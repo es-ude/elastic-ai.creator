@@ -1,7 +1,8 @@
 from types import SimpleNamespace
 
+from elasticai.creator.tags import tag
+from elasticai.creator.tags_utils import get_tags
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
-from elasticai.creator.tags import tag_precomputed, tag, get_tags
 
 
 class TagTest(TensorTestCase):
