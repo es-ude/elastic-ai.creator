@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Union, runtime_checkable, Protocol, Any
+from typing import Generic, TypeVar, Union, runtime_checkable, Protocol, Any, Tuple, Sequence
 
 T = TypeVar('T')
 
@@ -31,8 +31,10 @@ class TagWrapper(Generic[T]):
         return self._elasticai_tags
 
 
-def tag_precomputed(module: Union[T, TagWrapper[T]]) -> TagWrapper[T]:
-    return tag(module, precomputed=None)
+def tag_precomputed(module: Union[T, TagWrapper[T]],
+                    input_shape: Tuple[int],
+                    input_domain: Sequence[float]) -> TagWrapper[T]:
+    return tag(module, precomputed={'input_shape': input_shape, 'input_domain': input_domain})
 
 
 def unwrap(module: Union[T, Unwrappable[T]]) -> T:
