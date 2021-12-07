@@ -1,14 +1,14 @@
 from types import SimpleNamespace
 
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
-from elasticai.creator.tags import tag_precomputed, tag
+from elasticai.creator.tags import tag_precomputed, tag, get_tags
 
 
 class TagTest(TensorTestCase):
     def test_precompute_block(self):
         module = SimpleNamespace()
         module = tag(module, precomputed=None)
-        self.assertIn("precomputed", module.tags().keys())
+        self.assertIn("precomputed", module.elasticai_tags().keys())
 
     def test_precomputed_blocks_children_are_accessible(self):
         def children_generator():
@@ -36,5 +36,5 @@ class TagTest(TensorTestCase):
         self.assertEquals({
             "precomputed": None,
             "input_tensor_shape": (1, 2, 3),
-        }, module.tags())
+        }, get_tags(module))
 

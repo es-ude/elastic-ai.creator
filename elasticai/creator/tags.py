@@ -11,7 +11,7 @@ class Unwrappable(Protocol[T]):
 
 @runtime_checkable
 class HasElasticAITags(Protocol[T]):
-    def tags(self) -> dict:
+    def elasticai_tags(self) -> dict:
         raise NotImplementedError
 
 
@@ -27,7 +27,7 @@ class TagWrapper(Generic[T]):
     def unwrap(self):
         return self._wrapped
 
-    def tags(self):
+    def elasticai_tags(self) -> dict:
         return self._elasticai_tags
 
 
@@ -35,6 +35,13 @@ def tag_precomputed(module: Union[T, TagWrapper[T]],
                     input_shape: Tuple[int],
                     input_domain: Sequence[float]) -> TagWrapper[T]:
     return tag(module, precomputed={'input_shape': input_shape, 'input_domain': input_domain})
+
+
+def tag(module: Union[T, TagWrapper[T]], **new_tags: Any) -> TagWrapper[T]:
+    old_tags = get_tags(module)
+    module = unwrap(module)
+    tags = old_tags | new_tags
+    return TagWrapper(wrapped=module, **tags)
 
 
 def unwrap(module: Union[T, Unwrappable[T]]) -> T:
@@ -45,12 +52,5 @@ def unwrap(module: Union[T, Unwrappable[T]]) -> T:
 
 def get_tags(module: Union[T, TagWrapper[T]]) -> dict:
     if isinstance(module, HasElasticAITags):
-        return module.tags()
+        return module.elasticai_tags()
     return {}
-
-
-def tag(module: Union[T, TagWrapper[T]], **new_tags: Any) -> TagWrapper[T]:
-    old_tags = get_tags(module)
-    module = unwrap(module)
-    tags = old_tags | new_tags
-    return TagWrapper(wrapped=module, **tags)
