@@ -1,11 +1,11 @@
 from functools import partial
-from typing import Union
+from typing import Union, Tuple, Sequence
 
 import torch
 from torch.nn import Module
 from torch import Tensor
 
-from elasticai.creator.tags_utils import has_tag, get_tags, TagWrapper
+from elasticai.creator.tags_utils import has_tag, get_tags, TagWrapper, tag
 
 _precomputable_tag = 'precomputable'
 
@@ -60,17 +60,51 @@ def create_input_tensor(
         input_domain: Union[Tensor, NestedTuple],
         groups: int,
 ):
-    if not torch.is_tensor(input_domain):
-        input_domain = torch.tensor(input_domain)
-    domain_shape = input_domain.shape
-    total_number_of_elements_per_input_tensor = torch.prod(torch.tensor(domain_shape))
-
-    return input_domain
+    raise NotImplementedError
 
 
-def precomputations(module):
+def get_precomputations(module):
     tag_filter = partial(has_tag, tag_name=_precomputable_tag)
     submodules = module.children()
     filtered_submodules = filter(tag_filter, submodules)
     yield from (Precomputation.from_precomputable_tagged(submodule)
                 for submodule in filtered_submodules)
+
+
+def precomputable(module: Union[Module, TagWrapper[Module]],
+                  input_shape: Tuple[int],
+                  groups: int,
+                  input_domain: Sequence[float]) -> TagWrapper[Module]:
+    """Add all necessary information to allow later tools to precompute the specified module
+
+    The arguments provided will be used to determine the input data that needs
+    to be fed to the module to produce the precomputed input-output table.
+
+            Example:
+
+            model = Sequence(
+                precomputable(Sequence(
+                    QConv1D(...),
+                    BatchNorm1D(...),
+                    Binarize(),
+                ), input_shape=..., input_domain=..., groups=...),
+                precomputable(Sequence(
+                    QConv1D(...),
+                    BatchNorm1D(...),
+                    Binarize(),
+                ), input_shape=..., input_domain=..., groups=...),
+                MaxPool1D(..),
+
+            precomputations = get_precomputations(model)
+            for precompute in precomputations:
+                precompute()
+
+            with open('saved_precomputations.txt', 'w') as file:
+                for precomputation in precomputations:
+                    file.write(precomputation)
+    """
+    return tag(module, precomputed={
+        'input_shape': input_shape,
+        'input_domain': input_domain,
+        'groups': groups,
+    })
