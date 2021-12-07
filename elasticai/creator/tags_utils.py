@@ -1,7 +1,6 @@
-from typing import Generic, TypeVar, Union, runtime_checkable, Protocol, Any, Tuple, Sequence
+from typing import Generic, TypeVar, Union, runtime_checkable, Protocol, Any, Tuple, Sequence, TypeAlias
 
 T = TypeVar('T')
-
 
 @runtime_checkable
 class Unwrappable(Protocol[T]):
@@ -31,7 +30,10 @@ class TagWrapper(Generic[T]):
         return self._elasticai_tags
 
 
-def tag(module: Union[T, TagWrapper[T]], **new_tags: Any) -> TagWrapper[T]:
+MaybeTagWrapper = Union[T, TagWrapper[T]]
+
+
+def tag(module: MaybeTagWrapper, **new_tags: Any) -> TagWrapper[T]:
     """Add tags to any object wrapping it in a TagWrapper if necessary
 
     new_tags will override possibly existing tags
@@ -48,7 +50,11 @@ def unwrap(module: Union[T, Unwrappable[T]]) -> T:
     return module
 
 
-def get_tags(module: Union[T, TagWrapper[T]]) -> dict:
+def get_tags(module: MaybeTagWrapper) -> dict:
     if isinstance(module, HasElasticAITags):
         return module.elasticai_tags()
     return {}
+
+
+def has_tag(module: MaybeTagWrapper, tag_name) -> bool:
+    return tag_name in get_tags(module)
