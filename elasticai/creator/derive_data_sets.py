@@ -3,6 +3,7 @@ import numpy as np
 import itertools as ite
 import sys
 from torch import Tensor
+from torch.nn import Module
 
 
 def create_input_data(input_dim: List[int], domain: List[int]) -> np.ndarray:
@@ -29,9 +30,10 @@ def create_input_data(input_dim: List[int], domain: List[int]) -> np.ndarray:
             else:
                 table[i] = np.reshape(np.asarray(vector), input_dim)
     except MemoryError:
-        print("MemoryError: The generated tables are too large. No convertion possible. Unable to allocate memory for an array with shape ({}, {})".format(
-            n_values, input_dim
-        ))
+        print(
+            "MemoryError: The generated tables are too large. No convertion possible. Unable to allocate memory for an array with shape ({}, {})".format(
+                n_values, input_dim
+            ))
         sys.exit(1)
     return table
 
@@ -51,8 +53,8 @@ def create_io_table(inputs: np.ndarray, outputs: List[Tensor], channel_wise=True
         io_table = [{} for _ in range(num_channels)]
         for input, output in zip(inputs, outputs):
             for channel in range(num_channels):
-                io_table[channel][tuple(input[:,channel].flatten().tolist())] = tuple(
-                    output[:,channel].detach().numpy().flatten().tolist()
+                io_table[channel][tuple(input[:, channel].flatten().tolist())] = tuple(
+                    output[:, channel].detach().numpy().flatten().tolist()
                 )
     else:
         io_table = {}
@@ -73,3 +75,27 @@ def find_unique_elements(input: np.ndarray) -> np.ndarray:
     output = np.unique(input, axis=0)
 
     return output.reshape(original_shape[1:].insert(0, output.shape[0]))
+
+
+def depthwise_inputs(conv_layer: Module,
+                     kernel_size: tuple[int],
+                     codomain: List[int],
+                     ) -> np.ndarray:
+    """Calculate the inputs for depthwise convolution .
+        Args:
+            conv_layer: Layer, the convolutional layer
+            codomain: List[int], the codomain for the block
+            outputs: list the outputs from a previous layer
+        Returns:
+          np.ndarray: The inputs
+    """
+    n_channels = conv_layer.in_channels
+    inputs = create_input_data(list(kernel_size), codomain)
+    inputs = np.reshape(inputs, [-1, 1, *kernel_size])
+    stacked_inputs = inputs.copy()
+
+    if n_channels > 1:
+        for _ in range(n_channels - 1):
+            stacked_inputs = np.concatenate([stacked_inputs, inputs], axis=-2)
+
+    return stacked_inputs
