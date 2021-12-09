@@ -36,7 +36,6 @@ test:
 
 publish:
   only:
-    - develop
     - main
   script:
     - poetry build
