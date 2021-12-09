@@ -33,7 +33,7 @@ Add the following to your `pyproject.toml`
 ```toml
 [[tool.poetry.source]]
 name = "elasticai"
-url = "https://__token__:qAmtP5s8STEDBmrDiTvf@git.uni-due.de/api/v4/projects/3962/packages/pypi/simple"
+url = "package_url"
 secondary = true
 ```
 Afterwards you should be able to add the ElasticAICreator to your project like so
