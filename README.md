@@ -8,6 +8,8 @@ Obtaining a final model is typically a three stage process.
 
 This version currently only supports [Brevitas](https://github.com/Xilinx/brevitas) as a target representation.
 
+The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial.
+
 
 ## Table of contents
 
