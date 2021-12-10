@@ -2,7 +2,7 @@
 
 Design, train and compile neural networks optimized specifically for FPGAs.
 Obtaining a final model is typically a three stage process.
-* design and train it using the layers provided in the `elasticai.creator.qtorch` package.
+* design and train it using the layers provided in the `elasticai.creator` package.
 * translate the model to a target representation, e.g. VHDL
 * compile the intermediate representation with a third party tool, e.g. Xilinx Vivado (TM)
 
