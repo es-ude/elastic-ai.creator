@@ -17,9 +17,15 @@ python-language-server = "^0.36.2"
 brevitas = "^0.7.0"
 onnx = "^1.10.2"
 onnxoptimizer = "^0.2.6"
+coverage = "^6.2"
 flake8 = "*"
 tox = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+omit = ["elasticai/examples/*py"]
+source = ["elasticai"]
+command_line = "-m unittest discover ."
