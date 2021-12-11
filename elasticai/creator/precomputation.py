@@ -4,7 +4,7 @@ import numpy as np
 from torch import Tensor
 from torch.nn import Module
 
-from elasticai.creator.tags_utils import has_tag, get_tags, TagWrapperMixin, tag, unwrap, ModuleTagWrapper
+from elasticai.creator.tags_utils import has_tag, get_tags, tag
 
 _precomputable_tag = 'precomputable'
 
@@ -32,12 +32,12 @@ class Precomputation:
             self.input_domain = self.input_domain()
 
     @staticmethod
-    def from_precomputable_tagged(module: ModuleTagWrapper):
+    def from_precomputable_tagged(module: Module):
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]
         input_domain = info_for_precomputation['input_generator'](info_for_precomputation['input_shape'])
-        return Precomputation(module=unwrap(module),
+        return Precomputation(module=module,
                               input_domain=input_domain)
 
     def __call__(self) -> None:
@@ -69,7 +69,7 @@ def get_precomputations_from_direct_children(module):
                 for submodule in filtered_submodules)
 
 
-def precomputable(module: Union[Module, TagWrapperMixin[Module]],
+def precomputable(module: Module,
                   input_shape: tuple[int, ...],
                   input_generator: Callable[[tuple[int, ...]], np.ndarray]) -> Module:
     """Add all necessary information to allow later tools to precompute the specified module
@@ -84,12 +84,12 @@ def precomputable(module: Union[Module, TagWrapperMixin[Module]],
                     QConv1D(...),
                     BatchNorm1D(...),
                     Binarize(),
-                ), input_shape=..., input_domain=..., groups=...),
+                ), input_shape=..., input_generator=...),
                 precomputable(Sequence(
                     QConv1D(...),
                     BatchNorm1D(...),
                     Binarize(),
-                ), input_shape=..., input_domain=..., groups=...),
+                ), input_shape=..., input_generator=...),
                 MaxPool1D(..),
 
             precomputations = get_precomputations(model)
