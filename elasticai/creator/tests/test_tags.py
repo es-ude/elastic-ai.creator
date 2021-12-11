@@ -23,12 +23,6 @@ class TagTest(TensorTestCase):
         module = tag(module)
         self.assertEqual("some other attribute", module.other_attribute)
 
-    def test_wrapped_object_is_not_wrapped_again(self):
-        module = SimpleNamespace(children=[1, 2])
-        module = tag(module)
-        module = tag(module)
-        self.assertFalse(hasattr(module.unwrap(), "unwrap"))
-
     def test_update_tags(self):
         module = SimpleNamespace()
         module = tag(module, precomputed=None)
