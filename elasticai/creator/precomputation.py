@@ -1,10 +1,10 @@
-from functools import partial
-from typing import Union, Tuple, Sequence, Set, Callable
+from typing import Union, Set, Callable
 
+import numpy as np
 from torch import Tensor
 from torch.nn import Module
 
-from elasticai.creator.tags_utils import has_tag, get_tags, TagWrapper, tag
+from elasticai.creator.tags_utils import has_tag, get_tags, TagWrapperMixin, tag, unwrap, ModuleTagWrapper
 
 _precomputable_tag = 'precomputable'
 
@@ -32,12 +32,13 @@ class Precomputation:
             self.input_domain = self.input_domain()
 
     @staticmethod
-    def from_precomputable_tagged(module: TagWrapper[Module]):
+    def from_precomputable_tagged(module: ModuleTagWrapper):
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]
-        return Precomputation(module=module.unwrap(),
-                              **info_for_precomputation)
+        input_domain = info_for_precomputation['input_generator'](info_for_precomputation['input_shape'])
+        return Precomputation(module=unwrap(module),
+                              input_domain=input_domain)
 
     def __call__(self) -> None:
         """Precompute the input output pairs for the block handed during construction of the object.
@@ -59,17 +60,18 @@ class Precomputation:
 
 
 def get_precomputations_from_direct_children(module):
-    tag_filter = partial(has_tag, tag_name=_precomputable_tag)
-    submodules = module.children()
+    def tag_filter(child):
+        return _precomputable_tag in child.elasticai_tags()
+
+    submodules = tuple(module.children())
     filtered_submodules = filter(tag_filter, submodules)
     yield from (Precomputation.from_precomputable_tagged(submodule)
                 for submodule in filtered_submodules)
 
 
-def precomputable(module: Union[Module, TagWrapper[Module]],
-                  input_shape: Tuple[int],
-                  groups: int,
-                  input_domain: Sequence[float]) -> TagWrapper[Module]:
+def precomputable(module: Union[Module, TagWrapperMixin[Module]],
+                  input_shape: tuple[int, ...],
+                  input_generator: Callable[[tuple[int, ...]], np.ndarray]) -> Module:
     """Add all necessary information to allow later tools to precompute the specified module
 
     The arguments provided will be used to determine the input data that needs
@@ -98,8 +100,7 @@ def precomputable(module: Union[Module, TagWrapper[Module]],
                 for precomputation in precomputations:
                     file.write(precomputation)
     """
-    return tag(module, precomputed={
+    return tag(module, precomputable={
         'input_shape': input_shape,
-        'input_domain': input_domain,
-        'groups': groups,
+        'input_generator': input_generator,
     })

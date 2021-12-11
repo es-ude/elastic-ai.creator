@@ -3,6 +3,9 @@ from typing import Generic, TypeVar, Union, runtime_checkable, Protocol, Any
 T = TypeVar('T')
 
 
+from torch.nn import Module
+
+
 @runtime_checkable
 class Unwrappable(Protocol[T]):
     def unwrap(self) -> T:
@@ -15,14 +18,11 @@ class HasElasticAITags(Protocol[T]):
         raise NotImplementedError
 
 
-class TagWrapper(Generic[T]):
+class TagWrapperMixin(Generic[T]):
     def __init__(self, wrapped: T, **tags: Any):
         super().__init__()
         self._wrapped = wrapped
         self._elasticai_tags = tags
-
-    def __getattr__(self, item):
-        return self._wrapped.__getattribute__(item)
 
     def unwrap(self):
         return self._wrapped
@@ -31,10 +31,15 @@ class TagWrapper(Generic[T]):
         return self._elasticai_tags
 
 
-MaybeTagWrapper = Union[T, TagWrapper[T]]
+MaybeTagWrapper = Union[T, TagWrapperMixin[T]]
 
 
-def tag(module: MaybeTagWrapper, **new_tags: Any) -> TagWrapper[T]:
+class ModuleTagWrapper(TagWrapperMixin[Module], Module):
+    def __init__(self, module, **tags):
+        super().__init__(wrapped=module, **tags)
+
+
+def tag(module: MaybeTagWrapper, **new_tags: Any) -> ModuleTagWrapper:
     """Add tags to any object wrapping it in a TagWrapper if necessary
 
     new_tags will override possibly existing tags
@@ -42,7 +47,8 @@ def tag(module: MaybeTagWrapper, **new_tags: Any) -> TagWrapper[T]:
     old_tags = get_tags(module)
     module = unwrap(module)
     tags = old_tags | new_tags
-    return TagWrapper(wrapped=module, **tags)
+
+    return ModuleTagWrapper(module=module, **tags)
 
 
 def unwrap(module: Union[T, Unwrappable[T]]) -> T:

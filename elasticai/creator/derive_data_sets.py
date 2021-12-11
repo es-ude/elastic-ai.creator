@@ -44,7 +44,6 @@ def construct_domain_from_items(shape: tuple[int, ...], items: Iterable) -> np.n
       construct_domain_from_items((2, 3), ((1, 1), (0, 0))) # will raise a ValueError
     ```
     """
-
     result = np.array(items)
 
     shape_we_need_to_build = shape[:_calculate_the_rank_index_that_shape_sizes_match_up_to(
