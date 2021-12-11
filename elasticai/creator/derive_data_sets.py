@@ -1,16 +1,17 @@
-from typing import List, Dict, Union
-import numpy as np
+import itertools
 import itertools as ite
-import sys
+from typing import List, Dict, Union, Iterable
+
+import numpy as np
 from torch import Tensor
 from torch.nn import Module
 
 
-def create_input_data(input_dim: List[int], domain: List[int]) -> np.ndarray:
+def create_input_data(input_dim: List[int], domain: List[Union[int, float]], dtype='float16') -> np.ndarray:
     """The function creates possible inputs for a submodel given input dimensions .
         Args:
             input_dim (List[int]): The dimensions of the input, can be a tuple too.
-            domain (List[int]): The possible values of the input
+            domain (List[Union[int, float]]): The possible values of the input
 
         Returns:
             numpy.ndarray: An array of possible inputs
@@ -18,24 +19,31 @@ def create_input_data(input_dim: List[int], domain: List[int]) -> np.ndarray:
     input_dim = list(input_dim)
     input_dim = [x for x in input_dim if x is not None]
     domain = np.unique(domain)
-    n_values = int(len(domain) ** np.prod(input_dim).item())
-    try:
-        if hasattr(domain, "shape") and len(domain.shape) > 1:
-            table = np.zeros([n_values] + input_dim + list(domain.shape[1:]))
-        else:
-            table = np.zeros([n_values] + input_dim)
-        for vector, i in zip(ite.product(domain, repeat=int(np.prod(input_dim))), range(n_values)):
-            if hasattr(domain, "shape") and len(domain.shape) > 1:
-                table[i] = np.reshape(np.asarray(vector), input_dim + list(domain.shape[1:]))
-            else:
-                table[i] = np.reshape(np.asarray(vector), input_dim)
-    except MemoryError:
-        print(
-            "MemoryError: The generated tables are too large. No convertion possible. Unable to allocate memory for an array with shape ({}, {})".format(
-                n_values, input_dim
-            ))
-        sys.exit(1)
+    n_values = int(len(domain) ** np.prod(input_dim))
+    table = np.zeros([n_values] + input_dim, dtype=dtype)
+
+    for vector, i in zip(ite.product(domain, repeat=int(np.prod(input_dim))), range(n_values)):
+        table[i] = np.reshape(np.asarray(vector), input_dim)
+
     return table
+
+
+def get_cartesian_product_from_items(length: int, items: Iterable, dtype='float16') -> np.ndarray:
+    return np.array(tuple(itertools.product(items, repeat=length)), dtype=dtype)
+
+
+def construct_domain_from_items(shape: tuple[int, ...], items: Iterable) -> np.ndarray:
+    result = np.array(items)
+
+    def calculate_the_rank_index_that_shape_sizes_match_up_to():
+        rank_size_pairs = zip(reversed(result[0].shape), reversed(shape))
+        matching_rank_sizes = itertools.takewhile(lambda sizes: sizes[0] == sizes[1], rank_size_pairs)
+        return len(tuple(matching_rank_sizes))
+
+    shape_we_need_to_build = shape[:-calculate_the_rank_index_that_shape_sizes_match_up_to()]
+    for size in shape_we_need_to_build:
+        result = get_cartesian_product_from_items(length=size, items=result)
+    return result
 
 
 def create_io_table(inputs: np.ndarray, outputs: List[Tensor], channel_wise=True) -> Union[Dict, List[Dict]]:

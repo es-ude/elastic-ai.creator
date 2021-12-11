@@ -15,3 +15,17 @@ Extra:
                      ((-1, 1), (1, 1)),
                      ((-1, 1), (-1, 1))]
 """
+
+from elasticai.creator.precomputation import Precomputation
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from elasticai.creator.precomputation import precomputable
+
+
+class PrecomputationTest(TensorTestCase):
+    def test_precomputing_a_function(self):
+        def function(x):
+            return "{} more".format(x)
+        function.eval = lambda: ...
+        precompute = Precomputation(module=function, input_domain="something")
+        precompute()
+        self.assertEqual(("something", "something more"), tuple(precompute))
