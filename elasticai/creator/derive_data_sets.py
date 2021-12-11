@@ -33,14 +33,24 @@ def get_cartesian_product_from_items(length: int, items: Iterable, dtype='float1
 
 
 def construct_domain_from_items(shape: tuple[int, ...], items: Iterable) -> np.ndarray:
+    """Build the numpy array containing all combinations that can be built from `items` resulting in the desired `shape`.
+
+    `items` can either be a flat iterable of scalar values or already structure that is convertible to a nested numpy array.
+    In the latter case the last dimensions of the requested `shape` are expected to match the shape of `items` exactly.
+    Otherwise a `ValueError` will be raised.
+    E.g.:
+    ```
+      construct_domain_from_items((3, 2), ((1, 1), (0, 0))) # is fine
+      construct_domain_from_items((2, 3), ((1, 1), (0, 0))) # will raise a ValueError
+    ```
+    """
+
     result = np.array(items)
 
-    def calculate_the_rank_index_that_shape_sizes_match_up_to():
-        rank_size_pairs = zip(reversed(result[0].shape), reversed(shape))
-        matching_rank_sizes = itertools.takewhile(lambda sizes: sizes[0] == sizes[1], rank_size_pairs)
-        return len(tuple(matching_rank_sizes))
-
-    shape_we_need_to_build = shape[:-calculate_the_rank_index_that_shape_sizes_match_up_to()]
+    shape_we_need_to_build = shape[:_calculate_the_rank_index_that_shape_sizes_match_up_to(
+        requested_shape=shape,
+        provided_shape=result.shape[1:]
+    )]
     for size in shape_we_need_to_build:
         result = get_cartesian_product_from_items(length=size, items=result)
     return result
@@ -107,3 +117,11 @@ def depthwise_inputs(conv_layer: Module,
             stacked_inputs = np.concatenate([stacked_inputs, inputs], axis=-2)
 
     return stacked_inputs
+
+
+def _calculate_the_rank_index_that_shape_sizes_match_up_to(requested_shape, provided_shape):
+    rank_size_pairs = tuple(zip(reversed(provided_shape), reversed(requested_shape)))
+    equalities = map(lambda x: x[0] == x[1], rank_size_pairs)
+    if not all(equalities):
+        raise ValueError
+    return len(requested_shape) - len(rank_size_pairs)
