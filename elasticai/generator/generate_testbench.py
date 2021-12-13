@@ -1,21 +1,24 @@
-def write_imports():
+def write_libraries():
     return """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
-    """
+\n"""
 
 
-def write_entity():
-    return """entity sigmoid_tb is
+def write_entity(entity_name):
+    return """entity {entity_name}_tb is
     port ( clk: out std_logic);
-end entity ; -- sigmoid_tb
-    """
+end entity ; -- {entity_name}_tb
+\n""".format(entity_name=entity_name)
+
+
+def write_architecture_header(architecture_name, component_name):
+    return """architecture {architecture_name} of {component_name}_tb is
+\n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
 def write_component(data_width, frac_width):
-    return """architecture behav of sigmoid_tb is
-
-    component sigmoid is
+    return """    component sigmoid is
         generic (
                 DATA_WIDTH : integer := {};
                 FRAC_WIDTH : integer := {}
@@ -25,20 +28,20 @@ def write_component(data_width, frac_width):
             y: out signed(DATA_WIDTH-1 downto 0)
         );
     end component;
-    """.format(data_width, frac_width)
+\n""".format(data_width, frac_width)
 
 
-def write_inputs():
+def write_signal_definitions():
     return """    ------------------------------------------------------------
     -- Testbench Internal Signals
     ------------------------------------------------------------
     signal clk_period : time := 1 ns;
     signal test_input : signed(16-1 downto 0):=(others=>'0');
     signal test_output : signed(16-1 downto 0);
-    """
+\n"""
 
 
-def write_clock():
+def write_clock_process():
     return """begin
 
     clock_process : process
@@ -48,7 +51,7 @@ def write_clock():
         clk <= '1';
         wait for clk_period/2;
     end process; -- clock_process
-    """
+\n"""
 
 
 def write_utt():
@@ -57,30 +60,32 @@ def write_utt():
     x => test_input,
     y => test_output
     );
-    """
+\n"""
 
 
-def write_test_process(testoutput_1281, testoutput_1000, testoutput_500):
+def write_test_process_header():
     return """test_process: process is
     begin
         Report "======Simulation start======" severity Note;
-        
-        test_input <=  to_signed(-1281,16);
+\n"""
+
+
+def write_test_process(inputs, outputs):
+    test = ""
+    if len(inputs) == len(outputs):
+        for i in range(len(inputs)):
+            test = test + """        test_input <=  to_signed({input},16);
         wait for 1*clk_period;
         report "The value of 'test_output' is " & integer'image(to_integer(unsigned(test_output)));
-        assert test_output={} report "The test case -1281 fail" severity failure;
-        
-        test_input <=  to_signed(-1000,16);
-        wait for 1*clk_period;
-        report "The value of 'test_output' is " & integer'image(to_integer(unsigned(test_output)));
-        assert test_output={} report "The test case -1000 fail" severity failure;
-        
-        test_input <=  to_signed(-500,16);
-        wait for 1*clk_period;
-        report "The value of 'test_output' is " & integer'image(to_integer(unsigned(test_output)));
-        assert test_output={} report "The test case -500 fail" severity failure;
-        
-        
+        assert test_output={output} report "The test case {input} fail" severity failure;
+\n""".format(input=inputs[i], output=outputs[i])
+        return test
+    else:
+        raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")
+
+
+def write_test_process_end():
+    return """        
         -- if there is no error message, that means all test case are passed.
         report "======Simulation Success======" severity Note;
         report "Please check the output message." severity Note;
@@ -89,26 +94,42 @@ def write_test_process(testoutput_1281, testoutput_1000, testoutput_500):
         wait;
         
     end process; -- test_process
+\n"""
 
-end behav ; -- behav
-""".format(testoutput_1281, testoutput_1000, testoutput_500)
+
+def write_architecture_end(architecture_name):
+    return """end {architecture_name} ; -- {architecture_name}
+    """.format(architecture_name=architecture_name)
 
 
 def main():
-    with open('../testbench/sigmoid_generate_tb.vhd', 'w') as f:
-        f.write(write_imports())
-        f.write("\n")
-        f.write(write_entity())
-        f.write("\n")
-        f.write(write_component(data_width=16, frac_width=8))
-        f.write("\n")
-        f.write(write_inputs())
-        f.write("\n")
-        f.write(write_clock())
-        f.write("\n")
+    component_name = "sigmoid"
+    test_bench_file_name = component_name + "_tb.vhd"
+    architecture_name = "behav"
+
+    data_width = 16
+    frac_width = 8
+
+    # x, y = sigmoid(data_width, frac_width)
+    # Note, the two array below, is generated based on data_width and frac_width
+    # excitation signals, as test inputs signal
+    inputs = [-1281, -1000, -500]
+    # expected signal, as test reference output signal
+    outputs = [0, 4, 28]
+
+    # FIXME: change back
+    with open('../testbench/generated_' + test_bench_file_name, 'w') as f:
+        f.write(write_libraries())
+        f.write(write_entity(entity_name=component_name))
+        f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
+        f.write(write_component(data_width=data_width, frac_width=frac_width))
+        f.write(write_signal_definitions())
+        f.write(write_clock_process())
         f.write(write_utt())
-        f.write("\n")
-        f.write(write_test_process(0, 4, 28))
+        f.write(write_test_process_header())
+        f.write(write_test_process(inputs, outputs))
+        f.write(write_test_process_end())
+        f.write(write_architecture_end(architecture_name=architecture_name))
 
 
 if __name__ == '__main__':

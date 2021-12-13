@@ -1,13 +1,13 @@
 import unittest
 from os.path import exists
-from elasticai.generator.generate_testbench import main
+from elasticai.generator.generate_testbench import main, write_test_process
 
 
 class GenerateTestBenchTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.generated_testbench_file = open('../testbench/sigmoid_generate_tb.vhd', 'r')
-        self.lines = self.generated_testbench_file.readlines()
         main()
+        self.generated_testbench_file = open('../testbench/generated_sigmoid_tb.vhd', 'r')
+        self.lines = self.generated_testbench_file.readlines()
 
     def tearDown(self) -> None:
         self.generated_testbench_file.close()
@@ -15,7 +15,7 @@ class GenerateTestBenchTest(unittest.TestCase):
     def test_generate_file(self) -> None:
         self.assertTrue(exists('../testbench/sigmoid_generate_tb.vhd'))
 
-    def test_generate_imports(self) -> None:
+    def test_generate_libraries(self) -> None:
         expected_import_lines = [
             "library ieee;\n",
             "use ieee.std_logic_1164.all;\n",
@@ -33,10 +33,14 @@ class GenerateTestBenchTest(unittest.TestCase):
         for i, j in zip(range(0, 3), range(4, 7)):
             self.assertEqual(expected_entity_lines[i], self.lines[j])
 
+    def test_generate_architecture_header(self) -> None:
+        expected_architecture_header_lines = [
+            "architecture behav of sigmoid_tb is\n",
+        ]
+        self.assertEqual(expected_architecture_header_lines[0], self.lines[8])
+
     def test_generate_component(self) -> None:
         expected_component_lines = [
-            "architecture behav of sigmoid_tb is\n",
-            "\n",
             "    component sigmoid is\n",
             "        generic (\n",
             "                DATA_WIDTH : integer := 16;\n",
@@ -48,10 +52,10 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        );\n",
             "    end component;\n"
         ]
-        for i, j in zip(range(len(expected_component_lines)), range(8, 19)):
+        for i, j in zip(range(len(expected_component_lines)), range(10, 20)):
             self.assertEqual(expected_component_lines[i], self.lines[j])
 
-    def test_generate_inputs(self) -> None:
+    def test_generate_signal_definitions(self) -> None:
         expected_inputs_lines = [
             "    ------------------------------------------------------------\n",
             "    -- Testbench Internal Signals\n",
@@ -63,7 +67,7 @@ class GenerateTestBenchTest(unittest.TestCase):
         for i, j in zip(range(len(expected_inputs_lines)), range(21, 27)):
             self.assertEqual(expected_inputs_lines[i], self.lines[j])
 
-    def test_generate_clock(self) -> None:
+    def test_generate_clock_process(self) -> None:
         expected_clock_lines = [
             "begin\n",
             "\n",
@@ -89,28 +93,40 @@ class GenerateTestBenchTest(unittest.TestCase):
         for i, j in zip(range(len(expected_utt_lines)), range(38, 43)):
             self.assertEqual(expected_utt_lines[i], self.lines[j])
 
-    def test_generate_test_process(self) -> None:
-        expected_test_process_lines = [
+    def test_generate_test_process_header(self) -> None:
+        expected_test_process_header_lines = [
             "test_process: process is\n",
             "    begin\n",
             "        Report \"======Simulation start======\" severity Note;\n",
-            "        \n",
+        ]
+        for i, j in zip(range(len(expected_test_process_header_lines)), range(44, 75)):
+            self.assertEqual(expected_test_process_header_lines[i], self.lines[j])
+
+    def test_generate_test_process(self) -> None:
+        expected_test_process_lines = [
             "        test_input <=  to_signed(-1281,16);\n",
             "        wait for 1*clk_period;\n",
             "        report \"The value of 'test_output' is \" & integer'image(to_integer(unsigned(test_output)));\n",
             "        assert test_output=0 report \"The test case -1281 fail\" severity failure;\n",
-            "        \n",
+            "\n",
             "        test_input <=  to_signed(-1000,16);\n",
             "        wait for 1*clk_period;\n",
             "        report \"The value of 'test_output' is \" & integer'image(to_integer(unsigned(test_output)));\n",
             "        assert test_output=4 report \"The test case -1000 fail\" severity failure;\n",
-            "        \n",
+            "\n",
             "        test_input <=  to_signed(-500,16);\n",
             "        wait for 1*clk_period;\n",
             "        report \"The value of 'test_output' is \" & integer'image(to_integer(unsigned(test_output)));\n",
             "        assert test_output=28 report \"The test case -500 fail\" severity failure;\n",
-            "        \n",
-            "        \n",
+        ]
+        for i, j in zip(range(len(expected_test_process_lines)), range(48, 62)):
+            self.assertEqual(expected_test_process_lines[i], self.lines[j])
+
+    def test_generate_test_process_raises_error_when_called_with_different_inputs_and_outputs_lenghts(self) -> None:
+        self.assertRaises(TypeError, write_test_process, [1], [])
+
+    def test_generate_test_process_end(self) -> None:
+        expected_test_process_end_lines = [
             "        -- if there is no error message, that means all test case are passed.\n",
             "        report \"======Simulation Success======\" severity Note;\n",
             "        report \"Please check the output message.\" severity Note;\n",
@@ -119,8 +135,12 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        wait;\n",
             "        \n",
             "    end process; -- test_process\n",
-            "\n",
+        ]
+        for i, j in zip(range(len(expected_test_process_end_lines)), range(64, 72)):
+            self.assertEqual(expected_test_process_end_lines[i], self.lines[j])
+
+    def test_generate_architecture_end(self) -> None:
+        expected_test_architecture_end_lines = [
             "end behav ; -- behav\n"
         ]
-        for i, j in zip(range(len(expected_test_process_lines)), range(44, 75)):
-            self.assertEqual(expected_test_process_lines[i], self.lines[j])
+        self.assertEqual(expected_test_architecture_end_lines[0], self.lines[73])
