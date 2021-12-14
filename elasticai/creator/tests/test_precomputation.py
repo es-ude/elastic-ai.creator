@@ -25,7 +25,10 @@ class PrecomputationTest(TensorTestCase):
     def test_precomputing_a_function(self):
         def function(x):
             return "{} more".format(x)
-        function.eval = lambda: ...
+
+        def noop_function():
+            pass
+        function.eval = noop_function
         precompute = Precomputation(module=function, input_domain="something")
         precompute()
         self.assertEqual(("something", "something more"), tuple(precompute))
