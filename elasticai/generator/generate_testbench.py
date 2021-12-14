@@ -22,28 +22,29 @@ def write_architecture_header(architecture_name, component_name):
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def write_component(data_width, frac_width):
+def write_component(data_width, frac_width, variables_dict):
+    variables_list_str = ""
+    for variable in variables_dict:
+        variables_list_str = variables_list_str + "            {variable} : {io} signed(DATA_WIDTH-1 downto 0);\n".format(variable=variable, io=variables_dict[variable])
+    # remove last linebreak and semicolon
     return """    component sigmoid is
         generic (
-                DATA_WIDTH : integer := {};
-                FRAC_WIDTH : integer := {}
+                DATA_WIDTH : integer := {data_width};
+                FRAC_WIDTH : integer := {frac_width}
             );
-        port (
-            x : in signed(DATA_WIDTH-1 downto 0);
-            y: out signed(DATA_WIDTH-1 downto 0)
+        port (\n""".format(data_width=data_width, frac_width=frac_width) + variables_list_str[:-2] + """
         );
     end component;
-\n""".format(data_width, frac_width)
+\n"""
 
 
-def write_signal_definitions():
+def write_signal_definitions(signal_dict):
+    signal_dict_str = ""
+    for signal in signal_dict:
+        signal_dict_str = signal_dict_str + "    signal " + signal + " : " + signal_dict[signal] + ";\n"
     return """    ------------------------------------------------------------
     -- Testbench Internal Signals
-    ------------------------------------------------------------
-    signal clk_period : time := 1 ns;
-    signal test_input : signed(16-1 downto 0):=(others=>'0');
-    signal test_output : signed(16-1 downto 0);
-\n"""
+    ------------------------------------------------------------\n""" + signal_dict_str + "\n"
 
 
 def write_clock_process():
@@ -59,13 +60,13 @@ def write_clock_process():
 \n"""
 
 
-def write_utt():
-    return """    utt: sigmoid
-    port map (
-    x => test_input,
-    y => test_output
-    );
-\n"""
+def write_uut(mapping_dict):
+    mapping_dict_str = ""
+    for mapping in mapping_dict:
+        mapping_dict_str = mapping_dict_str + "    " + mapping + " => " + mapping_dict[mapping] + ",\n"
+    # remove last comma and linebreak and add linebreak again
+    return """    uut: sigmoid
+    port map (\n""" + mapping_dict_str[:-2] + "\n    );\n\n"
 
 
 def write_test_process_header():
@@ -127,10 +128,14 @@ def main():
         f.write(write_libraries())
         f.write(write_entity(entity_name=component_name))
         f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
-        f.write(write_component(data_width=data_width, frac_width=frac_width))
-        f.write(write_signal_definitions())
+        f.write(write_component(data_width=data_width, frac_width=frac_width, variables_dict={"x": "in", "y": "out"}))
+        f.write(write_signal_definitions(signal_dict={
+            "clk_period": "time := 1 ns",
+            "test_input": "signed(16-1 downto 0):=(others=>'0')",
+            "test_output": "signed(16-1 downto 0)"
+        }))
         f.write(write_clock_process())
-        f.write(write_utt())
+        f.write(write_uut(mapping_dict={"x": "test_input", "y": "test_output"}))
         f.write(write_test_process_header())
         f.write(write_test_process(inputs, outputs))
         f.write(write_test_process_end())

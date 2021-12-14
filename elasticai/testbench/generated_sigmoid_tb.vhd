@@ -15,7 +15,7 @@ architecture behav of sigmoid_tb is
             );
         port (
             x : in signed(DATA_WIDTH-1 downto 0);
-            y: out signed(DATA_WIDTH-1 downto 0)
+            y : out signed(DATA_WIDTH-1 downto 0)
         );
     end component;
 
@@ -36,7 +36,7 @@ begin
         wait for clk_period/2;
     end process; -- clock_process
 
-    utt: sigmoid
+    uut: sigmoid
     port map (
     x => test_input,
     y => test_output
@@ -72,4 +72,4 @@ test_process: process is
     end process; -- test_process
 
 end behav ; -- behav
-    
+

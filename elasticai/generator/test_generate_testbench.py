@@ -60,7 +60,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "            );\n",
             "        port (\n",
             "            x : in signed(DATA_WIDTH-1 downto 0);\n",
-            "            y: out signed(DATA_WIDTH-1 downto 0)\n",
+            "            y : out signed(DATA_WIDTH-1 downto 0)\n",
             "        );\n",
             "    end component;\n"
         ]
@@ -95,15 +95,15 @@ class GenerateTestBenchTest(unittest.TestCase):
             self.assertEqual(expected_clock_lines[i], self.lines[j])
 
     def test_generate_utt(self) -> None:
-        expected_utt_lines = [
-            "    utt: sigmoid\n",
+        expected_uut_lines = [
+            "    uut: sigmoid\n",
             "    port map (\n",
             "    x => test_input,\n",
             "    y => test_output\n",
             "    );\n"
         ]
-        for i, j in zip(range(len(expected_utt_lines)), range(38, 43)):
-            self.assertEqual(expected_utt_lines[i], self.lines[j])
+        for i, j in zip(range(len(expected_uut_lines)), range(38, 43)):
+            self.assertEqual(expected_uut_lines[i], self.lines[j])
 
     def test_generate_test_process_header(self) -> None:
         expected_test_process_header_lines = [
