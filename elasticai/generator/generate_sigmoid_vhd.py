@@ -15,7 +15,7 @@ def main():
         writer.write(write_libraries())
         writer.write(write_entity(entity_name=component_name, data_width=DATA_WIDTH, frac_width=DATA_FRAC))
         writer.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
-        writer.write(write_process_header(component_name=component_name))
+        writer.write(write_process(component_name=component_name))
         writer.write(write_architecture_end(architecture_name=architecture_name))
 
 

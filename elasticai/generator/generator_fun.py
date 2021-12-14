@@ -56,7 +56,7 @@ def write_architecture_end(architecture_name):
     """.format(architecture_name=architecture_name)
 
 
-def write_process_header(component_name):
+def write_process(component_name):
     return """begin 
     {component_name}_process:process(x)
     variable int_x: integer := 0;
