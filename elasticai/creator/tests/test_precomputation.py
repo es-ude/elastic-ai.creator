@@ -25,15 +25,10 @@ class PrecomputationTest(TensorTestCase):
     def test_precomputing_a_function(self):
         def function(x):
             return "{} more".format(x)
-        function.eval = lambda: ...
-        precompute = Precomputation(module=function, input_domain="something",input_shape=[1])
+
+        def noop_function():
+            pass
+        function.eval = noop_function
+        precompute = Precomputation(module=function, input_domain="something")
         precompute()
         self.assertEqual(("something", "something more"), tuple(precompute))
-    def test_serialization(self):
-        function = torch.nn.Identity()
-        input_shape =[1,1]
-        model = Precomputation(module=function, input_domain=torch.Tensor(),input_shape=input_shape)
-        torch.save(model,"model_test.pt")
-        model = torch.load("model_test.pt")
-        self.assertEqual(model.input_shape,input_shape)
-        
