@@ -25,9 +25,13 @@ CoefficientSet = Union[Tensor, Set[float]]
 
 
 class Precalculation_function(torch.autograd.Function):
+    """
+    Adds a psedo-implementation of the precalculation in autograd. Used as a helper to export to onnx
+    
+    """
         
     @staticmethod
-    def symbolic(g, input, input_domain,input_shape, module):
+    def symbolic(g, input, input_domain, input_shape, module):
 
         ret = g.op('custom_ops::Precomputation',input_shape_i = input_shape)
         return ret
