@@ -1,6 +1,6 @@
 import unittest
 from os.path import exists
-from elasticai.generator.generate_testbench import main, write_test_process
+from elasticai.generator.generate_testbench import main, write_test_process, write_libraries
 
 
 class GenerateTestBenchTest(unittest.TestCase):
@@ -13,7 +13,7 @@ class GenerateTestBenchTest(unittest.TestCase):
         self.generated_testbench_file.close()
 
     def test_generate_file(self) -> None:
-        self.assertTrue(exists('../testbench/sigmoid_generate_tb.vhd'))
+        self.assertTrue(exists('../testbench/generated_sigmoid_tb.vhd'))
 
     def test_generate_libraries(self) -> None:
         expected_import_lines = [
@@ -23,6 +23,18 @@ class GenerateTestBenchTest(unittest.TestCase):
         ]
         for i in range(0, 3):
             self.assertEqual(expected_import_lines[i], self.lines[i])
+
+    def test_generate_libraries_with_math_lib(self) -> None:
+        expected_import_lines = [
+            "library ieee;",
+            "use ieee.std_logic_1164.all;",
+            "use ieee.numeric_std.all;               -- for type conversions",
+            "use ieee.math_real.all;"
+        ]
+        lib_string = write_libraries(math_lib=True)
+        for i in range(0, 4):
+            self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
+
 
     def test_generate_entity(self) -> None:
         expected_entity_lines = [

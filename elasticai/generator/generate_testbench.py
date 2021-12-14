@@ -1,8 +1,13 @@
-def write_libraries():
-    return """library ieee;
+def write_libraries(math_lib=False):
+    lib_string = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
-\n"""
+"""
+    if math_lib:
+        lib_string = lib_string + "use ieee.math_real.all;\n"
+    else:
+        lib_string = lib_string + "\n"
+    return lib_string
 
 
 def write_entity(entity_name):
@@ -99,7 +104,7 @@ def write_test_process_end():
 
 def write_architecture_end(architecture_name):
     return """end {architecture_name} ; -- {architecture_name}
-    """.format(architecture_name=architecture_name)
+\n""".format(architecture_name=architecture_name)
 
 
 def main():
