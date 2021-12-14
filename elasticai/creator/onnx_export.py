@@ -2,11 +2,8 @@ from typing import Optional, Tuple
 
 from torch.nn import  Module
 from torch import  Tensor
-import  torch
-from torch.autograd import Function
-# class symbolic_precalculation(Function):
-#     
-#     pass
+from torch.onnx import register_custom_op_symbolic
+import torch
 from elasticai.creator.precomputation import Precalculation_function
 
 
@@ -16,6 +13,7 @@ class onnx_export_manager:
             input_shape: Optional[Tuple[int, ...]] = None,
             export_path: Optional[str] = None,
             input_t: Optional[Tensor] = None, **kwargs):
-        torch.onnx.register_custom_op_symbolic("custom_ops::Precomputation", Precalculation_function, 9)
+
+        register_custom_op_symbolic("custom_ops::Precomputation", Precalculation_function, 9)
         torch.onnx.export(module, torch.ones(input_shape), export_path, **kwargs)
         pass
