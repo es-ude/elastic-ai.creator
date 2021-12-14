@@ -1,9 +1,10 @@
 from typing import Union, Set, Callable
 
 import numpy as np
+import torch
 from torch import Tensor
 from torch.nn import Module
-
+import torch._C
 from elasticai.creator.tags_utils import has_tag, get_tags, tag
 
 _precomputable_tag = 'precomputable'
@@ -20,9 +21,19 @@ NestedTuple = Union[tuple['float', ...], tuple['NestedTuple', ...]]
 CoefficientSet = Union[Tensor, Set[float]]
 
 
-class Precomputation:
-    def __init__(self, module: Module,
-                 input_domain: Union[Callable[[], Tensor], Tensor]) -> None:
+class Precalculation_function(torch.autograd.Function):
+    @staticmethod
+    def symbolic(g, x, input_domain,module,parameters):
+        ret = g.op('custom_ops::Precomputation',x, input_domain)
+        return ret
+
+    @staticmethod
+    def forward(ctx, input, input_domain,module,parameters):
+        return module(input)#torch.empty(out_shape, device=x.device)
+
+class Precomputation(Module):
+    def __init__(self, module: Module, input_domain: Union[Callable[[], Tensor], Tensor]) -> None:
+        super().__init__()
         self.module = module
         self.input_domain = input_domain
         self.output = None
@@ -40,7 +51,7 @@ class Precomputation:
         return Precomputation(module=module,
                               input_domain=input_domain)
 
-    def __call__(self) -> None:
+    def precalalculate(self,input) -> None:
         """Precompute the input output pairs for the block handed during construction of the object.
 
         Be aware that this sets the corresponding submodule/block to eval mode. To continue training be sure to set
@@ -57,6 +68,11 @@ class Precomputation:
             return self.output
         else:
             raise IndexError
+    
+
+    
+    def forward(self,input):
+        return Precalculation_function.apply(input,self.input_domain,self.module,self.module.parameters())
 
 
 def get_precomputations_from_direct_children(module):
