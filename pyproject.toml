@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elasticAICreator"
-version = "0.2.0"
+version = "0.3"
 description = ""
 authors = ["Department Embedded Systems - University Duisburg Essen"]
 packages = [
@@ -10,7 +10,6 @@ packages = [
 [tool.poetry.dependencies]
 python = "~3.9"
 torch = "^1.9.1"
-matplotlib = "^3.5.0"
 
 [tool.poetry.dev-dependencies]
 python-language-server = "^0.36.2"
