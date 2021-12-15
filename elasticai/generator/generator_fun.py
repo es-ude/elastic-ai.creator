@@ -1,5 +1,4 @@
 import math
-import numpy as np
 from os import path
 
 
@@ -57,7 +56,7 @@ def write_architecture_end(architecture_name):
     """.format(architecture_name=architecture_name)
 
 
-def write_process(component_name):
+def write_process(component_name, process_name):
     return """begin 
     {component_name}_process:process(x)
     variable int_x: integer := 0;
@@ -66,17 +65,16 @@ def write_process(component_name):
         
         {generate_process}
     end process;                
-    \n""".format(component_name=component_name, generate_process=_generate_sigmoid_process())
+    \n""".format(component_name=component_name, generate_process=process_name)
 
 
-# FIXME : try to make it general maybe with parameters , without nested Function !
-def _generate_sigmoid_process():
-    def sigmoid(x):
+def sigmoid_process(x_list):
+    def _sigmoid(x):
         return 1 / (1 + math.exp(-x))
 
     # contains the new lines
     lines = []
-    x_list = np.linspace(-5, 5, 66)  # [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
+
     frac_bits = 8
     zero = 0
     one = 2 ** frac_bits
@@ -90,8 +88,8 @@ def _generate_sigmoid_process():
             lines.append("\ty <= \"" + '{0:016b}'.format(one) + "\"; -- " + str(one))
         else:
             lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
-            lines.append("\ty <= \"" + '{0:016b}'.format(int(256 * sigmoid(x_list[i - 1]))) + "\"; -- " + str(
-                int(256 * sigmoid(x_list[i - 1]))))
+            lines.append("\ty <= \"" + '{0:016b}'.format(int(256 * _sigmoid(x_list[i - 1]))) + "\"; -- " + str(
+                int(256 * _sigmoid(x_list[i - 1]))))
     lines.append("end if;")
     # build the string block and add new line + 2 tabs
     string = ""
@@ -104,3 +102,34 @@ def get_path_file(folder_name: str, file_name: str) -> str:
     base_path = path.dirname(__file__)
     path_file = path.abspath(path.join(base_path, "..", folder_name, file_name))
     return path_file
+
+
+def tanh_process(x_list):
+    def _bindigits(n, bits):
+        s = bin(n & int("1" * bits, 2))[2:]
+        return ("{0:0>%s}" % bits).format(s)
+
+    lines = []
+
+    frac_bits = 8
+    one = 2 ** frac_bits
+
+    for i in range(len(x_list)):
+        if i == 0:
+            lines.append("if int_x<" + str(int(x_list[0] * one)) + " then")
+            lines.append("\ty <= \"" + _bindigits(-1 * one, 16) + "\"; -- " + str(-1 * one))
+        elif i == (len(x_list) - 1):
+            lines.append("else")
+            lines.append("\ty <= \"" + '{0:016b}'.format(one) + "\"; -- " + str(one))
+        else:
+            lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
+
+            lines.append("\ty <= \"" + _bindigits(int(256 * math.tanh(x_list[i - 1])), 16) + "\"; -- " + str(
+                int(256 * math.tanh(x_list[i - 1]))))
+
+    lines.append("end if;")
+    # build the string block and add new line + 2 tabs
+    string = ""
+    for line in lines:
+        string = string + line + "\n" + "\t" + "\t"
+    return string
