@@ -12,8 +12,8 @@ from tensor_test_case import TensorTestCase
 class OnnxExportTest(TensorTestCase):
     """
     TODO:
-      - get rid of the warnings: The shape inference of elasticai.creator::Wrapper type is missing, so it may result in wrong
-        shape inference for the exported graph. Please consider adding it in symbolic function.
+      - get rid of the warnings: The shape inference of elasticai.creator::Wrapper type is missing, so it may result in
+        wrong shape inference for the exported graph. Please consider adding it in symbolic function.
     """
 
     def test_can_export_and_load(self):
@@ -74,7 +74,9 @@ opset_import {
         model = torch.nn.Sigmoid()
         input_shape = [3, 3]
         model = ModuleWrapper(tag(model, input_shape=input_shape))
-        expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__, input_shape="""      ints: 3
+        expected = self.get_string_representation_with_tag(
+            operation_name=type(model.module).__name__,
+            input_shape="""      ints: 3
       ints: 3
       type: INTS""")
 
