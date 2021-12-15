@@ -2,11 +2,13 @@
 
 Design, train and compile neural networks optimized specifically for FPGAs.
 Obtaining a final model is typically a three stage process.
-* design and train it using the layers provided in the `elasticai.creator.qtorch` package.
+* design and train it using the layers provided in the `elasticai.creator` package.
 * translate the model to a target representation, e.g. VHDL
 * compile the intermediate representation with a third party tool, e.g. Xilinx Vivado (TM)
 
 This version currently only supports [Brevitas](https://github.com/Xilinx/brevitas) as a target representation.
+
+The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial.
 
 
 ## Table of contents
