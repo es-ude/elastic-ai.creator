@@ -6,8 +6,10 @@ import torch
 
 from elasticai.creator.onnx import ModuleWrapper
 from elasticai.creator.tags_utils import tag
+from tensor_test_case import TensorTestCase
 
-class OnnxExportTest(unittest.TestCase):
+
+class OnnxExportTest(TensorTestCase):
     """
     TODO:
       - get rid of the warnings: The shape inference of elasticai.creator::Wrapper type is missing, so it may result in wrong
@@ -24,67 +26,64 @@ class OnnxExportTest(unittest.TestCase):
             torch.onnx.export(module, torch.ones(1, ), buffer)
             buffer.seek(0)
             model = onnx.load(buffer)
+
         self.assertEqual(expected, "{}".format(model))
 
-    @staticmethod
-    def get_simple_string_representation(operation_name, domain) -> str:
+    @classmethod
+    def get_simple_string_representation(cls, operation_name, domain) -> str:
         template = """ir_version: 7
 producer_name: "pytorch"
 producer_version: "1.10"
-graph {{
-  node {{
+graph {
+  node {
     output: "1"
     name: "Wrapper_0"
     op_type: "Wrapper"
-    attribute {{
-      name: "operation_name"
+"""
+        attributes = cls.build_attributes("""name: "operation_name"
       s: "{operation_name}"
-      type: STRING
-    }}
-    domain: "elasticai.creator"
-  }}
+      type: STRING""".format(operation_name=operation_name))
+        template = template + attributes + """    domain: "elasticai.creator"
+  }
   name: "torch-jit-export"
-  output {{
+  output {
     name: "1"
-    type {{
-      tensor_type {{
+    type {
+      tensor_type {
         elem_type: 1
-        shape {{
-          dim {{
+        shape {
+          dim {
             dim_param: "Wrapper1_dim_0"
-          }}
-        }}
-      }}
-    }}
-  }}
-}}
-opset_import {{
+          }
+        }
+      }
+    }
+  }
+}
+opset_import {
   version: 9
-}}
-opset_import {{
+}
+opset_import {
   domain: "elasticai.creator"
   version: 1
-}}
+}
 """
-        template = template.format(operation_name=operation_name)
         return template
-    
+
     def test_with_tag_int(self):
         model = torch.nn.Sigmoid()
-        input_shape = [3,3]
-        model = ModuleWrapper(tag(model,input_shape=input_shape))
-        expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__,input_shape="""      ints: 3
+        input_shape = [3, 3]
+        model = ModuleWrapper(tag(model, input_shape=input_shape))
+        expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__, input_shape="""      ints: 3
       ints: 3
       type: INTS""")
 
         self.check_stringified_onnx_model(expected_string=expected, model=model)
 
-
-
     def test_with_tag_float(self):
         model = torch.nn.Sigmoid()
         input_shape = [3.5, 3.5]
-        model = ModuleWrapper(tag(model,input_shape=input_shape))
+        model = ModuleWrapper(tag(model, input_shape=input_shape))
         expected = self.get_string_representation_with_tag(operation_name="Sigmoid",
                                                            input_shape="""      floats: 3.5
       floats: 3.5
@@ -97,7 +96,7 @@ opset_import {{
         input_shape = torch.tensor([1])
         model = ModuleWrapper(tag(model, input_shape=input_shape))
         expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__,
-                                                            input_shape="""      t {
+                                                           input_shape="""      t {
         dims: 1
         data_type: 7
         raw_data: "\\001\\000\\000\\000\\000\\000\\000\\000"
@@ -105,13 +104,13 @@ opset_import {{
       type: TENSOR""")
 
         self.check_stringified_onnx_model(expected_string=expected, model=model)
-    
+
     def test_with_tag_String(self):
         model = torch.nn.Sigmoid()
         input_shape = "abc"
         model = ModuleWrapper(tag(model, input_shape=input_shape))
         expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__,
-                                                            input_shape="""      s: "abc"
+                                                           input_shape="""      s: "abc"
       type: STRING""")
 
         self.check_stringified_onnx_model(expected_string=expected, model=model)
@@ -170,14 +169,21 @@ opset_import {{
         template = template.format(operation_name=operation_name, input_shape=input_shape)
         return template
 
+    @staticmethod
+    def build_attributes(*args: str) -> str:
+        attribute_string = ""
+        for attribute in args:
+            attribute_string += ('    attribute {{\n      {attribute}\n    }}\n'.format(attribute=attribute))
+        return attribute_string
 
     def test_wrapper_transparent(self):
         module = torch.nn.Sigmoid()
         module = ModuleWrapper(module)
-        input = torch.rand([2,2])
-        expected =  module.module(input)
+        input = torch.rand([2, 2])
+        expected = module.module(input)
         actual = module(input)
-        self.assertTrue(torch.all(torch.eq(expected, actual)))
+        self.assertTensorEquals(expected, actual)
+
 
 if __name__ == '__main__':
     unittest.main()
