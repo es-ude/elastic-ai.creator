@@ -5,11 +5,11 @@ use ieee.numeric_std.all;               -- for type conversions
 entity sigmoid is
     generic (
             DATA_WIDTH: integer := 16;
-            FRAC_WIDTH: integer := 8;
+            FRAC_WIDTH: integer := 8
     );
     port (
-     x: in singed(DATA_WIDTH-1 downto 0)
-     y: out singed(DATA_WIDTH-1 downto 0)
+     x : in signed(DATA_WIDTH-1 downto 0);
+     y : out signed(DATA_WIDTH-1 downto 0)
      );
 end sigmoid;
 
@@ -157,5 +157,5 @@ begin
 		
     end process;                
     
-end sigmoid_rtl ; -- sigmoid_rtl
+end sigmoid_rtl;
     

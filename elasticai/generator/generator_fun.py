@@ -19,11 +19,11 @@ def write_entity(entity_name, data_width, frac_width):
     return """entity {entity_name} is
     generic (
             DATA_WIDTH: integer := {data_width};
-            FRAC_WIDTH: integer := {frac_width};
+            FRAC_WIDTH: integer := {frac_width}
     );
     port (
-     x: in singed(DATA_WIDTH-1 downto 0)
-     y: out singed(DATA_WIDTH-1 downto 0)
+     x : in signed(DATA_WIDTH-1 downto 0);
+     y : out signed(DATA_WIDTH-1 downto 0)
      );
 end {entity_name};
 \n""".format(entity_name=entity_name, data_width=data_width, frac_width=frac_width)
@@ -32,6 +32,7 @@ end {entity_name};
 def write_architecture_header(architecture_name, component_name):
     return """architecture {architecture_name} of {component_name} is
 \n""".format(architecture_name=architecture_name, component_name=component_name)
+
 
 #  FIXME : maybe I need to change the def !!
 def write_component(data_width, frac_width, variables_dict):
@@ -52,7 +53,7 @@ def write_component(data_width, frac_width, variables_dict):
 
 
 def write_architecture_end(architecture_name):
-    return """end {architecture_name} ; -- {architecture_name}
+    return """end {architecture_name};
     """.format(architecture_name=architecture_name)
 
 

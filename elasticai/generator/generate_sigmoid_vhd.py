@@ -1,6 +1,6 @@
-import math
-import numpy as np
-from generator_fun import *
+from generator_fun import \
+    get_path_file, write_libraries, write_entity,\
+    write_architecture_header, write_process, write_architecture_end
 
 component_name = "sigmoid"
 file_name = component_name + ".vhd"
