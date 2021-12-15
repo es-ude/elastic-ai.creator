@@ -11,6 +11,9 @@ from tensor_test_case import TensorTestCase
 
 class OnnxExportTest(TensorTestCase):
     """
+    For documentation of the model returned by the onnx load function refer to
+    https://github.com/onnx/onnx/blob/master/docs/IR.md
+
     TODO:
       - get rid of the warnings: The shape inference of elasticai.creator::Wrapper type is missing, so it may result in
         wrong shape inference for the exported graph. Please consider adding it in symbolic function.
