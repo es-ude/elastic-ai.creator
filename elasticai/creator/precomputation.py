@@ -1,12 +1,15 @@
+import json
 from typing import Union, Set, Callable
 
 import numpy as np
+import torch
 from torch import Tensor
 from torch.nn import Module
 
 from elasticai.creator.tags_utils import has_tag, get_tags, tag
 
 _precomputable_tag = 'precomputable'
+
 
 class Precomputation:
     """
@@ -29,19 +32,18 @@ class Precomputation:
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]
-        input_domain = info_for_precomputation['input_generator'](info_for_precomputation['input_shape'])
+        input_domain = info_for_precomputation['input_generator']
         return Precomputation(module=module,
                               input_domain=input_domain)
 
     def __call__(self, *args, **kwargs) -> None:
         """Precompute the input output pairs for the block handed during construction of the object.
 
-        Be aware that this sets the corresponding submodule/block to eval mode. To continue training be sure to set
-        it back to training mode again.
+        IMPORTANT: We assume the model is in eval mode
         """
-        self._evaluate_input_domain_if_necessary()
-        self.module.eval()
-        self.output = self.module(self.input_domain)
+        with torch.no_grad():
+            self._evaluate_input_domain_if_necessary()
+            self.output = self.module(self.input_domain)
 
     def __getitem__(self, item) -> Tensor:
         if item == 0:
@@ -51,16 +53,31 @@ class Precomputation:
         else:
             raise IndexError
 
+    def dump_to(self, f):
+        description = ""
+        description += self.module.extra_repr()
+        if description == "":
+            description = []
+            for name, child in self.module.named_children():
+                description.append(name + " " + type(child).__name__)
+        json.dump({
+            'description': description,
+            'shape': get_tags(self.module)['precomputable']['input_shape'],
+            'x': self.input_domain.numpy().tolist(),
+            'y': self.input_domain.numpy().tolist()
+        },
+            f,
+        )
+
 
 def get_precomputations_from_direct_children(module):
     def tag_filter(child):
-        return _precomputable_tag in child.elasticai_tags()
+        return _precomputable_tag in get_tags(child)
 
     submodules = tuple(module.children())
     filtered_submodules = filter(tag_filter, submodules)
     yield from (Precomputation.from_precomputable_tagged(submodule)
                 for submodule in filtered_submodules)
-
 
 
 def precomputable(module: Module,

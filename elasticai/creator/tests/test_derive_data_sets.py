@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_equal as assertNPArrayEqual
 import torch
-from elasticai.creator.derive_data_sets import create_input_data, find_unique_elements, create_io_table, \
+from elasticai.creator.input_domains import create_input_data, find_unique_elements, create_io_table, \
     get_cartesian_product_from_items, construct_domain_from_items
 
 

@@ -3,6 +3,7 @@ import itertools as ite
 from typing import List, Dict, Union, Iterable
 
 import numpy as np
+import torch
 from torch import Tensor
 from torch.nn import Module
 
@@ -32,7 +33,7 @@ def get_cartesian_product_from_items(length: int, items: Iterable, dtype='float1
     return np.array(tuple(itertools.product(items, repeat=length)), dtype=dtype)
 
 
-def construct_domain_from_items(shape: tuple[int, ...], items: Iterable) -> np.ndarray:
+def construct_domain_from_items(shape: tuple[int, ...], items: Iterable, dtype='float16') -> np.ndarray:
     """Build the numpy array containing all combinations that can be built from `items` resulting in the desired `shape`.
 
     `items` can either be a flat iterable of scalar values or already structure that is convertible to a nested numpy array.
@@ -51,7 +52,7 @@ def construct_domain_from_items(shape: tuple[int, ...], items: Iterable) -> np.n
         provided_shape=result.shape[1:]
     )]
     for size in shape_we_need_to_build:
-        result = get_cartesian_product_from_items(length=size, items=result)
+        result = get_cartesian_product_from_items(length=size, items=result, dtype=dtype)
     return result
 
 
@@ -124,3 +125,18 @@ def _calculate_the_rank_index_that_shape_sizes_match_up_to(requested_shape, prov
     if not all(equalities):
         raise ValueError
     return len(requested_shape) - len(rank_size_pairs)
+
+
+def create_input_for_1d_conv(shape, items):
+    domain: torch.Tensor = torch.as_tensor(construct_domain_from_items(shape=shape, items=items, dtype='float32'))
+    return domain
+
+
+def create_depthwise_input_for_1d_conv(shape, items):
+    kernel_size = shape[1]
+    channels = shape[0]
+    domain: torch.Tensor = torch.as_tensor(
+        construct_domain_from_items(shape=(kernel_size,), items=items, dtype='float32'))
+    domain = domain.reshape([-1, 1, kernel_size])
+    domain = domain.repeat_interleave(channels, dim=1)
+    return domain
