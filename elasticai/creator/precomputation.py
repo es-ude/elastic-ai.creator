@@ -8,21 +8,14 @@ from elasticai.creator.tags_utils import has_tag, get_tags, tag
 
 _precomputable_tag = 'precomputable'
 
-WindowLength1D = int
-WindowWidth = int
-WindowHeight = int
-InputChannels = int
-BatchSize = int
-Shape = tuple[int]
-InputShape1D = tuple[InputChannels, WindowLength1D]
-InputShape2D = tuple[InputChannels, WindowHeight, WindowWidth]
-NestedTuple = Union[tuple['float', ...], tuple['NestedTuple', ...]]
-CoefficientSet = Union[Tensor, Set[float]]
-
-
 class Precomputation:
-    def __init__(self, module: Module,
-                 input_domain: Union[Callable[[], Tensor], Tensor]) -> None:
+    """
+    The Precomputation class provides a higher level api for precomputing the results of arbitrary pytorch modules.
+    It is not a pytorch module itself nor intended to be used like one.
+    """
+
+    def __init__(self, module: Module, input_domain: Union[Callable[[], Tensor], Tensor]) -> None:
+        super().__init__()
         self.module = module
         self.input_domain = input_domain
         self.output = None
@@ -40,7 +33,7 @@ class Precomputation:
         return Precomputation(module=module,
                               input_domain=input_domain)
 
-    def __call__(self) -> None:
+    def __call__(self, *args, **kwargs) -> None:
         """Precompute the input output pairs for the block handed during construction of the object.
 
         Be aware that this sets the corresponding submodule/block to eval mode. To continue training be sure to set
@@ -67,6 +60,7 @@ def get_precomputations_from_direct_children(module):
     filtered_submodules = filter(tag_filter, submodules)
     yield from (Precomputation.from_precomputable_tagged(submodule)
                 for submodule in filtered_submodules)
+
 
 
 def precomputable(module: Module,
