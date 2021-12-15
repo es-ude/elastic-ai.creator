@@ -18,14 +18,20 @@ def _preprocess_tags(tags: dict):
             processed_dic[key + "_f"] = value
         elif isinstance(to_check, str):
             processed_dic[key + "_s"] = value
+        elif isinstance(to_check, torch.Tensor):
+            processed_dic[key + "_t"] = value
         else:
             unprocessed_vals.append(value)
     return processed_dic, unprocessed_vals
 
 class AutogradWrapper(torch.autograd.Function):
+    """
+    Adds symbolic function so the tags can be exported. Is transparent
+    
+    """
     @staticmethod
     def forward(ctx, input, callable):
-        return input
+        return callable(input)
 
     @staticmethod
     def symbolic(g, x, callable):
@@ -37,6 +43,10 @@ class AutogradWrapper(torch.autograd.Function):
     
 
 class ModuleWrapper(torch.nn.Module):
+    """
+    Wraps the module so that it applies an autograd
+    
+    """
     def __init__(self, module, autograd_fn=AutogradWrapper, ):
         super().__init__()
         self.autograd_fn = autograd_fn
