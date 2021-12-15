@@ -69,67 +69,52 @@ opset_import {{
         template = template.format(operation_name=operation_name)
         return template
     
-    def get_buffer__from_model(self,module):
-        buffer = BytesIO()
-        torch.onnx.export(module, torch.ones(1, ), buffer)
-        buffer.seek(0)
-        model = onnx.load(buffer)
-        return model
-    
     def test_with_tag_int(self):
-        module = torch.nn.Sigmoid()
+        model = torch.nn.Sigmoid()
         input_shape = [3,3]
-        module = ModuleWrapper(tag(module,input_shape=input_shape))
-        expected = self.get_string_representation_with_tag(operation_name=type(module.module).__name__, domain="custom_ops",input_shape="""      ints: 3
-      ints: 3
-      type: INTS""")
-        
-        model = self.get_buffer__from_model(module)
-        self.assertEqual(expected, "{}".format(model))
-
-    def test_with_tag_int(self):
-        module = torch.nn.Sigmoid()
-        input_shape = [3, 3]
-        module = ModuleWrapper(tag(module, input_shape=input_shape))
-        expected = self.get_string_representation_with_tag(operation_name=type(module.module).__name__,
-                                                           input_shape="""      ints: 3
+        model = ModuleWrapper(tag(model,input_shape=input_shape))
+        expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__,input_shape="""      ints: 3
       ints: 3
       type: INTS""")
 
-        with BytesIO() as buffer:
-            torch.onnx.export(module, torch.ones(1, ), buffer)
-            buffer.seek(0)
-            model = onnx.load(buffer)
-        self.assertEqual(expected, "{}".format(model))
+        self.check_stringified_onnx_model(expected_string=expected, model=model)
+
 
 
     def test_with_tag_float(self):
         model = torch.nn.Sigmoid()
         input_shape = [3.5, 3.5]
-        model = ModuleWrapper(tag(model, input_shape=input_shape))
+        model = ModuleWrapper(tag(model,input_shape=input_shape))
         expected = self.get_string_representation_with_tag(operation_name="Sigmoid",
                                                            input_shape="""      floats: 3.5
       floats: 3.5
       type: FLOATS""")
 
-        model = self.get_buffer__from_model(model)
-        self.assertEqual(expected, "{}".format(model))
         self.check_stringified_onnx_model(expected_string=expected, model=model)
 
     def test_with_tag_Tensor(self):
-        module = torch.nn.Sigmoid()
+        model = torch.nn.Sigmoid()
         input_shape = torch.tensor([1])
-        module = ModuleWrapper(tag(module, input_shape=input_shape))
-        expected = self.get_string_representation_with_tag(operation_name=type(module.module).__name__,
-                                                           domain="custom_ops", input_shape="""      t {
+        model = ModuleWrapper(tag(model, input_shape=input_shape))
+        expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__,
+                                                            input_shape="""      t {
         dims: 1
         data_type: 7
         raw_data: "\\001\\000\\000\\000\\000\\000\\000\\000"
       }
       type: TENSOR""")
 
-        model = self.get_buffer__from_model(module)
-        self.assertEqual(expected, "{}".format(model))
+        self.check_stringified_onnx_model(expected_string=expected, model=model)
+    
+    def test_with_tag_String(self):
+        model = torch.nn.Sigmoid()
+        input_shape = "abc"
+        model = ModuleWrapper(tag(model, input_shape=input_shape))
+        expected = self.get_string_representation_with_tag(operation_name=type(model.module).__name__,
+                                                            input_shape="""      s: "abc"
+      type: STRING""")
+
+        self.check_stringified_onnx_model(expected_string=expected, model=model)
 
     def check_stringified_onnx_model(self, expected_string, model):
         with BytesIO() as buffer:
