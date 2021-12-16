@@ -1,14 +1,15 @@
 # TODO: add more possible test process cases
+from typing import List, Any
 
-def write_function_test_process(inputs, outputs):
+
+def write_function_test_process(inputs: List[Any], outputs: List[Any]) -> str:
     """
     writes test process cases for a function like sigmoid or tanh
     Args:
-        inputs ():
-        outputs ():
-
+        inputs (List[Any]): list of the inputs
+        outputs (List[Outputs]): list of outputs
     Returns:
-
+        string of the testcases of each input and output pair
     """
     test = ""
     if len(inputs) == len(outputs):

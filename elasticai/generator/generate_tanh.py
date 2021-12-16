@@ -4,7 +4,14 @@ from elasticai.generator.generate_testbench import write_libraries, write_entity
 from elasticai.generator.generate_specific_testprocess import write_function_test_process
 
 
-def main(path_to_testbench='../testbench/'):
+def main(path_to_testbench: str = '../testbench/'):
+    """
+    generates the vhd testbench file in the testbench folder for the tanh function
+    Args:
+        path_to_testbench: path where testbench is located, default in ../testbench/
+    Returns:
+        None
+    """
     component_name = "tanh"
     test_bench_file_name = component_name + "_tb.vhd"
     architecture_name = "arch"
