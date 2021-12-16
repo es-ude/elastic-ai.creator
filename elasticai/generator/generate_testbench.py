@@ -47,14 +47,14 @@ def write_architecture_header(architecture_name: Any, component_name: Any) -> st
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def write_component(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict[Any]) -> str:
+def write_component(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict) -> str:
     """
     returns the component definition string
     Args:
         component_name (Any): name of the component
         data_width (Any): data width
         frac_width (Any): frac width
-        variables_dict (Dict[Any]): dictionary with all variables and the declaration if they are an input or output variable
+        variables_dict (Dict): dictionary with all variables and the declaration if they are an input or output variable
     Returns:
         string of the component definition
     """
@@ -73,11 +73,11 @@ def write_component(component_name: Any, data_width: Any, frac_width: Any, varia
 \n""".format(component_name=component_name)
 
 
-def write_signal_definitions(signal_dict: Dict[Any]) -> str:
+def write_signal_definitions(signal_dict: Dict) -> str:
     """
     returns signal definitions string
     Args:
-        signal_dict (Dict[Any]): dictionary with the name of each signal and its definition
+        signal_dict (Dict): dictionary with the name of each signal and its definition
     Returns:
         string of the signal definitions
     """
@@ -107,12 +107,12 @@ def write_clock_process() -> str:
 \n"""
 
 
-def write_uut(component_name: Any, mapping_dict: Dict[Any]) -> str:
+def write_uut(component_name: Any, mapping_dict: Dict) -> str:
     """
     writes the unit under test definition string
     Args:
         component_name (Any): name of the component
-        mapping_dict (Dict[Any]): dictionary with the mapping of the variables to the signals
+        mapping_dict (Dict): dictionary with the mapping of the variables to the signals
     Returns:
         string of the unit under test definition
     """
