@@ -1,7 +1,7 @@
 from elasticai.generator.generate_testbench import write_libraries, write_entity, write_architecture_header, \
     write_component, write_signal_definitions, write_clock_process, write_uut, write_test_process_header, \
     write_test_process_end, write_architecture_end
-from elasticai.generator.generate_specific_testprocess import write_function_test_process
+from elasticai.generator.generate_specific_testprocess import write_function_test_process_for_one_input_results_in_one_output
 
 
 def main(path_to_testbench: str = '../testbench/') -> None:
@@ -39,7 +39,7 @@ def main(path_to_testbench: str = '../testbench/') -> None:
         f.write(write_clock_process())
         f.write(write_uut(component_name=component_name, mapping_dict={"x": "test_input", "y": "test_output"}))
         f.write(write_test_process_header())
-        f.write(write_function_test_process(inputs, outputs))
+        f.write(write_function_test_process_for_one_input_results_in_one_output(inputs=inputs, outputs=outputs, input_name="test_input", output_name="test_output"))
         f.write(write_test_process_end())
         f.write(write_architecture_end(architecture_name=architecture_name))
 

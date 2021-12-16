@@ -1,5 +1,5 @@
 import unittest
-from elasticai.generator.generate_specific_testprocess import write_function_test_process
+from elasticai.generator.generate_specific_testprocess import write_function_test_process_for_one_input_results_in_one_output
 
 
 class GenerateSpecificTestProcessTest(unittest.TestCase):
@@ -20,9 +20,9 @@ class GenerateSpecificTestProcessTest(unittest.TestCase):
             "        report \"The value of 'test_output' is \" & integer'image(to_integer(unsigned(test_output)));",
             "        assert test_output=28 report \"The test case -500 fail\" severity failure;",
         ]
-        test_process_string = write_function_test_process(inputs=[-1281, -1000, -500], outputs=[0, 4, 28])
+        test_process_string = write_function_test_process_for_one_input_results_in_one_output(inputs=[-1281, -1000, -500], outputs=[0, 4, 28], input_name="test_input", output_name="test_output")
         for i in range(len(expected_test_process_lines)):
             self.assertEqual(expected_test_process_lines[i], test_process_string.splitlines()[i])
 
     def test_generate_test_process_raises_error_when_called_with_different_inputs_and_outputs_lenghts(self) -> None:
-        self.assertRaises(TypeError, write_function_test_process, [1], [])
+        self.assertRaises(TypeError, write_function_test_process_for_one_input_results_in_one_output, [1], [])
