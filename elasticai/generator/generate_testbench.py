@@ -4,7 +4,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 """
     if math_lib:
-        lib_string = lib_string + "use ieee.math_real.all;\n"
+        lib_string = lib_string + "use ieee.math_real.all;                 -- for the ceiling and log constant calculation function\n\n"
     else:
         lib_string = lib_string + "\n"
     return lib_string
@@ -22,20 +22,20 @@ def write_architecture_header(architecture_name, component_name):
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def write_component(data_width, frac_width, variables_dict):
+def write_component(component_name, data_width, frac_width, variables_dict):
     variables_list_str = ""
     for variable in variables_dict:
         variables_list_str = variables_list_str + "            {variable} : {io} signed(DATA_WIDTH-1 downto 0);\n".format(variable=variable, io=variables_dict[variable])
     # remove last linebreak and semicolon
-    return """    component sigmoid is
+    return """    component {component_name} is
         generic (
                 DATA_WIDTH : integer := {data_width};
                 FRAC_WIDTH : integer := {frac_width}
             );
-        port (\n""".format(data_width=data_width, frac_width=frac_width) + variables_list_str[:-2] + """
+        port (\n""".format(component_name=component_name, data_width=data_width, frac_width=frac_width) + variables_list_str[:-2] + """
         );
-    end component;
-\n"""
+    end component {component_name};
+\n""".format(component_name=component_name)
 
 
 def write_signal_definitions(signal_dict):
@@ -60,31 +60,31 @@ def write_clock_process():
 \n"""
 
 
-def write_uut(mapping_dict):
+def write_uut(component_name, mapping_dict):
     mapping_dict_str = ""
     for mapping in mapping_dict:
         mapping_dict_str = mapping_dict_str + "    " + mapping + " => " + mapping_dict[mapping] + ",\n"
     # remove last comma and linebreak and add linebreak again
-    return """    uut: sigmoid
-    port map (\n""" + mapping_dict_str[:-2] + "\n    );\n\n"
+    return """    uut: {component_name}
+    port map (\n""".format(component_name=component_name) + mapping_dict_str[:-2] + "\n    );\n\n"
 
 
 def write_test_process_header():
-    return """test_process: process is
+    return """    test_process: process is
     begin
         Report "======Simulation start======" severity Note;
 \n"""
 
 
 def write_test_process_end():
-    return """        
+    return """
         -- if there is no error message, that means all test case are passed.
         report "======Simulation Success======" severity Note;
         report "Please check the output message." severity Note;
-        
+
         -- wait forever
         wait;
-        
+
     end process; -- test_process
 \n"""
 

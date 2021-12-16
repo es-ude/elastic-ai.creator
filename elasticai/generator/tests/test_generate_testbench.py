@@ -20,7 +20,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "library ieee;",
             "use ieee.std_logic_1164.all;",
             "use ieee.numeric_std.all;               -- for type conversions",
-            "use ieee.math_real.all;"
+            "use ieee.math_real.all;                 -- for the ceiling and log constant calculation function"
         ]
         lib_string = write_libraries(math_lib=True)
         for i in range(0, 4):
@@ -52,9 +52,9 @@ class GenerateTestBenchTest(unittest.TestCase):
             "            x : in signed(DATA_WIDTH-1 downto 0);",
             "            y : out signed(DATA_WIDTH-1 downto 0)",
             "        );",
-            "    end component;"
+            "    end component sigmoid;"
         ]
-        component_string = write_component(data_width=16, frac_width=8, variables_dict={"x": "in", "y": "out"})
+        component_string = write_component(component_name="sigmoid", data_width=16, frac_width=8, variables_dict={"x": "in", "y": "out"})
         for i in range(len(expected_component_lines)):
             self.assertEqual(expected_component_lines[i], component_string.splitlines()[i])
 
@@ -99,13 +99,13 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    y => test_output",
             "    );"
         ]
-        utt_string = write_uut(mapping_dict={"x": "test_input", "y": "test_output"})
+        utt_string = write_uut(component_name="sigmoid", mapping_dict={"x": "test_input", "y": "test_output"})
         for i in range(len(expected_uut_lines)):
             self.assertEqual(expected_uut_lines[i], utt_string.splitlines()[i])
 
     def test_generate_test_process_header(self) -> None:
         expected_test_process_header_lines = [
-            "test_process: process is",
+            "    test_process: process is",
             "    begin",
             "        Report \"======Simulation start======\" severity Note;",
         ]
@@ -115,14 +115,14 @@ class GenerateTestBenchTest(unittest.TestCase):
 
     def test_generate_test_process_end(self) -> None:
         expected_test_process_end_lines = [
-            "        ",
+            "",
             "        -- if there is no error message, that means all test case are passed.",
             "        report \"======Simulation Success======\" severity Note;",
             "        report \"Please check the output message.\" severity Note;",
-            "        ",
+            "",
             "        -- wait forever",
             "        wait;",
-            "        ",
+            "",
             "    end process; -- test_process",
         ]
         test_process_end_string = write_test_process_end()

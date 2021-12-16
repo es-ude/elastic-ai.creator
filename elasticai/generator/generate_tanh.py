@@ -5,22 +5,22 @@ from elasticai.generator.generate_specific_testprocess import write_function_tes
 
 
 def main(path_to_testbench='../testbench/'):
-    component_name = "sigmoid"
+    component_name = "tanh"
     test_bench_file_name = component_name + "_tb.vhd"
-    architecture_name = "behav"
+    architecture_name = "arch"
 
     data_width = 16
     frac_width = 8
 
-    # x, y = sigmoid(data_width, frac_width)
+    # x, y = tanh(data_width, frac_width)
     # Note, the two array below, is generated based on data_width and frac_width
     # excitation signals, as test inputs signal
-    inputs = [-1281, -1000, -500]
+    inputs = [-1281, -1000, -500, 0, 500, 800, 1024]
     # expected signal, as test reference output signal
-    outputs = [0, 4, 28]
+    outputs = ["\"1111111100000000\"", -255, -246, 0, 245, 254, 255]
 
     with open(path_to_testbench + test_bench_file_name, 'w') as f:
-        f.write(write_libraries())
+        f.write(write_libraries(math_lib=True))
         f.write(write_entity(entity_name=component_name))
         f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
         f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width, variables_dict={"x": "in", "y": "out"}))
