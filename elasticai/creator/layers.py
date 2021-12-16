@@ -34,6 +34,8 @@ class Quantize(Protocol):
 class Binarize(torch.nn.Module):
     """
     Implementation of binarizer with possible bits [-1,1]    """
+    def __init__(self):
+        super().__init__()
 
     def forward(self, x):
         return BinarizeFn.apply(x)
