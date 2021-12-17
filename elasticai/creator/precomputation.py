@@ -80,6 +80,15 @@ def get_precomputations_from_direct_children(module):
                 for submodule in filtered_submodules)
 
 
+def get_precomputations_recursively(module):
+    def tag_filter(submodule):
+        return _precomputable_tag in get_tags(submodule)
+    submodules = tuple(module.modules())
+    filtered_submodules = filter(tag_filter, submodules)
+    yield from (Precomputation.from_precomputable_tagged(submodule)
+                for submodule in filtered_submodules)
+
+
 def precomputable(module: Module,
                   input_shape: tuple[int, ...],
                   input_generator: Callable[[tuple[int, ...]], np.ndarray]) -> Module:
