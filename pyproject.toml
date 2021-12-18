@@ -10,8 +10,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.10"
-torch = "^1.9.1"
+python = "~3.9"
+torch = "^1.10.0"
 
 [tool.poetry.dev-dependencies]
 python-language-server = "^0.36.2"
