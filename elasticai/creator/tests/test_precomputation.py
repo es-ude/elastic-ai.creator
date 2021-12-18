@@ -25,35 +25,42 @@ from elasticai.creator.precomputation import Precomputation, JSONEncoder, Module
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
+class DummyModule:
+    def __init__(self):
+        self.call = lambda x: x
+
+    @property
+    def training(self) -> bool:
+        return False
+
+    # noinspection PyMethodMayBeStatic
+    def extra_repr(self) -> str:
+        return ""
+
+    # noinspection PyMethodMayBeStatic
+    def named_children(self) -> Iterable[tuple[str, 'ModuleProto']]:
+        yield from ()
+
+    def __call__(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
+        return self.call(x)
+
+
 class PrecomputationTest(TensorTestCase):
-    def test_precomputing_a_function(self):
-        def function(x):
-            return "{} more".format(x)
 
-        def noop_function():
-            pass
+    def test_precompute(self):
+        module = DummyModule()
 
-        function.eval = noop_function
-        precompute = Precomputation(module=function, input_domain="something")
+        def call(x: torch.Tensor) -> torch.Tensor:
+            return x * 2
+
+        module.call = call
+        precompute = Precomputation(module=module, input_domain=torch.tensor([[1], [1]]))
         precompute()
-        self.assertEqual(("something", "something more"), tuple(precompute))
+        self.assertTensorEquals(torch.tensor([[2], [2]]), precompute.output)
 
     def test_precomputation_is_json_encodable(self):
-
-        class DummyModule(ModuleProto):
-            @property
-            def training(self) -> bool:
-                return False
-
-            def extra_repr(self) -> str:
-                return ""
-
-            def named_children(self) -> Iterable[str, 'ModuleProto']:
-                raise IndexError
-
-            def __call__(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
-                return x
-
         module = DummyModule()
-        precompute = Precomputation(module=module, input_domain=np.ndarray([[1, 1]]))
-        json_string = json.dumps(precompute, cls=JSONEncoder)
+        precompute = Precomputation(module=module, input_domain=torch.tensor([[]]))
+        actual = json.dumps(precompute, cls=JSONEncoder)
+        expected = """{"description": [], "shape": [0], "x": [[]], "y": [[]]}"""
+        self.assertEqual(expected, actual)

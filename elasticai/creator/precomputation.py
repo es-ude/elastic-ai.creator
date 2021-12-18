@@ -21,7 +21,7 @@ class ModuleProto(Protocol):
     def extra_repr(self) -> str:
         pass
 
-    def named_children(self) -> Iterable[str, 'ModuleProto']:
+    def named_children(self) -> Iterable[tuple[str, 'ModuleProto']]:
         pass
 
     def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
@@ -80,7 +80,7 @@ class Precomputation:
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(Precomputation):
+        if isinstance(o, Precomputation):
             description = ""
             description += o.module.extra_repr()
             if description == "":
@@ -89,7 +89,7 @@ class JSONEncoder(json.JSONEncoder):
                     description.append(name + " " + type(child).__name__)
             return {
                 'description': description,
-                'shape': get_tags(o.module)['precomputable']['input_shape'],
+                'shape': o.input_domain.shape[1:],
                 'x': o.input_domain.numpy().tolist(),
                 'y': o.input_domain.numpy().tolist()
             }
