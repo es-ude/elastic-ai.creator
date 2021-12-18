@@ -21,6 +21,7 @@ from elasticai.creator.tests.tensor_test_case import TensorTestCase
 from elasticai.creator.precomputation import precomputable
 import torch
 
+
 class PrecomputationTest(TensorTestCase):
     def test_precomputing_a_function(self):
         def function(x):

@@ -3,6 +3,9 @@ data
 elasticai/creator/translator/systemTests/expected_model/processed_data.pickle
 venv
 
+# python build output
+dist/
+
 # Created by .ignore support plugin (hsz.mobi)
 
 .vscode
