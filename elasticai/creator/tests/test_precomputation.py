@@ -15,11 +15,15 @@ Extra:
                      ((-1, 1), (1, 1)),
                      ((-1, 1), (-1, 1))]
 """
+import json
+from collections import Iterable
 
-from elasticai.creator.precomputation import Precomputation
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
-from elasticai.creator.precomputation import precomputable
+import numpy as np
 import torch
+
+from elasticai.creator.precomputation import Precomputation, JSONEncoder, ModuleProto
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
+
 
 class PrecomputationTest(TensorTestCase):
     def test_precomputing_a_function(self):
@@ -28,7 +32,28 @@ class PrecomputationTest(TensorTestCase):
 
         def noop_function():
             pass
+
         function.eval = noop_function
         precompute = Precomputation(module=function, input_domain="something")
         precompute()
         self.assertEqual(("something", "something more"), tuple(precompute))
+
+    def test_precomputation_is_json_encodable(self):
+
+        class DummyModule(ModuleProto):
+            @property
+            def training(self) -> bool:
+                return False
+
+            def extra_repr(self) -> str:
+                return ""
+
+            def named_children(self) -> Iterable[str, 'ModuleProto']:
+                raise IndexError
+
+            def __call__(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
+                return x
+
+        module = DummyModule()
+        precompute = Precomputation(module=module, input_domain=np.ndarray([[1, 1]]))
+        json_string = json.dumps(precompute, cls=JSONEncoder)
