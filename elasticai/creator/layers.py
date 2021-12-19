@@ -1,3 +1,4 @@
+import types
 from abc import abstractmethod
 from typing import Optional, Tuple, Callable, Protocol, List, Any
 
@@ -5,6 +6,10 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from itertools import product
+
+from torch.nn import Module
+from torch.nn.utils.parametrize import register_parametrization
+
 from elasticai.creator.functional import binarize as BinarizeFn
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
@@ -34,10 +39,12 @@ class Quantize(Protocol):
 class Binarize(torch.nn.Module):
     """
     Implementation of binarizer with possible bits [-1,1]    """
+
     def __init__(self):
         super().__init__()
 
-    def forward(self, x):
+    @staticmethod
+    def forward(x):
         return BinarizeFn.apply(x)
 
     @property
@@ -47,6 +54,10 @@ class Binarize(torch.nn.Module):
     @property
     def thresholds(self):
         return torch.Tensor([0.])
+
+    @staticmethod
+    def right_inverse(x: Tensor) -> Tensor:
+        return x
 
 
 class Ternarize(torch.nn.Module):
@@ -108,17 +119,16 @@ class ResidualQuantization(Binarize):
             out.append(out[-1] - torch.abs(factor) * bin(out[-1]))
         return bin(torch.cat(out, dim=1))
 
-
     @property
     def codomain(self):
-        return list(product([-1,1],repeat=self.num_bits))
+        return list(product([-1, 1], repeat=self.num_bits))
 
     @property
     def thresholds(self):
         threshold = [torch.Tensor([0.])]
         for factor in self.weight:
             threshold.append(threshold[-1] + torch.abs(factor))
-        
+
         return torch.flatten(torch.stack(threshold, 0))
 
 
@@ -147,6 +157,19 @@ class QuantizeTwoBit(torch.nn.Module):
     def thresholds(self):
         return torch.cat((torch.Tensor([0.]), self.factors), 0)
 
+def _init_quantizable_convolution(self, quantizer, bias, constraints):
+    if isinstance(quantizer, Module):
+        register_parametrization(self, "weight", quantizer)
+        if bias:
+            register_parametrization(self, "bias", quantizer)
+    else:
+        raise TypeError(f"Quantizer {quantizer} is not an instance of Module.")
+    self.constraints = constraints if constraints else None
+    def apply_constraint(self):
+        if self.constraints:
+            [constraint(self) for constraint in self.constraints]
+    self.apply_constraint = types.MethodType(apply_constraint, self)
+
 
 class QConv1d(torch.nn.Conv1d):
     """
@@ -160,7 +183,7 @@ class QConv1d(torch.nn.Conv1d):
                  in_channels: int,
                  out_channels: int,
                  kernel_size: Tuple[int, ...],
-                 quantizer: Quantize,
+                 quantizer: Module,
                  stride: Tuple[int, ...] = (1,),
                  padding: int = 0,
                  dilation: Tuple[int, ...] = (1,),
@@ -177,28 +200,12 @@ class QConv1d(torch.nn.Conv1d):
             dilation=dilation,
             groups=groups,
             bias=bias,
-            padding_mode=padding_mode
+            padding_mode=padding_mode,
         )
-        if callable(quantizer):
-            self.quantizer = quantizer
-        else:
-            raise TypeError(f"Quantizer {quantizer} is not callable.")
-        self.constraints = constraints if constraints else None
-
-    def forward(self, x):
-        weight = self.quantizer(self.weight)
-        bias = self.quantizer(self.bias) if self.bias is not None else self.bias
-        return F.conv1d(input=x,
-                        weight=weight,
-                        bias=bias,
-                        stride=self.stride,
-                        padding=self.padding,
-                        dilation=self.dilation,
-                        groups=self.groups)
-
-    def apply_constraint(self):
-        if self.constraints:
-            [constraint(self) for constraint in self.constraints]
+        _init_quantizable_convolution(self,
+                                      quantizer=quantizer,
+                                      bias=bias,
+                                      constraints=constraints)
 
 
 class QConv2d(torch.nn.Conv2d):
@@ -232,26 +239,10 @@ class QConv2d(torch.nn.Conv2d):
             bias=bias,
             padding_mode=padding_mode
         )
-        if callable(quantizer):
-            self.quantizer = quantizer
-        else:
-            raise TypeError(f"Quantizer {quantizer} is not callable.")
-        self.constraints = constraints if constraints else None
-
-    def forward(self, x):
-        weight = self.quantizer(self.weight)
-        bias = self.quantizer(self.bias) if self.bias is not None else self.bias
-        return F.conv2d(input=x,
-                        weight=weight,
-                        bias=bias,
-                        stride=self.stride,
-                        padding=self.padding,
-                        dilation=self.dilation,
-                        groups=self.groups)
-
-    def apply_constraint(self):
-        if self.constraints:
-            [constraint(self) for constraint in self.constraints]
+        _init_quantizable_convolution(self,
+                                      quantizer=quantizer,
+                                      bias=bias,
+                                      constraints=constraints)
 
 
 class QLinear(torch.nn.Linear):
@@ -271,22 +262,12 @@ class QLinear(torch.nn.Linear):
         super().__init__(in_features=in_features,
                          out_features=out_features,
                          bias=bias)
-        if callable(quantizer):
-            self.quantizer = quantizer
-        else:
-            raise TypeError(f"Quantizer {quantizer} is not callable.")
-        self.constraints = constraints if constraints else None
-
-    def forward(self, x):
-        weight = self.quantizer(self.weight)
-        bias = self.quantizer(self.bias) if self.bias is not None else self.bias
-        return F.linear(input=x,
-                        weight=weight,
-                        bias=bias)
-
-    def apply_constraint(self):
-        if self.constraints:
-            [constraint(self) for constraint in self.constraints]
+        _init_quantizable_convolution(
+            self,
+            quantizer=quantizer,
+            bias=bias,
+            constraints=constraints
+        )
 
 
 class QLSTMCell(torch.nn.LSTMCell):

@@ -9,6 +9,7 @@ from torch import Tensor
 from elasticai.creator.layers import ResidualQuantization, Ternarize, \
     QuantizeTwoBit, QLinear, QConv1d, QConv2d, QLSTMCell, QLSTM, Binarize
 from elasticai.creator.constraints import WeightClipper
+from tensor_test_case import TensorTestCase
 
 
 class MockQLSTMCell:
@@ -22,7 +23,7 @@ class MockQLSTMCell:
         return hx
 
 
-class LayerTests(unittest.TestCase):
+class LayerTests(TensorTestCase):
     def test_ResidualQuantization(self):
         with self.subTest("test call with different values 1,-1,0"):
             layer = ResidualQuantization()
@@ -79,29 +80,29 @@ class LayerTests(unittest.TestCase):
     def test_Qlinear(self):
         with self.subTest("test call if binarized and has bias"):
             layer = QLinear(1, 2, Binarize())
-            layer.weight = torch.nn.Parameter(torch.Tensor([[2], [-2]]))
-            layer.bias = torch.nn.Parameter(torch.Tensor([[3, -3]]))
+            layer.weight = torch.Tensor([[2], [-2]])
+            layer.bias = torch.Tensor([[3, -3]])
             input = torch.unsqueeze(torch.Tensor([3.]), 0)
             out = layer(input)
             self.assertEqual(out.tolist(), [[4.0, -4.0]])
 
         with self.subTest("test Backward pass changes the weight gradient"):
             layer = QLinear(1, 2, Binarize())
-            layer.weight = torch.nn.Parameter(torch.Tensor([[.6], [.7]]))
-            old_grad = layer.weight.grad
-            layer.bias = torch.nn.Parameter(torch.Tensor([[3., -3.]]))
+            layer.weight = torch.Tensor([[.6], [.7]])
+            old_grad = layer.parametrizations.weight.original.grad
+            layer.bias = torch.Tensor([[3., -3.]])
             input = torch.unsqueeze(torch.Tensor([3.]), 0)
             out = layer(input)
             loss = (out - torch.Tensor([-1.])).sum()
             loss.backward()
-            new_weight_grad = layer.weight.grad
+            new_weight_grad = layer.parametrizations.weight.original.grad
             self.assertNotEqual(new_weight_grad[0], old_grad)
             self.assertNotEqual(new_weight_grad[1], old_grad)
 
         with self.subTest("test weight clipper constraint QLinear"):
             layer = QLinear(in_features=1, out_features=2, quantizer=Binarize(), constraints=[WeightClipper()])
-            layer.weight = torch.nn.Parameter(torch.Tensor([[-2], [2]]))
-            layer.bias = torch.nn.Parameter(torch.Tensor([[2, 2]]))
+            layer.weight = torch.Tensor([[-2], [2]])
+            layer.bias = torch.Tensor([[2, 2]])
             input = torch.unsqueeze(torch.Tensor([3.]), 0)
             # clip to [-1, 1]
             with torch.no_grad():
@@ -115,30 +116,30 @@ class LayerTests(unittest.TestCase):
 
     def test_QConv1d(self):
         with self.subTest("test call with binarizer and bias"):
-            layer = QConv1d(1, 1, 2, Binarize())
-            layer.weight = torch.nn.Parameter(torch.zeros(1, 1, 2))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
+            layer = QConv1d(1, 1, (2,), Binarize())
+            layer.weight = torch.zeros(1, 1, 2)
+            layer.bias = torch.Tensor([3.])
             input = torch.unsqueeze(torch.Tensor([[3., 2]], ), 0)
             out = layer(input)
-            self.assertEqual(out.tolist(), [[[6.0]]])
+            self.assertTensorEquals(out, torch.tensor([[[6.0]]]))
 
         with self.subTest("test Backward pass changes the weight gradient"):
             layer = QConv1d(1, 1, 2, Binarize())
-            layer.weight = torch.nn.Parameter(torch.zeros(1, 1, 2))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
-            old_grad = layer.weight.grad
+            layer.weight = torch.zeros(1, 1, 2)
+            layer.bias = torch.Tensor([3.])
+            old_grad = layer.parametrizations.weight.original.grad
             input = torch.unsqueeze(torch.Tensor([[3., 2]], ), 0)
             out = layer(input)
             loss = (out - torch.Tensor([-1.])).sum()
             loss.backward()
-            new_weight_grad = layer.weight.grad
+            new_weight_grad = layer.parametrizations.weight.original.grad
             self.assertNotEqual(new_weight_grad[0], old_grad)
 
         with self.subTest("test constraint QConv1d"):
             layer = QConv1d(in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize(),
                             constraints=[WeightClipper()])
-            layer.weight = torch.nn.Parameter(torch.tensor([[[-2., 2.]]]))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
+            layer.weight = torch.tensor([[[-2., 2.]]])
+            layer.bias = torch.Tensor([3.])
             input = torch.unsqueeze(torch.Tensor([[3., 2.]], ), 0)
             # clip to [-1, 1]
             with torch.no_grad():
@@ -149,8 +150,8 @@ class LayerTests(unittest.TestCase):
 
         with self.subTest("test apply constraint QConv1d if constaint is none"):
             layer = QConv1d(in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize())
-            layer.weight = torch.nn.Parameter(torch.tensor([[[-2., 2.]]]))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
+            layer.weight = torch.tensor([[[-2., 2.]]])
+            layer.bias = torch.Tensor([3.])
             input = torch.unsqueeze(torch.Tensor([[3., 2.]], ), 0)
             # clip to [-1, 1]
             with torch.no_grad():
@@ -165,29 +166,29 @@ class LayerTests(unittest.TestCase):
     def test_QConv2d(self):
         with self.subTest("test call with binarization and bias"):
             layer = QConv2d(1, 1, 2, Binarize())
-            layer.weight = torch.nn.Parameter(torch.zeros(1, 1, 2, 2))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
+            layer.weight = torch.zeros(1, 1, 2, 2)
+            layer.bias = torch.Tensor([3.])
             input = torch.unsqueeze(torch.Tensor([[[3., 2.], [3., 2.]]], ), 0)
             out = layer(input)
             self.assertEqual(out.tolist(), [[[[11.0]]]])
 
         with self.subTest("test Backward pass, changed weights"):
             layer = QConv2d(1, 1, 2, Binarize())
-            layer.weight = torch.nn.Parameter(torch.zeros(1, 1, 2, 2))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
+            layer.weight = torch.zeros(1, 1, 2, 2)
+            layer.bias = torch.Tensor([3.])
             input = torch.unsqueeze(torch.Tensor([[[3., 2.], [3., 2.]]], ), 0)
-            old_grad = layer.weight.grad
+            old_grad = layer.parametrizations.weight.original.grad
             out = layer(input)
             loss = (out - torch.Tensor([-1.])).sum()
             loss.backward()
-            new_weight_grad = layer.weight.grad
+            new_weight_grad = layer.parametrizations.weight.original.grad
             self.assertNotEqual(new_weight_grad[0], old_grad)
 
         with self.subTest("test weight clipper constraint QConv2d"):
             layer = QConv2d(in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize(),
                             constraints=[WeightClipper()])
-            layer.weight = torch.nn.Parameter(torch.tensor([[[[-2., 2.], [0., 1.]]]]))
-            layer.bias = torch.nn.Parameter(torch.Tensor([3.]))
+            layer.weight = torch.tensor([[[[-2., 2.], [0., 1.]]]])
+            layer.bias = torch.Tensor([3.])
             input = torch.unsqueeze(torch.Tensor([[[3., 2.], [3., 2.]]], ), 0)
             # clip to [-1, 1]
             with torch.no_grad():
