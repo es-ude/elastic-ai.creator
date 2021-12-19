@@ -8,9 +8,9 @@ entity tanh is
             FRAC_WIDTH: integer := 8
     );
     port (
-     x : in signed(DATA_WIDTH-1 downto 0);
-     y : out signed(DATA_WIDTH-1 downto 0)
-     );
+            x : in signed(DATA_WIDTH-1 downto 0);
+            y : out signed(DATA_WIDTH-1 downto 0)
+		);
 end tanh;
 
 architecture tanh_rtl of tanh is

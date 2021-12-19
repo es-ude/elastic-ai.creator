@@ -1,20 +1,32 @@
 import math
 from os import path
+import torch.nn as nn
+from elasticai.creator.layers import QLSTMCell
 
-
-def write_libraries(math_lib=False):
+def write_libraries(math_lib=False, work_lib=False):
     lib_string = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 """
     if math_lib:
         lib_string = lib_string + "use ieee.math_real.all;\n"
+    if work_lib:
+        lib_string = lib_string + "LIBRARY work;\nuse work.all;\n"
     else:
         lib_string = lib_string + "\n"
     return lib_string
 
 
-def write_entity(entity_name, data_width, frac_width):
+def write_entity(entity_name, data_width, frac_width, is_y=False):
+    if is_y:
+        ports = "     y : out signed(DATA_WIDTH-1 downto 0)"
+    else:
+        ports = """c_in : in signed(DATA_WIDTH-1 downto 0);
+    h_in : in signed(DATA_WIDTH-1 downto 0);
+
+    c_out: out signed(DATA_WIDTH-1 downto 0);
+    h_out: out signed(DATA_WIDTH-1 downto 0)
+        """
     return """entity {entity_name} is
     generic (
             DATA_WIDTH: integer := {data_width};
@@ -22,10 +34,10 @@ def write_entity(entity_name, data_width, frac_width):
     );
     port (
      x : in signed(DATA_WIDTH-1 downto 0);
-     y : out signed(DATA_WIDTH-1 downto 0)
+    {ports}
      );
 end {entity_name};
-\n""".format(entity_name=entity_name, data_width=data_width, frac_width=frac_width)
+\n""".format(entity_name=entity_name, data_width=data_width, frac_width=frac_width, ports=ports)
 
 
 def write_architecture_header(architecture_name, component_name):
@@ -133,3 +145,71 @@ def tanh_process(x_list):
     for line in lines:
         string = string + line + "\n" + "\t" + "\t"
     return string
+
+
+def _elasticaicreator_lstm():
+    return QLSTMCell(1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity())
+
+
+def generate_vhdl_codes_for_parameters_of_an_lstm_cell(lstm_singal_cell):
+
+    ensure_reproducibility()
+
+
+
+    # print the parameters in the vhdl format
+    # weight_ih_l[k] : `(W_ii|W_if|W_ig|W_io)`
+    # weight_hh_l[k] : `(W_hi|W_hf|W_hg|W_ho)`
+    # bias_ih_l[k] :  `(b_ii|b_if|b_ig|b_io)`
+    # bias_hh_l[k] :  `(W_hi|W_hf|W_hg|b_ho)`
+    b_ii = 0
+    b_if = 0
+    b_ig = 0
+    b_io = 0
+
+    b_hi = 0
+    b_hf = 0
+    b_hg = 0
+    b_ho = 0
+
+    for name, param in lstm_singal_cell.named_parameters():
+        if name == "weight_ih":
+            print(to_vhdl_parameter(param[0], frac_width, nbits, name_parameter="W_ii",
+                                    vhdl_prefix="signal wii: signed(DATA_WIDTH-1 downto 0) := "))
+            print(to_vhdl_parameter(param[1], frac_width, nbits, name_parameter="W_if",
+                                    vhdl_prefix="signal wif : signed(DATA_WIDTH-1 downto 0) := "))
+            print(to_vhdl_parameter(param[2], frac_width, nbits, name_parameter="W_ig",
+                                    vhdl_prefix="signal wig : signed(DATA_WIDTH-1 downto 0) := "))
+            print(to_vhdl_parameter(param[3], frac_width, nbits, name_parameter="W_io",
+                                    vhdl_prefix="signal wio : signed(DATA_WIDTH-1 downto 0) := "))
+        elif name == "weight_hh":
+            print(to_vhdl_parameter(param[0], frac_width, nbits, name_parameter="W_hi",
+                                    vhdl_prefix="signal whi : signed(DATA_WIDTH-1 downto 0) := "))
+            print(to_vhdl_parameter(param[1], frac_width, nbits, name_parameter="W_hf",
+                                    vhdl_prefix="signal whf : signed(DATA_WIDTH-1 downto 0) := "))
+            print(to_vhdl_parameter(param[2], frac_width, nbits, name_parameter="W_hg",
+                                    vhdl_prefix="signal whg : signed(DATA_WIDTH-1 downto 0) := "))
+            print(to_vhdl_parameter(param[3], frac_width, nbits, name_parameter="W_ho",
+                                    vhdl_prefix="signal who : signed(DATA_WIDTH-1 downto 0) := "))
+        elif name == "bias_ih":
+            b_ii = param[0]
+            b_if = param[1]
+            b_ig = param[2]
+            b_io = param[3]
+        elif name == "bias_hh":
+            b_hi = param[0]
+            b_hf = param[1]
+            b_hg = param[2]
+            b_ho = param[3]
+        else:
+            print("should not come to here.")
+
+    print(to_vhdl_parameter(b_ii + b_hi, frac_width, nbits, name_parameter="b_ii + b_hi",
+                            vhdl_prefix="signal bi : signed(DATA_WIDTH-1 downto 0) := "))
+    print(to_vhdl_parameter(b_if + b_hf, frac_width, nbits, name_parameter="b_if + b_hf",
+                            vhdl_prefix="signal bf : signed(DATA_WIDTH-1 downto 0) := "))
+    print(to_vhdl_parameter(b_ig + b_hg, frac_width, nbits, name_parameter="b_ig + b_hg",
+                            vhdl_prefix="signal bg : signed(DATA_WIDTH-1 downto 0) := "))
+    print(to_vhdl_parameter(b_io + b_ho, frac_width, nbits, name_parameter="b_io + b_ho",
+                            vhdl_prefix="signal bo : signed(DATA_WIDTH-1 downto 0) := "))
+
