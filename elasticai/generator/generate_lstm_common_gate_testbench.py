@@ -19,36 +19,36 @@ def main(path_to_testbench: str = '../testbench/') -> None:
 
     components_variables_dict = {
         "reset": "in std_logic",
-                "clk": "in std_logic",
-                "x": "in signed(DATA_WIDTH-1 downto 0)",
-                "w": "in signed(DATA_WIDTH-1 downto 0)",
-                "b": "in signed(DATA_WIDTH-1 downto 0)",
-                "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
-                "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
-                "ready": "out std_logic",
-                "y": "out signed(DATA_WIDTH-1 downto 0)"
+        "clk": "in std_logic",
+        "x": "in signed(DATA_WIDTH-1 downto 0)",
+        "w": "in signed(DATA_WIDTH-1 downto 0)",
+        "b": "in signed(DATA_WIDTH-1 downto 0)",
+        "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+        "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+        "ready": "out std_logic",
+        "y": "out signed(DATA_WIDTH-1 downto 0)"
     }
     type_definitions_dict = {"RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)"}
     signal_definition_dict = {
         "clk_period": "time := 2 ps",
-            "clock": "std_logic",
-            "reset, ready": "std_logic:='0'",
-            "X_MEM": "RAM_ARRAY :=(others=>(others=>'0'))",
-            "W_MEM": "RAM_ARRAY:=(others=>(others=>'0'))",
-            "x, w, y, b": "signed(DATA_WIDTH-1 downto 0):=(others=>'0')",
-            "vector_len": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
-            "idx": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
+        "clock": "std_logic",
+        "reset, ready": "std_logic:='0'",
+        "X_MEM": "RAM_ARRAY :=(others=>(others=>'0'))",
+        "W_MEM": "RAM_ARRAY:=(others=>(others=>'0'))",
+        "x, w, y, b": "signed(DATA_WIDTH-1 downto 0):=(others=>'0')",
+        "vector_len": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
+        "idx": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
     }
     uut_mapping_dict = {
         "reset": "reset",
-                                "clk": "clock",
-                                "x": "x",
-                                "w": "w",
-                                "b": "b",
-                                "vector_len": "vector_len",
-                                "idx": "idx",
-                                "ready": "ready",
-                                "y": "y"
+        "clk": "clock",
+        "x": "x",
+        "w": "w",
+        "b": "b",
+        "vector_len": "vector_len",
+        "idx": "idx",
+        "ready": "ready",
+        "y": "y"
     }
     variable_definitions_before_test_process_dict = {
         "x": "X_MEM(to_integer(idx))",

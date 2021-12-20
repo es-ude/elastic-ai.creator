@@ -1,7 +1,8 @@
 from typing import List, Any, Dict
 
 
-def get_test_process_for_one_input_results_in_one_output_string(inputs: List[Any], outputs: List[Any], input_name: str, output_name: str) -> str:
+def get_test_process_for_one_input_results_in_one_output_string(inputs: List[Any], outputs: List[Any], input_name: str,
+                                                                output_name: str) -> str:
     """
     writes test process cases for a function like sigmoid or tanh
     Args:
@@ -24,7 +25,8 @@ def get_test_process_for_one_input_results_in_one_output_string(inputs: List[Any
         raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")
 
 
-def get_test_process_for_multiple_input_results_in_one_output_string(inputs: List[Dict], outputs: List[Any], output_name:str) -> str:
+def get_test_process_for_multiple_input_results_in_one_output_string(inputs: List[Dict], outputs: List[Any],
+                                                                     output_name: str) -> str:
     """
     returns test process cases for multiple inputs which result in one output
     Args:
@@ -35,20 +37,23 @@ def get_test_process_for_multiple_input_results_in_one_output_string(inputs: Lis
         string of the testcases of each input dictionary and output pair
     """
     test = ""
-    for i in range(len(outputs)):
-        input_dict = inputs[i]
-        for input in input_dict:
-            test = test + "        {input_name} <= {input};\n".format(input_name=input, input=input_dict[input])
-        test = test + """
+    if len(inputs) == len(outputs):
+        for i in range(len(outputs)):
+            input_dict = inputs[i]
+            for input in input_dict:
+                test = test + "        {input_name} <= {input};\n".format(input_name=input, input=input_dict[input])
+            test = test + """
         reset <= '1';
         wait for 2*clk_period;
         wait until clock = '0';
         reset <= '0';
         wait until ready = '1';
-        
+
         report "expected output is {output}, value of '{output_name}' is " & integer'image(to_integer(signed({output_name})));
         assert {output_name} = {output} report "The {counter}. test case fail" severity error;
         reset <= '1';
         wait for 1*clk_period;
 \n""".format(output=outputs[i], output_name=output_name, counter=i)
-    return test
+        return test
+    else:
+        raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")

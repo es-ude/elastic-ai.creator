@@ -1,7 +1,9 @@
 import unittest
-from elasticai.generator.generate_testbench import get_libraries_string, get_entity_string, get_architecture_header_string, \
+from elasticai.generator.generate_testbench import get_libraries_string, get_entity_string, \
+    get_architecture_header_string, \
     get_component_string, get_signal_definitions_string, get_type_definitions_string, get_variable_definitions_string, \
-    get_clock_process_string, get_uut_string, get_test_process_header_string, get_test_process_end_string, get_architecture_end_string
+    get_clock_process_string, get_uut_string, get_test_process_header_string, get_test_process_end_string, \
+    get_architecture_end_string
 
 
 class GenerateTestBenchTest(unittest.TestCase):
@@ -51,7 +53,8 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    port ( clk: out std_logic);",
             "end entity ; -- lstm_common_gate_tb",
         ]
-        entity_string = get_entity_string(entity_name="lstm_common_gate", data_width=16, frac_width=8, vector_len_width=4)
+        entity_string = get_entity_string(entity_name="lstm_common_gate", data_width=16, frac_width=8,
+                                          vector_len_width=4)
         for i in range(len(expected_entity_lines)):
             self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
 
@@ -108,16 +111,16 @@ class GenerateTestBenchTest(unittest.TestCase):
         ]
         component_string = get_component_string(component_name="lstm_common_gate", data_width=16, frac_width=8,
                                                 variables_dict={
-                                               "reset": "in std_logic",
-                                               "clk": "in std_logic",
-                                               "x": "in signed(DATA_WIDTH-1 downto 0)",
-                                               "w": "in signed(DATA_WIDTH-1 downto 0)",
-                                               "b": "in signed(DATA_WIDTH-1 downto 0)",
-                                               "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
-                                               "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
-                                               "ready": "out std_logic",
-                                               "y": "out signed(DATA_WIDTH-1 downto 0)"
-                                           }, vector_len_width=4)
+                                                    "reset": "in std_logic",
+                                                    "clk": "in std_logic",
+                                                    "x": "in signed(DATA_WIDTH-1 downto 0)",
+                                                    "w": "in signed(DATA_WIDTH-1 downto 0)",
+                                                    "b": "in signed(DATA_WIDTH-1 downto 0)",
+                                                    "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+                                                    "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+                                                    "ready": "out std_logic",
+                                                    "y": "out signed(DATA_WIDTH-1 downto 0)"
+                                                }, vector_len_width=4)
         for i in range(len(expected_component_lines)):
             self.assertEqual(expected_component_lines[i], component_string.splitlines()[i])
 
@@ -180,7 +183,7 @@ class GenerateTestBenchTest(unittest.TestCase):
 
     def test_generate_variable_definition(self) -> None:
         expected_variable_lines = [
-           "    clk <= clock;"
+            "    clk <= clock;"
         ]
         variable_definition_string = get_variable_definitions_string(variable_dict={
             "clk": "clock",
@@ -231,16 +234,16 @@ class GenerateTestBenchTest(unittest.TestCase):
         ]
         utt_string = get_uut_string(component_name="lstm_common_gate",
                                     mapping_dict={
-                                   "reset": "reset",
-                                   "clk": "clock",
-                                   "x": "x",
-                                   "w": "w",
-                                   "b": "b",
-                                   "vector_len": "vector_len",
-                                   "idx": "idx",
-                                   "ready": "ready",
-                                   "y": "y"
-                               })
+                                        "reset": "reset",
+                                        "clk": "clock",
+                                        "x": "x",
+                                        "w": "w",
+                                        "b": "b",
+                                        "vector_len": "vector_len",
+                                        "idx": "idx",
+                                        "ready": "ready",
+                                        "y": "y"
+                                    })
         for i in range(len(expected_uut_lines)):
             self.assertEqual(expected_uut_lines[i], utt_string.splitlines()[i])
 

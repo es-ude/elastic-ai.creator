@@ -61,7 +61,8 @@ def get_architecture_header_string(architecture_name: Any, component_name: Any) 
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def get_component_string(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict, vector_len_width=None) -> str:
+def get_component_string(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict,
+                         vector_len_width=None) -> str:
     """
     returns the component definition string
     Args:
@@ -79,11 +80,13 @@ def get_component_string(component_name: Any, data_width: Any, frac_width: Any, 
     component {component_name} is
         generic (
                 DATA_WIDTH : integer := {data_width};
-                FRAC_WIDTH : integer := {frac_width}""".format(component_name=component_name, data_width=data_width, frac_width=frac_width)
+                FRAC_WIDTH : integer := {frac_width}""".format(component_name=component_name, data_width=data_width,
+                                                               frac_width=frac_width)
 
     # eventually add vector_len_width
     if vector_len_width:
-        second_part_of_string = f";\n                VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(vector_len_width=vector_len_width)
+        second_part_of_string = f";\n                VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(
+            vector_len_width=vector_len_width)
     else:
         second_part_of_string = "\n"
 
@@ -93,7 +96,10 @@ def get_component_string(component_name: Any, data_width: Any, frac_width: Any, 
     # add variables
     variables_list_str = ""
     for variable in variables_dict:
-        variables_list_str = variables_list_str + "            {variable} : {definition};\n".format(variable=variable, definition=variables_dict[variable])
+        variables_list_str = variables_list_str + "            {variable} : {definition};\n".format(variable=variable,
+                                                                                                    definition=
+                                                                                                    variables_dict[
+                                                                                                        variable])
     # remove last linebreak and semicolon
     return first_part_of_string + second_part_of_string + closing_of_generic_string + variables_list_str[:-2] + """
         );
@@ -129,7 +135,7 @@ def get_type_definitions_string(type_dict: Dict) -> str:
     -- Testbench Data Type
     ------------------------------------------------------------\n"""
     for type_variable in type_dict:
-        type_dict_str = type_dict_str + "    type {type_variable} is {type_definition};\n".\
+        type_dict_str = type_dict_str + "    type {type_variable} is {type_definition};\n". \
             format(type_variable=type_variable, type_definition=type_dict[type_variable])
     return type_dict_str + "\n"
 
@@ -144,7 +150,7 @@ def get_variable_definitions_string(variable_dict: Dict) -> str:
     """
     variable_str = ""
     for variable in variable_dict:
-        variable_str = variable_str + "    {variable} <= {variable_definition};\n".\
+        variable_str = variable_str + "    {variable} <= {variable_definition};\n". \
             format(variable=variable, variable_definition=variable_dict[variable])
     return variable_str + "\n"
 

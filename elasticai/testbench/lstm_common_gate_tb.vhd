@@ -94,7 +94,7 @@ begin
         wait until clock = '0';
         reset <= '0';
         wait until ready = '1';
-        
+
         report "expected output is 142, value of 'y' is " & integer'image(to_integer(signed(y)));
         assert y = 142 report "The 0. test case fail" severity error;
         reset <= '1';
@@ -109,7 +109,7 @@ begin
         wait until clock = '0';
         reset <= '0';
         wait until ready = '1';
-        
+
         report "expected output is 105, value of 'y' is " & integer'image(to_integer(signed(y)));
         assert y = 105 report "The 1. test case fail" severity error;
         reset <= '1';
@@ -124,7 +124,7 @@ begin
         wait until clock = '0';
         reset <= '0';
         wait until ready = '1';
-        
+
         report "expected output is 159, value of 'y' is " & integer'image(to_integer(signed(y)));
         assert y = 159 report "The 2. test case fail" severity error;
         reset <= '1';
@@ -139,7 +139,7 @@ begin
         wait until clock = '0';
         reset <= '0';
         wait until ready = '1';
-        
+
         report "expected output is 82, value of 'y' is " & integer'image(to_integer(signed(y)));
         assert y = 82 report "The 3. test case fail" severity error;
         reset <= '1';
@@ -154,7 +154,7 @@ begin
         wait until clock = '0';
         reset <= '0';
         wait until ready = '1';
-        
+
         report "expected output is 150, value of 'y' is " & integer'image(to_integer(signed(y)));
         assert y = 150 report "The 4. test case fail" severity error;
         reset <= '1';
