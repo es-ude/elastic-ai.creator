@@ -158,5 +158,5 @@ begin
 		
     end process;                
     
-end sigmoid_rtl;
-    
+end sigmoid_rtl ; -- sigmoid_rtl
+

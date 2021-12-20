@@ -9,7 +9,7 @@ def main(path_to_testbench: str = '../testbench/') -> None:
     Returns:
         None
     """
-    component_name = "sigmoid"
+    component_name = "sigmoid_tb"
     test_bench_file_name = component_name + "_tb.vhd"
     architecture_name = "behav"
 

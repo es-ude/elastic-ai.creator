@@ -22,7 +22,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "library ieee;",
             "use ieee.std_logic_1164.all;",
             "use ieee.numeric_std.all;               -- for type conversions",
-            "use ieee.math_real.all;                 -- for the ceiling and log constant calculation function"
+            "use ieee.math_real.all;"
         ]
         lib_string = get_libraries_string(math_lib=True)
         for i in range(0, 4):
@@ -38,7 +38,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    port ( clk: out std_logic);",
             "end entity ; -- sigmoid_tb"
         ]
-        entity_string = get_entity_string(entity_name="sigmoid", data_width=16, frac_width=8)
+        entity_string = get_entity_string(entity_name="sigmoid_tb", data_width=16, frac_width=8)
         for i in range(len(expected_entity_lines)):
             self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
 
@@ -53,14 +53,14 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    port ( clk: out std_logic);",
             "end entity ; -- lstm_common_gate_tb",
         ]
-        entity_string = get_entity_string(entity_name="lstm_common_gate", data_width=16, frac_width=8,
+        entity_string = get_entity_string(entity_name="lstm_common_gate_tb", data_width=16, frac_width=8,
                                           vector_len_width=4)
         for i in range(len(expected_entity_lines)):
             self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
 
     def test_generate_architecture_header(self) -> None:
         expected_architecture_header_line = "architecture behav of sigmoid_tb is"
-        architecture_header_string = get_architecture_header_string(architecture_name="behav", component_name="sigmoid")
+        architecture_header_string = get_architecture_header_string(architecture_name="behav", component_name="sigmoid_tb")
         self.assertEqual(expected_architecture_header_line, architecture_header_string.splitlines()[0])
 
     def test_generate_component(self) -> None:

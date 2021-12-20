@@ -1,4 +1,5 @@
 from generator_writer import *
+from elasticai.generator.string_definitions import *
 
 component_name = "lstm_cell"
 file_name = component_name + ".vhd"
@@ -10,12 +11,12 @@ FRAC_WIDTH = 8
 
 def main():
     with open(get_path_file("source", "generated_" + file_name), "w") as writer:
-        writer.write(write_libraries(work_lib=True))
+        writer.write(get_libraries_string(work_lib=True))
         writer.write(write_entity(entity_name=component_name, data_width=DATA_WIDTH, frac_width=FRAC_WIDTH,
                                   variables_dict={"x": "in", "c_in": "in", "h_in": "in", "c_out": "out",
                                                   "h_out": "out"}))
         # architecture structure
-        writer.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
+        writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
         writer.write(write_lstm_signals_definition(data_width=DATA_WIDTH, frac_width=FRAC_WIDTH))
         writer.write(write_input_gate(without_activation="i_wo_activation", with_activation="i"))
         writer.write(write_forget_gate(without_activation="f_wo_activation", with_activation="f"))
@@ -31,7 +32,7 @@ def main():
         writer.write(write_component(component_name="tanh", data_width="DATA_WIDTH", frac_width="FRAC_WIDTH",
                                      variables_dict={"x": "in", "y": "out"}))
         # architecture behavior
-        writer.write(write_architecture_begin())
+        writer.write(get_begin_architecture_string())
         writer.write(write_signal_map({"c_out": "c_new_wo_activation", "h_out": "h_new"}))
         writer.write(write_port_map(map_name="FORGET_GATE_MAC", component_name="mac_async",
                                     signals={"x1": "x", "x2": "h_in", "w1": "wif", "w2": "whf", "b": "bf",
@@ -59,7 +60,7 @@ def main():
         writer.write(write_port_map(map_name="SIGMOID_1", component_name="sigmoid",
                                     signals={"x": "o_wo_activation", "y": "o"}))
         writer.write(write_lstm_process())
-        writer.write(write_architecture_end(architecture_name=architecture_name))
+        writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
 
 if __name__ == '__main__':

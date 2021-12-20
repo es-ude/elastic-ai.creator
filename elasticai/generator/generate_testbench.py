@@ -3,25 +3,8 @@ from typing import Any, Dict, List
 from elasticai.generator.generate_specific_testprocess import \
     get_test_process_for_one_input_results_in_one_output_string, \
     get_test_process_for_multiple_input_results_in_one_output_string
-
-
-def get_libraries_string(math_lib: bool = False) -> str:
-    """
-    returns the string of the libraries which are imported in the vhd file
-    Args:
-        math_lib (bool): if True the import of the math library is added
-    Returns:
-        string with all library imports
-    """
-    lib_string = """library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
-"""
-    if math_lib:
-        lib_string = lib_string + "use ieee.math_real.all;                 -- for the ceiling and log constant calculation function\n\n"
-    else:
-        lib_string = lib_string + "\n"
-    return lib_string
+from elasticai.generator.string_definitions import get_libraries_string, get_architecture_header_string, \
+    get_begin_architecture_string, get_architecture_end_string
 
 
 def get_entity_string(entity_name: Any, data_width, frac_width, vector_len_width=None) -> str:
@@ -32,7 +15,7 @@ def get_entity_string(entity_name: Any, data_width, frac_width, vector_len_width
     Returns:
         string with entity definition
     """
-    beginning_entity_str = "entity {entity_name}_tb is\n".format(entity_name=entity_name)
+    beginning_entity_str = "entity {entity_name} is\n".format(entity_name=entity_name)
 
     generic_str = "    generic (\n"
     generic_str = generic_str + "        DATA_WIDTH : integer := {data_width};\n".format(data_width=data_width)
@@ -44,21 +27,8 @@ def get_entity_string(entity_name: Any, data_width, frac_width, vector_len_width
         );\n"""
 
     return beginning_entity_str + """    port ( clk: out std_logic);
-end entity ; -- {entity_name}_tb
+end entity ; -- {entity_name}
 \n""".format(entity_name=entity_name)
-
-
-def get_architecture_header_string(architecture_name: Any, component_name: Any) -> str:
-    """
-    returns the architecture header string
-    Args:
-        architecture_name (Any): name of the architecture
-        component_name (Any): name of the component
-    Returns:
-        string with the architecture header
-    """
-    return """architecture {architecture_name} of {component_name}_tb is
-\n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
 def get_component_string(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict,
@@ -155,15 +125,6 @@ def get_variable_definitions_string(variable_dict: Dict) -> str:
     return variable_str + "\n"
 
 
-def get_begin_architecture_string() -> str:
-    """
-    returns architecture begin string
-    Returns:
-        string of architecture end
-    """
-    return "begin\n\n"
-
-
 def get_clock_process_string(clock_name="clk") -> str:
     """
     returns the clock process string
@@ -227,16 +188,6 @@ def get_test_process_end_string() -> str:
 \n"""
 
 
-def get_architecture_end_string(architecture_name) -> str:
-    """
-    returns architecture end string
-    Returns:
-        string of architecture end
-    """
-    return """end {architecture_name} ; -- {architecture_name}
-\n""".format(architecture_name=architecture_name)
-
-
 def write_testbench_file(
         path_to_testbench: str,
         test_bench_file_name: str,
@@ -283,9 +234,9 @@ def write_testbench_file(
     """
     with open(path_to_testbench + test_bench_file_name, 'w') as f:
         f.write(get_libraries_string(math_lib=math_lib))
-        f.write(get_entity_string(entity_name=component_name, data_width=data_width, frac_width=frac_width,
+        f.write(get_entity_string(entity_name=component_name + "_tb", data_width=data_width, frac_width=frac_width,
                                   vector_len_width=vector_len_width))
-        f.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
+        f.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name + "_tb"))
         if type_definitions_dict:
             f.write(get_type_definitions_string(type_dict=type_definitions_dict))
         f.write(get_signal_definitions_string(signal_dict=signal_definitions_dict))
