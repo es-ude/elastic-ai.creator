@@ -12,6 +12,16 @@ end entity ; -- sigmoid_tb
 
 architecture behav of sigmoid_tb is
 
+    ------------------------------------------------------------
+    -- Testbench Internal Signals
+    ------------------------------------------------------------
+    signal clk_period : time := 1 ns;
+    signal test_input : signed(16-1 downto 0):=(others=>'0');
+    signal test_output : signed(16-1 downto 0);
+
+    ------------------------------------------------------------
+    -- Declare Components for testing
+    ------------------------------------------------------------
     component sigmoid is
         generic (
                 DATA_WIDTH : integer := 16;
@@ -22,13 +32,6 @@ architecture behav of sigmoid_tb is
             y : out signed(DATA_WIDTH-1 downto 0)
         );
     end component sigmoid;
-
-    ------------------------------------------------------------
-    -- Testbench Internal Signals
-    ------------------------------------------------------------
-    signal clk_period : time := 1 ns;
-    signal test_input : signed(16-1 downto 0):=(others=>'0');
-    signal test_output : signed(16-1 downto 0);
 
 begin
 
@@ -42,8 +45,8 @@ begin
 
     uut: sigmoid
     port map (
-    x => test_input,
-    y => test_output
+        x => test_input,
+        y => test_output
     );
 
     test_process: process is

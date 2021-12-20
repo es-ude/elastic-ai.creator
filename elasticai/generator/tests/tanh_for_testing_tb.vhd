@@ -13,6 +13,16 @@ end entity ; -- tanh_tb
 
 architecture arch of tanh_tb is
 
+    ------------------------------------------------------------
+    -- Testbench Internal Signals
+    ------------------------------------------------------------
+    signal clk_period : time := 1 ns;
+    signal test_input : signed(16-1 downto 0):=(others=>'0');
+    signal test_output : signed(16-1 downto 0);
+
+    ------------------------------------------------------------
+    -- Declare Components for testing
+    ------------------------------------------------------------
     component tanh is
         generic (
                 DATA_WIDTH : integer := 16;
@@ -23,13 +33,6 @@ architecture arch of tanh_tb is
             y : out signed(DATA_WIDTH-1 downto 0)
         );
     end component tanh;
-
-    ------------------------------------------------------------
-    -- Testbench Internal Signals
-    ------------------------------------------------------------
-    signal clk_period : time := 1 ns;
-    signal test_input : signed(16-1 downto 0):=(others=>'0');
-    signal test_output : signed(16-1 downto 0);
 
 begin
 
@@ -43,8 +46,8 @@ begin
 
     uut: tanh
     port map (
-    x => test_input,
-    y => test_output
+        x => test_input,
+        y => test_output
     );
 
     test_process: process is

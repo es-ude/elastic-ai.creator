@@ -14,6 +14,26 @@ end entity ; -- lstm_common_gate_tb
 
 architecture arch of lstm_common_gate_tb is
 
+    ------------------------------------------------------------
+    -- Testbench Data Type
+    ------------------------------------------------------------
+    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);
+
+    ------------------------------------------------------------
+    -- Testbench Internal Signals
+    ------------------------------------------------------------
+    signal clk_period : time := 2 ps;
+    signal clock : std_logic;
+    signal reset, ready : std_logic:='0';
+    signal X_MEM : RAM_ARRAY :=(others=>(others=>'0'));
+    signal W_MEM : RAM_ARRAY:=(others=>(others=>'0'));
+    signal x, w, y, b : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+    signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
+    signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
+
+    ------------------------------------------------------------
+    -- Declare Components for testing
+    ------------------------------------------------------------
     component lstm_common_gate is
         generic (
                 DATA_WIDTH : integer := 16;
@@ -33,19 +53,6 @@ architecture arch of lstm_common_gate_tb is
         );
     end component lstm_common_gate;
 
-    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);
-    ------------------------------------------------------------
-    -- Testbench Internal Signals
-    ------------------------------------------------------------
-    signal clk_period : time := 2 ps;
-    signal clock : std_logic;
-    signal reset, ready : std_logic:='0';
-    signal X_MEM : RAM_ARRAY :=(others=>(others=>'0'));
-    signal W_MEM : RAM_ARRAY:=(others=>(others=>'0'));
-    signal x, w, y, b : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-    signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
-    signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
-
 begin
 
     clock_process : process
@@ -58,15 +65,15 @@ begin
 
     uut: lstm_common_gate
     port map (
-    reset => reset,
-    clk => clock,
-    x => x,
-    w => w,
-    b => b,
-    vector_len => vector_len,
-    idx => idx,
-    ready => ready,
-    y => y
+        reset => reset,
+        clk => clock,
+        x => x,
+        w => w,
+        b => b,
+        vector_len => vector_len,
+        idx => idx,
+        ready => ready,
+        y => y
     );
 
     x <= X_MEM(to_integer(idx));

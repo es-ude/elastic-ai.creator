@@ -26,16 +26,6 @@ class GenerateTestBenchTest(unittest.TestCase):
         for i in range(0, 4):
             self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
 
-    def test_generate_entity(self) -> None:
-        expected_entity_lines = [
-            "entity sigmoid_tb is",
-            "    port ( clk: out std_logic);",
-            "end entity ; -- sigmoid_tb"
-        ]
-        entity_string = write_entity(entity_name="sigmoid")
-        for i in range(0, 3):
-            self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
-
     def test_generate_entity_with_generic_without_vector_length_width(self) -> None:
         expected_entity_lines = [
             "entity sigmoid_tb is",
@@ -72,6 +62,9 @@ class GenerateTestBenchTest(unittest.TestCase):
 
     def test_generate_component(self) -> None:
         expected_component_lines = [
+            "    ------------------------------------------------------------",
+            "    -- Declare Components for testing",
+            "    ------------------------------------------------------------",
             "    component sigmoid is",
             "        generic (",
             "                DATA_WIDTH : integer := 16;",
@@ -91,6 +84,9 @@ class GenerateTestBenchTest(unittest.TestCase):
 
     def test_generate_component_with_different_in_and_out_variables(self) -> None:
         expected_component_lines = [
+            "    ------------------------------------------------------------",
+            "    -- Declare Components for testing",
+            "    ------------------------------------------------------------",
             "    component lstm_common_gate is",
             "        generic (",
             "                DATA_WIDTH : integer := 16;",
@@ -171,6 +167,9 @@ class GenerateTestBenchTest(unittest.TestCase):
 
     def test_generate_type_definition(self) -> None:
         expected_inputs_lines = [
+            "    ------------------------------------------------------------",
+            "    -- Testbench Data Type",
+            "    ------------------------------------------------------------",
             "    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);",
         ]
         type_definition_string = write_type_definitions(type_dict={
@@ -207,8 +206,8 @@ class GenerateTestBenchTest(unittest.TestCase):
         expected_uut_lines = [
             "    uut: sigmoid",
             "    port map (",
-            "    x => test_input,",
-            "    y => test_output",
+            "        x => test_input,",
+            "        y => test_output",
             "    );"
         ]
         utt_string = write_uut(component_name="sigmoid", mapping_dict={"x": "test_input", "y": "test_output"})
@@ -219,15 +218,15 @@ class GenerateTestBenchTest(unittest.TestCase):
         expected_uut_lines = [
             "    uut: lstm_common_gate",
             "    port map (",
-            "    reset => reset,",
-            "    clk => clock,",
-            "    x => x,",
-            "    w => w,",
-            "    b => b,",
-            "    vector_len => vector_len,",
-            "    idx => idx,",
-            "    ready => ready,",
-            "    y => y",
+            "        reset => reset,",
+            "        clk => clock,",
+            "        x => x,",
+            "        w => w,",
+            "        b => b,",
+            "        vector_len => vector_len,",
+            "        idx => idx,",
+            "        ready => ready,",
+            "        y => y",
             "    );"
         ]
         utt_string = write_uut(component_name="lstm_common_gate",

@@ -24,7 +24,7 @@ use ieee.numeric_std.all;               -- for type conversions
     return lib_string
 
 
-def write_entity(entity_name: Any, data_width=None, frac_width=None, vector_len_width=None) -> str:
+def write_entity(entity_name: Any, data_width, frac_width, vector_len_width=None) -> str:
     """
     returns the entity definition string for the entity_name
     Args:
@@ -34,15 +34,13 @@ def write_entity(entity_name: Any, data_width=None, frac_width=None, vector_len_
     """
     beginning_entity_str = "entity {entity_name}_tb is\n".format(entity_name=entity_name)
 
-    if data_width or frac_width or vector_len_width:
-        generic_str = "    generic (\n"
-        if data_width:
-            generic_str = generic_str + "        DATA_WIDTH : integer := {data_width};\n".format(data_width=data_width)
-        if frac_width:
-            generic_str = generic_str + "        FRAC_WIDTH : integer := {frac_width};\n".format(frac_width=frac_width)
-        if vector_len_width:
-            generic_str = generic_str + "        VECTOR_LEN_WIDTH : integer := {vector_len_width};\n".format(vector_len_width=vector_len_width)
-        beginning_entity_str = beginning_entity_str + generic_str[:-2] + """
+    generic_str = "    generic (\n"
+    generic_str = generic_str + "        DATA_WIDTH : integer := {data_width};\n".format(data_width=data_width)
+    generic_str = generic_str + "        FRAC_WIDTH : integer := {frac_width};\n".format(frac_width=frac_width)
+    if vector_len_width:
+        generic_str = generic_str + "        VECTOR_LEN_WIDTH : integer := {vector_len_width};\n".format(
+            vector_len_width=vector_len_width)
+    beginning_entity_str = beginning_entity_str + generic_str[:-2] + """
         );\n"""
 
     return beginning_entity_str + """    port ( clk: out std_logic);
@@ -75,7 +73,10 @@ def write_component(component_name: Any, data_width: Any, frac_width: Any, varia
     Returns:
         string of the component definition
     """
-    first_part_of_string = """    component {component_name} is
+    first_part_of_string = """    ------------------------------------------------------------
+    -- Declare Components for testing
+    ------------------------------------------------------------
+    component {component_name} is
         generic (
                 DATA_WIDTH : integer := {data_width};
                 FRAC_WIDTH : integer := {frac_width}""".format(component_name=component_name, data_width=data_width, frac_width=frac_width)
@@ -124,11 +125,13 @@ def write_type_definitions(type_dict: Dict) -> str:
     Returns:
         string of the type definitions
     """
-    type_dict_str = ""
+    type_dict_str = """    ------------------------------------------------------------
+    -- Testbench Data Type
+    ------------------------------------------------------------\n"""
     for type_variable in type_dict:
         type_dict_str = type_dict_str + "    type {type_variable} is {type_definition};\n".\
             format(type_variable=type_variable, type_definition=type_dict[type_variable])
-    return type_dict_str
+    return type_dict_str + "\n"
 
 
 def write_variable_definition(variable_dict: Dict) -> str:
@@ -182,7 +185,7 @@ def write_uut(component_name: Any, mapping_dict: Dict) -> str:
     """
     mapping_dict_str = ""
     for mapping in mapping_dict:
-        mapping_dict_str = mapping_dict_str + "    " + mapping + " => " + mapping_dict[mapping] + ",\n"
+        mapping_dict_str = mapping_dict_str + "        " + mapping + " => " + mapping_dict[mapping] + ",\n"
     # remove last comma and linebreak and add linebreak again
     return """    uut: {component_name}
     port map (\n""".format(component_name=component_name) + mapping_dict_str[:-2] + "\n    );\n\n"
@@ -254,11 +257,11 @@ def write_file(
         f.write(write_entity(entity_name=component_name, data_width=data_width, frac_width=frac_width,
                              vector_len_width=vector_len_width))
         f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
-        f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width,
-                                vector_len_width=vector_len_width, variables_dict=component_variables_dict))
         if type_definitions_dict:
             f.write(write_type_definitions(type_dict=type_definitions_dict))
         f.write(write_signal_definitions(signal_dict=signal_definitions_dict))
+        f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width,
+                                vector_len_width=vector_len_width, variables_dict=component_variables_dict))
         f.write(write_begin_architecture())
         f.write(write_clock_process(clock_name=clock_name))
         f.write(write_uut(component_name=component_name, mapping_dict=uut_mapping_dict))
