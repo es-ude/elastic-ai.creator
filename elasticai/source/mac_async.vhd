@@ -27,7 +27,8 @@ end mac_async;
 
 -- The RTL implementations
 architecture mac_async_rtl of mac_async is
-    signal product_1, product_2:signed(DATA_WIDTH-1 downto 0);
+    signal product_1 :signed(DATA_WIDTH-1 downto 0);
+    signal product_2 :signed(DATA_WIDTH-1 downto 0);
 begin
     -- behavior: y=w1*x1+w2*x2+b
     product_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);

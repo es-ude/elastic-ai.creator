@@ -6,7 +6,7 @@ from elasticai.creator.layers import QLSTMCell
 
 
 def tanh_process(x_list):
-    def _bindigits(n, bits):
+    def _bin_digits(n, bits):
         s = bin(n & int("1" * bits, 2))[2:]
         return ("{0:0>%s}" % bits).format(s)
 
@@ -18,14 +18,14 @@ def tanh_process(x_list):
     for i in range(len(x_list)):
         if i == 0:
             lines.append("if int_x<" + str(int(x_list[0] * one)) + " then")
-            lines.append("\ty <= \"" + _bindigits(-1 * one, 16) + "\"; -- " + str(-1 * one))
+            lines.append("\ty <= \"" + _bin_digits(-1 * one, 16) + "\"; -- " + str(-1 * one))
         elif i == (len(x_list) - 1):
             lines.append("else")
             lines.append("\ty <= \"" + '{0:016b}'.format(one) + "\"; -- " + str(one))
         else:
             lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
 
-            lines.append("\ty <= \"" + _bindigits(int(256 * math.tanh(x_list[i - 1])), 16) + "\"; -- " + str(
+            lines.append("\ty <= \"" + _bin_digits(int(256 * math.tanh(x_list[i - 1])), 16) + "\"; -- " + str(
                 int(256 * math.tanh(x_list[i - 1]))))
 
     lines.append("end if;")
@@ -85,7 +85,7 @@ def _floating_to_hex(f_val, frac_width, nbits):
 def _to_vhdl_parameter(f_val, frac_width, nbits, name_parameter=None, vhdl_prefix=None):
     hex_str = _floating_to_hex(f_val, frac_width, nbits)
     hex_str_without_prefix = hex_str[2:]
-    if name_parameter == None:
+    if name_parameter is None:
         return hex_str_without_prefix
     else:
         return "" + vhdl_prefix + "X\"" + hex_str_without_prefix + "\"; -- " + name_parameter
@@ -95,7 +95,7 @@ def _pytorch_lstm():
     return nn.LSTMCell(1, 1)
 
 
-def elasticaicreator_lstm():
+def _elastic_ai_creator_lstm():
     return QLSTMCell(1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity())
 
 
@@ -108,7 +108,7 @@ def generate_vhdl_codes_for_parameters_of_an_lstm_cell(data_width, frac_width):
     lines = []
     # define the lstm cell
     _ensure_reproducibility()
-    lstm_single_cell = elasticaicreator_lstm()
+    lstm_single_cell = _elastic_ai_creator_lstm()
 
     # print the parameters in the vhdl format
     # weight_ih_l[k] : `(W_ii|W_if|W_ig|W_io)`

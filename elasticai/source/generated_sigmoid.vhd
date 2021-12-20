@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 
+
 entity sigmoid is
     generic (
             DATA_WIDTH: integer := 16;
