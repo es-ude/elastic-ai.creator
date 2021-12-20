@@ -69,6 +69,9 @@ def main(path_to_testbench: str = '../testbench/') -> None:
                 "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
                 "ready": "out std_logic",
                 "y": "out signed(DATA_WIDTH-1 downto 0)"}))
+        f.write(write_type_definitions(type_dict={
+            "RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)",
+        }))
         f.write(write_signal_definitions(signal_dict={
             "clk_period": "time := 2 ps",
             "clock": "std_logic",
@@ -79,11 +82,8 @@ def main(path_to_testbench: str = '../testbench/') -> None:
             "vector_len": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
             "idx": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
         }))
-        f.write(write_type_definitions(type_dict={
-            "RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)",
-        }))
         f.write(write_begin_architecture())
-        f.write(write_clock_process())
+        f.write(write_clock_process(clock_name="clock"))
         f.write(write_uut(component_name=component_name,
                           mapping_dict={
                                 "reset": "reset",

@@ -139,7 +139,7 @@ def write_begin_architecture() -> str:
     return "begin\n\n"
 
 
-def write_clock_process() -> str:
+def write_clock_process(clock_name = "clk") -> str:
     """
     returns the clock process string
     Returns:
@@ -147,12 +147,12 @@ def write_clock_process() -> str:
     """
     return """    clock_process : process
     begin
-        clk <= '0';
+        {clock_name} <= '0';
         wait for clk_period/2;
-        clk <= '1';
+        {clock_name} <= '1';
         wait for clk_period/2;
     end process; -- clock_process
-\n"""
+\n""".format(clock_name=clock_name)
 
 
 def write_uut(component_name: Any, mapping_dict: Dict) -> str:

@@ -33,6 +33,7 @@ architecture arch of lstm_common_gate_tb is
         );
     end component lstm_common_gate;
 
+    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);
     ------------------------------------------------------------
     -- Testbench Internal Signals
     ------------------------------------------------------------
@@ -45,14 +46,13 @@ architecture arch of lstm_common_gate_tb is
     signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
     signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
 
-    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);
 begin
 
     clock_process : process
     begin
-        clk <= '0';
+        clock <= '0';
         wait for clk_period/2;
-        clk <= '1';
+        clock <= '1';
         wait for clk_period/2;
     end process; -- clock_process
 
