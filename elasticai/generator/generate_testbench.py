@@ -1,5 +1,9 @@
 from typing import Any, Dict
 
+from elasticai.generator.generate_specific_testprocess import \
+    write_function_test_process_for_one_input_results_in_one_output, \
+    write_function_test_process_for_multiple_input_results_in_one_output
+
 
 def write_libraries(math_lib: bool = False) -> str:
     """
@@ -36,7 +40,7 @@ def write_entity(entity_name: Any, data_width=None, frac_width=None, vector_len_
             generic_str = generic_str + "        DATA_WIDTH : integer := {data_width};\n".format(data_width=data_width)
         if frac_width:
             generic_str = generic_str + "        FRAC_WIDTH : integer := {frac_width};\n".format(frac_width=frac_width)
-        if data_width:
+        if vector_len_width:
             generic_str = generic_str + "        VECTOR_LEN_WIDTH : integer := {vector_len_width};\n".format(vector_len_width=vector_len_width)
         beginning_entity_str = beginning_entity_str + generic_str[:-2] + """
         );\n"""
@@ -78,7 +82,7 @@ def write_component(component_name: Any, data_width: Any, frac_width: Any, varia
 
     # eventually add vector_len_width
     if vector_len_width:
-        second_part_of_string = ";\n                VECTOR_LEN_WIDTH : integer := 4\n"
+        second_part_of_string = f";\n                VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(vector_len_width=vector_len_width)
     else:
         second_part_of_string = "\n"
 
@@ -128,6 +132,13 @@ def write_type_definitions(type_dict: Dict) -> str:
 
 
 def write_variable_definition(variable_dict: Dict) -> str:
+    """
+    returns variable definitions string in form of variable <= variable_definition
+    Args:
+        variable_dict (Dict): dictionary with the name of the variable and its definition
+    Returns:
+        string of the variable definitions
+    """
     variable_str = ""
     for variable in variable_dict:
         variable_str = variable_str + "    {variable} <= {variable_definition};\n".\
@@ -136,10 +147,15 @@ def write_variable_definition(variable_dict: Dict) -> str:
 
 
 def write_begin_architecture() -> str:
+    """
+    returns architecture begin string
+    Returns:
+        string of architecture end
+    """
     return "begin\n\n"
 
 
-def write_clock_process(clock_name = "clk") -> str:
+def write_clock_process(clock_name="clk") -> str:
     """
     returns the clock process string
     Returns:
@@ -210,3 +226,58 @@ def write_architecture_end(architecture_name) -> str:
     """
     return """end {architecture_name} ; -- {architecture_name}
 \n""".format(architecture_name=architecture_name)
+
+
+def write_file(
+        path_to_testbench,
+        test_bench_file_name,
+        component_name,
+        architecture_name,
+        data_width,
+        frac_width,
+        component_variables_dict,
+        signal_definitions_dict,
+        uut_mapping_dict,
+        inputs_for_testcases,
+        outputs_for_testcases,
+        output_name_for_testcases,
+        input_name_for_testcases=None,
+        math_lib=False,
+        vector_len_width=None,
+        type_definitions_dict=None,
+        clock_name="clk",
+        variable_definitions_before_test_process_dict=None,
+        variable_definitions_in_test_process_dict=None
+):
+    with open(path_to_testbench + test_bench_file_name, 'w') as f:
+        f.write(write_libraries(math_lib=math_lib))
+        f.write(write_entity(entity_name=component_name, data_width=data_width, frac_width=frac_width,
+                             vector_len_width=vector_len_width))
+        f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
+        f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width,
+                                vector_len_width=vector_len_width, variables_dict=component_variables_dict))
+        if type_definitions_dict:
+            f.write(write_type_definitions(type_dict=type_definitions_dict))
+        f.write(write_signal_definitions(signal_dict=signal_definitions_dict))
+        f.write(write_begin_architecture())
+        f.write(write_clock_process(clock_name=clock_name))
+        f.write(write_uut(component_name=component_name, mapping_dict=uut_mapping_dict))
+        if variable_definitions_before_test_process_dict:
+            f.write(write_variable_definition(variable_dict=variable_definitions_before_test_process_dict))
+        f.write(write_test_process_header())
+        if variable_definitions_in_test_process_dict:
+            f.write(write_variable_definition(variable_dict=variable_definitions_in_test_process_dict))
+        # when one input results in one output
+        if input_name_for_testcases:
+            f.write(write_function_test_process_for_one_input_results_in_one_output(
+                inputs=inputs_for_testcases,
+                outputs=outputs_for_testcases,
+                input_name=input_name_for_testcases,
+                output_name=output_name_for_testcases))
+        else:
+            f.write(write_function_test_process_for_multiple_input_results_in_one_output(
+                inputs=inputs_for_testcases,
+                outputs=outputs_for_testcases,
+                output_name=output_name_for_testcases))
+        f.write(write_test_process_end())
+        f.write(write_architecture_end(architecture_name=architecture_name))

@@ -1,7 +1,4 @@
-from elasticai.generator.generate_testbench import write_libraries, write_entity, write_architecture_header, \
-    write_component, write_signal_definitions, write_clock_process, write_uut, write_test_process_header, \
-    write_test_process_end, write_architecture_end, write_begin_architecture
-from elasticai.generator.generate_specific_testprocess import write_function_test_process_for_one_input_results_in_one_output
+from elasticai.generator.generate_testbench import write_file
 
 
 def main(path_to_testbench: str = '../testbench/'):
@@ -19,6 +16,17 @@ def main(path_to_testbench: str = '../testbench/'):
     data_width = 16
     frac_width = 8
 
+    components_variables_dict = {
+        "x": "in signed(DATA_WIDTH-1 downto 0)",
+        "y": "out signed(DATA_WIDTH-1 downto 0)"
+    }
+    signal_definition_dict = {
+        "clk_period": "time := 1 ns",
+        "test_input": "signed(16-1 downto 0):=(others=>'0')",
+        "test_output": "signed(16-1 downto 0)"
+    }
+    uut_mapping_dict = {"x": "test_input", "y": "test_output"}
+
     # x, y = tanh(data_width, frac_width)
     # Note, the two array below, is generated based on data_width and frac_width
     # excitation signals, as test inputs signal
@@ -26,25 +34,22 @@ def main(path_to_testbench: str = '../testbench/'):
     # expected signal, as test reference output signal
     outputs = ["\"1111111100000000\"", -255, -246, 0, 245, 254, 255]
 
-    with open(path_to_testbench + test_bench_file_name, 'w') as f:
-        f.write(write_libraries(math_lib=True))
-        f.write(write_entity(entity_name=component_name))
-        f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
-        f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width, variables_dict={
-            "x": "in signed(DATA_WIDTH-1 downto 0)",
-            "y": "out signed(DATA_WIDTH-1 downto 0)"}))
-        f.write(write_signal_definitions(signal_dict={
-            "clk_period": "time := 1 ns",
-            "test_input": "signed(16-1 downto 0):=(others=>'0')",
-            "test_output": "signed(16-1 downto 0)"
-        }))
-        f.write(write_begin_architecture())
-        f.write(write_clock_process())
-        f.write(write_uut(component_name=component_name, mapping_dict={"x": "test_input", "y": "test_output"}))
-        f.write(write_test_process_header())
-        f.write(write_function_test_process_for_one_input_results_in_one_output(inputs=inputs, outputs=outputs, input_name="test_input", output_name="test_output"))
-        f.write(write_test_process_end())
-        f.write(write_architecture_end(architecture_name=architecture_name))
+    write_file(
+        path_to_testbench=path_to_testbench,
+        test_bench_file_name=test_bench_file_name,
+        component_name=component_name,
+        architecture_name=architecture_name,
+        data_width=data_width,
+        frac_width=frac_width,
+        component_variables_dict=components_variables_dict,
+        signal_definitions_dict=signal_definition_dict,
+        uut_mapping_dict=uut_mapping_dict,
+        inputs_for_testcases=inputs,
+        outputs_for_testcases=outputs,
+        input_name_for_testcases="test_input",
+        output_name_for_testcases="test_output",
+        math_lib=True,
+    )
 
 
 if __name__ == '__main__':

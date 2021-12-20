@@ -1,8 +1,7 @@
-# TODO: add more possible test process cases
 from typing import List, Any, Dict
 
 
-def write_function_test_process_for_one_input_results_in_one_output(inputs: List[Any], outputs: List[Any], input_name, output_name) -> str:
+def write_function_test_process_for_one_input_results_in_one_output(inputs: List[Any], outputs: List[Any], input_name: str, output_name: str) -> str:
     """
     writes test process cases for a function like sigmoid or tanh
     Args:
@@ -25,7 +24,16 @@ def write_function_test_process_for_one_input_results_in_one_output(inputs: List
         raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")
 
 
-def write_function_test_process_for_multiple_input_results_in_one_output(inputs: List[Dict], outputs: List[Any], output_name) -> str:
+def write_function_test_process_for_multiple_input_results_in_one_output(inputs: List[Dict], outputs: List[Any], output_name:str) -> str:
+    """
+    returns test process cases for multiple inputs which result in one output
+    Args:
+        inputs (List[Dict]): list of inputs for one output, the list includes a dictionary which defines each input
+        outputs (List): output for each test case
+        output_name (str): name of the output variable
+    Returns:
+        string of the testcases of each input dictionary and output pair
+    """
     test = ""
     for i in range(len(outputs)):
         input_dict = inputs[i]

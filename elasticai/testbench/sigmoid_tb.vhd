@@ -3,6 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 
 entity sigmoid_tb is
+    generic (
+        DATA_WIDTH : integer := 16;
+        FRAC_WIDTH : integer := 8
+        );
     port ( clk: out std_logic);
 end entity ; -- sigmoid_tb
 

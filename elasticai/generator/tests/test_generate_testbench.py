@@ -36,6 +36,20 @@ class GenerateTestBenchTest(unittest.TestCase):
         for i in range(0, 3):
             self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
 
+    def test_generate_entity_with_generic_without_vector_length_width(self) -> None:
+        expected_entity_lines = [
+            "entity sigmoid_tb is",
+            "    generic (",
+            "        DATA_WIDTH : integer := 16;",
+            "        FRAC_WIDTH : integer := 8",
+            "        );",
+            "    port ( clk: out std_logic);",
+            "end entity ; -- sigmoid_tb"
+        ]
+        entity_string = write_entity(entity_name="sigmoid", data_width=16, frac_width=8)
+        for i in range(len(expected_entity_lines)):
+            self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
+
     def test_generate_entity_with_generic(self) -> None:
         expected_entity_lines = [
             "entity lstm_common_gate_tb is",

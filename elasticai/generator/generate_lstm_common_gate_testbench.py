@@ -1,9 +1,4 @@
-from elasticai.generator.generate_testbench import write_libraries, write_entity, write_architecture_header, \
-    write_component, write_signal_definitions, write_clock_process, write_uut, write_test_process_header, \
-    write_test_process_end, write_architecture_end, write_type_definitions, write_variable_definition, \
-    write_begin_architecture
-from elasticai.generator.generate_specific_testprocess import \
-    write_function_test_process_for_multiple_input_results_in_one_output
+from elasticai.generator.generate_testbench import write_file
 
 
 def main(path_to_testbench: str = '../testbench/') -> None:
@@ -22,6 +17,44 @@ def main(path_to_testbench: str = '../testbench/') -> None:
     frac_width = 8
     vector_len_width = 4
 
+    components_variables_dict = {
+        "reset": "in std_logic",
+                "clk": "in std_logic",
+                "x": "in signed(DATA_WIDTH-1 downto 0)",
+                "w": "in signed(DATA_WIDTH-1 downto 0)",
+                "b": "in signed(DATA_WIDTH-1 downto 0)",
+                "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+                "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+                "ready": "out std_logic",
+                "y": "out signed(DATA_WIDTH-1 downto 0)"
+    }
+    type_definitions_dict = {"RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)"}
+    signal_definition_dict = {
+        "clk_period": "time := 2 ps",
+            "clock": "std_logic",
+            "reset, ready": "std_logic:='0'",
+            "X_MEM": "RAM_ARRAY :=(others=>(others=>'0'))",
+            "W_MEM": "RAM_ARRAY:=(others=>(others=>'0'))",
+            "x, w, y, b": "signed(DATA_WIDTH-1 downto 0):=(others=>'0')",
+            "vector_len": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
+            "idx": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
+    }
+    uut_mapping_dict = {
+        "reset": "reset",
+                                "clk": "clock",
+                                "x": "x",
+                                "w": "w",
+                                "b": "b",
+                                "vector_len": "vector_len",
+                                "idx": "idx",
+                                "ready": "ready",
+                                "y": "y"
+    }
+    variable_definitions_before_test_process_dict = {
+        "x": "X_MEM(to_integer(idx))",
+        "w": "W_MEM(to_integer(idx))"
+    }
+    variable_definitions_in_test_process_dict = {"    vector_len": "to_unsigned(10, VECTOR_LEN_WIDTH)"}
     # Note, the two array below, is generated based on data_width and frac_width
     # excitation signals, as test inputs signal
     inputs = [
@@ -54,55 +87,26 @@ def main(path_to_testbench: str = '../testbench/') -> None:
     # expected signal, as test reference output signal
     outputs = [142, 105, 159, 82, 150]
 
-    with open(path_to_testbench + test_bench_file_name, 'w') as f:
-        f.write(write_libraries(math_lib=True))
-        f.write(write_entity(entity_name=component_name, data_width=data_width, frac_width=frac_width, vector_len_width=vector_len_width))
-        f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
-        f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width,
-                                vector_len_width=vector_len_width, variables_dict={
-                "reset": "in std_logic",
-                "clk": "in std_logic",
-                "x": "in signed(DATA_WIDTH-1 downto 0)",
-                "w": "in signed(DATA_WIDTH-1 downto 0)",
-                "b": "in signed(DATA_WIDTH-1 downto 0)",
-                "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
-                "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
-                "ready": "out std_logic",
-                "y": "out signed(DATA_WIDTH-1 downto 0)"}))
-        f.write(write_type_definitions(type_dict={
-            "RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)",
-        }))
-        f.write(write_signal_definitions(signal_dict={
-            "clk_period": "time := 2 ps",
-            "clock": "std_logic",
-            "reset, ready": "std_logic:='0'",
-            "X_MEM": "RAM_ARRAY :=(others=>(others=>'0'))",
-            "W_MEM": "RAM_ARRAY:=(others=>(others=>'0'))",
-            "x, w, y, b": "signed(DATA_WIDTH-1 downto 0):=(others=>'0')",
-            "vector_len": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
-            "idx": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
-        }))
-        f.write(write_begin_architecture())
-        f.write(write_clock_process(clock_name="clock"))
-        f.write(write_uut(component_name=component_name,
-                          mapping_dict={
-                                "reset": "reset",
-                                "clk": "clock",
-                                "x": "x",
-                                "w": "w",
-                                "b": "b",
-                                "vector_len": "vector_len",
-                                "idx": "idx",
-                                "ready": "ready",
-                                "y": "y"}))
-        f.write(write_variable_definition(variable_dict={"x": "X_MEM(to_integer(idx))", "w": "W_MEM(to_integer(idx))"}))
-        f.write(write_test_process_header())
-        f.write(write_variable_definition(variable_dict={"    vector_len": "to_unsigned(10, VECTOR_LEN_WIDTH)"}))
-        f.write(write_function_test_process_for_multiple_input_results_in_one_output(inputs=inputs,
-                                                                                     outputs=outputs,
-                                                                                     output_name="y"))
-        f.write(write_test_process_end())
-        f.write(write_architecture_end(architecture_name=architecture_name))
+    write_file(
+        path_to_testbench=path_to_testbench,
+        test_bench_file_name=test_bench_file_name,
+        component_name=component_name,
+        architecture_name=architecture_name,
+        data_width=data_width,
+        frac_width=frac_width,
+        component_variables_dict=components_variables_dict,
+        signal_definitions_dict=signal_definition_dict,
+        uut_mapping_dict=uut_mapping_dict,
+        inputs_for_testcases=inputs,
+        outputs_for_testcases=outputs,
+        output_name_for_testcases="y",
+        math_lib=True,
+        vector_len_width=vector_len_width,
+        type_definitions_dict=type_definitions_dict,
+        clock_name="clock",
+        variable_definitions_before_test_process_dict=variable_definitions_before_test_process_dict,
+        variable_definitions_in_test_process_dict=variable_definitions_in_test_process_dict
+    )
 
 
 if __name__ == '__main__':
