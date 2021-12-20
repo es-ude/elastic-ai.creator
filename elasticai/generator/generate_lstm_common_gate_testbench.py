@@ -1,4 +1,4 @@
-from elasticai.generator.generate_testbench import write_file
+from elasticai.generator.generate_testbench import write_testbench_file
 
 
 def main(path_to_testbench: str = '../testbench/') -> None:
@@ -87,7 +87,7 @@ def main(path_to_testbench: str = '../testbench/') -> None:
     # expected signal, as test reference output signal
     outputs = [142, 105, 159, 82, 150]
 
-    write_file(
+    write_testbench_file(
         path_to_testbench=path_to_testbench,
         test_bench_file_name=test_bench_file_name,
         component_name=component_name,

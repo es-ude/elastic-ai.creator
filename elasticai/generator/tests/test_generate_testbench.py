@@ -1,7 +1,7 @@
 import unittest
-from elasticai.generator.generate_testbench import write_libraries, write_entity, write_architecture_header, \
-    write_component, write_signal_definitions, write_type_definitions, write_variable_definition, \
-    write_clock_process, write_uut, write_test_process_header, write_test_process_end, write_architecture_end
+from elasticai.generator.generate_testbench import get_libraries_string, get_entity_string, get_architecture_header_string, \
+    get_component_string, get_signal_definitions_string, get_type_definitions_string, get_variable_definitions_string, \
+    get_clock_process_string, get_uut_string, get_test_process_header_string, get_test_process_end_string, get_architecture_end_string
 
 
 class GenerateTestBenchTest(unittest.TestCase):
@@ -11,7 +11,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "use ieee.std_logic_1164.all;",
             "use ieee.numeric_std.all;               -- for type conversions"
         ]
-        lib_string = write_libraries()
+        lib_string = get_libraries_string()
         for i in range(0, 3):
             self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
 
@@ -22,7 +22,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "use ieee.numeric_std.all;               -- for type conversions",
             "use ieee.math_real.all;                 -- for the ceiling and log constant calculation function"
         ]
-        lib_string = write_libraries(math_lib=True)
+        lib_string = get_libraries_string(math_lib=True)
         for i in range(0, 4):
             self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
 
@@ -36,7 +36,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    port ( clk: out std_logic);",
             "end entity ; -- sigmoid_tb"
         ]
-        entity_string = write_entity(entity_name="sigmoid", data_width=16, frac_width=8)
+        entity_string = get_entity_string(entity_name="sigmoid", data_width=16, frac_width=8)
         for i in range(len(expected_entity_lines)):
             self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
 
@@ -51,13 +51,13 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    port ( clk: out std_logic);",
             "end entity ; -- lstm_common_gate_tb",
         ]
-        entity_string = write_entity(entity_name="lstm_common_gate", data_width=16, frac_width=8, vector_len_width=4)
+        entity_string = get_entity_string(entity_name="lstm_common_gate", data_width=16, frac_width=8, vector_len_width=4)
         for i in range(len(expected_entity_lines)):
             self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
 
     def test_generate_architecture_header(self) -> None:
         expected_architecture_header_line = "architecture behav of sigmoid_tb is"
-        architecture_header_string = write_architecture_header(architecture_name="behav", component_name="sigmoid")
+        architecture_header_string = get_architecture_header_string(architecture_name="behav", component_name="sigmoid")
         self.assertEqual(expected_architecture_header_line, architecture_header_string.splitlines()[0])
 
     def test_generate_component(self) -> None:
@@ -76,7 +76,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        );",
             "    end component sigmoid;"
         ]
-        component_string = write_component(component_name="sigmoid", data_width=16, frac_width=8, variables_dict={
+        component_string = get_component_string(component_name="sigmoid", data_width=16, frac_width=8, variables_dict={
             "x": "in signed(DATA_WIDTH-1 downto 0)",
             "y": "out signed(DATA_WIDTH-1 downto 0)"})
         for i in range(len(expected_component_lines)):
@@ -106,8 +106,8 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        );",
             "    end component lstm_common_gate;"
         ]
-        component_string = write_component(component_name="lstm_common_gate", data_width=16, frac_width=8,
-                                           variables_dict={
+        component_string = get_component_string(component_name="lstm_common_gate", data_width=16, frac_width=8,
+                                                variables_dict={
                                                "reset": "in std_logic",
                                                "clk": "in std_logic",
                                                "x": "in signed(DATA_WIDTH-1 downto 0)",
@@ -130,7 +130,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    signal test_input : signed(16-1 downto 0):=(others=>'0');",
             "    signal test_output : signed(16-1 downto 0);"
         ]
-        signal_definition_string = write_signal_definitions(signal_dict={
+        signal_definition_string = get_signal_definitions_string(signal_dict={
             "clk_period": "time := 1 ns",
             "test_input": "signed(16-1 downto 0):=(others=>'0')",
             "test_output": "signed(16-1 downto 0)"
@@ -152,7 +152,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
             "    signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
         ]
-        signal_definition_string = write_signal_definitions(signal_dict={
+        signal_definition_string = get_signal_definitions_string(signal_dict={
             "clk_period": "time := 2 ps",
             "clock": "std_logic",
             "reset, ready": "std_logic:='0'",
@@ -172,7 +172,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    ------------------------------------------------------------",
             "    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);",
         ]
-        type_definition_string = write_type_definitions(type_dict={
+        type_definition_string = get_type_definitions_string(type_dict={
             "RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)",
         })
         for i in range(len(expected_inputs_lines)):
@@ -182,7 +182,7 @@ class GenerateTestBenchTest(unittest.TestCase):
         expected_variable_lines = [
            "    clk <= clock;"
         ]
-        variable_definition_string = write_variable_definition(variable_dict={
+        variable_definition_string = get_variable_definitions_string(variable_dict={
             "clk": "clock",
         })
         for i in range(len(expected_variable_lines)):
@@ -198,7 +198,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        wait for clk_period/2;",
             "    end process; -- clock_process"
         ]
-        clock_process_string = write_clock_process()
+        clock_process_string = get_clock_process_string()
         for i in range(len(expected_clock_lines)):
             self.assertEqual(expected_clock_lines[i], clock_process_string.splitlines()[i])
 
@@ -210,7 +210,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        y => test_output",
             "    );"
         ]
-        utt_string = write_uut(component_name="sigmoid", mapping_dict={"x": "test_input", "y": "test_output"})
+        utt_string = get_uut_string(component_name="sigmoid", mapping_dict={"x": "test_input", "y": "test_output"})
         for i in range(len(expected_uut_lines)):
             self.assertEqual(expected_uut_lines[i], utt_string.splitlines()[i])
 
@@ -229,8 +229,8 @@ class GenerateTestBenchTest(unittest.TestCase):
             "        y => y",
             "    );"
         ]
-        utt_string = write_uut(component_name="lstm_common_gate",
-                               mapping_dict={
+        utt_string = get_uut_string(component_name="lstm_common_gate",
+                                    mapping_dict={
                                    "reset": "reset",
                                    "clk": "clock",
                                    "x": "x",
@@ -250,7 +250,7 @@ class GenerateTestBenchTest(unittest.TestCase):
             "    begin",
             "        Report \"======Simulation start======\" severity Note;",
         ]
-        test_process_header_string = write_test_process_header()
+        test_process_header_string = get_test_process_header_string()
         for i in range(len(expected_test_process_header_lines)):
             self.assertEqual(expected_test_process_header_lines[i], test_process_header_string.splitlines()[i])
 
@@ -266,11 +266,11 @@ class GenerateTestBenchTest(unittest.TestCase):
             "",
             "    end process; -- test_process",
         ]
-        test_process_end_string = write_test_process_end()
+        test_process_end_string = get_test_process_end_string()
         for i in range(len(expected_test_process_end_lines)):
             self.assertEqual(expected_test_process_end_lines[i], test_process_end_string.splitlines()[i])
 
     def test_generate_architecture_end(self) -> None:
         expected_test_architecture_end_line = "end behav ; -- behav"
-        architecture_end_string = write_architecture_end(architecture_name="behav")
+        architecture_end_string = get_architecture_end_string(architecture_name="behav")
         self.assertEqual(expected_test_architecture_end_line, architecture_end_string.splitlines()[0])

@@ -1,11 +1,11 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from elasticai.generator.generate_specific_testprocess import \
-    write_function_test_process_for_one_input_results_in_one_output, \
-    write_function_test_process_for_multiple_input_results_in_one_output
+    get_test_process_for_one_input_results_in_one_output_string, \
+    get_test_process_for_multiple_input_results_in_one_output_string
 
 
-def write_libraries(math_lib: bool = False) -> str:
+def get_libraries_string(math_lib: bool = False) -> str:
     """
     returns the string of the libraries which are imported in the vhd file
     Args:
@@ -24,7 +24,7 @@ use ieee.numeric_std.all;               -- for type conversions
     return lib_string
 
 
-def write_entity(entity_name: Any, data_width, frac_width, vector_len_width=None) -> str:
+def get_entity_string(entity_name: Any, data_width, frac_width, vector_len_width=None) -> str:
     """
     returns the entity definition string for the entity_name
     Args:
@@ -48,7 +48,7 @@ end entity ; -- {entity_name}_tb
 \n""".format(entity_name=entity_name)
 
 
-def write_architecture_header(architecture_name: Any, component_name: Any) -> str:
+def get_architecture_header_string(architecture_name: Any, component_name: Any) -> str:
     """
     returns the architecture header string
     Args:
@@ -61,7 +61,7 @@ def write_architecture_header(architecture_name: Any, component_name: Any) -> st
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def write_component(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict, vector_len_width=None) -> str:
+def get_component_string(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict, vector_len_width=None) -> str:
     """
     returns the component definition string
     Args:
@@ -101,7 +101,7 @@ def write_component(component_name: Any, data_width: Any, frac_width: Any, varia
 \n""".format(component_name=component_name)
 
 
-def write_signal_definitions(signal_dict: Dict) -> str:
+def get_signal_definitions_string(signal_dict: Dict) -> str:
     """
     returns signal definitions string
     Args:
@@ -117,7 +117,7 @@ def write_signal_definitions(signal_dict: Dict) -> str:
     ------------------------------------------------------------\n""" + signal_dict_str + "\n"
 
 
-def write_type_definitions(type_dict: Dict) -> str:
+def get_type_definitions_string(type_dict: Dict) -> str:
     """
     returns types definitions string
     Args:
@@ -134,7 +134,7 @@ def write_type_definitions(type_dict: Dict) -> str:
     return type_dict_str + "\n"
 
 
-def write_variable_definition(variable_dict: Dict) -> str:
+def get_variable_definitions_string(variable_dict: Dict) -> str:
     """
     returns variable definitions string in form of variable <= variable_definition
     Args:
@@ -149,7 +149,7 @@ def write_variable_definition(variable_dict: Dict) -> str:
     return variable_str + "\n"
 
 
-def write_begin_architecture() -> str:
+def get_begin_architecture_string() -> str:
     """
     returns architecture begin string
     Returns:
@@ -158,7 +158,7 @@ def write_begin_architecture() -> str:
     return "begin\n\n"
 
 
-def write_clock_process(clock_name="clk") -> str:
+def get_clock_process_string(clock_name="clk") -> str:
     """
     returns the clock process string
     Returns:
@@ -174,7 +174,7 @@ def write_clock_process(clock_name="clk") -> str:
 \n""".format(clock_name=clock_name)
 
 
-def write_uut(component_name: Any, mapping_dict: Dict) -> str:
+def get_uut_string(component_name: Any, mapping_dict: Dict) -> str:
     """
     writes the unit under test definition string
     Args:
@@ -191,7 +191,7 @@ def write_uut(component_name: Any, mapping_dict: Dict) -> str:
     port map (\n""".format(component_name=component_name) + mapping_dict_str[:-2] + "\n    );\n\n"
 
 
-def write_test_process_header() -> str:
+def get_test_process_header_string() -> str:
     """
     returns test process header string
     Returns:
@@ -203,7 +203,7 @@ def write_test_process_header() -> str:
 \n"""
 
 
-def write_test_process_end() -> str:
+def get_test_process_end_string() -> str:
     """
     returns test process end string
     Returns:
@@ -221,7 +221,7 @@ def write_test_process_end() -> str:
 \n"""
 
 
-def write_architecture_end(architecture_name) -> str:
+def get_architecture_end_string(architecture_name) -> str:
     """
     returns architecture end string
     Returns:
@@ -231,56 +231,79 @@ def write_architecture_end(architecture_name) -> str:
 \n""".format(architecture_name=architecture_name)
 
 
-def write_file(
-        path_to_testbench,
-        test_bench_file_name,
-        component_name,
-        architecture_name,
-        data_width,
-        frac_width,
-        component_variables_dict,
-        signal_definitions_dict,
-        uut_mapping_dict,
-        inputs_for_testcases,
-        outputs_for_testcases,
-        output_name_for_testcases,
-        input_name_for_testcases=None,
-        math_lib=False,
-        vector_len_width=None,
-        type_definitions_dict=None,
-        clock_name="clk",
-        variable_definitions_before_test_process_dict=None,
-        variable_definitions_in_test_process_dict=None
-):
+def write_testbench_file(
+        path_to_testbench: str,
+        test_bench_file_name: str,
+        component_name: str,
+        architecture_name: str,
+        data_width: int,
+        frac_width: int,
+        component_variables_dict: Dict,
+        signal_definitions_dict: Dict,
+        uut_mapping_dict: Dict,
+        inputs_for_testcases: List,
+        outputs_for_testcases: List,
+        output_name_for_testcases: str,
+        input_name_for_testcases: str = None,
+        math_lib: bool = False,
+        vector_len_width: int = None,
+        type_definitions_dict: Dict = None,
+        clock_name: str = "clk",
+        variable_definitions_before_test_process_dict: Dict = None,
+        variable_definitions_in_test_process_dict: Dict = None
+) -> None:
+    """
+    writes the testbench file for the specifications
+    Args:
+        path_to_testbench (str): path where testbench is located
+        test_bench_file_name (str): name of the testbench file name
+        component_name (str): component name
+        architecture_name (str): architecture name
+        data_width (int): data width
+        frac_width (int): frac width
+        component_variables_dict (Dict): variable definition of the components
+        signal_definitions_dict (Dict): signal definition
+        uut_mapping_dict (Dict): mapping in the uut
+        inputs_for_testcases (List): List of inputs
+        outputs_for_testcases (List): List of corresponding outputs for the inputs
+        output_name_for_testcases (str): name of the output variable
+        input_name_for_testcases (str): name of the input variable, default None (this determines if we have multiple inputs or only one)
+        math_lib (bool): True, if the math library should be imported in the testbench file, default False
+        vector_len_width (int): vector length width, not always defined, default None
+        type_definitions_dict (Dict): possible definitions of new types, default None
+        clock_name (str): name of the clock, default "clk"
+        variable_definitions_before_test_process_dict (Dict): possible definitions of variables before the test process, default None
+        variable_definitions_in_test_process_dict (Dict): possible definitions of variables in the test process, default None
+    """
     with open(path_to_testbench + test_bench_file_name, 'w') as f:
-        f.write(write_libraries(math_lib=math_lib))
-        f.write(write_entity(entity_name=component_name, data_width=data_width, frac_width=frac_width,
-                             vector_len_width=vector_len_width))
-        f.write(write_architecture_header(architecture_name=architecture_name, component_name=component_name))
+        f.write(get_libraries_string(math_lib=math_lib))
+        f.write(get_entity_string(entity_name=component_name, data_width=data_width, frac_width=frac_width,
+                                  vector_len_width=vector_len_width))
+        f.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
         if type_definitions_dict:
-            f.write(write_type_definitions(type_dict=type_definitions_dict))
-        f.write(write_signal_definitions(signal_dict=signal_definitions_dict))
-        f.write(write_component(component_name=component_name, data_width=data_width, frac_width=frac_width,
-                                vector_len_width=vector_len_width, variables_dict=component_variables_dict))
-        f.write(write_begin_architecture())
-        f.write(write_clock_process(clock_name=clock_name))
-        f.write(write_uut(component_name=component_name, mapping_dict=uut_mapping_dict))
+            f.write(get_type_definitions_string(type_dict=type_definitions_dict))
+        f.write(get_signal_definitions_string(signal_dict=signal_definitions_dict))
+        f.write(get_component_string(component_name=component_name, data_width=data_width, frac_width=frac_width,
+                                     vector_len_width=vector_len_width, variables_dict=component_variables_dict))
+        f.write(get_begin_architecture_string())
+        f.write(get_clock_process_string(clock_name=clock_name))
+        f.write(get_uut_string(component_name=component_name, mapping_dict=uut_mapping_dict))
         if variable_definitions_before_test_process_dict:
-            f.write(write_variable_definition(variable_dict=variable_definitions_before_test_process_dict))
-        f.write(write_test_process_header())
+            f.write(get_variable_definitions_string(variable_dict=variable_definitions_before_test_process_dict))
+        f.write(get_test_process_header_string())
         if variable_definitions_in_test_process_dict:
-            f.write(write_variable_definition(variable_dict=variable_definitions_in_test_process_dict))
+            f.write(get_variable_definitions_string(variable_dict=variable_definitions_in_test_process_dict))
         # when one input results in one output
         if input_name_for_testcases:
-            f.write(write_function_test_process_for_one_input_results_in_one_output(
+            f.write(get_test_process_for_one_input_results_in_one_output_string(
                 inputs=inputs_for_testcases,
                 outputs=outputs_for_testcases,
                 input_name=input_name_for_testcases,
                 output_name=output_name_for_testcases))
         else:
-            f.write(write_function_test_process_for_multiple_input_results_in_one_output(
+            f.write(get_test_process_for_multiple_input_results_in_one_output_string(
                 inputs=inputs_for_testcases,
                 outputs=outputs_for_testcases,
                 output_name=output_name_for_testcases))
-        f.write(write_test_process_end())
-        f.write(write_architecture_end(architecture_name=architecture_name))
+        f.write(get_test_process_end_string())
+        f.write(get_architecture_end_string(architecture_name=architecture_name))

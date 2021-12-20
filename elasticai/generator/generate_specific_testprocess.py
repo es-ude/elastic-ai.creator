@@ -1,7 +1,7 @@
 from typing import List, Any, Dict
 
 
-def write_function_test_process_for_one_input_results_in_one_output(inputs: List[Any], outputs: List[Any], input_name: str, output_name: str) -> str:
+def get_test_process_for_one_input_results_in_one_output_string(inputs: List[Any], outputs: List[Any], input_name: str, output_name: str) -> str:
     """
     writes test process cases for a function like sigmoid or tanh
     Args:
@@ -24,7 +24,7 @@ def write_function_test_process_for_one_input_results_in_one_output(inputs: List
         raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")
 
 
-def write_function_test_process_for_multiple_input_results_in_one_output(inputs: List[Dict], outputs: List[Any], output_name:str) -> str:
+def get_test_process_for_multiple_input_results_in_one_output_string(inputs: List[Dict], outputs: List[Any], output_name:str) -> str:
     """
     returns test process cases for multiple inputs which result in one output
     Args:
