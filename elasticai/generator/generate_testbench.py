@@ -20,7 +20,7 @@ use ieee.numeric_std.all;               -- for type conversions
     return lib_string
 
 
-def write_entity(entity_name: Any) -> str:
+def write_entity(entity_name: Any, data_width=None, frac_width=None, vector_len_width=None) -> str:
     """
     returns the entity definition string for the entity_name
     Args:
@@ -28,8 +28,20 @@ def write_entity(entity_name: Any) -> str:
     Returns:
         string with entity definition
     """
-    return """entity {entity_name}_tb is
-    port ( clk: out std_logic);
+    beginning_entity_str = "entity {entity_name}_tb is\n".format(entity_name=entity_name)
+
+    if data_width or frac_width or vector_len_width:
+        generic_str = "    generic (\n"
+        if data_width:
+            generic_str = generic_str + "        DATA_WIDTH : integer := {data_width};\n".format(data_width=data_width)
+        if frac_width:
+            generic_str = generic_str + "        FRAC_WIDTH : integer := {frac_width};\n".format(frac_width=frac_width)
+        if data_width:
+            generic_str = generic_str + "        VECTOR_LEN_WIDTH : integer := {vector_len_width};\n".format(vector_len_width=vector_len_width)
+        beginning_entity_str = beginning_entity_str + generic_str[:-2] + """
+        );\n"""
+
+    return beginning_entity_str + """    port ( clk: out std_logic);
 end entity ; -- {entity_name}_tb
 \n""".format(entity_name=entity_name)
 
@@ -47,27 +59,38 @@ def write_architecture_header(architecture_name: Any, component_name: Any) -> st
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def write_component(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict) -> str:
+def write_component(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict, vector_len_width=None) -> str:
     """
     returns the component definition string
     Args:
         component_name (Any): name of the component
         data_width (Any): data width
         frac_width (Any): frac width
-        variables_dict (Dict): dictionary with all variables and the declaration if they are an input or output variable
+        variables_dict (Dict): dictionary with all variables and their definition
+        vector_len_width (): default not specified, if specified added to the generic part
     Returns:
         string of the component definition
     """
-    variables_list_str = ""
-    for variable in variables_dict:
-        variables_list_str = variables_list_str + "            {variable} : {io} signed(DATA_WIDTH-1 downto 0);\n".format(variable=variable, io=variables_dict[variable])
-    # remove last linebreak and semicolon
-    return """    component {component_name} is
+    first_part_of_string = """    component {component_name} is
         generic (
                 DATA_WIDTH : integer := {data_width};
-                FRAC_WIDTH : integer := {frac_width}
-            );
-        port (\n""".format(component_name=component_name, data_width=data_width, frac_width=frac_width) + variables_list_str[:-2] + """
+                FRAC_WIDTH : integer := {frac_width}""".format(component_name=component_name, data_width=data_width, frac_width=frac_width)
+
+    # eventually add vector_len_width
+    if vector_len_width:
+        second_part_of_string = ";\n                VECTOR_LEN_WIDTH : integer := 4\n"
+    else:
+        second_part_of_string = "\n"
+
+    closing_of_generic_string = """            );
+        port (\n"""
+
+    # add variables
+    variables_list_str = ""
+    for variable in variables_dict:
+        variables_list_str = variables_list_str + "            {variable} : {definition};\n".format(variable=variable, definition=variables_dict[variable])
+    # remove last linebreak and semicolon
+    return first_part_of_string + second_part_of_string + closing_of_generic_string + variables_list_str[:-2] + """
         );
     end component {component_name};
 \n""".format(component_name=component_name)
@@ -89,15 +112,40 @@ def write_signal_definitions(signal_dict: Dict) -> str:
     ------------------------------------------------------------\n""" + signal_dict_str + "\n"
 
 
+def write_type_definitions(type_dict: Dict) -> str:
+    """
+    returns types definitions string
+    Args:
+        type_dict (Dict): dictionary with the name of each type and its definition
+    Returns:
+        string of the type definitions
+    """
+    type_dict_str = ""
+    for type_variable in type_dict:
+        type_dict_str = type_dict_str + "    type {type_variable} is {type_definition};\n".\
+            format(type_variable=type_variable, type_definition=type_dict[type_variable])
+    return type_dict_str
+
+
+def write_variable_definition(variable_dict: Dict) -> str:
+    variable_str = ""
+    for variable in variable_dict:
+        variable_str = variable_str + "    {variable} <= {variable_definition};\n".\
+            format(variable=variable, variable_definition=variable_dict[variable])
+    return variable_str + "\n"
+
+
+def write_begin_architecture() -> str:
+    return "begin\n\n"
+
+
 def write_clock_process() -> str:
     """
     returns the clock process string
     Returns:
         string of the clock process
     """
-    return """begin
-
-    clock_process : process
+    return """    clock_process : process
     begin
         clk <= '0';
         wait for clk_period/2;
