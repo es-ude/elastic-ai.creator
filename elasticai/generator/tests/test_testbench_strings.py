@@ -1,7 +1,8 @@
 import unittest
 from elasticai.generator.testbench_strings import get_type_definitions_string, \
-    get_variable_definitions_string, get_clock_process_string, get_uut_string, get_test_process_header_string, \
+    get_clock_process_string, get_uut_string, get_test_process_header_string, \
     get_test_process_end_string
+from elasticai.generator.general_strings import get_variable_definitions_string
 
 
 class TestbenchStringsTest(unittest.TestCase):
