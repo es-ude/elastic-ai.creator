@@ -1,4 +1,4 @@
-from vhd_strings import *
+from elasticai.generator.vhd_strings import *
 from elasticai.generator.general_strings import *
 
 component_name = "lstm_cell"
