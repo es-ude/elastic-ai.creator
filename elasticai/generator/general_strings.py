@@ -25,7 +25,8 @@ use ieee.numeric_std.all;               -- for type conversions
 
 
 def get_entity_or_component_string(entity_or_component: str, entity_or_component_name: str, data_width: int,
-                                   frac_width: int, variables_dict: Dict, vector_len_width: int = None, indent: str = ""):
+                                   frac_width: int, variables_dict: Dict, vector_len_width: int = None,
+                                   indent: str = ""):
     """
         returns the entity or component definition string
         Args:
@@ -43,10 +44,10 @@ def get_entity_or_component_string(entity_or_component: str, entity_or_component
     {indent}generic (
         {indent}DATA_WIDTH : integer := {data_width};
         {indent}FRAC_WIDTH : integer := {frac_width}""".format(indent=indent,
-                                                                   entity_or_component=entity_or_component,
-                                                                   entity_or_component_name=entity_or_component_name,
-                                                                   data_width=data_width,
-                                                                   frac_width=frac_width)
+                                                               entity_or_component=entity_or_component,
+                                                               entity_or_component_name=entity_or_component_name,
+                                                               data_width=data_width,
+                                                               frac_width=frac_width)
 
     # eventually add vector_len_width
     if vector_len_width:
@@ -99,11 +100,11 @@ def get_architecture_header_string(architecture_name: Any, component_name: Any) 
 \n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
-def get_begin_architecture_string() -> str:
+def get_architecture_begin_string() -> str:
     """
     returns architecture begin string
     Returns:
-        string of architecture end
+        string of architecture begin
     """
     return "begin\n\n"
 
@@ -116,3 +117,18 @@ def get_architecture_end_string(architecture_name) -> str:
     """
     return """end architecture {architecture_name} ; -- {architecture_name}
 \n""".format(architecture_name=architecture_name)
+
+
+def get_variable_definitions_string(variable_dict: Dict) -> str:
+    """
+    returns variable definitions string in form of variable <= variable_definition
+    Args:
+        variable_dict (Dict): dictionary with the name of the variable and its definition
+    Returns:
+        string of the variable definitions
+    """
+    variable_str = ""
+    for variable in variable_dict:
+        variable_str = variable_str + "    {variable} <= {variable_definition};\n". \
+            format(variable=variable, variable_definition=variable_dict[variable])
+    return variable_str + "\n"
