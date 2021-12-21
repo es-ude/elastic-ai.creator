@@ -1,5 +1,5 @@
-from generator_writer import *
-from elasticai.generator.string_definitions import *
+from vhd_strings import *
+from elasticai.generator.general_strings import *
 
 component_name = "lstm_cell"
 file_name = component_name + ".vhd"

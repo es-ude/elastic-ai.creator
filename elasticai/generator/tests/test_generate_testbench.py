@@ -1,5 +1,5 @@
 import unittest
-from elasticai.generator.generate_testbench import get_libraries_string, get_entity_string, \
+from elasticai.generator.testbench_strings import get_libraries_string, get_entity_string, \
     get_architecture_header_string, \
     get_component_string, get_signal_definitions_string, get_type_definitions_string, get_variable_definitions_string, \
     get_clock_process_string, get_uut_string, get_test_process_header_string, get_test_process_end_string, \

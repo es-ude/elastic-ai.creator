@@ -1,5 +1,5 @@
 import unittest
-from elasticai.generator.generate_specific_testprocess import \
+from elasticai.generator.specific_testprocess_strings import \
     get_test_process_for_one_input_results_in_one_output_string, \
     get_test_process_for_multiple_input_results_in_one_output_string
 

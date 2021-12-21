@@ -1,4 +1,4 @@
-from elasticai.generator.generate_testbench import write_testbench_file
+from elasticai.generator.testbench_strings import write_testbench_file
 
 
 def main(path_to_testbench: str = '../testbench/') -> None:

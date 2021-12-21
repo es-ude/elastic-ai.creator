@@ -1,9 +1,9 @@
 from typing import Any, Dict, List
 
-from elasticai.generator.generate_specific_testprocess import \
+from elasticai.generator.specific_testprocess_strings import \
     get_test_process_for_one_input_results_in_one_output_string, \
     get_test_process_for_multiple_input_results_in_one_output_string
-from elasticai.generator.string_definitions import get_libraries_string, get_architecture_header_string, \
+from elasticai.generator.general_strings import get_libraries_string, get_architecture_header_string, \
     get_begin_architecture_string, get_architecture_end_string
 
 

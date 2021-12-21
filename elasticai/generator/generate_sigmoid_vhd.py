@@ -1,7 +1,7 @@
 import numpy as np
 
-from elasticai.generator.generator_writer import *
-from elasticai.generator.string_definitions import *
+from elasticai.generator.vhd_strings import *
+from elasticai.generator.general_strings import *
 
 from elasticai.generator.generator_functions import sigmoid_process
 
