@@ -1,6 +1,7 @@
 import json
-from typing import Union, Set, Callable
+from typing import Union, Set, Callable, Protocol, Iterable
 
+import numpy
 import numpy as np
 import torch
 from torch import Tensor
@@ -11,13 +12,36 @@ from elasticai.creator.tags_utils import has_tag, get_tags, tag
 _precomputable_tag = 'precomputable'
 
 
+class ModuleProto(Protocol):
+
+    @property
+    def training(self) -> bool:
+        pass
+
+    def extra_repr(self) -> str:
+        pass
+
+    def named_children(self) -> Iterable[tuple[str, 'ModuleProto']]:
+        pass
+
+    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
+        pass
+
+
+TensorLike = Union[Callable[[], 'TensorLike'], torch.Tensor, numpy.ndarray]
+
+
 class Precomputation:
     """
     The Precomputation class provides a higher level api for precomputing the results of arbitrary pytorch modules.
     It is not a pytorch module itself nor intended to be used like one.
+    Precomputations can be exported to JSON with `elasticai.creator.precomputation.JSONEncoder`.
+    Note that this does not preserve the exact information about the module that was precomputed.
+    There is no way currently to load an exported Precomputation object.
     """
 
-    def __init__(self, module: Module, input_domain: Union[Callable[[], Tensor], Tensor]) -> None:
+    def __init__(self, module: ModuleProto,
+                 input_domain: TensorLike) -> None:
         super().__init__()
         self.module = module
         self.input_domain = input_domain
@@ -28,7 +52,7 @@ class Precomputation:
             self.input_domain = self.input_domain()
 
     @staticmethod
-    def from_precomputable_tagged(module: Module):
+    def from_precomputable_tagged(module: ModuleProto):
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]
@@ -54,20 +78,26 @@ class Precomputation:
             raise IndexError
 
     def dump_to(self, f):
-        description = ""
-        description += self.module.extra_repr()
-        if description == "":
-            description = []
-            for name, child in self.module.named_children():
-                description.append(name + " " + type(child).__name__)
-        json.dump({
-            'description': description,
-            'shape': get_tags(self.module)['precomputable']['input_shape'],
-            'x': self.input_domain.numpy().tolist(),
-            'y': self.input_domain.numpy().tolist()
-        },
-            f,
-        )
+        json.dump(JSONEncoder().default(self), f)
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Precomputation):
+            description = ""
+            description += o.module.extra_repr()
+            if description == "":
+                description = []
+                for name, child in o.module.named_children():
+                    description.append(name + " " + type(child).__name__)
+            return {
+                'description': description,
+                'shape': o.input_domain.shape[1:],
+                'x': o.input_domain.numpy().tolist(),
+                'y': o.input_domain.numpy().tolist()
+            }
+        else:
+            return json.JSONEncoder.default(self, o)
 
 
 def get_precomputations_from_direct_children(module):
@@ -83,6 +113,7 @@ def get_precomputations_from_direct_children(module):
 def get_precomputations_recursively(module):
     def tag_filter(submodule):
         return _precomputable_tag in get_tags(submodule)
+
     submodules = tuple(module.modules())
     filtered_submodules = filter(tag_filter, submodules)
     yield from (Precomputation.from_precomputable_tagged(submodule)
