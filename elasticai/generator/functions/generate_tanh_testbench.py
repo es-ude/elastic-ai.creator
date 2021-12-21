@@ -1,7 +1,7 @@
 from elasticai.generator.testbench_strings import write_testbench_file
 
 
-def main(path_to_testbench: str = '../testbench/'):
+def main(path_to_testbench: str = '../../testbench/'):
     """
     generates the vhd testbench file in the testbench folder for the tanh function
     Args:

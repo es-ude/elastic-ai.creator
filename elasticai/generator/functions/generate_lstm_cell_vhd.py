@@ -12,11 +12,20 @@ FRAC_WIDTH = 8
 def main():
     with open(get_path_file("source", "generated_" + file_name), "w") as writer:
         writer.write(get_libraries_string(work_lib=True))
-        writer.write(write_entity(entity_name=component_name, data_width=DATA_WIDTH, frac_width=FRAC_WIDTH,
-                                  variables_dict={"x": "in", "c_in": "in", "h_in": "in", "c_out": "out",
-                                                  "h_out": "out"}))
+        writer.write(get_entity_or_component_string(
+            entity_or_component="entity",
+            entity_or_component_name=component_name,
+            data_width=DATA_WIDTH,
+            frac_width=FRAC_WIDTH,
+            variables_dict={
+                "x": "in signed(DATA_WIDTH-1 downto 0)",
+                "c_in": "in signed(DATA_WIDTH-1 downto 0)",
+                "h_in": "in signed(DATA_WIDTH-1 downto 0)",
+                "c_out": "out signed(DATA_WIDTH-1 downto 0)",
+                "h_out": "out signed(DATA_WIDTH-1 downto 0)"}))
         # architecture structure
         writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
+        # TODO: check if it can use the general signal definition?
         writer.write(write_lstm_signals_definition(data_width=DATA_WIDTH, frac_width=FRAC_WIDTH))
         writer.write(write_input_gate(without_activation="i_wo_activation", with_activation="i"))
         writer.write(write_forget_gate(without_activation="f_wo_activation", with_activation="f"))
@@ -24,15 +33,36 @@ def main():
         writer.write(write_output_gate(without_activation="o_wo_activation", with_activation="o"))
         writer.write(write_new_cell_state(without_activation="c_new", with_activation="c_new_wo_activation"))
         # components
-        writer.write(write_component(component_name="mac_async", data_width="DATA_WIDTH", frac_width="FRAC_WIDTH",
-                                     variables_dict={"x1": "in", "x2": "in", "w1": "in", "w2": "in", "b": "in",
-                                                     "y": "out"}))
-        writer.write(write_component(component_name="sigmoid", data_width="DATA_WIDTH", frac_width="FRAC_WIDTH",
-                                     variables_dict={"x": "in", "y": "out"}))
-        writer.write(write_component(component_name="tanh", data_width="DATA_WIDTH", frac_width="FRAC_WIDTH",
-                                     variables_dict={"x": "in", "y": "out"}))
+        writer.write(get_entity_or_component_string(
+            entity_or_component="component",
+            entity_or_component_name="mac_async",
+            data_width="DATA_WIDTH",
+            frac_width="FRAC_WIDTH",
+            variables_dict={
+                "x1": "in signed(DATA_WIDTH-1 downto 0)",
+                "x2": "in signed(DATA_WIDTH-1 downto 0)",
+                "w1": "in signed(DATA_WIDTH-1 downto 0)",
+                "w2": "in signed(DATA_WIDTH-1 downto 0)",
+                "b": "in signed(DATA_WIDTH-1 downto 0)",
+                "y": "out signed(DATA_WIDTH-1 downto 0)"}
+        ))
+        writer.write(get_entity_or_component_string(
+            entity_or_component="component",
+            entity_or_component_name="sigmoid",
+            data_width="DATA_WIDTH",
+            frac_width="FRAC_WIDTH",
+            variables_dict={"x": "in signed(DATA_WIDTH-1 downto 0)", "y": "out signed(DATA_WIDTH-1 downto 0)"}
+        ))
+        writer.write(get_entity_or_component_string(
+            entity_or_component="component",
+            entity_or_component_name="tanh",
+            data_width="DATA_WIDTH",
+            frac_width="FRAC_WIDTH",
+            variables_dict={"x": "in signed(DATA_WIDTH-1 downto 0)", "y": "out signed(DATA_WIDTH-1 downto 0)"}
+        ))
         # architecture behavior
         writer.write(get_begin_architecture_string())
+        # TODO: maybe use variable definition from testbench strings? if so, move them to the general strings
         writer.write(write_signal_map({"c_out": "c_new_wo_activation", "h_out": "h_new"}))
         writer.write(write_port_map(map_name="FORGET_GATE_MAC", component_name="mac_async",
                                     signals={"x1": "x", "x2": "h_in", "w1": "wif", "w2": "whf", "b": "bf",

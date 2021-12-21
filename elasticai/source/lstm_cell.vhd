@@ -10,8 +10,8 @@ use work.all;
 
 entity lstm_cell is
     generic (
-            DATA_WIDTH: integer := 16;
-            FRAC_WIDTH: integer := 8
+            DATA_WIDTH : integer := 16;
+            FRAC_WIDTH : integer := 8
         );
     port (
         x : in signed(DATA_WIDTH-1 downto 0);
@@ -21,7 +21,7 @@ entity lstm_cell is
         c_out : out signed(DATA_WIDTH-1 downto 0);
         h_out : out signed(DATA_WIDTH-1 downto 0)
     );
-end lstm_cell;
+end entity lstm_cell;
 
 architecture lstm_cell_rtl of lstm_cell is
 
@@ -208,4 +208,4 @@ begin
     end process;
     
 
-end lstm_cell_rtl;
+end architecture lstm_cell_rtl ; -- lstm_cell_rtl

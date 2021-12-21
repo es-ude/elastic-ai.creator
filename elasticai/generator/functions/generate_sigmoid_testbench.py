@@ -1,7 +1,7 @@
 from elasticai.generator.testbench_strings import write_testbench_file
 
 
-def main(path_to_testbench: str = '../testbench/') -> None:
+def main(path_to_testbench: str = '../../testbench/') -> None:
     """
     generates the vhd testbench file in the testbench folder for the sigmoid function
     Args:
@@ -9,7 +9,7 @@ def main(path_to_testbench: str = '../testbench/') -> None:
     Returns:
         None
     """
-    component_name = "sigmoid_tb"
+    component_name = "sigmoid"
     test_bench_file_name = component_name + "_tb.vhd"
     architecture_name = "behav"
 

@@ -2,20 +2,6 @@ from os import path
 from elasticai.generator.generator_functions import *
 
 
-def write_libraries(math_lib=False, work_lib=False) -> str:
-    lib_string = """library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
-"""
-    if math_lib:
-        lib_string = lib_string + "use ieee.math_real.all;\n"
-    if work_lib:
-        lib_string = lib_string + "LIBRARY work;\nuse work.all;\n"
-    else:
-        lib_string = lib_string + "\n"
-    return lib_string + '\n'
-
-
 def write_entity(entity_name: str, data_width: int, frac_width: int, variables_dict: dict) -> str:
     variables_list_str = ""
     for variable in variables_dict:
@@ -31,11 +17,6 @@ def write_entity(entity_name: str, data_width: int, frac_width: int, variables_d
            + """\n\t\t);
 end {entity_name};
 \n""".format(entity_name=entity_name)
-
-
-def write_architecture_header(architecture_name: str, component_name: str) -> str:
-    return """architecture {architecture_name} of {component_name} is
-\n""".format(architecture_name=architecture_name, component_name=component_name)
 
 
 def write_component(data_width: any, frac_width: any, component_name: str, variables_dict: dict) -> str:
@@ -54,11 +35,6 @@ def write_component(data_width: any, frac_width: any, component_name: str, varia
         );
     end component {component_name};
 \n""".format(component_name=component_name)
-
-
-def write_architecture_end(architecture_name: str) -> str:
-    return """end {architecture_name};
-    """.format(architecture_name=architecture_name)
 
 
 def write_process(component_name: str, process_name) -> str:
@@ -131,9 +107,6 @@ signal {with_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
 -- h' = o * \\tanh(c')
 signal h_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n\n\n""".format(without_activation=without_activation,
                                                                              with_activation=with_activation)
-
-
-def write_architecture_begin() -> str: return "begin\n"
 
 
 def write_architecture_signals_definition(variable_list: list) -> str:

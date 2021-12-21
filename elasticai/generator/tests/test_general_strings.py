@@ -1,6 +1,6 @@
 import unittest
 from elasticai.generator.general_strings import get_libraries_string, get_architecture_header_string, \
-    get_architecture_end_string
+    get_architecture_end_string, get_entity_or_component_string, get_signal_definitions_string
 
 
 class GeneralStringsTest(unittest.TestCase):
@@ -13,6 +13,159 @@ class GeneralStringsTest(unittest.TestCase):
         lib_string = get_libraries_string()
         for i in range(0, 3):
             self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
+
+    def test_generate_entity_with_generic_without_vector_length_width(self) -> None:
+        expected_entity_lines = [
+            "entity sigmoid_tb is",
+            "    generic (",
+            "        DATA_WIDTH : integer := 16;",
+            "        FRAC_WIDTH : integer := 8",
+            "    );",
+            "    port (",
+            "        clk : out std_logic",
+            "    );",
+            "end entity sigmoid_tb;"
+        ]
+        entity_string = get_entity_or_component_string(
+            entity_or_component="entity",
+            entity_or_component_name="sigmoid_tb",
+            data_width=16,
+            frac_width=8,
+            variables_dict={"clk": "out std_logic"}
+        )
+        for i in range(len(expected_entity_lines)):
+            self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
+
+    def test_generate_entity_with_generic(self) -> None:
+        expected_entity_lines = [
+            "entity lstm_common_gate_tb is",
+            "    generic (",
+            "        DATA_WIDTH : integer := 16;",
+            "        FRAC_WIDTH : integer := 8;",
+            "        VECTOR_LEN_WIDTH : integer := 4",
+            "    );",
+            "    port (",
+            "        clk : out std_logic",
+            "    );",
+            "end entity lstm_common_gate_tb;",
+        ]
+        entity_string = get_entity_or_component_string(
+            entity_or_component="entity",
+            entity_or_component_name="lstm_common_gate_tb",
+            data_width=16,
+            frac_width=8,
+            variables_dict={"clk": "out std_logic"},
+            vector_len_width=4
+        )
+        for i in range(len(expected_entity_lines)):
+            self.assertEqual(expected_entity_lines[i], entity_string.splitlines()[i])
+
+    def test_generate_component(self) -> None:
+        expected_component_lines = [
+            "    component sigmoid is",
+            "        generic (",
+            "            DATA_WIDTH : integer := 16;",
+            "            FRAC_WIDTH : integer := 8",
+            "        );",
+            "        port (",
+            "            x : in signed(DATA_WIDTH-1 downto 0);",
+            "            y : out signed(DATA_WIDTH-1 downto 0)",
+            "        );",
+            "    end component sigmoid;"
+        ]
+        component_string = get_entity_or_component_string(
+            entity_or_component="component",
+            entity_or_component_name="sigmoid",
+            data_width=16,
+            frac_width=8,
+            variables_dict={
+                "x": "in signed(DATA_WIDTH-1 downto 0)",
+                "y": "out signed(DATA_WIDTH-1 downto 0)"},
+            indent="    "
+        )
+        for i in range(len(expected_component_lines)):
+            self.assertEqual(expected_component_lines[i], component_string.splitlines()[i])
+
+    def test_generate_component_with_different_in_and_out_variables(self) -> None:
+        expected_component_lines = [
+            "    component lstm_common_gate is",
+            "        generic (",
+            "            DATA_WIDTH : integer := 16;",
+            "            FRAC_WIDTH : integer := 8;",
+            "            VECTOR_LEN_WIDTH : integer := 4",
+            "        );",
+            "        port (",
+            "            reset : in std_logic;",
+            "            clk : in std_logic;",
+            "            x : in signed(DATA_WIDTH-1 downto 0);",
+            "            w : in signed(DATA_WIDTH-1 downto 0);",
+            "            b : in signed(DATA_WIDTH-1 downto 0);",
+            "            vector_len : in unsigned(VECTOR_LEN_WIDTH-1 downto 0);",
+            "            idx : out unsigned(VECTOR_LEN_WIDTH-1 downto 0);",
+            "            ready : out std_logic;",
+            "            y : out signed(DATA_WIDTH-1 downto 0)",
+            "        );",
+            "    end component lstm_common_gate;"
+        ]
+        component_string = get_entity_or_component_string(
+            entity_or_component="component",
+            entity_or_component_name="lstm_common_gate",
+            data_width=16,
+            frac_width=8,
+            variables_dict={
+                "reset": "in std_logic",
+                "clk": "in std_logic",
+                "x": "in signed(DATA_WIDTH-1 downto 0)",
+                "w": "in signed(DATA_WIDTH-1 downto 0)",
+                "b": "in signed(DATA_WIDTH-1 downto 0)",
+                "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+                "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
+                "ready": "out std_logic",
+                "y": "out signed(DATA_WIDTH-1 downto 0)"
+            },
+            vector_len_width=4,
+            indent="    "
+        )
+        for i in range(len(expected_component_lines)):
+            self.assertEqual(expected_component_lines[i], component_string.splitlines()[i])
+
+    def test_generate_signal_definitions(self) -> None:
+        expected_inputs_lines = [
+            "    signal clk_period : time := 1 ns;",
+            "    signal test_input : signed(16-1 downto 0):=(others=>'0');",
+            "    signal test_output : signed(16-1 downto 0);"
+        ]
+        signal_definition_string = get_signal_definitions_string(signal_dict={
+            "clk_period": "time := 1 ns",
+            "test_input": "signed(16-1 downto 0):=(others=>'0')",
+            "test_output": "signed(16-1 downto 0)"
+        })
+        for i in range(len(expected_inputs_lines)):
+            self.assertEqual(expected_inputs_lines[i], signal_definition_string.splitlines()[i])
+
+    def test_generate_signal_definitions_multiple(self) -> None:
+        expected_inputs_lines = [
+            "    signal clk_period : time := 2 ps;",
+            "    signal clock : std_logic;",
+            "    signal reset, ready : std_logic:='0';",
+            "    signal X_MEM : RAM_ARRAY :=(others=>(others=>'0'));",
+            "    signal W_MEM : RAM_ARRAY:=(others=>(others=>'0'));",
+            "    signal x, w, y, b : signed(DATA_WIDTH-1 downto 0):=(others=>'0');",
+            "    signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
+            "    signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
+        ]
+        signal_definition_string = get_signal_definitions_string(signal_dict={
+            "clk_period": "time := 2 ps",
+            "clock": "std_logic",
+            "reset, ready": "std_logic:='0'",
+            "X_MEM": "RAM_ARRAY :=(others=>(others=>'0'))",
+            "W_MEM": "RAM_ARRAY:=(others=>(others=>'0'))",
+            "x, w, y, b": "signed(DATA_WIDTH-1 downto 0):=(others=>'0')",
+            "vector_len": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
+            "idx": "unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0')",
+        })
+        for i in range(len(expected_inputs_lines)):
+            self.assertEqual(expected_inputs_lines[i], signal_definition_string.splitlines()[i])
 
     def test_generate_libraries_with_math_lib(self) -> None:
         expected_import_lines = [
@@ -31,6 +184,6 @@ class GeneralStringsTest(unittest.TestCase):
         self.assertEqual(expected_architecture_header_line, architecture_header_string.splitlines()[0])
 
     def test_generate_architecture_end(self) -> None:
-        expected_test_architecture_end_line = "end behav ; -- behav"
+        expected_test_architecture_end_line = "end architecture behav ; -- behav"
         architecture_end_string = get_architecture_end_string(architecture_name="behav")
         self.assertEqual(expected_test_architecture_end_line, architecture_end_string.splitlines()[0])

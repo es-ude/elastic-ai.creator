@@ -4,93 +4,8 @@ from elasticai.generator.specific_testprocess_strings import \
     get_test_process_for_one_input_results_in_one_output_string, \
     get_test_process_for_multiple_input_results_in_one_output_string
 from elasticai.generator.general_strings import get_libraries_string, get_architecture_header_string, \
-    get_begin_architecture_string, get_architecture_end_string
-
-
-def get_entity_string(entity_name: Any, data_width, frac_width, vector_len_width=None) -> str:
-    """
-    returns the entity definition string for the entity_name
-    Args:
-        entity_name (Any): name of the entity
-    Returns:
-        string with entity definition
-    """
-    beginning_entity_str = "entity {entity_name} is\n".format(entity_name=entity_name)
-
-    generic_str = "    generic (\n"
-    generic_str = generic_str + "        DATA_WIDTH : integer := {data_width};\n".format(data_width=data_width)
-    generic_str = generic_str + "        FRAC_WIDTH : integer := {frac_width};\n".format(frac_width=frac_width)
-    if vector_len_width:
-        generic_str = generic_str + "        VECTOR_LEN_WIDTH : integer := {vector_len_width};\n".format(
-            vector_len_width=vector_len_width)
-    beginning_entity_str = beginning_entity_str + generic_str[:-2] + """
-        );\n"""
-
-    return beginning_entity_str + """    port ( clk: out std_logic);
-end entity ; -- {entity_name}
-\n""".format(entity_name=entity_name)
-
-
-def get_component_string(component_name: Any, data_width: Any, frac_width: Any, variables_dict: Dict,
-                         vector_len_width=None) -> str:
-    """
-    returns the component definition string
-    Args:
-        component_name (Any): name of the component
-        data_width (Any): data width
-        frac_width (Any): frac width
-        variables_dict (Dict): dictionary with all variables and their definition
-        vector_len_width (): default not specified, if specified added to the generic part
-    Returns:
-        string of the component definition
-    """
-    first_part_of_string = """    ------------------------------------------------------------
-    -- Declare Components for testing
-    ------------------------------------------------------------
-    component {component_name} is
-        generic (
-                DATA_WIDTH : integer := {data_width};
-                FRAC_WIDTH : integer := {frac_width}""".format(component_name=component_name, data_width=data_width,
-                                                               frac_width=frac_width)
-
-    # eventually add vector_len_width
-    if vector_len_width:
-        second_part_of_string = f";\n                VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(
-            vector_len_width=vector_len_width)
-    else:
-        second_part_of_string = "\n"
-
-    closing_of_generic_string = """            );
-        port (\n"""
-
-    # add variables
-    variables_list_str = ""
-    for variable in variables_dict:
-        variables_list_str = variables_list_str + "            {variable} : {definition};\n".format(variable=variable,
-                                                                                                    definition=
-                                                                                                    variables_dict[
-                                                                                                        variable])
-    # remove last linebreak and semicolon
-    return first_part_of_string + second_part_of_string + closing_of_generic_string + variables_list_str[:-2] + """
-        );
-    end component {component_name};
-\n""".format(component_name=component_name)
-
-
-def get_signal_definitions_string(signal_dict: Dict) -> str:
-    """
-    returns signal definitions string
-    Args:
-        signal_dict (Dict): dictionary with the name of each signal and its definition
-    Returns:
-        string of the signal definitions
-    """
-    signal_dict_str = ""
-    for signal in signal_dict:
-        signal_dict_str = signal_dict_str + "    signal " + signal + " : " + signal_dict[signal] + ";\n"
-    return """    ------------------------------------------------------------
-    -- Testbench Internal Signals
-    ------------------------------------------------------------\n""" + signal_dict_str + "\n"
+    get_begin_architecture_string, get_architecture_end_string, get_entity_or_component_string, \
+    get_signal_definitions_string
 
 
 def get_type_definitions_string(type_dict: Dict) -> str:
@@ -234,14 +149,23 @@ def write_testbench_file(
     """
     with open(path_to_testbench + test_bench_file_name, 'w') as f:
         f.write(get_libraries_string(math_lib=math_lib))
-        f.write(get_entity_string(entity_name=component_name + "_tb", data_width=data_width, frac_width=frac_width,
-                                  vector_len_width=vector_len_width))
+        f.write(get_entity_or_component_string(entity_or_component="entity",
+                                               entity_or_component_name=component_name + "_tb",
+                                               data_width=data_width,
+                                               frac_width=frac_width,
+                                               variables_dict={"clk": "out std_logic"},
+                                               vector_len_width=vector_len_width))
         f.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name + "_tb"))
         if type_definitions_dict:
             f.write(get_type_definitions_string(type_dict=type_definitions_dict))
         f.write(get_signal_definitions_string(signal_dict=signal_definitions_dict))
-        f.write(get_component_string(component_name=component_name, data_width=data_width, frac_width=frac_width,
-                                     vector_len_width=vector_len_width, variables_dict=component_variables_dict))
+        f.write(get_entity_or_component_string(entity_or_component="component",
+                                               entity_or_component_name=component_name,
+                                               data_width=data_width,
+                                               frac_width=frac_width,
+                                               vector_len_width=vector_len_width,
+                                               variables_dict=component_variables_dict,
+                                               indent="    "))
         f.write(get_begin_architecture_string())
         f.write(get_clock_process_string(clock_name=clock_name))
         f.write(get_uut_string(component_name=component_name, mapping_dict=uut_mapping_dict))

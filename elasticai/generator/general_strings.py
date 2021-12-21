@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 
 def get_libraries_string(math_lib: bool = False, work_lib: bool = False) -> str:
@@ -14,13 +14,76 @@ def get_libraries_string(math_lib: bool = False, work_lib: bool = False) -> str:
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 """
-    if math_lib:
-        lib_string = lib_string + "use ieee.math_real.all;\n"
-    if work_lib:
-        lib_string = lib_string + "LIBRARY work;\nuse work.all;\n"
+    if math_lib or work_lib:
+        if math_lib:
+            lib_string = lib_string + "use ieee.math_real.all;\n"
+        if work_lib:
+            lib_string = lib_string + "LIBRARY work;\nuse work.all;\n"
     else:
         lib_string = lib_string + "\n"
     return lib_string + '\n'
+
+
+def get_entity_or_component_string(entity_or_component: str, entity_or_component_name: str, data_width: int,
+                                   frac_width: int, variables_dict: Dict, vector_len_width: int = None, indent: str = ""):
+    """
+        returns the entity or component definition string
+        Args:
+            entity_or_component (str):
+            entity_or_component_name (str):
+            data_width (int): data width
+            frac_width (int): frac width
+            variables_dict (Dict): dictionary with all variables and their definition
+            vector_len_width (int): default not specified, if specified added to the generic part
+            indent (str): number of tabs needed, specified in string
+        Returns:
+            string of the entity or component definition
+        """
+    first_part_of_string = """{indent}{entity_or_component} {entity_or_component_name} is
+    {indent}generic (
+        {indent}DATA_WIDTH : integer := {data_width};
+        {indent}FRAC_WIDTH : integer := {frac_width}""".format(indent=indent,
+                                                                   entity_or_component=entity_or_component,
+                                                                   entity_or_component_name=entity_or_component_name,
+                                                                   data_width=data_width,
+                                                                   frac_width=frac_width)
+
+    # eventually add vector_len_width
+    if vector_len_width:
+        second_part_of_string = f";\n        {indent}VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(
+            indent=indent, vector_len_width=vector_len_width)
+    else:
+        second_part_of_string = "\n"
+
+    closing_of_generic_string = """    {indent});
+    {indent}port (\n""".format(indent=indent)
+
+    # add variables
+    variables_list_str = ""
+    for variable in variables_dict:
+        variables_list_str = variables_list_str + "        {indent}{variable} : {definition};\n".format(
+            indent=indent,
+            variable=variable,
+            definition=variables_dict[variable])
+    # remove last linebreak and semicolon
+    return first_part_of_string + second_part_of_string + closing_of_generic_string + variables_list_str[:-2] + """
+    {indent});
+{indent}end {entity_or_component} {entity_or_component_name};
+\n""".format(indent=indent, entity_or_component=entity_or_component, entity_or_component_name=entity_or_component_name)
+
+
+def get_signal_definitions_string(signal_dict: Dict) -> str:
+    """
+    returns signal definitions string
+    Args:
+        signal_dict (Dict): dictionary with the name of each signal and its definition
+    Returns:
+        string of the signal definitions
+    """
+    signal_dict_str = ""
+    for signal in signal_dict:
+        signal_dict_str = signal_dict_str + "    signal " + signal + " : " + signal_dict[signal] + ";\n"
+    return signal_dict_str + "\n"
 
 
 def get_architecture_header_string(architecture_name: Any, component_name: Any) -> str:
@@ -51,5 +114,5 @@ def get_architecture_end_string(architecture_name) -> str:
     Returns:
         string of architecture end
     """
-    return """end {architecture_name} ; -- {architecture_name}
+    return """end architecture {architecture_name} ; -- {architecture_name}
 \n""".format(architecture_name=architecture_name)

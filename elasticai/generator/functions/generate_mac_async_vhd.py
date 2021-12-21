@@ -12,11 +12,22 @@ DATA_FRAC = 8
 def main():
     with open(get_path_file("source", "generated_" + file_name), "w") as writer:
         writer.write(get_libraries_string())
-        writer.write(write_entity(entity_name=component_name, data_width=DATA_WIDTH, frac_width=DATA_FRAC,
-                                  variables_dict={"x1": "in", "x2": "in", "w1": "in", "w2": "in", "b": "in",
-                                                  "y": "out"}))
+        writer.write(get_entity_or_component_string(
+            entity_or_component="entity",
+            entity_or_component_name=component_name,
+            data_width=DATA_WIDTH,
+            frac_width=DATA_FRAC,
+            variables_dict={
+                "x1": "in signed(DATA_WIDTH-1 downto 0)",
+                "x2": "in signed(DATA_WIDTH-1 downto 0)",
+                "w1": "in signed(DATA_WIDTH-1 downto 0)",
+                "w2": "in signed(DATA_WIDTH-1 downto 0)",
+                "b": "in signed(DATA_WIDTH-1 downto 0)",
+                "y": "out signed(DATA_WIDTH-1 downto 0)"}
+        ))
         writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
-        writer.write(write_architecture_signals_definition(["product_1", "product_2"]))
+        writer.write(get_signal_definitions_string(signal_dict={"product_1": "signed(DATA_WIDTH-1 downto 0)",
+                                                                "product_2": "signed(DATA_WIDTH-1 downto 0)"}))
         writer.write(get_begin_architecture_string())
         writer.write(write_mac_async_architecture_behavior())
         writer.write(get_architecture_end_string(architecture_name=architecture_name))

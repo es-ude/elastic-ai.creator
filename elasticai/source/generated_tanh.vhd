@@ -5,14 +5,14 @@ use ieee.numeric_std.all;               -- for type conversions
 
 entity tanh is
     generic (
-            DATA_WIDTH: integer := 16;
-            FRAC_WIDTH: integer := 8
+        DATA_WIDTH : integer := 16;
+        FRAC_WIDTH : integer := 8
     );
     port (
-            x : in signed(DATA_WIDTH-1 downto 0);
-            y : out signed(DATA_WIDTH-1 downto 0)
-		);
-end tanh;
+        x : in signed(DATA_WIDTH-1 downto 0);
+        y : out signed(DATA_WIDTH-1 downto 0)
+    );
+end entity tanh;
 
 architecture tanh_rtl of tanh is
 
@@ -544,5 +544,5 @@ begin
 		
     end process;                
     
-end tanh_rtl;
-    
+end architecture tanh_rtl ; -- tanh_rtl
+

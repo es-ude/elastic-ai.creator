@@ -6,17 +6,17 @@ use work.all;
 
 entity lstm_cell is
     generic (
-            DATA_WIDTH: integer := 16;
-            FRAC_WIDTH: integer := 8
+        DATA_WIDTH : integer := 16;
+        FRAC_WIDTH : integer := 8
     );
     port (
-            x : in signed(DATA_WIDTH-1 downto 0);
-            c_in : in signed(DATA_WIDTH-1 downto 0);
-            h_in : in signed(DATA_WIDTH-1 downto 0);
-            c_out : out signed(DATA_WIDTH-1 downto 0);
-            h_out : out signed(DATA_WIDTH-1 downto 0)
-		);
-end lstm_cell;
+        x : in signed(DATA_WIDTH-1 downto 0);
+        c_in : in signed(DATA_WIDTH-1 downto 0);
+        h_in : in signed(DATA_WIDTH-1 downto 0);
+        c_out : out signed(DATA_WIDTH-1 downto 0);
+        h_out : out signed(DATA_WIDTH-1 downto 0)
+    );
+end entity lstm_cell;
 
 architecture lstm_cell_rtl of lstm_cell is
 
@@ -66,44 +66,45 @@ signal c_new_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
 signal h_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
 
 
-    component mac_async is
-        generic (
-                DATA_WIDTH : integer := DATA_WIDTH;
-                FRAC_WIDTH : integer := FRAC_WIDTH
-            );
-        port (
-            x1 : in signed(DATA_WIDTH-1 downto 0);
-            x2 : in signed(DATA_WIDTH-1 downto 0);
-            w1 : in signed(DATA_WIDTH-1 downto 0);
-            w2 : in signed(DATA_WIDTH-1 downto 0);
-            b : in signed(DATA_WIDTH-1 downto 0);
-            y : out signed(DATA_WIDTH-1 downto 0)
-        );
-    end component mac_async;
+component mac_async is
+    generic (
+        DATA_WIDTH : integer := DATA_WIDTH;
+        FRAC_WIDTH : integer := FRAC_WIDTH
+    );
+    port (
+        x1 : in signed(DATA_WIDTH-1 downto 0);
+        x2 : in signed(DATA_WIDTH-1 downto 0);
+        w1 : in signed(DATA_WIDTH-1 downto 0);
+        w2 : in signed(DATA_WIDTH-1 downto 0);
+        b : in signed(DATA_WIDTH-1 downto 0);
+        y : out signed(DATA_WIDTH-1 downto 0)
+    );
+end component mac_async;
 
-    component sigmoid is
-        generic (
-                DATA_WIDTH : integer := DATA_WIDTH;
-                FRAC_WIDTH : integer := FRAC_WIDTH
-            );
-        port (
-            x : in signed(DATA_WIDTH-1 downto 0);
-            y : out signed(DATA_WIDTH-1 downto 0)
-        );
-    end component sigmoid;
+component sigmoid is
+    generic (
+        DATA_WIDTH : integer := DATA_WIDTH;
+        FRAC_WIDTH : integer := FRAC_WIDTH
+    );
+    port (
+        x : in signed(DATA_WIDTH-1 downto 0);
+        y : out signed(DATA_WIDTH-1 downto 0)
+    );
+end component sigmoid;
 
-    component tanh is
-        generic (
-                DATA_WIDTH : integer := DATA_WIDTH;
-                FRAC_WIDTH : integer := FRAC_WIDTH
-            );
-        port (
-            x : in signed(DATA_WIDTH-1 downto 0);
-            y : out signed(DATA_WIDTH-1 downto 0)
-        );
-    end component tanh;
+component tanh is
+    generic (
+        DATA_WIDTH : integer := DATA_WIDTH;
+        FRAC_WIDTH : integer := FRAC_WIDTH
+    );
+    port (
+        x : in signed(DATA_WIDTH-1 downto 0);
+        y : out signed(DATA_WIDTH-1 downto 0)
+    );
+end component tanh;
 
 begin
+
     -- signals will be output to the cell
     c_out <= c_new_wo_activation;
     h_out <= h_new;
@@ -193,5 +194,5 @@ begin
         h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
     end process;
 
-end lstm_cell_rtl;
-    
+end architecture lstm_cell_rtl ; -- lstm_cell_rtl
+

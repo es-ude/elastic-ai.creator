@@ -1,7 +1,7 @@
 from elasticai.generator.testbench_strings import write_testbench_file
 
 
-def main(path_to_testbench: str = '../testbench/') -> None:
+def main(path_to_testbench: str = '../../testbench/') -> None:
     """
     generates the vhd testbench file in the testbench folder for lstm common gate
     Args:

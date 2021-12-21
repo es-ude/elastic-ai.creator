@@ -1,33 +1,29 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
-use ieee.math_real.all;                 -- for the ceiling and log constant calculation function
+use ieee.math_real.all;
 
 entity tanh_tb is
     generic (
         DATA_WIDTH : integer := 16;
         FRAC_WIDTH : integer := 8
-        );
-    port ( clk: out std_logic);
-end entity ; -- tanh_tb
+    );
+    port (
+        clk : out std_logic
+    );
+end entity tanh_tb;
 
 architecture arch of tanh_tb is
 
-    ------------------------------------------------------------
-    -- Testbench Internal Signals
-    ------------------------------------------------------------
     signal clk_period : time := 1 ns;
     signal test_input : signed(16-1 downto 0):=(others=>'0');
     signal test_output : signed(16-1 downto 0);
 
-    ------------------------------------------------------------
-    -- Declare Components for testing
-    ------------------------------------------------------------
     component tanh is
         generic (
-                DATA_WIDTH : integer := 16;
-                FRAC_WIDTH : integer := 8
-            );
+            DATA_WIDTH : integer := 16;
+            FRAC_WIDTH : integer := 8
+        );
         port (
             x : in signed(DATA_WIDTH-1 downto 0);
             y : out signed(DATA_WIDTH-1 downto 0)
@@ -99,5 +95,5 @@ begin
 
     end process; -- test_process
 
-end arch ; -- arch
+end architecture arch ; -- arch
 

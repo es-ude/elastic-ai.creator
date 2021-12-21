@@ -1,16 +1,18 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
-use ieee.math_real.all;                 -- for the ceiling and log constant calculation function
+use ieee.math_real.all;
 
 entity lstm_common_gate_tb is
     generic (
         DATA_WIDTH : integer := 16;
         FRAC_WIDTH : integer := 8;
         VECTOR_LEN_WIDTH : integer := 4
-        );
-    port ( clk: out std_logic);
-end entity ; -- lstm_common_gate_tb
+    );
+    port (
+        clk : out std_logic
+    );
+end entity lstm_common_gate_tb;
 
 architecture arch of lstm_common_gate_tb is
 
@@ -19,9 +21,6 @@ architecture arch of lstm_common_gate_tb is
     ------------------------------------------------------------
     type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);
 
-    ------------------------------------------------------------
-    -- Testbench Internal Signals
-    ------------------------------------------------------------
     signal clk_period : time := 2 ps;
     signal clock : std_logic;
     signal reset, ready : std_logic:='0';
@@ -31,15 +30,12 @@ architecture arch of lstm_common_gate_tb is
     signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
     signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');
 
-    ------------------------------------------------------------
-    -- Declare Components for testing
-    ------------------------------------------------------------
     component lstm_common_gate is
         generic (
-                DATA_WIDTH : integer := 16;
-                FRAC_WIDTH : integer := 8;
-                VECTOR_LEN_WIDTH : integer := 4
-            );
+            DATA_WIDTH : integer := 16;
+            FRAC_WIDTH : integer := 8;
+            VECTOR_LEN_WIDTH : integer := 4
+        );
         port (
             reset : in std_logic;
             clk : in std_logic;
@@ -170,5 +166,5 @@ begin
 
     end process; -- test_process
 
-end arch ; -- arch
+end architecture arch ; -- arch
 
