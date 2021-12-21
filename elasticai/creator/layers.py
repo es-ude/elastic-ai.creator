@@ -1,4 +1,5 @@
 import types
+import warnings
 from abc import abstractmethod
 from typing import Optional, Tuple, Callable, Protocol, List, Any
 
@@ -157,7 +158,12 @@ class QuantizeTwoBit(torch.nn.Module):
     def thresholds(self):
         return torch.cat((torch.Tensor([0.]), self.factors), 0)
 
+
 def _init_quantizable_convolution(self, quantizer, bias, constraints):
+    warnings.warn(f"{type(self).__name__} is deprecated, use pytorch parametrization "
+                  "instead. "
+                  "See https://pytorch.org/tutorials/intermediate/parametrizations.html",
+                  DeprecationWarning, stacklevel=3)
     if isinstance(quantizer, Module):
         register_parametrization(self, "weight", quantizer)
         if bias:
@@ -165,9 +171,11 @@ def _init_quantizable_convolution(self, quantizer, bias, constraints):
     else:
         raise TypeError(f"Quantizer {quantizer} is not an instance of Module.")
     self.constraints = constraints if constraints else None
+
     def apply_constraint(self):
         if self.constraints:
             [constraint(self) for constraint in self.constraints]
+
     self.apply_constraint = types.MethodType(apply_constraint, self)
 
 
@@ -202,6 +210,7 @@ class QConv1d(torch.nn.Conv1d):
             bias=bias,
             padding_mode=padding_mode,
         )
+
         _init_quantizable_convolution(self,
                                       quantizer=quantizer,
                                       bias=bias,
