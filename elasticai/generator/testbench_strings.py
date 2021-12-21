@@ -4,8 +4,8 @@ from elasticai.generator.specific_testprocess_strings import \
     get_test_process_for_one_input_results_in_one_output_string, \
     get_test_process_for_multiple_input_results_in_one_output_string
 from elasticai.generator.general_strings import get_libraries_string, get_architecture_header_string, \
-    get_begin_architecture_string, get_architecture_end_string, get_entity_or_component_string, \
-    get_signal_definitions_string
+    get_architecture_begin_string, get_architecture_end_string, get_entity_or_component_string, \
+    get_signal_definitions_string, get_variable_definitions_string
 
 
 def get_type_definitions_string(type_dict: Dict) -> str:
@@ -23,21 +23,6 @@ def get_type_definitions_string(type_dict: Dict) -> str:
         type_dict_str = type_dict_str + "    type {type_variable} is {type_definition};\n". \
             format(type_variable=type_variable, type_definition=type_dict[type_variable])
     return type_dict_str + "\n"
-
-
-def get_variable_definitions_string(variable_dict: Dict) -> str:
-    """
-    returns variable definitions string in form of variable <= variable_definition
-    Args:
-        variable_dict (Dict): dictionary with the name of the variable and its definition
-    Returns:
-        string of the variable definitions
-    """
-    variable_str = ""
-    for variable in variable_dict:
-        variable_str = variable_str + "    {variable} <= {variable_definition};\n". \
-            format(variable=variable, variable_definition=variable_dict[variable])
-    return variable_str + "\n"
 
 
 def get_clock_process_string(clock_name="clk") -> str:
@@ -155,7 +140,8 @@ def write_testbench_file(
                                                frac_width=frac_width,
                                                variables_dict={"clk": "out std_logic"},
                                                vector_len_width=vector_len_width))
-        f.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name + "_tb"))
+        f.write(
+            get_architecture_header_string(architecture_name=architecture_name, component_name=component_name + "_tb"))
         if type_definitions_dict:
             f.write(get_type_definitions_string(type_dict=type_definitions_dict))
         f.write(get_signal_definitions_string(signal_dict=signal_definitions_dict))
@@ -166,7 +152,7 @@ def write_testbench_file(
                                                vector_len_width=vector_len_width,
                                                variables_dict=component_variables_dict,
                                                indent="    "))
-        f.write(get_begin_architecture_string())
+        f.write(get_architecture_begin_string())
         f.write(get_clock_process_string(clock_name=clock_name))
         f.write(get_uut_string(component_name=component_name, mapping_dict=uut_mapping_dict))
         if variable_definitions_before_test_process_dict:
