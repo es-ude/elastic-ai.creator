@@ -1,6 +1,6 @@
 import unittest
 from os.path import exists
-from elasticai.generator.generate_sigmoid_vhd import main
+from elasticai.generator.functions.generate_sigmoid_vhd import main
 
 
 class GenerateLSTMCellVhdTest(unittest.TestCase):
