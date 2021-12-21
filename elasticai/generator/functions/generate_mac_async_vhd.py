@@ -10,7 +10,10 @@ DATA_FRAC = 8
 
 
 def main():
-    with open(get_path_file("source", "generated_" + file_name), "w") as writer:
+    file_path = get_file_path(folder_names=["..", "source"],
+                              file_name="generated_" + file_name)
+
+    with open(file_path, "w") as writer:
         writer.write(get_libraries_string())
         writer.write(get_entity_or_component_string(
             entity_or_component="entity",
@@ -28,8 +31,8 @@ def main():
         writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
         writer.write(get_signal_definitions_string(signal_dict={"product_1": "signed(DATA_WIDTH-1 downto 0)",
                                                                 "product_2": "signed(DATA_WIDTH-1 downto 0)"}))
-        writer.write(get_begin_architecture_string())
-        writer.write(write_mac_async_architecture_behavior())
+        writer.write(get_architecture_begin_string())
+        writer.write(get_mac_async_architecture_behavior_string())
         writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
 

@@ -17,7 +17,10 @@ x_list = np.linspace(-5, 5, 66)  # [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
 
 
 def main():
-    with open(get_path_file("source", "generated_" + file_name), "w") as writer:
+    file_path = get_file_path(folder_names=["..", "source"],
+                              file_name="generated_" + file_name)
+
+    with open(file_path, "w") as writer:
         writer.write(get_libraries_string())
         writer.write(get_entity_or_component_string(
             entity_or_component="entity",
@@ -28,7 +31,7 @@ def main():
                 "x": "in signed(DATA_WIDTH-1 downto 0)",
                 "y": "out signed(DATA_WIDTH-1 downto 0)"}))
         writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
-        writer.write(write_process(component_name=component_name, process_name=sigmoid_process(x_list)))
+        writer.write(get_process_string(component_name=component_name, process_name=sigmoid_process(x_list)))
         writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
 
