@@ -35,6 +35,9 @@ class Precomputation:
     """
     The Precomputation class provides a higher level api for precomputing the results of arbitrary pytorch modules.
     It is not a pytorch module itself nor intended to be used like one.
+    Precomputations can be exported to JSON with `elasticai.creator.precomputation.JSONEncoder`.
+    Note that this does not preserve the exact information about the module that was precomputed.
+    There is no way currently to load an exported Precomputation object.
     """
 
     def __init__(self, module: ModuleProto,
