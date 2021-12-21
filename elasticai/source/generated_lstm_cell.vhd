@@ -20,21 +20,18 @@ end entity lstm_cell;
 
 architecture lstm_cell_rtl of lstm_cell is
 
-   -- -- signals -- -- 
-    signal wii: signed(DATA_WIDTH-1 downto 0) := X"ffff"; -- W_ii
-	signal wif : signed(DATA_WIDTH-1 downto 0) := X"0089"; -- W_if
-	signal wig : signed(DATA_WIDTH-1 downto 0) := X"ff2e"; -- W_ig
-	signal wio : signed(DATA_WIDTH-1 downto 0) := X"ff44"; -- W_io
-	signal whi : signed(DATA_WIDTH-1 downto 0) := X"ff9e"; -- W_hi
-	signal whf : signed(DATA_WIDTH-1 downto 0) := X"0044"; -- W_hf
-	signal whg : signed(DATA_WIDTH-1 downto 0) := X"fffb"; -- W_hg
-	signal who : signed(DATA_WIDTH-1 downto 0) := X"00ca"; -- W_ho
-	signal bi : signed(DATA_WIDTH-1 downto 0) := X"fef5"; -- b_ii + b_hi
-	signal bf : signed(DATA_WIDTH-1 downto 0) := X"ff9b"; -- b_if + b_hf
-	signal bg : signed(DATA_WIDTH-1 downto 0) := X"ff4a"; -- b_ig + b_hg
-	signal bo : signed(DATA_WIDTH-1 downto 0) := X"ffd8"; -- b_io + b_ho
-	 
-    -- -- signals -- --
+    signal wii : signed(DATA_WIDTH-1 downto 0) := X"ffff"; -- W_ii;
+    signal wif : signed(DATA_WIDTH-1 downto 0) := X"0089"; -- W_if;
+    signal wig : signed(DATA_WIDTH-1 downto 0) := X"ff2e"; -- W_ig;
+    signal wio : signed(DATA_WIDTH-1 downto 0) := X"ff44"; -- W_io;
+    signal whi : signed(DATA_WIDTH-1 downto 0) := X"ff9e"; -- W_hi;
+    signal whf : signed(DATA_WIDTH-1 downto 0) := X"0044"; -- W_hf;
+    signal whg : signed(DATA_WIDTH-1 downto 0) := X"fffb"; -- W_hg;
+    signal who : signed(DATA_WIDTH-1 downto 0) := X"00ca"; -- W_ho;
+    signal bi : signed(DATA_WIDTH-1 downto 0) := X"fef5"; -- b_ii + b_hi;
+    signal bf : signed(DATA_WIDTH-1 downto 0) := X"ff9b"; -- b_if + b_hf;
+    signal bg : signed(DATA_WIDTH-1 downto 0) := X"ff4a"; -- b_ig + b_hg;
+    signal bo : signed(DATA_WIDTH-1 downto 0) := X"ffd8"; -- b_io + b_ho;
 
 -- Intermediate results
 -- Input gate without/with activation
@@ -105,7 +102,6 @@ end component tanh;
 
 begin
 
-    -- signals will be output to the cell
     c_out <= c_new_wo_activation;
     h_out <= h_new;
 
