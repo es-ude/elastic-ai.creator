@@ -3,9 +3,18 @@ import random
 import torch
 import torch.nn as nn
 from elasticai.creator.layers import QLSTMCell
+from typing import Dict, List
 
 
-def tanh_process(x_list):
+def tanh_process(x_list: List) -> str:
+    """
+        returns the string of a lookup table
+    Args:
+        x_list (List): List contains integers
+    Returns:
+        String of lookup table (if/elsif statements for vhdl file)
+    """
+
     def _bin_digits(n, bits):
         s = bin(n & int("1" * bits, 2))[2:]
         return ("{0:0>%s}" % bits).format(s)
@@ -36,7 +45,14 @@ def tanh_process(x_list):
     return string
 
 
-def sigmoid_process(x_list):
+def sigmoid_process(x_list: List) -> str:
+    """
+        returns the string of a lookup table
+    Args:
+        x_list (List): List contains integers
+    Returns:
+        String of lookup table (if/elsif statements for vhdl file)
+    """
     def _sigmoid(x):
         return 1 / (1 + math.exp(-x))
 
@@ -66,36 +82,56 @@ def sigmoid_process(x_list):
     return string
 
 
-def _int_to_hex(val, nbits):
+def _int_to_hex(val: int, nbits: int) -> str:
+    """
+        returns a string of a hexadecimal value for an integer
+    Args:
+        val (int): the integer value which will converted in hexadecimal
+        nbits(int): the number of bits
+    Returns:
+        String of a hexadecimal value for an integer
+    """
     if val < 0:
         return hex((val + (1 << nbits)) % (1 << nbits))
     else:
         return "{0:#0{1}x}".format(val, 2 + int(nbits / 4))
 
 
-def _floating_to_fixed_point_int(f_val, frac_width):
-    return str(int(f_val * (2 ** frac_width)))
-
-
-def _floating_to_hex(f_val, frac_width, nbits):
+def _floating_to_hex(f_val: float, frac_width: int, nbits: int) -> str:
+    """
+        returns a string of a hexadecimal value for a floating point number
+    Args:
+        f_val (int): the floating point number which will converted to hexadecimal
+        nbits(int): the number of bits
+        frac_width(int): the number of bits for the fraction
+    Returns:
+        String of a hexadecimal value for a floating number
+    """
     int_val = int(f_val * (2 ** frac_width))
     return _int_to_hex(int_val, nbits)
 
 
-def _to_vhdl_parameter(f_val, frac_width, nbits, name_parameter=None, vhdl_prefix=None):
+def _to_vhdl_parameter(f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str) -> Dict:
+    """
+        returns a Dictionary of one signal and his definition
+    Args:
+        f_val (float): a floating point number
+        nbits(int): the number of bits
+        frac_width(int): the number of bits for the fraction
+    Returns:
+        String of a hexadecimal value for an integer
+    """
     hex_str = _floating_to_hex(f_val, frac_width, nbits)
     hex_str_without_prefix = hex_str[2:]
-    if name_parameter is None:
-        return hex_str_without_prefix
-    else:
-        return "" + vhdl_prefix + "X\"" + hex_str_without_prefix + "\"; -- " + name_parameter
+
+    return {
+        str(signal_name):
+            "signed(DATA_WIDTH-1 downto 0) := " + "X\"" + hex_str_without_prefix + "\"; -- " + name_parameter
+    }
 
 
-def _pytorch_lstm():
-    return nn.LSTMCell(1, 1)
+def _elastic_ai_creator_lstm() -> QLSTMCell:
 
-
-def _elastic_ai_creator_lstm():
     return QLSTMCell(1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity())
 
 
@@ -104,13 +140,20 @@ def _ensure_reproducibility():
     random.seed(0)
 
 
-def generate_vhdl_codes_for_parameters_of_an_lstm_cell(data_width, frac_width):
-    lines = []
+def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Dict:
+    """
+      returns Dict of signals names as key and their definition as value
+      Args:
+          data_width (int): the width of the data
+          frac_width (int): the fraction part of data_width
+      Returns:
+          Dict of the signal names and their definitions
+      """
+    dict_of_signals = {}
     # define the lstm cell
     _ensure_reproducibility()
     lstm_single_cell = _elastic_ai_creator_lstm()
 
-    # print the parameters in the vhdl format
     # weight_ih_l[k] : `(W_ii|W_if|W_ig|W_io)`
     # weight_hh_l[k] : `(W_hi|W_hf|W_hg|W_ho)`
     # bias_ih_l[k] :  `(b_ii|b_if|b_ig|b_io)`
@@ -127,23 +170,23 @@ def generate_vhdl_codes_for_parameters_of_an_lstm_cell(data_width, frac_width):
 
     for name, param in lstm_single_cell.named_parameters():
         if name == "weight_ih":
-            lines.append(_to_vhdl_parameter(param[0], frac_width, data_width, name_parameter="W_ii",
-                                            vhdl_prefix="signal wii: signed(DATA_WIDTH-1 downto 0) := "))
-            lines.append(_to_vhdl_parameter(param[1], frac_width, data_width, name_parameter="W_if",
-                                            vhdl_prefix="signal wif : signed(DATA_WIDTH-1 downto 0) := "))
-            lines.append(_to_vhdl_parameter(param[2], frac_width, data_width, name_parameter="W_ig",
-                                            vhdl_prefix="signal wig : signed(DATA_WIDTH-1 downto 0) := "))
-            lines.append(_to_vhdl_parameter(param[3], frac_width, data_width, name_parameter="W_io",
-                                            vhdl_prefix="signal wio : signed(DATA_WIDTH-1 downto 0) := "))
+            dict_of_signals.update(_to_vhdl_parameter(param[0], frac_width, data_width, name_parameter="W_ii",
+                                                      signal_name="wii"))
+            dict_of_signals.update(_to_vhdl_parameter(param[1], frac_width, data_width, name_parameter="W_if",
+                                                      signal_name="wif"))
+            dict_of_signals.update(_to_vhdl_parameter(param[2], frac_width, data_width, name_parameter="W_ig",
+                                                      signal_name="wig"))
+            dict_of_signals.update(_to_vhdl_parameter(param[3], frac_width, data_width, name_parameter="W_io",
+                                                      signal_name="wio"))
         elif name == "weight_hh":
-            lines.append(_to_vhdl_parameter(param[0], frac_width, data_width, name_parameter="W_hi",
-                                            vhdl_prefix="signal whi : signed(DATA_WIDTH-1 downto 0) := "))
-            lines.append(_to_vhdl_parameter(param[1], frac_width, data_width, name_parameter="W_hf",
-                                            vhdl_prefix="signal whf : signed(DATA_WIDTH-1 downto 0) := "))
-            lines.append(_to_vhdl_parameter(param[2], frac_width, data_width, name_parameter="W_hg",
-                                            vhdl_prefix="signal whg : signed(DATA_WIDTH-1 downto 0) := "))
-            lines.append(_to_vhdl_parameter(param[3], frac_width, data_width, name_parameter="W_ho",
-                                            vhdl_prefix="signal who : signed(DATA_WIDTH-1 downto 0) := "))
+            dict_of_signals.update(_to_vhdl_parameter(param[0], frac_width, data_width, name_parameter="W_hi",
+                                                      signal_name="whi"))
+            dict_of_signals.update(_to_vhdl_parameter(param[1], frac_width, data_width, name_parameter="W_hf",
+                                                      signal_name="whf"))
+            dict_of_signals.update(_to_vhdl_parameter(param[2], frac_width, data_width, name_parameter="W_hg",
+                                                      signal_name="whg"))
+            dict_of_signals.update(_to_vhdl_parameter(param[3], frac_width, data_width, name_parameter="W_ho",
+                                                      signal_name="who"))
         elif name == "bias_ih":
             b_ii = param[0]
             b_if = param[1]
@@ -155,20 +198,15 @@ def generate_vhdl_codes_for_parameters_of_an_lstm_cell(data_width, frac_width):
             b_hg = param[2]
             b_ho = param[3]
         else:
-            lines.append("should not come to here.")
+            dict_of_signals.update("should not come to here.")
 
-    lines.append(_to_vhdl_parameter(b_ii + b_hi, frac_width, data_width, name_parameter="b_ii + b_hi",
-                                    vhdl_prefix="signal bi : signed(DATA_WIDTH-1 downto 0) := "))
-    lines.append(_to_vhdl_parameter(b_if + b_hf, frac_width, data_width, name_parameter="b_if + b_hf",
-                                    vhdl_prefix="signal bf : signed(DATA_WIDTH-1 downto 0) := "))
-    lines.append(_to_vhdl_parameter(b_ig + b_hg, frac_width, data_width, name_parameter="b_ig + b_hg",
-                                    vhdl_prefix="signal bg : signed(DATA_WIDTH-1 downto 0) := "))
-    lines.append(_to_vhdl_parameter(b_io + b_ho, frac_width, data_width, name_parameter="b_io + b_ho",
-                                    vhdl_prefix="signal bo : signed(DATA_WIDTH-1 downto 0) := "))
-    # build the string of lines
-    string = ""
-    for line in lines:
-        string = string + line + '\n' + '\t'
-    return """   -- -- signals -- -- 
-    {string} 
-    -- -- signals -- --\n\n""".format(string=string)
+    dict_of_signals.update(_to_vhdl_parameter(b_ii + b_hi, frac_width, data_width, name_parameter="b_ii + b_hi",
+                                              signal_name="bi"))
+    dict_of_signals.update(_to_vhdl_parameter(b_if + b_hf, frac_width, data_width, name_parameter="b_if + b_hf",
+                                              signal_name="bf"))
+    dict_of_signals.update(_to_vhdl_parameter(b_ig + b_hg, frac_width, data_width, name_parameter="b_ig + b_hg",
+                                              signal_name="bg"))
+    dict_of_signals.update(_to_vhdl_parameter(b_io + b_ho, frac_width, data_width, name_parameter="b_io + b_ho",
+                                              signal_name="bo"))
+
+    return dict_of_signals
