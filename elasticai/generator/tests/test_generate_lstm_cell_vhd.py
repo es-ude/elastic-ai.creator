@@ -3,7 +3,7 @@ from os.path import exists
 from elasticai.generator.generate_sigmoid_vhd import main
 
 
-class GenerateSigmoidTestBenchTest(unittest.TestCase):
+class GenerateLSTMCellVhdTest(unittest.TestCase):
     def setUp(self) -> None:
         main()
         self.generated_file = open('../../source/generated_lstm_cell.vhd', 'r')

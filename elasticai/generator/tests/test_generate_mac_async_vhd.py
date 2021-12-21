@@ -3,7 +3,7 @@ from os.path import exists
 from elasticai.generator.generate_sigmoid_vhd import main
 
 
-class GenerateSigmoidTestBenchTest(unittest.TestCase):
+class GenerateMacAsyncVhdTest(unittest.TestCase):
     def setUp(self) -> None:
         main()
         self.generated_file = open('../../source/generated_mac_async.vhd', 'r')

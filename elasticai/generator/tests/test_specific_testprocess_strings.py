@@ -4,7 +4,7 @@ from elasticai.generator.specific_testprocess_strings import \
     get_test_process_for_multiple_input_results_in_one_output_string
 
 
-class GenerateSpecificTestProcessTest(unittest.TestCase):
+class SpecificTestProcessStringsTest(unittest.TestCase):
     def test_generate_test_process_for_one_input(self) -> None:
         expected_test_process_lines = [
             "        test_input <=  to_signed(-1281,16);",
