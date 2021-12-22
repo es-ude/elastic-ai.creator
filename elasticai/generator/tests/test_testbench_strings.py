@@ -2,7 +2,6 @@ import unittest
 from elasticai.generator.testbench_strings import get_type_definitions_string, \
     get_clock_process_string, get_uut_string, get_test_process_header_string, \
     get_test_process_end_string
-from elasticai.generator.general_strings import get_variable_definitions_string
 
 
 class TestbenchStringsTest(unittest.TestCase):
@@ -19,16 +18,6 @@ class TestbenchStringsTest(unittest.TestCase):
         })
         for i in range(len(expected_inputs_lines)):
             self.assertEqual(expected_inputs_lines[i], type_definition_string.splitlines()[i])
-
-    def test_generate_variable_definition(self) -> None:
-        expected_variable_lines = [
-            "    clk <= clock;"
-        ]
-        variable_definition_string = get_variable_definitions_string(variable_dict={
-            "clk": "clock",
-        })
-        for i in range(len(expected_variable_lines)):
-            self.assertEqual(expected_variable_lines[i], variable_definition_string.splitlines()[i])
 
     def test_generate_clock_process(self) -> None:
         expected_clock_lines = [

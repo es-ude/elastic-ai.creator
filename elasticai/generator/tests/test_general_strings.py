@@ -1,6 +1,6 @@
 import unittest
 from elasticai.generator.general_strings import get_libraries_string, get_architecture_header_string, \
-    get_architecture_end_string, get_entity_or_component_string, get_signal_definitions_string
+    get_architecture_end_string, get_entity_or_component_string, get_signal_definitions_string, get_variable_definitions_string
 
 
 class GeneralStringsTest(unittest.TestCase):
@@ -177,6 +177,16 @@ class GeneralStringsTest(unittest.TestCase):
         lib_string = get_libraries_string(math_lib=True)
         for i in range(0, 4):
             self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
+
+    def test_generate_variable_definition(self) -> None:
+        expected_variable_lines = [
+            "    clk <= clock;"
+        ]
+        variable_definition_string = get_variable_definitions_string(variable_dict={
+            "clk": "clock",
+        })
+        for i in range(len(expected_variable_lines)):
+            self.assertEqual(expected_variable_lines[i], variable_definition_string.splitlines()[i])
 
     def test_generate_architecture_header(self) -> None:
         expected_architecture_header_line = "architecture behav of sigmoid_tb is"

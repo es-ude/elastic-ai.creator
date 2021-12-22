@@ -6,9 +6,9 @@ from elasticai.generator.functions.generate_sigmoid_vhd import main
 class GenerateLSTMCellVhdTest(unittest.TestCase):
     def setUp(self) -> None:
         main()
-        self.generated_file = open('../../source/generated_lstm_cell.vhd', 'r')
+        self.generated_file = open('../../source/lstm_cell.vhd', 'r')
         self.generated_lines = self.generated_file.readlines()
-        self.expected_file = open('../../source/lstm_cell.vhd', 'r')
+        self.expected_file = open('vhdFiles/lstm_cell_for_testing.vhd', 'r')
         self.expected_lines = self.expected_file.readlines()
 
     def tearDown(self) -> None:
@@ -16,7 +16,7 @@ class GenerateLSTMCellVhdTest(unittest.TestCase):
         self.expected_file.close()
 
     def test_generate_file(self) -> None:
-        self.assertTrue(exists('../../source/generated_lstm_cell.vhd'))
+        self.assertTrue(exists('../../source/lstm_cell.vhd'))
 
     def test_compare_files(self) -> None:
         # clean each file from empty lines and lines which are just comment
