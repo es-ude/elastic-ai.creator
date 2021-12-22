@@ -11,8 +11,8 @@ FRAC_WIDTH = 8
 
 
 def main():
-    file_path = get_file_path(folder_names=["..", "source"],
-                              file_name="generated_" + file_name)
+    file_path = get_file_path_string(folder_names=["..", "source"],
+                                     file_name="generated_" + file_name)
 
     with open(file_path, "w") as writer:
         writer.write(get_libraries_string(work_lib=True))
@@ -27,21 +27,39 @@ def main():
                 "h_in": "in signed(DATA_WIDTH-1 downto 0)",
                 "c_out": "out signed(DATA_WIDTH-1 downto 0)",
                 "h_out": "out signed(DATA_WIDTH-1 downto 0)"}))
+
         # architecture structure
         writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
+
         # generate lstm signal definitions
         lstm_signal_definitions = generate_signal_definitions_for_lstm(data_width=DATA_WIDTH, frac_width=FRAC_WIDTH)
         writer.write(get_signal_definitions_string(lstm_signal_definitions))
-        writer.write(get_input_gate_string(without_activation="i_wo_activation",
-                                           with_activation="i"))
-        writer.write(get_forget_gate_string(without_activation="f_wo_activation",
-                                            with_activation="f"))
-        writer.write(get_cell_gate_string(without_activation="g_wo_activation",
-                                          with_activation="g"))
-        writer.write(get_output_gate_string(without_activation="o_wo_activation",
-                                            with_activation="o"))
-        writer.write(get_new_cell_state_string(without_activation="c_new",
-                                               with_activation="c_new_wo_activation"))
+
+        # string of input/forget/cell/output/ gate definition or new cell state definition
+        writer.write(get_gate_definition_string(comment="-- Intermediate results\n" \
+                                                        "-- Input gate without/with activation\n" \
+                                                        "-- i = \sigma(W_{ii} x + b_{ii} + W_{hi} h + b_{hi})",
+                                                signal_names=["i_wo_activation",
+                                                              "i"]))
+        writer.write(get_gate_definition_string(comment="-- Forget gate without/with activation\n"
+                                                        "-- f = \sigma(W_{if} x + b_{if} + W_{hf} h + b_{hf})",
+                                                signal_names=["f_wo_activation",
+                                                              "f"]))
+        writer.write(get_gate_definition_string(comment="-- Cell gate without/with activation\n"
+                                                        "-- g = \\tanh(W_{ig} x + b_{ig} + W_{hg} h + b_{hg})",
+                                                signal_names=["g_wo_activation",
+                                                              "g"]))
+        writer.write(get_gate_definition_string(comment="-- Output gate without/with activation\n"
+                                                        "-- o = \sigma(W_{io} x + b_{io} + W_{ho} h + b_{ho})",
+                                                signal_names=["o_wo_activation",
+                                                              "o"]))
+        writer.write(get_gate_definition_string(comment="-- new_cell_state without/with activation\n"
+                                                        "-- c' = f * c + i * g",
+                                                signal_names=["c_new",
+                                                              "c_new_wo_activation"]))
+        writer.write(get_gate_definition_string(comment=
+                                                """-- h' = o * \\tanh(c')""",
+                                                signal_names=["h_new"]))
         # components
         writer.write(get_entity_or_component_string(
             entity_or_component="component",
@@ -135,7 +153,12 @@ def main():
                                          component_name="sigmoid",
                                          signals={"x": "o_wo_activation",
                                                   "y": "o"}))
-        writer.write(get_lstm_process_string())
+        # write process
+        writer.write(get_define_process_string(
+            process_name="H_OUT_PROCESS",
+            sensitive_signals_list=["o", "c_new"],
+            behavior="h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);"))
+
         writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
 

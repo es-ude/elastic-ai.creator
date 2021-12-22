@@ -10,8 +10,8 @@ DATA_FRAC = 8
 
 
 def main():
-    file_path = get_file_path(folder_names=["..", "source"],
-                              file_name="generated_" + file_name)
+    file_path = get_file_path_string(folder_names=["..", "source"],
+                                     file_name="generated_" + file_name)
 
     with open(file_path, "w") as writer:
         writer.write(get_libraries_string())

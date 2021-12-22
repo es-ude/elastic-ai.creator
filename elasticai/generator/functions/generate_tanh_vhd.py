@@ -15,8 +15,8 @@ x_list = np.linspace(-5, 5, 259)
 
 
 def main():
-    file_path = get_file_path(folder_names=["..", "source"],
-                              file_name="generated_" + file_name)
+    file_path = get_file_path_string(folder_names=["..", "source"],
+                                     file_name="generated_" + file_name)
 
     with open(file_path, "w") as writer:
         writer.write(get_libraries_string())
@@ -30,7 +30,7 @@ def main():
                 "y": "out signed(DATA_WIDTH-1 downto 0)"}
         ))
         writer.write(get_architecture_header_string(architecture_name=architecture_name, component_name=component_name))
-        writer.write(get_process_string(component_name=component_name, process_name=tanh_process(x_list)))
+        writer.write(get_process_string(component_name=component_name, lookup_table_generator_function=tanh_process(x_list)))
         writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
 
