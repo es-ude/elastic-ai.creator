@@ -2,12 +2,12 @@ from typing import Any, Dict, List, Iterable
 from os import path
 
 
-def get_process_string(component_name: str, process_name) -> str:
+def get_process_string(component_name: str, lookup_table_generator_function) -> str:
     """
     returns the string of a process Block
     Args:
         component_name (str): the name of the component
-        process_name (str): a function in generator_functions which generate look up table for sigmoid/tanh
+        lookup_table_generator_function (str): a function in generator_functions which generate look up table for sigmoid/tanh
     Returns:
         string as vhdl process Block
     """
@@ -19,10 +19,10 @@ def get_process_string(component_name: str, process_name) -> str:
         
         {generate_process}
     end process;                
-    \n""".format(component_name=component_name, generate_process=process_name)
+    \n""".format(component_name=component_name, generate_process=lookup_table_generator_function)
 
 
-def get_file_path(folder_names: List[str], file_name: str) -> str:
+def get_file_path_string(folder_names: List[str], file_name: str) -> str:
     """
     returns String of a file path
     Args:
@@ -39,92 +39,21 @@ def get_file_path(folder_names: List[str], file_name: str) -> str:
     return file_path
 
 
-def get_input_gate_string(without_activation: str, with_activation: str) -> str:
+def get_gate_definition_string(comment: str, signal_names: List[str]) -> str:
     """
         returns the string of input gate
     Args:
-        without_activation (str): name of a signal
-        with_activation (str): name of a signal
+        comment(str): comment for the gate definition
+        signal_names (str): contains the name of signals with/without activation
     Returns:
-        string of input gate definition
+        string of input/forget/cell/output/ gate definition or new cell state definition
     """
-    string = """-- Intermediate results
--- Input gate without/with activation
--- i = \sigma(W_{ii} x + b_{ii} + W_{hi} h + b_{hi})\n""" + (
-        """signal {without_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-        signal {with_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n\n""").format(
-        without_activation=without_activation, with_activation=with_activation)
-    return string
+    signals_string = ""
+    for signal in signal_names:
+        signals_string += """signal {signal} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n""".format(signal=signal)
+    signals_string = comment + "\n" + signals_string + "\n\n\n"
 
-
-def get_forget_gate_string(without_activation: str, with_activation: str) -> str:
-    """
-        returns the string of forget gate definitions
-    Args:
-        without_activation (str): name of a signal
-        with_activation (str): name of a signal
-    Returns:
-        string of forget gate definition
-    """
-    string = """-- Forget gate without/with activation
--- f = \sigma(W_{if} x + b_{if} + W_{hf} h + b_{hf})\n""" + (
-        """signal {without_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal {with_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n\n""").format(
-        without_activation=without_activation, with_activation=with_activation)
-    return string
-
-
-def get_cell_gate_string(without_activation: str, with_activation: str) -> str:
-    """
-        returns the string of cell gate definitions
-    Args:
-        without_activation (str): name of a signal
-        with_activation (str): name of a signal
-    Returns:
-        string of cell gate definition
-    """
-    string = """-- Cell gate without/with activation
--- g = \\tanh(W_{ig} x + b_{ig} + W_{hg} h + b_{hg})\n""" + (
-        """signal {without_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal {with_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n\n""".format(
-            without_activation=without_activation, with_activation=with_activation))
-    return string
-
-
-def get_output_gate_string(without_activation: str, with_activation: str) -> str:
-    """
-        returns the string of output gate definitions
-    Args:
-        without_activation (str): name of a signal
-        with_activation (str): name of a signal
-    Returns:
-        string of output gate definition
-    """
-    string = """-- Output gate without/with activation
--- o = \sigma(W_{io} x + b_{io} + W_{ho} h + b_{ho})\n""" + (
-        """signal {without_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-        signal {with_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n\n""".format(
-            without_activation=without_activation, with_activation=with_activation))
-    return string
-
-
-def get_new_cell_state_string(without_activation: str, with_activation: str) -> str:
-    """
-        returns the string of new cell state definitions
-    Args:
-        without_activation (str): name of a signal
-        with_activation (str): name of a signal
-    Returns:
-        string of output gate definition
-    """
-    return """-- new_cell_state without/with activation
--- c' = f * c + i * g 
-signal {without_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal {with_activation} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-
--- h' = o * \\tanh(c')
-signal h_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n\n\n""".format(without_activation=without_activation,
-                                                                             with_activation=with_activation)
+    return signals_string
 
 
 # maybe it could be more general !
@@ -164,13 +93,18 @@ def get_port_map_string(map_name: str, component_name: str, signals) -> str:
     return string
 
 
-# maybe it could be more general !
-def get_lstm_process_string() -> str:
+def get_define_process_string(process_name: str, sensitive_signals_list: List[str], behavior: str) -> str:
     """
     Returns:
         string of lstm_process
     """
-    return """    H_OUT_PROCESS: process(o,c_new)
+    signal_string = ""
+    for signal in sensitive_signals_list:
+        signal_string += signal + ","
+    # remove the last comma
+    signal_string = signal_string.removesuffix(",")
+
+    return """    {process_name}: process({signal_string})
     begin
-        h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
-    end process;\n\n"""
+        {behavior}
+    end process;\n\n""".format(process_name=process_name, signal_string=signal_string, behavior=behavior)
