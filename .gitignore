@@ -2,6 +2,8 @@
 data
 elasticai/creator/translator/systemTests/expected_model/processed_data.pickle
 venv
+simulation
+simulation/*
 
 # python build output
 dist/
