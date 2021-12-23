@@ -12,16 +12,24 @@ packages = [
 [tool.poetry.dependencies]
 python = "~3.9"
 torch = "^1.10.0"
+brevitas = { version = "^0.7.0", optional = true }
+onnx = { version = "^1.10.2", optional = true }
+onnxoptimizer = { version = "^0.2.6", optional = true }
+torchvision = { version = "^0.11.2", optional = true }
+
+[tool.poetry.extras]
+brevitas = ['brevitas', 'onnx', 'onnxoptimizer']
+examples = ['torchvision']
+systemtests = ['torchvision']
 
 [tool.poetry.dev-dependencies]
 python-language-server = "^0.36.2"
-brevitas = "^0.7.0"
-onnx = "^1.10.2"
-onnxoptimizer = "^0.2.6"
 coverage = "^6.2"
 flake8 = "*"
 tox = "*"
 black = "^21.12b0"
+torchvision = "^0.11.2"
+
 
 [tool.flake8]
 max-line-length = 88

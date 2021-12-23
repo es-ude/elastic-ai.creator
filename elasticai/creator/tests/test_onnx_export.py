@@ -6,7 +6,7 @@ import torch
 
 from elasticai.creator.onnx import ModuleWrapper
 from elasticai.creator.tags_utils import tag
-from tensor_test_case import TensorTestCase
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
 class OnnxExportTest(TensorTestCase):

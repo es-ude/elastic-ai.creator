@@ -89,7 +89,7 @@ The structure of the project is as follows.
 The [qtorch](elasticai/creator/qtorch) folder includes our implementation of quantized PyTorch layer.
 The folder [protocols](elasticai/creator/protocols) contains some general protocols for the models and layers which are also used by multiple translated languages.
 In the [translator](elasticai/creator/translator) folder there are the modules which can be used for every translation from a pytorch model to a target language.
-The subfolder [brevitas](elasticai/creator/translator/brevitas) is for the translation to Brevitas.
+The subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas.
 Each language we can translate to has folders for unit tests, integration tests and system test. 
 
 ## QTorch
@@ -132,7 +132,7 @@ How to translate a given PyTorch model consisting of QTorch layers to Brevitas?
 This is how to translate a given model to a Brevitas model:
 
 ```python
-from elasticai.creator.translator.brevitas.brevitas_representation import BrevitasRepresentation
+from elasticai.creator.brevitas.brevitas_representation import BrevitasRepresentation
 
 converted_model = BrevitasRepresentation.from_pytorch(qtorch_model).translated_model
 ```
@@ -142,7 +142,7 @@ args:
 returns:
 - converted_model: a Brevitas model
 
-Example usages are shown here: [Brevitas system tests](elasticai/creator/translator/brevitas/systemTests).
+Example usages are shown here: [Brevitas system tests](elasticai/creator/systemTests).
 We also support to translate a brevitas model to onnx which is shown in the system test.
 
 ### Translations
@@ -159,7 +159,7 @@ The following QTorch or PyTorch layers are translated to the corresponding Brevi
 - PyTorch Flatten to PyTorch Flatten
 - PyTorch Sigmoid to PyTorch Sigmoid
 
-You can find the mappings in [translation_mapping](elasticai/creator/translator/brevitas/translation_mapping.py) and can easily add more PyTorch layers.
+You can find the mappings in [translation_mapping](elasticai/creator/brevitas/translation_mapping.py) and can easily add more PyTorch layers.
 
 ### Supported Layers for Brevitas Translation
 
@@ -176,7 +176,7 @@ You can find the mappings in [translation_mapping](elasticai/creator/translator/
   - ResidualQuantization 
   - QuantizeTwoBit 
   - QLSTM
-- we do not support all PyTorch layers, but you can easily add them in the [translation_mapping](elasticai/creator/translator/brevitas/translation_mapping.py).
+- we do not support all PyTorch layers, but you can easily add them in the [translation_mapping](elasticai/creator/brevitas/translation_mapping.py).
 
 ## General Limitations
 
@@ -188,14 +188,14 @@ New translation targets should be located in their own folder, e.g. Brevitas for
 Workflow for adding a new translation:
 1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
 2. Identify and label relevant structures, in the base cases it can be simply separate layers.
-3. Map each structure to its function which will convert it, like for [example](elasticai/creator/translator/brevitas/translation_mapping.py).
+3. Map each structure to its function which will convert it, like for [example](elasticai/creator/brevitas/translation_mapping.py).
 4. Do such conversions.
 5. Recreate connections based on 1.
 
 Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
 ## Model reporter
-As part of this repository an utility called [model reporter](elasticai/creator/translator/model_reporter.py) exists which is used to produce a file with the individual identifier from a given dataset. 
+As part of this repository an utility called [model reporter](elasticai/creator/model_reporter.py) exists which is used to produce a file with the individual identifier from a given dataset. 
 It is used for hardware comparisons, where a small subset of the data is used for comparison. 
 Example: 
 ```
@@ -235,21 +235,21 @@ If you want to add more tests please refer to the [Test Guidelines](test_guideli
 
 ### Brevitas System Tests
 
-The [Brevitas system tests](elasticai/creator/translator/brevitas/systemTests) can be used as example use cases of our implementation.
+The [Brevitas system tests](elasticai/creator/systemTests) can be used as example use cases of our implementation.
 We created tests which check the conversion of a model like we would expect our models will look like.
 In addition, we also created tests for validating the conversion for trained models or unusual models. 
 Note that you have to use your own data set and therefore maybe do some small adaptions by using the training.
 
 ### Brevitas Integration Tests
 
-Our  [Brevitas integration tests](elasticai/creator/translator/brevitas/integrationTests) are focused on testing the conversion of one specific layer. 
+Our  [Brevitas integration tests](elasticai/creator/integrationTests) are focused on testing the conversion of one specific layer. 
 We created for all our supported layers a minimal model with this layer included and test its functionality. 
 
 ### Brevitas Unit Tests
 
 In addition to system and integration tests we implemented unit tests. 
 The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
-The Brevitas unit tests can be found [here](elasticai/creator/translator/brevitas/unitTests).
+The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests).
 
 
 ## Developers Guide

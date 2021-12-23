@@ -4,7 +4,7 @@ Files containing tests for a python module should be located in a test directory
 Each file in the test directory should contain tests for one and only one class/function defined in the module. 
 Files containing tests should be named according to the rubric
 `test_ClassName.py`.
-Next, if needed for more specific tests define a class which is a subclass of unittest.TestCase like [test_brevitas_model_comparison](elasticai/creator/translator/brevitas/integrationTests/test_brevitas_model_comparison.py) in the integration tests folder. 
+Next, if needed for more specific tests define a class which is a subclass of unittest.TestCase like [test_brevitas_model_comparison](elasticai/creator/integrationTests/test_brevitas_model_comparison.py) in the integration tests folder. 
 Then subclass it, in this class define a setUp method (and possibly tearDown) to create the global environment. 
 It avoids introducing the category of bugs associated with copying and pasting code for reuse. 
 This class should be named similarly to the file name.

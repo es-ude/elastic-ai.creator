@@ -93,6 +93,10 @@ class Ternarize(torch.nn.Module):
     def codomain(self):
         return [-1, 0, 1]
 
+    @staticmethod
+    def right_inverse(x: Tensor) -> Tensor:
+        return x
+
     @property
     def thresholds(self):
         return torch.Tensor([0.5 / self.widening_factor, -0.5 / self.widening_factor])
