@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 
 from elasticai.creator.vhdl.generator.general_strings import (
@@ -12,46 +14,63 @@ from elasticai.creator.vhdl.generator.vhd_strings import (
     get_process_string,
 )
 
-component_name = "tanh"
-file_name = component_name + ".vhd"
-architecture_name = "tanh_rtl"
 
-DATA_WIDTH = 16
-FRAC_WIDTH = 8
+class Tanh:
+    def __init__(self, data_width, frac_width, x, component_name="tanh"):
+        self.component_name = component_name
+        self.data_width = data_width
+        self.frac_width = frac_width
+        self.x = x
 
-# generate 259 evenly spaced numbers between (-5,5)
-x_list = np.linspace(-5, 5, 259)
+    @property
+    def file_name(self) -> str:
+        return f"{self.component_name}.vhd"
 
+    @property
+    def architecture_name(self) -> str:
+        return f"{self.component_name}_rtl"
 
-def main():
-    file_path = get_file_path_string(folder_names=["..", "source"], file_name=file_name)
-
-    with open(file_path, "w") as writer:
-        writer.write(get_libraries_string())
-        writer.write(
-            get_entity_or_component_string(
+    def build(self) -> str:
+        code = ""
+        string_builders = [
+            get_libraries_string,
+            partial(
+                get_entity_or_component_string,
                 entity_or_component="entity",
-                entity_or_component_name=component_name,
-                data_width=DATA_WIDTH,
-                frac_width=FRAC_WIDTH,
+                entity_or_component_name=self.component_name,
+                data_width=self.data_width,
+                frac_width=self.frac_width,
                 variables_dict={
                     "x": "in signed(DATA_WIDTH-1 downto 0)",
                     "y": "out signed(DATA_WIDTH-1 downto 0)",
                 },
-            )
-        )
-        writer.write(
-            get_architecture_header_string(
-                architecture_name=architecture_name, component_name=component_name
-            )
-        )
-        writer.write(
-            get_process_string(
-                component_name=component_name,
-                lookup_table_generator_function=tanh_process(x_list),
-            )
-        )
-        writer.write(get_architecture_end_string(architecture_name=architecture_name))
+            ),
+            partial(
+                get_architecture_header_string,
+                architecture_name=self.architecture_name,
+                component_name=self.component_name,
+            ),
+            partial(
+                get_process_string,
+                component_name=self.component_name,
+                lookup_table_generator_function=tanh_process(self.x),
+            ),
+            partial(
+                get_architecture_end_string, architecture_name=self.architecture_name
+            ),
+        ]
+        for function in string_builders:
+            code += function()
+        return code
+
+
+def main():
+    file_path = get_file_path_string(
+        folder_names=["..", "source"], file_name="tanh.vhd"
+    )
+    tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
+    with open(file_path, "w") as writer:
+        writer.write(tanh.build())
 
 
 if __name__ == "__main__":

@@ -1,46 +1,14 @@
-import os
-import unittest
+import numpy as np
 
-from elasticai.creator.vhdl.generator.functions.generate_tanh_vhd import main
+from elasticai.creator.vhdl.generator.functions.generate_tanh_vhd import Tanh
+from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
-class GenerateTanhVhdTest(unittest.TestCase):
-    def __init__(self, methodname):
-        super().__init__(methodname)
-        self.source_path_prefix = "../vhdl/source"
-
-    def setUp(self) -> None:
-        main()
-        print(os.getcwd())
-        self.generated_file = self.open("tanh.vhd", "r")
-        self.generated_lines = self.generated_file.readlines()
-        self.expected_lines = [x for x in self.expected_code.splitlines() if len(x) > 0]
-
-    def file_path(self, file):
-        return f"{self.source_path_prefix}/{file}"
-
-    def open(self, file, mode):
-        return open(self.file_path(file), mode)
-
-    def tearDown(self) -> None:
-        self.generated_file.close()
-
+class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
+        tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
+        self.check_generated_code(tanh.build())
         # clean each file from empty lines and lines which are just comment
-        self.expected_lines = [
-            line.strip()
-            for line in self.expected_lines
-            if not line.startswith("--") and not line.isspace()
-        ]
-
-        self.generated_lines = [
-            line.strip()
-            for line in self.generated_lines
-            if not line.startswith("--") and not line.isspace()
-        ]
-
-        self.assertEqual(self.generated_lines, self.expected_lines)
-        self.assertEqual(len(self.generated_lines), len(self.expected_lines))
 
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;

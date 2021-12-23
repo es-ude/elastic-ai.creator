@@ -1,43 +1,23 @@
 import unittest
-from os.path import exists
+
 import numpy as np
+
 from elasticai.creator.vhdl.generator.functions.generate_sigmoid_vhd import (
-    main,
     Sigmoid,
 )
+from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
-class GenerateSigmoidVhdTest(unittest.TestCase):
-    @staticmethod
-    def get_non_empty_lines(text):
-        text = text.splitlines()
-        return [x for x in text if len(x) > 0]
-
-    def setUp(self) -> None:
+class SigmoidTest(GeneratedVHDLCodeTest):
+    def test_compare_files(self) -> None:
         sigmoid = Sigmoid(
             data_width=16,
             data_frac=8,
             x=np.linspace(-5, 5, 66),
             component_name="sigmoid",
         )
-        self.generated_lines = self.get_non_empty_lines(sigmoid.build())
-        self.expected_lines = self.get_non_empty_lines(self.expected_code)
-
-    def test_compare_files(self) -> None:
-        # clean each file from empty lines and lines which are just comment
-        self.expected_lines = [
-            line.strip()
-            for line in self.expected_lines
-            if not line.startswith("--") and not line.isspace()
-        ]
-
-        self.generated_lines = [
-            line.strip()
-            for line in self.generated_lines
-            if not line.startswith("--") and not line.isspace()
-        ]
-
-        self.assertEqual(self.generated_lines, self.expected_lines)
+        sigmoid_code = sigmoid.build()
+        self.check_generated_code(sigmoid_code)
 
     expected_code = """-- A LUT version of sigmoid
 library ieee;
