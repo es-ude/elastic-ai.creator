@@ -1,4 +1,4 @@
-name: tests
+name: unit-tests
 on: [push]
 jobs:
   run-tests:
@@ -16,4 +16,4 @@ jobs:
       - run: poetry --version
       - run: python --version
       - run: poetry install
-      - run: poetry run python -m unittest discover .
+      - run: poetry run python -m unittest discover elasticai/creator/tests
