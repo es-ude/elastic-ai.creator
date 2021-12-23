@@ -1,6 +1,6 @@
 import unittest
 from os.path import exists
-from elasticai.creator.vhdl.generator.functions.generate_sigmoid_vhd import main
+from elasticai.creator.vhdl.generator.functions.generate_mac_async_vhd import main
 
 
 class GenerateMacAsyncVhdTest(unittest.TestCase):

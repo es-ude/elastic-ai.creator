@@ -12,16 +12,6 @@ from elasticai.creator.vhdl.generator.vhd_strings import (
     get_process_string,
 )
 
-component_name = "sigmoid"
-file_name = component_name + ".vhd"
-architecture_name = "sigmoid_rtl"
-
-DATA_WIDTH = 16
-DATA_FRAC = 8
-
-# generate 66 evenly spaced numbers between (-5,5)
-x_list = np.linspace(-5, 5, 66)  # [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
-
 
 class Sigmoid:
     def __init__(
@@ -48,7 +38,7 @@ class Sigmoid:
         code = get_libraries_string()
         code += get_entity_or_component_string(
             entity_or_component="entity",
-            entity_or_component_name=component_name,
+            entity_or_component_name=self.component_name,
             data_width=self.data_width,
             frac_width=self.data_frac,
             variables_dict={
@@ -64,37 +54,17 @@ class Sigmoid:
             lookup_table_generator_function=sigmoid_process(self.x),
         )
         code += get_architecture_end_string(architecture_name=self.architecture_name)
+        return code
 
 
 def main():
-    file_path = get_file_path_string(folder_names=["..", "source"], file_name=file_name)
+    file_path = get_file_path_string(
+        folder_names=["..", "source"], file_name="sigmoid.vhd"
+    )
 
     with open(file_path, "w") as writer:
-        writer.write(get_libraries_string())
-        writer.write(
-            get_entity_or_component_string(
-                entity_or_component="entity",
-                entity_or_component_name=component_name,
-                data_width=DATA_WIDTH,
-                frac_width=DATA_FRAC,
-                variables_dict={
-                    "x": "in signed(DATA_WIDTH-1 downto 0)",
-                    "y": "out signed(DATA_WIDTH-1 downto 0)",
-                },
-            )
-        )
-        writer.write(
-            get_architecture_header_string(
-                architecture_name=architecture_name, component_name=component_name
-            )
-        )
-        writer.write(
-            get_process_string(
-                component_name=component_name,
-                lookup_table_generator_function=sigmoid_process(x_list),
-            )
-        )
-        writer.write(get_architecture_end_string(architecture_name=architecture_name))
+        s = Sigmoid(data_width=16, data_frac=8, x=np.linspace(-5, 5, 66))
+        writer.write(s.build())
 
 
 if __name__ == "__main__":

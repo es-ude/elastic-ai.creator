@@ -1,7 +1,7 @@
 import os
 import unittest
-from os.path import exists
-from elasticai.creator.vhdl.generator.functions.generate_sigmoid_vhd import main
+
+from elasticai.creator.vhdl.generator.functions.generate_tanh_vhd import main
 
 
 class GenerateTanhVhdTest(unittest.TestCase):

@@ -1,4 +1,15 @@
-from elasticai.creator.vhdl.generator.general_strings import *
+from elasticai.creator.vhdl.generator.general_strings import (
+    get_libraries_string,
+    get_entity_or_component_string,
+    get_architecture_header_string,
+    get_signal_definitions_string,
+    get_architecture_begin_string,
+    get_architecture_end_string,
+)
+from elasticai.creator.vhdl.generator.vhd_strings import (
+    get_file_path_string,
+    get_mac_async_architecture_behavior_string,
+)
 
 component_name = "mac_async"
 file_name = component_name + ".vhd"

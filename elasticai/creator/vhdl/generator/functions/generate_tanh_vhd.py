@@ -1,6 +1,16 @@
 import numpy as np
-from elasticai.creator.vhdl.generator.general_strings import *
+
+from elasticai.creator.vhdl.generator.general_strings import (
+    get_libraries_string,
+    get_entity_or_component_string,
+    get_architecture_header_string,
+    get_architecture_end_string,
+)
 from elasticai.creator.vhdl.generator.generator_functions import tanh_process
+from elasticai.creator.vhdl.generator.vhd_strings import (
+    get_file_path_string,
+    get_process_string,
+)
 
 component_name = "tanh"
 file_name = component_name + ".vhd"
