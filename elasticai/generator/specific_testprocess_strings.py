@@ -1,8 +1,9 @@
 from typing import List, Any, Dict
 
 
-def get_test_process_for_one_input_results_in_one_output_string(inputs: List[Any], outputs: List[Any], input_name: str,
-                                                                output_name: str) -> str:
+def get_test_process_for_one_input_results_in_one_output_string(
+    inputs: List[Any], outputs: List[Any], input_name: str, output_name: str
+) -> str:
     """
     writes test process cases for a function like sigmoid or tanh
     Args:
@@ -15,18 +16,29 @@ def get_test_process_for_one_input_results_in_one_output_string(inputs: List[Any
     test = ""
     if len(inputs) == len(outputs):
         for i in range(len(inputs)):
-            test = test + """        {input_name} <=  to_signed({input},16);
+            test = (
+                test
+                + """        {input_name} <=  to_signed({input},16);
         wait for 1*clk_period;
         report "The value of '{output_name}' is " & integer'image(to_integer(unsigned({output_name})));
         assert {output_name}={output} report "The test case {input} fail" severity failure;
-\n""".format(input=inputs[i], output=outputs[i], input_name=input_name, output_name=output_name)
+\n""".format(
+                    input=inputs[i],
+                    output=outputs[i],
+                    input_name=input_name,
+                    output_name=output_name,
+                )
+            )
         return test
     else:
-        raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")
+        raise TypeError(
+            f"inputs length {len(inputs)} is different to outputs length {len(outputs)}."
+        )
 
 
-def get_test_process_for_multiple_input_results_in_one_output_string(inputs: List[Dict], outputs: List[Any],
-                                                                     output_name: str) -> str:
+def get_test_process_for_multiple_input_results_in_one_output_string(
+    inputs: List[Dict], outputs: List[Any], output_name: str
+) -> str:
     """
     returns test process cases for multiple inputs which result in one output
     Args:
@@ -41,8 +53,12 @@ def get_test_process_for_multiple_input_results_in_one_output_string(inputs: Lis
         for i in range(len(outputs)):
             input_dict = inputs[i]
             for input in input_dict:
-                test = test + "        {input_name} <= {input};\n".format(input_name=input, input=input_dict[input])
-            test = test + """
+                test = test + "        {input_name} <= {input};\n".format(
+                    input_name=input, input=input_dict[input]
+                )
+            test = (
+                test
+                + """
         reset <= '1';
         wait for 2*clk_period;
         wait until clock = '0';
@@ -53,7 +69,12 @@ def get_test_process_for_multiple_input_results_in_one_output_string(inputs: Lis
         assert {output_name} = {output} report "The {counter}. test case fail" severity error;
         reset <= '1';
         wait for 1*clk_period;
-\n""".format(output=outputs[i], output_name=output_name, counter=i)
+\n""".format(
+                    output=outputs[i], output_name=output_name, counter=i
+                )
+            )
         return test
     else:
-        raise TypeError(f"inputs length {len(inputs)} is different to outputs length {len(outputs)}.")
+        raise TypeError(
+            f"inputs length {len(inputs)} is different to outputs length {len(outputs)}."
+        )

@@ -39,7 +39,7 @@ class Quantize(Protocol):
 
 class Binarize(torch.nn.Module):
     """
-    Implementation of binarizer with possible bits [-1,1]    """
+    Implementation of binarizer with possible bits [-1,1]"""
 
     def __init__(self):
         super().__init__()
@@ -54,7 +54,7 @@ class Binarize(torch.nn.Module):
 
     @property
     def thresholds(self):
-        return torch.Tensor([0.])
+        return torch.Tensor([0.0])
 
     @staticmethod
     def right_inverse(x: Tensor) -> Tensor:
@@ -69,13 +69,14 @@ class Ternarize(torch.nn.Module):
      0.5 which corresponds to natural rounding
     """
 
-    def __init__(self,
-                 zero_window_width=0.5,
-                 trainable=False,
-                 ):
+    def __init__(
+        self,
+        zero_window_width=0.5,
+        trainable=False,
+    ):
         super().__init__()
 
-        factor = torch.tensor(.5 / zero_window_width)
+        factor = torch.tensor(0.5 / zero_window_width)
 
         # naming only possible per axis and is only a prototype feature --> decline
         # requires_grad flag to false makes parameters non-trainable
@@ -94,7 +95,7 @@ class Ternarize(torch.nn.Module):
 
     @property
     def thresholds(self):
-        return torch.Tensor([.5 / self.widening_factor, -.5 / self.widening_factor])
+        return torch.Tensor([0.5 / self.widening_factor, -0.5 / self.widening_factor])
 
 
 class ResidualQuantization(Binarize):
@@ -103,14 +104,14 @@ class ResidualQuantization(Binarize):
     But instead of summing the bits, they are concatenated, multiplying the second dimension by n bits.
     Here the encoded form is used to facilitate precalculation.
     Args:
-     num_bits: number of residual quantization levels or bits 
+     num_bits: number of residual quantization levels or bits
     """
 
     def __init__(self, num_bits=2):
         super().__init__()
         self.num_bits = num_bits
         self.weight = torch.nn.Parameter(
-            torch.Tensor([.5 ** i for i in range(1, num_bits)])
+            torch.Tensor([0.5 ** i for i in range(1, num_bits)])
         )
 
     def forward(self, inputs):
@@ -126,7 +127,7 @@ class ResidualQuantization(Binarize):
 
     @property
     def thresholds(self):
-        threshold = [torch.Tensor([0.])]
+        threshold = [torch.Tensor([0.0])]
         for factor in self.weight:
             threshold.append(threshold[-1] + torch.abs(factor))
 
@@ -135,10 +136,10 @@ class ResidualQuantization(Binarize):
 
 class QuantizeTwoBit(torch.nn.Module):
     """
-       Implementation of 2 bit residual quantization, the first bit is binarized the second uses  a factor similar to residual quantization
-       Args:
-         factors: the initial factor
-       """
+    Implementation of 2 bit residual quantization, the first bit is binarized the second uses  a factor similar to residual quantization
+    Args:
+      factors: the initial factor
+    """
 
     def __init__(self, factors=0.5):
         super().__init__()
@@ -156,14 +157,17 @@ class QuantizeTwoBit(torch.nn.Module):
 
     @property
     def thresholds(self):
-        return torch.cat((torch.Tensor([0.]), self.factors), 0)
+        return torch.cat((torch.Tensor([0.0]), self.factors), 0)
 
 
 def _init_quantizable_convolution(self, quantizer, bias, constraints):
-    warnings.warn(f"{type(self).__name__} is deprecated, use pytorch parametrization "
-                  "instead. "
-                  "See https://pytorch.org/tutorials/intermediate/parametrizations.html",
-                  DeprecationWarning, stacklevel=3)
+    warnings.warn(
+        f"{type(self).__name__} is deprecated, use pytorch parametrization "
+        "instead. "
+        "See https://pytorch.org/tutorials/intermediate/parametrizations.html",
+        DeprecationWarning,
+        stacklevel=3,
+    )
     if isinstance(quantizer, Module):
         register_parametrization(self, "weight", quantizer)
         if bias:
@@ -187,18 +191,20 @@ class QConv1d(torch.nn.Conv1d):
       constraints: A list of instances of constraints, applied with the apply constraint_call
     """
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_size: Tuple[int, ...],
-                 quantizer: Module,
-                 stride: Tuple[int, ...] = (1,),
-                 padding: int = 0,
-                 dilation: Tuple[int, ...] = (1,),
-                 groups: int = 1,
-                 bias: bool = True,
-                 padding_mode: str = 'zeros',
-                 constraints: list = None):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: Tuple[int, ...],
+        quantizer: Module,
+        stride: Tuple[int, ...] = (1,),
+        padding: int = 0,
+        dilation: Tuple[int, ...] = (1,),
+        groups: int = 1,
+        bias: bool = True,
+        padding_mode: str = "zeros",
+        constraints: list = None,
+    ):
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -211,10 +217,9 @@ class QConv1d(torch.nn.Conv1d):
             padding_mode=padding_mode,
         )
 
-        _init_quantizable_convolution(self,
-                                      quantizer=quantizer,
-                                      bias=bias,
-                                      constraints=constraints)
+        _init_quantizable_convolution(
+            self, quantizer=quantizer, bias=bias, constraints=constraints
+        )
 
 
 class QConv2d(torch.nn.Conv2d):
@@ -225,18 +230,20 @@ class QConv2d(torch.nn.Conv2d):
     constraints: A list of instances of constraints, applied with the apply constraint_call
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 quantizer,
-                 stride=1,
-                 padding=0,
-                 dilation=1,
-                 groups=1,
-                 bias=True,
-                 padding_mode='zeros',
-                 constraints: list = None):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        quantizer,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        bias=True,
+        padding_mode="zeros",
+        constraints: list = None,
+    ):
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -246,36 +253,27 @@ class QConv2d(torch.nn.Conv2d):
             dilation=dilation,
             groups=groups,
             bias=bias,
-            padding_mode=padding_mode
+            padding_mode=padding_mode,
         )
-        _init_quantizable_convolution(self,
-                                      quantizer=quantizer,
-                                      bias=bias,
-                                      constraints=constraints)
+        _init_quantizable_convolution(
+            self, quantizer=quantizer, bias=bias, constraints=constraints
+        )
 
 
 class QLinear(torch.nn.Linear):
     """
     Implementation of quantized Linear layer,all parameters are equivalent to the base pytorch class except for the quantizer and constraints.
     Args:
-     quantizer: An instance of a quantizer for weight and bias, currently only 1 can be used for both 
+     quantizer: An instance of a quantizer for weight and bias, currently only 1 can be used for both
      constraints: A list of instances of constraints, applied with the apply constraint_call
     """
 
-    def __init__(self,
-                 in_features,
-                 out_features,
-                 quantizer,
-                 bias=True,
-                 constraints: list = None):
-        super().__init__(in_features=in_features,
-                         out_features=out_features,
-                         bias=bias)
+    def __init__(
+        self, in_features, out_features, quantizer, bias=True, constraints: list = None
+    ):
+        super().__init__(in_features=in_features, out_features=out_features, bias=bias)
         _init_quantizable_convolution(
-            self,
-            quantizer=quantizer,
-            bias=bias,
-            constraints=constraints
+            self, quantizer=quantizer, bias=bias, constraints=constraints
         )
 
 
@@ -290,17 +288,19 @@ class QLSTMCell(torch.nn.LSTMCell):
         new_cell_gate_activation: The new cell gate activation, expects a quantizer instance, if None will default to tanh
     """
 
-    def __init__(self,
-                 input_size: int,
-                 hidden_size: int,
-                 state_quantizer: Quantize,
-                 weight_quantizer: Quantize,
-                 bias: bool = True,
-                 input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-                 forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-                 cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-                 output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-                 new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh):
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        state_quantizer: Quantize,
+        weight_quantizer: Quantize,
+        bias: bool = True,
+        input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+        forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+        cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
+        output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+        new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
+    ):
         super().__init__(input_size, hidden_size, bias)
 
         self.state_quantizer = state_quantizer
@@ -315,21 +315,32 @@ class QLSTMCell(torch.nn.LSTMCell):
     def __identity(input_tensor: torch.Tensor) -> torch.Tensor:
         return input_tensor
 
-    def forward(self,
-                x: torch.Tensor,
-                hx: Optional[Tuple[torch.Tensor, torch.Tensor]] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, hx: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         # Implementation based on
         # https://github.com/pytorch/pytorch/blob/e9ef087d2d12051341db485c8ac64ea64649823d/benchmarks/fastrnns/cells.py#L25
         if hx is None:
-            zeros = torch.zeros(x.size(0), self.hidden_size, dtype=x.dtype, device=x.device)
+            zeros = torch.zeros(
+                x.size(0), self.hidden_size, dtype=x.dtype, device=x.device
+            )
             hx = (zeros, zeros)
 
         h_0, c_0 = self.state_quantizer(hx[0]), self.state_quantizer(hx[1])
-        weight_ih, weight_hh = self.weight_quantizer(self.weight_ih), self.weight_quantizer(self.weight_hh)
+        weight_ih, weight_hh = self.weight_quantizer(
+            self.weight_ih
+        ), self.weight_quantizer(self.weight_hh)
 
         if self.bias:
-            bias_ih, bias_hh = self.weight_quantizer(self.bias_ih), self.weight_quantizer(self.bias_hh)
-            gates = torch.mm(x, weight_ih.t()) + bias_ih + torch.mm(h_0, weight_hh.t()) + bias_hh
+            bias_ih, bias_hh = self.weight_quantizer(
+                self.bias_ih
+            ), self.weight_quantizer(self.bias_hh)
+            gates = (
+                torch.mm(x, weight_ih.t())
+                + bias_ih
+                + torch.mm(h_0, weight_hh.t())
+                + bias_hh
+            )
         else:
             gates = torch.mm(x, weight_ih.t()) + torch.mm(h_0, weight_hh.t())
 
@@ -354,19 +365,20 @@ class QLSTM(torch.nn.Module):
      batch_first: same as pytorch. If True, then the input and output tensors are provided as (batch, seq, feature) instead of (seq, batch, feature)
     """
 
-    def __init__(self,
-                 input_size: int,
-                 hidden_size: int,
-                 state_quantizer: Quantize,
-                 weight_quantizer: Quantize,
-                 bias: bool = True,
-                 input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-                 forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-                 cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-                 output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-                 new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-                 batch_first=False,
-                 ):
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        state_quantizer: Quantize,
+        weight_quantizer: Quantize,
+        bias: bool = True,
+        input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+        forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+        cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
+        output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+        new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
+        batch_first=False,
+    ):
         super().__init__()
         self.cell = QLSTMCell(
             hidden_size=hidden_size,
@@ -378,14 +390,13 @@ class QLSTM(torch.nn.Module):
             forget_gate_activation=forget_gate_activation,
             cell_gate_activation=cell_gate_activation,
             output_gate_activation=output_gate_activation,
-            new_cell_state_activation=new_cell_state_activation
+            new_cell_state_activation=new_cell_state_activation,
         )
         self.batch_first = batch_first
 
-    def forward(self,
-                input: torch.Tensor,
-                state: Tuple[torch.Tensor, torch.Tensor] = None
-                ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def forward(
+        self, input: torch.Tensor, state: Tuple[torch.Tensor, torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         if self.batch_first:
             input = torch.stack(torch.unbind(input), dim=1)
 

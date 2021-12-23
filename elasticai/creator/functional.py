@@ -25,8 +25,8 @@ class binarize(Function):
 
     @staticmethod
     def _unwrap_inputs(inputs: Any) -> Tensor:
-        """ Using the _unwrap_inputs method allows the forward method to keep
-            the signature of the autograd.Function superclass.
+        """Using the _unwrap_inputs method allows the forward method to keep
+        the signature of the autograd.Function superclass.
         """
         return inputs
 
@@ -39,6 +39,6 @@ class binarize(Function):
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         grad_output = grad_outputs[0]
-        inputs, = ctx.saved_tensors
+        (inputs,) = ctx.saved_tensors
         mask = inputs.less(-1).logical_or(inputs.greater(1))
         return grad_output * torch.ones_like(inputs).masked_fill_(mask, 0)

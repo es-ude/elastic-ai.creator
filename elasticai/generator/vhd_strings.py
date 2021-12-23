@@ -19,7 +19,9 @@ def get_process_string(component_name: str, lookup_table_generator_function) -> 
         
         {generate_process}
     end process;                
-    \n""".format(component_name=component_name, generate_process=lookup_table_generator_function)
+    \n""".format(
+        component_name=component_name, generate_process=lookup_table_generator_function
+    )
 
 
 def get_file_path_string(folder_names: List[str], file_name: str) -> str:
@@ -50,7 +52,9 @@ def get_gate_definition_string(comment: str, signal_names: List[str]) -> str:
     """
     signals_string = ""
     for signal in signal_names:
-        signals_string += """signal {signal} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n""".format(signal=signal)
+        signals_string += """signal {signal} : signed(DATA_WIDTH-1 downto 0):=(others=>'0');\n""".format(
+            signal=signal
+        )
     signals_string = comment + "\n" + signals_string + "\n\n\n"
 
     return signals_string
@@ -78,14 +82,17 @@ def get_port_map_string(map_name: str, component_name: str, signals) -> str:
     Returns:
         string of port map
     """
-    string = """    {map_name}: {component_name}\n    port map (\n""".format(map_name=map_name,
-                                                                             component_name=component_name)
+    string = """    {map_name}: {component_name}\n    port map (\n""".format(
+        map_name=map_name, component_name=component_name
+    )
     if type(signals) == list:
         for signal in signals:
             string += """        {signal},\n""".format(signal=signal)
     else:
         for signal in signals:
-            string += """        {val1} => {val2},\n""".format(val1=signal, val2=signals[signal])
+            string += """        {val1} => {val2},\n""".format(
+                val1=signal, val2=signals[signal]
+            )
     # remove the last comma and new line
     string = string.removesuffix(",\n") + "\n"
     # add close bracket
@@ -93,7 +100,9 @@ def get_port_map_string(map_name: str, component_name: str, signals) -> str:
     return string
 
 
-def get_define_process_string(process_name: str, sensitive_signals_list: List[str], behavior: str) -> str:
+def get_define_process_string(
+    process_name: str, sensitive_signals_list: List[str], behavior: str
+) -> str:
     """
     Returns:
         string of lstm_process
@@ -107,4 +116,6 @@ def get_define_process_string(process_name: str, sensitive_signals_list: List[st
     return """    {process_name}: process({signal_string})
     begin
         {behavior}
-    end process;\n\n""".format(process_name=process_name, signal_string=signal_string, behavior=behavior)
+    end process;\n\n""".format(
+        process_name=process_name, signal_string=signal_string, behavior=behavior
+    )

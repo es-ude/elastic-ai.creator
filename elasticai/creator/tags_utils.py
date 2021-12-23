@@ -1,6 +1,6 @@
 from typing import Any, TypeVar, Generic
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class HasTag(Generic[T]):
@@ -25,7 +25,7 @@ def tag(module: T, **new_tags: Any) -> HasTag:
 
 
 def get_tags(module: Any) -> dict:
-    if hasattr(module, 'elasticai_tags'):
+    if hasattr(module, "elasticai_tags"):
         return module.elasticai_tags()
     return {}
 

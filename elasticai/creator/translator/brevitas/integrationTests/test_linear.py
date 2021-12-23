@@ -4,7 +4,9 @@ from torch import nn
 
 import brevitas.nn as bnn
 
-from elasticai.creator.translator.brevitas.translation_functions.linear import translate_linear_layer
+from elasticai.creator.translator.brevitas.translation_functions.linear import (
+    translate_linear_layer,
+)
 from elasticai.creator.layers import QLinear, Binarize, Ternarize
 import elasticai.creator.translator.brevitas.brevitas_quantizers as bquant
 
@@ -12,12 +14,7 @@ import elasticai.creator.translator.brevitas.brevitas_quantizers as bquant
 class LinearLayerTest(unittest.TestCase):
     @staticmethod
     def create_qtorch_linear_layer(quantizer):
-        return QLinear(
-            in_features=5,
-            out_features=10,
-            bias=True,
-            quantizer=quantizer
-        )
+        return QLinear(in_features=5, out_features=10, bias=True, quantizer=quantizer)
 
     @staticmethod
     def create_brevitas_linear_layer(weight_quant, bias_quant):
@@ -26,14 +23,13 @@ class LinearLayerTest(unittest.TestCase):
             out_features=10,
             bias=True,
             weight_quant=weight_quant,
-            bias_quant=bias_quant
+            bias_quant=bias_quant,
         )
 
     def test_translate_linear_layer_binary_weight_bias_quant(self):
         layer = self.create_qtorch_linear_layer(quantizer=Binarize())
         target = self.create_brevitas_linear_layer(
-            weight_quant=bquant.BinaryWeights,
-            bias_quant=bquant.BinaryBias
+            weight_quant=bquant.BinaryWeights, bias_quant=bquant.BinaryBias
         )
         translated = translate_linear_layer(layer)
 
@@ -47,8 +43,7 @@ class LinearLayerTest(unittest.TestCase):
     def test_translate_linear_layer_ternary_weight_bias_quant(self):
         layer = self.create_qtorch_linear_layer(quantizer=Ternarize())
         target = self.create_brevitas_linear_layer(
-            weight_quant=bquant.TernaryWeights,
-            bias_quant=bquant.TernaryBias
+            weight_quant=bquant.TernaryWeights, bias_quant=bquant.TernaryBias
         )
         translated = translate_linear_layer(layer)
 

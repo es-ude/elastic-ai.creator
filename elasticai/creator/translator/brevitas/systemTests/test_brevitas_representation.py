@@ -1,8 +1,16 @@
 import unittest
 
-from elasticai.creator.translator.brevitas.brevitas_model_comparison import BrevitasModelComparisonTestCase
-from elasticai.creator.translator.brevitas.brevitas_representation import BrevitasRepresentation
-from elasticai.creator.translator.brevitas.systemTests.models_definition import create_qtorch_model, crete_brevitas_model, define_weight
+from elasticai.creator.translator.brevitas.brevitas_model_comparison import (
+    BrevitasModelComparisonTestCase,
+)
+from elasticai.creator.translator.brevitas.brevitas_representation import (
+    BrevitasRepresentation,
+)
+from elasticai.creator.translator.brevitas.systemTests.models_definition import (
+    create_qtorch_model,
+    crete_brevitas_model,
+    define_weight,
+)
 
 
 class ModelSystemTest(BrevitasModelComparisonTestCase):
@@ -16,7 +24,9 @@ class ModelSystemTest(BrevitasModelComparisonTestCase):
         self.brevitas_model = crete_brevitas_model()
         define_weight([layer for layer in self.brevitas_model])
 
-        translated_model = BrevitasRepresentation.from_pytorch(self.qtorch_model).translated_model
+        translated_model = BrevitasRepresentation.from_pytorch(
+            self.qtorch_model
+        ).translated_model
         translated_layers = [layer for layer in translated_model]
         define_weight(translated_layers)
 

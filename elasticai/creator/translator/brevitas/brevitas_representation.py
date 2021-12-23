@@ -4,7 +4,7 @@ from torch import nn
 from brevitas.export import BrevitasONNXManager
 
 from elasticai.creator.translator.brevitas.translation_mapping import ConversionMapping
-from torch.nn import  Module
+from torch.nn import Module
 
 
 class BrevitasRepresentation:
@@ -13,6 +13,7 @@ class BrevitasRepresentation:
     expected starting point:
     brevitas_representation = BrevitasRepresentation.from_pytorch(model)
     """
+
     def __init__(self, original_model: Module, translated_model: Module) -> None:
         self._original_model = original_model
         self._translated_model = translated_model
@@ -75,4 +76,6 @@ class BrevitasRepresentation:
         """
         # we use brevitas onnx manager because the standard onnx manager doesn't work for our model
         # (https://github.com/Xilinx/brevitas/issues/365)
-        BrevitasONNXManager.export(module=self.translated_model, input_shape=input_shape, export_path=path)
+        BrevitasONNXManager.export(
+            module=self.translated_model, input_shape=input_shape, export_path=path
+        )

@@ -27,15 +27,21 @@ def tanh_process(x_list: List) -> str:
     for i in range(len(x_list)):
         if i == 0:
             lines.append("if int_x<" + str(int(x_list[0] * one)) + " then")
-            lines.append("\ty <= \"" + _bin_digits(-1 * one, 16) + "\"; -- " + str(-1 * one))
+            lines.append(
+                '\ty <= "' + _bin_digits(-1 * one, 16) + '"; -- ' + str(-1 * one)
+            )
         elif i == (len(x_list) - 1):
             lines.append("else")
-            lines.append("\ty <= \"" + '{0:016b}'.format(one) + "\"; -- " + str(one))
+            lines.append('\ty <= "' + "{0:016b}".format(one) + '"; -- ' + str(one))
         else:
             lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
 
-            lines.append("\ty <= \"" + _bin_digits(int(256 * math.tanh(x_list[i - 1])), 16) + "\"; -- " + str(
-                int(256 * math.tanh(x_list[i - 1]))))
+            lines.append(
+                '\ty <= "'
+                + _bin_digits(int(256 * math.tanh(x_list[i - 1])), 16)
+                + '"; -- '
+                + str(int(256 * math.tanh(x_list[i - 1])))
+            )
 
     lines.append("end if;")
     # build the string block and add new line + 2 tabs
@@ -53,6 +59,7 @@ def sigmoid_process(x_list: List) -> str:
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
+
     def _sigmoid(x):
         return 1 / (1 + math.exp(-x))
 
@@ -66,14 +73,18 @@ def sigmoid_process(x_list: List) -> str:
     for i in range(len(x_list)):
         if i == 0:
             lines.append("if int_x<" + str(int(x_list[0] * one)) + " then")
-            lines.append("\ty <= \"" + '{0:016b}'.format(zero) + "\"; -- " + str(zero))
+            lines.append('\ty <= "' + "{0:016b}".format(zero) + '"; -- ' + str(zero))
         elif i == (len(x_list) - 1):
             lines.append("else")
-            lines.append("\ty <= \"" + '{0:016b}'.format(one) + "\"; -- " + str(one))
+            lines.append('\ty <= "' + "{0:016b}".format(one) + '"; -- ' + str(one))
         else:
             lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
-            lines.append("\ty <= \"" + '{0:016b}'.format(int(256 * _sigmoid(x_list[i - 1]))) + "\"; -- " + str(
-                int(256 * _sigmoid(x_list[i - 1]))))
+            lines.append(
+                '\ty <= "'
+                + "{0:016b}".format(int(256 * _sigmoid(x_list[i - 1])))
+                + '"; -- '
+                + str(int(256 * _sigmoid(x_list[i - 1])))
+            )
     lines.append("end if;")
     # build the string block and add new line + 2 tabs
     string = ""
@@ -111,7 +122,9 @@ def _floating_to_hex(f_val: float, frac_width: int, nbits: int) -> str:
     return _int_to_hex(int_val, nbits)
 
 
-def _to_vhdl_parameter(f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str) -> Dict:
+def _to_vhdl_parameter(
+    f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
+) -> Dict:
     """
         returns a Dictionary of one signal and his definition
     Args:
@@ -125,14 +138,19 @@ def _to_vhdl_parameter(f_val: float, frac_width: int, nbits: int, name_parameter
     hex_str_without_prefix = hex_str[2:]
 
     return {
-        str(signal_name):
-            "signed(DATA_WIDTH-1 downto 0) := " + "X\"" + hex_str_without_prefix + "\"; -- " + name_parameter
+        str(signal_name): "signed(DATA_WIDTH-1 downto 0) := "
+        + 'X"'
+        + hex_str_without_prefix
+        + '"; -- '
+        + name_parameter
     }
 
 
 def _elastic_ai_creator_lstm() -> QLSTMCell:
 
-    return QLSTMCell(1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity())
+    return QLSTMCell(
+        1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity()
+    )
 
 
 def _ensure_reproducibility():
@@ -142,13 +160,13 @@ def _ensure_reproducibility():
 
 def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Dict:
     """
-      returns Dict of signals names as key and their definition as value
-      Args:
-          data_width (int): the width of the data
-          frac_width (int): the fraction part of data_width
-      Returns:
-          Dict of the signal names and their definitions
-      """
+    returns Dict of signals names as key and their definition as value
+    Args:
+        data_width (int): the width of the data
+        frac_width (int): the fraction part of data_width
+    Returns:
+        Dict of the signal names and their definitions
+    """
     dict_of_signals = {}
     # define the lstm cell
     _ensure_reproducibility()
@@ -170,23 +188,79 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
 
     for name, param in lstm_single_cell.named_parameters():
         if name == "weight_ih":
-            dict_of_signals.update(_to_vhdl_parameter(param[0], frac_width, data_width, name_parameter="W_ii",
-                                                      signal_name="wii"))
-            dict_of_signals.update(_to_vhdl_parameter(param[1], frac_width, data_width, name_parameter="W_if",
-                                                      signal_name="wif"))
-            dict_of_signals.update(_to_vhdl_parameter(param[2], frac_width, data_width, name_parameter="W_ig",
-                                                      signal_name="wig"))
-            dict_of_signals.update(_to_vhdl_parameter(param[3], frac_width, data_width, name_parameter="W_io",
-                                                      signal_name="wio"))
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[0],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_ii",
+                    signal_name="wii",
+                )
+            )
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[1],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_if",
+                    signal_name="wif",
+                )
+            )
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[2],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_ig",
+                    signal_name="wig",
+                )
+            )
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[3],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_io",
+                    signal_name="wio",
+                )
+            )
         elif name == "weight_hh":
-            dict_of_signals.update(_to_vhdl_parameter(param[0], frac_width, data_width, name_parameter="W_hi",
-                                                      signal_name="whi"))
-            dict_of_signals.update(_to_vhdl_parameter(param[1], frac_width, data_width, name_parameter="W_hf",
-                                                      signal_name="whf"))
-            dict_of_signals.update(_to_vhdl_parameter(param[2], frac_width, data_width, name_parameter="W_hg",
-                                                      signal_name="whg"))
-            dict_of_signals.update(_to_vhdl_parameter(param[3], frac_width, data_width, name_parameter="W_ho",
-                                                      signal_name="who"))
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[0],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_hi",
+                    signal_name="whi",
+                )
+            )
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[1],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_hf",
+                    signal_name="whf",
+                )
+            )
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[2],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_hg",
+                    signal_name="whg",
+                )
+            )
+            dict_of_signals.update(
+                _to_vhdl_parameter(
+                    param[3],
+                    frac_width,
+                    data_width,
+                    name_parameter="W_ho",
+                    signal_name="who",
+                )
+            )
         elif name == "bias_ih":
             b_ii = param[0]
             b_if = param[1]
@@ -200,13 +274,41 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
         else:
             dict_of_signals.update("should not come to here.")
 
-    dict_of_signals.update(_to_vhdl_parameter(b_ii + b_hi, frac_width, data_width, name_parameter="b_ii + b_hi",
-                                              signal_name="bi"))
-    dict_of_signals.update(_to_vhdl_parameter(b_if + b_hf, frac_width, data_width, name_parameter="b_if + b_hf",
-                                              signal_name="bf"))
-    dict_of_signals.update(_to_vhdl_parameter(b_ig + b_hg, frac_width, data_width, name_parameter="b_ig + b_hg",
-                                              signal_name="bg"))
-    dict_of_signals.update(_to_vhdl_parameter(b_io + b_ho, frac_width, data_width, name_parameter="b_io + b_ho",
-                                              signal_name="bo"))
+    dict_of_signals.update(
+        _to_vhdl_parameter(
+            b_ii + b_hi,
+            frac_width,
+            data_width,
+            name_parameter="b_ii + b_hi",
+            signal_name="bi",
+        )
+    )
+    dict_of_signals.update(
+        _to_vhdl_parameter(
+            b_if + b_hf,
+            frac_width,
+            data_width,
+            name_parameter="b_if + b_hf",
+            signal_name="bf",
+        )
+    )
+    dict_of_signals.update(
+        _to_vhdl_parameter(
+            b_ig + b_hg,
+            frac_width,
+            data_width,
+            name_parameter="b_ig + b_hg",
+            signal_name="bg",
+        )
+    )
+    dict_of_signals.update(
+        _to_vhdl_parameter(
+            b_io + b_ho,
+            frac_width,
+            data_width,
+            name_parameter="b_io + b_ho",
+            signal_name="bo",
+        )
+    )
 
     return dict_of_signals

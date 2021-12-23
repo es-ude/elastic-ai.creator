@@ -1,11 +1,18 @@
 from typing import Any, Dict, List
 
-from elasticai.generator.specific_testprocess_strings import \
-    get_test_process_for_one_input_results_in_one_output_string, \
-    get_test_process_for_multiple_input_results_in_one_output_string
-from elasticai.generator.general_strings import get_libraries_string, get_architecture_header_string, \
-    get_architecture_begin_string, get_architecture_end_string, get_entity_or_component_string, \
-    get_signal_definitions_string, get_variable_definitions_string
+from elasticai.generator.specific_testprocess_strings import (
+    get_test_process_for_one_input_results_in_one_output_string,
+    get_test_process_for_multiple_input_results_in_one_output_string,
+)
+from elasticai.generator.general_strings import (
+    get_libraries_string,
+    get_architecture_header_string,
+    get_architecture_begin_string,
+    get_architecture_end_string,
+    get_entity_or_component_string,
+    get_signal_definitions_string,
+    get_variable_definitions_string,
+)
 
 
 def get_type_definitions_string(type_dict: Dict) -> str:
@@ -20,8 +27,12 @@ def get_type_definitions_string(type_dict: Dict) -> str:
     -- Testbench Data Type
     ------------------------------------------------------------\n"""
     for type_variable in type_dict:
-        type_dict_str = type_dict_str + "    type {type_variable} is {type_definition};\n". \
-            format(type_variable=type_variable, type_definition=type_dict[type_variable])
+        type_dict_str = (
+            type_dict_str
+            + "    type {type_variable} is {type_definition};\n".format(
+                type_variable=type_variable, type_definition=type_dict[type_variable]
+            )
+        )
     return type_dict_str + "\n"
 
 
@@ -38,7 +49,9 @@ def get_clock_process_string(clock_name="clk") -> str:
         {clock_name} <= '1';
         wait for clk_period/2;
     end process; -- clock_process
-\n""".format(clock_name=clock_name)
+\n""".format(
+        clock_name=clock_name
+    )
 
 
 def get_uut_string(component_name: Any, mapping_dict: Dict) -> str:
@@ -52,10 +65,23 @@ def get_uut_string(component_name: Any, mapping_dict: Dict) -> str:
     """
     mapping_dict_str = ""
     for mapping in mapping_dict:
-        mapping_dict_str = mapping_dict_str + "        " + mapping + " => " + mapping_dict[mapping] + ",\n"
+        mapping_dict_str = (
+            mapping_dict_str
+            + "        "
+            + mapping
+            + " => "
+            + mapping_dict[mapping]
+            + ",\n"
+        )
     # remove last comma and linebreak and add linebreak again
-    return """    uut: {component_name}
-    port map (\n""".format(component_name=component_name) + mapping_dict_str[:-2] + "\n    );\n\n"
+    return (
+        """    uut: {component_name}
+    port map (\n""".format(
+            component_name=component_name
+        )
+        + mapping_dict_str[:-2]
+        + "\n    );\n\n"
+    )
 
 
 def get_test_process_header_string() -> str:
@@ -89,25 +115,25 @@ def get_test_process_end_string() -> str:
 
 
 def write_testbench_file(
-        path_to_testbench: str,
-        test_bench_file_name: str,
-        component_name: str,
-        architecture_name: str,
-        data_width: int,
-        frac_width: int,
-        component_variables_dict: Dict,
-        signal_definitions_dict: Dict,
-        uut_mapping_dict: Dict,
-        inputs_for_testcases: List,
-        outputs_for_testcases: List,
-        output_name_for_testcases: str,
-        input_name_for_testcases: str = None,
-        math_lib: bool = False,
-        vector_len_width: int = None,
-        type_definitions_dict: Dict = None,
-        clock_name: str = "clk",
-        variable_definitions_before_test_process_dict: Dict = None,
-        variable_definitions_in_test_process_dict: Dict = None
+    path_to_testbench: str,
+    test_bench_file_name: str,
+    component_name: str,
+    architecture_name: str,
+    data_width: int,
+    frac_width: int,
+    component_variables_dict: Dict,
+    signal_definitions_dict: Dict,
+    uut_mapping_dict: Dict,
+    inputs_for_testcases: List,
+    outputs_for_testcases: List,
+    output_name_for_testcases: str,
+    input_name_for_testcases: str = None,
+    math_lib: bool = False,
+    vector_len_width: int = None,
+    type_definitions_dict: Dict = None,
+    clock_name: str = "clk",
+    variable_definitions_before_test_process_dict: Dict = None,
+    variable_definitions_in_test_process_dict: Dict = None,
 ) -> None:
     """
     writes the testbench file for the specifications
@@ -132,45 +158,73 @@ def write_testbench_file(
         variable_definitions_before_test_process_dict (Dict): possible definitions of variables before the test process, default None
         variable_definitions_in_test_process_dict (Dict): possible definitions of variables in the test process, default None
     """
-    with open(path_to_testbench + test_bench_file_name, 'w') as f:
+    with open(path_to_testbench + test_bench_file_name, "w") as f:
         f.write(get_libraries_string(math_lib=math_lib))
-        f.write(get_entity_or_component_string(entity_or_component="entity",
-                                               entity_or_component_name=component_name + "_tb",
-                                               data_width=data_width,
-                                               frac_width=frac_width,
-                                               variables_dict={"clk": "out std_logic"},
-                                               vector_len_width=vector_len_width))
         f.write(
-            get_architecture_header_string(architecture_name=architecture_name, component_name=component_name + "_tb"))
+            get_entity_or_component_string(
+                entity_or_component="entity",
+                entity_or_component_name=component_name + "_tb",
+                data_width=data_width,
+                frac_width=frac_width,
+                variables_dict={"clk": "out std_logic"},
+                vector_len_width=vector_len_width,
+            )
+        )
+        f.write(
+            get_architecture_header_string(
+                architecture_name=architecture_name,
+                component_name=component_name + "_tb",
+            )
+        )
         if type_definitions_dict:
             f.write(get_type_definitions_string(type_dict=type_definitions_dict))
         f.write(get_signal_definitions_string(signal_dict=signal_definitions_dict))
-        f.write(get_entity_or_component_string(entity_or_component="component",
-                                               entity_or_component_name=component_name,
-                                               data_width=data_width,
-                                               frac_width=frac_width,
-                                               vector_len_width=vector_len_width,
-                                               variables_dict=component_variables_dict,
-                                               indent="    "))
+        f.write(
+            get_entity_or_component_string(
+                entity_or_component="component",
+                entity_or_component_name=component_name,
+                data_width=data_width,
+                frac_width=frac_width,
+                vector_len_width=vector_len_width,
+                variables_dict=component_variables_dict,
+                indent="    ",
+            )
+        )
         f.write(get_architecture_begin_string())
         f.write(get_clock_process_string(clock_name=clock_name))
-        f.write(get_uut_string(component_name=component_name, mapping_dict=uut_mapping_dict))
+        f.write(
+            get_uut_string(component_name=component_name, mapping_dict=uut_mapping_dict)
+        )
         if variable_definitions_before_test_process_dict:
-            f.write(get_variable_definitions_string(variable_dict=variable_definitions_before_test_process_dict))
+            f.write(
+                get_variable_definitions_string(
+                    variable_dict=variable_definitions_before_test_process_dict
+                )
+            )
         f.write(get_test_process_header_string())
         if variable_definitions_in_test_process_dict:
-            f.write(get_variable_definitions_string(variable_dict=variable_definitions_in_test_process_dict))
+            f.write(
+                get_variable_definitions_string(
+                    variable_dict=variable_definitions_in_test_process_dict
+                )
+            )
         # when one input results in one output
         if input_name_for_testcases:
-            f.write(get_test_process_for_one_input_results_in_one_output_string(
-                inputs=inputs_for_testcases,
-                outputs=outputs_for_testcases,
-                input_name=input_name_for_testcases,
-                output_name=output_name_for_testcases))
+            f.write(
+                get_test_process_for_one_input_results_in_one_output_string(
+                    inputs=inputs_for_testcases,
+                    outputs=outputs_for_testcases,
+                    input_name=input_name_for_testcases,
+                    output_name=output_name_for_testcases,
+                )
+            )
         else:
-            f.write(get_test_process_for_multiple_input_results_in_one_output_string(
-                inputs=inputs_for_testcases,
-                outputs=outputs_for_testcases,
-                output_name=output_name_for_testcases))
+            f.write(
+                get_test_process_for_multiple_input_results_in_one_output_string(
+                    inputs=inputs_for_testcases,
+                    outputs=outputs_for_testcases,
+                    output_name=output_name_for_testcases,
+                )
+            )
         f.write(get_test_process_end_string())
         f.write(get_architecture_end_string(architecture_name=architecture_name))

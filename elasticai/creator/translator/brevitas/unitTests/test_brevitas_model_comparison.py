@@ -1,6 +1,8 @@
 import unittest
 
-from elasticai.creator.translator.brevitas.brevitas_model_comparison import BrevitasModelMatcher
+from elasticai.creator.translator.brevitas.brevitas_model_comparison import (
+    BrevitasModelMatcher,
+)
 
 
 def dummy_model():
@@ -26,10 +28,13 @@ class DummyParameter:
 
 
 class BrevitasModelComparisonTest(unittest.TestCase):
-
     def test_one_model_and_None_raise_Typeerror(self):
-        self.assertRaises(TypeError, BrevitasModelMatcher.check_equality, None, dummy_model())
-        self.assertRaises(TypeError, BrevitasModelMatcher.check_equality, dummy_model(), None)
+        self.assertRaises(
+            TypeError, BrevitasModelMatcher.check_equality, None, dummy_model()
+        )
+        self.assertRaises(
+            TypeError, BrevitasModelMatcher.check_equality, dummy_model(), None
+        )
 
     def test_empty_models_are_equal(self):
         fake_model_1 = dummy_model()
@@ -58,7 +63,9 @@ class BrevitasModelComparisonTest(unittest.TestCase):
     def test_non_iterable_models_throw_exception(self):
         dummy_model_1 = 1
         dummy_model_2 = 2
-        self.assertRaises(TypeError, BrevitasModelMatcher.check_equality, dummy_model_1, dummy_model_2)
+        self.assertRaises(
+            TypeError, BrevitasModelMatcher.check_equality, dummy_model_1, dummy_model_2
+        )
 
     def test_models_with_same_layer_types_but_different_parameters_are_unequal(self):
         dummy_model_1 = [DummyLayer(1)]
@@ -66,7 +73,9 @@ class BrevitasModelComparisonTest(unittest.TestCase):
         equality = BrevitasModelMatcher.check_equality(dummy_model_1, dummy_model_2)
         self.assertFalse(equality)
 
-    def test_models_with_same_layer_types_but_different_parameters_are_unequal_exchanged(self):
+    def test_models_with_same_layer_types_but_different_parameters_are_unequal_exchanged(
+        self,
+    ):
         dummy_model_1 = [DummyLayer()]
         dummy_model_2 = [DummyLayer(1)]
         equality = BrevitasModelMatcher.check_equality(dummy_model_1, dummy_model_2)

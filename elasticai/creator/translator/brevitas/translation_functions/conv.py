@@ -3,10 +3,12 @@ from typing import Union
 import brevitas.nn as bnn
 
 from elasticai.creator.layers import QConv1d, QConv2d
-from elasticai.creator.translator.brevitas.translation_functions.translation_function_tools import set_quantizers
+from elasticai.creator.translator.brevitas.translation_functions.translation_function_tools import (
+    set_quantizers,
+)
 
 
-def translate_conv(layer: Union[QConv1d,QConv2d]) -> dict:
+def translate_conv(layer: Union[QConv1d, QConv2d]) -> dict:
     """
     translates the arguments of a qtorch convolutional layer into the arguments of a brevitas convolutional layer
     the padding mode of the qtorch layer is translated to the padding type of the brevitas layer, brevitas does not support all padding modes
@@ -49,7 +51,7 @@ def translate_conv1d(layer: QConv1d) -> bnn.QuantConv1d:
     Args:
         layer (Conv): qtorch layer
     Returns:
-        brevitas layer 
+        brevitas layer
     """
     args = translate_conv(layer=layer)
     return bnn.QuantConv1d(**args)

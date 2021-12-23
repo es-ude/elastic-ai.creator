@@ -14,7 +14,7 @@ def create_qtorch_model():
             out_channels=3,
             kernel_size=3,
             quantizer=Binarize(),
-            bias=False
+            bias=False,
         ),
         nn.BatchNorm1d(num_features=3),
         Binarize(),
@@ -63,13 +63,8 @@ def create_qtorch_model():
             stride=2,
         ),
         nn.Flatten(),
-        QLinear(
-            in_features=15,
-            out_features=1,
-            quantizer=Binarize(),
-            bias=False
-        ),
-        nn.Sigmoid()
+        QLinear(in_features=15, out_features=1, quantizer=Binarize(), bias=False),
+        nn.Sigmoid(),
     )
     return model
 
@@ -85,16 +80,13 @@ def crete_brevitas_model():
         ),
         nn.BatchNorm1d(num_features=3),
         bnn.QuantIdentity(act_quant=bquant.BinaryActivation),
-        nn.MaxPool1d(
-            kernel_size=5,
-            stride=3
-        ),
+        nn.MaxPool1d(kernel_size=5, stride=3),
         bnn.QuantConv1d(
             in_channels=3,
             out_channels=3,
             kernel_size=3,
             weight_quant=bquant.BinaryWeights,
-            bias_quant=bquant.BinaryBias
+            bias_quant=bquant.BinaryBias,
         ),
         nn.BatchNorm1d(num_features=3),
         bnn.QuantIdentity(act_quant=bquant.BinaryActivation),
@@ -107,10 +99,7 @@ def crete_brevitas_model():
         ),
         nn.BatchNorm1d(num_features=3),
         bnn.QuantIdentity(act_quant=bquant.BinaryActivation),
-        nn.MaxPool1d(
-            kernel_size=3,
-            stride=2
-        ),
+        nn.MaxPool1d(kernel_size=3, stride=2),
         bnn.QuantConv1d(
             in_channels=3,
             out_channels=3,
@@ -138,9 +127,9 @@ def crete_brevitas_model():
             in_features=15,
             out_features=1,
             bias=False,
-            weight_quant=bquant.BinaryWeights
+            weight_quant=bquant.BinaryWeights,
         ),
-        nn.Sigmoid()
+        nn.Sigmoid(),
     )
     return model
 

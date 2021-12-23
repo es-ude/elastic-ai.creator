@@ -1,1 +1,3 @@
-from elasticai.creator.translator.brevitas.brevitas_representation import BrevitasRepresentation
+from elasticai.creator.translator.brevitas.brevitas_representation import (
+    BrevitasRepresentation,
+)

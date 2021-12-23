@@ -1,7 +1,7 @@
 from elasticai.generator.testbench_strings import write_testbench_file
 
 
-def main(path_to_testbench: str = '../../testbench/') -> None:
+def main(path_to_testbench: str = "../../testbench/") -> None:
     """
     generates the vhd testbench file in the testbench folder for lstm common gate
     Args:
@@ -26,9 +26,11 @@ def main(path_to_testbench: str = '../../testbench/') -> None:
         "vector_len": "in unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
         "idx": "out unsigned(VECTOR_LEN_WIDTH-1 downto 0)",
         "ready": "out std_logic",
-        "y": "out signed(DATA_WIDTH-1 downto 0)"
+        "y": "out signed(DATA_WIDTH-1 downto 0)",
     }
-    type_definitions_dict = {"RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)"}
+    type_definitions_dict = {
+        "RAM_ARRAY": "array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0)"
+    }
     signal_definition_dict = {
         "clk_period": "time := 2 ps",
         "clock": "std_logic",
@@ -48,40 +50,42 @@ def main(path_to_testbench: str = '../../testbench/') -> None:
         "vector_len": "vector_len",
         "idx": "idx",
         "ready": "ready",
-        "y": "y"
+        "y": "y",
     }
     variable_definitions_before_test_process_dict = {
         "x": "X_MEM(to_integer(idx))",
-        "w": "W_MEM(to_integer(idx))"
+        "w": "W_MEM(to_integer(idx))",
     }
-    variable_definitions_in_test_process_dict = {"    vector_len": "to_unsigned(10, VECTOR_LEN_WIDTH)"}
+    variable_definitions_in_test_process_dict = {
+        "    vector_len": "to_unsigned(10, VECTOR_LEN_WIDTH)"
+    }
     # Note, the two array below, is generated based on data_width and frac_width
     # excitation signals, as test inputs signal
     inputs = [
         {
-            "X_MEM": "(x\"0013\",x\"0000\",x\"0010\",x\"0013\",x\"000c\",x\"0005\",x\"0005\",x\"0013\",x\"0004\",x\"0002\")",
-            "W_MEM": "(x\"0011\",x\"0018\",x\"0000\",x\"000d\",x\"0014\",x\"000f\",x\"0012\",x\"0007\",x\"0017\",x\"0012\")",
-            "b": "x\"008a\"",
+            "X_MEM": '(x"0013",x"0000",x"0010",x"0013",x"000c",x"0005",x"0005",x"0013",x"0004",x"0002")',
+            "W_MEM": '(x"0011",x"0018",x"0000",x"000d",x"0014",x"000f",x"0012",x"0007",x"0017",x"0012")',
+            "b": 'x"008a"',
         },
         {
-            "X_MEM": "(x\"0014\",x\"000d\",x\"0017\",x\"0008\",x\"0002\",x\"0007\",x\"0002\",x\"0015\",x\"0001\",x\"0010\")",
-            "W_MEM": "(x\"000e\",x\"0014\",x\"0005\",x\"0015\",x\"0009\",x\"0013\",x\"0007\",x\"0016\",x\"0008\",x\"0004\")",
-            "b": "x\"0064\"",
+            "X_MEM": '(x"0014",x"000d",x"0017",x"0008",x"0002",x"0007",x"0002",x"0015",x"0001",x"0010")',
+            "W_MEM": '(x"000e",x"0014",x"0005",x"0015",x"0009",x"0013",x"0007",x"0016",x"0008",x"0004")',
+            "b": 'x"0064"',
         },
         {
-            "X_MEM": "(x\"000f\",x\"0017\",x\"000d\",x\"000f\",x\"0001\",x\"0009\",x\"0002\",x\"0007\",x\"0008\",x\"0013\")",
-            "W_MEM": "(x\"0001\",x\"000a\",x\"0008\",x\"0010\",x\"0008\",x\"0001\",x\"0016\",x\"0013\",x\"0016\",x\"000a\")",
-            "b": "x\"009b\"",
+            "X_MEM": '(x"000f",x"0017",x"000d",x"000f",x"0001",x"0009",x"0002",x"0007",x"0008",x"0013")',
+            "W_MEM": '(x"0001",x"000a",x"0008",x"0010",x"0008",x"0001",x"0016",x"0013",x"0016",x"000a")',
+            "b": 'x"009b"',
         },
         {
-            "X_MEM": "(x\"000c\",x\"0007\",x\"0001\",x\"0019\",x\"0008\",x\"000c\",x\"0019\",x\"000b\",x\"0008\",x\"000d\")",
-            "W_MEM": "(x\"000e\",x\"0015\",x\"0001\",x\"000b\",x\"0014\",x\"0012\",x\"000f\",x\"0000\",x\"0008\",x\"000e\")",
-            "b": "x\"004c\"",
+            "X_MEM": '(x"000c",x"0007",x"0001",x"0019",x"0008",x"000c",x"0019",x"000b",x"0008",x"000d")',
+            "W_MEM": '(x"000e",x"0015",x"0001",x"000b",x"0014",x"0012",x"000f",x"0000",x"0008",x"000e")',
+            "b": 'x"004c"',
         },
         {
-            "X_MEM": "(x\"0005\",x\"0013\",x\"0002\",x\"0013\",x\"000c\",x\"000f\",x\"0003\",x\"0004\",x\"0010\",x\"0001\")",
-            "W_MEM": "(x\"0006\",x\"000d\",x\"0005\",x\"0009\",x\"0017\",x\"0017\",x\"000e\",x\"000d\",x\"0000\",x\"0019\")",
-            "b": "x\"0092\"",
+            "X_MEM": '(x"0005",x"0013",x"0002",x"0013",x"000c",x"000f",x"0003",x"0004",x"0010",x"0001")',
+            "W_MEM": '(x"0006",x"000d",x"0005",x"0009",x"0017",x"0017",x"000e",x"000d",x"0000",x"0019")',
+            "b": 'x"0092"',
         },
     ]
     # expected signal, as test reference output signal
@@ -105,9 +109,9 @@ def main(path_to_testbench: str = '../../testbench/') -> None:
         type_definitions_dict=type_definitions_dict,
         clock_name="clock",
         variable_definitions_before_test_process_dict=variable_definitions_before_test_process_dict,
-        variable_definitions_in_test_process_dict=variable_definitions_in_test_process_dict
+        variable_definitions_in_test_process_dict=variable_definitions_in_test_process_dict,
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -15,10 +15,17 @@ class ModelReport:
     and the produced csv file to check that the hw model produces the
     same output as the software model for every data sample.
     """
-    def __init__(self, model: Model, data: Iterable[Sequence[str, Any, Any]], is_binary: bool, threshold: float = 0.5) -> None:
+
+    def __init__(
+        self,
+        model: Model,
+        data: Iterable[Sequence[str, Any, Any]],
+        is_binary: bool,
+        threshold: float = 0.5,
+    ) -> None:
         model.eval()
         self.model = model
-        self.data: Iterable[Sequence[str, Any, Any]] = data 
+        self.data: Iterable[Sequence[str, Any, Any]] = data
         self.evaluate(is_binary, threshold)
 
     def evaluate(self, is_binary: bool, threshold: float = 0.5) -> None:
@@ -30,9 +37,16 @@ class ModelReport:
             threshold (float): If binary the threshold to compare the model to
         """
         if is_binary:
-            self._results = \
-                [(example_id, int(expected_value), int(self.model(torch.unsqueeze(input_value, 1)) > threshold))
-                 for example_id, input_value, expected_value in zip(self.data[0], self.data[1], self.data[2])]
+            self._results = [
+                (
+                    example_id,
+                    int(expected_value),
+                    int(self.model(torch.unsqueeze(input_value, 1)) > threshold),
+                )
+                for example_id, input_value, expected_value in zip(
+                    self.data[0], self.data[1], self.data[2]
+                )
+            ]
 
     def write_to_csv(self, path: str) -> None:
         """
@@ -40,8 +54,8 @@ class ModelReport:
         Args:
             path(str): the results path eg "results.csv"
         """
-        with open(path, 'wt') as results_file:
-            wtr = csv.writer(results_file, delimiter=' ', lineterminator='\n')
+        with open(path, "wt") as results_file:
+            wtr = csv.writer(results_file, delimiter=" ", lineterminator="\n")
             wtr.writerow(["path", "ground-truth", "model-prediction"])
             wtr.writerows(self._results)
 
@@ -51,8 +65,7 @@ class ModelReport:
         Args:
             path(str): the results path eg "results.txt"
         """
-        with open(path, 'wt') as results_file:
+        with open(path, "wt") as results_file:
             results_file.write("path ground-truth model-prediction\n")
             for result in self._results:
                 results_file.write("{} {} {}\n".format(result[0], result[1], result[2]))
-

@@ -9,6 +9,7 @@ class BrevitasModelMatcher:
     """
     self implemented Test case for comparing two brevitas models
     """
+
     @classmethod
     def check_equality(cls, first_model: Module, second_model: Module) -> bool:
         """
@@ -23,16 +24,16 @@ class BrevitasModelMatcher:
             raise TypeError
         if first_model == second_model:
             return True
-        return cls._condition_function_applies_to_all_elements_in_iterables(cls._layers_are_equal,
-                                                                            first_model,
-                                                                            second_model)
+        return cls._condition_function_applies_to_all_elements_in_iterables(
+            cls._layers_are_equal, first_model, second_model
+        )
 
     @classmethod
     def _condition_function_applies_to_all_elements_in_iterables(
-            cls,
-            condition_function: Callable[[Any, Any], bool],
-            first_iterable: Iterable[Any],
-            second_iterable: Iterable[Any]
+        cls,
+        condition_function: Callable[[Any, Any], bool],
+        first_iterable: Iterable[Any],
+        second_iterable: Iterable[Any],
     ) -> bool:
         """
         applies a condition function to two iterables, e.g. to the layers or to the parameters
@@ -49,7 +50,9 @@ class BrevitasModelMatcher:
         return True
 
     @classmethod
-    def _layers_are_equal(cls, first_model_layer: Module, second_model_layer: Module) -> bool:
+    def _layers_are_equal(
+        cls, first_model_layer: Module, second_model_layer: Module
+    ) -> bool:
         """
         checks if two layers of two models are equal
         Args:
@@ -59,15 +62,23 @@ class BrevitasModelMatcher:
             equality boolean of the layers
         """
         if type(first_model_layer) == type(second_model_layer):
-            first_model_parameters = cls._get_parameters_or_empty_list(first_model_layer)
-            second_model_parameters = cls._get_parameters_or_empty_list(second_model_layer)
-            return cls._condition_function_applies_to_all_elements_in_iterables(cls._parameters_are_equal,
-                                                                                first_model_parameters,
-                                                                                second_model_parameters)
+            first_model_parameters = cls._get_parameters_or_empty_list(
+                first_model_layer
+            )
+            second_model_parameters = cls._get_parameters_or_empty_list(
+                second_model_layer
+            )
+            return cls._condition_function_applies_to_all_elements_in_iterables(
+                cls._parameters_are_equal,
+                first_model_parameters,
+                second_model_parameters,
+            )
         return False
 
     @classmethod
-    def _parameters_are_equal(cls, first_model_parameter: Any, second_model_parameter: Any) -> bool:
+    def _parameters_are_equal(
+        cls, first_model_parameter: Any, second_model_parameter: Any
+    ) -> bool:
         """
         compares a parameter of two equal layers in the two models
         Args:
@@ -76,7 +87,9 @@ class BrevitasModelMatcher:
         Returns:
             equality boolean of the parameters
         """
-        return first_model_parameter is not None and first_model_parameter.equal(second_model_parameter)
+        return first_model_parameter is not None and first_model_parameter.equal(
+            second_model_parameter
+        )
 
     @staticmethod
     def _has_callable_parameters(layer: Module) -> bool:
@@ -112,4 +125,3 @@ class BrevitasModelComparisonTestCase(TestCase):
             other (Model): brevitas model
         """
         self.assertTrue(BrevitasModelMatcher.check_equality(expected, other))
-

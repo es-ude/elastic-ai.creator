@@ -4,8 +4,12 @@ from torch import nn
 
 import brevitas.nn as bnn
 
-from elasticai.creator.translator.brevitas.translation_functions.conv import translate_conv2d
-from elasticai.creator.translator.brevitas.integrationTests.conv_params_comparison import ConvTest
+from elasticai.creator.translator.brevitas.translation_functions.conv import (
+    translate_conv2d,
+)
+from elasticai.creator.translator.brevitas.integrationTests.conv_params_comparison import (
+    ConvTest,
+)
 from elasticai.creator.layers import QConv2d, Binarize, Ternarize
 import elasticai.creator.translator.brevitas.brevitas_quantizers as bquant
 
@@ -14,17 +18,17 @@ class Conv2dTest(ConvTest):
     @staticmethod
     def create_qtorch_conv_layers(quantizer, padding=0, padding_mode="zeros"):
         return QConv2d(
-                in_channels=5,
-                out_channels=10,
-                kernel_size=10,
-                stride=1,
-                padding=padding,
-                dilation=1,
-                groups=1,
-                bias=True,
-                padding_mode=padding_mode,
-                quantizer=quantizer
-            )
+            in_channels=5,
+            out_channels=10,
+            kernel_size=10,
+            stride=1,
+            padding=padding,
+            dilation=1,
+            groups=1,
+            bias=True,
+            padding_mode=padding_mode,
+            quantizer=quantizer,
+        )
 
     @staticmethod
     def create_brevitas_conv_layer(weight_quant, bias_quant, padding_type="standard"):
@@ -39,14 +43,13 @@ class Conv2dTest(ConvTest):
             bias=True,
             padding_type=padding_type,
             weight_quant=weight_quant,
-            bias_quant=bias_quant
+            bias_quant=bias_quant,
         )
 
     def test_conv2d_binary_weight_bias_quant(self):
         layer = self.create_qtorch_conv_layers(quantizer=Binarize())
         target = self.create_brevitas_conv_layer(
-            weight_quant=bquant.BinaryWeights,
-            bias_quant=bquant.BinaryBias
+            weight_quant=bquant.BinaryWeights, bias_quant=bquant.BinaryBias
         )
         translated = translate_conv2d(layer)
 
@@ -55,8 +58,7 @@ class Conv2dTest(ConvTest):
     def test_conv2d_ternaryweight_bias_quant(self):
         layer = self.create_qtorch_conv_layers(quantizer=Ternarize())
         target = self.create_brevitas_conv_layer(
-            weight_quant=bquant.TernaryWeights,
-            bias_quant=bquant.TernaryBias
+            weight_quant=bquant.TernaryWeights, bias_quant=bquant.TernaryBias
         )
         translated = translate_conv2d(layer)
 
@@ -64,13 +66,19 @@ class Conv2dTest(ConvTest):
 
     def test_conv2d_padding(self):
         layer = self.create_qtorch_conv_layers(quantizer=Binarize(), padding="same")
-        target = self.create_brevitas_conv_layer(weight_quant=bquant.BinaryWeights, bias_quant=bquant.BinaryBias, padding_type="same")
+        target = self.create_brevitas_conv_layer(
+            weight_quant=bquant.BinaryWeights,
+            bias_quant=bquant.BinaryBias,
+            padding_type="same",
+        )
         translated = translate_conv2d(layer)
 
         self.assertConv2dParams(target, translated)
 
     def test_conv2d_wrong_padding_mode(self):
-        layer = self.create_qtorch_conv_layers(quantizer=Binarize(), padding_mode="reflect")
+        layer = self.create_qtorch_conv_layers(
+            quantizer=Binarize(), padding_mode="reflect"
+        )
         self.assertRaises(NotImplementedError, translate_conv2d, layer)
 
     def test_conv2d_on_random_input(self):

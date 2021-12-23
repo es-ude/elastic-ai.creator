@@ -1,7 +1,7 @@
 from elasticai.generator.testbench_strings import write_testbench_file
 
 
-def main(path_to_testbench: str = '../../testbench/'):
+def main(path_to_testbench: str = "../../testbench/"):
     """
     generates the vhd testbench file in the testbench folder for the tanh function
     Args:
@@ -18,12 +18,12 @@ def main(path_to_testbench: str = '../../testbench/'):
 
     components_variables_dict = {
         "x": "in signed(DATA_WIDTH-1 downto 0)",
-        "y": "out signed(DATA_WIDTH-1 downto 0)"
+        "y": "out signed(DATA_WIDTH-1 downto 0)",
     }
     signal_definition_dict = {
         "clk_period": "time := 1 ns",
         "test_input": "signed(16-1 downto 0):=(others=>'0')",
-        "test_output": "signed(16-1 downto 0)"
+        "test_output": "signed(16-1 downto 0)",
     }
     uut_mapping_dict = {"x": "test_input", "y": "test_output"}
 
@@ -32,7 +32,7 @@ def main(path_to_testbench: str = '../../testbench/'):
     # excitation signals, as test inputs signal
     inputs = [-1281, -1000, -500, 0, 500, 800, 1024]
     # expected signal, as test reference output signal
-    outputs = ["\"1111111100000000\"", -255, -246, 0, 245, 254, 255]
+    outputs = ['"1111111100000000"', -255, -246, 0, 245, 254, 255]
 
     write_testbench_file(
         path_to_testbench=path_to_testbench,
@@ -52,5 +52,5 @@ def main(path_to_testbench: str = '../../testbench/'):
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

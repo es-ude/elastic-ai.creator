@@ -6,8 +6,17 @@ from unittest import SkipTest
 import torch
 from torch import Tensor
 
-from elasticai.creator.layers import ResidualQuantization, Ternarize, \
-    QuantizeTwoBit, QLinear, QConv1d, QConv2d, QLSTMCell, QLSTM, Binarize
+from elasticai.creator.layers import (
+    ResidualQuantization,
+    Ternarize,
+    QuantizeTwoBit,
+    QLinear,
+    QConv1d,
+    QConv2d,
+    QLSTMCell,
+    QLSTM,
+    Binarize,
+)
 from elasticai.creator.constraints import WeightClipper
 from tensor_test_case import TensorTestCase
 
@@ -17,9 +26,7 @@ class MockQLSTMCell:
         pass
 
     # it is the forward function in a real LSTM cell
-    def __call__(self,
-                 input: Tensor,
-                 hx: Optional[Tuple[Tensor, Tensor]] = None):
+    def __call__(self, input: Tensor, hx: Optional[Tuple[Tensor, Tensor]] = None):
         return hx
 
 
@@ -28,7 +35,7 @@ class LayerTests(TensorTestCase):
         with self.subTest("test call with different values 1,-1,0"):
             layer = ResidualQuantization()
             out = layer(torch.unsqueeze(torch.Tensor([1, -1, 0]), dim=0))
-            self.assertEqual(out.tolist(), [[1., -1., 1., 1., -1., -1.]])
+            self.assertEqual(out.tolist(), [[1.0, -1.0, 1.0, 1.0, -1.0, -1.0]])
 
         with self.subTest("test if Backward pass requires grad"):
             layer = ResidualQuantization()
@@ -37,10 +44,12 @@ class LayerTests(TensorTestCase):
         with self.subTest("thresholds"):
             layer = ResidualQuantization()
             threshold = layer.thresholds
-            self.assertEqual(layer.thresholds.tolist(), [0,0.5])
+            self.assertEqual(layer.thresholds.tolist(), [0, 0.5])
         with self.subTest("codomain"):
             layer = ResidualQuantization()
-            self.assertSequenceEqual(layer.codomain, [(x, y) for x in [-1, 1] for y in [-1, 1]])
+            self.assertSequenceEqual(
+                layer.codomain, [(x, y) for x in [-1, 1] for y in [-1, 1]]
+            )
 
     def test_Ternarize(self):
         with self.subTest("test call with different values 1,-1,0"):
@@ -55,8 +64,8 @@ class LayerTests(TensorTestCase):
             self.assertEqual(out.requires_grad, False)
 
         with self.subTest("thresholds"):
-            layer = Ternarize(.25)
-            self.assertEqual(layer.thresholds.tolist(), [.25, -.25])
+            layer = Ternarize(0.25)
+            self.assertEqual(layer.thresholds.tolist(), [0.25, -0.25])
 
         with self.subTest("Check if widening is trainable when option True"):
             layer = Ternarize(zero_window_width=0.5, trainable=True)
@@ -67,7 +76,7 @@ class LayerTests(TensorTestCase):
         with self.subTest("test call with  0.3 factor and 2 as ipnut"):
             layer = QuantizeTwoBit(0.3)
             out = layer(torch.unsqueeze(torch.Tensor([2]), 0))
-            self.assertEqual(out.tolist(), [[1, 1.]])
+            self.assertEqual(out.tolist(), [[1, 1.0]])
         with self.subTest("test factors are trainable"):
             layer = QuantizeTwoBit(0.3)
             out = layer(torch.unsqueeze(torch.Tensor([2]), 0))
@@ -75,35 +84,42 @@ class LayerTests(TensorTestCase):
         with self.subTest("Check thresholds value with factors 0.3"):
             layer = QuantizeTwoBit(0.3)
             thresholds = layer.thresholds.tolist()
-            self.assertEqual([0., round(thresholds[1], 2)], [0.0, 0.3])  # precision loss
+            self.assertEqual(
+                [0.0, round(thresholds[1], 2)], [0.0, 0.3]
+            )  # precision loss
 
     def test_Qlinear(self):
         with self.subTest("test call if binarized and has bias"):
             layer = QLinear(1, 2, Binarize())
             layer.weight = torch.Tensor([[2], [-2]])
             layer.bias = torch.Tensor([[3, -3]])
-            input = torch.unsqueeze(torch.Tensor([3.]), 0)
+            input = torch.unsqueeze(torch.Tensor([3.0]), 0)
             out = layer(input)
             self.assertEqual(out.tolist(), [[4.0, -4.0]])
 
         with self.subTest("test Backward pass changes the weight gradient"):
             layer = QLinear(1, 2, Binarize())
-            layer.weight = torch.Tensor([[.6], [.7]])
+            layer.weight = torch.Tensor([[0.6], [0.7]])
             old_grad = layer.parametrizations.weight.original.grad
-            layer.bias = torch.Tensor([[3., -3.]])
-            input = torch.unsqueeze(torch.Tensor([3.]), 0)
+            layer.bias = torch.Tensor([[3.0, -3.0]])
+            input = torch.unsqueeze(torch.Tensor([3.0]), 0)
             out = layer(input)
-            loss = (out - torch.Tensor([-1.])).sum()
+            loss = (out - torch.Tensor([-1.0])).sum()
             loss.backward()
             new_weight_grad = layer.parametrizations.weight.original.grad
             self.assertNotEqual(new_weight_grad[0], old_grad)
             self.assertNotEqual(new_weight_grad[1], old_grad)
 
         with self.subTest("test weight clipper constraint QLinear"):
-            layer = QLinear(in_features=1, out_features=2, quantizer=Binarize(), constraints=[WeightClipper()])
+            layer = QLinear(
+                in_features=1,
+                out_features=2,
+                quantizer=Binarize(),
+                constraints=[WeightClipper()],
+            )
             layer.weight = torch.Tensor([[-2], [2]])
             layer.bias = torch.Tensor([[2, 2]])
-            input = torch.unsqueeze(torch.Tensor([3.]), 0)
+            input = torch.unsqueeze(torch.Tensor([3.0]), 0)
             # clip to [-1, 1]
             with torch.no_grad():
                 layer.apply_constraint()
@@ -118,29 +134,49 @@ class LayerTests(TensorTestCase):
         with self.subTest("test call with binarizer and bias"):
             layer = QConv1d(1, 1, (2,), Binarize())
             layer.weight = torch.zeros(1, 1, 2)
-            layer.bias = torch.Tensor([3.])
-            input = torch.unsqueeze(torch.Tensor([[3., 2]], ), 0)
+            layer.bias = torch.Tensor([3.0])
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[3.0, 2]],
+                ),
+                0,
+            )
             out = layer(input)
             self.assertTensorEquals(out, torch.tensor([[[6.0]]]))
 
         with self.subTest("test Backward pass changes the weight gradient"):
             layer = QConv1d(1, 1, 2, Binarize())
             layer.weight = torch.zeros(1, 1, 2)
-            layer.bias = torch.Tensor([3.])
+            layer.bias = torch.Tensor([3.0])
             old_grad = layer.parametrizations.weight.original.grad
-            input = torch.unsqueeze(torch.Tensor([[3., 2]], ), 0)
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[3.0, 2]],
+                ),
+                0,
+            )
             out = layer(input)
-            loss = (out - torch.Tensor([-1.])).sum()
+            loss = (out - torch.Tensor([-1.0])).sum()
             loss.backward()
             new_weight_grad = layer.parametrizations.weight.original.grad
             self.assertNotEqual(new_weight_grad[0], old_grad)
 
         with self.subTest("test constraint QConv1d"):
-            layer = QConv1d(in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize(),
-                            constraints=[WeightClipper()])
-            layer.weight = torch.tensor([[[-2., 2.]]])
-            layer.bias = torch.Tensor([3.])
-            input = torch.unsqueeze(torch.Tensor([[3., 2.]], ), 0)
+            layer = QConv1d(
+                in_channels=1,
+                out_channels=1,
+                kernel_size=2,
+                quantizer=Binarize(),
+                constraints=[WeightClipper()],
+            )
+            layer.weight = torch.tensor([[[-2.0, 2.0]]])
+            layer.bias = torch.Tensor([3.0])
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[3.0, 2.0]],
+                ),
+                0,
+            )
             # clip to [-1, 1]
             with torch.no_grad():
                 layer.apply_constraint()
@@ -149,10 +185,17 @@ class LayerTests(TensorTestCase):
             self.assertEqual(out.tolist(), [[[0.0]]])
 
         with self.subTest("test apply constraint QConv1d if constaint is none"):
-            layer = QConv1d(in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize())
-            layer.weight = torch.tensor([[[-2., 2.]]])
-            layer.bias = torch.Tensor([3.])
-            input = torch.unsqueeze(torch.Tensor([[3., 2.]], ), 0)
+            layer = QConv1d(
+                in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize()
+            )
+            layer.weight = torch.tensor([[[-2.0, 2.0]]])
+            layer.bias = torch.Tensor([3.0])
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[3.0, 2.0]],
+                ),
+                0,
+            )
             # clip to [-1, 1]
             with torch.no_grad():
                 layer.apply_constraint()
@@ -167,29 +210,49 @@ class LayerTests(TensorTestCase):
         with self.subTest("test call with binarization and bias"):
             layer = QConv2d(1, 1, 2, Binarize())
             layer.weight = torch.zeros(1, 1, 2, 2)
-            layer.bias = torch.Tensor([3.])
-            input = torch.unsqueeze(torch.Tensor([[[3., 2.], [3., 2.]]], ), 0)
+            layer.bias = torch.Tensor([3.0])
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[[3.0, 2.0], [3.0, 2.0]]],
+                ),
+                0,
+            )
             out = layer(input)
             self.assertEqual(out.tolist(), [[[[11.0]]]])
 
         with self.subTest("test Backward pass, changed weights"):
             layer = QConv2d(1, 1, 2, Binarize())
             layer.weight = torch.zeros(1, 1, 2, 2)
-            layer.bias = torch.Tensor([3.])
-            input = torch.unsqueeze(torch.Tensor([[[3., 2.], [3., 2.]]], ), 0)
+            layer.bias = torch.Tensor([3.0])
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[[3.0, 2.0], [3.0, 2.0]]],
+                ),
+                0,
+            )
             old_grad = layer.parametrizations.weight.original.grad
             out = layer(input)
-            loss = (out - torch.Tensor([-1.])).sum()
+            loss = (out - torch.Tensor([-1.0])).sum()
             loss.backward()
             new_weight_grad = layer.parametrizations.weight.original.grad
             self.assertNotEqual(new_weight_grad[0], old_grad)
 
         with self.subTest("test weight clipper constraint QConv2d"):
-            layer = QConv2d(in_channels=1, out_channels=1, kernel_size=2, quantizer=Binarize(),
-                            constraints=[WeightClipper()])
-            layer.weight = torch.tensor([[[[-2., 2.], [0., 1.]]]])
-            layer.bias = torch.Tensor([3.])
-            input = torch.unsqueeze(torch.Tensor([[[3., 2.], [3., 2.]]], ), 0)
+            layer = QConv2d(
+                in_channels=1,
+                out_channels=1,
+                kernel_size=2,
+                quantizer=Binarize(),
+                constraints=[WeightClipper()],
+            )
+            layer.weight = torch.tensor([[[[-2.0, 2.0], [0.0, 1.0]]]])
+            layer.bias = torch.Tensor([3.0])
+            input = torch.unsqueeze(
+                torch.Tensor(
+                    [[[3.0, 2.0], [3.0, 2.0]]],
+                ),
+                0,
+            )
             # clip to [-1, 1]
             with torch.no_grad():
                 layer.apply_constraint()
@@ -208,8 +271,13 @@ class LayerTests(TensorTestCase):
             def identity(x):
                 return x
 
-            qlstm_cell = QLSTMCell(input_size=3, hidden_size=5, bias=True, weight_quantizer=identity,
-                                   state_quantizer=lambda x: x)
+            qlstm_cell = QLSTMCell(
+                input_size=3,
+                hidden_size=5,
+                bias=True,
+                weight_quantizer=identity,
+                state_quantizer=lambda x: x,
+            )
             qlstm_cell.weight_ih = lstm_cell.weight_ih
             qlstm_cell.weight_hh = lstm_cell.weight_hh
             qlstm_cell.bias_ih = lstm_cell.bias_ih
@@ -222,7 +290,11 @@ class LayerTests(TensorTestCase):
 
         with self.subTest("full res QLSTM cell equal PyTorch LSTM cell (without bias)"):
             lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=False)
-            qlstm_cell = QLSTMCell(input_size=3, hidden_size=5, bias=False, )
+            qlstm_cell = QLSTMCell(
+                input_size=3,
+                hidden_size=5,
+                bias=False,
+            )
             qlstm_cell.weight_ih = lstm_cell.weight_ih
             qlstm_cell.weight_hh = lstm_cell.weight_hh
             qlstm_cell.bias_ih = lstm_cell.bias_ih
@@ -239,16 +311,21 @@ class LayerTests(TensorTestCase):
                 hidden_size=1,
                 bias=True,
                 state_quantizer=Binarize(),
-                weight_quantizer=Binarize()
+                weight_quantizer=Binarize(),
             )
             cell.weight_ih = torch.nn.Parameter(torch.ones_like(cell.weight_ih))
             cell.weight_hh = torch.nn.Parameter(torch.ones_like(cell.weight_hh) * (-1))
             cell.bias_ih = torch.nn.Parameter(torch.ones_like(cell.bias_ih))
             cell.bias_hh = torch.nn.Parameter(torch.ones_like(cell.bias_hh) * (-1))
-            inp = torch.as_tensor([[1.]])
+            inp = torch.as_tensor([[1.0]])
             actual_outputs = cell(inp)
             actual_outputs = tuple(
-                map(lambda output: [[round(n, 4) for n in row] for row in output.tolist()], actual_outputs)
+                map(
+                    lambda output: [
+                        [round(n, 4) for n in row] for row in output.tolist()
+                    ],
+                    actual_outputs,
+                )
             )
             target_outputs = ([[0.2311]], [[0.5]])
             self.assertListEqual(actual_outputs[0], target_outputs[0])
@@ -257,28 +334,28 @@ class LayerTests(TensorTestCase):
     def test_QLSTM(self):
         lstm_cell_id = "elasticai.creator.layers.QLSTMCell"
         qlstm_parameters = {
-            'input_size': 0,
-            'hidden_size': 1,
-            'state_quantizer': lambda x: x,
-            'weight_quantizer': lambda x: x,
-            'bias': False
+            "input_size": 0,
+            "hidden_size": 1,
+            "state_quantizer": lambda x: x,
+            "weight_quantizer": lambda x: x,
+            "bias": False,
         }
         with patch(lstm_cell_id, new=MockQLSTMCell) as _:
             with self.subTest("test QLSTM default"):
                 layer = QLSTM(**qlstm_parameters)
-                input = torch.Tensor([[1., 1.], [1., 1.]])
-                state = [torch.Tensor([1.]), torch.Tensor([1.])]
+                input = torch.Tensor([[1.0, 1.0], [1.0, 1.0]])
+                state = [torch.Tensor([1.0]), torch.Tensor([1.0])]
                 outputs, cell_state = layer(input, state)
-                self.assertEqual(outputs.tolist(), [[1.], [1.]])
-                self.assertEqual(cell_state[0].tolist(), [1.])
-                self.assertEqual(cell_state[1].tolist(), [1.])
+                self.assertEqual(outputs.tolist(), [[1.0], [1.0]])
+                self.assertEqual(cell_state[0].tolist(), [1.0])
+                self.assertEqual(cell_state[1].tolist(), [1.0])
 
         with patch(lstm_cell_id, new=MockQLSTMCell) as _:
             with self.subTest("test QLSTM other input + state"):
                 layer = QLSTM(**qlstm_parameters)
-                input = torch.Tensor([[1., 1.], [1., 1.], [1., 1.]])
-                state = [torch.Tensor([5.]), torch.Tensor([-1.])]
+                input = torch.Tensor([[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
+                state = [torch.Tensor([5.0]), torch.Tensor([-1.0])]
                 outputs, cell_state = layer(input, state)
-                self.assertEqual(outputs.tolist(), [[5.], [5.], [5.]])
-                self.assertEqual(cell_state[0].tolist(), [5.])
-                self.assertEqual(cell_state[1].tolist(), [-1.])
+                self.assertEqual(outputs.tolist(), [[5.0], [5.0], [5.0]])
+                self.assertEqual(cell_state[0].tolist(), [5.0])
+                self.assertEqual(cell_state[1].tolist(), [-1.0])

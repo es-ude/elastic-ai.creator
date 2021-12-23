@@ -1,7 +1,9 @@
 import unittest
 
 from elasticai.creator.layers import Binarize, Ternarize
-from elasticai.creator.translator.brevitas.translation_functions.translation_function_tools import set_quantizers
+from elasticai.creator.translator.brevitas.translation_functions.translation_function_tools import (
+    set_quantizers,
+)
 import elasticai.creator.translator.brevitas.brevitas_quantizers as bquant
 
 

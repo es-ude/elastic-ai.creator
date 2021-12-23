@@ -3,7 +3,9 @@ import brevitas.nn as bnn
 from torch.nn import Module
 
 from elasticai.creator.layers import QLinear
-from elasticai.creator.translator.brevitas.translation_functions.translation_function_tools import set_quantizers
+from elasticai.creator.translator.brevitas.translation_functions.translation_function_tools import (
+    set_quantizers,
+)
 
 
 def translate_linear_layer(layer: QLinear) -> bnn.QuantLinear:
@@ -19,7 +21,7 @@ def translate_linear_layer(layer: QLinear) -> bnn.QuantLinear:
     args = {
         "in_features": layer.in_features,
         "out_features": layer.out_features,
-        "bias": layer.bias is not None
+        "bias": layer.bias is not None,
     }
 
     set_quantizers(layer, args)

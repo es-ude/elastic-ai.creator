@@ -8,7 +8,9 @@ import numpy as np
 from brevitas import quant
 import brevitas.nn as bnn
 
-from elasticai.creator.translator.brevitas.brevitas_model_comparison import BrevitasModelComparisonTestCase
+from elasticai.creator.translator.brevitas.brevitas_model_comparison import (
+    BrevitasModelComparisonTestCase,
+)
 import elasticai.creator.translator.brevitas.brevitas_quantizers as bquant
 
 
@@ -16,6 +18,7 @@ class TestModelComparison(BrevitasModelComparisonTestCase):
     """
     Test the brevitas model comparison class
     """
+
     def setUp(self) -> None:
         self.ensure_reproducibility()
 
@@ -60,10 +63,7 @@ class TestModelComparison(BrevitasModelComparisonTestCase):
         )
         l5 = nn.Flatten()
         l6 = bnn.QuantLinear(
-            in_features=21,
-            out_features=1,
-            bias=True,
-            weight_quant=bquant.BinaryWeights
+            in_features=21, out_features=1, bias=True, weight_quant=bquant.BinaryWeights
         )
         l7 = nn.Sigmoid()
 
@@ -100,7 +100,7 @@ class TestModelComparison(BrevitasModelComparisonTestCase):
                 in_features=5,
                 out_features=2,
                 bias=True,
-                weight_quant=quant.SignedBinaryWeightPerTensorConst
+                weight_quant=quant.SignedBinaryWeightPerTensorConst,
             )
         )
 

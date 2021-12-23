@@ -7,6 +7,7 @@ class ConvTest(unittest.TestCase):
     """
     self implemented Test case for comparing two brevitas convolutional layers
     """
+
     def assertConvParams(self, target, translated):
         self.assertEqual(target.in_channels, translated.in_channels)
         self.assertEqual(target.out_channels, translated.out_channels)
@@ -28,4 +29,3 @@ class ConvTest(unittest.TestCase):
     def assertConv2dParams(self, target, translated):
         self.assertIsInstance(translated, bnn.QuantConv2d)
         self.assertConvParams(target, translated)
-

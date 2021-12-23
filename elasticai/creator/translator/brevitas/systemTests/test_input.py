@@ -1,7 +1,11 @@
 import unittest
 import torch
 
-from elasticai.creator.translator.brevitas.systemTests.models_definition import create_qtorch_model, crete_brevitas_model, define_weight
+from elasticai.creator.translator.brevitas.systemTests.models_definition import (
+    create_qtorch_model,
+    crete_brevitas_model,
+    define_weight,
+)
 
 # for reproducability
 torch.manual_seed(0)
@@ -12,6 +16,7 @@ class InputSystemTest(unittest.TestCase):
     System test where the same input is put in a qtorch model and the corresponding tranlsated brevitas model
     Check if the output is the same
     """
+
     def test_input(self) -> None:
         self.qtorch_model = create_qtorch_model()
         self.brevitas_model = crete_brevitas_model()

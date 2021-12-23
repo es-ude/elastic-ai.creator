@@ -21,56 +21,79 @@ use ieee.numeric_std.all;               -- for type conversions
             lib_string = lib_string + "LIBRARY work;\nuse work.all;\n"
     else:
         lib_string = lib_string + "\n"
-    return lib_string + '\n'
+    return lib_string + "\n"
 
 
-def get_entity_or_component_string(entity_or_component: str, entity_or_component_name: str, data_width: int,
-                                   frac_width: int, variables_dict: Dict, vector_len_width: int = None,
-                                   indent: str = ""):
+def get_entity_or_component_string(
+    entity_or_component: str,
+    entity_or_component_name: str,
+    data_width: int,
+    frac_width: int,
+    variables_dict: Dict,
+    vector_len_width: int = None,
+    indent: str = "",
+):
     """
-        returns the entity or component definition string
-        Args:
-            entity_or_component (str):
-            entity_or_component_name (str):
-            data_width (int): data width
-            frac_width (int): frac width
-            variables_dict (Dict): dictionary with all variables and their definition
-            vector_len_width (int): default not specified, if specified added to the generic part
-            indent (str): number of tabs needed, specified in string
-        Returns:
-            string of the entity or component definition
-        """
+    returns the entity or component definition string
+    Args:
+        entity_or_component (str):
+        entity_or_component_name (str):
+        data_width (int): data width
+        frac_width (int): frac width
+        variables_dict (Dict): dictionary with all variables and their definition
+        vector_len_width (int): default not specified, if specified added to the generic part
+        indent (str): number of tabs needed, specified in string
+    Returns:
+        string of the entity or component definition
+    """
     first_part_of_string = """{indent}{entity_or_component} {entity_or_component_name} is
     {indent}generic (
         {indent}DATA_WIDTH : integer := {data_width};
-        {indent}FRAC_WIDTH : integer := {frac_width}""".format(indent=indent,
-                                                               entity_or_component=entity_or_component,
-                                                               entity_or_component_name=entity_or_component_name,
-                                                               data_width=data_width,
-                                                               frac_width=frac_width)
+        {indent}FRAC_WIDTH : integer := {frac_width}""".format(
+        indent=indent,
+        entity_or_component=entity_or_component,
+        entity_or_component_name=entity_or_component_name,
+        data_width=data_width,
+        frac_width=frac_width,
+    )
 
     # eventually add vector_len_width
     if vector_len_width:
         second_part_of_string = f";\n        {indent}VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(
-            indent=indent, vector_len_width=vector_len_width)
+            indent=indent, vector_len_width=vector_len_width
+        )
     else:
         second_part_of_string = "\n"
 
     closing_of_generic_string = """    {indent});
-    {indent}port (\n""".format(indent=indent)
+    {indent}port (\n""".format(
+        indent=indent
+    )
 
     # add variables
     variables_list_str = ""
     for variable in variables_dict:
-        variables_list_str = variables_list_str + "        {indent}{variable} : {definition};\n".format(
-            indent=indent,
-            variable=variable,
-            definition=variables_dict[variable])
+        variables_list_str = (
+            variables_list_str
+            + "        {indent}{variable} : {definition};\n".format(
+                indent=indent, variable=variable, definition=variables_dict[variable]
+            )
+        )
     # remove last linebreak and semicolon
-    return first_part_of_string + second_part_of_string + closing_of_generic_string + variables_list_str[:-2] + """
+    return (
+        first_part_of_string
+        + second_part_of_string
+        + closing_of_generic_string
+        + variables_list_str[:-2]
+        + """
     {indent});
 {indent}end {entity_or_component} {entity_or_component_name};
-\n""".format(indent=indent, entity_or_component=entity_or_component, entity_or_component_name=entity_or_component_name)
+\n""".format(
+            indent=indent,
+            entity_or_component=entity_or_component,
+            entity_or_component_name=entity_or_component_name,
+        )
+    )
 
 
 def get_signal_definitions_string(signal_dict: Dict) -> str:
@@ -83,7 +106,14 @@ def get_signal_definitions_string(signal_dict: Dict) -> str:
     """
     signal_dict_str = ""
     for signal in signal_dict:
-        signal_dict_str = signal_dict_str + "    signal " + signal + " : " + signal_dict[signal] + ";\n"
+        signal_dict_str = (
+            signal_dict_str
+            + "    signal "
+            + signal
+            + " : "
+            + signal_dict[signal]
+            + ";\n"
+        )
     return signal_dict_str + "\n"
 
 
@@ -97,7 +127,9 @@ def get_architecture_header_string(architecture_name: Any, component_name: Any) 
         string with the architecture header
     """
     return """architecture {architecture_name} of {component_name} is
-\n""".format(architecture_name=architecture_name, component_name=component_name)
+\n""".format(
+        architecture_name=architecture_name, component_name=component_name
+    )
 
 
 def get_architecture_begin_string() -> str:
@@ -116,7 +148,9 @@ def get_architecture_end_string(architecture_name) -> str:
         string of architecture end
     """
     return """end architecture {architecture_name} ; -- {architecture_name}
-\n""".format(architecture_name=architecture_name)
+\n""".format(
+        architecture_name=architecture_name
+    )
 
 
 def get_variable_definitions_string(variable_dict: Dict) -> str:
@@ -129,6 +163,10 @@ def get_variable_definitions_string(variable_dict: Dict) -> str:
     """
     variable_str = ""
     for variable in variable_dict:
-        variable_str = variable_str + "    {variable} <= {variable_definition};\n". \
-            format(variable=variable, variable_definition=variable_dict[variable])
+        variable_str = (
+            variable_str
+            + "    {variable} <= {variable_definition};\n".format(
+                variable=variable, variable_definition=variable_dict[variable]
+            )
+        )
     return variable_str + "\n"
