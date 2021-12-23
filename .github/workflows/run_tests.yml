@@ -5,7 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: docker://python:3.9.9-bullseye
-      - run: pip install poetry
-      - run: poetry install
+      - uses: actions/setup-python@v1
+      - with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+      - run: poetry --version
+      - run: python --version
       - run: poetry python -m unittest discover .
