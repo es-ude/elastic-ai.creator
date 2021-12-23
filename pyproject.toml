@@ -21,6 +21,12 @@ onnxoptimizer = "^0.2.6"
 coverage = "^6.2"
 flake8 = "*"
 tox = "*"
+black = "^21.12b0"
+
+[tool.flake8]
+max-line-length = 88
+extended-ignore = ["E203"]
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
