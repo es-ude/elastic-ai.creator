@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
-      - with:
+        with:
           python-version: 3.9
       - uses: Gr1N/setup-poetry@v7
       - run: poetry --version
