@@ -2,6 +2,7 @@ name: tests
 on: [push]
 jobs:
   run-tests:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: docker://python:3.10.1-bullseye
