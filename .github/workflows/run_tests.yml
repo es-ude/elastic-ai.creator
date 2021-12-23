@@ -1,0 +1,9 @@
+name: tests
+on: [push]
+jobs:
+  run-tests:
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker://python:3.10.1-bullseye
+      - run: poetry install
+      - run: poetry python -m unittest discover .
