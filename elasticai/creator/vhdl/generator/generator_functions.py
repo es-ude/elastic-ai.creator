@@ -7,6 +7,8 @@ from torch import Tensor
 from elasticai.creator.layers import QLSTMCell
 from typing import Dict, List, Callable, Any, Union, Sequence
 
+from elasticai.creator.vhdl.number_representations import FixedPointConverter
+
 
 def tanh_process(x_list: List) -> str:
     """
@@ -53,11 +55,6 @@ def tanh_process(x_list: List) -> str:
     return string
 
 
-def get_fixed_point_representation(x, bits_used_for_fraction):
-    fixed_point_one = 2 ** bits_used_for_fraction
-    return int(fixed_point_one * x)
-
-
 def sigmoid_process(
     x_list: Union[Sequence[float], Tensor],
     function: Callable[[Union[float, Tensor]], Any],
@@ -74,31 +71,26 @@ def sigmoid_process(
     # contains the new lines
     lines = []
     bits_used_for_fraction = 8
-    one = get_fixed_point_representation(
-        x=1, bits_used_for_fraction=bits_used_for_fraction
+    fixed_point = FixedPointConverter(
+        bits_used_for_fraction=bits_used_for_fraction, strict=False
     )
+
     zero = 0
 
     for i, x in enumerate(x_list):
         if i == 0:
-            lines.append(
-                "if int_x<"
-                + str(get_fixed_point_representation(x, bits_used_for_fraction))
-                + " then"
-            )
+            lines.append("if int_x<" + str(fixed_point.from_float(x)) + " then")
             lines.append('\ty <= "' + "{0:016b}".format(zero) + '"; -- ' + str(zero))
         elif i == (len(x_list) - 1):
             lines.append("else")
             lines.append(
                 '\ty <= "'
-                + "{0:016b}".format(
-                    get_fixed_point_representation(1, bits_used_for_fraction)
-                )
+                + "{0:016b}".format(fixed_point.from_float(1))
                 + '"; -- '
-                + str(one)
+                + str(fixed_point.from_float(1))
             )
         else:
-            lines.append("elsif int_x<" + str(int(x * one)) + " then")
+            lines.append("elsif int_x<" + str(fixed_point.from_float(x)) + " then")
             lines.append(
                 '\ty <= "'
                 + "{0:016b}".format(int(256 * function(x_list[i - 1])))
