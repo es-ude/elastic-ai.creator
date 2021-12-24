@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from functools import partial
 
+import torch.nn
+
 from elasticai.creator.vhdl.generator.general_strings import (
     get_libraries_string,
     get_entity_or_component_string,
@@ -60,7 +62,9 @@ class Sigmoid(Component):
         )
         code += get_process_string(
             component_name=self.component_name,
-            lookup_table_generator_function=sigmoid_process(self.x),
+            lookup_table_generator_function=sigmoid_process(
+                x_list=torch.as_tensor(self.x), function=torch.nn.Sigmoid()
+            ),
         )
         code += get_architecture_end_string(architecture_name=self.architecture_name)
         return code

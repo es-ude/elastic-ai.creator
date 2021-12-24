@@ -2,8 +2,10 @@ import math
 import random
 import torch
 import torch.nn as nn
+from torch import Tensor
+
 from elasticai.creator.layers import QLSTMCell
-from typing import Dict, List
+from typing import Dict, List, Callable, Any, Union, Sequence
 
 
 def tanh_process(x_list: List) -> str:
@@ -51,45 +53,61 @@ def tanh_process(x_list: List) -> str:
     return string
 
 
-def sigmoid_process(x_list: List) -> str:
+def get_fixed_point_representation(x, bits_used_for_fraction):
+    fixed_point_one = 2 ** bits_used_for_fraction
+    return int(fixed_point_one * x)
+
+
+def sigmoid_process(
+    x_list: Union[Sequence[float], Tensor],
+    function: Callable[[Union[float, Tensor]], Any],
+) -> str:
     """
         returns the string of a lookup table
     Args:
+        function: takes the elements from x_list and produces the output to be used in the generated process
         x_list (List): List contains integers
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
 
-    def _sigmoid(x):
-        return 1 / (1 + math.exp(-x))
-
     # contains the new lines
     lines = []
-
-    frac_bits = 8
+    bits_used_for_fraction = 8
+    one = get_fixed_point_representation(
+        x=1, bits_used_for_fraction=bits_used_for_fraction
+    )
     zero = 0
-    one = 2 ** frac_bits
 
-    for i in range(len(x_list)):
+    for i, x in enumerate(x_list):
         if i == 0:
-            lines.append("if int_x<" + str(int(x_list[0] * one)) + " then")
+            lines.append(
+                "if int_x<"
+                + str(get_fixed_point_representation(x, bits_used_for_fraction))
+                + " then"
+            )
             lines.append('\ty <= "' + "{0:016b}".format(zero) + '"; -- ' + str(zero))
         elif i == (len(x_list) - 1):
             lines.append("else")
-            lines.append('\ty <= "' + "{0:016b}".format(one) + '"; -- ' + str(one))
-        else:
-            lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
             lines.append(
                 '\ty <= "'
-                + "{0:016b}".format(int(256 * _sigmoid(x_list[i - 1])))
+                + "{0:016b}".format(
+                    get_fixed_point_representation(1, bits_used_for_fraction)
+                )
                 + '"; -- '
-                + str(int(256 * _sigmoid(x_list[i - 1])))
+                + str(one)
+            )
+        else:
+            lines.append("elsif int_x<" + str(int(x * one)) + " then")
+            lines.append(
+                '\ty <= "'
+                + "{0:016b}".format(int(256 * function(x_list[i - 1])))
+                + '"; -- '
+                + str(int(256 * function(x_list[i - 1])))
             )
     lines.append("end if;")
     # build the string block and add new line + 2 tabs
-    string = ""
-    for line in lines:
-        string = string + line + "\n" + "\t" + "\t"
+    string = "\n\t\t".join(lines)
     return string
 
 
