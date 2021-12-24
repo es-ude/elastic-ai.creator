@@ -1,6 +1,6 @@
 import numpy as np
 
-from elasticai.creator.vhdl.generator.functions.generate_tanh_vhd import Tanh
+from elasticai.creator.vhdl.generator.component import Tanh
 from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 

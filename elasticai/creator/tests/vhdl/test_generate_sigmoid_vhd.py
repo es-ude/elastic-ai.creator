@@ -2,9 +2,7 @@ import unittest
 
 import numpy as np
 
-from elasticai.creator.vhdl.generator.functions.generate_sigmoid_vhd import (
-    Sigmoid,
-)
+from elasticai.creator.vhdl.generator.component import Sigmoid
 from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
@@ -12,7 +10,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
         sigmoid = Sigmoid(
             data_width=16,
-            data_frac=8,
+            frac_width=8,
             x=np.linspace(-5, 5, 66),
             component_name="sigmoid",
         )
