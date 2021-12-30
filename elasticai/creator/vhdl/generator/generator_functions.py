@@ -7,7 +7,18 @@ from torch import Tensor
 from elasticai.creator.layers import QLSTMCell
 from typing import Dict, List, Callable, Any, Union, Sequence
 
-from elasticai.creator.vhdl.number_representations import FixedPointConverter
+from elasticai.creator.vhdl.number_representations import (
+    FloatToSignedFixedPointConverter,
+    two_complements_representation,
+    FloatToBinaryFixedPointStringConverter,
+)
+
+
+def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
+    new_code_fragment = f'\t{line_id} <= "{value}";'
+    if comment is not None:
+        new_code_fragment += f" -- {comment}"
+    code.append(new_code_fragment)
 
 
 def tanh_process(x_list: List) -> str:
@@ -18,35 +29,42 @@ def tanh_process(x_list: List) -> str:
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
+    as_signed_fixed_point = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=8, strict=False
+    )
+    as_binary_string = FloatToBinaryFixedPointStringConverter(
+        total_bit_width=16, as_signed_fixed_point=as_signed_fixed_point
+    )
 
-    def _bin_digits(n, bits):
-        s = bin(n & int("1" * bits, 2))[2:]
-        return ("{0:0>%s}" % bits).format(s)
-
+    _bin_digits = two_complements_representation
     lines = []
 
     frac_bits = 8
     one = 2 ** frac_bits
-
-    for i in range(len(x_list)):
-        if i == 0:
-            lines.append("if int_x<" + str(int(x_list[0] * one)) + " then")
-            lines.append(
-                '\ty <= "' + _bin_digits(-1 * one, 16) + '"; -- ' + str(-1 * one)
-            )
-        elif i == (len(x_list) - 1):
-            lines.append("else")
-            lines.append('\ty <= "' + "{0:016b}".format(one) + '"; -- ' + str(one))
-        else:
-            lines.append("elsif int_x<" + str(int(x_list[i] * one)) + " then")
-
-            lines.append(
-                '\ty <= "'
-                + _bin_digits(int(256 * math.tanh(x_list[i - 1])), 16)
-                + '"; -- '
-                + str(int(256 * math.tanh(x_list[i - 1])))
-            )
-
+    for x in x_list[:1]:
+        lines.append("if int_x<{0} then".format(as_signed_fixed_point(x)))
+        vhdl_add_assignment(
+            code=lines,
+            line_id="y",
+            value=as_binary_string(-1),
+            comment=as_signed_fixed_point(-1),
+        )
+    for current, previous in zip(x_list[1:-1], x_list[:-2]):
+        lines.append("elsif int_x<{0} then".format(as_signed_fixed_point(current)))
+        vhdl_add_assignment(
+            code=lines,
+            line_id="y",
+            value=as_binary_string(math.tanh(previous)),
+            comment=as_signed_fixed_point(math.tanh(previous)),
+        )
+    for x in x_list[-1:]:
+        lines.append("else")
+        vhdl_add_assignment(
+            code=lines,
+            line_id="y",
+            value=as_binary_string(1),
+            comment=as_signed_fixed_point(1),
+        )
     lines.append("end if;")
     # build the string block and add new line + 2 tabs
     string = ""
@@ -67,11 +85,9 @@ def sigmoid_process(
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
-
-    # contains the new lines
     lines = []
     bits_used_for_fraction = 8
-    fixed_point = FixedPointConverter(
+    fixed_point = FloatToSignedFixedPointConverter(
         bits_used_for_fraction=bits_used_for_fraction, strict=False
     )
 
@@ -79,18 +95,18 @@ def sigmoid_process(
 
     for i, x in enumerate(x_list):
         if i == 0:
-            lines.append("if int_x<" + str(fixed_point.from_float(x)) + " then")
+            lines.append("if int_x<" + str(fixed_point.__call__(x)) + " then")
             lines.append('\ty <= "' + "{0:016b}".format(zero) + '"; -- ' + str(zero))
         elif i == (len(x_list) - 1):
             lines.append("else")
             lines.append(
                 '\ty <= "'
-                + "{0:016b}".format(fixed_point.from_float(1))
+                + "{0:016b}".format(fixed_point.__call__(1))
                 + '"; -- '
-                + str(fixed_point.from_float(1))
+                + str(fixed_point.__call__(1))
             )
         else:
-            lines.append("elsif int_x<" + str(fixed_point.from_float(x)) + " then")
+            lines.append("elsif int_x<" + str(fixed_point.__call__(x)) + " then")
             lines.append(
                 '\ty <= "'
                 + "{0:016b}".format(int(256 * function(x_list[i - 1])))
