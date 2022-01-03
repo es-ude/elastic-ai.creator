@@ -6,7 +6,6 @@ from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
-        self.maxDiff = None
         tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
         self.check_generated_code(tanh.build())
         # clean each file from empty lines and lines which are just comment

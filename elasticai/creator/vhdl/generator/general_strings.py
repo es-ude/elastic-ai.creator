@@ -1,4 +1,7 @@
+from itertools import chain
 from typing import Any, Dict
+
+from elasticai.creator.vhdl.language import ComponentDeclaration, EntityDeclaration
 
 
 def get_libraries_string(math_lib: bool = False, work_lib: bool = False) -> str:
@@ -46,54 +49,24 @@ def get_entity_or_component_string(
     Returns:
         string of the entity or component definition
     """
-    first_part_of_string = """{indent}{entity_or_component} {entity_or_component_name} is
-    {indent}generic (
-        {indent}DATA_WIDTH : integer := {data_width};
-        {indent}FRAC_WIDTH : integer := {frac_width}""".format(
-        indent=indent,
-        entity_or_component=entity_or_component,
-        entity_or_component_name=entity_or_component_name,
-        data_width=data_width,
-        frac_width=frac_width,
-    )
+    if entity_or_component == "entity":
+        entity = EntityDeclaration(f"{entity_or_component_name}")
 
+    else:
+        entity = ComponentDeclaration(f"{entity_or_component_name}")
+
+    entity.generic_list = [
+        f"DATA_WIDTH : integer := {data_width}",
+        f"FRAC_WIDTH : integer := {frac_width}",
+    ]
     # eventually add vector_len_width
     if vector_len_width:
-        second_part_of_string = f";\n        {indent}VECTOR_LEN_WIDTH : integer := {vector_len_width}\n".format(
-            indent=indent, vector_len_width=vector_len_width
-        )
-    else:
-        second_part_of_string = "\n"
+        entity.generic_list.append(f"VECTOR_LEN_WIDTH : integer := {vector_len_width}")
 
-    closing_of_generic_string = """    {indent});
-    {indent}port (\n""".format(
-        indent=indent
-    )
-
-    # add variables
-    variables_list_str = ""
-    for variable in variables_dict:
-        variables_list_str = (
-            variables_list_str
-            + "        {indent}{variable} : {definition};\n".format(
-                indent=indent, variable=variable, definition=variables_dict[variable]
-            )
-        )
-    # remove last linebreak and semicolon
-    return (
-        first_part_of_string
-        + second_part_of_string
-        + closing_of_generic_string
-        + variables_list_str[:-2]
-        + """
-    {indent});
-{indent}end {entity_or_component} {entity_or_component_name};
-\n""".format(
-            indent=indent,
-            entity_or_component=entity_or_component,
-            entity_or_component_name=entity_or_component_name,
-        )
-    )
+    entity.port_list = [
+        f"{variable} : {definition}" for variable, definition in variables_dict.items()
+    ]
+    return "\n".join(chain(entity(), [""]))
 
 
 def get_signal_definitions_string(signal_dict: Dict) -> str:

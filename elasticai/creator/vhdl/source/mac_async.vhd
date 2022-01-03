@@ -4,20 +4,19 @@ use ieee.numeric_std.all;               -- for type conversions
 
 
 entity mac_async is
-    generic (
-        DATA_WIDTH : integer := 16;
-        FRAC_WIDTH : integer := 8
-    );
-    port (
-        x1 : in signed(DATA_WIDTH-1 downto 0);
-        x2 : in signed(DATA_WIDTH-1 downto 0);
-        w1 : in signed(DATA_WIDTH-1 downto 0);
-        w2 : in signed(DATA_WIDTH-1 downto 0);
-        b : in signed(DATA_WIDTH-1 downto 0);
-        y : out signed(DATA_WIDTH-1 downto 0)
-    );
+	generic (
+		DATA_WIDTH : integer := 16;
+		FRAC_WIDTH : integer := 8
+	);
+	port (
+		x1 : in signed(DATA_WIDTH-1 downto 0);
+		x2 : in signed(DATA_WIDTH-1 downto 0);
+		w1 : in signed(DATA_WIDTH-1 downto 0);
+		w2 : in signed(DATA_WIDTH-1 downto 0);
+		b : in signed(DATA_WIDTH-1 downto 0);
+		y : out signed(DATA_WIDTH-1 downto 0)
+	);
 end entity mac_async;
-
 architecture mac_async_rtl of mac_async is
 
     signal product_1 : signed(DATA_WIDTH-1 downto 0);
