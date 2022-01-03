@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from functools import partial
+from itertools import chain
 
 import torch.nn
 
@@ -14,6 +15,7 @@ from elasticai.creator.vhdl.generator.generator_functions import (
     tanh_process,
 )
 from elasticai.creator.vhdl.generator.vhd_strings import get_process_string
+from elasticai.creator.vhdl.language import EntityDeclaration
 
 
 class Component(ABC):
@@ -46,17 +48,16 @@ class Component(ABC):
 
 class Sigmoid(Component):
     def build(self) -> str:
-        code = get_libraries_string()
-        code += get_entity_or_component_string(
-            entity_or_component="entity",
-            entity_or_component_name=self.component_name,
-            data_width=self.data_width,
-            frac_width=self.frac_width,
-            variables_dict={
-                "x": "in signed(DATA_WIDTH-1 downto 0)",
-                "y": "out signed(DATA_WIDTH-1 downto 0)",
-            },
-        )
+        entity = EntityDeclaration(self.component_name)
+        entity.generic_list = [
+            f"DATA_WIDTH : integer := {self.data_width}",
+            f"FRAC_WIDTH : integer := {self.frac_width}",
+        ]
+        entity.port_list = [
+            "x : in signed(DATA_WIDTH-1 downto 0)",
+            "y : out signed(DATA_WIDTH-1 downto 0)",
+        ]
+        code = "\n".join(chain([get_libraries_string()], chain(entity()), [""]))
         code += get_architecture_header_string(
             architecture_name=self.architecture_name, component_name=self.component_name
         )
@@ -73,19 +74,18 @@ class Sigmoid(Component):
 class Tanh(Component):
     def build(self) -> str:
         code = ""
+        entity = EntityDeclaration(self.component_name)
+        entity.generic_list = [
+            f"DATA_WIDTH : integer := {self.data_width}",
+            f"FRAC_WIDTH : integer := {self.frac_width}",
+        ]
+        entity.port_list = [
+            "x : in signed(DATA_WIDTH-1 downto 0)",
+            "y : out signed(DATA_WIDTH-1 downto 0)",
+        ]
         string_builders = [
             get_libraries_string,
-            partial(
-                get_entity_or_component_string,
-                entity_or_component="entity",
-                entity_or_component_name=self.component_name,
-                data_width=self.data_width,
-                frac_width=self.frac_width,
-                variables_dict={
-                    "x": "in signed(DATA_WIDTH-1 downto 0)",
-                    "y": "out signed(DATA_WIDTH-1 downto 0)",
-                },
-            ),
+            lambda: "\n".join(chain(entity(), [""])),
             partial(
                 get_architecture_header_string,
                 architecture_name=self.architecture_name,
