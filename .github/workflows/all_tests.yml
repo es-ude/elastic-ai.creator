@@ -15,5 +15,5 @@ jobs:
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
       - run: poetry --version
       - run: python --version
-      - run: poetry install
+      - run: poetry install --no-interaction --extras brevitas
       - run: poetry run python -m unittest discover .
