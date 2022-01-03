@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Any, Dict
 
-from elasticai.creator.vhdl.language import ComponentDeclaration, EntityDeclaration
+from elasticai.creator.vhdl.language import ComponentDeclaration, Entity
 
 
 def get_libraries_string(math_lib: bool = False, work_lib: bool = False) -> str:
@@ -50,7 +50,7 @@ def get_entity_or_component_string(
         string of the entity or component definition
     """
     if entity_or_component == "entity":
-        entity = EntityDeclaration(f"{entity_or_component_name}")
+        entity = Entity(f"{entity_or_component_name}")
 
     else:
         entity = ComponentDeclaration(f"{entity_or_component_name}")

@@ -15,7 +15,11 @@ from elasticai.creator.vhdl.generator.generator_functions import (
     tanh_process,
 )
 from elasticai.creator.vhdl.generator.vhd_strings import get_process_string
-from elasticai.creator.vhdl.language import EntityDeclaration
+from elasticai.creator.vhdl.language import (
+    Entity,
+    InterfaceVariable,
+    DataType,
+)
 
 
 class Component(ABC):
@@ -46,9 +50,23 @@ class Component(ABC):
         pass
 
 
+class DataWidthVariable(InterfaceVariable):
+    def __init__(self, value: int):
+        super().__init__(
+            identifier="DATA_WIDTH", variable_type=DataType.INTEGER, value=f"{value}"
+        )
+
+
+class FracWidthVariable(InterfaceVariable):
+    def __init__(self, value: int):
+        super().__init__(
+            identifier="FRAC_WIDTH", variable_type=DataType.INTEGER, value=f"{value}"
+        )
+
+
 class Sigmoid(Component):
     def build(self) -> str:
-        entity = EntityDeclaration(self.component_name)
+        entity = Entity(self.component_name)
         entity.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
             f"FRAC_WIDTH : integer := {self.frac_width}",
@@ -74,7 +92,7 @@ class Sigmoid(Component):
 class Tanh(Component):
     def build(self) -> str:
         code = ""
-        entity = EntityDeclaration(self.component_name)
+        entity = Entity(self.component_name)
         entity.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
             f"FRAC_WIDTH : integer := {self.frac_width}",

@@ -1,5 +1,9 @@
 from typing import Any, Dict, List
 
+from elasticai.creator.vhdl.generator.component import (
+    DataWidthVariable,
+    FracWidthVariable,
+)
 from elasticai.creator.vhdl.generator.specific_testprocess_strings import (
     get_test_process_for_one_input_results_in_one_output_string,
     get_test_process_for_multiple_input_results_in_one_output_string,
@@ -12,6 +16,13 @@ from elasticai.creator.vhdl.generator.general_strings import (
     get_entity_or_component_string,
     get_signal_definitions_string,
     get_variable_definitions_string,
+)
+from elasticai.creator.vhdl.language import (
+    Entity,
+    InterfaceList,
+    InterfaceVariable,
+    DataType,
+    Mode,
 )
 
 
@@ -160,16 +171,22 @@ def write_testbench_file(
     """
     with open(path_to_testbench + test_bench_file_name, "w") as f:
         f.write(get_libraries_string(math_lib=math_lib))
-        f.write(
-            get_entity_or_component_string(
-                entity_or_component="entity",
-                entity_or_component_name=component_name + "_tb",
-                data_width=data_width,
-                frac_width=frac_width,
-                variables_dict={"clk": "out std_logic"},
-                vector_len_width=vector_len_width,
+        entity = Entity(component_name + "_tb")
+        entity.generic_list = [
+            DataWidthVariable(value=data_width),
+            FracWidthVariable(value=frac_width),
+            InterfaceVariable(
+                identifier="VECTOR_LEN_WIDTH", variable_type=DataType.INTEGER, value=4
+            ),
+        ]
+        entity.port_list = [
+            InterfaceVariable(
+                identifier="clk", variable_type=DataType.STD_LOGIC, mode=Mode.OUT
             )
-        )
+        ]
+        for line in entity():
+            f.write(line)
+            f.write("\n")
         f.write(
             get_architecture_header_string(
                 architecture_name=architecture_name,
