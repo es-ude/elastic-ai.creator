@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from elasticai.creator.vhdl.generator.component import Sigmoid
-from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
 class SigmoidTest(GeneratedVHDLCodeTest):

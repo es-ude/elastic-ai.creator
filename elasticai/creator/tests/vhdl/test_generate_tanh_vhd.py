@@ -1,7 +1,7 @@
 import numpy as np
 
 from elasticai.creator.vhdl.generator.component import Tanh
-from vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
 class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
