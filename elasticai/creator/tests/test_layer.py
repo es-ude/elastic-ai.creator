@@ -18,7 +18,7 @@ from elasticai.creator.layers import (
     Binarize,
 )
 from elasticai.creator.constraints import WeightClipper
-from tensor_test_case import TensorTestCase
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
 class MockQLSTMCell:

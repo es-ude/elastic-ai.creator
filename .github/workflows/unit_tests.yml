@@ -1,4 +1,4 @@
-name: all-tests
+name: unit-tests
 on: [push]
 jobs:
   run-tests:
@@ -16,4 +16,5 @@ jobs:
       - run: poetry --version
       - run: python --version
       - run: poetry install --no-interaction --extras brevitas
+      - run: cd elasticai/creator/tests
       - run: poetry run python -m unittest discover .
