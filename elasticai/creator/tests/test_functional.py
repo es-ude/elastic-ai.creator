@@ -7,18 +7,6 @@ from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
 class BinarizeFunctionTest(TensorTestCase):
-    def test_ForwardRaisesErrorOnMissingInput(self):
-        def save_for_backward_dummy(_):
-            pass
-
-        dummy_context = SimpleNamespace(save_for_backward=save_for_backward_dummy)
-        try:
-            binarize.forward(dummy_context)
-        except TypeError:
-            return
-
-        self.fail()
-
     def test_Yields1For0(self):
         self.assertTensorEquals(
             expected=Tensor([1.0]), actual=binarize.apply(Tensor([0.0]))

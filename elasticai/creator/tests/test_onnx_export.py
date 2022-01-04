@@ -25,7 +25,6 @@ class OnnxExportTest(TensorTestCase):
         expected = self.get_simple_string_representation(
             operation_name=type(module.module).__name__, domain="elasticai.creator"
         )
-
         with BytesIO() as buffer:
             torch.onnx.export(
                 module,
