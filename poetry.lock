@@ -11,6 +11,14 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest", "pytest-flake8", "pytest-cov", "pytest-black (>=0.3.7)", "pytest-mypy", "pytest-checkdocs (>=2.4)", "pytest-enabler (>=1.0.1)"]
 
 [[package]]
+name = "bitarray"
+version = "2.3.5"
+description = "efficient arrays of booleans -- C extension"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "black"
 version = "21.12b0"
 description = "The uncompromising code formatter."
@@ -533,12 +541,15 @@ systemtests = ["torchvision"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "1971b459f16a595e2f6326dad486c734cd046ee5129fd8d209c9ccd0ebaef185"
+content-hash = "74333482a6041532f1c0102874f210a6aa87924777d2db15af7c4010f5915621"
 
 [metadata.files]
 "backports.entry-points-selectable" = [
     {file = "backports.entry_points_selectable-1.1.1-py2.py3-none-any.whl", hash = "sha256:7fceed9532a7aa2bd888654a7314f864a3c16a4e710b34a58cfc0f08114c663b"},
     {file = "backports.entry_points_selectable-1.1.1.tar.gz", hash = "sha256:914b21a479fde881635f7af5adc7f6e38d6b274be32269070c53b698c60d5386"},
+]
+bitarray = [
+    {file = "bitarray-2.3.5.tar.gz", hash = "sha256:60285184cb02fdba5e1cc8605ac84e150a50f940e9383ab43564e5258d1f47bb"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},
