@@ -130,7 +130,7 @@ class GeneralStringsTest(unittest.TestCase):
                 "y": "out signed(DATA_WIDTH-1 downto 0)",
             },
             vector_len_width=4,
-            indent="    ",
+            indent="\t",
         )
         for i in range(len(expected_component_lines)):
             self.assertEqual(
