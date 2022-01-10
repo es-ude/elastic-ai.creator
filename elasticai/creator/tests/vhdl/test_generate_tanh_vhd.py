@@ -6,7 +6,7 @@ from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTes
 
 class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
-        tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
+        tanh = Tanh(data_width=16, frac_width=8, input_domain=np.linspace(-5, 5, 259))
         self.check_generated_code(tanh.build())
         # clean each file from empty lines and lines which are just comment
 
