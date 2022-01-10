@@ -3,24 +3,27 @@ The module contains classes and functions for generating vhdl code.
 We provide code generators for the subset of vhdl that we need for implementing
 our neural network accelerators and test benches. We stick closely to the vhdl
 formal grammar with our class names.
+
+The core of this module is the `CodeGenerator`. Code generators are callables that return `Code`.
+`Code` is an iterable of strings. Depending on complexity we define syntactic components of the vhdl
+grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
+of code as strings.
 """
-from abc import abstractmethod
+from collections import Sequence
 from enum import Enum
 from itertools import filterfalse, chain
 from typing import (
     Callable,
     Iterable,
     Union,
-    NewType,
     Literal,
-    overload,
     Optional,
 )
-from collections import Sequence
 
 Identifier = str
 Code = Iterable[str]
 CodeGenerator = Callable[[], Code]
+CodeGeneratorCompatible = Union[Code, CodeGenerator, str]
 
 
 class Keywords(Enum):
@@ -125,35 +128,7 @@ class InterfaceVariable:
         )
 
 
-def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
-    def wrapped():
-        return (string,)
-
-    return wrapped
-
-
-def _wrap_code_into_code_generator(code: Code) -> CodeGenerator:
-    def wrapped():
-        return code
-
-    return wrapped
-
-
-def _unify_code_generators(generator: Union[Code, CodeGenerator, str]) -> CodeGenerator:
-    if isinstance(generator, str):
-        return _wrap_string_into_code_generator(generator)
-    elif isinstance(generator, Iterable):
-        return _wrap_code_into_code_generator(generator)
-    elif isinstance(generator, Callable):
-        return generator
-    else:
-        raise ValueError
-
-
-CodeGeneratorCompatible = Union[Code, CodeGenerator, str]
-
-
-class InterfaceList(Sequence[CodeGenerator]):
+class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
     def __len__(self) -> int:
         return len(self.interface_generators)
 
@@ -165,21 +140,17 @@ class InterfaceList(Sequence[CodeGenerator]):
             _unify_code_generators(interface) for interface in interfaces
         ]
 
-    @overload
-    def append(self, interface: str) -> None:
-        ...
-
-    @overload
-    def append(self, interface: Code) -> None:
-        ...
-
-    def append(self, interface: CodeGenerator) -> None:
+    def append(self, interface: CodeGeneratorCompatible) -> None:
         self.interface_generators.append(_unify_code_generators(interface))
 
     def __call__(self) -> Code:
         yield from chain.from_iterable(
             (interface() for interface in self.interface_generators)
         )
+
+
+class InterfaceList(CodeGeneratorConcatenation):
+    pass
 
 
 InterfaceDeclaration = Union[
@@ -196,8 +167,11 @@ InterfaceObjectDeclaration = Union[
     "InterfaceFileDeclaration",
 ]
 
-
 ClauseType = Literal[Keywords.GENERIC, Keywords.PORT]
+
+
+def indent(line: str) -> str:
+    return "".join(["\t", line])
 
 
 def _add_semicolons(lines: Code) -> Code:
@@ -212,28 +186,24 @@ def _clause(clause_type: ClauseType, interfaces: Code) -> Code:
     yield ");"
 
 
-def _indent(line: str) -> str:
-    return "".join(["\t", line])
-
-
-def _filter_empty_lines(lines: list[str]) -> list[str]:
-    return [line for line in lines if line != ""]
+def _filter_empty_lines(lines: Code) -> Code:
+    return filterfalse(_line_is_empty, lines)
 
 
 def _line_is_empty(line: str) -> bool:
     return len(line) == 0
 
 
-def _join_lines(lines):
+def _join_lines(lines) -> str:
     return "\n".join(lines)
 
 
-def _empty_code_generator() -> list[str]:
+def _empty_code_generator() -> Code:
     return []
 
 
 def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
-    yield from map(_indent, filterfalse(_line_is_empty, lines))
+    yield from map(indent, _filter_empty_lines(lines))
 
 
 # noinspection PyPep8Naming
@@ -243,3 +213,28 @@ def _wrap_in_IS_END_block(
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
     yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
+
+
+def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
+    def wrapped():
+        return string,
+
+    return wrapped
+
+
+def _wrap_code_into_code_generator(code: Code) -> CodeGenerator:
+    def wrapped():
+        return code
+
+    return wrapped
+
+
+def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
+    if isinstance(generator, str):
+        return _wrap_string_into_code_generator(generator)
+    elif isinstance(generator, Iterable):
+        return _wrap_code_into_code_generator(generator)
+    elif isinstance(generator, Callable):
+        return generator
+    else:
+        raise ValueError
