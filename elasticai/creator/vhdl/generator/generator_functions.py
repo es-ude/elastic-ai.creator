@@ -7,18 +7,12 @@ from torch import Tensor
 from elasticai.creator.layers import QLSTMCell
 from typing import Dict, List, Callable, Any, Union, Sequence
 
+from elasticai.creator.vhdl.generator.general_strings import vhdl_add_assignment
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     two_complements_representation,
     FloatToBinaryFixedPointStringConverter,
 )
-
-
-def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
-    new_code_fragment = f'\t{line_id} <= "{value}";'
-    if comment is not None:
-        new_code_fragment += f" -- {comment}"
-    code.append(new_code_fragment)
 
 
 def tanh_process(x_list: List) -> str:

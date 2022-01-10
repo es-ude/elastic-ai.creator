@@ -143,3 +143,10 @@ def get_variable_definitions_string(variable_dict: Dict) -> str:
             )
         )
     return variable_str + "\n"
+
+
+def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
+    new_code_fragment = f'\t{line_id} <= "{value}";'
+    if comment is not None:
+        new_code_fragment += f" -- {comment}"
+    code.append(new_code_fragment)
