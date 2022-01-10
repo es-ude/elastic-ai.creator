@@ -120,6 +120,7 @@ def get_precomputations_recursively(module):
                 for submodule in filtered_submodules)
 
 
+
 def precomputable(module: Module,
                   input_shape: tuple[int, ...],
                   input_generator: Callable[[tuple[int, ...]], np.ndarray]) -> Module:
@@ -155,3 +156,8 @@ def precomputable(module: Module,
         'input_shape': input_shape,
         'input_generator': input_generator,
     })
+
+def tag_precomputable(input_shape,input_generator):
+    def precomputable_decorator_function(module):
+        return precomputable(module,input_shape,input_generator)
+    return precomputable_decorator_function
