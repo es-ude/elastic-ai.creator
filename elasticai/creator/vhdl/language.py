@@ -87,7 +87,9 @@ class _DesignEntity:
             yield from _clause(Keywords.PORT, self._port_list())
 
     def __call__(self) -> Code:
-        return _wrap_in_IS_END_block(self.type, self.identifier, self._header())
+        yield f"{self.type.value} {self.identifier} {Keywords.IS.value}"
+        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
 
 
 class Entity(_DesignEntity):
