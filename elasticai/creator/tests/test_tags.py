@@ -27,8 +27,10 @@ class TagTest(TensorTestCase):
         module = SimpleNamespace()
         module = tag(module, precomputed=None)
         module = tag(module, input_tensor_shape=(1, 2, 3))
-        self.assertEqual({
-            "precomputed": None,
-            "input_tensor_shape": (1, 2, 3),
-        }, get_tags(module))
-
+        self.assertEqual(
+            {
+                "precomputed": None,
+                "input_tensor_shape": (1, 2, 3),
+            },
+            get_tags(module),
+        )

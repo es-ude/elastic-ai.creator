@@ -19,7 +19,7 @@ training_data = [
     # Tags are: DET - determiner; NN - noun; V - verb
     # For example, the word "The" is a determiner
     ("The dog ate the apple".split(), ["DET", "NN", "V", "DET", "NN"]),
-    ("Everybody read that book".split(), ["NN", "V", "DET", "NN"])
+    ("Everybody read that book".split(), ["NN", "V", "DET", "NN"]),
 ]
 word_to_ix = {}
 # For each words-list (sentence) and tags-list in each tuple of training_data
@@ -36,7 +36,6 @@ HIDDEN_DIM = 6
 
 
 class LSTMTagger(nn.Module):
-
     def __init__(self, embedding_dim, hidden_dim, vocab_size, tagset_size):
         super(LSTMTagger, self).__init__()
         self.hidden_dim = hidden_dim
@@ -49,7 +48,7 @@ class LSTMTagger(nn.Module):
             embedding_dim,
             hidden_dim,
             state_quantizer=Binarize(),
-            weight_quantizer=Binarize()
+            weight_quantizer=Binarize(),
         )
 
         self.binarize = Binarize()
@@ -123,4 +122,3 @@ with torch.no_grad():
         print("but expected was: ", expected_tags)
     else:
         print("Test Successful!")
-

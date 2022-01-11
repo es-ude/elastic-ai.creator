@@ -29,8 +29,9 @@ def _preprocess_tags(tags: dict):
 class AutogradWrapper(torch.autograd.Function):
     """
     Adds symbolic function so the tags can be exported. Is transparent
-    
+
     """
+
     @staticmethod
     def jvp(ctx: Any, *grad_inputs: Any) -> Any:
         raise NotImplementedError
@@ -47,16 +48,26 @@ class AutogradWrapper(torch.autograd.Function):
     def symbolic(g, x, wrapped: Module):
         tags = get_tags(wrapped)
         kwargs, args = _preprocess_tags(tags)
-        ret = g.op("elasticai.creator::Wrapper", *args, operation_name_s=type(wrapped).__name__, **kwargs)
+        ret = g.op(
+            "elasticai.creator::Wrapper",
+            *args,
+            operation_name_s=type(wrapped).__name__,
+            **kwargs
+        )
         return ret
 
 
 class ModuleWrapper(Module):
     """
     Wraps the module so that it applies an autograd
-    
+
     """
-    def __init__(self, module, autograd_fn=AutogradWrapper, ):
+
+    def __init__(
+        self,
+        module,
+        autograd_fn=AutogradWrapper,
+    ):
         super().__init__()
         self.autograd_fn = autograd_fn
         self.module = module
