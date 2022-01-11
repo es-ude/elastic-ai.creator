@@ -1,7 +1,6 @@
+import math
 from abc import ABC, abstractmethod
-from functools import partial
 from itertools import chain
-from typing import Callable
 
 import torch.nn
 
@@ -12,8 +11,7 @@ from elasticai.creator.vhdl.generator.general_strings import (
     get_architecture_end_string,
 )
 from elasticai.creator.vhdl.generator.generator_functions import (
-    sigmoid_process,
-    tanh_process,
+    precomputed_scalar_function_process
 )
 from elasticai.creator.vhdl.generator.vhd_strings import get_process_string
 from elasticai.creator.vhdl.language import (
@@ -96,8 +94,8 @@ class Sigmoid(PrecomputedScalarFunction):
             frac_width=frac_width,
             x=x,
             component_name=component_name,
-            process_instance=sigmoid_process(
-                x_list=torch.as_tensor(x), function=torch.nn.Sigmoid()
+            process_instance=precomputed_scalar_function_process(
+                x_list=torch.as_tensor(x), function=torch.nn.Sigmoid(), smallest_possible_output=0, biggest_possible_output=1
             )
         )
 
@@ -109,5 +107,7 @@ class Tanh(PrecomputedScalarFunction):
             frac_width=frac_width,
             x=x,
             component_name=component_name,
-            process_instance=tanh_process(x)
+            process_instance=precomputed_scalar_function_process(
+                x_list=x, function=math.tanh, smallest_possible_output=-1, biggest_possible_output=1
+            )
         )
