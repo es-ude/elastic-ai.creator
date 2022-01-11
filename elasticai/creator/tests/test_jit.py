@@ -1,14 +1,12 @@
 import pathlib
 import re
-from functools import partial
-from typing import Any
 
 import torch
-from torch import jit, threshold
+from torch import jit
 from torch.nn.functional import hardtanh
 
 from elasticai.creator.layers import Binarize
-from tensor_test_case import TensorTestCase
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
 class JitTests(TensorTestCase):
