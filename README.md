@@ -251,6 +251,9 @@ In addition to system and integration tests we implemented unit tests.
 The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
 The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests).
 
+## VHDL Generation
+
+We follow the VHDL code guidelines of this [book](https://github.com/fabriziotappero/Free-Range-VHDL-book).
 
 ## Developers Guide
 * We use [black](https://black.readthedocs.io/en/stable/index.html) for code formatting. For instruction on setup with your IDE please refer to https://black.readthedocs.io/en/stable/integrations/editors.html#editor-integration.
