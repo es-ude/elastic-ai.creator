@@ -54,7 +54,7 @@ class Mode(Enum):
     BUFFER = Keywords.BUFFER.value
 
 
-class _DesignEntity:
+class _DesignUnitForEntityAndComponent:
     def __init__(
         self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
     ):
@@ -89,12 +89,12 @@ class _DesignEntity:
         return _wrap_in_IS_END_block(self.type, self.identifier, self._header())
 
 
-class Entity(_DesignEntity):
+class Entity(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
         super().__init__(identifier, Keywords.ENTITY)
 
 
-class ComponentDeclaration(_DesignEntity):
+class ComponentDeclaration(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
         super().__init__(identifier, Keywords.COMPONENT)
 
