@@ -15,25 +15,18 @@ from elasticai.creator.vhdl.number_representations import (
 
 
 def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
-    new_code_fragment = f'\t{line_id} <= "{value}";'
+    new_code_fragment = f'{line_id} <= "{value}";'
     if comment is not None:
         new_code_fragment += f" -- {comment}"
     code.append(new_code_fragment)
 
 
-def precomputed_scalar_function_process(
-        x_list,
-        function: Callable[[Union[float, Tensor]], Any],
-        smallest_possible_output: int,
-        biggest_possible_output: int
-) -> str:
+def precomputed_scalar_function_process(x_list, y_list) -> str:
     """
         returns the string of a lookup table
     Args:
-        biggest_possible_output (int): biggest possible output of the function
-        smallest_possible_output (int): smallest possible output of the function
-        x_list: List contains integers
-        function: takes the elements from x_list and produces the output to be used in the generated process
+        y_list : output List contains integers
+        x_list: input List contains integers
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
@@ -43,35 +36,57 @@ def precomputed_scalar_function_process(
     as_binary_string = FloatToBinaryFixedPointStringConverter(
         total_bit_width=16, as_signed_fixed_point=as_signed_fixed_point
     )
-
+    x_list.sort()
     lines = []
-    # first element
-    for x in x_list[:1]:
-        lines.append("if int_x<{0} then".format(as_signed_fixed_point(x)))
+    if len(x_list) == 0 and len(y_list) == 1:
         vhdl_add_assignment(
             code=lines,
             line_id="y",
-            value=as_binary_string(smallest_possible_output),
-            comment=as_signed_fixed_point(smallest_possible_output),
+            value=as_binary_string(y_list[0]),
         )
-    for current, previous in zip(x_list[1:-1], x_list[:-2]):
-        lines.append("elsif int_x<{0} then".format(as_signed_fixed_point(current)))
-        vhdl_add_assignment(
-            code=lines,
-            line_id="y",
-            value=as_binary_string(function(previous)),
-            comment=as_signed_fixed_point(function(previous)),
+    elif len(x_list) != len(y_list) - 1:
+        raise ValueError(
+            "x_list has to be one element shorter than y_list, but x_list has {} elements and y_list {} elements".format(
+                len(x_list), len(y_list)
+            )
         )
-    # last element
-    for x in x_list[-1:]:
-        lines.append("else")
-        vhdl_add_assignment(
-            code=lines,
-            line_id="y",
-            value=as_binary_string(biggest_possible_output),
-            comment=as_signed_fixed_point(biggest_possible_output),
-        )
-    lines.append("end if;")
+    else:
+        smallest_possible_output = y_list[0]
+        biggest_possible_output = y_list[-1]
+
+        # first element
+        for x in x_list[:1]:
+            lines.append("if int_x<{0} then".format(as_signed_fixed_point(x)))
+            vhdl_add_assignment(
+                code=lines,
+                line_id="y",
+                value=as_binary_string(smallest_possible_output),
+                comment=as_signed_fixed_point(smallest_possible_output),
+            )
+            lines[-1] = "\t" + lines[-1]
+        for current_x, current_y in zip(x_list[1:-1], y_list[1:-1]):
+            lines.append(
+                "elsif int_x<{0} then".format(as_signed_fixed_point(current_x))
+            )
+            vhdl_add_assignment(
+                code=lines,
+                line_id="y",
+                value=as_binary_string(current_y),
+                comment=as_signed_fixed_point(current_y),
+            )
+            lines[-1] = "\t" + lines[-1]
+        # last element only in y
+        for y in y_list[-1:]:
+            lines.append("else")
+            vhdl_add_assignment(
+                code=lines,
+                line_id="y",
+                value=as_binary_string(biggest_possible_output),
+                comment=as_signed_fixed_point(biggest_possible_output),
+            )
+            lines[-1] = "\t" + lines[-1]
+        if len(lines) != 0:
+            lines.append("end if;")
     # build the string block and add new line + 2 tabs
     string = ""
     for line in lines:

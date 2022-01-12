@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.generator.general_strings import (
     get_architecture_end_string,
 )
 from elasticai.creator.vhdl.generator.generator_functions import (
-    precomputed_scalar_function_process
+    precomputed_scalar_function_process,
 )
 from elasticai.creator.vhdl.generator.vhd_strings import get_process_string
 from elasticai.creator.vhdl.language import (
@@ -19,35 +19,6 @@ from elasticai.creator.vhdl.language import (
     InterfaceVariable,
     DataType,
 )
-
-
-class Component(ABC):
-    def __init__(self, data_width, frac_width, x, component_name=None, process_instance=None):
-        self.component_name = self._get_lower_case_class_name_or_component_name(
-            component_name=component_name
-        )
-        self.data_width = data_width
-        self.frac_width = frac_width
-        self.x = x
-        self.process_instance = process_instance
-
-    @classmethod
-    def _get_lower_case_class_name_or_component_name(cls, component_name):
-        if component_name is None:
-            return cls.__name__.lower()
-        return component_name
-
-    @property
-    def file_name(self) -> str:
-        return f"{self.component_name}.vhd"
-
-    @property
-    def architecture_name(self) -> str:
-        return f"{self.component_name}_rtl"
-
-    @abstractmethod
-    def build(self) -> str:
-        pass
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -64,8 +35,34 @@ class FracWidthVariable(InterfaceVariable):
         )
 
 
-class PrecomputedScalarFunction(Component):
-    def build(self) -> str:
+class PrecomputedScalarFunction:
+    def __init__(
+        self, data_width, frac_width, x, y, component_name=None, process_instance=None
+    ):
+        self.component_name = self._get_lower_case_class_name_or_component_name(
+            component_name=component_name
+        )
+        self.data_width = data_width
+        self.frac_width = frac_width
+        self.x = x
+        self.y = y
+        self.process_instance = process_instance
+
+    @classmethod
+    def _get_lower_case_class_name_or_component_name(cls, component_name):
+        if component_name is None:
+            return cls.__name__.lower()
+        return component_name
+
+    @property
+    def file_name(self) -> str:
+        return f"{self.component_name}.vhd"
+
+    @property
+    def architecture_name(self) -> str:
+        return f"{self.component_name}_rtl"
+
+    def __call__(self) -> list[str]:
         entity = Entity(self.component_name)
         entity.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
@@ -81,33 +78,47 @@ class PrecomputedScalarFunction(Component):
         )
         code += get_process_string(
             component_name=self.component_name,
-            lookup_table_generator_function=self.process_instance,
+            lookup_table_generator_function=precomputed_scalar_function_process(
+                x_list=self.x, y_list=self.y
+            ),
         )
         code += get_architecture_end_string(architecture_name=self.architecture_name)
-        return code
+        return [code]
 
 
 class Sigmoid(PrecomputedScalarFunction):
     def __init__(self, data_width, frac_width, x, component_name=None):
+        x_list = torch.as_tensor(x)
+        y_list = list(torch.nn.Sigmoid()(x_list[1:]))
+        y_list.insert(0, 0)
+        y_list.append(1)
         super(Sigmoid, self).__init__(
             data_width=data_width,
             frac_width=frac_width,
             x=x,
+            y=y_list,
             component_name=component_name,
-            process_instance=precomputed_scalar_function_process(
-                x_list=torch.as_tensor(x), function=torch.nn.Sigmoid(), smallest_possible_output=0, biggest_possible_output=1
-            )
         )
+
+    def build(self) -> str:
+        lines_of_code = self.__call__()
+        return "\n".join(lines_of_code)
 
 
 class Tanh(PrecomputedScalarFunction):
     def __init__(self, data_width, frac_width, x, component_name=None):
+        y_list = [-1]
+        for x_element in x:
+            y_list.append(math.tanh(x_element))
+        y_list.append(1)
         super(Tanh, self).__init__(
             data_width=data_width,
             frac_width=frac_width,
             x=x,
+            y=y_list,
             component_name=component_name,
-            process_instance=precomputed_scalar_function_process(
-                x_list=x, function=math.tanh, smallest_possible_output=-1, biggest_possible_output=1
-            )
         )
+
+    def build(self) -> str:
+        lines_of_code = self.__call__()
+        return "\n".join(lines_of_code)
