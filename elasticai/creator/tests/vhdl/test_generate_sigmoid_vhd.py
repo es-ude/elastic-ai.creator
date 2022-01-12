@@ -161,6 +161,8 @@ class SigmoidTest(GeneratedVHDLCodeTest):
                     y <= "0000000011111101"; -- 253
                 elsif int_x<1240 then
                     y <= "0000000011111101"; -- 253
+                elsif int_x<1280 then
+                    y <= "0000000011111110"; -- 254
                 else
                     y <= "0000000100000000"; -- 256
                 end if;

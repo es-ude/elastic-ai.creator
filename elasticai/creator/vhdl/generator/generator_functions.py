@@ -64,7 +64,7 @@ def precomputed_scalar_function_process(x_list, y_list) -> str:
                 comment=as_signed_fixed_point(smallest_possible_output),
             )
             lines[-1] = "\t" + lines[-1]
-        for current_x, current_y in zip(x_list[1:-1], y_list[1:-1]):
+        for current_x, current_y in zip(x_list[1:], y_list[1:-1]):
             lines.append(
                 "elsif int_x<{0} then".format(as_signed_fixed_point(current_x))
             )

@@ -89,8 +89,10 @@ class PrecomputedScalarFunction:
 class Sigmoid(PrecomputedScalarFunction):
     def __init__(self, data_width, frac_width, x, component_name=None):
         x_list = torch.as_tensor(x)
-        y_list = list(torch.nn.Sigmoid()(x_list[1:]))
+        # calculate y always for the previous element, therefore the last input is not needed here
+        y_list = list(torch.nn.Sigmoid()(x_list[:-1]))
         y_list.insert(0, 0)
+        # add last y value, therefore, x_list is one element shorter than y_list
         y_list.append(1)
         super(Sigmoid, self).__init__(
             data_width=data_width,
@@ -108,8 +110,10 @@ class Sigmoid(PrecomputedScalarFunction):
 class Tanh(PrecomputedScalarFunction):
     def __init__(self, data_width, frac_width, x, component_name=None):
         y_list = [-1]
-        for x_element in x:
+        # calculate y always for the previous element, therefore the last input is not needed here
+        for x_element in x[:-1]:
             y_list.append(math.tanh(x_element))
+        # add last y value, therefore, x_list is one element shorter than y_list
         y_list.append(1)
         super(Tanh, self).__init__(
             data_width=data_width,

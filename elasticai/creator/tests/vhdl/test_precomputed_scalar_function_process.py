@@ -38,6 +38,8 @@ class PrecomputedScalarFunctionProcessTest(GeneratedVHDLCodeTest):
                     y <= "0000000100000000"; -- 256
                 elsif int_x<512 then
                     y <= "0000001000000000"; -- 512
+                elsif int_x<768 then
+                    y <= "0000001100000000"; -- 768
                 else
                     y <= "0000010000000000"; -- 1024
                 end if;"""
