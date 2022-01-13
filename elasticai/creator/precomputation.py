@@ -109,7 +109,7 @@ def get_precomputations_from_direct_children(module):
     )
 
 
-def get_precomputations_recursively(module):
+def get_precomputations_recursively(module) -> Precomputation:
     def tag_filter(submodule):
         return _precomputable_tag in get_tags(submodule)
 

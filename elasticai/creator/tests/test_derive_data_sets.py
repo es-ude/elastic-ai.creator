@@ -8,7 +8,7 @@ from elasticai.creator.input_domains import (
     find_unique_elements,
     create_io_table,
     get_cartesian_product_from_items,
-    construct_domain_from_items,
+    construct_codomain_from_elements,
 )
 
 
@@ -148,7 +148,9 @@ class DeriveDataSetsTests(unittest.TestCase):
         expected = itertools.product((0, 1), repeat=4)
         expected = ([[a, b], [c, d]] for a, b, c, d in expected)
         expected = np.array(list(expected), dtype="float16")
-        actual = construct_domain_from_items(shape=(2, 2), items=(0, 1))
+        actual = construct_codomain_from_elements(
+            shape=(2, 2), codomain_elements=(0, 1)
+        )
         assertNPArrayEqual(expected, actual)
 
     def test_construct_domain_from_subshape_vectors_length_2(self):
@@ -156,7 +158,9 @@ class DeriveDataSetsTests(unittest.TestCase):
         table = ((0, 0), (1, 1))
         expected = ((table[i], table[j]) for i, j in expected)
         expected = np.array(list(expected), dtype="float16")
-        actual = construct_domain_from_items(shape=(2, 2), items=((0, 0), (1, 1)))
+        actual = construct_codomain_from_elements(
+            shape=(2, 2), codomain_elements=((0, 0), (1, 1))
+        )
         assertNPArrayEqual(expected, actual)
 
     def test_construct_domain_from_subshape_vectors_length_3(self):
@@ -164,13 +168,15 @@ class DeriveDataSetsTests(unittest.TestCase):
         table = ((0, 0), (1, 1))
         expected = ((table[i], table[j], table[k]) for i, j, k in expected)
         expected = np.array(list(expected), dtype="float16")
-        actual = construct_domain_from_items(shape=(3, 2), items=((0, 0), (1, 1)))
+        actual = construct_codomain_from_elements(
+            shape=(3, 2), codomain_elements=((0, 0), (1, 1))
+        )
         assertNPArrayEqual(expected, actual)
 
     def test_construct_domain_from_incompatible_subshape_raises_error(self):
         self.assertRaises(
             ValueError,
-            construct_domain_from_items,
+            construct_codomain_from_elements,
             shape=(2, 3),
             items=((0, 0), (1, 1)),
         )
