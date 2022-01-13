@@ -66,7 +66,6 @@ class JitTests(TensorTestCase):
 
     def test_script_heaviside_based_ste(self):
         function = jit.trace(Binarize(), torch.tensor([0.0]))
-        print(function.graph)
         actual = function(torch.tensor([-1.2, -0.4, 8.9]))
         expected = torch.tensor([-1.0, -1.0, 1.0])
         self.assertTensorEquals(expected, actual)
