@@ -1,38 +1,44 @@
 import unittest
-from os.path import exists
-from elasticai.creator.vhdl.generator.functions.generate_mac_async_vhd import main
+from io import StringIO
+from elasticai.creator.vhdl.generator.functions.generate_mac_async_vhd import build_mac_async
+from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
-class GenerateMacAsyncVhdTest(unittest.TestCase):
-    def setUp(self) -> None:
-        main()
-        self.generated_file = open("../vhdl/source/mac_async.vhd", "r")
-        self.generated_lines = self.generated_file.readlines()
-        self.expected_file = open("vhdl/vhdFiles/mac_async_for_testing.vhd", "r")
-        self.expected_lines = self.expected_file.readlines()
-
-    def tearDown(self) -> None:
-        self.generated_file.close()
-        self.expected_file.close()
-
-    @unittest.SkipTest
-    def test_generate_file(self) -> None:
-        self.assertTrue(exists("../vhdl/source/mac_async.vhd"))
-
-    @unittest.SkipTest
+class GenerateMacAsyncVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
-        # clean each file from empty lines and lines which are just comment
-        self.expected_lines = [
-            line.strip()
-            for line in self.expected_lines
-            if not line.startswith("--") and not line.isspace()
-        ]
+        expected_code = """library ieee;
+        use ieee.std_logic_1164.all;
+        use ieee.numeric_std.all;               -- for type conversions
 
-        self.generated_lines = [
-            line.strip()
-            for line in self.generated_lines
-            if not line.startswith("--") and not line.isspace()
-        ]
+        
+        entity mac_async is
+        	generic (
+        		DATA_WIDTH : integer := 16;
+        		FRAC_WIDTH : integer := 8
+        	);
+        	port (
+        		x1 : in signed(DATA_WIDTH-1 downto 0);
+        		x2 : in signed(DATA_WIDTH-1 downto 0);
+        		w1 : in signed(DATA_WIDTH-1 downto 0);
+        		w2 : in signed(DATA_WIDTH-1 downto 0);
+        		b : in signed(DATA_WIDTH-1 downto 0);
+        		y : out signed(DATA_WIDTH-1 downto 0)
+        	);
+        end entity mac_async;
+        architecture mac_async_rtl of mac_async is
 
-        self.assertEqual(self.generated_lines, self.expected_lines)
-        self.assertEqual(len(self.generated_lines), len(self.expected_lines))
+            signal product_1 : signed(DATA_WIDTH-1 downto 0);
+            signal product_2 : signed(DATA_WIDTH-1 downto 0);
+
+        begin
+
+            -- behavior: y=w1*x1+w2*x2+b
+            product_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
+            product_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
+            y <= product_1 + product_2 + b;
+        end architecture mac_async_rtl ; -- mac_async_rtl"""
+
+        string_io = StringIO("")
+        mac_async_code = build_mac_async(string_io)
+
+        self.check_generated_code(expected_code, mac_async_code)
