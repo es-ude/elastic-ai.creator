@@ -39,6 +39,16 @@ class PrecomputedScalarFunction:
     def __init__(
         self, data_width, frac_width, x, y, component_name=None, process_instance=None
     ):
+        """
+        We calculate the function with an algorithm equivalent to:
+        ```
+        def function(x: int, inputs: list[int], outputs: list[int]) -> int:
+          for input, output in zip(inputs, outputs[:-1]):
+            if x < input:
+              return output
+          return outputs[-1]
+        ```
+        """
         self.component_name = self._get_lower_case_class_name_or_component_name(
             component_name=component_name
         )
