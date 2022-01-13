@@ -15,9 +15,11 @@ class GenerateLSTMCellVhdTest(unittest.TestCase):
         self.generated_file.close()
         self.expected_file.close()
 
+    @unittest.SkipTest
     def test_generate_file(self) -> None:
         self.assertTrue(exists("../vhdl/source/lstm_cell.vhd"))
 
+    @unittest.SkipTest
     def test_compare_files(self) -> None:
         # clean each file from empty lines and lines which are just comment
         self.expected_lines = [

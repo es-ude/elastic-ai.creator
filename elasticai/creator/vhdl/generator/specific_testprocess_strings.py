@@ -16,18 +16,15 @@ def get_test_process_for_one_input_results_in_one_output_string(
     test = ""
     if len(inputs) == len(outputs):
         for i in range(len(inputs)):
-            test = (
-                test
-                + """        {input_name} <=  to_signed({input},16);
+            test = test + """        {input_name} <=  to_signed({input},16);
         wait for 1*clk_period;
         report "The value of '{output_name}' is " & integer'image(to_integer(unsigned({output_name})));
         assert {output_name}={output} report "The test case {input} fail" severity failure;
 \n""".format(
-                    input=inputs[i],
-                    output=outputs[i],
-                    input_name=input_name,
-                    output_name=output_name,
-                )
+                input=inputs[i],
+                output=outputs[i],
+                input_name=input_name,
+                output_name=output_name,
             )
         return test
     else:

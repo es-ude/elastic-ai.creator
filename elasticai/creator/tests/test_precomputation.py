@@ -4,7 +4,13 @@ from collections import Iterable
 import numpy as np
 import torch
 
-from elasticai.creator.precomputation import Precomputation, JSONEncoder, ModuleProto, precomputable, Precomputable
+from elasticai.creator.precomputation import (
+    Precomputation,
+    JSONEncoder,
+    ModuleProto,
+    precomputable,
+    Precomputable,
+)
 from elasticai.creator.tags_utils import get_tags
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
@@ -60,13 +66,14 @@ class PrecomputationTest(TensorTestCase):
         self.assertEqual(expected, actual)
 
     def test_precomputable_tag(self):
-        input_generator = [-1,1]
+        input_generator = [-1, 1]
+
         @Precomputable(input_shape=[-1, 1], input_generator=input_generator)
         class MyCustomModule(torch.nn.Module):
             def __init__(self):
                 super().__init__()
+
         module = MyCustomModule()
         tags = get_tags(module)
 
-
-        self.assertSequenceEqual(tags['precomputable']['input_shape'],[-1,1])
+        self.assertSequenceEqual(tags["precomputable"]["input_shape"], [-1, 1])
