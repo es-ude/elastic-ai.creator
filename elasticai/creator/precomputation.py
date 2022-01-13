@@ -9,11 +9,10 @@ from torch.nn import Module
 
 from elasticai.creator.tags_utils import has_tag, get_tags, tag
 
-_precomputable_tag = 'precomputable'
+_precomputable_tag = "precomputable"
 
 
 class ModuleProto(Protocol):
-
     @property
     def training(self) -> bool:
         pass
@@ -21,14 +20,14 @@ class ModuleProto(Protocol):
     def extra_repr(self) -> str:
         pass
 
-    def named_children(self) -> Iterable[tuple[str, 'ModuleProto']]:
+    def named_children(self) -> Iterable[tuple[str, "ModuleProto"]]:
         pass
 
     def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
         pass
 
 
-TensorLike = Union[Callable[[], 'TensorLike'], torch.Tensor, numpy.ndarray]
+TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, numpy.ndarray]
 
 
 class Precomputation:
@@ -40,8 +39,7 @@ class Precomputation:
     There is no way currently to load an exported Precomputation object.
     """
 
-    def __init__(self, module: ModuleProto,
-                 input_domain: TensorLike) -> None:
+    def __init__(self, module: ModuleProto, input_domain: TensorLike) -> None:
         super().__init__()
         self.module = module
         self.input_domain = input_domain
@@ -56,9 +54,8 @@ class Precomputation:
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]
-        input_domain = info_for_precomputation['input_generator']
-        return Precomputation(module=module,
-                              input_domain=input_domain)
+        input_domain = info_for_precomputation["input_generator"]
+        return Precomputation(module=module, input_domain=input_domain)
 
     def __call__(self, *args, **kwargs) -> None:
         """Precompute the input output pairs for the block handed during construction of the object.
@@ -91,10 +88,10 @@ class JSONEncoder(json.JSONEncoder):
                 for name, child in o.module.named_children():
                     description.append(name + " " + type(child).__name__)
             return {
-                'description': description,
-                'shape': o.input_domain.shape[1:],
-                'x': o.input_domain.numpy().tolist(),
-                'y': o.input_domain.numpy().tolist()
+                "description": description,
+                "shape": o.input_domain.shape[1:],
+                "x": o.input_domain.numpy().tolist(),
+                "y": o.input_domain.numpy().tolist(),
             }
         else:
             return json.JSONEncoder.default(self, o)
@@ -106,8 +103,10 @@ def get_precomputations_from_direct_children(module):
 
     submodules = tuple(module.children())
     filtered_submodules = filter(tag_filter, submodules)
-    yield from (Precomputation.from_precomputable_tagged(submodule)
-                for submodule in filtered_submodules)
+    yield from (
+        Precomputation.from_precomputable_tagged(submodule)
+        for submodule in filtered_submodules
+    )
 
 
 def get_precomputations_recursively(module):
@@ -116,14 +115,17 @@ def get_precomputations_recursively(module):
 
     submodules = tuple(module.modules())
     filtered_submodules = filter(tag_filter, submodules)
-    yield from (Precomputation.from_precomputable_tagged(submodule)
-                for submodule in filtered_submodules)
+    yield from (
+        Precomputation.from_precomputable_tagged(submodule)
+        for submodule in filtered_submodules
+    )
 
 
-
-def precomputable(module: Module,
-                  input_shape: tuple[int, ...],
-                  input_generator: Callable[[tuple[int, ...]], np.ndarray]) -> Module:
+def precomputable(
+    module: Module,
+    input_shape: tuple[int, ...],
+    input_generator: Callable[[tuple[int, ...]], np.ndarray],
+) -> Module:
     """Add all necessary information to allow later tools to precompute the specified module
 
     The arguments provided will be used to determine the input data that needs
@@ -152,10 +154,13 @@ def precomputable(module: Module,
                 for precomputation in precomputations:
                     file.write(precomputation)
     """
-    return tag(module, precomputable={
-        'input_shape': input_shape,
-        'input_generator': input_generator,
-    })
+    return tag(
+        module,
+        precomputable={
+            "input_shape": input_shape,
+            "input_generator": input_generator,
+        },
+    )
 
 def Precomputable(input_shape, input_generator):
     def precomputable_decorator_function(module):

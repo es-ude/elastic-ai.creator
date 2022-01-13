@@ -89,7 +89,7 @@ The structure of the project is as follows.
 The [qtorch](elasticai/creator/qtorch) folder includes our implementation of quantized PyTorch layer.
 The folder [protocols](elasticai/creator/protocols) contains some general protocols for the models and layers which are also used by multiple translated languages.
 In the [translator](elasticai/creator/translator) folder there are the modules which can be used for every translation from a pytorch model to a target language.
-The subfolder [brevitas](elasticai/creator/translator/brevitas) is for the translation to Brevitas.
+The subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas.
 Each language we can translate to has folders for unit tests, integration tests and system test. 
 
 ## QTorch
@@ -132,7 +132,7 @@ How to translate a given PyTorch model consisting of QTorch layers to Brevitas?
 This is how to translate a given model to a Brevitas model:
 
 ```python
-from elasticai.creator.translator.brevitas.brevitas_representation import BrevitasRepresentation
+from elasticai.creator.brevitas.brevitas_representation import BrevitasRepresentation
 
 converted_model = BrevitasRepresentation.from_pytorch(qtorch_model).translated_model
 ```
@@ -142,7 +142,7 @@ args:
 returns:
 - converted_model: a Brevitas model
 
-Example usages are shown here: [Brevitas system tests](elasticai/creator/translator/brevitas/systemTests).
+Example usages are shown here: [Brevitas system tests](elasticai/creator/systemTests).
 We also support to translate a brevitas model to onnx which is shown in the system test.
 
 ### Translations
@@ -159,7 +159,7 @@ The following QTorch or PyTorch layers are translated to the corresponding Brevi
 - PyTorch Flatten to PyTorch Flatten
 - PyTorch Sigmoid to PyTorch Sigmoid
 
-You can find the mappings in [translation_mapping](elasticai/creator/translator/brevitas/translation_mapping.py) and can easily add more PyTorch layers.
+You can find the mappings in [translation_mapping](elasticai/creator/brevitas/translation_mapping.py) and can easily add more PyTorch layers.
 
 ### Supported Layers for Brevitas Translation
 
@@ -176,7 +176,7 @@ You can find the mappings in [translation_mapping](elasticai/creator/translator/
   - ResidualQuantization 
   - QuantizeTwoBit 
   - QLSTM
-- we do not support all PyTorch layers, but you can easily add them in the [translation_mapping](elasticai/creator/translator/brevitas/translation_mapping.py).
+- we do not support all PyTorch layers, but you can easily add them in the [translation_mapping](elasticai/creator/brevitas/translation_mapping.py).
 
 ## General Limitations
 
@@ -188,14 +188,14 @@ New translation targets should be located in their own folder, e.g. Brevitas for
 Workflow for adding a new translation:
 1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
 2. Identify and label relevant structures, in the base cases it can be simply separate layers.
-3. Map each structure to its function which will convert it, like for [example](elasticai/creator/translator/brevitas/translation_mapping.py).
+3. Map each structure to its function which will convert it, like for [example](elasticai/creator/brevitas/translation_mapping.py).
 4. Do such conversions.
 5. Recreate connections based on 1.
 
 Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
 ## Model reporter
-As part of this repository an utility called [model reporter](elasticai/creator/translator/model_reporter.py) exists which is used to produce a file with the individual identifier from a given dataset. 
+As part of this repository an utility called [model reporter](elasticai/creator/model_reporter.py) exists which is used to produce a file with the individual identifier from a given dataset. 
 It is used for hardware comparisons, where a small subset of the data is used for comparison. 
 Example: 
 ```
@@ -235,18 +235,75 @@ If you want to add more tests please refer to the [Test Guidelines](test_guideli
 
 ### Brevitas System Tests
 
-The [Brevitas system tests](elasticai/creator/translator/brevitas/systemTests) can be used as example use cases of our implementation.
+The [Brevitas system tests](elasticai/creator/systemTests) can be used as example use cases of our implementation.
 We created tests which check the conversion of a model like we would expect our models will look like.
 In addition, we also created tests for validating the conversion for trained models or unusual models. 
 Note that you have to use your own data set and therefore maybe do some small adaptions by using the training.
 
 ### Brevitas Integration Tests
 
-Our  [Brevitas integration tests](elasticai/creator/translator/brevitas/integrationTests) are focused on testing the conversion of one specific layer. 
+Our  [Brevitas integration tests](elasticai/creator/integrationTests) are focused on testing the conversion of one specific layer. 
 We created for all our supported layers a minimal model with this layer included and test its functionality. 
 
 ### Brevitas Unit Tests
 
 In addition to system and integration tests we implemented unit tests. 
 The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
-The Brevitas unit tests can be found [here](elasticai/creator/translator/brevitas/unitTests).
+The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests).
+
+
+## Developers Guide
+* We use [black](https://black.readthedocs.io/en/stable/index.html) for code formatting. For instruction on setup with your IDE please refer to https://black.readthedocs.io/en/stable/integrations/editors.html#editor-integration.
+* importing `*` should be avoided in favor of explicit imports
+
+### Test style Guidelines
+
+#### File IO
+In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
+If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
+
+
+#### Diectory structure and file names
+Files containing tests for a python module should be located in a test directory for the sake of separation of concerns. 
+Each file in the test directory should contain tests for one and only one class/function defined in the module. 
+Files containing tests should be named according to the rubric
+`test_ClassName.py`.
+Next, if needed for more specific tests define a class which is a subclass of unittest.TestCase like [test_brevitas_model_comparison](elasticai/creator/integrationTests/test_brevitas_model_comparison.py) in the integration tests folder. 
+Then subclass it, in this class define a setUp method (and possibly tearDown) to create the global environment. 
+It avoids introducing the category of bugs associated with copying and pasting code for reuse. 
+This class should be named similarly to the file name.
+There's a category of bugs that appear if  the initialization parameters defined at the top of the test file are directly used: some tests require the initialization parameters to be changed slightly. 
+Its possible to define a parameter and have it change in memory as a result of a test. 
+Subsequent tests will therefore throw errors.
+Each class contains methods that implement a test. 
+These methods are named according to the rubric
+`test_name_condition`
+
+#### Unit tests
+In those tests each functionality of each function in the module is tested, it is the entry point  when adding new functions. 
+It assures that the function behaves correctly independently of others. 
+Each test has to be fast, so use of heavier libraries is discouraged.
+The input used is the minimal one needed to obtain a reproducible output. 
+Dependencies should be replaced with mocks as needed. 
+
+#### Integration Tests
+Here the functions' behaviour with other modules is tested. 
+In this repository each integration function is in the correspondent folder.
+Then the integration with a single class of the target, or the minimum amount of classes for a functionality, is tested in each separated file.
+
+#### System tests
+Those tests will use every component of the system, comprising multiple classes.
+Those tests include expected use cases and unexpected or stress tests.
+
+#### Adding new functionalities and tests required
+When adding new functions to an existing module, add unit tests in the correspondent file in the same order of the module, if a new module is created a new file should be created.
+When a bug is solved created the respective regression test to ensure that it will not return.
+Proceed similarly with integration tests. 
+Creating a new file if a functionality completely different from the others is created e.g. support for a new layer.
+System tests are added if support for a new library is added.
+
+#### Updating tests
+If new functionalities are changed or removed the tests are expected to reflect that, generally the ordering is unit tests -> integration tests-> system tests.
+Also, unit tests that change the dependencies should be checked, since this system is fairly small the internal dependencies are not always mocked.
+
+references: https://jrsmith3.github.io/python-testing-style-guidelines.html

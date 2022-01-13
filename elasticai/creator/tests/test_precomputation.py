@@ -22,7 +22,7 @@ class DummyModule:
         return ""
 
     # noinspection PyMethodMayBeStatic
-    def named_children(self) -> Iterable[tuple[str, 'ModuleProto']]:
+    def named_children(self) -> Iterable[tuple[str, "ModuleProto"]]:
         yield from ()
 
     def __call__(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
@@ -30,7 +30,6 @@ class DummyModule:
 
 
 class PrecomputationTest(TensorTestCase):
-
     def test_precompute(self):
         module = DummyModule()
 
@@ -38,7 +37,9 @@ class PrecomputationTest(TensorTestCase):
             return x * 2
 
         module.call = call
-        precompute = Precomputation(module=module, input_domain=torch.tensor([[1], [1]]))
+        precompute = Precomputation(
+            module=module, input_domain=torch.tensor([[1], [1]])
+        )
         precompute()
         self.assertTensorEquals(torch.tensor([[2], [2]]), precompute.output)
 
@@ -53,7 +54,9 @@ class PrecomputationTest(TensorTestCase):
         module = DummyModule()
         precompute = Precomputation(module=module, input_domain=torch.tensor([[[1]]]))
         actual = json.dumps(precompute, cls=JSONEncoder)
-        expected = """{"description": [], "shape": [1, 1], "x": [[[1]]], "y": [[[1]]]}"""
+        expected = (
+            """{"description": [], "shape": [1, 1], "x": [[[1]]], "y": [[[1]]]}"""
+        )
         self.assertEqual(expected, actual)
 
     def test_precomputable_tag(self):
@@ -62,8 +65,8 @@ class PrecomputationTest(TensorTestCase):
         class MyCustomModule(torch.nn.Module):
             def __init__(self):
                 super().__init__()
-        module = MyCustomModule()        
+        module = MyCustomModule()
         tags = get_tags(module)
 
-        
+
         self.assertSequenceEqual(tags['precomputable']['input_shape'],[-1,1])

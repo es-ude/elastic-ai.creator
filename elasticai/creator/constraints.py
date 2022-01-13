@@ -1,4 +1,3 @@
-
 class WeightClipper:
     """
     This is an applied constraint meant to be used  after each batch. It clips the weights of the given module to be between -1,1.
