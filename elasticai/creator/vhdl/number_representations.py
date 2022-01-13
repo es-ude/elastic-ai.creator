@@ -1,7 +1,4 @@
-from abc import ABC, abstractmethod
-from functools import partial
-from numbers import Integral, Rational
-from typing import Union, Iterable, Any, overload
+from typing import Union
 
 
 class FloatToSignedFixedPointConverter:
@@ -57,7 +54,7 @@ def two_complements_representation(x, number_of_bits):
         unsigned_int_version = (1 << number_of_bits) + x
     else:
         unsigned_int_version = x
-    return _int_to_bin_str(x, number_of_bits)
+    return _int_to_bin_str(unsigned_int_version, number_of_bits)
 
 
 class ToLogicEncoder:
@@ -80,7 +77,6 @@ class ToLogicEncoder:
         self._update_mapping()
 
     def _update_mapping(self) -> None:
-        length = len(self.numerics)
         sorted_numerics = list(self.numerics)
         sorted_numerics.sort()
         mapping = dict(((value, index) for index, value in enumerate(sorted_numerics)))

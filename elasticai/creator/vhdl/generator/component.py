@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from collections import Iterable
 from functools import partial
 from itertools import chain
-from typing import Any, Callable
+from typing import Union
 
 import torch.nn
 
@@ -19,7 +20,7 @@ from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
     DataType,
-    Code,
+    Code, _wrap_in_IS_END_block, indent,
 )
 
 
@@ -130,9 +131,21 @@ class Tanh(FixedPointComponent):
         return code
 
 
-class NaiveLUTConv(Component):
-    def __init__(self, input_domain: Any, software_conv: Callable[[Any], Any]):
-        super().__init__(input_domain=input_domain)
+class NaiveLUTBasedConv:
+    def __init__(self, implements: Union[str, Entity], name: str,
+                 inputs: Iterable[float], outputs: Iterable[float]):
+        self.implements = implements
+        self.name = name
+        self.inputs = inputs
+        self.outputs = outputs
 
-    def _build_body(self) -> Code:
-        inputs, outputs = self.io_table
+    def __call__(self) -> Code:
+        yield from (
+            f"architecture {self.name} of {self.implements} is",
+            "begin"
+        )
+        io = zip(self.inputs, self.outputs)
+        first = next(io)
+        yield indent(f'\toutput <= "{first[0]}" when input = "{first[1]}"')
+        yield from map(indent, ())
+        yield from _wrap_in_IS_END_block("architecture {self.name}")

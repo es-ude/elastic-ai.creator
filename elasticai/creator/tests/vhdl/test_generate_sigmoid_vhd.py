@@ -11,7 +11,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
         sigmoid = Sigmoid(
             data_width=16,
             frac_width=8,
-            x=np.linspace(-5, 5, 66),
+            input_domain=np.linspace(-5, 5, 66),
             component_name="sigmoid",
         )
         sigmoid_code = sigmoid.build()

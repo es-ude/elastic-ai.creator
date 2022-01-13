@@ -82,10 +82,6 @@ class NumberEncoderTest(TestCase):
          max pooling operations we might want to ensure that the encoding is monotonous.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.addTypeEqualityFunc()
-
     def test_binarization_minus_one_is_zero(self):
         encoder = ToLogicEncoder()
         encoder.add_numeric(-1)
