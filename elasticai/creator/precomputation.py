@@ -161,3 +161,10 @@ def precomputable(
             "input_generator": input_generator,
         },
     )
+
+
+def Precomputable(input_shape, input_generator):
+    def precomputable_decorator_function(module):
+        return precomputable(module, input_shape, input_generator)
+
+    return precomputable_decorator_function

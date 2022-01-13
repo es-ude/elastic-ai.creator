@@ -217,7 +217,7 @@ def _wrap_in_IS_END_block(
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
     def wrapped():
-        return string,
+        return (string,)
 
     return wrapped
 
