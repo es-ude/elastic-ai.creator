@@ -7,8 +7,8 @@ class GeneratedVHDLCodeTest(unittest.TestCase):
         text = text.splitlines()
         return [x for x in text if len(x) > 0]
 
-    def check_generated_code(self, code):
-        expected = self.get_non_empty_lines(self.expected_code)
+    def check_generated_code(self, expected_code, code):
+        expected = self.get_non_empty_lines(expected_code)
         actual = self.get_non_empty_lines(code)
         expected = [
             line.strip()

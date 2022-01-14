@@ -9,7 +9,7 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
-from collections import Sequence
+from abc import abstractmethod
 from enum import Enum
 from itertools import filterfalse, chain
 from typing import (
@@ -17,7 +17,6 @@ from typing import (
     Iterable,
     Union,
     Literal,
-    overload,
     Optional,
 )
 
@@ -55,7 +54,7 @@ class Mode(Enum):
     BUFFER = Keywords.BUFFER.value
 
 
-class _DesignEntity:
+class _DesignUnitForEntityAndComponent:
     def __init__(
         self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
     ):
@@ -92,12 +91,12 @@ class _DesignEntity:
         yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
 
 
-class Entity(_DesignEntity):
+class Entity(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
         super().__init__(identifier, Keywords.ENTITY)
 
 
-class ComponentDeclaration(_DesignEntity):
+class ComponentDeclaration(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
         super().__init__(identifier, Keywords.COMPONENT)
 
@@ -131,7 +130,7 @@ class InterfaceVariable:
         )
 
 
-class InterfaceList(Sequence[CodeGenerator]):
+class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
     def __len__(self) -> int:
         return len(self.interface_generators)
 
@@ -143,21 +142,17 @@ class InterfaceList(Sequence[CodeGenerator]):
             _unify_code_generators(interface) for interface in interfaces
         ]
 
-    @overload
-    def append(self, interface: str) -> None:
-        ...
-
-    @overload
-    def append(self, interface: Code) -> None:
-        ...
-
-    def append(self, interface: CodeGenerator) -> None:
+    def append(self, interface: CodeGeneratorCompatible) -> None:
         self.interface_generators.append(_unify_code_generators(interface))
 
     def __call__(self) -> Code:
         yield from chain.from_iterable(
             (interface() for interface in self.interface_generators)
         )
+
+
+class InterfaceList(CodeGeneratorConcatenation):
+    pass
 
 
 InterfaceDeclaration = Union[
@@ -173,7 +168,6 @@ InterfaceObjectDeclaration = Union[
     "InterfaceVariableDeclaration",
     "InterfaceFileDeclaration",
 ]
-
 
 ClauseType = Literal[Keywords.GENERIC, Keywords.PORT]
 
@@ -226,6 +220,31 @@ def _wrap_in_IS_END_block(
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
     def wrapped():
         return string,
+
+    return wrapped
+
+
+def _wrap_code_into_code_generator(code: Code) -> CodeGenerator:
+    def wrapped():
+        return code
+
+    return wrapped
+
+
+def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
+    if isinstance(generator, str):
+        return _wrap_string_into_code_generator(generator)
+    elif isinstance(generator, Iterable):
+        return _wrap_code_into_code_generator(generator)
+    elif isinstance(generator, Callable):
+        return generator
+    else:
+        raise ValueError
+
+
+def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
+    def wrapped():
+        return (string,)
 
     return wrapped
 

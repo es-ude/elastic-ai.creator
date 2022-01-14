@@ -7,7 +7,6 @@ from torch import Tensor
 from elasticai.creator.layers import QLSTMCell
 from typing import Dict, List, Callable, Any, Union, Sequence
 
-from elasticai.creator.vhdl.generator.general_strings import vhdl_add_assignment
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     two_complements_representation,
@@ -15,11 +14,19 @@ from elasticai.creator.vhdl.number_representations import (
 )
 
 
-def tanh_process(x_list: List) -> str:
+def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
+    new_code_fragment = f'{line_id} <= "{value}";'
+    if comment is not None:
+        new_code_fragment += f" -- {comment}"
+    code.append(new_code_fragment)
+
+
+def precomputed_scalar_function_process(x_list, y_list) -> str:
     """
         returns the string of a lookup table
     Args:
-        x_list (List): List contains integers
+        y_list : output List contains integers
+        x_list: input List contains integers
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
@@ -29,87 +36,61 @@ def tanh_process(x_list: List) -> str:
     as_binary_string = FloatToBinaryFixedPointStringConverter(
         total_bit_width=16, as_signed_fixed_point=as_signed_fixed_point
     )
-
-    _bin_digits = two_complements_representation
+    x_list.sort()
     lines = []
+    if len(x_list) == 0 and len(y_list) == 1:
+        vhdl_add_assignment(
+            code=lines,
+            line_id="y",
+            value=as_binary_string(y_list[0]),
+        )
+    elif len(x_list) != len(y_list) - 1:
+        raise ValueError(
+            "x_list has to be one element shorter than y_list, but x_list has {} elements and y_list {} elements".format(
+                len(x_list), len(y_list)
+            )
+        )
+    else:
+        smallest_possible_output = y_list[0]
+        biggest_possible_output = y_list[-1]
 
-    frac_bits = 8
-    one = 2 ** frac_bits
-    for x in x_list[:1]:
-        lines.append("if int_x<{0} then".format(as_signed_fixed_point(x)))
-        vhdl_add_assignment(
-            code=lines,
-            line_id="y",
-            value=as_binary_string(-1),
-            comment=as_signed_fixed_point(-1),
-        )
-    for current, previous in zip(x_list[1:-1], x_list[:-2]):
-        lines.append("elsif int_x<{0} then".format(as_signed_fixed_point(current)))
-        vhdl_add_assignment(
-            code=lines,
-            line_id="y",
-            value=as_binary_string(math.tanh(previous)),
-            comment=as_signed_fixed_point(math.tanh(previous)),
-        )
-    for x in x_list[-1:]:
-        lines.append("else")
-        vhdl_add_assignment(
-            code=lines,
-            line_id="y",
-            value=as_binary_string(1),
-            comment=as_signed_fixed_point(1),
-        )
-    lines.append("end if;")
+        # first element
+        for x in x_list[:1]:
+            lines.append("if int_x<{0} then".format(as_signed_fixed_point(x)))
+            vhdl_add_assignment(
+                code=lines,
+                line_id="y",
+                value=as_binary_string(smallest_possible_output),
+                comment=as_signed_fixed_point(smallest_possible_output),
+            )
+            lines[-1] = "\t" + lines[-1]
+        for current_x, current_y in zip(x_list[1:], y_list[1:-1]):
+            lines.append(
+                "elsif int_x<{0} then".format(as_signed_fixed_point(current_x))
+            )
+            vhdl_add_assignment(
+                code=lines,
+                line_id="y",
+                value=as_binary_string(current_y),
+                comment=as_signed_fixed_point(current_y),
+            )
+            lines[-1] = "\t" + lines[-1]
+        # last element only in y
+        for y in y_list[-1:]:
+            lines.append("else")
+            vhdl_add_assignment(
+                code=lines,
+                line_id="y",
+                value=as_binary_string(biggest_possible_output),
+                comment=as_signed_fixed_point(biggest_possible_output),
+            )
+            lines[-1] = "\t" + lines[-1]
+        if len(lines) != 0:
+            lines.append("end if;")
     # build the string block and add new line + 2 tabs
     string = ""
     for line in lines:
         string = string + line + "\n" + "\t" + "\t"
-    return string
-
-
-def sigmoid_process(
-    x_list: Union[Sequence[float], Tensor],
-    function: Callable[[Union[float, Tensor]], Any],
-) -> str:
-    """
-        returns the string of a lookup table
-    Args:
-        function: takes the elements from x_list and produces the output to be used in the generated process
-        x_list (List): List contains integers
-    Returns:
-        String of lookup table (if/elsif statements for vhdl file)
-    """
-    lines = []
-    bits_used_for_fraction = 8
-    fixed_point = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=bits_used_for_fraction, strict=False
-    )
-
-    zero = 0
-
-    for i, x in enumerate(x_list):
-        if i == 0:
-            lines.append("if int_x<" + str(fixed_point.__call__(x)) + " then")
-            lines.append('\ty <= "' + "{0:016b}".format(zero) + '"; -- ' + str(zero))
-        elif i == (len(x_list) - 1):
-            lines.append("else")
-            lines.append(
-                '\ty <= "'
-                + "{0:016b}".format(fixed_point.__call__(1))
-                + '"; -- '
-                + str(fixed_point.__call__(1))
-            )
-        else:
-            lines.append("elsif int_x<" + str(fixed_point.__call__(x)) + " then")
-            lines.append(
-                '\ty <= "'
-                + "{0:016b}".format(int(256 * function(x_list[i - 1])))
-                + '"; -- '
-                + str(int(256 * function(x_list[i - 1])))
-            )
-    lines.append("end if;")
-    # build the string block and add new line + 2 tabs
-    string = "\n\t\t".join(lines)
     return string
 
 

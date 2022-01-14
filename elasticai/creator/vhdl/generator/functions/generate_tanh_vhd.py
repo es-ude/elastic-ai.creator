@@ -1,6 +1,6 @@
 import numpy as np
 
-from elasticai.creator.vhdl.generator.component import Tanh
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import Tanh
 from elasticai.creator.vhdl.generator.vhd_strings import (
     get_file_path_string,
 )

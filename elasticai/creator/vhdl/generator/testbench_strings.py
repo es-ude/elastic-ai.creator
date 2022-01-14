@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from elasticai.creator.vhdl.generator.component import (
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
     DataWidthVariable,
     FracWidthVariable,
 )

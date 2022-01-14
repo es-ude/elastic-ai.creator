@@ -1,6 +1,6 @@
 import numpy as np
 
-from elasticai.creator.vhdl.generator.component import Sigmoid
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid
 from elasticai.creator.vhdl.generator.vhd_strings import (
     get_file_path_string,
 )

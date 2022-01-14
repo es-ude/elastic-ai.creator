@@ -16,6 +16,8 @@ def _heaviside(x):
 class heaviside_with_ste(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> Any:
+        if len(args) == 0:
+            raise TypeError
         x = args[0]
         masked_zero_for_out_of_range = _heaviside(x + 1) - _heaviside(x - 1)
         ctx.save_for_backward(masked_zero_for_out_of_range)

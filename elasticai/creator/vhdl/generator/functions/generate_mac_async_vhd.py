@@ -1,3 +1,5 @@
+from io import StringIO
+
 from elasticai.creator.vhdl.generator.general_strings import (
     get_libraries_string,
     get_entity_or_component_string,
@@ -20,42 +22,52 @@ DATA_FRAC = 8
 
 
 def main():
-    file_path = get_file_path_string(folder_names=["..", "source"], file_name=file_name)
-
+    file_path = get_file_path_string(
+        folder_names=["..", "source"], file_name=file_name
+    )
     with open(file_path, "w") as writer:
-        writer.write(get_libraries_string())
-        writer.write(
-            get_entity_or_component_string(
-                entity_or_component="entity",
-                entity_or_component_name=component_name,
-                data_width=DATA_WIDTH,
-                frac_width=DATA_FRAC,
-                variables_dict={
-                    "x1": "in signed(DATA_WIDTH-1 downto 0)",
-                    "x2": "in signed(DATA_WIDTH-1 downto 0)",
-                    "w1": "in signed(DATA_WIDTH-1 downto 0)",
-                    "w2": "in signed(DATA_WIDTH-1 downto 0)",
-                    "b": "in signed(DATA_WIDTH-1 downto 0)",
-                    "y": "out signed(DATA_WIDTH-1 downto 0)",
-                },
-            )
+        stringio = StringIO("")
+        code = build_mac_async(stringio)
+        writer.write(code)
+
+
+def build_mac_async(writer: StringIO):
+    writer.write(get_libraries_string())
+    writer.write(
+        get_entity_or_component_string(
+            entity_or_component="entity",
+            entity_or_component_name=component_name,
+            data_width=DATA_WIDTH,
+            frac_width=DATA_FRAC,
+            variables_dict={
+                "x1": "in signed(DATA_WIDTH-1 downto 0)",
+                "x2": "in signed(DATA_WIDTH-1 downto 0)",
+                "w1": "in signed(DATA_WIDTH-1 downto 0)",
+                "w2": "in signed(DATA_WIDTH-1 downto 0)",
+                "b": "in signed(DATA_WIDTH-1 downto 0)",
+                "y": "out signed(DATA_WIDTH-1 downto 0)",
+            },
         )
-        writer.write(
-            get_architecture_header_string(
-                architecture_name=architecture_name, component_name=component_name
-            )
+    )
+    writer.write(
+        get_architecture_header_string(
+            architecture_name=architecture_name, component_name=component_name
         )
-        writer.write(
-            get_signal_definitions_string(
-                signal_dict={
-                    "product_1": "signed(DATA_WIDTH-1 downto 0)",
-                    "product_2": "signed(DATA_WIDTH-1 downto 0)",
-                }
-            )
+    )
+    writer.write(
+        get_signal_definitions_string(
+            signal_dict={
+                "product_1": "signed(DATA_WIDTH-1 downto 0)",
+                "product_2": "signed(DATA_WIDTH-1 downto 0)",
+            }
         )
-        writer.write(get_architecture_begin_string())
-        writer.write(get_mac_async_architecture_behavior_string())
-        writer.write(get_architecture_end_string(architecture_name=architecture_name))
+    )
+    writer.write(get_architecture_begin_string())
+    writer.write(get_mac_async_architecture_behavior_string())
+    writer.write(get_architecture_end_string(architecture_name=architecture_name))
+
+    code = writer.getvalue()
+    return code
 
 
 if __name__ == "__main__":

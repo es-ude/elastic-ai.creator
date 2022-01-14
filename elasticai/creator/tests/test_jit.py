@@ -1,14 +1,12 @@
 import pathlib
 import re
-from functools import partial
-from typing import Any
 
 import torch
-from torch import jit, threshold
+from torch import jit
 from torch.nn.functional import hardtanh
 
 from elasticai.creator.layers import Binarize
-from tensor_test_case import TensorTestCase
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
 class JitTests(TensorTestCase):
@@ -68,7 +66,6 @@ class JitTests(TensorTestCase):
 
     def test_script_heaviside_based_ste(self):
         function = jit.trace(Binarize(), torch.tensor([0.0]))
-        print(function.graph)
         actual = function(torch.tensor([-1.2, -0.4, 8.9]))
         expected = torch.tensor([-1.0, -1.0, 1.0])
         self.assertTensorEquals(expected, actual)
