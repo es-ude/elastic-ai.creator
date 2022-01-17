@@ -20,7 +20,9 @@ from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
     DataType,
-    Code, _wrap_in_IS_END_block, indent,
+    Code,
+    _wrap_in_IS_END_block,
+    indent,
 )
 
 
@@ -142,18 +144,20 @@ class Tanh(PrecomputedScalarFunction):
 
 
 class NaiveLUTBasedConv:
-    def __init__(self, implements: Union[str, Entity], name: str,
-                 inputs: Iterable[float], outputs: Iterable[float]):
+    def __init__(
+        self,
+        implements: Union[str, Entity],
+        name: str,
+        inputs: Iterable[float],
+        outputs: Iterable[float],
+    ):
         self.implements = implements
         self.name = name
         self.inputs = inputs
         self.outputs = outputs
 
     def __call__(self) -> Code:
-        yield from (
-            f"architecture {self.name} of {self.implements} is",
-            "begin"
-        )
+        yield from (f"architecture {self.name} of {self.implements} is", "begin")
         io = zip(self.inputs, self.outputs)
         first = next(io)
         yield indent(f'\toutput <= "{first[0]}" when input = "{first[1]}"')

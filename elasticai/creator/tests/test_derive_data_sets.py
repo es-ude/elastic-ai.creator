@@ -178,7 +178,7 @@ class DeriveDataSetsTests(unittest.TestCase):
             ValueError,
             construct_codomain_from_elements,
             shape=(2, 3),
-            items=((0, 0), (1, 1)),
+            codomain_elements=((0, 0), (1, 1)),
         )
 
 

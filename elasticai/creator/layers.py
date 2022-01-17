@@ -542,9 +542,10 @@ class SplitConvolutionBase(torch.nn.Module):
                 depthwise_shape, self.codomain_elements
             )
 
-        precomputable(
-            self.depthwise, input_shape=depthwise_shape, input_generator=depthwise_input
+        depthwise_precomputable_tag = precomputable(
+            input_shape=depthwise_shape, input_generator=depthwise_input
         )
+        self.depthwise = depthwise_precomputable_tag(self.depthwise)
 
         pointwise_shape = (1, in_channels * self.depthwise.channel_multiplexing_factor)
 
@@ -553,9 +554,10 @@ class SplitConvolutionBase(torch.nn.Module):
                 pointwise_shape, self.depthwise.codomain_elements
             )
 
-        precomputable(
-            self.pointwise, input_shape=pointwise_shape, input_generator=pointwise_input
+        pointwise_precomputable_tag = precomputable(
+            input_shape=pointwise_shape, input_generator=pointwise_input
         )
+        self.pointwise = pointwise_precomputable_tag(self.pointwise)
 
     def forward(self, x):
         return self.pointwise(self.depthwise(x))

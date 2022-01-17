@@ -10,6 +10,7 @@ grammar as `CodeGenerator`s. The class can then be used to set up and configure 
 of code as strings.
 """
 from abc import abstractmethod
+from collections import Sequence
 from enum import Enum
 from itertools import filterfalse, chain
 from typing import (
@@ -219,7 +220,7 @@ def _wrap_in_IS_END_block(
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
     def wrapped():
-        return string,
+        return (string,)
 
     return wrapped
 
