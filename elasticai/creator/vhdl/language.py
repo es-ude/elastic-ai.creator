@@ -40,11 +40,16 @@ class Keywords(Enum):
     LINKAGE = "linkage"
     INTEGER = "integer"
     STD_LOGIC = "std_logic"
+    SIGNAL = "signal"
+    ARCHITECTURE = "architecture"
+    OF = "of"
+    SIGNED = "signed"
 
 
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
+    SIGNED = Keywords.SIGNED.value
 
 
 class Mode(Enum):
@@ -88,6 +93,30 @@ class _DesignUnitForEntityAndComponent:
     def __call__(self) -> Code:
         return _wrap_in_IS_END_block(self.type, self.identifier, self._header())
 
+class Architecture:
+    def __init__(
+        self, identifier: str,entity_name:str,
+    ):
+        self.identifier = identifier
+        self.entity_name = entity_name
+        self._code_list = InterfaceList()
+
+
+    @property
+    def code_list(self):
+        return self._code_list
+
+    @code_list.setter
+    def code_list(self, value):
+        self._code_list = InterfaceList(value)
+
+    def _behaviour(self) -> Code:
+        if len(self._code_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(_add_semicolons(self._code_list()))
+
+    def __call__(self) -> Code:
+        return _wrap_in_IS_OF_END_block(Keywords.ARCHITECTURE, self.identifier, self._behaviour(),entity_name=self.entity_name)
+
 
 class Entity(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
@@ -122,11 +151,51 @@ class InterfaceVariable:
 
     def __call__(self) -> Code:
         value_part = "" if self.value is None else f" := {self.value}"
-        mode_part = "" if self.mode is None else f" {self.mode} "
+        mode_part = "" if self.mode is None else f" {self.mode.value} "
         yield from (
             f"{self.identifier} : {mode_part}{self.variable_type.value}{value_part}",
         )
 
+
+
+
+class InterfaceConstrained:
+    def __init__(
+        self,
+        identifier: str,
+        variable_type: DataType,
+        range: Optional[Union[str, int]] = None, 
+        mode: Optional[Mode] = None,
+        declaration_type: Optional[str] = None
+            
+            
+    ):
+        self.identifier = identifier
+        self._range = range
+        self.variable_type = variable_type
+        self.mode = mode
+        self.declaration_type = declaration_type
+    @property
+    def range(self) -> int:
+        return self._range
+
+    @range.setter
+    def range(self, v: Optional[Union[str, int]]):
+        self._range = v if v is not None else None
+
+    def __call__(self) -> Code:
+        mode_part = "" if self.mode is None else f" {self.mode.value} "
+        declaration_part = "" if self.declaration_type is None else f" {self.declaration_type} "
+        yield from (
+            f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
+        )
+
+class InterfaceSignal(InterfaceConstrained):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None):
+        super().__init__(identifier, variable_type, range, mode, declaration_type = "signal")
+        
+        
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
     def __len__(self) -> int:
@@ -206,13 +275,24 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
     yield from map(indent, _filter_empty_lines(lines))
 
 
+def _wrap_in_END_block(block_type: Keywords, block_identifier: Identifier, lines: Code):
+    yield from _indent_and_filter_non_empty_lines(lines)
+    yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
+
+
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
     block_type: Keywords, block_identifier: Identifier, lines: Code
 ) -> Code:
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
-    yield from _indent_and_filter_non_empty_lines(lines)
-    yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
+    yield from  _wrap_in_END_block(block_type, block_identifier, lines)
+
+
+def _wrap_in_IS_OF_END_block(
+    block_type: Keywords, block_identifier: Identifier, lines: Code, entity_name: Identifier
+) -> Code:
+    yield f"{block_type.value} {block_identifier} {Keywords.OF.value} {entity_name} {Keywords.IS.value}"
+    yield from  _wrap_in_END_block(block_type, block_identifier, lines)
 
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:

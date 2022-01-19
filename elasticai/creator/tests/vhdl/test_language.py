@@ -1,7 +1,7 @@
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
-    DataType,
+    DataType, InterfaceConstrained, Mode, Architecture,
 )
 from unittest import TestCase
 
@@ -67,6 +67,21 @@ class EntityTest(TestCase):
         actual = actual[2:3]
         self.assertEqual(expected, actual)
 
+
+    def test_InterfaceConstrained(self):
+        e = InterfaceConstrained(identifier="y", mode=Mode.OUT, range="x",
+                             variable_type=DataType.SIGNED)
+        expected = ["y : out signed(x)"]
+        actual = list(e())
+        #actual = actual[2:3]
+        self.assertEqual(expected, actual)
+    
+    def test_Architecture(self):
+        e = Architecture(identifier="y",entity_name= "z" )
+        expected = ["architecture y of z is", "end architecture y;"]
+        actual = list(e())
+        #actual = actual[2:3]
+        self.assertSequenceEqual(expected, actual)
 
 example = """
 entity tanh is
