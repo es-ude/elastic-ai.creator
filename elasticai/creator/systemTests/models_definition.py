@@ -1,8 +1,6 @@
-import torch
 from torch import nn
 
 import brevitas.nn as bnn
-from torch.nn.utils.parametrize import is_parametrized
 
 from elasticai.creator.layers import Binarize, QConv1d, QLinear
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
@@ -133,22 +131,3 @@ def create_brevitas_model():
         nn.Sigmoid(),
     )
     return model
-
-
-weight_layers = (QConv1d, QLinear, nn.BatchNorm1d, bnn.QuantConv1d, bnn.QuantLinear)
-
-
-def define_weight(layers):
-    # TODO: In case we're using this function just to have deterministic weight value generation
-    #  we should reconsider our approach here
-    for layer in layers:
-        if isinstance(layer, weight_layers):
-            if is_parametrized(layer):
-                layer.weight = torch.ones_like(layer.weight)
-            else:
-                layer.weight = torch.nn.Parameter(torch.ones_like(layer.weight))
-            if layer.bias is not None:
-                if is_parametrized(layer):
-                    layer.bias = torch.ones_like(layer.bias)
-                else:
-                    layer.bias = torch.nn.Parameter(torch.ones_like(layer.bias))
