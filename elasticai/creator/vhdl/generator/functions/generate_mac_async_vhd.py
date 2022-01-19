@@ -60,22 +60,6 @@ def build_mac_async(writer: StringIO):
     for line in architecture():
         writer.write(line)
         writer.write("\n")
-    # writer.write(
-    #     get_architecture_header_string(
-    #         architecture_name=architecture_name, component_name=component_name
-    #     )
-    # )
-    # writer.write(
-    #     get_signal_definitions_string(
-    #         signal_dict={
-    #             "product_1": "signed(DATA_WIDTH-1 downto 0)",
-    #             "product_2": "signed(DATA_WIDTH-1 downto 0)",
-    #         }
-    #     )
-    # )
-    # writer.write(get_architecture_begin_string())
-    # writer.write(get_mac_async_architecture_behavior_string())
-    # writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
     code = writer.getvalue()
     return code
