@@ -340,7 +340,7 @@ def _get_standard_libraries(lines: Code) -> Code:
     yield from _add_semicolon_in_each_line(["library ieee"])
     yield from _add_semicolon_in_each_line(["use ieee.std_logic_1164.all"])
     yield from _add_semicolon_in_each_line(["use ieee.numeric_std.all"])
-    yield from _indent_and_filter_non_empty_lines(lines)
+    yield from _filter_empty_lines(lines)
 
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
