@@ -9,7 +9,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
         expected_code = """-- A LUT version of sigmoid
         library ieee;
         use ieee.std_logic_1164.all;
-        use ieee.numeric_std.all;               -- for type conversions
+        use ieee.numeric_std.all;
 
         entity sigmoid is
         	generic (
@@ -26,7 +26,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
         architecture sigmoid_rtl of sigmoid is
         begin
 
-            sigmoid_process:process(x)
+            sigmoid_process: process(x)
             variable int_x: integer := 0;
             begin
                 int_x := to_integer(x);
@@ -167,8 +167,8 @@ class SigmoidTest(GeneratedVHDLCodeTest):
                     y <= "0000000100000000"; -- 256
                 end if;
 
-            end process;
-        end architecture sigmoid_rtl ; -- sigmoid_rtl
+            end process sigmoid_process;
+        end architecture sigmoid_rtl;
         """
         sigmoid = Sigmoid(
             data_width=16,

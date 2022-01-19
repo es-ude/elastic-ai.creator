@@ -1,29 +1,5 @@
-from typing import Any, Dict, List, Iterable
+from typing import List
 from os import path
-
-
-def get_process_string(
-    component_name: str, lookup_table_generator_function: str
-) -> str:
-    """
-    returns the string of a process Block
-    Args:
-        component_name (str): the name of the component
-        lookup_table_generator_function (str): a function in generator_functions which generate look up table for sigmoid/tanh
-    Returns:
-        string as vhdl process Block
-    """
-    return """begin 
-    {component_name}_process:process(x)
-    variable int_x: integer := 0;
-    begin
-        int_x := to_integer(x);
-        
-        {generate_process}
-    end process;                
-    \n""".format(
-        component_name=component_name, generate_process=lookup_table_generator_function
-    )
 
 
 def get_file_path_string(folder_names: List[str], file_name: str) -> str:
