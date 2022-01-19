@@ -11,10 +11,10 @@ from elasticai.creator.vhdl.generator.testbench_strings import (
 class TestbenchStringsTest(unittest.TestCase):
     def test_generate_type_definition(self) -> None:
         expected_inputs_lines = [
-            "    ------------------------------------------------------------",
-            "    -- Testbench Data Type",
-            "    ------------------------------------------------------------",
-            "    type RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);",
+            "\t------------------------------------------------------------",
+            "\t-- Testbench Data Type",
+            "\t------------------------------------------------------------",
+            "\ttype RAM_ARRAY is array (0 to 9 ) of signed(DATA_WIDTH-1 downto 0);",
         ]
         type_definition_string = get_type_definitions_string(
             type_dict={
@@ -28,13 +28,13 @@ class TestbenchStringsTest(unittest.TestCase):
 
     def test_generate_clock_process(self) -> None:
         expected_clock_lines = [
-            "    clock_process : process",
-            "    begin",
-            "        clk <= '0';",
-            "        wait for clk_period/2;",
-            "        clk <= '1';",
-            "        wait for clk_period/2;",
-            "    end process; -- clock_process",
+            "\tclock_process : process",
+            "\tbegin",
+            "\t\tclk <= '0';",
+            "\t\twait for clk_period/2;",
+            "\t\tclk <= '1';",
+            "\t\twait for clk_period/2;",
+            "\tend process; -- clock_process",
         ]
         clock_process_string = get_clock_process_string()
         for i in range(len(expected_clock_lines)):
@@ -44,11 +44,11 @@ class TestbenchStringsTest(unittest.TestCase):
 
     def test_generate_uut(self) -> None:
         expected_uut_lines = [
-            "    uut: sigmoid",
-            "    port map (",
-            "        x => test_input,",
-            "        y => test_output",
-            "    );",
+            "\tuut: sigmoid",
+            "\tport map (",
+            "\t\tx => test_input,",
+            "\t\ty => test_output",
+            "\t);",
         ]
         utt_string = get_uut_string(
             component_name="sigmoid",
@@ -59,18 +59,18 @@ class TestbenchStringsTest(unittest.TestCase):
 
     def test_generate_bigger_uut(self) -> None:
         expected_uut_lines = [
-            "    uut: lstm_common_gate",
-            "    port map (",
-            "        reset => reset,",
-            "        clk => clock,",
-            "        x => x,",
-            "        w => w,",
-            "        b => b,",
-            "        vector_len => vector_len,",
-            "        idx => idx,",
-            "        ready => ready,",
-            "        y => y",
-            "    );",
+            "\tuut: lstm_common_gate",
+            "\tport map (",
+            "\t\treset => reset,",
+            "\t\tclk => clock,",
+            "\t\tx => x,",
+            "\t\tw => w,",
+            "\t\tb => b,",
+            "\t\tvector_len => vector_len,",
+            "\t\tidx => idx,",
+            "\t\tready => ready,",
+            "\t\ty => y",
+            "\t);",
         ]
         utt_string = get_uut_string(
             component_name="lstm_common_gate",
@@ -91,9 +91,9 @@ class TestbenchStringsTest(unittest.TestCase):
 
     def test_generate_test_process_header(self) -> None:
         expected_test_process_header_lines = [
-            "    test_process: process is",
-            "    begin",
-            '        Report "======Simulation start======" severity Note;',
+            "\ttest_process: process is",
+            "\tbegin",
+            '\t\tReport "======Simulation start======" severity Note;',
         ]
         test_process_header_string = get_test_process_header_string()
         for i in range(len(expected_test_process_header_lines)):
@@ -105,14 +105,14 @@ class TestbenchStringsTest(unittest.TestCase):
     def test_generate_test_process_end(self) -> None:
         expected_test_process_end_lines = [
             "",
-            "        -- if there is no error message, that means all test case are passed.",
-            '        report "======Simulation Success======" severity Note;',
-            '        report "Please check the output message." severity Note;',
+            "\t\t-- if there is no error message, that means all test case are passed.",
+            '\t\treport "======Simulation Success======" severity Note;',
+            '\t\treport "Please check the output message." severity Note;',
             "",
-            "        -- wait forever",
-            "        wait;",
+            "\t\t-- wait forever",
+            "\t\twait;",
             "",
-            "    end process; -- test_process",
+            "\tend process; -- test_process",
         ]
         test_process_end_string = get_test_process_end_string()
         for i in range(len(expected_test_process_end_lines)):

@@ -34,13 +34,13 @@ def get_type_definitions_string(type_dict: Dict) -> str:
     Returns:
         string of the type definitions
     """
-    type_dict_str = """    ------------------------------------------------------------
-    -- Testbench Data Type
-    ------------------------------------------------------------\n"""
+    type_dict_str = """\t------------------------------------------------------------
+\t-- Testbench Data Type
+\t------------------------------------------------------------\n"""
     for type_variable in type_dict:
         type_dict_str = (
             type_dict_str
-            + "    type {type_variable} is {type_definition};\n".format(
+            + "\ttype {type_variable} is {type_definition};\n".format(
                 type_variable=type_variable, type_definition=type_dict[type_variable]
             )
         )
@@ -53,13 +53,13 @@ def get_clock_process_string(clock_name="clk") -> str:
     Returns:
         string of the clock process
     """
-    return """    clock_process : process
-    begin
-        {clock_name} <= '0';
-        wait for clk_period/2;
-        {clock_name} <= '1';
-        wait for clk_period/2;
-    end process; -- clock_process
+    return """\tclock_process : process
+\tbegin
+\t\t{clock_name} <= '0';
+\t\twait for clk_period/2;
+\t\t{clock_name} <= '1';
+\t\twait for clk_period/2;
+\tend process; -- clock_process
 \n""".format(
         clock_name=clock_name
     )
@@ -77,21 +77,16 @@ def get_uut_string(component_name: Any, mapping_dict: Dict) -> str:
     mapping_dict_str = ""
     for mapping in mapping_dict:
         mapping_dict_str = (
-            mapping_dict_str
-            + "        "
-            + mapping
-            + " => "
-            + mapping_dict[mapping]
-            + ",\n"
+            mapping_dict_str + "\t\t" + mapping + " => " + mapping_dict[mapping] + ",\n"
         )
     # remove last comma and linebreak and add linebreak again
     return (
-        """    uut: {component_name}
-    port map (\n""".format(
+        """\tuut: {component_name}
+\tport map (\n""".format(
             component_name=component_name
         )
         + mapping_dict_str[:-2]
-        + "\n    );\n\n"
+        + "\n\t);\n\n"
     )
 
 
@@ -101,9 +96,9 @@ def get_test_process_header_string() -> str:
     Returns:
         string of test process header
     """
-    return """    test_process: process is
-    begin
-        Report "======Simulation start======" severity Note;
+    return """\ttest_process: process is
+\tbegin
+\t\tReport "======Simulation start======" severity Note;
 \n"""
 
 
@@ -114,14 +109,14 @@ def get_test_process_end_string() -> str:
         string of test process end
     """
     return """
-        -- if there is no error message, that means all test case are passed.
-        report "======Simulation Success======" severity Note;
-        report "Please check the output message." severity Note;
+\t\t-- if there is no error message, that means all test case are passed.
+\t\treport "======Simulation Success======" severity Note;
+\t\treport "Please check the output message." severity Note;
 
-        -- wait forever
-        wait;
+\t\t-- wait forever
+\t\twait;
 
-    end process; -- test_process
+\tend process; -- test_process
 \n"""
 
 
@@ -204,7 +199,7 @@ def write_testbench_file(
                 frac_width=frac_width,
                 vector_len_width=vector_len_width,
                 variables_dict=component_variables_dict,
-                indent="    ",
+                indent="\t",
             )
         )
         f.write(get_architecture_begin_string())

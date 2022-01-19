@@ -80,12 +80,7 @@ def get_signal_definitions_string(signal_dict: Dict) -> str:
     signal_dict_str = ""
     for signal in signal_dict:
         signal_dict_str = (
-            signal_dict_str
-            + "    signal "
-            + signal
-            + " : "
-            + signal_dict[signal]
-            + ";\n"
+            signal_dict_str + "\tsignal " + signal + " : " + signal_dict[signal] + ";\n"
         )
     return signal_dict_str + "\n"
 
@@ -136,10 +131,7 @@ def get_variable_definitions_string(variable_dict: Dict) -> str:
     """
     variable_str = ""
     for variable in variable_dict:
-        variable_str = (
-            variable_str
-            + "    {variable} <= {variable_definition};\n".format(
-                variable=variable, variable_definition=variable_dict[variable]
-            )
+        variable_str = variable_str + "\t{variable} <= {variable_definition};\n".format(
+            variable=variable, variable_definition=variable_dict[variable]
         )
     return variable_str + "\n"
