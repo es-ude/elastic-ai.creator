@@ -76,13 +76,26 @@ class EntityTest(TestCase):
         #actual = actual[2:3]
         self.assertEqual(expected, actual)
     
-    def test_Architecture(self):
+    def test_Architecture_base(self):
         e = Architecture(identifier="y",entity_name= "z" )
-        expected = ["architecture y of z is", "end architecture y;"]
+        expected = ["architecture y of z is", '\t\tbegin',"end architecture y;"]
         actual = list(e())
-        #actual = actual[2:3]
         self.assertSequenceEqual(expected, actual)
-
+        
+    def test_Architecture_with_variables(self):
+        e = Architecture(identifier="y",entity_name= "z" )
+        e.variable_list.append(InterfaceConstrained(identifier="1", range="1",
+                                                      variable_type=DataType.SIGNED))
+        expected = ["architecture y of z is",'\t\t1 : signed(1);','\t\tbegin',"end architecture y;"]
+        actual = list(e())
+        self.assertSequenceEqual(expected, actual)
+        
+    def test_Architecture_with_code(self):
+        e = Architecture(identifier="y",entity_name= "z" )
+        e.code_list.append("some code")
+        expected = ["architecture y of z is", '\t\tbegin','\t\tsome code',"end architecture y;"]
+        actual = list(e())
+        self.assertSequenceEqual(expected, actual)
 example = """
 entity tanh is
     generic (

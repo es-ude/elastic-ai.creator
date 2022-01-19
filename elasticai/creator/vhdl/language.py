@@ -44,6 +44,7 @@ class Keywords(Enum):
     ARCHITECTURE = "architecture"
     OF = "of"
     SIGNED = "signed"
+    BEGIN = "begin"
 
 
 class DataType(Enum):
@@ -95,12 +96,21 @@ class _DesignUnitForEntityAndComponent:
 
 class Architecture:
     def __init__(
-        self, identifier: str,entity_name:str,
+        self, identifier: str, entity_name:str,
     ):
         self.identifier = identifier
         self.entity_name = entity_name
-        self._code_list = InterfaceList()
+        self._variable_list = InterfaceList()
+        self._code_list = []
 
+
+    @property
+    def variable_list(self):
+        return self._variable_list
+
+    @variable_list.setter
+    def variable_list(self, value):
+        self._variable_list = InterfaceList(value)
 
     @property
     def code_list(self):
@@ -108,14 +118,19 @@ class Architecture:
 
     @code_list.setter
     def code_list(self, value):
-        self._code_list = InterfaceList(value)
+        self._variable_list = InterfaceList(value)
 
-    def _behaviour(self) -> Code:
-        if len(self._code_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(_add_semicolons(self._code_list()))
+    def _code(self) -> Code:
+        if len(self._variable_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(_add_semicolons(self._variable_list(),semicolon_last=True)) 
+ 
+        code = list(_add_semicolons(self.code_list)) if len(self._code_list) > 0 else self.code_list
+        yield from _indent_and_filter_non_empty_lines([Keywords.BEGIN.value] + code)
+            
 
     def __call__(self) -> Code:
-        return _wrap_in_IS_OF_END_block(Keywords.ARCHITECTURE, self.identifier, self._behaviour(),entity_name=self.entity_name)
+        
+        return _wrap_in_IS_OF_END_block(Keywords.ARCHITECTURE, self.identifier, self._code(), entity_name=self.entity_name)
 
 
 class Entity(_DesignUnitForEntityAndComponent):
@@ -164,7 +179,7 @@ class InterfaceConstrained:
         self,
         identifier: str,
         variable_type: DataType,
-        range: Optional[Union[str, int]] = None, 
+        range: Optional[Union[str, int]], 
         mode: Optional[Mode] = None,
         declaration_type: Optional[str] = None
             
@@ -184,7 +199,7 @@ class InterfaceConstrained:
         self._range = v if v is not None else None
 
     def __call__(self) -> Code:
-        mode_part = "" if self.mode is None else f" {self.mode.value} "
+        mode_part = " " if self.mode is None else f" {self.mode.value} "
         declaration_part = "" if self.declaration_type is None else f" {self.declaration_type} "
         yield from (
             f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
@@ -243,10 +258,10 @@ def indent(line: str) -> str:
     return "".join(["\t", line])
 
 
-def _add_semicolons(lines: Code) -> Code:
+def _add_semicolons(lines: Code, semicolon_last :bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
-    yield f"{temp[-1]}"
+    yield f"{temp[-1]};" if semicolon_last else  f"{temp[-1]}"
 
 
 def _clause(clause_type: ClauseType, interfaces: Code) -> Code:

@@ -52,12 +52,11 @@ def build_mac_async(writer: StringIO):
         writer.write(line)
         writer.write("\n")
     architecture = Architecture(identifier=architecture_name,entity_name=component_name)
-    architecture.code_list.append(InterfaceSignal(identifier="product_1", range="DATA_WIDTH-1 downto 0",
-                             variable_type=DataType.SIGNED))
-    architecture.code_list.append(InterfaceSignal(identifier="product_2", range="DATA_WIDTH-1 downto 0",
-                             variable_type=DataType.SIGNED))
-    # architecture.code_list.append("begin")
-    # architecture.code_list.append(get_mac_async_architecture_behavior_string())
+    architecture.variable_list.append(InterfaceSignal(identifier="product_1", range="DATA_WIDTH-1 downto 0",
+                                                      variable_type=DataType.SIGNED))
+    architecture.variable_list.append(InterfaceSignal(identifier="product_2", range="DATA_WIDTH-1 downto 0",
+                                                      variable_type=DataType.SIGNED))
+    architecture.code_list.extend(get_mac_async_architecture_behavior_string())
     for line in architecture():
         writer.write(line)
         writer.write("\n")

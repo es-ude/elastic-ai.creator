@@ -63,15 +63,15 @@ def get_gate_definition_string(comment: str, signal_names: List[str]) -> str:
 
 
 # maybe it could be more general !
-def get_mac_async_architecture_behavior_string() -> str:
+def get_mac_async_architecture_behavior_string() -> List[str]:
     """
     Returns:
         string of the behavior for mac_async architecture
     """
-    return """    -- behavior: y=w1*x1+w2*x2+b
-    product_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
-    product_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
-    y <= product_1 + product_2 + b;\n"""
+    return [
+    "product_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)",
+    "product_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)",
+    "y <= product_1 + product_2 + b;\n"]
 
 
 def get_port_map_string(map_name: str, component_name: str, signals) -> str:

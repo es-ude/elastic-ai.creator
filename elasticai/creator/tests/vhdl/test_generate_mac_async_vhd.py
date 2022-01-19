@@ -32,11 +32,10 @@ class GenerateMacAsyncVhdTest(GeneratedVHDLCodeTest):
 
         begin
 
-            -- behavior: y=w1*x1+w2*x2+b
             product_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
             product_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
             y <= product_1 + product_2 + b;
-        end architecture mac_async_rtl ; -- mac_async_rtl"""
+        end architecture mac_async_rtl;"""
         
         string_io = StringIO("")
         mac_async_code = build_mac_async(string_io)
