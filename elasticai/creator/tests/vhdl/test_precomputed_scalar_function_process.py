@@ -25,24 +25,24 @@ class PrecomputedScalarFunctionProcessTest(GeneratedVHDLCodeTest):
         )
 
     def test_x_list_with_only_one_element(self) -> None:
-        expected_code = """        if int_x<256 then
-                y <= "0000000100000000"; -- 256
-            else
-                y <= "0000001000000000"; -- 512
-            end if;"""
+        expected_code = """\t\tif int_x<256 then
+\t\t\ty <= "0000000100000000"; -- 256
+\t\telse
+\t\t\ty <= "0000001000000000"; -- 512
+\t\tend if;"""
         code = precomputed_scalar_function_process(x_list=[1], y_list=[1, 2])
         self.check_generated_code(expected_code, code)
 
     def test_unsorted_x_list(self) -> None:
-        expected_code = """        if int_x<256 then
-                    y <= "0000000100000000"; -- 256
-                elsif int_x<512 then
-                    y <= "0000001000000000"; -- 512
-                elsif int_x<768 then
-                    y <= "0000001100000000"; -- 768
-                else
-                    y <= "0000010000000000"; -- 1024
-                end if;"""
+        expected_code = """\t\tif int_x<256 then
+\t\t\ty <= "0000000100000000"; -- 256
+\t\telsif int_x<512 then
+\t\t\ty <= "0000001000000000"; -- 512
+\t\telsif int_x<768 then
+\t\t\ty <= "0000001100000000"; -- 768
+\t\telse
+\t\t\ty <= "0000010000000000"; -- 1024
+\t\tend if;"""
         code = precomputed_scalar_function_process(
             x_list=[3, 1, 2], y_list=[1, 2, 3, 4]
         )
