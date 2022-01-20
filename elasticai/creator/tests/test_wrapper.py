@@ -1,9 +1,24 @@
 import functools
 import types
-from typing import Union, Any
-from types import FunctionType
+from abc import abstractmethod
+from typing import Any, Protocol, runtime_checkable, TypeVar, Type
 from unittest import TestCase
-from wrapt import ObjectProxy
+
+T = TypeVar("T")
+
+
+def add_attribute_to_class(
+    old_class: Type[T], new_class_name: str, name: str, value: Any
+) -> Type[T]:
+    def body(namespace):
+        for attr in old_class.__dict__:
+            namespace[attr] = getattr(old_class, attr)
+
+    class_copy = types.new_class(
+        new_class_name, bases=old_class.__bases__, exec_body=body
+    )
+    setattr(class_copy, name, value)
+    return class_copy
 
 
 def add_instance_attribute_to_class_def(
@@ -20,28 +35,17 @@ def add_instance_attribute_to_class_def(
     Returns:
 
     """
+    init = getattr(old_class, "__init__")
 
-    @functools.wraps(old_class.__init__)
+    @functools.wraps(init)
     def wrapped_init(*args, **kwargs):
-        old_class.__init__(*args, **kwargs)
+        init(*args, **kwargs)
         setattr(args[0], attribute_name, attribute_value)
 
-    def class_body(namespace):
-        for key in old_class.__dict__:
-            namespace[key] = old_class.__dict__[key]
-        namespace["__init__"] = wrapped_init
-
-    wrapped = types.new_class(
-        "Wrapper", bases=old_class.__bases__, exec_body=class_body
-    )
+    setattr(old_class, "__init__", wrapped_init)
+    wrapped = old_class
 
     return wrapped
-
-
-def add_method_to_class(to_be_wrapped: type, function: FunctionType):
-    return functools.partial(
-        add_instance_attribute_to_class_def, function.__name__, function
-    )
 
 
 def tag(**tags: Any):
@@ -54,23 +58,48 @@ def tag(**tags: Any):
     return decorator
 
 
-class Base:
-    pass
-
-
-@tag(test=1)
-class Wrapped(Base):
-    def __init__(self):
-        self.a = 1
-
+@runtime_checkable
+class P(Protocol):
+    @abstractmethod
     def b(self):
-        return 2
+        ...
+
+
+class A:
+    ...
+
+
+class B(A):
+    ...
 
 
 class TestWrappingClasses(TestCase):
     def test_base(self):
+        class A:
+            ...
 
-        w = Wrapped()
-        self.assertEqual({"test": 1}, w._elasticai_tags)
-        self.assertTrue(not hasattr(Wrapped, "_elasticai_tags"))
-        self.assertTrue(isinstance(w, Base))
+        MyClass = add_attribute_to_class(A, "MyClass", "b", 1)
+        self.assertEqual(MyClass.b, 1)
+
+    def test_class_method_protocol(self):
+        class A:
+            pass
+
+        @runtime_checkable
+        class B(Protocol):
+            @abstractmethod
+            def b(self):
+                ...
+
+        def b(s):
+            pass
+
+        C = add_attribute_to_class(A, "C", "b", b)
+        a = C()
+
+        def test_static_type_checks(obj: B):
+            pass
+
+        test_static_type_checks(a)
+        self.assertTrue(isinstance(a, B))
+        self.assertTrue(not isinstance(A(), B))
