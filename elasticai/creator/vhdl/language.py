@@ -113,12 +113,10 @@ class Architecture:
         yield self.process_content
 
     def __call__(self) -> Code:
-        return _wrap_in_ARCHITECTURE_block(
-            block_type=Keywords.ARCHITECTURE,
-            block_identifier=self.identifier,
-            lines=self._header(),
-            design_unit_identifier=self.design_unit,
-        )
+        yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
+        yield f"{Keywords.BEGIN.value}"
+        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
 
 
 class Process:
@@ -126,67 +124,70 @@ class Process:
         self, identifier: str, input: str, lookup_table_generator_function: str
     ):
         self.identifier = identifier
-        self._variable_initialization_list = InterfaceList()
-        # FIXME: change name
-        self._variables_list = InterfaceList()
+        self._item_declaration_list = []
+        self._sequential_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
         self.input = input
 
     @property
-    def variable_initialization_list(self):
-        return self._variable_initialization_list
+    def item_declaration_list(self):
+        return self._item_declaration_list
 
-    @variable_initialization_list.setter
-    def variable_initialization_list(self, value):
-        self._variable_initialization_list = InterfaceList(value)
+    @item_declaration_list.setter
+    def item_declaration_list(self, value: list[str]):
+        self._item_declaration_list = value
 
     @property
-    def variable_list(self):
-        return self._variables_list
+    def sequential_statements_list(self):
+        return self._sequential_statements_list
 
-    @variable_list.setter
-    def variable_list(self, value):
-        self._variables_list = InterfaceList(value)
+    @sequential_statements_list.setter
+    def sequential_statements_list(self, value: list[str]):
+        self._sequential_statements_list = value
 
     def _header(self) -> Code:
-        if len(self.variable_initialization_list) > 0:
-            yield from _add_semicolon_in_each_line(self._variable_initialization_list())
+        if len(self.item_declaration_list) > 0:
+            yield from _append_semicolons_to_lines(self._item_declaration_list)
 
     def _footer(self) -> Code:
-        if len(self.variable_list) > 0:
-            yield from _add_semicolon_in_each_line(self._variables_list())
+        if len(self.sequential_statements_list) > 0:
+            yield from _append_semicolons_to_lines(self._sequential_statements_list)
         yield self.lookup_table_generator_function
 
     def __call__(self) -> Code:
-        return _wrap_in_PROCESS_block(
-            block_type=Keywords.PROCESS,
-            block_identifier=self.identifier,
-            input=self.input,
-            lines_header=self._header(),
-            lines_footer=self._footer(),
-        )
+        yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
+        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield f"{Keywords.BEGIN.value}"
+        yield from _indent_and_filter_non_empty_lines(self._footer())
+        yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
 class Library:
+    _library_header = "library ieee;"
+
     def __init__(self):
-        self._more_libraries_list = InterfaceList()
+        self._std_libs = ["ieee.std_logic_1164.all", "ieee.numeric_std.all"]
+        self._more_libs = []
 
     @property
-    def more_libraries_list(self):
-        return self._more_libraries_list
+    def libs(self):
+        yield from chain(self._std_libs, self._more_libs)
 
-    @more_libraries_list.setter
-    def more_libraries_list(self, value):
-        self._more_libraries_list = InterfaceList(value)
+    @property
+    def more_libs_list(self):
+        return self._more_libs
 
-    def _header(self) -> Code:
-        if len(self.more_libraries_list) > 0:
-            yield from _add_semicolon_in_each_line(self._more_libraries_list())
+    @more_libs_list.setter
+    def more_libs_list(self, lib_definition: list[str]):
+        self._more_libs = lib_definition
 
-    def __call__(self) -> Code:
-        return _get_standard_libraries(
-            lines=self._header(),
-        )
+    def _prefix_lines_with_USE(self, lines: Code) -> Code:
+        temp = tuple(lines)
+        yield from (f"use {line};" for line in temp)
+
+    def __call__(self):
+        yield self._library_header
+        yield from self._prefix_lines_with_USE(self.libs)
 
 
 class InterfaceVariable:
@@ -270,7 +271,7 @@ def _add_semicolons(lines: Code) -> Code:
     yield f"{temp[-1]}"
 
 
-def _add_semicolon_in_each_line(lines: Code) -> Code:
+def _append_semicolons_to_lines(lines: Code) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp)
 
@@ -308,39 +309,6 @@ def _wrap_in_IS_END_block(
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
     yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
-
-
-def _wrap_in_ARCHITECTURE_block(
-    block_type: Keywords,
-    block_identifier: Identifier,
-    lines: Code,
-    design_unit_identifier: Identifier,
-) -> Code:
-    yield f"{block_type.value} {block_identifier} {Keywords.OF.value} {design_unit_identifier} {Keywords.IS.value}"
-    yield f"{Keywords.BEGIN.value}"
-    yield from _indent_and_filter_non_empty_lines(lines)
-    yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
-
-
-def _wrap_in_PROCESS_block(
-    block_type: Keywords,
-    block_identifier: Identifier,
-    input: str,
-    lines_header: Code,
-    lines_footer: Code,
-) -> Code:
-    yield f"{block_identifier}_{block_type.value}: {block_type.value}({input})"
-    yield from _indent_and_filter_non_empty_lines(lines_header)
-    yield f"{Keywords.BEGIN.value}"
-    yield from _indent_and_filter_non_empty_lines(lines_footer)
-    yield f"{Keywords.END.value} {block_type.value} {block_identifier}_{block_type.value};"
-
-
-def _get_standard_libraries(lines: Code) -> Code:
-    yield from _add_semicolon_in_each_line(["library ieee"])
-    yield from _add_semicolon_in_each_line(["use ieee.std_logic_1164.all"])
-    yield from _add_semicolon_in_each_line(["use ieee.numeric_std.all"])
-    yield from _filter_empty_lines(lines)
 
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:

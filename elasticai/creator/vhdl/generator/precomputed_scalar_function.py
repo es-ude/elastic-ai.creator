@@ -1,5 +1,6 @@
 import math
 from itertools import chain
+from typing import Iterable
 
 import torch.nn
 
@@ -67,7 +68,9 @@ class PrecomputedScalarFunction:
     def architecture_name(self) -> str:
         return f"{self.component_name}_rtl"
 
-    def __call__(self) -> list[str]:
+    def __call__(self) -> Iterable[str]:
+        library = Library()
+        yield "\n".join(library())
         entity = Entity(self.component_name)
         entity.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
@@ -77,8 +80,7 @@ class PrecomputedScalarFunction:
             "x : in signed(DATA_WIDTH-1 downto 0)",
             "y : out signed(DATA_WIDTH-1 downto 0)",
         ]
-        library = Library()
-        code = "\n".join(chain(chain(library()), chain(entity()), [""]))
+        yield "\n".join(entity())
         process = Process(
             identifier=self.component_name,
             lookup_table_generator_function=precomputed_scalar_function_process(
@@ -86,16 +88,15 @@ class PrecomputedScalarFunction:
             ),
             input="x",
         )
-        process.variable_initialization_list = ["variable int_x: integer := 0"]
-        process.variable_list = ["int_x := to_integer(x)"]
-        process_code = "\n".join(chain(chain(process()), [""]))
+        process.item_declaration_list = ["variable int_x: integer := 0"]
+        process.sequential_statements_list = ["int_x := to_integer(x)"]
+        process_code = "\n".join(process())
         architecture = Architecture(
             identifier=self.architecture_name,
             design_unit=self.component_name,
             process_content=process_code,
         )
-        code += "\n".join(chain(chain(architecture()), [""]))
-        return [code]
+        yield "\n".join(architecture())
 
 
 class Sigmoid(PrecomputedScalarFunction):
