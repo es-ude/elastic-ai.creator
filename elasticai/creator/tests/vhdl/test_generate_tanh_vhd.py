@@ -8,7 +8,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
         expected_code = """library ieee;
         use ieee.std_logic_1164.all;
-        use ieee.numeric_std.all;               -- for type conversions
+        use ieee.numeric_std.all;
 
 
         entity tanh is
@@ -25,7 +25,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
         architecture tanh_rtl of tanh is
 
         begin 
-            tanh_process:process(x)
+            tanh_process: process(x)
             variable int_x: integer := 0;
             begin
                 int_x := to_integer(x);
@@ -552,9 +552,9 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                     y <= "0000000100000000"; -- 256
                 end if;
 
-            end process;                
+            end process tanh_process;                
 
-        end architecture tanh_rtl ; -- tanh_rtl
+        end architecture tanh_rtl;
         """
 
         tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
