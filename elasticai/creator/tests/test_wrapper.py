@@ -1,24 +1,16 @@
 import functools
+import inspect
 import types
 from abc import abstractmethod
-from typing import Any, Protocol, runtime_checkable, TypeVar, Type
+from typing import Any, Protocol, runtime_checkable, TypeVar, Type, Callable
 from unittest import TestCase
 
+import wrapt
+from wrapt import ObjectProxy, CallableObjectProxy
+
+from elasticai.creator.tags_utils import Tagged
+
 T = TypeVar("T")
-
-
-def add_attribute_to_class(
-    old_class: Type[T], new_class_name: str, name: str, value: Any
-) -> Type[T]:
-    def body(namespace):
-        for attr in old_class.__dict__:
-            namespace[attr] = getattr(old_class, attr)
-
-    class_copy = types.new_class(
-        new_class_name, bases=old_class.__bases__, exec_body=body
-    )
-    setattr(class_copy, name, value)
-    return class_copy
 
 
 def add_instance_attribute_to_class_def(
@@ -48,14 +40,31 @@ def add_instance_attribute_to_class_def(
     return wrapped
 
 
-def tag(**tags: Any):
+def tag(**tags: Any) -> Callable[[type], Type[Tagged]]:
+    # @wrapt.decorator
+    # def wrapper(wrapped, instance, args, kwargs) -> Tagged:
+    #     if instance is None and inspect.isclass(wrapped):
+    #
+    #         def elasticai_tags(self) -> dict[str, Any]:
+    #             return self._elasticai_tags
+    #
+    #         wrapped.elasticai_tags = elasticai_tags
+    #         obj = wrapped(*args, **kwargs)
+    #         obj._elasticai_tags = tags
+    #         return obj
+    #     raise TypeError
+    #
+    class TagWrapper(CallableObjectProxy):
+        def __init__(self, wrapped: type):
+            super().__init__(wrapped)
+            self._self_wrapper = wrapped
+            self._elasticai_tags = tags
 
-    decorator = functools.partial(
-        add_instance_attribute_to_class_def,
-        attribute_name="_elasticai_tags",
-        attribute_value=tags,
-    )
-    return decorator
+        @property
+        def elasticai_tags(self) -> dict[str, Any]:
+            return self._elasticai_tags
+
+    return TagWrapper
 
 
 @runtime_checkable
@@ -65,41 +74,12 @@ class P(Protocol):
         ...
 
 
-class A:
-    ...
-
-
-class B(A):
-    ...
-
-
 class TestWrappingClasses(TestCase):
-    def test_base(self):
+    def test_tag(self):
+        @tag(test=1)
         class A:
             ...
 
-        MyClass = add_attribute_to_class(A, "MyClass", "b", 1)
-        self.assertEqual(MyClass.b, 1)
-
-    def test_class_method_protocol(self):
-        class A:
-            pass
-
-        @runtime_checkable
-        class B(Protocol):
-            @abstractmethod
-            def b(self):
-                ...
-
-        def b(s):
-            pass
-
-        C = add_attribute_to_class(A, "C", "b", b)
-        a = C()
-
-        def test_static_type_checks(obj: B):
-            pass
-
-        test_static_type_checks(a)
-        self.assertTrue(isinstance(a, B))
-        self.assertTrue(not isinstance(A(), B))
+        tagged = A()
+        print(dir(A))
+        self.assertEqual(1, tagged.elasticai_tags()["test"])
