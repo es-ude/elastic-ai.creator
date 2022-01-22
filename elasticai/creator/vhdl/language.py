@@ -44,11 +44,13 @@ class Keywords(Enum):
     OF = "of"
     PROCESS = "process"
     BEGIN = "begin"
+    SIGNED = "signed"
 
 
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
+    SIGNED = Keywords.SIGNED.value
 
 
 class Mode(Enum):
@@ -60,7 +62,7 @@ class Mode(Enum):
 
 class _DesignUnitForEntityAndComponent:
     def __init__(
-        self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
+            self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
     ):
         self.identifier = identifier
         self._generic_list = InterfaceList()
@@ -121,7 +123,7 @@ class Architecture:
 
 class Process:
     def __init__(
-        self, identifier: str, input: str, lookup_table_generator_function: str
+            self, identifier: str, input: str, lookup_table_generator_function: str
     ):
         self.identifier = identifier
         self._item_declaration_list = []
@@ -190,33 +192,52 @@ class Library:
         yield from self._prefix_lines_with_USE(self.libs)
 
 
-class InterfaceVariable:
+class InterfaceConstrained:
     def __init__(
-        self,
-        identifier: str,
-        variable_type: DataType,
-        value: Optional[Union[str, int]] = None,
-        mode: Optional[Mode] = None,
+            self,
+            identifier: str,
+            variable_type: DataType,
+            range: Optional[Union[str, int]] = None,
+            mode: Optional[Mode] = None,
+            value: Optional[Union[str, int]] = None,
+            declaration_type: Optional[str] = None
+
     ):
-        self.identifier = identifier
-        self.value = value
-        self.variable_type = variable_type
-        self.mode = mode
+        self._identifier = identifier
+        self._range = range
+        self._variable_type = variable_type
+        self._mode = mode
+        self._value = value
+        self._declaration_type = declaration_type
 
     @property
-    def value(self) -> int:
-        return self._value
+    def range(self) -> int:
+        return self._range
 
-    @value.setter
-    def value(self, v: Optional[Union[str, int]]):
-        self._value = int(v) if v is not None else None
+    @range.setter
+    def range(self, v: Optional[Union[str, int]]):
+        self._range = v if v is not None else ""
 
     def __call__(self) -> Code:
-        value_part = "" if self.value is None else f" := {self.value}"
-        mode_part = "" if self.mode is None else f" {self.mode} "
+        range_part = "" if self._range is None else f"({self._range})"
+        value_part = "" if self._value is None else f" := {self._value}"
+        mode_part = " " if self._mode is None else f" {self._mode.value} "
+        declaration_part = "" if self._declaration_type is None else f" {self._declaration_type} "
         yield from (
-            f"{self.identifier} : {mode_part}{self.variable_type.value}{value_part}",
+            f"{declaration_part}{self._identifier} :{mode_part}{self._variable_type.value}{range_part}{value_part}",
         )
+
+
+class InterfaceSignal(InterfaceConstrained):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
+        super().__init__(identifier, variable_type, range, mode, value, declaration_type="signal")
+
+
+class InterfaceVariable(InterfaceConstrained):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
+        super().__init__(identifier, variable_type, range, mode, value)
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
@@ -304,7 +325,7 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
 
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
-    block_type: Keywords, block_identifier: Identifier, lines: Code
+        block_type: Keywords, block_identifier: Identifier, lines: Code
 ) -> Code:
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
