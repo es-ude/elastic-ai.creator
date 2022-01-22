@@ -4,6 +4,7 @@ from elasticai.creator.vhdl.language import (
     DataType,
     Library,
     Process,
+    Mode,
 )
 import unittest
 from unittest import TestCase
@@ -139,6 +140,21 @@ class LanguageTest(TestCase):
         ]
         actual = list(process())
         self.assertEqual(expected, actual)
+
+    def test_InterfaceVariable_empty(self):
+        interface_variable = InterfaceVariable(identifier="some_variable", variable_type=DataType.INTEGER)
+        expected = "some_variable : integer"
+        actual = interface_variable()
+        # '*actual' to compare with the value of the generator interface_variable()
+        self.assertEqual(expected, *actual)
+
+    def test_InterfaceVariable_all_parameters(self):
+        interface_variable = InterfaceVariable(
+            identifier="my_var", variable_type=DataType.SIGNED, mode=Mode.IN, range="15 downto 0", value="16"
+        )
+        expected = "my_var : in signed(15 downto 0) := 16"
+        actual = interface_variable()
+        self.assertEqual(expected, *actual)
 
 
 example = """
