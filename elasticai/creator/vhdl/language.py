@@ -197,10 +197,10 @@ class InterfaceConstrained:
             self,
             identifier: str,
             variable_type: DataType,
-            range: Optional[Union[str, int]] = None,
-            mode: Optional[Mode] = None,
-            value: Optional[Union[str, int]] = None,
-            declaration_type: Optional[str] = None
+            range: Optional[Union[str, int]],
+            mode: Optional[Mode],
+            value: Optional[Union[str, int]],
+            declaration_type: Optional[str]
 
     ):
         self._identifier = identifier
@@ -216,7 +216,31 @@ class InterfaceConstrained:
 
     @range.setter
     def range(self, v: Optional[Union[str, int]]):
-        self._range = v if v is not None else ""
+        self._range = v if v is not None else None
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, v):
+        self._mode = v if v is not None else None
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, v):
+        self._value = v if v is not None else None
+
+    @property
+    def declaration_type(self):
+        return self._declaration_type
+
+    @declaration_type.setter
+    def declaration_type(self, v):
+        self._declaration_type = v if v is not None else None
 
     def __call__(self) -> Code:
         range_part = "" if self._range is None else f"({self._range})"
@@ -229,15 +253,15 @@ class InterfaceConstrained:
 
 
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
-                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]],
+                 mode: Optional[Mode], value: Optional[Union[str, int]]):
         super().__init__(identifier, variable_type, range, mode, value, declaration_type="signal")
 
 
 class InterfaceVariable(InterfaceConstrained):
     def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, variable_type, range, mode, value)
+        super().__init__(identifier, variable_type, range, mode, value, declaration_type=None)
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
