@@ -1,33 +1,13 @@
 import json
-from typing import Union, Set, Callable, Protocol, Iterable
+from typing import Callable
 
-import numpy
 import numpy as np
 import torch
-from torch import Tensor
-from torch.nn import Module
 
+from elasticai.creator.protocols import Module, TensorLike, Tensor
 from elasticai.creator.tags_utils import has_tag, get_tags, tag
 
 _precomputable_tag = "precomputable"
-
-
-class ModuleProto(Protocol):
-    @property
-    def training(self) -> bool:
-        pass
-
-    def extra_repr(self) -> str:
-        pass
-
-    def named_children(self) -> Iterable[tuple[str, "ModuleProto"]]:
-        pass
-
-    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
-        pass
-
-
-TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, numpy.ndarray]
 
 
 class Precomputation:
@@ -39,7 +19,7 @@ class Precomputation:
     There is no way currently to load an exported Precomputation object.
     """
 
-    def __init__(self, module: ModuleProto, input_domain: TensorLike) -> None:
+    def __init__(self, module: Module, input_domain: TensorLike) -> None:
         super().__init__()
         self.module = module
         self.input_domain = input_domain
@@ -50,7 +30,7 @@ class Precomputation:
             self.input_domain = self.input_domain()
 
     @staticmethod
-    def from_precomputable_tagged(module: ModuleProto):
+    def from_precomputable_tagged(module: Module):
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]

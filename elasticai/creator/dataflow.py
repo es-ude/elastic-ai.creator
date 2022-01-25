@@ -1,32 +1,27 @@
-class DataFlowSpecification:
-    """
-    The class is used to model how data flows from one layer to the next, but also to express how data flows through
-    a layer. E.g. the dataflow for a mapping corresponding to a
-    matrix $A = \begin{pmatrix} 1 & 0 & 1 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{pmatrix}$
-    modelled by a `DataFlowSpecification` `d` could be printed with
-    ```
-    for item in d:
-      print(f"{item} : {d[item]}")
-    ```
-    and would result in the following output
-    ```
-    0: (0, 2)
-    1: (1,)
-    2: (2,)
-    ```
-    ```
-    outputs = data_flow_spec[input]
-    ```
-    """
+from typing import NamedTuple, Callable
 
-    def __init__(self):
-        raise NotImplementedError
+from elasticai.creator.protocols import Tensor, Index
 
-    def __getitem__(self, input: int) -> tuple[int]:
-        raise NotImplementedError
 
-    def __len__(self) -> int:
-        raise NotImplementedError
+class DataSource(NamedTuple):
+    source: Callable[[...], Tensor]
+    selection: Index
 
-    def __next__(self) -> int:
-        raise NotImplementedError
+
+class DataSink(NamedTuple):
+    sources: list[DataSource]
+    shape: tuple[int, ...]
+
+
+DataFlowSpecification = tuple[DataSink, ...]
+
+
+def sinks_have_common_source(first: DataSink, second: DataSink) -> bool:
+    for source in first.sources:
+        if source in second.sources and len(source.selection) > 0:
+            return True
+    return False
+
+
+def group_dependent_sinks(sinks: tuple[DataSink, ...]) -> tuple[tuple[DataSink]]:
+    pass
