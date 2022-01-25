@@ -45,41 +45,41 @@ architecture lstm_cell_rtl of lstm_cell is
 -- Intermediate results
 -- Input gate without/with activation
 -- i = \sigma(W_{ii} x + b_{ii} + W_{hi} h + b_{hi})
-signal i_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal i : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal i_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal i : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Forget gate without/with activation
 -- f = \sigma(W_{if} x + b_{if} + W_{hf} h + b_{hf})
-signal f_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal f : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal f_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal f : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Cell gate without/with activation
 -- g = \tanh(W_{ig} x + b_{ig} + W_{hg} h + b_{hg})
-signal g_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal g : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal g_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal g : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Output gate without/with activation
 -- o = \sigma(W_{io} x + b_{io} + W_{ho} h + b_{ho})
-signal o_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal o : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal o_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal o : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- new_cell_state without/with activation
 -- c' = f * c + i * g
-signal c_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal c_new_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal c_new : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal c_new_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- h' = o * \tanh(c')
-signal h_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal h_new : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
