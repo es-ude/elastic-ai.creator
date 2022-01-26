@@ -1,12 +1,12 @@
 from abc import abstractmethod
 from typing import Protocol, Iterable, Union, Callable
 
-Index = Union[slice, tuple[Union[int, slice], ...], int]
+Indices = tuple[Union[int, slice], ...]
 
 
 class Tensor(Protocol):
     @abstractmethod
-    def __getitem__(self, index: Index) -> "Tensor":
+    def __getitem__(self, index: Indices) -> "Tensor":
         ...
 
     @abstractmethod
