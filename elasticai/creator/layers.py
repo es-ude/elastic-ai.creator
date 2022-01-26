@@ -7,7 +7,6 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from itertools import product
-
 from torch.nn import Module
 from torch.nn.utils.parametrize import register_parametrization
 
@@ -262,6 +261,19 @@ class QConv2d(torch.nn.Conv2d):
         _init_quantizable_convolution(
             self, quantizer=quantizer, bias=bias, constraints=constraints
         )
+
+
+class ChannelShuffle(torch.nn.Module):
+    def __init__(self, groups):
+        super(ChannelShuffle, self).__init__()
+        self.groups = groups
+
+    def forward(self, x):
+        num_channels = x.data.size()[1]
+        original_shape = x.data.size()[2:]
+        x = x.view(x.data.size()[0],self.groups,num_channels//self.groups,*original_shape)
+        x = x.transpose(1, 2).contiguous()
+        return x.view(x.data.size()[0], num_channels, *original_shape)
 
 
 class QLinear(torch.nn.Linear):

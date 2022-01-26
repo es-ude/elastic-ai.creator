@@ -2,7 +2,7 @@ import unittest
 from typing import Optional, Tuple
 from unittest.mock import patch
 from unittest import SkipTest
-
+import  numpy as np
 import torch
 from torch import Tensor
 
@@ -15,7 +15,7 @@ from elasticai.creator.layers import (
     QConv2d,
     QLSTMCell,
     QLSTM,
-    Binarize,
+    Binarize, FixedSparsityMask4D, ChannelShuffle,
 )
 from elasticai.creator.constraints import WeightClipper
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
@@ -359,3 +359,17 @@ class LayerTests(TensorTestCase):
                 self.assertEqual(outputs.tolist(), [[5.0], [5.0], [5.0]])
                 self.assertEqual(cell_state[0].tolist(), [5.0])
                 self.assertEqual(cell_state[1].tolist(), [-1.0])
+                
+    def test_shuffle_block_input_and_output_same_with_1_group(self):
+        layer = ChannelShuffle(groups=1)
+        input = torch.rand((2,2,3,2))
+        output = layer(input)
+        n = torch.eq(input,output)
+        self.assertTrue(torch.all(torch.eq(input,output)).item())
+
+    def test_shuffle_block_input_and_output_with_2_group(self):
+        layer = ChannelShuffle(groups=2)
+        input = torch.tensor([[[1],[2],[3],[4]],])
+        output = layer(input)
+        expected = torch.tensor([[[1],[3],[2],[4]],])
+        self.assertTrue(torch.all(torch.eq(output, expected)).item())
