@@ -40,15 +40,18 @@ class Keywords(Enum):
     LINKAGE = "linkage"
     INTEGER = "integer"
     STD_LOGIC = "std_logic"
+    SIGNAL = "signal"
     ARCHITECTURE = "architecture"
     OF = "of"
-    PROCESS = "process"
+    SIGNED = "signed"
     BEGIN = "begin"
+    PROCESS = "process"
 
 
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
+    SIGNED = Keywords.SIGNED.value
 
 
 class Mode(Enum):
@@ -107,13 +110,24 @@ class Architecture:
     def __init__(self, identifier: str, design_unit: str, process_content: str):
         self.identifier = identifier
         self.design_unit = design_unit
+        self._variable_list = InterfaceList()
         self.process_content = process_content
 
     def _header(self) -> Code:
         yield self.process_content
 
+    @property
+    def variable_list(self):
+        return self._variable_list
+
+    @variable_list.setter
+    def variable_list(self, value):
+        self._variable_list = InterfaceList(value)
+
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
+        if len(self._variable_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(_add_semicolons(self._variable_list(), semicolon_last=True))
         yield f"{Keywords.BEGIN.value}"
         yield from _indent_and_filter_non_empty_lines(self._header())
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
@@ -216,11 +230,51 @@ class InterfaceVariable:
 
     def __call__(self) -> Code:
         value_part = "" if self.value is None else f" := {self.value}"
-        mode_part = "" if self.mode is None else f" {self.mode} "
+        mode_part = "" if self.mode is None else f" {self.mode.value} "
         yield from (
             f"{self.identifier} : {mode_part}{self.variable_type.value}{value_part}",
         )
 
+
+
+
+class InterfaceConstrained:
+    def __init__(
+        self,
+        identifier: str,
+        variable_type: DataType,
+        range: Optional[Union[str, int]], 
+        mode: Optional[Mode] = None,
+        declaration_type: Optional[str] = None
+            
+            
+    ):
+        self.identifier = identifier
+        self._range = range
+        self.variable_type = variable_type
+        self.mode = mode
+        self.declaration_type = declaration_type
+    @property
+    def range(self) -> int:
+        return self._range
+
+    @range.setter
+    def range(self, v: Optional[Union[str, int]]):
+        self._range = v if v is not None else None
+
+    def __call__(self) -> Code:
+        mode_part = " " if self.mode is None else f" {self.mode.value} "
+        declaration_part = "" if self.declaration_type is None else f" {self.declaration_type} "
+        yield from (
+            f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
+        )
+
+class InterfaceSignal(InterfaceConstrained):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None):
+        super().__init__(identifier, variable_type, range, mode, declaration_type = "signal")
+        
+        
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
     def __len__(self) -> int:
@@ -268,10 +322,10 @@ def indent(line: str) -> str:
     return "".join(["\t", line])
 
 
-def _add_semicolons(lines: Code) -> Code:
+def _add_semicolons(lines: Code, semicolon_last :bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
-    yield f"{temp[-1]}"
+    yield f"{temp[-1]};" if semicolon_last else  f"{temp[-1]}"
 
 
 def _append_semicolons_to_lines(lines: Code) -> Code:
@@ -305,6 +359,7 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
     yield from map(indent, _filter_empty_lines(lines))
 
 
+
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
     block_type: Keywords, block_identifier: Identifier, lines: Code
@@ -312,6 +367,8 @@ def _wrap_in_IS_END_block(
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
     yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
+
+
 
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
