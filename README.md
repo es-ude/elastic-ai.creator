@@ -251,6 +251,11 @@ In addition to system and integration tests we implemented unit tests.
 The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
 The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests).
 
+## VHDL Generation
+
+We follow the VHDL code specification of IEEE Std 1076-1993. 
+You can easily google the format of this specification.
+
 ### Syntax Checking 
 
 [GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
