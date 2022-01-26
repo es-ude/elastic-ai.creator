@@ -2,7 +2,10 @@ from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
     DataType,
-    Library,
+    IEEEContextClause,
+    ContextClause,
+    LibraryClause,
+    UseClause,
     Process,
 )
 import unittest
@@ -75,7 +78,7 @@ class LanguageTest(TestCase):
 
     # FIXME: do not implement test for the architecture because it is already tested in the other pull request
     def test_library(self):
-        lib = Library()
+        lib = IEEEContextClause()
         expected = [
             "library ieee;",
             "use ieee.std_logic_1164.all;",
@@ -84,16 +87,21 @@ class LanguageTest(TestCase):
         actual = list(lib())
         self.assertEqual(expected, actual)
 
-    # FIXME
-    @unittest.skip("skipping strange lib LIBRARY work")
     def test_library_with_extra_libraries(self):
-        lib = Library()
-        lib.more_libs_list = ["LIBRARY work", "work.all"]
+        lib = ContextClause(
+            library_clause=LibraryClause(logical_name_list=["ieee", "work"]),
+            use_clause=UseClause(
+                selected_names=[
+                    "ieee.std_logic_1164.all",
+                    "ieee.numeric_std.all",
+                    "work.all",
+                ]
+            ),
+        )
         expected = [
-            "library ieee;",
+            "library ieee, work;",
             "use ieee.std_logic_1164.all;",
             "use ieee.numeric_std.all;",
-            "LIBRARY work;",
             "use work.all;",
         ]
         actual = list(lib())

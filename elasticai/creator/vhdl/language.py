@@ -162,32 +162,53 @@ class Process:
         yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
-class Library:
-    _library_header = "library ieee;"
-
-    def __init__(self):
-        self._std_libs = ["ieee.std_logic_1164.all", "ieee.numeric_std.all"]
-        self._more_libs = []
-
-    @property
-    def libs(self):
-        yield from chain(self._std_libs, self._more_libs)
-
-    @property
-    def more_libs_list(self):
-        return self._more_libs
-
-    @more_libs_list.setter
-    def more_libs_list(self, lib_definition: list[str]):
-        self._more_libs = lib_definition
-
-    def _prefix_lines_with_USE(self, lines: Code) -> Code:
-        temp = tuple(lines)
-        yield from (f"use {line};" for line in temp)
+class ContextClause:
+    def __init__(self, library_clause, use_clause):
+        self._use_clause = use_clause
+        self._library_clause = library_clause
 
     def __call__(self):
-        yield self._library_header
-        yield from self._prefix_lines_with_USE(self.libs)
+        yield from self._library_clause()
+        yield from self._use_clause()
+
+
+class IEEEContextClause:
+    _logical_name = "ieee"
+    _selected_names = ["std_logic_1164.all", "numeric_std.all"]
+
+    def __init__(self):
+        self._use_clause = UseClause(
+            [
+                self._logical_name + "." + selected_name
+                for selected_name in self._selected_names
+            ]
+        )
+        self._library_clause = LibraryClause([self._logical_name])
+
+    def __call__(self):
+        yield from self._library_clause()
+        yield from self._use_clause()
+
+
+class UseClause:
+    def __init__(self, selected_names: list[str]):
+        self._selected_names = selected_names
+
+    def __call__(self):
+        def prefix_use(line: str):
+            return f"use {line}"
+
+        yield from _append_semicolons_to_lines(map(prefix_use, self._selected_names))
+
+
+class LibraryClause:
+    def __init__(self, logical_name_list: list[str]):
+        self._logical_name_list = logical_name_list
+
+    def __call__(self):
+        yield from _append_semicolons_to_lines(
+            ["library {}".format(", ".join(self._logical_name_list))]
+        )
 
 
 class InterfaceVariable:

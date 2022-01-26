@@ -13,7 +13,7 @@ from elasticai.creator.vhdl.language import (
     DataType,
     Architecture,
     Process,
-    Library,
+    IEEEContextClause,
 )
 
 
@@ -69,7 +69,7 @@ class PrecomputedScalarFunction:
         return f"{self.component_name}_rtl"
 
     def __call__(self) -> Iterable[str]:
-        library = Library()
+        library = IEEEContextClause()
         yield "\n".join(library())
         entity = Entity(self.component_name)
         entity.generic_list = [
