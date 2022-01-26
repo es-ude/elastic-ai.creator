@@ -172,24 +172,6 @@ class ContextClause:
         yield from self._use_clause()
 
 
-class IEEEContextClause:
-    _logical_name = "ieee"
-    _selected_names = ["std_logic_1164.all", "numeric_std.all"]
-
-    def __init__(self):
-        self._use_clause = UseClause(
-            [
-                self._logical_name + "." + selected_name
-                for selected_name in self._selected_names
-            ]
-        )
-        self._library_clause = LibraryClause([self._logical_name])
-
-    def __call__(self):
-        yield from self._library_clause()
-        yield from self._use_clause()
-
-
 class UseClause:
     def __init__(self, selected_names: list[str]):
         self._selected_names = selected_names

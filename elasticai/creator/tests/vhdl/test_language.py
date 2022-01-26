@@ -2,7 +2,6 @@ from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
     DataType,
-    IEEEContextClause,
     ContextClause,
     LibraryClause,
     UseClause,
@@ -77,15 +76,6 @@ class LanguageTest(TestCase):
         self.assertEqual(expected, actual)
 
     # FIXME: do not implement test for the architecture because it is already tested in the other pull request
-    def test_library(self):
-        lib = IEEEContextClause()
-        expected = [
-            "library ieee;",
-            "use ieee.std_logic_1164.all;",
-            "use ieee.numeric_std.all;",
-        ]
-        actual = list(lib())
-        self.assertEqual(expected, actual)
 
     def test_library_with_extra_libraries(self):
         lib = ContextClause(
