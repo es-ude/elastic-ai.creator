@@ -253,8 +253,7 @@ The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests
 
 ## VHDL Generation
 
-We follow the VHDL code specification of IEEE Std 1076-1993. 
-You can easily google the format of this specification.
+We follow the VHDL code specification of IEEE Std 1076-1993.
 
 ### Syntax Checking 
 
