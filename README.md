@@ -253,7 +253,7 @@ The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests
 
 ## VHDL Generation
 
-We follow the VHDL code guidelines of this [book](https://github.com/fabriziotappero/Free-Range-VHDL-book).
+We follow the VHDL code specification of IEEE Std 1076-1993.
 
 ### Syntax Checking 
 

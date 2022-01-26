@@ -1,12 +1,19 @@
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
-    DataType, InterfaceConstrained, Mode, Architecture,
+    DataType,
+    Library,
+    Process,
+    InterfaceConstrained
 )
+import unittest
 from unittest import TestCase
+from elasticai.creator.vhdl.generator.generator_functions import (
+    precomputed_scalar_function_process,
+)
 
 
-class EntityTest(TestCase):
+class LanguageTest(TestCase):
     def test_no_name_entity(self):
         e = Entity("")
         expected = ["entity  is", "end entity ;"]
@@ -65,6 +72,73 @@ class EntityTest(TestCase):
         expected = ["\t\tmy_var : integer := 16"]
         actual = list(e())
         actual = actual[2:3]
+        self.assertEqual(expected, actual)
+
+    # FIXME: do not implement test for the architecture because it is already tested in the other pull request
+    def test_library(self):
+        lib = Library()
+        expected = [
+            "library ieee;",
+            "use ieee.std_logic_1164.all;",
+            "use ieee.numeric_std.all;",
+        ]
+        actual = list(lib())
+        self.assertEqual(expected, actual)
+
+    # FIXME
+    @unittest.skip("skipping strange lib LIBRARY work")
+    def test_library_with_extra_libraries(self):
+        lib = Library()
+        lib.more_libs_list = ["LIBRARY work", "work.all"]
+        expected = [
+            "library ieee;",
+            "use ieee.std_logic_1164.all;",
+            "use ieee.numeric_std.all;",
+            "LIBRARY work;",
+            "use work.all;",
+        ]
+        actual = list(lib())
+        self.assertEqual(expected, actual)
+
+    # Note: the precomputed scalar function process is already tested, no need for trying more in- and outputs
+    def test_process_empty(self):
+        process = Process(
+            identifier="some_name",
+            input="some_input",
+            lookup_table_generator_function=precomputed_scalar_function_process(
+                x_list=[], y_list=[0]
+            ),
+        )
+        expected = [
+            "some_name_process: process(some_input)",
+            "begin",
+            '\ty <= "0000000000000000";\n\t\t',
+            "end process some_name_process;",
+        ]
+        actual = list(process())
+        self.assertEqual(expected, actual)
+
+    def test_process_with_variables(self):
+        process = Process(
+            identifier="some_name",
+            input="some_input",
+            lookup_table_generator_function=precomputed_scalar_function_process(
+                x_list=[], y_list=[0]
+            ),
+        )
+        process.item_declaration_list = ["variable some_variable_name: integer := 0"]
+        process.sequential_statements_list = [
+            "some_variable_name := to_integer(some_variable_name)"
+        ]
+        expected = [
+            "some_name_process: process(some_input)",
+            "\tvariable some_variable_name: integer := 0;",
+            "begin",
+            "\tsome_variable_name := to_integer(some_variable_name);",
+            '\ty <= "0000000000000000";\n\t\t',
+            "end process some_name_process;",
+        ]
+        actual = list(process())
         self.assertEqual(expected, actual)
 
 

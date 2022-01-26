@@ -45,6 +45,7 @@ class Keywords(Enum):
     OF = "of"
     SIGNED = "signed"
     BEGIN = "begin"
+    PROCESS = "process"
 
 
 class DataType(Enum):
@@ -94,44 +95,6 @@ class _DesignUnitForEntityAndComponent:
     def __call__(self) -> Code:
         return _wrap_in_IS_END_block(self.type, self.identifier, self._header())
 
-class Architecture:
-    def __init__(
-        self, identifier: str, entity_name:str,
-    ):
-        self.identifier = identifier
-        self.entity_name = entity_name
-        self._variable_list = InterfaceList()
-        self._code_list = []
-
-
-    @property
-    def variable_list(self):
-        return self._variable_list
-
-    @variable_list.setter
-    def variable_list(self, value):
-        self._variable_list = InterfaceList(value)
-
-    @property
-    def code_list(self):
-        return self._code_list
-
-    @code_list.setter
-    def code_list(self, value):
-        self._variable_list = InterfaceList(value)
-
-    def _code(self) -> Code:
-        if len(self._variable_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(_add_semicolons(self._variable_list(),semicolon_last=True)) 
- 
-        code = list(_add_semicolons(self.code_list)) if len(self._code_list) > 0 else self.code_list
-        yield from _indent_and_filter_non_empty_lines([Keywords.BEGIN.value] + code)
-            
-
-    def __call__(self) -> Code:
-        
-        return _wrap_in_IS_OF_END_block(Keywords.ARCHITECTURE, self.identifier, self._code(), entity_name=self.entity_name)
-
 
 class Entity(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
@@ -141,6 +104,93 @@ class Entity(_DesignUnitForEntityAndComponent):
 class ComponentDeclaration(_DesignUnitForEntityAndComponent):
     def __init__(self, identifier: str):
         super().__init__(identifier, Keywords.COMPONENT)
+
+
+class Architecture:
+    def __init__(self, identifier: str, design_unit: str, process_content: str):
+        self.identifier = identifier
+        self.design_unit = design_unit
+        self.process_content = process_content
+
+    def _header(self) -> Code:
+        yield self.process_content
+
+    def __call__(self) -> Code:
+        yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
+        yield f"{Keywords.BEGIN.value}"
+        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
+
+
+class Process:
+    def __init__(
+        self, identifier: str, input: str, lookup_table_generator_function: str
+    ):
+        self.identifier = identifier
+        self._item_declaration_list = []
+        self._sequential_statements_list = []
+        self.lookup_table_generator_function = lookup_table_generator_function
+        self.input = input
+
+    @property
+    def item_declaration_list(self):
+        return self._item_declaration_list
+
+    @item_declaration_list.setter
+    def item_declaration_list(self, value: list[str]):
+        self._item_declaration_list = value
+
+    @property
+    def sequential_statements_list(self):
+        return self._sequential_statements_list
+
+    @sequential_statements_list.setter
+    def sequential_statements_list(self, value: list[str]):
+        self._sequential_statements_list = value
+
+    def _header(self) -> Code:
+        if len(self.item_declaration_list) > 0:
+            yield from _append_semicolons_to_lines(self._item_declaration_list)
+
+    def _footer(self) -> Code:
+        if len(self.sequential_statements_list) > 0:
+            yield from _append_semicolons_to_lines(self._sequential_statements_list)
+        yield self.lookup_table_generator_function
+
+    def __call__(self) -> Code:
+        yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
+        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield f"{Keywords.BEGIN.value}"
+        yield from _indent_and_filter_non_empty_lines(self._footer())
+        yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
+
+
+class Library:
+    _library_header = "library ieee;"
+
+    def __init__(self):
+        self._std_libs = ["ieee.std_logic_1164.all", "ieee.numeric_std.all"]
+        self._more_libs = []
+
+    @property
+    def libs(self):
+        yield from chain(self._std_libs, self._more_libs)
+
+    @property
+    def more_libs_list(self):
+        return self._more_libs
+
+    @more_libs_list.setter
+    def more_libs_list(self, lib_definition: list[str]):
+        self._more_libs = lib_definition
+
+    def _prefix_lines_with_USE(self, lines: Code) -> Code:
+        temp = tuple(lines)
+        yield from (f"use {line};" for line in temp)
+
+    def __call__(self):
+        yield self._library_header
+        yield from self._prefix_lines_with_USE(self.libs)
 
 
 class InterfaceVariable:
@@ -262,6 +312,11 @@ def _add_semicolons(lines: Code, semicolon_last :bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
     yield f"{temp[-1]};" if semicolon_last else  f"{temp[-1]}"
+
+
+def _append_semicolons_to_lines(lines: Code) -> Code:
+    temp = tuple(lines)
+    yield from (f"{line};" for line in temp)
 
 
 def _clause(clause_type: ClauseType, interfaces: Code) -> Code:
