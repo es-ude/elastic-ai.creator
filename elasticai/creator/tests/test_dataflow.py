@@ -1,4 +1,5 @@
 import unittest
+from itertools import repeat
 from typing import Union, Iterable
 
 from elasticai.creator.dataflow import DataSource
@@ -65,32 +66,51 @@ class TestDataFlowSpecification(unittest.TestCase):
     """
 
     def test_source_unequals(self):
-        module_a = DummyModule()
-        module_b = DummyModule()
-        source_a = DataSource(source=module_a, selection=(1, 2))
-        source_b = DataSource(source=module_b, selection=(1, 2))
+        module_a, module_b = self.create_dummy_modules(2)
+        source_a, source_b = self.create_sources(
+            modules=(module_a, module_b), selections=((1, 2), (1, 2))
+        )
         self.assertFalse(source_a == source_b)
 
     def test_source_equals(self):
-        module = DummyModule()
-        source_a = DataSource(source=module, selection=(1, 2))
-        source_b = DataSource(source=module, selection=(1, 2))
+        (module,) = self.create_dummy_modules(1)
+        source_a, source_b = self.create_sources(
+            modules=repeat(module, 2), selections=repeat((1, 2), 2)
+        )
         self.assertTrue(source_a == source_b)
 
     def test_subsource_of(self):
         module = DummyModule()
-        source_a = DataSource(source=module, selection=(1, 1))
-        source_b = DataSource(source=module, selection=(1, slice(0, 2)))
+        source_a, source_b = self.create_sources(
+            modules=repeat(module, 2), selections=((1, 1), (1, slice(0, 2)))
+        )
         self.assertTrue(source_a.subsource_of(source_b))
 
     def test_not_subsource_of(self):
         module = DummyModule()
-        source_a = DataSource(source=module, selection=(1, 1))
-        source_b = DataSource(source=module, selection=(1, 2))
+        source_a, source_b = self.create_sources(
+            modules=repeat(module, 2), selections=((1, 1), (1, 2))
+        )
         self.assertFalse(source_a.subsource_of(source_b))
 
     def test_repr_for_datasource(self):
         module = DummyModule()
-        source = DataSource(source=module, selection=(1, 1))
+        source = DataSource(node=module, selection=(1, 1))
         expected = "DataSource(source=DummyModule(), selection=(1, 1))"
         self.assertEqual(expected, repr(source))
+
+    @staticmethod
+    def create_dummy_modules(n: int) -> tuple[Module, ...]:
+        return tuple((DummyModule() for _ in range(n)))
+
+    @staticmethod
+    def create_sources(
+        modules: Iterable[TensorMapping],
+        selections: Iterable[Union[int, slice, Indices]],
+    ) -> tuple[DataSource, ...]:
+        return tuple(
+            (
+                DataSource(node=source, selection=selection)
+                for source, selection in zip(modules, selections)
+            )
+        )

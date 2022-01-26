@@ -4,8 +4,8 @@ from elasticai.creator.protocols import Indices, TensorMapping
 
 
 class DataSource:
-    def __init__(self, source: TensorMapping, selection: Union[int, slice, Indices]):
-        self.source = source
+    def __init__(self, node: TensorMapping, selection: Union[int, slice, Indices]):
+        self.source = node
         self.selection = selection
 
     @staticmethod
