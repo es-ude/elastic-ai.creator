@@ -4,7 +4,7 @@ from elasticai.creator.vhdl.language import (
     DataType,
     Library,
     Process,
-    InterfaceConstrained
+    InterfaceConstrained, Mode, Architecture
 )
 import unittest
 from unittest import TestCase
@@ -13,7 +13,7 @@ from elasticai.creator.vhdl.generator.generator_functions import (
 )
 
 
-class LanguageTest(TestCase):
+class EntityTest(TestCase):
     def test_no_name_entity(self):
         e = Entity("")
         expected = ["entity  is", "end entity ;"]
@@ -143,6 +143,7 @@ class LanguageTest(TestCase):
 
 
     def test_InterfaceConstrained(self):
+        
         e = InterfaceConstrained(identifier="y", mode=Mode.OUT, range="x",
                              variable_type=DataType.SIGNED)
         expected = ["y : out signed(x)"]
@@ -151,23 +152,24 @@ class LanguageTest(TestCase):
         self.assertEqual(expected, actual)
     
     def test_Architecture_base(self):
-        e = Architecture(identifier="y",entity_name= "z" )
-        expected = ["architecture y of z is", '\t\tbegin',"end architecture y;"]
+        process_value = []
+        e = Architecture(identifier="y",design_unit= "z",process_content=process_value )
+        expected = ["architecture y of z is", 'begin',"end architecture y;"]
         actual = list(e())
         self.assertSequenceEqual(expected, actual)
         
     def test_Architecture_with_variables(self):
-        e = Architecture(identifier="y",entity_name= "z" )
+        
+        e = Architecture(identifier="y",design_unit= "z",process_content=[] )
         e.variable_list.append(InterfaceConstrained(identifier="1", range="1",
                                                       variable_type=DataType.SIGNED))
-        expected = ["architecture y of z is",'\t\t1 : signed(1);','\t\tbegin',"end architecture y;"]
+        expected = ["architecture y of z is",'\t1 : signed(1);','begin',"end architecture y;"]
         actual = list(e())
         self.assertSequenceEqual(expected, actual)
         
     def test_Architecture_with_code(self):
-        e = Architecture(identifier="y",entity_name= "z" )
-        e.code_list.append("some code")
-        expected = ["architecture y of z is", '\t\tbegin','\t\tsome code',"end architecture y;"]
+        e = Architecture(identifier="y",design_unit= "z",process_content="some code" )
+        expected = ["architecture y of z is", 'begin','\tsome code',"end architecture y;"]
         actual = list(e())
         self.assertSequenceEqual(expected, actual)
 example = """

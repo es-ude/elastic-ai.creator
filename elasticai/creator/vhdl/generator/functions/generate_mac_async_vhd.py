@@ -1,6 +1,6 @@
 from io import StringIO
 from elasticai.creator.vhdl.language import Entity, InterfaceVariable, DataType, Architecture, \
-    InterfaceConstrained, Mode, InterfaceSignal
+    InterfaceConstrained, Mode, InterfaceSignal, Library
 from elasticai.creator.vhdl.generator.general_strings import (
     get_libraries_string,
 )
@@ -28,7 +28,10 @@ def main():
 
 
 def build_mac_async(writer: StringIO):
-    writer.write(get_libraries_string())
+    lib = Library()
+    for line in lib():
+        writer.write(line)
+        writer.write("\n")
     entity = Entity(component_name)
     entity.generic_list.append(InterfaceVariable(identifier="DATA_WIDTH", variable_type=DataType.INTEGER, value=DATA_WIDTH))
     entity.generic_list.append(InterfaceVariable(identifier="FRAC_WIDTH", variable_type=DataType.INTEGER, value=DATA_FRAC))
@@ -51,12 +54,11 @@ def build_mac_async(writer: StringIO):
     for line in entity():
         writer.write(line)
         writer.write("\n")
-    architecture = Architecture(identifier=architecture_name,entity_name=component_name)
+    architecture = Architecture(identifier=architecture_name,design_unit=component_name,process_content=get_mac_async_architecture_behavior_string())
     architecture.variable_list.append(InterfaceSignal(identifier="product_1", range="DATA_WIDTH-1 downto 0",
                                                       variable_type=DataType.SIGNED))
     architecture.variable_list.append(InterfaceSignal(identifier="product_2", range="DATA_WIDTH-1 downto 0",
                                                       variable_type=DataType.SIGNED))
-    architecture.code_list.extend(get_mac_async_architecture_behavior_string())
     for line in architecture():
         writer.write(line)
         writer.write("\n")
