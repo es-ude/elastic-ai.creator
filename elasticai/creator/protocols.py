@@ -25,23 +25,29 @@ class Tensor(Protocol):
         ...
 
 
-class Module(Protocol):
+class TensorMapping(Protocol):
+    @abstractmethod
+    def __repr__(self) -> str:
+        ...
+
+    @abstractmethod
+    def __call__(self, x: Tensor, /, *args, **kwargs) -> Tensor:
+        ...
+
+
+class Module(TensorMapping, Protocol):
     @property
     @abstractmethod
     def training(self) -> bool:
-        pass
+        ...
 
     @abstractmethod
     def extra_repr(self) -> str:
-        pass
+        ...
 
     @abstractmethod
     def named_children(self) -> Iterable[tuple[str, "Module"]]:
-        pass
-
-    @abstractmethod
-    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
-        pass
+        ...
 
 
 TensorLike = Union[Callable[[], "TensorLike"], Tensor]

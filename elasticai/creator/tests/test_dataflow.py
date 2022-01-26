@@ -1,9 +1,8 @@
+import unittest
 from typing import Union, Iterable
 
-from elasticai.creator.dataflow import DataFlowSpecification, DataSource
-import unittest
-
-from elasticai.creator.protocols import Tensor, Indices, Module
+from elasticai.creator.dataflow import DataSource
+from elasticai.creator.protocols import Tensor, Indices, Module, TensorMapping
 
 
 class DummyTensor(Tensor):
@@ -23,6 +22,14 @@ class DummyTensor(Tensor):
         return self
 
 
+class DummyTensorMapping(TensorMapping):
+    def __repr__(self) -> str:
+        pass
+
+    def __call__(self, *args, **kwargs) -> Tensor:
+        pass
+
+
 class DummyModule(Module):
     @property
     def training(self) -> bool:
@@ -34,8 +41,11 @@ class DummyModule(Module):
     def named_children(self) -> Iterable[tuple[str, "Module"]]:
         yield from []
 
-    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
-        return x
+    def __call__(self, *args, **kwargs) -> Tensor:
+        return args[0]
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
 
 
 class TestDataFlowSpecification(unittest.TestCase):
@@ -78,3 +88,9 @@ class TestDataFlowSpecification(unittest.TestCase):
         source_a = DataSource(source=module, selection=(1, 1))
         source_b = DataSource(source=module, selection=(1, 2))
         self.assertFalse(source_a.subsource_of(source_b))
+
+    def test_repr_for_datasource(self):
+        module = DummyModule()
+        source = DataSource(source=module, selection=(1, 1))
+        expected = "DataSource(source=DummyModule(), selection=(1, 1))"
+        self.assertEqual(expected, repr(source))

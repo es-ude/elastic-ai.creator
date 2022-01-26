@@ -1,12 +1,10 @@
-from typing import NamedTuple, Callable, Union, Any
+from typing import NamedTuple, Union, Any
 
-from elasticai.creator.protocols import Tensor, Indices
+from elasticai.creator.protocols import Indices, TensorMapping
 
 
 class DataSource:
-    def __init__(
-        self, source: Callable[[...], Tensor], selection: Union[int, slice, Indices]
-    ):
+    def __init__(self, source: TensorMapping, selection: Union[int, slice, Indices]):
         self.source = source
         self.selection = selection
 
@@ -30,6 +28,13 @@ class DataSource:
         if hasattr(other, "source") and hasattr(other, "selection"):
             return other.source == self.source and other.selection == self.selection
         return False
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"source={self.source.__repr__()}, "
+            f"selection={self.selection.__repr__()})"
+        )
 
 
 class DataSink(NamedTuple):
