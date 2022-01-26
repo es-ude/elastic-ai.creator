@@ -23,14 +23,6 @@ class DummyTensor(Tensor):
         return self
 
 
-class DummyTensorMapping(TensorMapping):
-    def __repr__(self) -> str:
-        pass
-
-    def __call__(self, *args, **kwargs) -> Tensor:
-        pass
-
-
 class DummyModule(Module):
     @property
     def training(self) -> bool:
