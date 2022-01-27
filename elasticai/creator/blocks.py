@@ -1,6 +1,6 @@
 from torch import nn
 
-from elasticai.creator.layers import QConv1d, QLinear
+from elasticai.creator.layers import QConv1d, QLinear, QConv2d
 
 """
 Modules that work as a sequence of 3  or more layers. Useful for writing more compact models
@@ -58,6 +58,59 @@ class QConv1d_block(nn.Module):
 
     def forward(self, input):
         x = self.conv1d(input)
+        x = self.batch_norm(x)
+        x = self.activation(x)
+        return x
+
+class QConv2d_block(nn.Module):
+    """
+    Sequence QConv1d - batchNorm - activation
+    uses default batchNorm parameters. Most other parameters affect QConv1d
+    @param conv_quantizer: The quantizer of the QConv1d
+    @param activation: an instance of the activation
+    """
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        conv_quantizer,
+        activation,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        bias=True,
+        padding_mode="zeros",
+        constraints: list = None,
+    ):
+        super().__init__()
+
+        self.conv2d = QConv2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            conv_quantizer,
+            stride=stride,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+            padding=padding,
+            padding_mode=padding_mode,
+            constraints=constraints,
+        )
+        self.batch_norm = nn.BatchNorm1d(out_channels)
+        self.activation = activation
+
+    @property
+    def codomain(self):
+        if self.activation is not None and hasattr(self.activation, "codomain"):
+            return self.activation.codomain
+        return None
+
+    def forward(self, input):
+        x = self.conv2d(input)
         x = self.batch_norm(x)
         x = self.activation(x)
         return x
