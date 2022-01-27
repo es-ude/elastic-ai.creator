@@ -6,7 +6,7 @@ import torch
 class test_masks(unittest.TestCase):
     def test_fixedOffsetMask4D_channel_offset(self):
         mask = fixedOffsetMask4D(out_channels=4, kernel_size=(1, 1),
-                                 in_channels=2, groups=1, channel_width=1, offset_axis=1)
+                                 in_channels=2, groups=1, axis_width=1, offset_axis=1)
         expected = torch.zeros((4,2,1,1))
         expected[0,0,0,0] = 1
         expected[1, 1, 0, 0] = 1
@@ -16,7 +16,7 @@ class test_masks(unittest.TestCase):
     
     def test_fixedOffsetMask4D_channel_offset_width2(self):
         mask = fixedOffsetMask4D(out_channels=2, kernel_size=(1, 1),
-                                 in_channels=4, groups=1, channel_width=2, offset_axis=1)
+                                 in_channels=4, groups=1, axis_width=2, offset_axis=1)
         expected = torch.zeros((2,4,1,1))
         expected[0,0,0,0] = 1
         expected[0, 1, 0, 0] = 1
@@ -26,7 +26,7 @@ class test_masks(unittest.TestCase):
     
     def test_fixedOffsetMask4D_axis_offset(self):
         mask = fixedOffsetMask4D(out_channels=4, kernel_size=(2, 1),
-                                 in_channels=2, groups=1, channel_width=1, offset_axis=2)
+                                 in_channels=2, groups=1, axis_width=1, offset_axis=2)
         expected = torch.zeros((4,2,2,1))
         expected[0,0,0,0] = 1
         expected[0, 1, 0, 0] = 1
