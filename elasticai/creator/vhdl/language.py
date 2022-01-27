@@ -18,6 +18,7 @@ from typing import (
     Union,
     Literal,
     Optional,
+    Generator,
 )
 
 Identifier = str
@@ -153,7 +154,7 @@ class Architecture:
 
 class Process:
     def __init__(
-        self, identifier: str, input: str, lookup_table_generator_function: str
+        self, identifier: str, input: str, lookup_table_generator_function: Generator
     ):
         self.identifier = identifier
         self._process_declaration_list = []
@@ -184,7 +185,7 @@ class Process:
     def _footer(self) -> Code:
         if len(self.process_statements_list) > 0:
             yield from _append_semicolons_to_lines(self._process_statements_list)
-        yield self.lookup_table_generator_function
+        yield from self.lookup_table_generator_function
 
     def __call__(self) -> Code:
         yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"

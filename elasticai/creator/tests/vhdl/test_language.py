@@ -110,7 +110,7 @@ class EntityTest(TestCase):
         expected = [
             "some_name_process: process(some_input)",
             "begin",
-            '\ty <= "0000000000000000";\n\t\t',
+            '\ty <= "0000000000000000";',
             "end process some_name_process;",
         ]
         actual = list(process())
@@ -133,7 +133,7 @@ class EntityTest(TestCase):
             "\tvariable some_variable_name: integer := 0;",
             "begin",
             "\tsome_variable_name := to_integer(some_variable_name);",
-            '\ty <= "0000000000000000";\n\t\t',
+            '\ty <= "0000000000000000";',
             "end process some_name_process;",
         ]
         actual = list(process())
@@ -183,9 +183,12 @@ class EntityTest(TestCase):
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_architecture_part_as_process(self):
+        def function():
+            yield "some code"
+
         dummy_process = Process(
             identifier="some name",
-            lookup_table_generator_function="some code",
+            lookup_table_generator_function=function(),
             input="x",
         )
         a = Architecture(identifier="y", design_unit="z")

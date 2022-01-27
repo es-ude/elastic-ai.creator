@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from elasticai.creator.layers import QLSTMCell
-from typing import Dict, List, Callable, Any, Union, Sequence
+from typing import Dict, List, Callable, Any, Union, Sequence, Generator
 
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
@@ -21,7 +21,7 @@ def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> N
     code.append(new_code_fragment)
 
 
-def precomputed_scalar_function_process(x_list, y_list) -> str:
+def precomputed_scalar_function_process(x_list, y_list) -> Generator:
     """
         returns the string of a lookup table
     Args:
@@ -87,11 +87,10 @@ def precomputed_scalar_function_process(x_list, y_list) -> str:
             lines[-1] = "\t" + lines[-1]
         if len(lines) != 0:
             lines.append("end if;")
-    # build the string block and add new line + 2 tabs
-    string = ""
-    for line in lines:
-        string = string + line + "\n" + "\t" + "\t"
-    return string
+    # build the string block
+    yield lines[0]
+    for line in lines[1:]:
+        yield line
 
 
 def _int_to_hex(val: int, nbits: int) -> str:
