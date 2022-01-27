@@ -94,7 +94,7 @@ class PrecomputedScalarFunction:
             lookup_table_generator_function=precomputed_scalar_function_process(
                 x_list=self.x, y_list=self.y
             ),
-            input="x",
+            input_name="x",
         )
         process.process_declaration_list = ["variable int_x: integer := 0"]
         process.process_statements_list = ["int_x := to_integer(x)"]

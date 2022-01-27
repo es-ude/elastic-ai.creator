@@ -112,7 +112,7 @@ def build_mac_async(writer: StringIO):
         design_unit=component_name,
     )
     architecture.architecture_statement_part = (
-        get_mac_async_architecture_behavior_string()
+        get_mac_async_architecture_behavior_string
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(

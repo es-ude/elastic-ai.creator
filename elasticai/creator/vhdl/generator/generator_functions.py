@@ -1,15 +1,13 @@
-import math
 import random
 import torch
 import torch.nn as nn
-from torch import Tensor
 
 from elasticai.creator.layers import QLSTMCell
-from typing import Dict, List, Callable, Any, Union, Sequence, Generator
+from typing import Dict
 
+from elasticai.creator.vhdl.language import CodeGenerator
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
-    two_complements_representation,
     FloatToBinaryFixedPointStringConverter,
 )
 
@@ -21,7 +19,7 @@ def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> N
     code.append(new_code_fragment)
 
 
-def precomputed_scalar_function_process(x_list, y_list) -> Generator:
+def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
     """
         returns the string of a lookup table
     Args:

@@ -18,7 +18,6 @@ from typing import (
     Union,
     Literal,
     Optional,
-    Generator,
 )
 
 Identifier = str
@@ -140,27 +139,24 @@ class Architecture:
             )
         yield f"{Keywords.BEGIN.value}"
         if self._architecture_statement_part:
-            # this is temporary because we do not have a defined code generator for mac async architecture statement part
-            if isinstance(self._architecture_statement_part, str):
-                yield from _indent_and_filter_non_empty_lines(
-                    [self._architecture_statement_part]
-                )
-            else:
-                yield from _indent_and_filter_non_empty_lines(
-                    self._architecture_statement_part()
-                )
+            yield from _indent_and_filter_non_empty_lines(
+                self._architecture_statement_part()
+            )
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
 
 
 class Process:
     def __init__(
-        self, identifier: str, input: str, lookup_table_generator_function: Generator
+        self,
+        identifier: str,
+        input_name: str,
+        lookup_table_generator_function: CodeGenerator,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
         self._process_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
-        self.input = input
+        self.input = input_name
 
     @property
     def process_declaration_list(self):

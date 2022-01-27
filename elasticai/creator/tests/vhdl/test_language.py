@@ -102,7 +102,7 @@ class EntityTest(TestCase):
     def test_process_empty(self):
         process = Process(
             identifier="some_name",
-            input="some_input",
+            input_name="some_input",
             lookup_table_generator_function=precomputed_scalar_function_process(
                 x_list=[], y_list=[0]
             ),
@@ -119,7 +119,7 @@ class EntityTest(TestCase):
     def test_process_with_variables(self):
         process = Process(
             identifier="some_name",
-            input="some_input",
+            input_name="some_input",
             lookup_table_generator_function=precomputed_scalar_function_process(
                 x_list=[], y_list=[0]
             ),
@@ -170,9 +170,12 @@ class EntityTest(TestCase):
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
 
-    def test_Architecture_with_architecture_part_as_string(self):
+    def test_Architecture_with_architecture_part_as_function(self):
+        def function():
+            yield "some code"
+
         a = Architecture(identifier="y", design_unit="z")
-        a.architecture_statement_part = "some code"
+        a.architecture_statement_part = function
         expected = [
             "architecture y of z is",
             "begin",
@@ -189,7 +192,7 @@ class EntityTest(TestCase):
         dummy_process = Process(
             identifier="some name",
             lookup_table_generator_function=function(),
-            input="x",
+            input_name="x",
         )
         a = Architecture(identifier="y", design_unit="z")
         a.architecture_statement_part = dummy_process
