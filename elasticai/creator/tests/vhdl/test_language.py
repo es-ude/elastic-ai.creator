@@ -6,7 +6,9 @@ from elasticai.creator.vhdl.language import (
     LibraryClause,
     UseClause,
     Process,
-    InterfaceConstrained, Mode, Architecture
+    InterfaceConstrained,
+    Mode,
+    Architecture,
 )
 import unittest
 from unittest import TestCase
@@ -76,8 +78,6 @@ class EntityTest(TestCase):
         actual = actual[2:3]
         self.assertEqual(expected, actual)
 
-    # FIXME: do not implement test for the architecture because it is already tested in the other pull request
-
     def test_library_with_extra_libraries(self):
         lib = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee", "work"]),
@@ -124,8 +124,8 @@ class EntityTest(TestCase):
                 x_list=[], y_list=[0]
             ),
         )
-        process.item_declaration_list = ["variable some_variable_name: integer := 0"]
-        process.sequential_statements_list = [
+        process.process_declaration_list = ["variable some_variable_name: integer := 0"]
+        process.process_statements_list = [
             "some_variable_name := to_integer(some_variable_name)"
         ]
         expected = [
@@ -139,37 +139,70 @@ class EntityTest(TestCase):
         actual = list(process())
         self.assertEqual(expected, actual)
 
-
     def test_InterfaceConstrained(self):
-        
-        e = InterfaceConstrained(identifier="y", mode=Mode.OUT, range="x",
-                             variable_type=DataType.SIGNED)
+        i = InterfaceConstrained(
+            identifier="y", mode=Mode.OUT, range="x", variable_type=DataType.SIGNED
+        )
         expected = ["y : out signed(x)"]
-        actual = list(e())
-        #actual = actual[2:3]
+        actual = list(i())
+        # actual = actual[2:3]
         self.assertEqual(expected, actual)
-    
+
     def test_Architecture_base(self):
-        process_value = []
-        e = Architecture(identifier="y",design_unit= "z",process_content=process_value )
-        expected = ["architecture y of z is", 'begin',"end architecture y;"]
-        actual = list(e())
+        a = Architecture(identifier="y", design_unit="z")
+        expected = ["architecture y of z is", "begin", "end architecture y;"]
+        actual = list(a())
         self.assertSequenceEqual(expected, actual)
-        
+
     def test_Architecture_with_variables(self):
-        
-        e = Architecture(identifier="y",design_unit= "z",process_content=[] )
-        e.variable_list.append(InterfaceConstrained(identifier="1", range="1",
-                                                      variable_type=DataType.SIGNED))
-        expected = ["architecture y of z is",'\t1 : signed(1);','begin',"end architecture y;"]
-        actual = list(e())
+        a = Architecture(identifier="y", design_unit="z")
+        a.architecture_declaration_list.append(
+            InterfaceConstrained(
+                identifier="1", range="1", variable_type=DataType.SIGNED
+            )
+        )
+        expected = [
+            "architecture y of z is",
+            "\t1 : signed(1);",
+            "begin",
+            "end architecture y;",
+        ]
+        actual = list(a())
         self.assertSequenceEqual(expected, actual)
-        
-    def test_Architecture_with_code(self):
-        e = Architecture(identifier="y",design_unit= "z",process_content="some code" )
-        expected = ["architecture y of z is", 'begin','\tsome code',"end architecture y;"]
-        actual = list(e())
+
+    def test_Architecture_with_architecture_part_as_string(self):
+        a = Architecture(identifier="y", design_unit="z")
+        a.architecture_statement_part = "some code"
+        expected = [
+            "architecture y of z is",
+            "begin",
+            "\tsome code",
+            "end architecture y;",
+        ]
+        actual = list(a())
         self.assertSequenceEqual(expected, actual)
+
+    def test_Architecture_with_architecture_part_as_process(self):
+        dummy_process = Process(
+            identifier="some name",
+            lookup_table_generator_function="some code",
+            input="x",
+        )
+        a = Architecture(identifier="y", design_unit="z")
+        a.architecture_statement_part = dummy_process
+        expected = [
+            "architecture y of z is",
+            "begin",
+            "\tsome name_process: process(x)",
+            "\tbegin",
+            "\t\tsome code",
+            "\tend process some name_process;",
+            "end architecture y;",
+        ]
+        actual = list(a())
+        self.assertSequenceEqual(expected, actual)
+
+
 example = """
 entity tanh is
     generic (
