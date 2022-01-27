@@ -110,16 +110,18 @@ def build_mac_async(writer: StringIO):
     architecture = Architecture(
         identifier=architecture_name,
         design_unit=component_name,
-        process_content=get_mac_async_architecture_behavior_string(),
     )
-    architecture.variable_list.append(
+    architecture.architecture_statement_part = (
+        get_mac_async_architecture_behavior_string()
+    )
+    architecture.architecture_declaration_list.append(
         InterfaceSignal(
             identifier="product_1",
             range="DATA_WIDTH-1 downto 0",
             variable_type=DataType.SIGNED,
         )
     )
-    architecture.variable_list.append(
+    architecture.architecture_declaration_list.append(
         InterfaceSignal(
             identifier="product_2",
             range="DATA_WIDTH-1 downto 0",

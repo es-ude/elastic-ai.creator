@@ -18,6 +18,7 @@ from typing import (
     Union,
     Literal,
     Optional,
+    Generator,
 )
 
 Identifier = str
@@ -107,66 +108,84 @@ class ComponentDeclaration(_DesignUnitForEntityAndComponent):
 
 
 class Architecture:
-    def __init__(self, identifier: str, design_unit: str, process_content: str):
+    def __init__(self, identifier: str, design_unit: str):
         self.identifier = identifier
         self.design_unit = design_unit
-        self._variable_list = InterfaceList()
-        self.process_content = process_content
-
-    def _header(self) -> Code:
-        yield self.process_content
+        self._architecture_declaration_list = InterfaceList()
+        self._architecture_statement_part = None
 
     @property
-    def variable_list(self):
-        return self._variable_list
+    def architecture_declaration_list(self):
+        return self._architecture_declaration_list
 
-    @variable_list.setter
-    def variable_list(self, value):
-        self._variable_list = InterfaceList(value)
+    @architecture_declaration_list.setter
+    def architecture_declaration_list(self, value):
+        self._architecture_declaration_list = InterfaceList(value)
+
+    @property
+    def architecture_statement_part(self):
+        return self._architecture_statement_part
+
+    @architecture_statement_part.setter
+    def architecture_statement_part(self, value):
+        self._architecture_statement_part = value
 
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
-        if len(self._variable_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(_add_semicolons(self._variable_list(), semicolon_last=True))
+        if len(self._architecture_declaration_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                _add_semicolons(
+                    self._architecture_declaration_list(), semicolon_last=True
+                )
+            )
         yield f"{Keywords.BEGIN.value}"
-        yield from _indent_and_filter_non_empty_lines(self._header())
+        if self._architecture_statement_part:
+            # this is temporary because we do not have a defined code generator for mac async architecture statement part
+            if isinstance(self._architecture_statement_part, str):
+                yield from _indent_and_filter_non_empty_lines(
+                    [self._architecture_statement_part]
+                )
+            else:
+                yield from _indent_and_filter_non_empty_lines(
+                    self._architecture_statement_part()
+                )
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
 
 
 class Process:
     def __init__(
-        self, identifier: str, input: str, lookup_table_generator_function: str
+        self, identifier: str, input: str, lookup_table_generator_function: Generator
     ):
         self.identifier = identifier
-        self._item_declaration_list = []
-        self._sequential_statements_list = []
+        self._process_declaration_list = []
+        self._process_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
         self.input = input
 
     @property
-    def item_declaration_list(self):
-        return self._item_declaration_list
+    def process_declaration_list(self):
+        return self._process_declaration_list
 
-    @item_declaration_list.setter
-    def item_declaration_list(self, value: list[str]):
-        self._item_declaration_list = value
+    @process_declaration_list.setter
+    def process_declaration_list(self, value: list[str]):
+        self._process_declaration_list = value
 
     @property
-    def sequential_statements_list(self):
-        return self._sequential_statements_list
+    def process_statements_list(self):
+        return self._process_statements_list
 
-    @sequential_statements_list.setter
-    def sequential_statements_list(self, value: list[str]):
-        self._sequential_statements_list = value
+    @process_statements_list.setter
+    def process_statements_list(self, value: list[str]):
+        self._process_statements_list = value
 
     def _header(self) -> Code:
-        if len(self.item_declaration_list) > 0:
-            yield from _append_semicolons_to_lines(self._item_declaration_list)
+        if len(self.process_declaration_list) > 0:
+            yield from _append_semicolons_to_lines(self._process_declaration_list)
 
     def _footer(self) -> Code:
-        if len(self.sequential_statements_list) > 0:
-            yield from _append_semicolons_to_lines(self._sequential_statements_list)
-        yield self.lookup_table_generator_function
+        if len(self.process_statements_list) > 0:
+            yield from _append_semicolons_to_lines(self._process_statements_list)
+        yield from self.lookup_table_generator_function
 
     def __call__(self) -> Code:
         yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
@@ -236,24 +255,21 @@ class InterfaceVariable:
         )
 
 
-
-
 class InterfaceConstrained:
     def __init__(
         self,
         identifier: str,
         variable_type: DataType,
-        range: Optional[Union[str, int]], 
+        range: Optional[Union[str, int]],
         mode: Optional[Mode] = None,
-        declaration_type: Optional[str] = None
-            
-            
+        declaration_type: Optional[str] = None,
     ):
         self.identifier = identifier
         self._range = range
         self.variable_type = variable_type
         self.mode = mode
         self.declaration_type = declaration_type
+
     @property
     def range(self) -> int:
         return self._range
@@ -264,17 +280,26 @@ class InterfaceConstrained:
 
     def __call__(self) -> Code:
         mode_part = " " if self.mode is None else f" {self.mode.value} "
-        declaration_part = "" if self.declaration_type is None else f" {self.declaration_type} "
+        declaration_part = (
+            "" if self.declaration_type is None else f" {self.declaration_type} "
+        )
         yield from (
             f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
         )
 
+
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
-                 mode: Optional[Mode] = None):
-        super().__init__(identifier, variable_type, range, mode, declaration_type = "signal")
-        
-        
+    def __init__(
+        self,
+        identifier: str,
+        variable_type: DataType,
+        range: Optional[Union[str, int]] = None,
+        mode: Optional[Mode] = None,
+    ):
+        super().__init__(
+            identifier, variable_type, range, mode, declaration_type="signal"
+        )
+
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
     def __len__(self) -> int:
@@ -322,10 +347,10 @@ def indent(line: str) -> str:
     return "".join(["\t", line])
 
 
-def _add_semicolons(lines: Code, semicolon_last :bool = False) -> Code:
+def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
-    yield f"{temp[-1]};" if semicolon_last else  f"{temp[-1]}"
+    yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
 
 
 def _append_semicolons_to_lines(lines: Code) -> Code:
@@ -359,7 +384,6 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
     yield from map(indent, _filter_empty_lines(lines))
 
 
-
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
     block_type: Keywords, block_identifier: Identifier, lines: Code
@@ -367,8 +391,6 @@ def _wrap_in_IS_END_block(
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
     yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
-
-
 
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
