@@ -558,5 +558,9 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
         """
 
         tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
-        self.check_generated_code(expected_code, tanh.build())
+        tanh_code = tanh()
+        tanh_code_str = ""
+        for line in tanh_code:
+            tanh_code_str += line + "\n"
+        self.check_generated_code(expected_code, tanh_code_str)
         # clean each file from empty lines and lines which are just comment

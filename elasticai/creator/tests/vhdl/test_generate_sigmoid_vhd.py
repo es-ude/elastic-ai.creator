@@ -176,5 +176,8 @@ class SigmoidTest(GeneratedVHDLCodeTest):
             x=np.linspace(-5, 5, 66),
             component_name="sigmoid",
         )
-        sigmoid_code = sigmoid.build()
-        self.check_generated_code(expected_code, sigmoid_code)
+        sigmoid_code = sigmoid()
+        sigmoid_code_str = ""
+        for line in sigmoid_code:
+            sigmoid_code_str += line + "\n"
+        self.check_generated_code(expected_code, sigmoid_code_str)
