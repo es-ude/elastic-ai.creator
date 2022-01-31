@@ -1,8 +1,6 @@
-import unittest
 from typing import Optional, Tuple
 from unittest.mock import patch
 from unittest import SkipTest
-import  numpy as np
 import torch
 from torch import Tensor
 
@@ -15,7 +13,7 @@ from elasticai.creator.layers import (
     QConv2d,
     QLSTMCell,
     QLSTM,
-    Binarize, FixedSparsityMask4D, ChannelShuffle,
+    Binarize, ChannelShuffle,
 )
 from elasticai.creator.constraints import WeightClipper
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
