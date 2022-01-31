@@ -109,14 +109,46 @@ class Architecture:
     def __init__(self, identifier: str, design_unit: str, process_content: str):
         self.identifier = identifier
         self.design_unit = design_unit
+        self._signals_list = InterfaceList()
+        self._components_list = InterfaceList()
+        self._assignment_list = InterfaceList()
         self.process_content = process_content
+
+    @property
+    def signal_list(self):
+        return self._signals_list
+
+    @signal_list.setter
+    def signal_list(self, value):
+        self._signals_list = InterfaceList(value)
+
+    @property
+    def component_list(self):
+        return self._components_list
+
+    @component_list.setter
+    def component_list(self, value):
+        self._components_list = InterfaceList(value)
+
+    @property
+    def signal_assignment_list(self):
+        return self._assignment_list
+
+    @signal_assignment_list.setter
+    def signal_assignment_list(self, identifier: str, statement: str):
+        self._assignment_list = InterfaceList(signal_assignment(identifier, statement))
 
     def _header(self) -> Code:
         yield self.process_content
 
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
+        if len(self._signals_list) > 0:
+            yield from _append_semicolons_to_lines(self._signals_list)
+        if len(self._components_list) > 0:
+            yield from self._components_list
         yield f"{Keywords.BEGIN.value}"
+        yield from self._assignment_list
         yield from _indent_and_filter_non_empty_lines(self._header())
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
 
@@ -379,3 +411,7 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         return generator
     else:
         raise ValueError
+
+
+def signal_assignment(identifier: str, statement):
+    return f"{identifier} <= {statement};"

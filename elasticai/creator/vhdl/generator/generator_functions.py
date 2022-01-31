@@ -124,7 +124,7 @@ def _floating_to_hex(f_val: float, frac_width: int, nbits: int) -> str:
 
 
 def _to_vhdl_parameter(
-    f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
+        f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
 ) -> Dict:
     """
         returns a Dictionary of one signal and his definition
@@ -139,16 +139,15 @@ def _to_vhdl_parameter(
     hex_str_without_prefix = hex_str[2:]
 
     return {
-        str(signal_name): "signed(DATA_WIDTH-1 downto 0) := "
-        + 'X"'
-        + hex_str_without_prefix
-        + '"; -- '
-        + name_parameter
+        str(signal_name):
+            'X"'
+            + hex_str_without_prefix
+            + '"; -- '
+            + name_parameter
     }
 
 
 def _elastic_ai_creator_lstm() -> QLSTMCell:
-
     return QLSTMCell(
         1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity()
     )
