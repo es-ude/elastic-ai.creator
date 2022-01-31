@@ -40,11 +40,13 @@ class Keywords(Enum):
     LINKAGE = "linkage"
     INTEGER = "integer"
     STD_LOGIC = "std_logic"
+    SIGNAL = "signal"
     ARCHITECTURE = "architecture"
     OF = "of"
-    PROCESS = "process"
-    BEGIN = "begin"
     SIGNED = "signed"
+    BEGIN = "begin"
+    PROCESS = "process"
+
 
 
 class DataType(Enum):
@@ -106,13 +108,13 @@ class ComponentDeclaration(_DesignUnitForEntityAndComponent):
 
 
 class Architecture:
-    def __init__(self, identifier: str, design_unit: str, process_content: str):
+    def __init__(self, identifier: str, design_unit: str):
         self.identifier = identifier
         self.design_unit = design_unit
+
         self._signals_list = InterfaceList()
         self._components_list = InterfaceList()
         self._assignment_list = InterfaceList()
-        self.process_content = process_content
 
     @property
     def signal_list(self):
@@ -138,55 +140,76 @@ class Architecture:
     def signal_assignment_list(self, identifier: str, statement: str):
         self._assignment_list = InterfaceList(signal_assignment(identifier, statement))
 
-    def _header(self) -> Code:
-        yield self.process_content
+
+    @property
+    def architecture_declaration_list(self):
+        return self._architecture_declaration_list
+
+    @architecture_declaration_list.setter
+    def architecture_declaration_list(self, value):
+        self._architecture_declaration_list = InterfaceList(value)
+
+    @property
+    def architecture_statement_part(self):
+        return self._architecture_statement_part
+
+    @architecture_statement_part.setter
+    def architecture_statement_part(self, value):
+        self._architecture_statement_part = value
 
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
-        if len(self._signals_list) > 0:
-            yield from _append_semicolons_to_lines(self._signals_list)
-        if len(self._components_list) > 0:
-            yield from self._components_list
+        if len(self._architecture_declaration_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                _add_semicolons(
+                    self._architecture_declaration_list(), semicolon_last=True
+                )
+            )
         yield f"{Keywords.BEGIN.value}"
-        yield from self._assignment_list
-        yield from _indent_and_filter_non_empty_lines(self._header())
+        if self._architecture_statement_part:
+            yield from _indent_and_filter_non_empty_lines(
+                self._architecture_statement_part()
+            )
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
 
 
 class Process:
     def __init__(
-            self, identifier: str, input: str, lookup_table_generator_function: str
+        self,
+        identifier: str,
+        input_name: str,
+        lookup_table_generator_function: CodeGenerator,
     ):
         self.identifier = identifier
-        self._item_declaration_list = []
-        self._sequential_statements_list = []
+        self._process_declaration_list = []
+        self._process_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
-        self.input = input
+        self.input = input_name
 
     @property
-    def item_declaration_list(self):
-        return self._item_declaration_list
+    def process_declaration_list(self):
+        return self._process_declaration_list
 
-    @item_declaration_list.setter
-    def item_declaration_list(self, value: list[str]):
-        self._item_declaration_list = value
+    @process_declaration_list.setter
+    def process_declaration_list(self, value: list[str]):
+        self._process_declaration_list = value
 
     @property
-    def sequential_statements_list(self):
-        return self._sequential_statements_list
+    def process_statements_list(self):
+        return self._process_statements_list
 
-    @sequential_statements_list.setter
-    def sequential_statements_list(self, value: list[str]):
-        self._sequential_statements_list = value
+    @process_statements_list.setter
+    def process_statements_list(self, value: list[str]):
+        self._process_statements_list = value
 
     def _header(self) -> Code:
-        if len(self.item_declaration_list) > 0:
-            yield from _append_semicolons_to_lines(self._item_declaration_list)
+        if len(self.process_declaration_list) > 0:
+            yield from _append_semicolons_to_lines(self._process_declaration_list)
 
     def _footer(self) -> Code:
-        if len(self.sequential_statements_list) > 0:
-            yield from _append_semicolons_to_lines(self._sequential_statements_list)
-        yield self.lookup_table_generator_function
+        if len(self.process_statements_list) > 0:
+            yield from _append_semicolons_to_lines(self._process_statements_list)
+        yield from self.lookup_table_generator_function
 
     def __call__(self) -> Code:
         yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
@@ -196,32 +219,35 @@ class Process:
         yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
-class Library:
-    _library_header = "library ieee;"
-
-    def __init__(self):
-        self._std_libs = ["ieee.std_logic_1164.all", "ieee.numeric_std.all"]
-        self._more_libs = []
-
-    @property
-    def libs(self):
-        yield from chain(self._std_libs, self._more_libs)
-
-    @property
-    def more_libs_list(self):
-        return self._more_libs
-
-    @more_libs_list.setter
-    def more_libs_list(self, lib_definition: list[str]):
-        self._more_libs = lib_definition
-
-    def _prefix_lines_with_USE(self, lines: Code) -> Code:
-        temp = tuple(lines)
-        yield from (f"use {line};" for line in temp)
+class ContextClause:
+    def __init__(self, library_clause, use_clause):
+        self._use_clause = use_clause
+        self._library_clause = library_clause
 
     def __call__(self):
-        yield self._library_header
-        yield from self._prefix_lines_with_USE(self.libs)
+        yield from self._library_clause()
+        yield from self._use_clause()
+
+
+class UseClause:
+    def __init__(self, selected_names: list[str]):
+        self._selected_names = selected_names
+
+    def __call__(self):
+        def prefix_use(line: str):
+            return f"use {line}"
+
+        yield from _append_semicolons_to_lines(map(prefix_use, self._selected_names))
+
+
+class LibraryClause:
+    def __init__(self, logical_name_list: list[str]):
+        self._logical_name_list = logical_name_list
+
+    def __call__(self):
+        yield from _append_semicolons_to_lines(
+            ["library {}".format(", ".join(self._logical_name_list))]
+        )
 
 
 class InterfaceConstrained:
@@ -276,12 +302,13 @@ class InterfaceConstrained:
 
     def __call__(self) -> Code:
         range_part = "" if self._range is None else f"({self._range})"
-        value_part = "" if self._value is None else f" := {self._value}"
-        mode_part = " " if self._mode is None else f" {self._mode.value} "
         declaration_part = "" if self._declaration_type is None else f" {self._declaration_type} "
+        value_part = "" if self.value is None else f" := {self.value}"
+        mode_part = "" if self.mode is None else f" {self.mode.value} "
         yield from (
             f"{declaration_part}{self._identifier} :{mode_part}{self._variable_type.value}{range_part}{value_part}",
         )
+
 
 
 class InterfaceSignal(InterfaceConstrained):
@@ -294,6 +321,52 @@ class InterfaceVariable(InterfaceConstrained):
     def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
         super().__init__(identifier, variable_type, range, mode, value, declaration_type=None)
+
+class InterfaceConstrained:
+    def __init__(
+        self,
+        identifier: str,
+        variable_type: DataType,
+        range: Optional[Union[str, int]],
+        mode: Optional[Mode] = None,
+        declaration_type: Optional[str] = None,
+    ):
+        self.identifier = identifier
+        self._range = range
+        self.variable_type = variable_type
+        self.mode = mode
+        self.declaration_type = declaration_type
+
+    @property
+    def range(self) -> int:
+        return self._range
+
+    @range.setter
+    def range(self, v: Optional[Union[str, int]]):
+        self._range = v if v is not None else None
+
+    def __call__(self) -> Code:
+        mode_part = " " if self.mode is None else f" {self.mode.value} "
+        declaration_part = (
+            "" if self.declaration_type is None else f" {self.declaration_type} "
+        )
+        yield from (
+            f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
+        )
+
+
+class InterfaceSignal(InterfaceConstrained):
+    def __init__(
+        self,
+        identifier: str,
+        variable_type: DataType,
+        range: Optional[Union[str, int]] = None,
+        mode: Optional[Mode] = None,
+    ):
+        super().__init__(
+            identifier, variable_type, range, mode, declaration_type="signal"
+        )
+
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
@@ -342,10 +415,10 @@ def indent(line: str) -> str:
     return "".join(["\t", line])
 
 
-def _add_semicolons(lines: Code) -> Code:
+def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
-    yield f"{temp[-1]}"
+    yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
 
 
 def _append_semicolons_to_lines(lines: Code) -> Code:
