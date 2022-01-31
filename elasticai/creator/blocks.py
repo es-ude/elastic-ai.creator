@@ -84,7 +84,6 @@ class Conv2d_block(nn.Module):
         groups=1,
         bias=True,
         padding_mode="zeros",
-        constraints: list = None,
     ):
         super().__init__()
 
@@ -101,7 +100,7 @@ class Conv2d_block(nn.Module):
         )
         if conv_quantizer is not None:
             parametrize.register_parametrization(self.conv2d, "weight", conv_quantizer)
-        self.batch_norm = nn.BatchNorm1d(out_channels)
+        self.batch_norm = nn.BatchNorm2d(out_channels)
         self.activation = activation
 
     @property
@@ -202,7 +201,6 @@ class depthwiseConv1d_block(nn.Module):
             in_channels,
             out_channels,
             1,
-            pointwise_quantizer,
             stride=1,
             groups=1,
             bias=bias,

@@ -37,7 +37,9 @@ class BreakdownTest(unittest.TestCase):
         self.compare_models_and_weight_shape(layers,expected)
     
     def test_pointwise_breakdown_forward(self):
-        layer = depthwisePointwiseBreakdownQConv2d_block(in_channels=4,out_channels=8,pointwise_channel_width=2)
-
+        layer = depthwisePointwiseBreakdownQConv2d_block(in_channels=4,out_channels=8,pointwise_channel_width=2,kernel_size=3,activation=Binarize(),pointwise_activation=Binarize())
+        test_input = torch.ones((2,4,3,3))
+        output = layer(test_input)
+        self.assertSequenceEqual(output.shape,[2,8,1,1])
 if __name__ == '__main__':
     unittest.main()
