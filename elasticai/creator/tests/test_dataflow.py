@@ -2,7 +2,8 @@ import unittest
 from itertools import repeat
 from typing import Union, Iterable
 
-from elasticai.creator.dataflow import DataSource, DataSink, sinks_have_common_source, group_dependent_sinks
+from elasticai.creator.dataflow import DataSource, DataSink, sinks_have_common_source, group_dependent_sinks, \
+    represent_grouped_DataFlowSpecification
 from elasticai.creator.protocols import Tensor, Indices, Module, TensorMapping
 
 
@@ -92,22 +93,28 @@ class TestDataFlowSpecification(unittest.TestCase):
         self.assertEqual(expected, repr(source))
     
     
-    def test_sink_has_common_sources(self):
+    def test_sink_has_not_common_sources(self):
         module = DummyModule()
         source_a, source_b = self.create_sources(
             modules=repeat(module, 2), selections=((1, 1), (1, 2))
         )
-        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
-        data_sink_b = DataSink(shape=(1, 1), sources=[source_b])
+        data_sink_a,data_sink_b = self.create_sinks(shapes=repeat((1, 1),2),sources=[[source_a],[source_b]],nodes=[None,None])
         self.assertFalse(sinks_have_common_source(data_sink_a,data_sink_b))
     
-    def test_sink_has_not_common_sources(self):
+    def test_sink_has_common_sources_longer_b(self):
+        module = DummyModule()
+        source_a, source_b = self.create_sources(
+            modules=repeat(module, 2), selections=((1, 1), (1, 2))
+        )
+        data_sink_a,data_sink_b = self.create_sinks(shapes=repeat((1, 1),2),sources=[[source_a],[source_a,source_b]],nodes=[None,None])
+        self.assertFalse(sinks_have_common_source(data_sink_a,data_sink_b))
+    
+    def test_sink_has_common_sources(self):
         module = DummyModule()
         source_a = self.create_sources(
             modules=(module,), selections=((1, 1),)
         )
-        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
-        data_sink_b = DataSink(shape=(1, 1), sources=[source_a])
+        data_sink_a,data_sink_b = self.create_sinks(shapes=repeat((1, 1),2),sources=[[source_a],[source_a]],nodes=[None,None])
         self.assertTrue(sinks_have_common_source(data_sink_a,data_sink_b))
     
     def test_group_independent_sinks(self):
@@ -115,8 +122,7 @@ class TestDataFlowSpecification(unittest.TestCase):
         source_a,source_b = self.create_sources(
             modules=(repeat(module, 2)), selections=((1, 1), (1, 2))
         )
-        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
-        data_sink_b = DataSink(shape=(1, 1), sources=[source_b])
+        data_sink_a,data_sink_b = self.create_sinks(shapes=repeat((1, 1),2),sources=[[source_a],[source_b]],nodes=[None,None]) 
         expected = ((data_sink_a,),(data_sink_b,))
         self.assertSequenceEqual(expected,group_dependent_sinks((data_sink_a,data_sink_b)))
     
@@ -125,8 +131,7 @@ class TestDataFlowSpecification(unittest.TestCase):
         source_a = self.create_sources(
             modules=(module,), selections=((1, 1),)
         )
-        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
-        data_sink_b = DataSink(shape=(1, 1), sources=[source_a])
+        data_sink_a,data_sink_b = self.create_sinks(shapes=repeat((1, 1),2),sources=[[source_a],[source_a]],nodes=[None,None]) 
         expected = ((data_sink_a,data_sink_b),)
         self.assertSequenceEqual(expected,group_dependent_sinks((data_sink_a,data_sink_b)))
     
@@ -135,16 +140,25 @@ class TestDataFlowSpecification(unittest.TestCase):
         source_a, source_b = self.create_sources(
             modules=(repeat(module, 2)), selections=((1, 1), (1, 2))
         )
-        data_sink_a = DataSink(shape=(1, 1), sources=[source_a])
-        data_sink_b = DataSink(shape=(1, 1), sources=[source_b])
-        data_sink_c = DataSink(shape=(1, 1), sources=[source_a])
+        data_sink_a,data_sink_b,data_sink_c = self.create_sinks(shapes=repeat((1, 1),3),sources =[[source_a],[source_b],[source_a]], nodes = repeat(None,3))  
         expected = ((data_sink_a,data_sink_c), (data_sink_b,))
         actual = group_dependent_sinks((data_sink_a, data_sink_b,data_sink_c))
         self.assertSequenceEqual(expected,actual )
-        
+    
+    def test_represent_grouped_DataFlowSpecification(self):
+        module = DummyModule()
+        source_a, source_b = self.create_sources(
+            modules=(repeat(module, 2)), selections=((1, 1), (1, 2))
+        )
+        data_sink_a,data_sink_b,data_sink_c = self.create_sinks(shapes=repeat((1, 1),3),sources =[[source_a],[source_b],[source_a]], nodes = self.create_dummy_modules(3))  
+        actual = represent_grouped_DataFlowSpecification((data_sink_a, data_sink_b,data_sink_c))
+        print(actual)
+        self.assertSequenceEqual("[DataSource(source=DummyModule(), selection=(1, 1))] -> DummyModule(), DummyModule()\n[DataSource(source=DummyModule(), selection=(1, 2))] -> DummyModule()\n",actual )
+    
     @staticmethod
-    def create_dummy_modules(n: int) -> tuple[Module, ...]:
-        return tuple((DummyModule() for _ in range(n)))
+    def create_sinks(shapes: Iterable[tuple[int]],sources:Iterable[DataSource],nodes: Iterable[Union[TensorMapping,None]]):
+        return tuple(DataSink(source,shape,node) for shape,source,node in zip(shapes,sources,nodes) )
+    
     @staticmethod
     def create_dummy_modules(n: int) -> tuple[Module, ...]:
         return tuple((DummyModule() for _ in range(n)))

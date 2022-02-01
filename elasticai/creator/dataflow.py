@@ -40,12 +40,15 @@ class DataSource:
 class DataSink(NamedTuple):
     sources: list[DataSource]
     shape: tuple[int, ...]
+    node : Union[TensorMapping,None]
 
 
 DataFlowSpecification = tuple[DataSink, ...]
 
 
 def sinks_have_common_source(first: DataSink, second: DataSink) -> bool:
+    if len(first.sources) != len(second.sources):
+        return False
     for first_source in first.sources:
         if not any(x==first_source for x in second.sources):
             return False
@@ -65,3 +68,14 @@ def group_dependent_sinks(sinks: tuple[DataSink, ...]) -> tuple[tuple[DataSink]]
         groups.append(tuple(subgroup))
         sinks.remove(current_sink)
     return tuple(groups)
+
+
+def represent_grouped_DataFlowSpecification(dataflowspecification:DataFlowSpecification)-> str:
+    grouped_dataflow = group_dependent_sinks(dataflowspecification)
+    representation = "" 
+    for group in grouped_dataflow:
+        representation += f"{repr(group[0].sources)} ->"
+        for sink in group:
+            representation +=f" {sink.node}," if sink != group[-1] else f" {sink.node}"
+        representation += "\n"
+    return representation
