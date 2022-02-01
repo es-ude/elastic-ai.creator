@@ -46,8 +46,22 @@ DataFlowSpecification = tuple[DataSink, ...]
 
 
 def sinks_have_common_source(first: DataSink, second: DataSink) -> bool:
-    pass
+    for first_source in first.sources:
+        if not any(x==first_source for x in second.sources):
+            return False
+    return True
 
 
 def group_dependent_sinks(sinks: tuple[DataSink, ...]) -> tuple[tuple[DataSink]]:
-    pass
+    groups = []
+    sinks = list(sinks)
+    while sinks:
+        subgroup = [sinks[0]]
+        current_sink = sinks[0]
+        for sink in sinks:
+            if (sinks_have_common_source(current_sink, sink) and sink is not current_sink):
+                subgroup.append(sink)
+                sinks.remove(sink)
+        groups.append(tuple(subgroup))
+        sinks.remove(current_sink)
+    return tuple(groups)

@@ -2,7 +2,7 @@ import unittest
 from itertools import repeat
 from typing import Union, Iterable
 
-from elasticai.creator.dataflow import DataSource
+from elasticai.creator.dataflow import DataSource, DataSink, sinks_have_common_source, group_dependent_sinks
 from elasticai.creator.protocols import Tensor, Indices, Module, TensorMapping
 
 
@@ -90,11 +90,64 @@ class TestDataFlowSpecification(unittest.TestCase):
         source = DataSource(node=module, selection=(1, 1))
         expected = "DataSource(source=DummyModule(), selection=(1, 1))"
         self.assertEqual(expected, repr(source))
-
+    
+    
+    def test_sink_has_common_sources(self):
+        module = DummyModule()
+        source_a, source_b = self.create_sources(
+            modules=repeat(module, 2), selections=((1, 1), (1, 2))
+        )
+        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
+        data_sink_b = DataSink(shape=(1, 1), sources=[source_b])
+        self.assertFalse(sinks_have_common_source(data_sink_a,data_sink_b))
+    
+    def test_sink_has_not_common_sources(self):
+        module = DummyModule()
+        source_a = self.create_sources(
+            modules=(module,), selections=((1, 1),)
+        )
+        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
+        data_sink_b = DataSink(shape=(1, 1), sources=[source_a])
+        self.assertTrue(sinks_have_common_source(data_sink_a,data_sink_b))
+    
+    def test_group_independent_sinks(self):
+        module = DummyModule()
+        source_a,source_b = self.create_sources(
+            modules=(repeat(module, 2)), selections=((1, 1), (1, 2))
+        )
+        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
+        data_sink_b = DataSink(shape=(1, 1), sources=[source_b])
+        expected = ((data_sink_a,),(data_sink_b,))
+        self.assertSequenceEqual(expected,group_dependent_sinks((data_sink_a,data_sink_b)))
+    
+    def test_group_dependent_sinks(self):
+        module = DummyModule()
+        source_a = self.create_sources(
+            modules=(module,), selections=((1, 1),)
+        )
+        data_sink_a = DataSink(shape=(1,1),sources=[source_a])
+        data_sink_b = DataSink(shape=(1, 1), sources=[source_a])
+        expected = ((data_sink_a,data_sink_b),)
+        self.assertSequenceEqual(expected,group_dependent_sinks((data_sink_a,data_sink_b)))
+    
+    def test_group_dependent_sinks_2groups(self):
+        module = DummyModule()
+        source_a, source_b = self.create_sources(
+            modules=(repeat(module, 2)), selections=((1, 1), (1, 2))
+        )
+        data_sink_a = DataSink(shape=(1, 1), sources=[source_a])
+        data_sink_b = DataSink(shape=(1, 1), sources=[source_b])
+        data_sink_c = DataSink(shape=(1, 1), sources=[source_a])
+        expected = ((data_sink_a,data_sink_c), (data_sink_b,))
+        actual = group_dependent_sinks((data_sink_a, data_sink_b,data_sink_c))
+        self.assertSequenceEqual(expected,actual )
+        
     @staticmethod
     def create_dummy_modules(n: int) -> tuple[Module, ...]:
         return tuple((DummyModule() for _ in range(n)))
-
+    @staticmethod
+    def create_dummy_modules(n: int) -> tuple[Module, ...]:
+        return tuple((DummyModule() for _ in range(n)))
     @staticmethod
     def create_sources(
         modules: Iterable[TensorMapping],
