@@ -8,10 +8,9 @@ from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTes
 class GenerateLSTMCellVhdTest(GeneratedVHDLCodeTest):
     # the test will fail if you try to align the string with the same indent with the function (--)
     def test_compare_files(self) -> None:
-        expected_code = """library ieee;
+        expected_code = """library ieee, work;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
-LIBRARY work;
+use ieee.numeric_std.all;
 use work.all;
 
 entity lstm_cell is
