@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.language import (
     Process,
     InterfaceConstrained,
     Mode,
-    Architecture,
+    Architecture, InterfaceSignal,
 
 )
 import unittest
@@ -140,27 +140,34 @@ class EntityTest(TestCase):
         actual = list(process())
         self.assertEqual(expected, actual)
 
-
     def test_InterfaceVariable_empty(self):
-        interface_variable = InterfaceVariable(identifier="some_variable", variable_type=DataType.INTEGER)
-        expected = "some_variable : integer"
-        actual = interface_variable()
-        # '*actual' to compare with the value of the generator interface_variable()
-        self.assertEqual(expected, *actual)
+        interface_variable = InterfaceVariable(
+            identifier="some_variable",
+            variable_type=DataType.INTEGER
+        )
+        expected = ["some_variable : integer"]
+        actual = list(interface_variable())
+        self.assertEqual(expected, actual)
 
     def test_InterfaceVariable_all_parameters(self):
         interface_variable = InterfaceVariable(
-            identifier="my_var", variable_type=DataType.SIGNED, mode=Mode.IN, range="15 downto 0", value="16"
+            identifier="my_var",
+            variable_type=DataType.SIGNED,
+            mode=Mode.IN, range="15 downto 0",
+            value="16"
         )
-        expected = "my_var : in signed(15 downto 0) := 16"
-        actual = interface_variable()
-        self.assertEqual(expected, *actual)
+        expected = ["my_var : in signed(15 downto 0) := 16"]
+        actual = list(interface_variable())
+        self.assertEqual(expected, actual)
 
-    def test_InterfaceConstrained(self):
-        i = InterfaceConstrained(
-            identifier="y", mode=Mode.OUT, range="x", variable_type=DataType.SIGNED
+    def test_InterfaceSignal(self):
+        i = InterfaceSignal(
+            identifier="y",
+            mode=Mode.OUT,
+            range="x",
+            variable_type=DataType.SIGNED
         )
-        expected = ["y : out signed(x)"]
+        expected = ["signal y : out signed(x)"]
         actual = list(i())
         # actual = actual[2:3]
         self.assertEqual(expected, actual)
@@ -174,7 +181,7 @@ class EntityTest(TestCase):
     def test_Architecture_with_variables(self):
         a = Architecture(identifier="y", design_unit="z")
         a.architecture_declaration_list.append(
-            InterfaceConstrained(
+            InterfaceVariable(
                 identifier="1", range="1", variable_type=DataType.SIGNED
             )
         )
