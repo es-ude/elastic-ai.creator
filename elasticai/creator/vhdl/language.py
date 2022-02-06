@@ -48,7 +48,6 @@ class Keywords(Enum):
     PROCESS = "process"
 
 
-
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
@@ -111,35 +110,9 @@ class Architecture:
     def __init__(self, identifier: str, design_unit: str):
         self.identifier = identifier
         self.design_unit = design_unit
-
-        self._signals_list = InterfaceList()
-        self._components_list = InterfaceList()
-        self._assignment_list = InterfaceList()
-
-    @property
-    def signal_list(self):
-        return self._signals_list
-
-    @signal_list.setter
-    def signal_list(self, value):
-        self._signals_list = InterfaceList(value)
-
-    @property
-    def component_list(self):
-        return self._components_list
-
-    @component_list.setter
-    def component_list(self, value):
-        self._components_list = InterfaceList(value)
-
-    @property
-    def signal_assignment_list(self):
-        return self._assignment_list
-
-    @signal_assignment_list.setter
-    def signal_assignment_list(self, identifier: str, statement: str):
-        self._assignment_list = InterfaceList(signal_assignment(identifier, statement))
-
+        self._architecture_declaration_list = InterfaceList()
+        self._architecture_component_list = InterfaceList()
+        self._architecture_statement_part = None
 
     @property
     def architecture_declaration_list(self):
@@ -157,6 +130,14 @@ class Architecture:
     def architecture_statement_part(self, value):
         self._architecture_statement_part = value
 
+    @property
+    def architecture_component_list(self):
+        return self._architecture_component_list
+
+    @architecture_component_list.setter
+    def architecture_component_list(self, value):
+        self._architecture_component_list = InterfaceList(value)
+
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
@@ -164,6 +145,10 @@ class Architecture:
                 _add_semicolons(
                     self._architecture_declaration_list(), semicolon_last=True
                 )
+            )
+        if len(self._architecture_component_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                self._architecture_component_list()
             )
         yield f"{Keywords.BEGIN.value}"
         if self._architecture_statement_part:
@@ -175,10 +160,10 @@ class Architecture:
 
 class Process:
     def __init__(
-        self,
-        identifier: str,
-        input_name: str,
-        lookup_table_generator_function: CodeGenerator,
+            self,
+            identifier: str,
+            input_name: str,
+            lookup_table_generator_function: CodeGenerator,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
@@ -302,18 +287,17 @@ class InterfaceConstrained:
 
     def __call__(self) -> Code:
         range_part = "" if self._range is None else f"({self._range})"
-        declaration_part = "" if self._declaration_type is None else f" {self._declaration_type} "
+        declaration_part = "" if self._declaration_type is None else f"{self._declaration_type} "
         value_part = "" if self.value is None else f" := {self.value}"
-        mode_part = "" if self.mode is None else f" {self.mode.value} "
+        mode_part = " " if self.mode is None else f" {self.mode.value} "
         yield from (
             f"{declaration_part}{self._identifier} :{mode_part}{self._variable_type.value}{range_part}{value_part}",
         )
 
 
-
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]],
-                 mode: Optional[Mode], value: Optional[Union[str, int]]):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
         super().__init__(identifier, variable_type, range, mode, value, declaration_type="signal")
 
 
@@ -321,52 +305,6 @@ class InterfaceVariable(InterfaceConstrained):
     def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
         super().__init__(identifier, variable_type, range, mode, value, declaration_type=None)
-
-class InterfaceConstrained:
-    def __init__(
-        self,
-        identifier: str,
-        variable_type: DataType,
-        range: Optional[Union[str, int]],
-        mode: Optional[Mode] = None,
-        declaration_type: Optional[str] = None,
-    ):
-        self.identifier = identifier
-        self._range = range
-        self.variable_type = variable_type
-        self.mode = mode
-        self.declaration_type = declaration_type
-
-    @property
-    def range(self) -> int:
-        return self._range
-
-    @range.setter
-    def range(self, v: Optional[Union[str, int]]):
-        self._range = v if v is not None else None
-
-    def __call__(self) -> Code:
-        mode_part = " " if self.mode is None else f" {self.mode.value} "
-        declaration_part = (
-            "" if self.declaration_type is None else f" {self.declaration_type} "
-        )
-        yield from (
-            f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
-        )
-
-
-class InterfaceSignal(InterfaceConstrained):
-    def __init__(
-        self,
-        identifier: str,
-        variable_type: DataType,
-        range: Optional[Union[str, int]] = None,
-        mode: Optional[Mode] = None,
-    ):
-        super().__init__(
-            identifier, variable_type, range, mode, declaration_type="signal"
-        )
-
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
