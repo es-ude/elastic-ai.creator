@@ -304,6 +304,12 @@ def build_lstm_cell(writer: StringIO):
 
     # signal assignment
     # TODO: implement signal assignment
+    architecture.architecture_assignment_list.append(
+        "c_out <= c_new_wo_activation"
+    )
+    architecture.architecture_assignment_list.append(
+        "h_out <= h_new"
+    )
 
     # port map
     # TODO:  implement port map
@@ -319,7 +325,7 @@ def build_lstm_cell(writer: StringIO):
         writer.write(line)
         writer.write("\n")
 
-# old ones !!
+    # old ones !!
     # port mapping
     writer.write(
         get_port_map_string(
