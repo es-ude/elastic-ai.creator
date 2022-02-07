@@ -152,7 +152,6 @@ class TestDataFlowSpecification(unittest.TestCase):
         )
         data_sink_a,data_sink_b,data_sink_c = self.create_sinks(shapes=repeat((1, 1),3),sources =[[source_a],[source_b],[source_a]], nodes = self.create_dummy_modules(3))  
         actual = represent_grouped_DataFlowSpecification((data_sink_a, data_sink_b,data_sink_c))
-        print(actual)
         self.assertSequenceEqual("[DataSource(source=DummyModule(), selection=(1, 1))] -> DummyModule(), DummyModule()\n[DataSource(source=DummyModule(), selection=(1, 2))] -> DummyModule()\n",actual )
     
     @staticmethod

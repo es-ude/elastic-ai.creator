@@ -40,7 +40,7 @@ class DataSource:
 class DataSink(NamedTuple):
     sources: list[DataSource]
     shape: tuple[int, ...]
-    node : Union[TensorMapping,None]
+    node : Union[TensorMapping]
 
 
 DataFlowSpecification = tuple[DataSink, ...]
