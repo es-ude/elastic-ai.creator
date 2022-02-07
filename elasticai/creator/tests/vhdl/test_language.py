@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.language import (
     Process,
     InterfaceConstrained,
     Mode,
-    Architecture, InterfaceSignal,
+    Architecture, InterfaceSignal, PortMap,
 
 )
 import unittest
@@ -231,6 +231,49 @@ class EntityTest(TestCase):
         ]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
+
+    def test_Architecture_with_assignment(self):
+        a = Architecture(identifier="y", design_unit="z")
+        a.architecture_assignment_list.append("A <= B")
+        expected = ["architecture y of z is",
+                    "begin",
+                    "\tA <= B;",
+                    "end architecture y;"]
+        actual = list(a())
+
+        self.assertSequenceEqual(expected, actual)
+
+    def test_PortMap(self):
+        port_map = PortMap(map_name="something", component_name="lstm")
+        port_map.signal_list.append("x => y")
+        expected = ["something: lstm",
+                    "port map (",
+                    "\tx => y",
+                    ");"]
+        actual = list(port_map())
+
+        self.assertSequenceEqual(expected, actual)
+
+    def test_Architecture_with_port_map(self):
+        architecture = Architecture(identifier="lstm", design_unit="rtl_lstm")
+        port_map = PortMap(map_name="something", component_name="sigmoid")
+        port_map.signal_list.append("x => y")
+        port_map.signal_list.append("a => b")
+        architecture.architecture_port_map_list.append(port_map)
+
+        expected = ["architecture lstm of rtl_lstm is",
+                    "begin",
+                    "\tsomething: sigmoid",
+                    "\tport map (",
+                    "\t\tx => y,",
+                    "\t\ta => b"
+                    "\t);"
+                    "end architecture rtl_lstm;"
+                    ]
+        actual = list(architecture())
+
+        self.assertSequenceEqual(expected, actual)
+
 
 
 example = """
