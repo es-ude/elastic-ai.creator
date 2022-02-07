@@ -112,6 +112,8 @@ class Architecture:
         self.design_unit = design_unit
         self._architecture_declaration_list = InterfaceList()
         self._architecture_component_list = InterfaceList()
+        self._architecture_assignment_list = InterfaceList()
+        self._architecture_port_map_list = []
         self._architecture_statement_part = None
 
     @property
@@ -138,6 +140,22 @@ class Architecture:
     def architecture_component_list(self, value):
         self._architecture_component_list = InterfaceList(value)
 
+    @property
+    def architecture_assignment_list(self):
+        return self._architecture_assignment_list
+
+    @architecture_assignment_list.setter
+    def architecture_assignment_list(self, value):
+        self._architecture_assignment_list = InterfaceList(value)
+
+    @property
+    def architecture_port_map_list(self):
+        return self._architecture_port_map_list
+
+    @architecture_port_map_list.setter
+    def architecture_port_map_list(self, value):
+        self._architecture_port_map_list = [value]
+
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
@@ -151,6 +169,14 @@ class Architecture:
                 self._architecture_component_list()
             )
         yield f"{Keywords.BEGIN.value}"
+        if len(self._architecture_assignment_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                _add_semicolons(self._architecture_assignment_list(), semicolon_last=True)
+            )
+        if len(self._architecture_port_map_list) > 0:
+            for portmap in self.architecture_port_map_list:
+                yield from _indent_and_filter_non_empty_lines(portmap())
+
         if self._architecture_statement_part:
             yield from _indent_and_filter_non_empty_lines(
                 self._architecture_statement_part()
@@ -328,6 +354,27 @@ class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
         )
 
 
+class PortMap:
+    def __init__(self, map_name, component_name):
+        self.map_name = map_name
+        self.component_name = component_name
+        self._signal_list = InterfaceList()
+
+    @property
+    def signal_list(self):
+        return self._signal_list
+
+    @signal_list.setter
+    def signal_list(self, value):
+        self._signal_list = InterfaceList(value)
+
+    def __call__(self) -> Code:
+        yield f"{self.map_name}: {self.component_name}"
+        yield f"port map ("
+        yield from _indent_and_filter_non_empty_lines(_add_comma(self._signal_list()))
+        yield ");"
+
+
 class InterfaceList(CodeGeneratorConcatenation):
     pass
 
@@ -357,6 +404,12 @@ def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
     yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
+
+
+def _add_comma(lines: Code, comma_last: bool = False) -> Code:
+    temp = tuple(lines)
+    yield from (f"{line}," for line in temp[:-1])
+    yield f"{temp[-1]}," if comma_last else f"{temp[-1]}"
 
 
 def _append_semicolons_to_lines(lines: Code) -> Code:
