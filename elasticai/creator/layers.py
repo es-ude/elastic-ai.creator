@@ -264,6 +264,11 @@ class QConv2d(torch.nn.Conv2d):
 
 
 class ChannelShuffle(torch.nn.Module):
+    """
+    Implementation of Channel Shuffle according to Shufflenet https://arxiv.org/pdf/1707.01083v2.pdf
+    the torch implementation  is missing the implementation for the derivative
+    
+    """
     def __init__(self, groups):
         super(ChannelShuffle, self).__init__()
         self.groups = groups

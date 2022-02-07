@@ -52,6 +52,13 @@ class test_Io_table_builder(unittest.TestCase):
         Iotable = IOTable(inputs, outputs)
         dict = Iotable.get_table_as_dict()
         self.assertTrue((dict == {(1,): (2,), (2,): (3,), (3,): (4,)}))
+        
+    def test_io_repr_basic(self) -> None:
+        inputs = torch.tensor([[1], [2], [3]])
+        outputs = torch.tensor([[2], [3], [4]])
+        Iotable = IOTable(inputs, outputs)
+        repr = Iotable.__repr__()
+        self.assertEqual(repr,"[1]:[2], [2]:[3], [3]:[4]")
 
     def test_create_io_dict_depthwise(self) -> None:
         io_list = [

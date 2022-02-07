@@ -13,6 +13,14 @@ class IOTable:
 
     def __getitem__(self, item):
         return (self.inputs[item], self.outputs[item])
+    
+    def __repr__(self):
+        repr = ""
+        for input,output in zip(self.inputs,self.outputs):
+            repr += f"{input.tolist()}:{output.tolist()}"
+            if torch.all(input != self.inputs[-1]):
+                repr += ", "
+        return repr
 
     def get_table_as_dict(self) -> Dict:
         """given a list or single input,output table pair will return a list of dictionaries for each io pair. Said tables will be flatenned.
