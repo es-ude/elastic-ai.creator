@@ -6,8 +6,18 @@ from torch.nn import Parameter
 
 
 def randomMask4D(out_channels:int, kernel_size: Union[int,Tuple], in_channels:int, groups:int, params_per_channel:int):
+    """
+    Creates a 4d mask with a  number of nonzero elements per out channels (index 0) equals to the params_per_channel randomly selected
+    Args:
+        out_channels: 
+        kernel_size: 
+        in_channels: 
+        groups: 
+        params_per_channel: 
 
+    Returns:
 
+    """
     if isinstance(kernel_size, int):
         kernel_size = (kernel_size, kernel_size)
     mask = Parameter(torch.zeros((out_channels, in_channels // groups, *kernel_size)),
@@ -22,7 +32,22 @@ def randomMask4D(out_channels:int, kernel_size: Union[int,Tuple], in_channels:in
 
 
 
-def fixedOffsetMask4D(out_channels:int, kernel_size: Union[int, Tuple], in_channels:int, groups:int, axis_width:int, offset_axis = 1):
+def fixed_offset_mask4D(out_channels:int, kernel_size: Union[int, Tuple], in_channels:int, groups:int, axis_width:int, offset_axis = 1):
+    """
+    Creates a 4d mask with a  offset per out channel, on each channel each element of the offset indices part of the offset axis is set to 1. Can select more than 1 by setting an axis width.
+    The offset will wrap over the axis so index % len(axis)
+
+    Args:
+        out_channels: 
+        kernel_size: 
+        in_channels: 
+        groups: 
+        axis_width: 
+        offset_axis: 
+
+    Returns:
+
+    """
     if isinstance(kernel_size, int):
         kernel_size = (kernel_size, kernel_size)
     mask = Parameter(torch.zeros((out_channels, in_channels // groups, *kernel_size)),
@@ -41,4 +66,15 @@ def fixedOffsetMask4D(out_channels:int, kernel_size: Union[int, Tuple], in_chann
             mask[i, :, :, axis_indices] = 1
     
     return mask
+
+class fixedOffsetMask4D(torch.nn.Module):
+    def __init__(self, out_channels:int, kernel_size: Union[int, Tuple], in_channels:int, groups:int, axis_width:int, offset_axis = 1):
+        super().__init__()
+        self.mask = fixed_offset_mask4D(out_channels=out_channels, kernel_size=kernel_size, in_channels=in_channels, groups=groups, axis_width=axis_width, offset_axis = offset_axis)
+
+    def forward(self, input):
+        return input * self.mask
+
+        
+    
 
