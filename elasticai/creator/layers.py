@@ -421,7 +421,7 @@ class QLSTM(torch.nn.Module):
         return outputs, state
 
 
-class BatchNormedActivatedConv(torch.nn.Module):
+class BatchNormedActivatedConv1d(torch.nn.Module):
     """Applies a convolution followed by a batchnorm and an activation function.
     The BatchNorm is not performing an affine translation, instead we incorporate
     a trainable scaling factor that is applied to each channel before the application
@@ -464,14 +464,14 @@ class BatchNormedActivatedConv(torch.nn.Module):
         return x
 
 
-def define_batch_normed_convolution(activation, channel_multiplexing_factor):
+def define_batch_normed_convolution_1d(activation, channel_multiplexing_factor):
     """Allows to define a new `BatchNormedActivationConvolution` that uses `activation` for its activation function.
     The `channel_multiplexing_factor` will be used by calling modules to determine if the activation function will
     change the number of channels, like the `ResidualBinarization` does.
     This way we can determine the input shape for following layers."""
 
     def wrapper(cls):
-        class Wrapped(BatchNormedActivatedConv):
+        class Wrapped(BatchNormedActivatedConv1d):
             def __init__(self, kernel_size, in_channels, out_channels, groups, bias):
                 super().__init__(
                     activation=activation,
@@ -488,25 +488,25 @@ def define_batch_normed_convolution(activation, channel_multiplexing_factor):
     return wrapper
 
 
-@define_batch_normed_convolution(Ternarize, 1)
-class TernaryConvolution:
+@define_batch_normed_convolution_1d(Ternarize, 1)
+class TernaryConvolution1d:
     pass
 
 
-@define_batch_normed_convolution(QuantizeTwoBit, 2)
-class MultilevelResidualBinarizationConv:
+@define_batch_normed_convolution_1d(QuantizeTwoBit, 2)
+class MultilevelResidualBinarizationConv1d:
     pass
 
 
-@define_batch_normed_convolution(Binarize, 1)
-class BinaryActivatedConv:
+@define_batch_normed_convolution_1d(Binarize, 1)
+class BinaryActivatedConv1d:
     pass
 
 
 class SplitConvolutionBase(torch.nn.Module):
     def __init__(
         self,
-        convolution: BatchNormedActivatedConv,
+        convolution: BatchNormedActivatedConv1d,
         kernel_size,
         in_channels,
         out_channels,
@@ -585,21 +585,21 @@ def define_split_convolution(
 
 
 @define_split_convolution(
-    BinaryActivatedConv, _channel_multiplexing_factor=1, input_domain_elements=[-1, 1]
+    BinaryActivatedConv1d, _channel_multiplexing_factor=1, input_domain_elements=[-1, 1]
 )
 class BinarySplitConv:
     pass
 
 
 @define_split_convolution(
-    TernaryConvolution, _channel_multiplexing_factor=1, input_domain_elements=[-1, 0, 1]
+    TernaryConvolution1d, _channel_multiplexing_factor=1, input_domain_elements=[-1, 0, 1]
 )
 class TernarySplitConv:
     pass
 
 
 @define_split_convolution(
-    MultilevelResidualBinarizationConv,
+    MultilevelResidualBinarizationConv1d,
     _channel_multiplexing_factor=2,
     input_domain_elements=[-1, 1],
 )
