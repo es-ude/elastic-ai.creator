@@ -60,3 +60,16 @@ However as mentioned above there is a discrepancy between the software neural ne
 ### Interlayer Dataflow
 
 Additionally we need to express how outputs of one table are connected to the inputs of another table. Contrary to the above *intralayer dataflow* this will also involve buffering and striding.
+The simplest solution would be to enumerate inputs and outputs and apply a mapping $f: \mathbb{N} \to \mathbb{N}$ to them that assigns an input of layer $h_{i+1}$ to each output of $h_i$. To model this behaviour we extend the layer protocol as follows
+```python
+class Layer(Protocol):
+  # ...
+  def outputs(self) -> Iterable[MultiDimensionalIndex]:
+    ...
+```
+An interlayer dataflow specification can then be expressed as
+```python
+class InterLayerDataflow(Protocol):
+  def __getitem__(self, output: MultiDimensionalIndex) -> tuple[Layer, MultiDimensionalIndex]:
+    ...
+```

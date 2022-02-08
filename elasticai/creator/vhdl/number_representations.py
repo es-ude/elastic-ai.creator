@@ -1,4 +1,4 @@
-from typing import Union, overload
+from typing import Union
 
 
 class FloatToSignedFixedPointConverter:
