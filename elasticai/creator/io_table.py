@@ -1,10 +1,8 @@
 from typing import List, Dict
-
-import numpy as np
-
+import torch
 
 class IOTable:
-    def __init__(self, inputs: np.ndarray, outputs: np.ndarray):
+    def __init__(self, inputs: torch.Tensor, outputs: torch.Tensor):
         self.inputs = inputs
         self.outputs = outputs
         pass
@@ -15,6 +13,14 @@ class IOTable:
 
     def __getitem__(self, item):
         return (self.inputs[item], self.outputs[item])
+    
+    def __repr__(self):
+        repr = ""
+        for input,output in zip(self.inputs,self.outputs):
+            repr += f"{input.tolist()}:{output.tolist()}"
+            if torch.all(input != self.inputs[-1]):
+                repr += ", "
+        return repr
 
     def get_table_as_dict(self) -> Dict:
         """given a list or single input,output table pair will return a list of dictionaries for each io pair. Said tables will be flatenned.
@@ -52,7 +58,7 @@ def group_tables(table: IOTable, groups: int) -> List[IOTable]:
     input_io_dim[1] = input_io_dim[1] // groups
     output_io_dim[1] = output_io_dim[1] // groups
     io_tables = [
-        (np.zeros(input_io_dim), np.zeros(output_io_dim)) for _ in range(groups)
+        (torch.zeros(input_io_dim), torch.zeros(output_io_dim)) for _ in range(groups)
     ]
     for num, (input, output) in enumerate(zip(inputs, outputs)):
         for group in range(groups):

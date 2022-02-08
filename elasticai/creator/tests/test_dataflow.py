@@ -184,21 +184,19 @@ class TestDataFlowSpecification(unittest.TestCase):
         actual = represent_grouped_DataFlowSpecification(
             (data_sink_a, data_sink_b, data_sink_c)
         )
-        print(actual)
-        self.assertSequenceEqual(
-            "[DataSource(source=DummyModule(), selection=(1, 1))] -> DummyModule(), DummyModule()\n"
-            "[DataSource(source=DummyModule(), selection=(1, 2))] -> DummyModule()\n",
+        self.assertEqual(
+            "[DataSource(source=DummyModule(), selection=(1, 1))] -> (DummyModule(), selection = 0), (DummyModule(), selection = 0)\n[DataSource(source=DummyModule(), selection=(1, 2))] -> (DummyModule(), selection = 0)\n",
             actual,
         )
 
     @staticmethod
     def create_sinks(
-        shapes: Iterable[tuple[int, ...]],
-        sources: Iterable[list[DataSource]],
+        shapes: Iterable[tuple[int]],
+        sources: Iterable[DataSource],
         nodes: Iterable[Union[TensorMapping, None]],
     ):
         return tuple(
-            DataSink(source, shape, node)
+            DataSink(source, shape, node, 0)
             for shape, source, node in zip(shapes, sources, nodes)
         )
 

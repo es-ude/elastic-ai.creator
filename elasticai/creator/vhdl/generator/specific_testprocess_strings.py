@@ -16,10 +16,10 @@ def get_test_process_for_one_input_results_in_one_output_string(
     test = ""
     if len(inputs) == len(outputs):
         for i in range(len(inputs)):
-            test = test + """        {input_name} <=  to_signed({input},16);
-        wait for 1*clk_period;
-        report "The value of '{output_name}' is " & integer'image(to_integer(unsigned({output_name})));
-        assert {output_name}={output} report "The test case {input} fail" severity failure;
+            test = test + """\t\t{input_name} <=  to_signed({input},16);
+\t\twait for 1*clk_period;
+\t\treport "The value of '{output_name}' is " & integer'image(to_integer(unsigned({output_name})));
+\t\tassert {output_name}={output} report "The test case {input} fail" severity failure;
 \n""".format(
                 input=inputs[i],
                 output=outputs[i],
@@ -50,22 +50,22 @@ def get_test_process_for_multiple_input_results_in_one_output_string(
         for i in range(len(outputs)):
             input_dict = inputs[i]
             for input in input_dict:
-                test = test + "        {input_name} <= {input};\n".format(
+                test = test + "\t\t{input_name} <= {input};\n".format(
                     input_name=input, input=input_dict[input]
                 )
             test = (
                 test
                 + """
-        reset <= '1';
-        wait for 2*clk_period;
-        wait until clock = '0';
-        reset <= '0';
-        wait until ready = '1';
+\t\treset <= '1';
+\t\twait for 2*clk_period;
+\t\twait until clock = '0';
+\t\treset <= '0';
+\t\twait until ready = '1';
 
-        report "expected output is {output}, value of '{output_name}' is " & integer'image(to_integer(signed({output_name})));
-        assert {output_name} = {output} report "The {counter}. test case fail" severity error;
-        reset <= '1';
-        wait for 1*clk_period;
+\t\treport "expected output is {output}, value of '{output_name}' is " & integer'image(to_integer(signed({output_name})));
+\t\tassert {output_name} = {output} report "The {counter}. test case fail" severity error;
+\t\treset <= '1';
+\t\twait for 1*clk_period;
 \n""".format(
                     output=outputs[i], output_name=output_name, counter=i
                 )

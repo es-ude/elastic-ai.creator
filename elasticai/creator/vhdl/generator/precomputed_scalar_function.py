@@ -1,23 +1,21 @@
 import math
-from abc import ABC, abstractmethod
 from itertools import chain
+from typing import Iterable
 
 import torch.nn
 
-from elasticai.creator.vhdl.generator.general_strings import (
-    get_libraries_string,
-    get_entity_or_component_string,
-    get_architecture_header_string,
-    get_architecture_end_string,
-)
 from elasticai.creator.vhdl.generator.generator_functions import (
     precomputed_scalar_function_process,
 )
-from elasticai.creator.vhdl.generator.vhd_strings import get_process_string
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
     DataType,
+    Architecture,
+    Process,
+    ContextClause,
+    LibraryClause,
+    UseClause,
 )
 
 
@@ -72,7 +70,16 @@ class PrecomputedScalarFunction:
     def architecture_name(self) -> str:
         return f"{self.component_name}_rtl"
 
-    def __call__(self) -> list[str]:
+    def __call__(self) -> Iterable[str]:
+        library = ContextClause(
+            library_clause=LibraryClause(logical_name_list=["ieee"]),
+            use_clause=UseClause(
+                selected_names=[
+                    "ieee.std_logic_1164.all",
+                    "ieee.numeric_std.all",
+                ]
+            ),
+        )
         entity = Entity(self.component_name)
         entity.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
@@ -82,18 +89,22 @@ class PrecomputedScalarFunction:
             "x : in signed(DATA_WIDTH-1 downto 0)",
             "y : out signed(DATA_WIDTH-1 downto 0)",
         ]
-        code = "\n".join(chain([get_libraries_string()], chain(entity()), [""]))
-        code += get_architecture_header_string(
-            architecture_name=self.architecture_name, component_name=self.component_name
-        )
-        code += get_process_string(
-            component_name=self.component_name,
+        process = Process(
+            identifier=self.component_name,
             lookup_table_generator_function=precomputed_scalar_function_process(
                 x_list=self.x, y_list=self.y
             ),
+            input_name="x",
         )
-        code += get_architecture_end_string(architecture_name=self.architecture_name)
-        return [code]
+        process.process_declaration_list = ["variable int_x: integer := 0"]
+        process.process_statements_list = ["int_x := to_integer(x)"]
+        architecture = Architecture(
+            identifier=self.architecture_name,
+            design_unit=self.component_name,
+        )
+        architecture.architecture_statement_part = process
+        code = chain(chain(library(), entity()), architecture())
+        return code
 
 
 class Sigmoid(PrecomputedScalarFunction):
@@ -112,10 +123,6 @@ class Sigmoid(PrecomputedScalarFunction):
             component_name=component_name,
         )
 
-    def build(self) -> str:
-        lines_of_code = self.__call__()
-        return "\n".join(lines_of_code)
-
 
 class Tanh(PrecomputedScalarFunction):
     def __init__(self, data_width, frac_width, x, component_name=None):
@@ -132,7 +139,3 @@ class Tanh(PrecomputedScalarFunction):
             y=y_list,
             component_name=component_name,
         )
-
-    def build(self) -> str:
-        lines_of_code = self.__call__()
-        return "\n".join(lines_of_code)

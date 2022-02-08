@@ -1,6 +1,7 @@
 from torch import nn
-
-from elasticai.creator.layers import QConv1d, QLinear
+from torch.nn import Conv1d, Linear, Conv2d
+from torch.nn.utils import parametrize
+from elasticai.creator.layers import QConv1d, QLinear, QConv2d
 
 """
 Modules that work as a sequence of 3  or more layers. Useful for writing more compact models
@@ -9,7 +10,7 @@ Modules that work as a sequence of 3  or more layers. Useful for writing more co
 
 # when applying constraints to blocks loop with model.modules()
 # finish with nn.Identity as an activation if not using Softmax
-class QConv1d_block(nn.Module):
+class Conv1d_block(nn.Module):
     """
     Sequence QConv1d - batchNorm - activation
     uses default batchNorm parameters. Most other parameters affect QConv1d
@@ -34,19 +35,19 @@ class QConv1d_block(nn.Module):
     ):
         super().__init__()
 
-        self.conv1d = QConv1d(
+        self.conv1d = Conv1d(
             in_channels,
             out_channels,
             kernel_size,
-            conv_quantizer,
             stride=stride,
             dilation=dilation,
             groups=groups,
             bias=bias,
             padding=padding,
             padding_mode=padding_mode,
-            constraints=constraints,
         )
+        if conv_quantizer is not None:
+            parametrize.register_parametrization(self.conv1d, "weight", conv_quantizer)
         self.batch_norm = nn.BatchNorm1d(out_channels)
         self.activation = activation
 
@@ -62,12 +63,64 @@ class QConv1d_block(nn.Module):
         x = self.activation(x)
         return x
 
-
-class QLinear_block(nn.Module):
+class Conv2d_block(nn.Module):
     """
-    Sequence QLinear - batchNorm - activation
+    Sequence Conv2d - batchNorm - activation
+    uses default batchNorm parameters. Most other parameters affect QConv1d
+    @param conv_quantizer: The quantizer of the QConv1d
+    @param activation: an instance of the activation
+    """
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        conv_quantizer,
+        activation,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        bias=True,
+        padding_mode="zeros",
+    ):
+        super().__init__()
+
+        self.conv2d = Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+            padding=padding,
+            padding_mode=padding_mode,
+        )
+        if conv_quantizer is not None:
+            parametrize.register_parametrization(self.conv2d, "weight", conv_quantizer)
+        self.batch_norm = nn.BatchNorm2d(out_channels)
+        self.activation = activation
+
+    @property
+    def codomain(self):
+        if self.activation is not None and hasattr(self.activation, "codomain"):
+            return self.activation.codomain
+        return None
+
+    def forward(self, input):
+        x = self.conv2d(input)
+        x = self.batch_norm(x)
+        x = self.activation(x)
+        return x
+
+
+class Linear_block(nn.Module):
+    """
+    Sequence Linear - batchNorm - activation
     uses default batchNorm parameters. Most other parameters affect Qconv1d
-    @param linear_quantizer: The quantizer of the QConv1d
+    @param linear_quantizer: The quantizer of the linear weight
     @param activation: an instance of the activation
     """
 
@@ -81,13 +134,13 @@ class QLinear_block(nn.Module):
         constraints: list = None,
     ):
         super().__init__()
-        self.linear = QLinear(
+        self.linear = Linear(
             in_features,
             out_features,
-            linear_quantizer,
             bias=bias,
-            constraints=constraints,
         )
+        if linear_quantizer is not None:
+            parametrize.register_parametrization(self.linear, "weight", linear_quantizer)
         self.batchnorm = nn.BatchNorm1d(out_features)
         self.activation = activation
 
@@ -98,9 +151,9 @@ class QLinear_block(nn.Module):
         return x
 
 
-class depthwiseQConv1d_block(nn.Module):
+class depthwiseConv1d_block(nn.Module):
     """
-    Sequence depthwise QConv1d - batchNorm -activation, 1x1 QConv1d - batchnorm - activation
+    Sequence depthwise Conv1d - batchNorm -activation, 1x1 Conv1d - batchnorm - activation
     uses default batchNorm parameters. Most other parameters affect Qconv1d
     Args:
      conv_quantizer: The quantizer of the first QConv1d
@@ -128,32 +181,33 @@ class depthwiseQConv1d_block(nn.Module):
     ):
         super().__init__()
 
-        self.depthwiseConv1d = QConv1d(
+        self.depthwiseConv1d = Conv1d(
             in_channels=in_channels,
             out_channels=in_channels,
             kernel_size=kernel_size,
-            quantizer=conv_quantizer,
             stride=stride,
             dilation=dilation,
             groups=in_channels,
             bias=bias,
             padding=padding,
             padding_mode=padding_mode,
-            constraints=constraints,
         )
+        if conv_quantizer is not None:
+            parametrize.register_parametrization(self.depthwiseConv1d, "weight", conv_quantizer)
         self.batchnorm = nn.BatchNorm1d(in_channels)
         self.activation = activation
 
-        self.pointwiseConv1d = QConv1d(
+        self.pointwiseConv1d = Conv1d(
             in_channels,
             out_channels,
             1,
-            pointwise_quantizer,
             stride=1,
             groups=1,
             bias=bias,
-            constraints=pointwise_constraints,
+
         )
+        if conv_quantizer is not None:
+            parametrize.register_parametrization(self.pointwiseConv1d, "weight", pointwise_quantizer)
         self.pointwise_batchnorm = nn.BatchNorm1d(out_channels)
         self.pointwise_activation = pointwise_activation
 

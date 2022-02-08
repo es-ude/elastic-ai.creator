@@ -41,6 +41,7 @@ class DataSink(NamedTuple):
     sources: list[DataSource]
     shape: tuple[int, ...]
     node : Union[TensorMapping,None]
+    selection: Union[int, slice, Indices]
 
 
 DataFlowSpecification = tuple[DataSink, ...]
@@ -76,6 +77,8 @@ def represent_grouped_DataFlowSpecification(dataflowspecification:DataFlowSpecif
     for group in grouped_dataflow:
         representation += f"{repr(group[0].sources)} ->"
         for sink in group:
-            representation +=f" {sink.node}," if sink != group[-1] else f" {sink.node}"
+            representation +=f" ({sink.node.__repr__()}, selection = {sink.selection.__repr__()})" 
+            if sink != group[-1]:
+                representation+=","
         representation += "\n"
     return representation
