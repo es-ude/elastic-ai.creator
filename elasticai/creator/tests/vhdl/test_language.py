@@ -240,7 +240,6 @@ class EntityTest(TestCase):
                     "\tA <= B;",
                     "end architecture y;"]
         actual = list(a())
-
         self.assertSequenceEqual(expected, actual)
 
     def test_PortMap(self):
@@ -251,27 +250,25 @@ class EntityTest(TestCase):
                     "\tx => y",
                     ");"]
         actual = list(port_map())
-
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_port_map(self):
-        architecture = Architecture(identifier="lstm", design_unit="rtl_lstm")
+        architecture = Architecture(identifier="lstm_cell_rtl", design_unit="lstm_cell")
         port_map = PortMap(map_name="something", component_name="sigmoid")
         port_map.signal_list.append("x => y")
         port_map.signal_list.append("a => b")
         architecture.architecture_port_map_list.append(port_map)
 
-        expected = ["architecture lstm of rtl_lstm is",
+        expected = ["architecture lstm_cell_rtl of lstm_cell is",
                     "begin",
                     "\tsomething: sigmoid",
                     "\tport map (",
                     "\t\tx => y,",
-                    "\t\ta => b"
-                    "\t);"
-                    "end architecture rtl_lstm;"
+                    "\t\ta => b",
+                    "\t);",
+                    "end architecture lstm_cell_rtl;"
                     ]
         actual = list(architecture())
-
         self.assertSequenceEqual(expected, actual)
 
 

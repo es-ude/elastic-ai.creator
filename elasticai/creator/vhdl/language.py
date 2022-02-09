@@ -113,7 +113,7 @@ class Architecture:
         self._architecture_declaration_list = InterfaceList()
         self._architecture_component_list = InterfaceList()
         self._architecture_assignment_list = InterfaceList()
-        self._architecture_port_map_list = []
+        self._architecture_port_map_list = InterfaceList()
         self._architecture_statement_part = None
 
     @property
@@ -154,7 +154,7 @@ class Architecture:
 
     @architecture_port_map_list.setter
     def architecture_port_map_list(self, value):
-        self._architecture_port_map_list = [value]
+        self._architecture_port_map_list = InterfaceList(value)
 
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
@@ -174,8 +174,7 @@ class Architecture:
                 _add_semicolons(self._architecture_assignment_list(), semicolon_last=True)
             )
         if len(self._architecture_port_map_list) > 0:
-            for portmap in self.architecture_port_map_list:
-                yield from _indent_and_filter_non_empty_lines(portmap())
+            yield from _indent_and_filter_non_empty_lines(self.architecture_port_map_list())
 
         if self._architecture_statement_part:
             yield from _indent_and_filter_non_empty_lines(
