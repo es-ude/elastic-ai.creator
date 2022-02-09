@@ -201,14 +201,13 @@ begin
         y => o
     );
 
-    H_OUT_PROCESS: process(o,c_new)
+    H_OUT_process: process(o,c_new)
     begin
         h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
-    end process;
+    end process H_OUT_process;
 
-end architecture lstm_cell_rtl ; -- lstm_cell_rtl"""
+end architecture lstm_cell_rtl;"""
 
         string_io = StringIO("")
         lstm_cell_code = build_lstm_cell(string_io)
-
         self.check_generated_code(expected_code, lstm_cell_code)
