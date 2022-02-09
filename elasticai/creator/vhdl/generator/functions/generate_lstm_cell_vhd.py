@@ -1,27 +1,24 @@
 from io import StringIO
 
-from elasticai.creator.vhdl.generator.general_strings import (
-    get_libraries_string,
-    get_entity_or_component_string,
-    get_architecture_header_string,
-    get_signal_definitions_string,
-    get_architecture_begin_string,
-    get_variable_definitions_string,
-    get_architecture_end_string,
-)
 from elasticai.creator.vhdl.generator.generator_functions import (
     generate_signal_definitions_for_lstm,
 )
 from elasticai.creator.vhdl.generator.vhd_strings import (
     get_file_path_string,
-    get_gate_definition_string,
-    get_port_map_string,
-    get_define_process_string,
 )
 from elasticai.creator.vhdl.language import (
-    LibraryClause, UseClause, Entity, InterfaceVariable, DataType, Mode, ComponentDeclaration, Architecture,
+    LibraryClause,
+    UseClause,
+    Entity,
+    InterfaceVariable,
+    DataType,
+    Mode,
+    ComponentDeclaration,
+    Architecture,
     InterfaceSignal,
-    InterfaceList, Process, ContextClause
+    Process,
+    ContextClause,
+    PortMap
 )
 
 component_name = "lstm_cell"
@@ -53,9 +50,6 @@ def build_lstm_cell(writer: StringIO):
             ]
         ),
     )
-    for line in lib():
-        writer.write(line)
-        writer.write("\n")
 
     entity = Entity(identifier="lstm_cell")
     entity.generic_list.append(
@@ -100,9 +94,6 @@ def build_lstm_cell(writer: StringIO):
                           range="DATA_WIDTH-1 downto 0")
     )
 
-    for line in entity():
-        writer.write(line)
-        writer.write("\n")
     # -------------------------------------------------- #
     # define the architecture
     architecture = Architecture(identifier="lstm_cell_rtl",
@@ -303,7 +294,6 @@ def build_lstm_cell(writer: StringIO):
     architecture.architecture_component_list.append(tanh_component)
 
     # signal assignment
-    # TODO: implement signal assignment
     architecture.architecture_assignment_list.append(
         "c_out <= c_new_wo_activation"
     )
@@ -312,135 +302,129 @@ def build_lstm_cell(writer: StringIO):
     )
 
     # port map
-    # TODO:  implement port map
+    portmap = PortMap(
+        map_name="FORGET_GATE_MAC",
+        component_name="mac_async"
+    )
+    portmap.signal_list.append("x1 => x")
+    portmap.signal_list.append("x2 => h_in")
+    portmap.signal_list.append("w1 => wif")
+    portmap.signal_list.append("w2 => whf")
+    portmap.signal_list.append("b => bf")
+    portmap.signal_list.append("y => f_wo_activation")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="FORGET_GATE_SIGMOID",
+        component_name="sigmoid"
+    )
+    portmap.signal_list.append("f_wo_activation")
+    portmap.signal_list.append("f")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="INPUT_GATE_MAC",
+        component_name="mac_async"
+    )
+    portmap.signal_list.append("x1 => x")
+    portmap.signal_list.append("x2 => h_in")
+    portmap.signal_list.append("w1 => wii")
+    portmap.signal_list.append("w2 => whi")
+    portmap.signal_list.append("b => bi")
+    portmap.signal_list.append("y => i_wo_activation")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="INPUT_GATE_SIGMOID",
+        component_name="sigmoid"
+    )
+    portmap.signal_list.append("i_wo_activation")
+    portmap.signal_list.append("i")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="CELL_GATE_MAC",
+        component_name="mac_async"
+    )
+    portmap.signal_list.append("x1 => x")
+    portmap.signal_list.append("x2 => h_in")
+    portmap.signal_list.append("w1 => wig")
+    portmap.signal_list.append("w2 => whg")
+    portmap.signal_list.append("b => bg")
+    portmap.signal_list.append("y => g_wo_activation")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="CELL_GATE_TANH",
+        component_name="tanh"
+    )
+    portmap.signal_list.append("g_wo_activation")
+    portmap.signal_list.append("g")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="NEW_CELL_STATE_MAC",
+        component_name="mac_async"
+    )
+    portmap.signal_list.append("x1 => f")
+    portmap.signal_list.append("x2 => i")
+    portmap.signal_list.append("w1 => c_in")
+    portmap.signal_list.append("w2 => g")
+    portmap.signal_list.append("b => (others=>'0')")
+    portmap.signal_list.append("y => c_new_wo_activation")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="NEW_CELL_STATE_TANH",
+        component_name="tanh"
+    )
+    portmap.signal_list.append("c_new_wo_activation")
+    portmap.signal_list.append("c_new")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="MAC_ASYNC_4",
+        component_name="mac_async"
+    )
+    portmap.signal_list.append("x1 => x")
+    portmap.signal_list.append("x2 => h_in")
+    portmap.signal_list.append("w1 => wio")
+    portmap.signal_list.append("w2 => who")
+    portmap.signal_list.append("b => bo")
+    portmap.signal_list.append("y => o_wo_activation")
+    architecture.architecture_port_map_list.append(portmap)
+
+    portmap = PortMap(
+        map_name="SIGMOID_1",
+        component_name="sigmoid"
+    )
+    portmap.signal_list.append("x => o_wo_activation")
+    portmap.signal_list.append("y => o")
+    architecture.architecture_port_map_list.append(portmap)
 
     # process
-    # TODO : refactor the process in langauge to let it have no loookup_table !
-    process_content = Process(identifier="H_OUT_PROCESS", input_name="o,c_new",
-                              lookup_table_generator_function=[""])
+    process_content = Process(
+        identifier="H_OUT",
+        input_name="o,c_new",
+        lookup_table_generator_function=[""]
+    )
     process_content.process_statements_list.append(
-        "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);")
+        "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)"
+    )
+    architecture.architecture_port_map_list.append(process_content)
+
+    # write it in StringIO
+    for line in lib():
+        writer.write(line)
+        writer.write("\n")
+
+    for line in entity():
+        writer.write(line)
+        writer.write("\n")
 
     for line in architecture():
         writer.write(line)
         writer.write("\n")
-
-    # old ones !!
-    # port mapping
-    writer.write(
-        get_port_map_string(
-            map_name="FORGET_GATE_MAC",
-            component_name="mac_async",
-            signals={
-                "x1": "x",
-                "x2": "h_in",
-                "w1": "wif",
-                "w2": "whf",
-                "b": "bf",
-                "y": "f_wo_activation",
-            },
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="FORGET_GATE_SIGMOID",
-            component_name="sigmoid",
-            signals=["f_wo_activation", "f"],
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="INPUT_GATE_MAC",
-            component_name="mac_async",
-            signals={
-                "x1": "x",
-                "x2": "h_in",
-                "w1": "wii",
-                "w2": "whi",
-                "b": "bi",
-                "y": "i_wo_activation",
-            },
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="INPUT_GATE_SIGMOID",
-            component_name="sigmoid",
-            signals=["i_wo_activation", "i"],
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="CELL_GATE_MAC",
-            component_name="mac_async",
-            signals={
-                "x1": "x",
-                "x2": "h_in",
-                "w1": "wig",
-                "w2": "whg",
-                "b": "bg",
-                "y": "g_wo_activation",
-            },
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="CELL_GATE_TANH",
-            component_name="tanh",
-            signals=["g_wo_activation", "g"],
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="NEW_CELL_STATE_MAC",
-            component_name="mac_async",
-            signals={
-                "x1": "f",
-                "x2": "i",
-                "w1": "c_in",
-                "w2": "g",
-                "b": "(others=>'0')",
-                "y": "c_new_wo_activation",
-            },
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="NEW_CELL_STATE_TANH",
-            component_name="tanh",
-            signals=["c_new_wo_activation", "c_new"],
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="MAC_ASYNC_4",
-            component_name="mac_async",
-            signals={
-                "x1": "x",
-                "x2": "h_in",
-                "w1": "wio",
-                "w2": "who",
-                "b": "bo",
-                "y": "o_wo_activation",
-            },
-        )
-    )
-    writer.write(
-        get_port_map_string(
-            map_name="SIGMOID_1",
-            component_name="sigmoid",
-            signals={"x": "o_wo_activation", "y": "o"},
-        )
-    )
-    # write process
-    writer.write(
-        get_define_process_string(
-            process_name="H_OUT_PROCESS",
-            sensitive_signals_list=["o", "c_new"],
-            behavior="h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
-        )
-    )
-    writer.write(get_architecture_end_string(architecture_name=architecture_name))
 
     code = writer.getvalue()
     return code
