@@ -257,6 +257,7 @@ class EntityTest(TestCase):
         port_map = PortMap(map_name="something", component_name="sigmoid")
         port_map.signal_list.append("x => y")
         port_map.signal_list.append("a => b")
+        port_map.signal_list.append("c => d")
         architecture.architecture_port_map_list.append(port_map)
 
         expected = ["architecture lstm_cell_rtl of lstm_cell is",
@@ -264,13 +265,36 @@ class EntityTest(TestCase):
                     "\tsomething: sigmoid",
                     "\tport map (",
                     "\t\tx => y,",
-                    "\t\ta => b",
+                    "\t\ta => b,",
+                    "\t\tc => d",
                     "\t);",
                     "end architecture lstm_cell_rtl;"
                     ]
         actual = list(architecture())
         self.assertSequenceEqual(expected, actual)
 
+    def test_Architecture_with_process_statements_list(self):
+        dummy_process = Process(
+            identifier="H_OUT",
+            lookup_table_generator_function=[""],
+            input_name="o,c_new",
+        )
+        dummy_process.process_statements_list.append(
+            "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)"
+        )
+        a = Architecture(identifier="y", design_unit="z")
+        a.architecture_statement_part = dummy_process
+        expected = [
+            "architecture y of z is",
+            "begin",
+            "\tH_OUT_process: process(o,c_new)",
+            "\tbegin",
+            "\t\th_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
+            "\tend process H_OUT_process;",
+            "end architecture y;",
+        ]
+        actual = list(a())
+        self.assertSequenceEqual(expected, actual)
 
 
 example = """
