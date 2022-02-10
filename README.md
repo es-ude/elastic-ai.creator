@@ -253,7 +253,23 @@ The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests
 
 ## VHDL Generation
 
-We follow the VHDL code guidelines of this [book](https://github.com/fabriziotappero/Free-Range-VHDL-book).
+We follow the VHDL code specification of IEEE Std 1076-1993.
+
+### Syntax Checking 
+
+[GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
+The command is as follows:
+```
+ghdl -s path/to/vhdl/file
+```
+So, for example for checking the sigmoid source vhdl files in our project we can run:
+```
+ghdl -s elasticai/creator/vhdl/source/sigmoid.vhd
+```
+For checking all vhdl files together in our project we can just run:
+```
+ghdl -s elasticai/creator/**/*.vhd
+```
 
 ## Developers Guide
 * We use [black](https://black.readthedocs.io/en/stable/index.html) for code formatting. For instruction on setup with your IDE please refer to https://black.readthedocs.io/en/stable/integrations/editors.html#editor-integration.

@@ -1,14 +1,12 @@
 import unittest
 import torch
+import random
+import numpy as np
 
 from elasticai.creator.systemTests.models_definition import (
     create_qtorch_model,
     create_brevitas_model,
-    define_weight,
 )
-
-# for reproducability
-torch.manual_seed(0)
 
 
 class InputSystemTest(unittest.TestCase):
@@ -17,11 +15,20 @@ class InputSystemTest(unittest.TestCase):
     Check if the output is the same
     """
 
+    def setUp(self) -> None:
+        self.ensure_reproducibility()
+
+    @staticmethod
+    def ensure_reproducibility():
+        torch.manual_seed(0)
+        random.seed(0)
+        np.random.seed(0)
+
     def test_input(self) -> None:
         self.qtorch_model = create_qtorch_model()
+        # we think brevitas is manipulating some seed therefore we need to reset them again
+        self.ensure_reproducibility()
         self.brevitas_model = create_brevitas_model()
-        define_weight([layer for layer in self.qtorch_model])
-        define_weight([layer for layer in self.brevitas_model])
 
         output_qtorch = self.qtorch_model(torch.ones(1, 1, 100))
         output_brevitas = self.brevitas_model(torch.ones(1, 1, 100))
@@ -30,9 +37,9 @@ class InputSystemTest(unittest.TestCase):
 
     def test_bigger_input(self) -> None:
         self.qtorch_model = create_qtorch_model()
+        # we think brevitas is manipulating some seed therefore we need to reset them again
+        self.ensure_reproducibility()
         self.brevitas_model = create_brevitas_model()
-        define_weight([layer for layer in self.qtorch_model])
-        define_weight([layer for layer in self.brevitas_model])
 
         output_qtorch = self.qtorch_model(torch.ones(512, 1, 100))
         output_brevitas = self.brevitas_model(torch.ones(512, 1, 100))

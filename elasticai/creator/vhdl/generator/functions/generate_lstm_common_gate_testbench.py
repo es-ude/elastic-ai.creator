@@ -57,7 +57,7 @@ def main(path_to_testbench: str = "../../testbench/") -> None:
         "w": "W_MEM(to_integer(idx))",
     }
     variable_definitions_in_test_process_dict = {
-        "    vector_len": "to_unsigned(10, VECTOR_LEN_WIDTH)"
+        "\tvector_len": "to_unsigned(10, VECTOR_LEN_WIDTH)"
     }
     # Note, the two array below, is generated based on data_width and frac_width
     # excitation signals, as test inputs signal

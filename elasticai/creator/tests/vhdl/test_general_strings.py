@@ -139,9 +139,9 @@ class GeneralStringsTest(unittest.TestCase):
 
     def test_generate_signal_definitions(self) -> None:
         expected_inputs_lines = [
-            "    signal clk_period : time := 1 ns;",
-            "    signal test_input : signed(16-1 downto 0):=(others=>'0');",
-            "    signal test_output : signed(16-1 downto 0);",
+            "\tsignal clk_period : time := 1 ns;",
+            "\tsignal test_input : signed(16-1 downto 0):=(others=>'0');",
+            "\tsignal test_output : signed(16-1 downto 0);",
         ]
         signal_definition_string = get_signal_definitions_string(
             signal_dict={
@@ -157,14 +157,14 @@ class GeneralStringsTest(unittest.TestCase):
 
     def test_generate_signal_definitions_multiple(self) -> None:
         expected_inputs_lines = [
-            "    signal clk_period : time := 2 ps;",
-            "    signal clock : std_logic;",
-            "    signal reset, ready : std_logic:='0';",
-            "    signal X_MEM : RAM_ARRAY :=(others=>(others=>'0'));",
-            "    signal W_MEM : RAM_ARRAY:=(others=>(others=>'0'));",
-            "    signal x, w, y, b : signed(DATA_WIDTH-1 downto 0):=(others=>'0');",
-            "    signal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
-            "    signal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
+            "\tsignal clk_period : time := 2 ps;",
+            "\tsignal clock : std_logic;",
+            "\tsignal reset, ready : std_logic:='0';",
+            "\tsignal X_MEM : RAM_ARRAY :=(others=>(others=>'0'));",
+            "\tsignal W_MEM : RAM_ARRAY:=(others=>(others=>'0'));",
+            "\tsignal x, w, y, b : signed(DATA_WIDTH-1 downto 0):=(others=>'0');",
+            "\tsignal vector_len : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
+            "\tsignal idx : unsigned(VECTOR_LEN_WIDTH-1 downto 0):=(others=>'0');",
         ]
         signal_definition_string = get_signal_definitions_string(
             signal_dict={
@@ -195,7 +195,7 @@ class GeneralStringsTest(unittest.TestCase):
             self.assertEqual(expected_import_lines[i], lib_string.splitlines()[i])
 
     def test_generate_variable_definition(self) -> None:
-        expected_variable_lines = ["    clk <= clock;"]
+        expected_variable_lines = ["\tclk <= clock;"]
         variable_definition_string = get_variable_definitions_string(
             variable_dict={
                 "clk": "clock",

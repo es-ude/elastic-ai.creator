@@ -269,6 +269,19 @@ class QConv2d(torch.nn.Conv2d):
         )
 
 
+class ChannelShuffle(torch.nn.Module):
+    def __init__(self, groups):
+        super(ChannelShuffle, self).__init__()
+        self.groups = groups
+
+    def forward(self, x):
+        num_channels = x.data.size()[1]
+        original_shape = x.data.size()[2:]
+        x = x.view(x.data.size()[0],self.groups,num_channels//self.groups,*original_shape)
+        x = x.transpose(1, 2).contiguous()
+        return x.view(x.data.size()[0], num_channels, *original_shape)
+
+
 class QLinear(torch.nn.Linear):
     """
     Implementation of quantized Linear layer,all parameters are equivalent to the base pytorch class except for the quantizer and constraints.
