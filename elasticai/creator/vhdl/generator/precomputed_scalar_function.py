@@ -9,6 +9,7 @@ from elasticai.creator.vhdl.generator.generator_functions import (
 )
 from elasticai.creator.vhdl.language import (
     Entity,
+    ComponentDeclaration,
     InterfaceVariable,
     DataType,
     Architecture,
@@ -17,6 +18,7 @@ from elasticai.creator.vhdl.language import (
     LibraryClause,
     UseClause,
 )
+from elasticai.creator.vhdl.language_testbench import UUT
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -139,3 +141,83 @@ class Tanh(PrecomputedScalarFunction):
             y=y_list,
             component_name=component_name,
         )
+
+
+class SigmoidTestBench:
+    def __init__(
+        self, data_width, frac_width, x, y, component_name=None, process_instance=None
+    ):
+        self.component_name = self._get_lower_case_class_name_or_component_name(
+            component_name=component_name
+        )
+        self.data_width = data_width
+        self.frac_width = frac_width
+        self.x = x
+        self.y = y
+        self.process_instance = process_instance
+
+    @classmethod
+    def _get_lower_case_class_name_or_component_name(cls, component_name):
+        if component_name is None:
+            return cls.__name__.lower()
+        return component_name
+
+    @property
+    def file_name(self) -> str:
+        return f"{self.component_name}.vhd"
+
+    @property
+    def architecture_name(self) -> str:
+        return f"{self.component_name}_rtl"
+
+    def __call__(self) -> Iterable[str]:
+        library = ContextClause(
+            library_clause=LibraryClause(logical_name_list=["ieee"]),
+            use_clause=UseClause(
+                selected_names=[
+                    "ieee.std_logic_1164.all",
+                    "ieee.numeric_std.all",
+                ]
+            ),
+        )
+        entity = Entity(self.component_name)
+        entity.generic_list = [
+            f"DATA_WIDTH : integer := {self.data_width}",
+            f"FRAC_WIDTH : integer := {self.frac_width}",
+        ]
+        entity.port_list = [
+            "clk : out std_logic",
+        ]
+        process = Process(
+            identifier="clock",
+            lookup_table_generator_function=[""],
+        )
+        process.process_statements_list = [
+            "clk <= '0'",
+            "wait for clk_period/2",
+            "clk <= '1'",
+            "wait for clk_period/2",
+        ]
+        component = ComponentDeclaration(identifier="sigmoid")
+        component.generic_list = [
+            f"DATA_WIDTH : integer := {self.data_width}",
+            f"FRAC_WIDTH : integer := {self.frac_width}",
+        ]
+        component.port_list = [
+            "x : in signed(DATA_WIDTH-1 downto 0)",
+            "y : out signed(DATA_WIDTH-1 downto 0)",
+        ]
+        uut = UUT(identifier="sigmoid")
+        architecture = Architecture(
+            identifier=self.architecture_name,
+            design_unit=self.component_name,
+        )
+        architecture.architecture_declaration_list = [
+            "signal clk_period : time := 1 ns",
+            "signal test_input : signed(16-1 downto 0):=(others=>'0')",
+            "signal test_output : signed(16-1 downto 0)",
+        ]
+        architecture.architecture_declaration_part = component
+        architecture.architecture_statement_part = process
+        code = chain(chain(library(), entity()), architecture())
+        return code

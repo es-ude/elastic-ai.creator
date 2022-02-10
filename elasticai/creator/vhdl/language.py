@@ -111,6 +111,7 @@ class Architecture:
         self.identifier = identifier
         self.design_unit = design_unit
         self._architecture_declaration_list = InterfaceList()
+        self._architecture_declaration_part = None
         self._architecture_statement_part = None
 
     @property
@@ -120,6 +121,14 @@ class Architecture:
     @architecture_declaration_list.setter
     def architecture_declaration_list(self, value):
         self._architecture_declaration_list = InterfaceList(value)
+
+    @property
+    def architecture_declaration_part(self):
+        return self._architecture_declaration_part
+
+    @architecture_declaration_part.setter
+    def architecture_declaration_part(self, value):
+        self._architecture_declaration_part = value
 
     @property
     def architecture_statement_part(self):
@@ -137,6 +146,10 @@ class Architecture:
                     self._architecture_declaration_list(), semicolon_last=True
                 )
             )
+        if self._architecture_declaration_part:
+            yield from _indent_and_filter_non_empty_lines(
+                self._architecture_declaration_part()
+            )
         yield f"{Keywords.BEGIN.value}"
         if self._architecture_statement_part:
             yield from _indent_and_filter_non_empty_lines(
@@ -149,8 +162,8 @@ class Process:
     def __init__(
         self,
         identifier: str,
-        input_name: str,
         lookup_table_generator_function: CodeGenerator,
+        input_name: str = None,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
@@ -184,7 +197,10 @@ class Process:
         yield from self.lookup_table_generator_function
 
     def __call__(self) -> Code:
-        yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
+        if self.input:
+            yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
+        else:
+            yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}"
         yield from _indent_and_filter_non_empty_lines(self._header())
         yield f"{Keywords.BEGIN.value}"
         yield from _indent_and_filter_non_empty_lines(self._footer())
