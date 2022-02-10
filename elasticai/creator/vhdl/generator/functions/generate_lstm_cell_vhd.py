@@ -98,7 +98,7 @@ def build_lstm_cell(writer: StringIO):
     # define the architecture
     architecture = Architecture(identifier="lstm_cell_rtl",
                                 design_unit="lstm_cell")
-    # TODO: refactor this with some thing similar to precomputed scalar function!!
+    # TODO: refactor this with something similar to precomputed scalar function!!
     lstm_signal_definitions = generate_signal_definitions_for_lstm(
         data_width=DATA_WIDTH, frac_width=FRAC_WIDTH
     )
@@ -406,7 +406,6 @@ def build_lstm_cell(writer: StringIO):
     process_content = Process(
         identifier="H_OUT",
         input_name="o,c_new",
-        lookup_table_generator_function=[""]
     )
     process_content.process_statements_list.append(
         "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)"

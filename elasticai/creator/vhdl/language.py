@@ -188,7 +188,7 @@ class Process:
             self,
             identifier: str,
             input_name: str,
-            lookup_table_generator_function: CodeGenerator,
+            lookup_table_generator_function: CodeGenerator = None,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
@@ -219,7 +219,8 @@ class Process:
     def _footer(self) -> Code:
         if len(self.process_statements_list) > 0:
             yield from _append_semicolons_to_lines(self._process_statements_list)
-        yield from self.lookup_table_generator_function
+        if self.lookup_table_generator_function:
+            yield from self.lookup_table_generator_function
 
     def __call__(self) -> Code:
         yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"

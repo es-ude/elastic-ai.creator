@@ -276,7 +276,6 @@ class EntityTest(TestCase):
     def test_Architecture_with_process_statements_list(self):
         dummy_process = Process(
             identifier="H_OUT",
-            lookup_table_generator_function=[""],
             input_name="o,c_new",
         )
         dummy_process.process_statements_list.append(
