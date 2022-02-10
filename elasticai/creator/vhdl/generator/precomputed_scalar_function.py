@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Union
 
 import torch.nn
 
@@ -149,23 +149,15 @@ class Tanh(PrecomputedScalarFunction):
         return "\n".join(lines_of_code)
 
 
-class NaiveLUTBasedConv:
-    def __init__(
-        self,
-        implements: Union[str, Entity],
-        name: str,
-        inputs: Iterable[float],
-        outputs: Iterable[float],
-    ):
-        self.implements = implements
-        self.name = name
+class NaiveLUTBasedConv(Architecture):
+    def __init__(self, design_unit: str,identifier: str , inputs: Iterable[float], outputs: Iterable[float],
+                 ):
+        super().__init__(identifier, design_unit)
         self.inputs = inputs
         self.outputs = outputs
-
-    def __call__(self) -> Code:
-        yield from (f"architecture {self.name} of {self.implements} is", "begin")
-        io = zip(self.inputs, self.outputs)
-        first = next(io)
-        yield indent(f'\toutput <= "{first[0]}" when input = "{first[1]}"')
-        yield from map(indent, ())
-        yield from _wrap_in_IS_END_block("architecture {self.name}")
+        def yield_io_lines():
+            io = zip(self.inputs, self.outputs)
+            first = next(io)
+            yield indent(f'\toutput <= "{first[0]}" when input = "{first[1]}"')
+            yield from map(indent, ())
+        self.architecture_statement_part = yield_io_lines

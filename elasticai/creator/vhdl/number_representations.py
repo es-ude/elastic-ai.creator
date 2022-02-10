@@ -1,3 +1,4 @@
+import math
 from typing import Union
 
 
@@ -84,8 +85,20 @@ class ToLogicEncoder:
 
     def __getitem__(self, item: int) -> int:
         return self.mapping[item]
+    
+    def __call__(self,number):
+        if number not in self.numerics:
+            raise ValueError
+        bit_width = math.floor(math.log(len(self.numerics),2))
+        return BitVector(number,self.mapping[number],bit_width)
+    
 
 
 class BitVector:
-    def __init__(self, number: int):
-        self._number = int
+    def __init__(self, number: int, repr:int,bit_width:int):
+        self._number = number
+        self._repr = repr
+        self._bit_width = bit_width
+    
+    def __repr__(self):
+        return f"{self._repr:0{self._bit_width}b}"
