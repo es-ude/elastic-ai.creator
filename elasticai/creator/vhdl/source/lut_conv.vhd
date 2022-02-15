@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity NaiveLUTConv is
 	generic (
-		INPUT_WIDTH : integer := 2;
+		INPUT_WIDTH : integer := 1;
 		OUTPUT_WIDTH : integer := 1
 	);
 	port (

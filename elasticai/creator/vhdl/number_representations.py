@@ -86,11 +86,14 @@ class ToLogicEncoder:
     def __getitem__(self, item: int) -> int:
         return self.mapping[item]
     
-    def __call__(self,number):
+    @property
+    def bit_width(self):
+        return math.floor(math.log(len(self.numerics),2))
+    
+    def __call__(self,number:Union[int]):
         if number not in self.numerics:
             raise ValueError
-        bit_width = math.floor(math.log(len(self.numerics),2))
-        return BitVector(number,self.mapping[number],bit_width)
+        return BitVector(number,self.mapping[number],self.bit_width)
     
 
 
