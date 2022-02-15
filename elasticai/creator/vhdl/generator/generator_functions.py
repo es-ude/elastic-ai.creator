@@ -91,9 +91,9 @@ def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
         yield line
 
 
-def precomputed_conv_function_process(x_list:List[List[BitVector]], y_list:List[List[BitVector]],) -> CodeGenerator:
+def precomputed_logic_function_process(x_list:List[List[BitVector]], y_list:List[List[BitVector]], ) -> CodeGenerator:
     """
-        returns the string of a lookup table
+        returns the string of a lookup table where the value of the input exactly equals x
     Args:
         y_list : output List contains integers
         x_list: input List contains integers
@@ -115,7 +115,6 @@ def precomputed_conv_function_process(x_list:List[List[BitVector]], y_list:List[
         for x_element,y_element in zip(x_list,y_list):
             x_bit_vectors.append("".join(list(map(lambda x:x.__repr__(),x_element))))
             y_bit_vectors.append("".join(list(map(lambda x:x.__repr__(),y_element))))
-        n = list(x_bit_vectors)
         # first element
         iterator = zip(x_bit_vectors,y_bit_vectors)
         first = next(iterator)

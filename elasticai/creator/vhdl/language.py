@@ -47,13 +47,14 @@ class Keywords(Enum):
     SIGNED = "signed"
     BEGIN = "begin"
     PROCESS = "process"
-
+    STD_LOGIC_VECTOR = "std_logic_vector"
+    
 
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
     SIGNED = Keywords.SIGNED.value
-
+    STD_LOGIC_VECTOR = Keywords.STD_LOGIC_VECTOR.value
 
 class Mode(Enum):
     IN = Keywords.IN.value
