@@ -98,7 +98,7 @@ def build_lstm_cell(writer: StringIO):
     # define the architecture
     architecture = Architecture(identifier="lstm_cell_rtl",
                                 design_unit="lstm_cell")
-    # TODO: refactor this with something similar to precomputed scalar function!!
+
     lstm_signal_definitions = generate_signal_definitions_for_lstm(
         data_width=DATA_WIDTH, frac_width=FRAC_WIDTH
     )
