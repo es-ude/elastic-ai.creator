@@ -1,5 +1,5 @@
 from elasticai.creator.input_domains import create_codomain_for_1d_conv
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import NaiveLUTBasedConv
+from elasticai.creator.vhdl.generator.lut_conv import NaiveLUTBasedConv
 from elasticai.creator.vhdl.generator.vhd_strings import get_file_path_string
 import torch
 

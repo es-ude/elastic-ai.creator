@@ -1,10 +1,8 @@
 import unittest
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
-    NaiveLUTBasedConv,
-)
 from unittest import TestCase
 
+from elasticai.creator.vhdl.generator.lut_conv import NaiveLUTBasedConv
 from elasticai.creator.vhdl.number_representations import BitVector
 
 
