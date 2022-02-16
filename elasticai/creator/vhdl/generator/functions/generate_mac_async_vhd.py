@@ -57,7 +57,7 @@ def build_mac_async(writer: StringIO):
         )
     )
     entity.port_list.append(
-        InterfaceConstrained(
+        InterfaceVariable(
             identifier="x1",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
@@ -65,7 +65,7 @@ def build_mac_async(writer: StringIO):
         )
     )
     entity.port_list.append(
-        InterfaceConstrained(
+        InterfaceVariable(
             identifier="x2",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
@@ -73,7 +73,7 @@ def build_mac_async(writer: StringIO):
         )
     )
     entity.port_list.append(
-        InterfaceConstrained(
+        InterfaceVariable(
             identifier="w1",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
@@ -81,7 +81,7 @@ def build_mac_async(writer: StringIO):
         )
     )
     entity.port_list.append(
-        InterfaceConstrained(
+        InterfaceVariable(
             identifier="w2",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
@@ -89,7 +89,7 @@ def build_mac_async(writer: StringIO):
         )
     )
     entity.port_list.append(
-        InterfaceConstrained(
+        InterfaceVariable(
             identifier="b",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
@@ -97,7 +97,7 @@ def build_mac_async(writer: StringIO):
         )
     )
     entity.port_list.append(
-        InterfaceConstrained(
+        InterfaceVariable(
             identifier="y",
             mode=Mode.OUT,
             range="DATA_WIDTH-1 downto 0",
