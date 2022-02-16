@@ -71,7 +71,7 @@ def group_dependent_sinks(sinks: tuple[DataSink, ...]) -> tuple[tuple[DataSink]]
         sinks.remove(current_sink)
     return tuple(groups)
 
-class DataFlowSpecification:
+class InterLayerDataflow:
     def __init__(self):
         self.sinks = []
         

@@ -6,7 +6,7 @@ from elasticai.creator.dataflow import (
     DataSource,
     DataSink,
     sinks_have_common_source,
-    group_dependent_sinks, DataFlowSpecification,
+    group_dependent_sinks, InterLayerDataflow,
 )
 from elasticai.creator.protocols import Tensor, Indices, Module, TensorMapping
 
@@ -181,7 +181,7 @@ class TestDataFlowSpecification(unittest.TestCase):
             sources=[[source_a], [source_b], [source_a]],
             nodes=repeat(sink_module, 3),
         )
-        dataflow = DataFlowSpecification()
+        dataflow = InterLayerDataflow()
         dataflow.append(sink=data_sink_a)
         dataflow.append(sink=data_sink_b)
         dataflow.append(sink=data_sink_c)
@@ -199,7 +199,7 @@ class TestDataFlowSpecification(unittest.TestCase):
             sources=[[source_a], [source_b], [source_a]],
             nodes=self.create_dummy_modules(3),
         )
-        dataflow = DataFlowSpecification() 
+        dataflow = InterLayerDataflow() 
         dataflow.append(sink=data_sink_a)
         dataflow.append(sink=data_sink_b)
         dataflow.append(sink=data_sink_c)

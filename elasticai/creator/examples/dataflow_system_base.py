@@ -2,11 +2,12 @@ from functools import partial
 
 from torch.nn import Sequential, MaxPool1d, Conv1d
 
-from elasticai.creator.dataflow import DataSource, DataSink,DataFlowSpecification
+from elasticai.creator.dataflow import DataSource, DataSink,InterLayerDataflow
 from elasticai.creator.input_domains import create_depthwise_input_for_1d_conv, create_input_for_1d_conv
 from elasticai.creator.io_table import IOTable, group_tables
 from elasticai.creator.layers import  Binarize, ChannelShuffle
 from elasticai.creator.precomputation import precomputable, get_precomputations_from_direct_children
+from elasticai.creator.tags_utils import tag, get_tags
 
 model = Sequential(
     precomputable(
@@ -62,17 +63,17 @@ tables[0] = group_tables(table=tables[0],groups=2)
 tables[1] = group_tables(table=tables[1],groups=2)
 nodes = [model[0],model[3],model[4]]
 for node,table in zip(nodes,tables):
-    node.table = table #TODO: merge with metaprogramming
+    tag(node,table= table) 
 sources = []
 sources.append(DataSource(node = nodes[0],selection=slice(0,1)))
 sources.append(DataSource(node = nodes[0],selection=slice(2,3)))
 sources.append(DataSource(node = nodes[1],selection=0))
 sources.append(DataSource(node = nodes[2],selection=0))
-specification = DataFlowSpecification()
+specification = InterLayerDataflow()
 specification.append(DataSink(sources=[sources[0]],shape=(1,2),node=nodes[1],selection=0))
 specification.append(DataSink(sources=[sources[1]],shape=(1,2),node=nodes[1],selection=1))
 specification.append(DataSink(sources=[sources[2]],shape=(1,2),node=nodes[2],selection=0))
 specification.append(DataSink(sources=[sources[3]],shape=(1,2),node=None,selection=0))
 print(specification)
 for sink in specification.sinks:
-    print(f"Data sink: {sink.node}, {sink.selection}, Generating table: {sink.sources[0].source.table[sink.selection]}")
+    print(f"Data sink: {sink.node}, {sink.selection}, Generating table: {get_tags(sink.sources[0].source)['table'][sink.selection]}")
