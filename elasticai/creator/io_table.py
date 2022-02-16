@@ -1,6 +1,8 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 import torch
-
+"""
+Classes used to define the intra layer relationship
+"""
 class IOTable:
     def __init__(self, inputs: torch.Tensor, outputs: torch.Tensor):
         self.inputs = inputs
@@ -21,6 +23,17 @@ class IOTable:
             if torch.all(input != self.inputs[-1]):
                 repr += ", "
         return repr
+    
+    def select_outputs(self,indices:Union[int,slice]):
+        """
+        This functions reshape the outputs so only the selected indices become part of the output. It is useful in applications
+        where the tables are masked and a large number of irrelevant outputs are generated.
+        Args:
+            indices:  the selected indices
+
+        """
+        self.outputs = self.outputs[:,indices]
+        n = 0
 
     def get_table_as_dict(self) -> Dict:
         """given a list or single input,output table pair will return a list of dictionaries for each io pair. Said tables will be flatenned.

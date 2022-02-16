@@ -1,7 +1,9 @@
 from typing import NamedTuple, Union, Any
 
 from elasticai.creator.protocols import Indices, TensorMapping
-
+"""
+Classes to describe the interlayer dataflow
+"""
 
 class DataSource:
     def __init__(self, node: TensorMapping, selection: Union[int, slice, Indices]):

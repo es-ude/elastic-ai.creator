@@ -16,7 +16,7 @@ and the weights of that layer are all equal to `1`. In this case we will obtain
 >>> conv(t)
 tensor([[6], [3], [9]])
 ```
-But we could have obtained the same result by slicing the tensor `t` along its channel axis then processing each channel individually and stacking the results again. For the hardware generating tool it is crucial to know the smallest possible unit the layer can be decomposed into.
+But we could have obtained the same result by slicing the tensor `t` along its channel axis then processing each channel individually and stacking the results again. This occurs due to the groups parameter which creates three independent groups of inputs and outputs .For the hardware generating tool it is crucial to know the smallest possible unit the layer can be decomposed into.
 
 We could try to get that information from the pytorch modules automatically, however this poses a drastic development overhead taking human resources we do not have. Therefore we postpone this task. Instead we want to define an easy to use API allowing developers to specify information about how inputs and outputs of the layer are connected, ie. how the layer function can be decomposed into smaller functions.
 To cover the case above we could just use a structure like
@@ -55,8 +55,8 @@ this makes especially sense, because the outputs will have to be calculated from
 ```python
 outputs = layer(inputs)
 ```
-However as mentioned above there is a discrepancy between the software neural network layer and the tables we want to generate. We want to and can decompose the convolution above into three smaller tables, however the software interface provided by the ml frameworks is hiding that fact to great extent. Therefore we will decorate the ml frameworks classes to carry information that will allow us to decompose the tables accordingly.
+However as mentioned above there is a discrepancy between the software neural network layer and the tables we want to generate. We want to and can decompose the tables generated from the convolution above into three smaller tables, however the software interface provided by the ml frameworks is hiding that fact to great extent. Therefore we will decorate the ml frameworks classes to carry information that will allow us to decompose the tables accordingly.
 
 ### Interlayer Dataflow
 
-Additionally we need to express how outputs of one table are connected to the inputs of another table. Contrary to the above *intralayer dataflow* this will also involve buffering and striding.
+Additionally we need to express how outputs of one table are connected to the inputs of another table. In its standard form all the outputs from the previous layer connect directly to the input of the next layer however the same is not the case when operating with grouped convolutions or techniques such as channel shuffling [Zhang et al. 2017]. Those connections are expressed by creating a dataflow specification by defining a sequence of data sinks and the data sources used to generate them. Each has a selection parameter to describe the relevant subset for defining the connection. [Example](examples/dataflow_system_base.py)

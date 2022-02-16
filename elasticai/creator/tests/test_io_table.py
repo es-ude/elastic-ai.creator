@@ -13,7 +13,6 @@ class test_Io_table_builder(unittest.TestCase):
             torch.all(inputs == result[0].tables[0]),
             torch.all(outputs == result[0].tables[1]),
         )
-
     def test_group_tables_depthwise(self):
         inputs = torch.Tensor(
             [
@@ -68,6 +67,16 @@ class test_Io_table_builder(unittest.TestCase):
         dict_list = io_list[0].get_table_as_dict(), io_list[1].get_table_as_dict()
         self.assertTrue((dict_list[0] == {(1, 2): (1,), (3, 4): (6,)}))
         self.assertTrue((dict_list[1] == {(3, 4): (2,), (5, 6): (5,)}))
+        
+    
+    def test_select_tables_output_indices(self):
+        inputs = torch.Tensor([[1, 2], [3, 4]])
+        outputs = torch.Tensor([[0,0,1], [0,0,0]])
+        Iotable = IOTable(inputs, outputs)
+        Iotable.select_outputs(2)
+        self.assertTrue(
+            torch.all(torch.Tensor([1,0]) == Iotable.outputs).item()
+        )
 
 
 if __name__ == "__main__":
