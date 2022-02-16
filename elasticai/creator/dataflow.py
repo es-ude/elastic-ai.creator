@@ -46,7 +46,6 @@ class DataSink(NamedTuple):
     selection: Union[int, slice, Indices]
 
 
-DataFlowSpecification = tuple[DataSink, ...]
 
 
 def sinks_have_common_source(first: DataSink, second: DataSink) -> bool:
@@ -72,15 +71,28 @@ def group_dependent_sinks(sinks: tuple[DataSink, ...]) -> tuple[tuple[DataSink]]
         sinks.remove(current_sink)
     return tuple(groups)
 
+class DataFlowSpecification:
+    def __init__(self):
+        self.sinks = []
+        
+    def append(self,sink: DataSink):
+        self.sinks.append(sink)
+        
+    def __repr__(self):
+        grouped_dataflow = group_dependent_sinks(self.sinks)
+        representation = ""
+        for group in grouped_dataflow:
+            representation += f"{repr(group[0].sources)} ->"
+            for sink in group:
+                representation += f" ({sink.node.__repr__()}, selection = {sink.selection.__repr__()})"
+                if sink != group[-1]:
+                    representation += ","
+            representation += "\n"
+        return representation
 
-def represent_grouped_DataFlowSpecification(dataflowspecification:DataFlowSpecification)-> str:
-    grouped_dataflow = group_dependent_sinks(dataflowspecification)
-    representation = "" 
-    for group in grouped_dataflow:
-        representation += f"{repr(group[0].sources)} ->"
-        for sink in group:
-            representation +=f" ({sink.node.__repr__()}, selection = {sink.selection.__repr__()})" 
-            if sink != group[-1]:
-                representation+=","
-        representation += "\n"
-    return representation
+    def get_datasinks_for_Node(self,node:TensorMapping)-> list[DataSink]:
+        sinks = []
+        for sink in self.sinks:
+            if sink.node is node:
+                sinks.append(sink)
+        return sinks

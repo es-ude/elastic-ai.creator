@@ -6,8 +6,7 @@ from elasticai.creator.dataflow import (
     DataSource,
     DataSink,
     sinks_have_common_source,
-    group_dependent_sinks,
-    represent_grouped_DataFlowSpecification,
+    group_dependent_sinks, DataFlowSpecification,
 )
 from elasticai.creator.protocols import Tensor, Indices, Module, TensorMapping
 
@@ -170,6 +169,25 @@ class TestDataFlowSpecification(unittest.TestCase):
         expected = ((data_sink_a, data_sink_c), (data_sink_b,))
         actual = group_dependent_sinks((data_sink_a, data_sink_b, data_sink_c))
         self.assertSequenceEqual(expected, actual)
+    
+    def test_get_datasinks_for_Node(self):
+        module = DummyModule()
+        sink_module = DummyModule()
+        source_a, source_b = self.create_sources(
+            modules=(repeat(module, 2)), selections=((1, 1), (1, 2))
+        )
+        data_sink_a, data_sink_b, data_sink_c = self.create_sinks(
+            shapes=repeat((1, 1), 3),
+            sources=[[source_a], [source_b], [source_a]],
+            nodes=repeat(sink_module, 3),
+        )
+        dataflow = DataFlowSpecification()
+        dataflow.append(sink=data_sink_a)
+        dataflow.append(sink=data_sink_b)
+        dataflow.append(sink=data_sink_c)
+        expected = [data_sink_a,data_sink_b,data_sink_c]
+        actual =  dataflow.get_datasinks_for_Node(sink_module)
+        self.assertSequenceEqual(expected, actual)
 
     def test_represent_grouped_DataFlowSpecification(self):
         module = DummyModule()
@@ -181,9 +199,11 @@ class TestDataFlowSpecification(unittest.TestCase):
             sources=[[source_a], [source_b], [source_a]],
             nodes=self.create_dummy_modules(3),
         )
-        actual = represent_grouped_DataFlowSpecification(
-            (data_sink_a, data_sink_b, data_sink_c)
-        )
+        dataflow = DataFlowSpecification() 
+        dataflow.append(sink=data_sink_a)
+        dataflow.append(sink=data_sink_b)
+        dataflow.append(sink=data_sink_c)
+        actual = dataflow.__repr__()
         self.assertEqual(
             "[DataSource(source=DummyModule(), selection=(1, 1))] -> (DummyModule(), selection = 0), (DummyModule(), selection = 0)\n[DataSource(source=DummyModule(), selection=(1, 2))] -> (DummyModule(), selection = 0)\n",
             actual,

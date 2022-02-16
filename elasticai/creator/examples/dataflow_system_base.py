@@ -2,7 +2,7 @@ from functools import partial
 
 from torch.nn import Sequential, MaxPool1d, Conv1d
 
-from elasticai.creator.dataflow import DataSource, DataSink, represent_grouped_DataFlowSpecification
+from elasticai.creator.dataflow import DataSource, DataSink,DataFlowSpecification
 from elasticai.creator.input_domains import create_depthwise_input_for_1d_conv, create_input_for_1d_conv
 from elasticai.creator.io_table import IOTable, group_tables
 from elasticai.creator.layers import  Binarize, ChannelShuffle
@@ -68,11 +68,11 @@ sources.append(DataSource(node = nodes[0],selection=slice(0,1)))
 sources.append(DataSource(node = nodes[0],selection=slice(2,3)))
 sources.append(DataSource(node = nodes[1],selection=0))
 sources.append(DataSource(node = nodes[2],selection=0))
-specification = []
+specification = DataFlowSpecification()
 specification.append(DataSink(sources=[sources[0]],shape=(1,2),node=nodes[1],selection=0))
 specification.append(DataSink(sources=[sources[1]],shape=(1,2),node=nodes[1],selection=1))
 specification.append(DataSink(sources=[sources[2]],shape=(1,2),node=nodes[2],selection=0))
 specification.append(DataSink(sources=[sources[3]],shape=(1,2),node=None,selection=0))
-print(represent_grouped_DataFlowSpecification(dataflowspecification=specification))
-for sink in specification:
+print(specification)
+for sink in specification.sinks:
     print(f"Data sink: {sink.node}, {sink.selection}, Generating table: {sink.sources[0].source.table[sink.selection]}")
