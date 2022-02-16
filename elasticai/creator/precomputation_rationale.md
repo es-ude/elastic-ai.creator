@@ -59,4 +59,17 @@ However as mentioned above there is a discrepancy between the software neural ne
 
 ### Interlayer Dataflow
 
-Additionally we need to express how outputs of one table are connected to the inputs of another table. In its standard form all the outputs from the previous layer connect directly to the input of the next layer however the same is not the case when operating with grouped convolutions or techniques such as channel shuffling [Zhang et al. 2017]. Those connections are expressed by creating a dataflow specification by defining a sequence of data sinks and the data sources used to generate them. Each has a selection parameter to describe the relevant subset for defining the connection. [Example](examples/dataflow_system_base.py)
+Additionally we need to express how outputs of one table are connected to the inputs of another table. Contrary to the above *intralayer dataflow* this will also involve buffering and striding.
+The simplest solution would be to enumerate inputs and outputs and apply a mapping $f: \mathbb{N} \to \mathbb{N}$ to them that assigns an input of layer $h_{i+1}$ to each output of $h_i$. To model this behaviour we extend the layer protocol as follows
+```python
+class Layer(Protocol):
+  # ...
+  def outputs(self) -> Iterable[MultiDimensionalIndex]:
+    ...
+```
+An interlayer dataflow specification can then be expressed as
+```python
+class InterLayerDataflow(Protocol):
+  def __getitem__(self, output: MultiDimensionalIndex) -> tuple[Layer, MultiDimensionalIndex]:
+    ...
+```
