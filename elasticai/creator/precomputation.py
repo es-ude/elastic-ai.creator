@@ -81,7 +81,7 @@ class JSONEncoder(json.JSONEncoder):
                 "description": description,
                 "shape": o.input_domain.shape[1:],
                 "x": o.input_domain.numpy().tolist(),
-                "y": o.input_domain.numpy().tolist(),
+                "y": o.output.numpy().tolist(),
             }
         else:
             return json.JSONEncoder.default(self, o)
