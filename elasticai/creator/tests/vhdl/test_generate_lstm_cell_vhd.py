@@ -8,10 +8,9 @@ from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTes
 class GenerateLSTMCellVhdTest(GeneratedVHDLCodeTest):
     # the test will fail if you try to align the string with the same indent with the function (--)
     def test_compare_files(self) -> None:
-        expected_code = """library ieee;
+        expected_code = """library ieee, work;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
-LIBRARY work;
+use ieee.numeric_std.all;
 use work.all;
 
 entity lstm_cell is
@@ -45,41 +44,41 @@ architecture lstm_cell_rtl of lstm_cell is
 -- Intermediate results
 -- Input gate without/with activation
 -- i = \sigma(W_{ii} x + b_{ii} + W_{hi} h + b_{hi})
-signal i_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal i : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal i_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal i : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Forget gate without/with activation
 -- f = \sigma(W_{if} x + b_{if} + W_{hf} h + b_{hf})
-signal f_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal f : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal f_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal f : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Cell gate without/with activation
 -- g = \tanh(W_{ig} x + b_{ig} + W_{hg} h + b_{hg})
-signal g_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal g : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal g_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal g : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Output gate without/with activation
 -- o = \sigma(W_{io} x + b_{io} + W_{ho} h + b_{ho})
-signal o_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal o : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal o_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal o : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- new_cell_state without/with activation
 -- c' = f * c + i * g
-signal c_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
-signal c_new_wo_activation : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal c_new : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+signal c_new_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- h' = o * \tanh(c')
-signal h_new : signed(DATA_WIDTH-1 downto 0):=(others=>'0');
+signal h_new : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
@@ -202,14 +201,13 @@ begin
         y => o
     );
 
-    H_OUT_PROCESS: process(o,c_new)
+    H_OUT_process: process(o,c_new)
     begin
         h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
-    end process;
+    end process H_OUT_process;
 
-end architecture lstm_cell_rtl ; -- lstm_cell_rtl"""
+end architecture lstm_cell_rtl;"""
 
         string_io = StringIO("")
         lstm_cell_code = build_lstm_cell(string_io)
-
         self.check_generated_code(expected_code, lstm_cell_code)
