@@ -65,7 +65,7 @@ class Mode(Enum):
 
 class _DesignUnitForEntityAndComponent:
     def __init__(
-        self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
+            self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
     ):
         self.identifier = identifier
         self._generic_list = InterfaceList()
@@ -115,6 +115,9 @@ class Architecture:
         self.identifier = identifier
         self.design_unit = design_unit
         self._architecture_declaration_list = InterfaceList()
+        self._architecture_component_list = InterfaceList()
+        self._architecture_assignment_list = InterfaceList()
+        self._architecture_port_map_list = InterfaceList()
         self._architecture_statement_part = None
 
     @property
@@ -133,6 +136,30 @@ class Architecture:
     def architecture_statement_part(self, value):
         self._architecture_statement_part = value
 
+    @property
+    def architecture_component_list(self):
+        return self._architecture_component_list
+
+    @architecture_component_list.setter
+    def architecture_component_list(self, value):
+        self._architecture_component_list = InterfaceList(value)
+
+    @property
+    def architecture_assignment_list(self):
+        return self._architecture_assignment_list
+
+    @architecture_assignment_list.setter
+    def architecture_assignment_list(self, value):
+        self._architecture_assignment_list = InterfaceList(value)
+
+    @property
+    def architecture_port_map_list(self):
+        return self._architecture_port_map_list
+
+    @architecture_port_map_list.setter
+    def architecture_port_map_list(self, value):
+        self._architecture_port_map_list = InterfaceList(value)
+
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
@@ -141,7 +168,18 @@ class Architecture:
                     self._architecture_declaration_list(), semicolon_last=True
                 )
             )
+        if len(self._architecture_component_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                self._architecture_component_list()
+            )
         yield f"{Keywords.BEGIN.value}"
+        if len(self._architecture_assignment_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                _add_semicolons(self._architecture_assignment_list(), semicolon_last=True)
+            )
+        if len(self._architecture_port_map_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(self.architecture_port_map_list())
+
         if self._architecture_statement_part:
             yield from _indent_and_filter_non_empty_lines(
                 self._architecture_statement_part()
@@ -151,10 +189,10 @@ class Architecture:
 
 class Process:
     def __init__(
-        self,
-        identifier: str,
-        input_name: str,
-        lookup_table_generator_function: CodeGenerator,
+            self,
+            identifier: str,
+            input_name: str,
+            lookup_table_generator_function: CodeGenerator = None,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
@@ -185,7 +223,8 @@ class Process:
     def _footer(self) -> Code:
         if len(self.process_statements_list) > 0:
             yield from _append_semicolons_to_lines(self._process_statements_list)
-        yield from self.lookup_table_generator_function
+        if self.lookup_table_generator_function:
+            yield from self.lookup_table_generator_function
 
     def __call__(self) -> Code:
         yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
@@ -226,49 +265,23 @@ class LibraryClause:
         )
 
 
-class InterfaceVariable:
-    def __init__(
-        self,
-        identifier: str,
-        variable_type: DataType,
-        value: Optional[Union[str, int]] = None,
-        mode: Optional[Mode] = None,
-    ):
-        self.identifier = identifier
-        self.value = value
-        self.variable_type = variable_type
-        self.mode = mode
-
-    @property
-    def value(self) -> int:
-        return self._value
-
-    @value.setter
-    def value(self, v: Optional[Union[str, int]]):
-        self._value = int(v) if v is not None else None
-
-    def __call__(self) -> Code:
-        value_part = "" if self.value is None else f" := {self.value}"
-        mode_part = "" if self.mode is None else f" {self.mode.value} "
-        yield from (
-            f"{self.identifier} : {mode_part}{self.variable_type.value}{value_part}",
-        )
-
-
 class InterfaceConstrained:
     def __init__(
-        self,
-        identifier: str,
-        variable_type: DataType,
-        range: Optional[Union[str, int]],
-        mode: Optional[Mode] = None,
-        declaration_type: Optional[str] = None,
+            self,
+            identifier: str,
+            variable_type: DataType,
+            range: Optional[Union[str, int]],
+            mode: Optional[Mode],
+            value: Optional[Union[str, int]],
+            declaration_type: Optional[str]
+
     ):
-        self.identifier = identifier
+        self._identifier = identifier
         self._range = range
-        self.variable_type = variable_type
-        self.mode = mode
-        self.declaration_type = declaration_type
+        self._variable_type = variable_type
+        self._mode = mode
+        self._value = value
+        self._declaration_type = declaration_type
 
     @property
     def range(self) -> int:
@@ -278,27 +291,50 @@ class InterfaceConstrained:
     def range(self, v: Optional[Union[str, int]]):
         self._range = v if v is not None else None
 
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, v):
+        self._mode = v if v is not None else None
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, v):
+        self._value = v if v is not None else None
+
+    @property
+    def declaration_type(self):
+        return self._declaration_type
+
+    @declaration_type.setter
+    def declaration_type(self, v):
+        self._declaration_type = v if v is not None else None
+
     def __call__(self) -> Code:
+        range_part = "" if self._range is None else f"({self._range})"
+        declaration_part = "" if self._declaration_type is None else f"{self._declaration_type} "
+        value_part = "" if self.value is None else f" := {self.value}"
         mode_part = " " if self.mode is None else f" {self.mode.value} "
-        declaration_part = (
-            "" if self.declaration_type is None else f" {self.declaration_type} "
-        )
         yield from (
-            f"{declaration_part}{self.identifier} :{mode_part}{self.variable_type.value}({self.range})",
+            f"{declaration_part}{self._identifier} :{mode_part}{self._variable_type.value}{range_part}{value_part}",
         )
 
 
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(
-        self,
-        identifier: str,
-        variable_type: DataType,
-        range: Optional[Union[str, int]] = None,
-        mode: Optional[Mode] = None,
-    ):
-        super().__init__(
-            identifier, variable_type, range, mode, declaration_type="signal"
-        )
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
+        super().__init__(identifier, variable_type, range, mode, value, declaration_type="signal")
+
+
+class InterfaceVariable(InterfaceConstrained):
+    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
+        super().__init__(identifier, variable_type, range, mode, value, declaration_type=None)
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
@@ -320,6 +356,27 @@ class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
         yield from chain.from_iterable(
             (interface() for interface in self.interface_generators)
         )
+
+
+class PortMap:
+    def __init__(self, map_name, component_name):
+        self.map_name = map_name
+        self.component_name = component_name
+        self._signal_list = InterfaceList()
+
+    @property
+    def signal_list(self):
+        return self._signal_list
+
+    @signal_list.setter
+    def signal_list(self, value):
+        self._signal_list = InterfaceList(value)
+
+    def __call__(self) -> Code:
+        yield f"{self.map_name}: {self.component_name}"
+        yield f"port map ("
+        yield from _indent_and_filter_non_empty_lines(_add_comma(self._signal_list()))
+        yield ");"
 
 
 class InterfaceList(CodeGeneratorConcatenation):
@@ -351,6 +408,12 @@ def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
     yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
+
+
+def _add_comma(lines: Code, comma_last: bool = False) -> Code:
+    temp = tuple(lines)
+    yield from (f"{line}," for line in temp[:-1])
+    yield f"{temp[-1]}," if comma_last else f"{temp[-1]}"
 
 
 def _append_semicolons_to_lines(lines: Code) -> Code:
@@ -386,7 +449,7 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
 
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
-    block_type: Keywords, block_identifier: Identifier, lines: Code
+        block_type: Keywords, block_identifier: Identifier, lines: Code
 ) -> Code:
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
@@ -418,26 +481,5 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         raise ValueError
 
 
-def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
-    def wrapped():
-        return (string,)
-
-    return wrapped
-
-
-def _wrap_code_into_code_generator(code: Code) -> CodeGenerator:
-    def wrapped():
-        return code
-
-    return wrapped
-
-
-def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
-    if isinstance(generator, str):
-        return _wrap_string_into_code_generator(generator)
-    elif isinstance(generator, Iterable):
-        return _wrap_code_into_code_generator(generator)
-    elif isinstance(generator, Callable):
-        return generator
-    else:
-        raise ValueError
+def signal_assignment(identifier: str, statement):
+    return f"{identifier} <= {statement};"
