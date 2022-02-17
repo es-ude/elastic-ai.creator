@@ -59,7 +59,9 @@ However as mentioned above there is a discrepancy between the software neural ne
 
 ### Interlayer Dataflow
 
-Additionally we need to express how outputs of one table are connected to the inputs of another table. Contrary to the above *intralayer dataflow* this will also involve buffering and striding.
+Additionally we need to express how outputs of one table are connected to the inputs of another table. The easiest way to describing such a relationship is by a set of tuples (source(s), sink) which create a directed graph. Each of those values will point to a node i.e. a layer. However this is not enough to describe which parts of those nodes are being selected therefore the property selection is added to describe those more complex relations.
+The idea is that this property should be flexible enough to describe either I) a subset of tables, II) the relevant indices in a table, III) a combination of I and II, since there are many situations where some of those are not relevant for describing the network. 
+Contrary to the above *intralayer dataflow* this will also involve buffering and striding.
 The simplest solution would be to enumerate inputs and outputs and apply a mapping $f: \mathbb{N} \to \mathbb{N}$ to them that assigns an input of layer $h_{i+1}$ to each output of $h_i$. To model this behaviour we extend the layer protocol as follows
 ```python
 class Layer(Protocol):

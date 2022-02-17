@@ -170,6 +170,20 @@ class TestDataFlowSpecification(unittest.TestCase):
         actual = group_dependent_sinks((data_sink_a, data_sink_b, data_sink_c))
         self.assertSequenceEqual(expected, actual)
     
+    def test_group_dependent_sinks_groups_tupled_indices(self):
+        module = DummyModule()
+        source_a, source_b = self.create_sources(
+            modules=(repeat(module, 2)), selections=((1, (1,2)), (1, 2))
+        )
+        data_sink_a, data_sink_b, data_sink_c = self.create_sinks(
+            shapes=repeat((1, 1), 3),
+            sources=[[source_a], [source_b], [source_a]],
+            nodes=repeat(None, 3),
+        )
+        expected = ((data_sink_a, data_sink_c), (data_sink_b,))
+        actual = group_dependent_sinks((data_sink_a, data_sink_b, data_sink_c))
+        self.assertSequenceEqual(expected, actual)
+    
     def test_get_datasinks_for_Node(self):
         module = DummyModule()
         sink_module = DummyModule()
