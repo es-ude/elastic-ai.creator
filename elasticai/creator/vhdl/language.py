@@ -9,6 +9,7 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
+from abc import abstractmethod
 from collections import Sequence
 from enum import Enum
 from itertools import filterfalse, chain
@@ -46,13 +47,14 @@ class Keywords(Enum):
     SIGNED = "signed"
     BEGIN = "begin"
     PROCESS = "process"
-
+    STD_LOGIC_VECTOR = "std_logic_vector"
+    
 
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
     SIGNED = Keywords.SIGNED.value
-
+    STD_LOGIC_VECTOR = Keywords.STD_LOGIC_VECTOR.value
 
 class Mode(Enum):
     IN = Keywords.IN.value
@@ -93,7 +95,9 @@ class _DesignUnitForEntityAndComponent:
             yield from _clause(Keywords.PORT, self._port_list())
 
     def __call__(self) -> Code:
-        return _wrap_in_IS_END_block(self.type, self.identifier, self._header())
+        yield f"{self.type.value} {self.identifier} {Keywords.IS.value}"
+        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
 
 
 class Entity(_DesignUnitForEntityAndComponent):
