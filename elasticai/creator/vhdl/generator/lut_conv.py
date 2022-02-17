@@ -32,12 +32,16 @@ class NaiveLUTBasedConv():
             mode=Mode.IN,
             range=f"INPUT_WIDTH-1 downto 0",
             variable_type=DataType.STD_LOGIC_VECTOR,
+            value=None,
+            declaration_type=None,
         ))
         entity.port_list.append(InterfaceConstrained(
             identifier="y",
             mode=Mode.OUT,
             range=f"OUTPUT_WIDTH-1 downto 0",
             variable_type=DataType.STD_LOGIC_VECTOR,
+            value=None,
+            declaration_type=None
         ))
         entity.generic_list = [
             f"INPUT_WIDTH : integer := {self.input_width}",
