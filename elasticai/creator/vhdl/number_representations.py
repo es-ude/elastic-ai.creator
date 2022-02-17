@@ -90,7 +90,7 @@ class ToLogicEncoder:
     def bit_width(self):
         return math.floor(math.log(len(self.numerics),2))
     
-    def __call__(self,number:Union[int]):
+    def __call__(self, number:int):
         if number not in self.numerics:
             raise ValueError
         return BitVector(number,self.mapping[number],self.bit_width)
