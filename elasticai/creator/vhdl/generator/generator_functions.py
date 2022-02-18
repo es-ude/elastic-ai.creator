@@ -3,12 +3,12 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.layers import QLSTMCell
-from typing import Dict
+from typing import Dict, List
 
 from elasticai.creator.vhdl.language import CodeGenerator
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
-    FloatToBinaryFixedPointStringConverter,
+    FloatToBinaryFixedPointStringConverter, ToLogicEncoder, BitVector,
 )
 
 
@@ -85,6 +85,43 @@ def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
             lines[-1] = "\t" + lines[-1]
         if len(lines) != 0:
             lines.append("end if;")
+    # build the string block
+    yield lines[0]
+    for line in lines[1:]:
+        yield line
+
+
+def precomputed_logic_function_process(x_list:List[List[BitVector]], y_list:List[List[BitVector]], ) -> CodeGenerator:
+    """
+        returns the string of a lookup table where the value of the input exactly equals x
+    Args:
+        y_list : output List contains integers
+        x_list: input List contains integers
+    Returns:
+        String of lookup table (if/elsif statements for vhdl file)
+    """
+    
+
+    lines = []
+    if len(x_list) != len(y_list) :
+        raise ValueError(
+            "x_list has to be the same length as y_list, but x_list has {} elements and y_list {} elements".format(
+                len(x_list), len(y_list)
+            )
+        )
+    else:
+        x_bit_vectors = []
+        y_bit_vectors = []
+        for x_element,y_element in zip(x_list,y_list):
+            x_bit_vectors.append("".join(list(map(lambda x:x.__repr__(),x_element))))
+            y_bit_vectors.append("".join(list(map(lambda x:x.__repr__(),y_element))))
+        # first element
+        iterator = zip(x_bit_vectors,y_bit_vectors)
+        first = next(iterator)
+        lines.append(f'y <="{first[1]}" when x="{first[0]}" else')
+        for x,y in iterator:
+            lines.append(f'"{y}" when x="{x}" else\n')
+        lines[-1] =lines[-1][:-5] +";"
     # build the string block
     yield lines[0]
     for line in lines[1:]:

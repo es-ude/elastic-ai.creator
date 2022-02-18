@@ -7,11 +7,9 @@ import torch
 from elasticai.creator.precomputation import (
     Precomputation,
     JSONEncoder,
-    ModuleProto,
     precomputable,
-    Precomputable,
 )
-from elasticai.creator.tags_utils import get_tags
+from elasticai.creator.tags_utils import get_tags, ModuleProto
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
@@ -52,6 +50,7 @@ class PrecomputationTest(TensorTestCase):
     def test_precomputation_is_json_encodable(self):
         module = DummyModule()
         precompute = Precomputation(module=module, input_domain=torch.tensor([[]]))
+        precompute()
         actual = json.dumps(precompute, cls=JSONEncoder)
         expected = """{"description": [], "shape": [0], "x": [[]], "y": [[]]}"""
         self.assertEqual(expected, actual)
@@ -59,16 +58,30 @@ class PrecomputationTest(TensorTestCase):
     def test_precomputation_is_json_encodable_for_shape1x1(self):
         module = DummyModule()
         precompute = Precomputation(module=module, input_domain=torch.tensor([[[1]]]))
+        precompute()
         actual = json.dumps(precompute, cls=JSONEncoder)
         expected = (
             """{"description": [], "shape": [1, 1], "x": [[[1]]], "y": [[[1]]]}"""
         )
         self.assertEqual(expected, actual)
 
+    def test_precomputation_is_json_encoding_correctly_writes_in_and_output(self):
+        module = DummyModule()
+        def call(x: torch.Tensor) -> torch.Tensor:
+            return torch.flatten(x * 3)
+        module.call = call
+        precompute = Precomputation(module=module, input_domain=torch.tensor([[[1]]]))
+        precompute()
+        actual = json.dumps(precompute, cls=JSONEncoder)
+        expected = (
+            """{"description": [], "shape": [1, 1], "x": [[[1]]], "y": [3]}"""
+        )
+        self.assertEqual(expected, actual)
+
     def test_precomputable_tag(self):
         input_generator = [-1, 1]
 
-        @Precomputable(input_shape=[-1, 1], input_generator=input_generator)
+        @precomputable(input_shape=[-1, 1], input_generator=input_generator)
         class MyCustomModule(torch.nn.Module):
             def __init__(self):
                 super().__init__()

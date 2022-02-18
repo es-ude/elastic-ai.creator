@@ -2,6 +2,7 @@ from unittest import TestCase
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     two_complements_representation,
+    ToLogicEncoder,
 )
 
 
@@ -70,3 +71,53 @@ class BinaryTwoComplementRepresentation(TestCase):
         actual = two_complements_representation(-254, 16)
         expected = "1111111100000010"
         self.assertEqual(expected, actual)
+
+
+class NumberEncoderTest(TestCase):
+    """
+    Test Cases:
+      - build new encoder from existing encoder ensuring compatibility of enumerations
+        Use case scenario: Connecting the outputs of layer h_1 to the inputs of layer h_2, while we can consider the in-
+         and output as enumerations, ie. we don't care about the actual numeric values. However to still allow for
+         max pooling operations we might want to ensure that the encoding is monotonous.
+    """
+
+    def test_binarization_minus_one_is_zero(self):
+        encoder = ToLogicEncoder()
+        encoder.add_numeric(-1)
+        self.assertEqual(0, encoder[-1])
+
+    def test_binarization_minus_1_to_0_and_1to1(self):
+        encoder = ToLogicEncoder()
+        encoder.add_numeric(-1)
+        encoder.add_numeric(1)
+        self.assertEqual(1, encoder[1])
+
+    def test_encoder_is_monotonous(self):
+        encoder = ToLogicEncoder()
+        encoder.add_numeric(1)
+        encoder.add_numeric(-1)
+        self.assertEqual(1, encoder[1])
+    
+    def test_encoder_is_to_bit_vector(self):
+        encoder = ToLogicEncoder()
+        encoder.add_numeric(1)
+        encoder.add_numeric(-1)
+        bit_vector = encoder(-1)
+        self.assertEqual("0", bit_vector.__repr__())
+
+    def test_ternarization_minus1_to_00(self):
+        encoder = ToLogicEncoder()
+        encoder.add_numeric(-1)
+        encoder.add_numeric(0)
+        encoder.add_numeric(1)
+        test_parameters = (
+            (0, -1),
+            (1, 0),
+            (2, 1),
+        )
+        for parameter in test_parameters:
+            with self.subTest(parameter):
+                expected = parameter[0]
+                actual = encoder[parameter[1]]
+                self.assertEqual(expected, actual)

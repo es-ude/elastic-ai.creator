@@ -1,14 +1,38 @@
-from typing import Any, TypeVar, Generic
+from typing import Any, TypeVar, Protocol, Iterable, runtime_checkable
+
+from torch import Tensor
 
 T = TypeVar("T")
 
 
-class HasTag(Generic[T]):
+@runtime_checkable
+class Tagged(Protocol):
     def elasticai_tags(self) -> dict:
         pass
 
 
-def tag(module: T, **new_tags: Any) -> HasTag:
+@runtime_checkable
+class ModuleProto(Protocol):
+    @property
+    def training(self) -> bool:
+        pass
+
+    def extra_repr(self) -> str:
+        pass
+
+    def named_children(self) -> Iterable[tuple[str, "ModuleProto"]]:
+        pass
+
+    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
+        pass
+
+
+@runtime_checkable
+class TaggedModule(ModuleProto, Tagged, Protocol):
+    pass
+
+
+def tag(module: ModuleProto, **new_tags: Any) -> TaggedModule:
     """Add tags to any object wrapping it in a TagWrapper if necessary
 
     new_tags will override possibly existing tags
@@ -25,10 +49,12 @@ def tag(module: T, **new_tags: Any) -> HasTag:
 
 
 def get_tags(module: Any) -> dict:
-    if hasattr(module, "elasticai_tags"):
+    if isinstance(module, Tagged):
         return module.elasticai_tags()
     return {}
 
 
-def has_tag(module: Any, tag_name) -> bool:
-    return tag_name in get_tags(module)
+def has_tag(module: Any, tag: str) -> bool:
+    if isinstance(module, Tagged):
+        return tag in module.elasticai_tags()
+    return False

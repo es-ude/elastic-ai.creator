@@ -5,18 +5,22 @@ from typing import Iterable
 import torch.nn
 
 from elasticai.creator.vhdl.generator.generator_functions import (
-    precomputed_scalar_function_process,
+    precomputed_scalar_function_process, precomputed_logic_function_process,
 )
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
     DataType,
+    Code,
+    _wrap_in_IS_END_block,
+    indent,
     Architecture,
     Process,
     ContextClause,
     LibraryClause,
-    UseClause,
+    UseClause, InterfaceConstrained, Mode,
 )
+from elasticai.creator.vhdl.number_representations import BitVector
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -139,3 +143,7 @@ class Tanh(PrecomputedScalarFunction):
             y=y_list,
             component_name=component_name,
         )
+
+    def build(self) -> str:
+        lines_of_code = self.__call__()
+        return "\n".join(lines_of_code)
