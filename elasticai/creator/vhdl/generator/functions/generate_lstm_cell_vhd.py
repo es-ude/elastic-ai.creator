@@ -410,7 +410,7 @@ def build_lstm_cell(writer: StringIO):
     process_content.process_statements_list.append(
         "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)"
     )
-    architecture.architecture_port_map_list.append(process_content)
+    architecture.architecture_statement_part = process_content
 
     # write it in StringIO
     for line in lib():
