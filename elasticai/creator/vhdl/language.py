@@ -269,7 +269,7 @@ class InterfaceConstrained:
     def __init__(
             self,
             identifier: str,
-            variable_type: DataType,
+            identifier_type: DataType,
             range: Optional[Union[str, int]],
             mode: Optional[Mode],
             value: Optional[Union[str, int]],
@@ -278,7 +278,7 @@ class InterfaceConstrained:
     ):
         self._identifier = identifier
         self._range = range
-        self._variable_type = variable_type
+        self._variable_type = identifier_type
         self._mode = mode
         self._value = value
         self._declaration_type = declaration_type
@@ -326,15 +326,15 @@ class InterfaceConstrained:
 
 
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+    def __init__(self, identifier: str, identifier_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, variable_type, range, mode, value, declaration_type="signal")
+        super().__init__(identifier, identifier_type, range, mode, value, declaration_type="signal")
 
 
 class InterfaceVariable(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+    def __init__(self, identifier: str, identifier_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, variable_type, range, mode, value, declaration_type=None)
+        super().__init__(identifier, identifier_type, range, mode, value, declaration_type=None)
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):

@@ -54,43 +54,43 @@ def build_lstm_cell(writer: StringIO):
     entity = Entity(identifier="lstm_cell")
     entity.generic_list.append(
         InterfaceVariable(identifier="DATA_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value=DATA_WIDTH)
     )
     entity.generic_list.append(
         InterfaceVariable(identifier="FRAC_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value=FRAC_WIDTH)
     )
 
     entity.port_list.append(
         InterfaceVariable(identifier="x",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     entity.port_list.append(
         InterfaceVariable(identifier="c_in",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     entity.port_list.append(
         InterfaceVariable(identifier="h_in",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     entity.port_list.append(
         InterfaceVariable(identifier="c_out",
                           mode=Mode.OUT,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     entity.port_list.append(
         InterfaceVariable(identifier="h_out",
                           mode=Mode.OUT,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
 
@@ -106,7 +106,7 @@ def build_lstm_cell(writer: StringIO):
     for identifier, value in lstm_signal_definitions.items():
         architecture.architecture_declaration_list.append(
             InterfaceSignal(identifier=identifier,
-                            variable_type=DataType.SIGNED,
+                            identifier_type=DataType.SIGNED,
                             range="DATA_WIDTH-1 downto 0",
                             value=value,
                             mode=None)
@@ -116,7 +116,7 @@ def build_lstm_cell(writer: StringIO):
     architecture.architecture_declaration_list.append(
         InterfaceSignal(
             identifier="i_wo_activation",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
             range="DATA_WIDTH-1 downto 0",
             value="(others=>'0')",
             mode=None)
@@ -124,70 +124,70 @@ def build_lstm_cell(writer: StringIO):
 
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="i",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="f_wo_activation",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="f",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="g_wo_activation",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="g",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="o_wo_activation",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="o",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="c_new",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="c_new_wo_activation",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(identifier="h_new",
-                        variable_type=DataType.SIGNED,
+                        identifier_type=DataType.SIGNED,
                         range="DATA_WIDTH-1 downto 0",
                         value="(others=>'0')",
                         mode=None)
@@ -196,96 +196,96 @@ def build_lstm_cell(writer: StringIO):
     mac_async_component = ComponentDeclaration(identifier="mac_async")
     mac_async_component.generic_list.append(
         InterfaceVariable(identifier="DATA_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value="DATA_WIDTH")
     )
     mac_async_component.generic_list.append(
         InterfaceVariable(identifier="FRAC_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value="FRAC_WIDTH")
     )
     mac_async_component.port_list.append(
         InterfaceVariable(identifier="x1",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     mac_async_component.port_list.append(
         InterfaceVariable(identifier="x2",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     mac_async_component.port_list.append(
         InterfaceVariable(identifier="w1",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     mac_async_component.port_list.append(
         InterfaceVariable(identifier="w2",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     mac_async_component.port_list.append(
         InterfaceVariable(identifier="b",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     mac_async_component.port_list.append(
         InterfaceVariable(identifier="y",
                           mode=Mode.OUT,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
 
     sigmoid_component = ComponentDeclaration(identifier="sigmoid")
     sigmoid_component.generic_list.append(
         InterfaceVariable(identifier="DATA_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value="DATA_WIDTH")
     )
     sigmoid_component.generic_list.append(
         InterfaceVariable(identifier="FRAC_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value="FRAC_WIDTH")
     )
     sigmoid_component.port_list.append(
         InterfaceVariable(identifier="x",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     sigmoid_component.port_list.append(
         InterfaceVariable(identifier="y",
                           mode=Mode.OUT,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
 
     tanh_component = ComponentDeclaration(identifier="tanh")
     tanh_component.generic_list.append(
         InterfaceVariable(identifier="DATA_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value="DATA_WIDTH")
     )
     tanh_component.generic_list.append(
         InterfaceVariable(identifier="FRAC_WIDTH",
-                          variable_type=DataType.INTEGER,
+                          identifier_type=DataType.INTEGER,
                           value="FRAC_WIDTH")
     )
     tanh_component.port_list.append(
         InterfaceVariable(identifier="x",
                           mode=Mode.IN,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     tanh_component.port_list.append(
         InterfaceVariable(identifier="y",
                           mode=Mode.OUT,
-                          variable_type=DataType.SIGNED,
+                          identifier_type=DataType.SIGNED,
                           range="DATA_WIDTH-1 downto 0")
     )
     # add component to architecture
