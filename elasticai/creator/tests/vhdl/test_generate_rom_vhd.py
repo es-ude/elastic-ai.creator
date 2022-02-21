@@ -15,7 +15,7 @@ entity rom_bi is
         clk : in std_logic;
         en : in std_logic;
         addr : in std_logic_vector(3-1 downto 0);
-        data : out std_logic_vector(3-1 downto 0)
+        data : out std_logic_vector(12-1 downto 0)
     );
 end entity rom_bi;
 
@@ -25,15 +25,15 @@ architecture rom_bi_rtl of rom_bi is
     attribute rom_style : string;
     attribute rom_style of ROM : signal is "block";
 begin
-    process(clk)
+    ROM_process: process(clk)
     begin
         if rising_edge(clk) then
             if (en = '1') then
                 data <= ROM(conv_integer(addr));
             end if;
         end if;
-    end process;
-end rom_bi_rtl;
+    end process ROM_process;
+end architecture rom_bi_rtl;
 """
 
         string_io = StringIO("")
