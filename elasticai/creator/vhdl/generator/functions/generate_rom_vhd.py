@@ -1,5 +1,9 @@
+import math
 from io import StringIO
 
+import numpy as np
+
+from elasticai.creator.vhdl.generator.generator_functions import float_array_to_string
 from elasticai.creator.vhdl.generator.vhd_strings import (
     get_file_path_string
 )
@@ -9,16 +13,26 @@ from elasticai.creator.vhdl.language import (
     UseClause,
     Entity,
     InterfaceVariable,
-    DataType, Mode
+    DataType,
+    Mode,
+    Architecture,
+    Process
 )
+
+############################
+frac_bits = 4
+nbits = 12
+Bi = np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])  # biases for the input gate
+############################
 
 component_name = "rom_bi"
 file_name = component_name + ".vhd"
 architecture_name = "rom_bi_rtl"
 
-DATA_WITH = 12
-# TODO: chnage this, it should be generated from other param -- > math.ceil(math.log2(len(Bi)))
-PARAM_ADDR_WIDTH = 3  # will be calculated !
+DATA_WIDTH = nbits
+ROM_NAME_ARRAT_T = "rom_bi_array_t"
+ADDR_WIDTH = math.ceil(math.log2(len(Bi)))
+ROM_STRING = float_array_to_string(float_array=Bi, frac_bits=frac_bits, nbits=nbits)
 
 
 def main():
@@ -59,21 +73,49 @@ def build_rom(writer: StringIO):
         InterfaceVariable(identifier="addr",
                           variable_type=DataType.STD_LOGIC_VECTOR,
                           mode=Mode.IN,
-                          range=f"{PARAM_ADDR_WIDTH}-1 downto 0".format(PARAM_ADDR_WIDTH=PARAM_ADDR_WIDTH))
+                          range=f"{ADDR_WIDTH}-1 downto 0".format(ADDR_WIDTH=ADDR_WIDTH))
     )
     entity.port_list.append(
         InterfaceVariable(identifier="data",
                           variable_type=DataType.STD_LOGIC_VECTOR,
                           mode=Mode.OUT,
-                          range=f"{PARAM_ADDR_WIDTH}-1 downto 0".format(PARAM_ADDR_WIDTH=PARAM_ADDR_WIDTH))
-        ####
+                          range=f"{DATA_WIDTH}-1 downto 0".format(DATA_WIDTH=DATA_WIDTH))
     )
 
+    architecture = Architecture(identifier=architecture_name, design_unit=component_name)
+    ###############
+    array = "type rom_bi_array_t is array (0 to 2**{ADDR_WIDTH}-1) of std_logic_vector({DATA_WIDTH}-1 downto 0)".format(
+        ADDR_WIDTH=ADDR_WIDTH, DATA_WIDTH=DATA_WIDTH)
+    architecture.architecture_declaration_list.append(array)
+
+    value_of_array = "signal ROM : {ROM_NAME_ARRAT_T}:=({ROM_STRING})".format(
+        ROM_NAME_ARRAT_T=ROM_NAME_ARRAT_T, ROM_STRING=ROM_STRING)
+    architecture.architecture_declaration_list.append(value_of_array)
+    ###############
+
+    architecture.architecture_declaration_list.append("attribute rom_style : string")
+    architecture.architecture_declaration_list.append('attribute rom_style of ROM : signal is "block"')
+
+    # define process
+    rom_process = Process(identifier="ROM", input_name="clk")
+    rom_process.process_statements_list.append(
+        "if rising_edge(clk) then \nif (en = '1') then\ndata <= ROM(conv_integer(addr))")
+    rom_process.process_statements_list.append("end if")
+    rom_process.process_statements_list.append("end if")
+
+    # add process to the architecture
+    architecture.architecture_statement_part = rom_process
+
+    # write it to StringIO
     for line in library():
         writer.write(line)
         writer.write("\n")
 
     for line in entity():
+        writer.write(line)
+        writer.write("\n")
+
+    for line in architecture():
         writer.write(line)
         writer.write("\n")
 
