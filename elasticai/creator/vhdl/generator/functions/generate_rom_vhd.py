@@ -1,5 +1,6 @@
 import math
 from io import StringIO
+from itertools import chain
 
 import numpy as np
 
@@ -30,7 +31,6 @@ file_name = component_name + ".vhd"
 architecture_name = "rom_bi_rtl"
 
 DATA_WIDTH = nbits
-ROM_NAME_ARRAT_T = "rom_bi_array_t"
 ADDR_WIDTH = math.ceil(math.log2(len(Bi)))
 ROM_STRING = float_array_to_string(float_array=Bi, frac_bits=frac_bits, nbits=nbits)
 
@@ -46,7 +46,7 @@ def main():
         writer.write(code)
 
 
-def build_rom(writer: StringIO):
+def build_rom(writer: StringIO, ):
     # library
     library = ContextClause(
         library_clause=LibraryClause(logical_name_list=["ieee"]),
@@ -81,41 +81,39 @@ def build_rom(writer: StringIO):
                           mode=Mode.OUT,
                           range=f"{DATA_WIDTH}-1 downto 0".format(DATA_WIDTH=DATA_WIDTH))
     )
+    # architecture
+    architecture = Architecture(
+        identifier=architecture_name,
+        design_unit=component_name)
 
-    architecture = Architecture(identifier=architecture_name, design_unit=component_name)
-    ###############
-    array = "type rom_bi_array_t is array (0 to 2**{ADDR_WIDTH}-1) of std_logic_vector({DATA_WIDTH}-1 downto 0)".format(
-        ADDR_WIDTH=ADDR_WIDTH, DATA_WIDTH=DATA_WIDTH)
-    architecture.architecture_declaration_list.append(array)
-
-    value_of_array = "signal ROM : {ROM_NAME_ARRAT_T}:=({ROM_STRING})".format(
-        ROM_NAME_ARRAT_T=ROM_NAME_ARRAT_T, ROM_STRING=ROM_STRING)
-    architecture.architecture_declaration_list.append(value_of_array)
-    ###############
-
-    architecture.architecture_declaration_list.append("attribute rom_style : string")
-    architecture.architecture_declaration_list.append('attribute rom_style of ROM : signal is "block"')
+    architecture.architecture_declaration_list.append(
+        "type rom_bi_array_t is array (0 to 2**{ADDR_WIDTH}-1) of std_logic_vector({DATA_WIDTH}-1 downto 0)".format(
+            ADDR_WIDTH=ADDR_WIDTH,
+            DATA_WIDTH=DATA_WIDTH)
+    )
+    architecture.architecture_declaration_list.append(
+        "signal ROM : rom_bi_array_t:=({ROM_STRING})".format(ROM_STRING=ROM_STRING)
+    )
+    architecture.architecture_declaration_list.append(
+        "attribute rom_style : string"
+    )
+    architecture.architecture_declaration_list.append(
+        'attribute rom_style of ROM : signal is "block"'
+    )
 
     # define process
     rom_process = Process(identifier="ROM", input_name="clk")
     rom_process.process_statements_list.append(
-        "if rising_edge(clk) then \nif (en = '1') then\ndata <= ROM(conv_integer(addr))")
+        "if rising_edge(clk) then \nif (en = '1') then\ndata <= ROM(conv_integer(addr))"
+    )
     rom_process.process_statements_list.append("end if")
     rom_process.process_statements_list.append("end if")
 
     # add process to the architecture
     architecture.architecture_statement_part = rom_process
 
-    # write it to StringIO
-    for line in library():
-        writer.write(line)
-        writer.write("\n")
-
-    for line in entity():
-        writer.write(line)
-        writer.write("\n")
-
-    for line in architecture():
+    code = chain(chain(library(), entity()), architecture())
+    for line in code:
         writer.write(line)
         writer.write("\n")
 
