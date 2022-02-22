@@ -1,10 +1,14 @@
 import math
 from io import StringIO
 from itertools import chain
-
 import numpy as np
 
-from elasticai.creator.vhdl.generator.generator_functions import float_array_to_string
+from elasticai.creator.vhdl.generator.vhdl_formatter import (
+    format_vhdl
+)
+from elasticai.creator.vhdl.generator.generator_functions import (
+    float_array_to_string
+)
 from elasticai.creator.vhdl.generator.vhd_strings import (
     get_file_path_string
 )
@@ -44,6 +48,8 @@ def main():
         stringio = StringIO("")
         code = build_rom(stringio)
         writer.write(code)
+
+    format_vhdl(file_path=file_path)
 
 
 def build_rom(writer: StringIO, ):
