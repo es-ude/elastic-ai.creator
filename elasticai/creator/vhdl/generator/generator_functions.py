@@ -350,7 +350,15 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     return dict_of_signals
 
 
-def _format_array_to_string(arr, nbits=16):
+def _format_array_to_string(arr: List[int], nbits: int):
+    """
+    returns String of hexadecimal values of an array
+    Args:
+        arr ([int]): the width of the data
+        nbits (int): the number of DATA_WIDTH
+    Returns:
+        returns String of hexadecimal values of an integer array
+    """
     result_string = ""
     for value in range(2 ** math.ceil(math.log2(len(arr)))):
         if value < len(arr):
@@ -362,7 +370,16 @@ def _format_array_to_string(arr, nbits=16):
     return result_string
 
 
-def float_array_to_string(float_array, frac_bits=8, nbits=16):
+def float_array_to_string(float_array, frac_bits, nbits):
+    """
+    returns String of hexadecimal values of an array
+    Args:
+        float_array ([float]): array of float values
+        frac_bits (int): the number of fraction bits
+        nbits (int): the number of bits
+    Returns:
+        returns String of hexadecimal values of float array
+    """
     scaled_array = float_array * 2 ** frac_bits
     int_array = scaled_array.astype(np.int16)
     return _format_array_to_string(int_array, nbits)
