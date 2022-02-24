@@ -1,4 +1,8 @@
 from io import StringIO
+
+from elasticai.creator.vhdl.generator.vhdl_formatter import (
+    format_vhdl
+)
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
@@ -30,6 +34,8 @@ def main():
         stringio = StringIO("")
         code = build_mac_async(stringio)
         writer.write(code)
+    # indent the generated vhdl file
+    format_vhdl(file_path=file_path)
 
 
 def build_mac_async(writer: StringIO):

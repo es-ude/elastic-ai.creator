@@ -20,6 +20,9 @@ from elasticai.creator.vhdl.language import (
     ContextClause,
     PortMap
 )
+from elasticai.creator.vhdl.generator.vhdl_formatter import (
+    format_vhdl
+)
 
 component_name = "lstm_cell"
 file_name = component_name + ".vhd"
@@ -37,6 +40,8 @@ def main():
         stringio = StringIO("")
         code = build_lstm_cell(stringio)
         writer.write(code)
+    # indent the generated vhdl file
+    format_vhdl(file_path=file_path)
 
 
 def build_lstm_cell(writer: StringIO):

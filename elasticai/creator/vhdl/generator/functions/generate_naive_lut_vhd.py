@@ -3,6 +3,7 @@ from elasticai.creator.vhdl.generator.lut_conv import NaiveLUTBasedConv
 from elasticai.creator.vhdl.generator.vhd_strings import get_file_path_string
 import torch
 
+from elasticai.creator.vhdl.generator.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
 
 
@@ -35,3 +36,5 @@ if __name__ == "__main__":
     example_outputs[[0, 2]] = 1
     example_outputs = example_outputs.tolist()
     main(example_inputs,example_outputs,file_path)
+    # indent the generated vhdl file
+    format_vhdl(file_path=file_path)
