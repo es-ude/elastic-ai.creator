@@ -39,7 +39,7 @@ class FracWidthVariable(InterfaceVariable):
 
 class PrecomputedScalarFunction:
     def __init__(
-        self, data_width, frac_width, x, y, component_name=None, process_instance=None
+            self, data_width, frac_width, x, y, component_name=None, process_instance=None
     ):
         """
         We calculate the function with an algorithm equivalent to:
@@ -127,10 +127,6 @@ class Sigmoid(PrecomputedScalarFunction):
             component_name=component_name,
         )
 
-    def build(self) -> str:
-        lines_of_code = self.__call__()
-        return "\n".join(lines_of_code)
-
 
 class Tanh(PrecomputedScalarFunction):
     def __init__(self, data_width, frac_width, x, component_name=None):
@@ -148,6 +144,3 @@ class Tanh(PrecomputedScalarFunction):
             component_name=component_name,
         )
 
-    def build(self) -> str:
-        lines_of_code = self.__call__()
-        return "\n".join(lines_of_code)
