@@ -13,7 +13,8 @@ def main():
     )
     tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
     with open(file_path, "w") as writer:
-        writer.write(tanh.build())
+        for line in tanh():
+            writer.write(line)
     # indent the generated vhdl file
     format_vhdl(file_path=file_path)
 

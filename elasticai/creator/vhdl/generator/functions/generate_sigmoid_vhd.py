@@ -14,7 +14,8 @@ def main():
 
     with open(file_path, "w") as writer:
         s = Sigmoid(data_width=16, frac_width=8, x=np.linspace(-5, 5, 66))
-        writer.write(s.build())
+        for line in s():
+            writer.write(line)
     # indent the generated vhdl file
     format_vhdl(file_path=file_path)
 
