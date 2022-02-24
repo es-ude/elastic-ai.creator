@@ -31,7 +31,7 @@ class NaiveLUTBasedConv():
             identifier="x",
             mode=Mode.IN,
             range=f"INPUT_WIDTH-1 downto 0",
-            variable_type=DataType.STD_LOGIC_VECTOR,
+            identifier_type=DataType.STD_LOGIC_VECTOR,
             value=None,
             declaration_type=None,
         ))
@@ -39,7 +39,7 @@ class NaiveLUTBasedConv():
             identifier="y",
             mode=Mode.OUT,
             range=f"OUTPUT_WIDTH-1 downto 0",
-            variable_type=DataType.STD_LOGIC_VECTOR,
+            identifier_type=DataType.STD_LOGIC_VECTOR,
             value=None,
             declaration_type=None
         ))
