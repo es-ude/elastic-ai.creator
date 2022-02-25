@@ -212,12 +212,12 @@ class SigmoidTestBench:
             identifier=self.architecture_name,
             design_unit=self.component_name,
         )
-        architecture.architecture_declaration_list = [
+        architecture.architecture_declaration_strings_list = [
             "signal clk_period : time := 1 ns",
             "signal test_input : signed(16-1 downto 0):=(others=>'0')",
             "signal test_output : signed(16-1 downto 0)",
         ]
-        architecture.architecture_declaration_part = component
+        architecture.architecture_declaration_classes_list = [component, uut]
         architecture.architecture_statement_part = process
         code = chain(chain(library(), entity()), architecture())
         return code

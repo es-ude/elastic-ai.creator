@@ -110,25 +110,25 @@ class Architecture:
     def __init__(self, identifier: str, design_unit: str):
         self.identifier = identifier
         self.design_unit = design_unit
-        self._architecture_declaration_list = InterfaceList()
-        self._architecture_declaration_part = None
+        self._architecture_declaration_strings_list = InterfaceList()
+        self._architecture_declaration_classes_list = None
         self._architecture_statement_part = None
 
     @property
-    def architecture_declaration_list(self):
-        return self._architecture_declaration_list
+    def architecture_declaration_strings_list(self):
+        return self._architecture_declaration_strings_list
 
-    @architecture_declaration_list.setter
-    def architecture_declaration_list(self, value):
-        self._architecture_declaration_list = InterfaceList(value)
+    @architecture_declaration_strings_list.setter
+    def architecture_declaration_strings_list(self, value):
+        self._architecture_declaration_strings_list = InterfaceList(value)
 
     @property
-    def architecture_declaration_part(self):
-        return self._architecture_declaration_part
+    def architecture_declaration_classes_list(self):
+        return self._architecture_declaration_classes_list
 
-    @architecture_declaration_part.setter
-    def architecture_declaration_part(self, value):
-        self._architecture_declaration_part = value
+    @architecture_declaration_classes_list.setter
+    def architecture_declaration_classes_list(self, value):
+        self._architecture_declaration_classes_list = value
 
     @property
     def architecture_statement_part(self):
@@ -140,16 +140,15 @@ class Architecture:
 
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
-        if len(self._architecture_declaration_list) > 0:
+        if len(self._architecture_declaration_strings_list) > 0:
             yield from _indent_and_filter_non_empty_lines(
                 _add_semicolons(
-                    self._architecture_declaration_list(), semicolon_last=True
+                    self._architecture_declaration_strings_list(), semicolon_last=True
                 )
             )
-        if self._architecture_declaration_part:
-            yield from _indent_and_filter_non_empty_lines(
-                self._architecture_declaration_part()
-            )
+        for class_declaration in self._architecture_declaration_classes_list:
+            print(class_declaration)
+            yield from _indent_and_filter_non_empty_lines(class_declaration())
         yield f"{Keywords.BEGIN.value}"
         if self._architecture_statement_part:
             yield from _indent_and_filter_non_empty_lines(
