@@ -171,12 +171,12 @@ def write_testbench_file(
             DataWidthVariable(value=data_width),
             FracWidthVariable(value=frac_width),
             InterfaceVariable(
-                identifier="VECTOR_LEN_WIDTH", variable_type=DataType.INTEGER, value=4
+                identifier="VECTOR_LEN_WIDTH", identifier_type=DataType.INTEGER, value=4
             ),
         ]
         entity.port_list = [
             InterfaceVariable(
-                identifier="clk", variable_type=DataType.STD_LOGIC, mode=Mode.OUT
+                identifier="clk", identifier_type=DataType.STD_LOGIC, mode=Mode.OUT
             )
         ]
         for line in entity():

@@ -48,13 +48,14 @@ class Keywords(Enum):
     BEGIN = "begin"
     PROCESS = "process"
     STD_LOGIC_VECTOR = "std_logic_vector"
-    
+
 
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
     SIGNED = Keywords.SIGNED.value
     STD_LOGIC_VECTOR = Keywords.STD_LOGIC_VECTOR.value
+
 
 class Mode(Enum):
     IN = Keywords.IN.value
@@ -269,7 +270,7 @@ class InterfaceConstrained:
     def __init__(
             self,
             identifier: str,
-            variable_type: DataType,
+            identifier_type: DataType,
             range: Optional[Union[str, int]],
             mode: Optional[Mode],
             value: Optional[Union[str, int]],
@@ -277,64 +278,28 @@ class InterfaceConstrained:
 
     ):
         self._identifier = identifier
-        self._range = range
-        self._variable_type = variable_type
-        self._mode = mode
-        self._value = value
-        self._declaration_type = declaration_type
-
-    @property
-    def range(self) -> int:
-        return self._range
-
-    @range.setter
-    def range(self, v: Optional[Union[str, int]]):
-        self._range = v if v is not None else None
-
-    @property
-    def mode(self):
-        return self._mode
-
-    @mode.setter
-    def mode(self, v):
-        self._mode = v if v is not None else None
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, v):
-        self._value = v if v is not None else None
-
-    @property
-    def declaration_type(self):
-        return self._declaration_type
-
-    @declaration_type.setter
-    def declaration_type(self, v):
-        self._declaration_type = v if v is not None else None
+        self._range = f"({range})" if range else ""
+        self._identifier_type = identifier_type
+        self._mode = f" {mode.value} " if mode else " "
+        self._value = f" := {value}" if value else ""
+        self._declaration_type = f"{declaration_type} " if declaration_type else ""
 
     def __call__(self) -> Code:
-        range_part = "" if self._range is None else f"({self._range})"
-        declaration_part = "" if self._declaration_type is None else f"{self._declaration_type} "
-        value_part = "" if self.value is None else f" := {self.value}"
-        mode_part = " " if self.mode is None else f" {self.mode.value} "
         yield from (
-            f"{declaration_part}{self._identifier} :{mode_part}{self._variable_type.value}{range_part}{value_part}",
+            f"{self._declaration_type}{self._identifier} :{self._mode}{self._identifier_type.value}{self._range}{self._value}",
         )
 
 
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+    def __init__(self, identifier: str, identifier_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, variable_type, range, mode, value, declaration_type="signal")
+        super().__init__(identifier, identifier_type, range, mode, value, declaration_type="signal")
 
 
 class InterfaceVariable(InterfaceConstrained):
-    def __init__(self, identifier: str, variable_type: DataType, range: Optional[Union[str, int]] = None,
+    def __init__(self, identifier: str, identifier_type: DataType, range: Optional[Union[str, int]] = None,
                  mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, variable_type, range, mode, value, declaration_type=None)
+        super().__init__(identifier, identifier_type, range, mode, value, declaration_type=None)
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):

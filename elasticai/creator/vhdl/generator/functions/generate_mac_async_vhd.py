@@ -48,12 +48,12 @@ def build_mac_async(writer: StringIO):
     entity = Entity(component_name)
     entity.generic_list.append(
         InterfaceVariable(
-            identifier="DATA_WIDTH", variable_type=DataType.INTEGER, value=DATA_WIDTH
+            identifier="DATA_WIDTH", identifier_type=DataType.INTEGER, value=DATA_WIDTH
         )
     )
     entity.generic_list.append(
         InterfaceVariable(
-            identifier="FRAC_WIDTH", variable_type=DataType.INTEGER, value=DATA_FRAC
+            identifier="FRAC_WIDTH", identifier_type=DataType.INTEGER, value=DATA_FRAC
         )
     )
     entity.port_list.append(
@@ -61,7 +61,7 @@ def build_mac_async(writer: StringIO):
             identifier="x1",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     entity.port_list.append(
@@ -69,7 +69,7 @@ def build_mac_async(writer: StringIO):
             identifier="x2",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     entity.port_list.append(
@@ -77,7 +77,7 @@ def build_mac_async(writer: StringIO):
             identifier="w1",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     entity.port_list.append(
@@ -85,7 +85,7 @@ def build_mac_async(writer: StringIO):
             identifier="w2",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     entity.port_list.append(
@@ -93,7 +93,7 @@ def build_mac_async(writer: StringIO):
             identifier="b",
             mode=Mode.IN,
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     entity.port_list.append(
@@ -101,7 +101,7 @@ def build_mac_async(writer: StringIO):
             identifier="y",
             mode=Mode.OUT,
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     for line in entity():
@@ -118,14 +118,14 @@ def build_mac_async(writer: StringIO):
         InterfaceSignal(
             identifier="product_1",
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     architecture.architecture_declaration_list.append(
         InterfaceSignal(
             identifier="product_2",
             range="DATA_WIDTH-1 downto 0",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
         )
     )
     for line in architecture():
