@@ -61,23 +61,23 @@ def build_rom(writer: StringIO, ):
     entity = Entity(identifier=component_name)
     entity.port_list.append(
         InterfaceVariable(identifier="clk",
-                          variable_type=DataType.STD_LOGIC,
+                          identifier_type=DataType.STD_LOGIC,
                           mode=Mode.IN)
     )
     entity.port_list.append(
         InterfaceVariable(identifier="en",
-                          variable_type=DataType.STD_LOGIC,
+                          identifier_type=DataType.STD_LOGIC,
                           mode=Mode.IN)
     )
     entity.port_list.append(
         InterfaceVariable(identifier="addr",
-                          variable_type=DataType.STD_LOGIC_VECTOR,
+                          identifier_type=DataType.STD_LOGIC_VECTOR,
                           mode=Mode.IN,
                           range=f"{ADDR_WIDTH}-1 downto 0".format(ADDR_WIDTH=ADDR_WIDTH))
     )
     entity.port_list.append(
         InterfaceVariable(identifier="data",
-                          variable_type=DataType.STD_LOGIC_VECTOR,
+                          identifier_type=DataType.STD_LOGIC_VECTOR,
                           mode=Mode.OUT,
                           range=f"{DATA_WIDTH}-1 downto 0".format(DATA_WIDTH=DATA_WIDTH))
     )
