@@ -46,7 +46,7 @@ begin
         y => test_output
     );
 
-    test_process: process is
+    test_process: process
     begin
         Report "======Simulation start======" severity Note;
 
