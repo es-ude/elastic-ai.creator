@@ -217,7 +217,7 @@ class SigmoidTestBench:
             "signal test_input : signed(16-1 downto 0):=(others=>'0')",
             "signal test_output : signed(16-1 downto 0)",
         ]
-        architecture.architecture_declaration_classes_list = [component, uut]
-        architecture.architecture_statement_part = process
+        architecture.architecture_declaration_classes_list = [component]
+        architecture.architecture_statement_part_list = [process, uut]
         code = chain(chain(library(), entity()), architecture())
         return code

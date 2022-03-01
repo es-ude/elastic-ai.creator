@@ -112,7 +112,7 @@ class Architecture:
         self.design_unit = design_unit
         self._architecture_declaration_strings_list = InterfaceList()
         self._architecture_declaration_classes_list = None
-        self._architecture_statement_part = None
+        self._architecture_statement_part_list = None
 
     @property
     def architecture_declaration_strings_list(self):
@@ -131,12 +131,12 @@ class Architecture:
         self._architecture_declaration_classes_list = value
 
     @property
-    def architecture_statement_part(self):
-        return self._architecture_statement_part
+    def architecture_statement_part_list(self):
+        return self._architecture_statement_part_list
 
-    @architecture_statement_part.setter
-    def architecture_statement_part(self, value):
-        self._architecture_statement_part = value
+    @architecture_statement_part_list.setter
+    def architecture_statement_part_list(self, value):
+        self._architecture_statement_part_list = value
 
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
@@ -150,10 +150,9 @@ class Architecture:
             print(class_declaration)
             yield from _indent_and_filter_non_empty_lines(class_declaration())
         yield f"{Keywords.BEGIN.value}"
-        if self._architecture_statement_part:
-            yield from _indent_and_filter_non_empty_lines(
-                self._architecture_statement_part()
-            )
+        if self._architecture_statement_part_list:
+            for statement_part in self._architecture_statement_part_list:
+                yield from _indent_and_filter_non_empty_lines(statement_part())
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
 
 

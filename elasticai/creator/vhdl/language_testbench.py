@@ -24,6 +24,6 @@ class UUT:
         # TODO: change with ahmads portmap
         yield f"port map ("
         yield from _indent_and_filter_non_empty_lines(
-            ["x => test_input", "y => test_output"]
+            ["x => test_input,", "y => test_output"]
         )
         yield f");"
