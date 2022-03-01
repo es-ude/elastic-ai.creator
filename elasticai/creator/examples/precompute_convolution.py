@@ -4,8 +4,8 @@ from io import StringIO
 from torch.nn import Sequential, MaxPool1d, Conv1d
 
 from elasticai.creator.input_domains import (
-    create_input_for_1d_conv,
-    create_depthwise_input_for_1d_conv,
+    create_codomain_for_1d_conv,
+    create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.layers import QConv1d, Binarize
 from elasticai.creator.precomputation import (
@@ -33,7 +33,7 @@ model = Sequential(
             Binarize(),
         ),
         input_generator=partial(
-            create_depthwise_input_for_1d_conv, shape=(2, 4), items=[-1, 1]
+            create_codomain_for_depthwise_1d_conv, shape=(2, 4), items=[-1, 1]
         ),
         input_shape=(2, 2),
     ),
@@ -47,7 +47,9 @@ model = Sequential(
             ),
             Binarize(),
         ),
-        input_generator=partial(create_input_for_1d_conv, shape=(1, 2), items=[-1, 1]),
+        input_generator=partial(
+            create_codomain_for_1d_conv, shape=(1, 2), items=[-1, 1]
+        ),
         input_shape=(6, 1),
     ),
 )

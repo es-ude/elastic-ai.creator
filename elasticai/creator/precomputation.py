@@ -1,31 +1,21 @@
 import json
-from typing import Union, Set, Callable, Protocol, Iterable
+from typing import Union, Callable, Sequence
 
 import numpy
 import numpy as np
 import torch
 from torch import Tensor
-from torch.nn import Module
 
-from elasticai.creator.tags_utils import has_tag, get_tags, tag
+from elasticai.creator.tags_utils import (
+    has_tag,
+    get_tags,
+    tag,
+    Tagged,
+    ModuleProto,
+    TaggedModule,
+)
 
 _precomputable_tag = "precomputable"
-
-
-class ModuleProto(Protocol):
-    @property
-    def training(self) -> bool:
-        pass
-
-    def extra_repr(self) -> str:
-        pass
-
-    def named_children(self) -> Iterable[tuple[str, "ModuleProto"]]:
-        pass
-
-    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
-        pass
-
 
 TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, numpy.ndarray]
 
@@ -91,7 +81,7 @@ class JSONEncoder(json.JSONEncoder):
                 "description": description,
                 "shape": o.input_domain.shape[1:],
                 "x": o.input_domain.numpy().tolist(),
-                "y": o.input_domain.numpy().tolist(),
+                "y": o.output.numpy().tolist(),
             }
         else:
             return json.JSONEncoder.default(self, o)
@@ -109,7 +99,7 @@ def get_precomputations_from_direct_children(module):
     )
 
 
-def get_precomputations_recursively(module):
+def get_precomputations_recursively(module) -> Precomputation:
     def tag_filter(submodule):
         return _precomputable_tag in get_tags(submodule)
 
@@ -122,10 +112,9 @@ def get_precomputations_recursively(module):
 
 
 def precomputable(
-    module: Module,
-    input_shape: tuple[int, ...],
-    input_generator: Callable[[tuple[int, ...]], np.ndarray],
-) -> Module:
+    input_shape: Sequence[int],
+    input_generator: Callable[[Sequence[float]], np.ndarray],
+) -> Callable[[ModuleProto], TaggedModule]:
     """Add all necessary information to allow later tools to precompute the specified module
 
     The arguments provided will be used to determine the input data that needs
@@ -154,17 +143,12 @@ def precomputable(
                 for precomputation in precomputations:
                     file.write(precomputation)
     """
-    return tag(
-        module,
-        precomputable={
-            "input_shape": input_shape,
-            "input_generator": input_generator,
-        },
-    )
+    tag_content = {
+        "input_shape": input_shape,
+        "input_generator": input_generator,
+    }
 
+    def decorator(module: ModuleProto) -> TaggedModule:
+        return tag(module, precomputable=tag_content)
 
-def Precomputable(input_shape, input_generator):
-    def precomputable_decorator_function(module):
-        return precomputable(module, input_shape, input_generator)
-
-    return precomputable_decorator_function
+    return decorator

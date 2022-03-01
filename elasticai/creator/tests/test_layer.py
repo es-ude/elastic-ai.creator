@@ -1,3 +1,5 @@
+import unittest
+from functools import partial
 from typing import Optional, Tuple
 from unittest.mock import patch
 from unittest import SkipTest
@@ -13,7 +15,9 @@ from elasticai.creator.layers import (
     QConv2d,
     QLSTMCell,
     QLSTM,
-    Binarize, ChannelShuffle,
+    Binarize, BatchNormedActivatedConv1d, TernaryConvolution1d, MultilevelResidualBinarizationConv1d,
+    BinaryActivatedConv1d, SplitConvolutionBase, BinarySplitConv, TernarySplitConv, TwoBitSplitConv,
+    ChannelShuffle,
 )
 from elasticai.creator.constraints import WeightClipper
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
@@ -261,6 +265,60 @@ class LayerTests(TensorTestCase):
         with self.subTest("test throw error if quanitzer is None"):
             self.assertRaises(TypeError, QConv2d, 1, 1, 2, None)
 
+    def test_BatchNormedActivatedConv(self):
+        layer = BatchNormedActivatedConv1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False, activation=Binarize, channel_multiplexing_factor=1)
+        layer.conv.weight = torch.nn.Parameter(torch.ones_like(layer.conv.weight))
+        test_input = torch.ones((2,1,3))
+        output = layer(test_input)
+        expected = torch.ones(2,2,2)
+        self.assertTrue(torch.all((expected==output)))
+    
+    
+    def test_TernaryConvolution(self):
+        layer = TernaryConvolution1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False)
+        self.assertEqual(type(layer.quantize),type(Ternarize()))
+        self.assertEqual(layer.channel_multiplexing_factor, 1)
+        
+    def test_MultilevelResidualBinarizationConv(self):
+        layer = MultilevelResidualBinarizationConv1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False)
+        self.assertEqual(type(layer.quantize),type(QuantizeTwoBit()))
+        self.assertEqual(layer.channel_multiplexing_factor, 2)
+   
+    def test_BinaryActivatedConv(self):
+        layer = BinaryActivatedConv1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False)
+        self.assertEqual(type(layer.quantize),type(Binarize()))
+        self.assertEqual(layer.channel_multiplexing_factor, 1)
+
+
+    def test_SplitConvolutionBase(self):
+        layer_function = partial(BatchNormedActivatedConv1d,activation=Binarize,channel_multiplexing_factor=1)
+        layer = SplitConvolutionBase(in_channels=2, out_channels=4, kernel_size=2,convolution=layer_function,codomain_elements=[-1, 1] )
+        layer.depthwise.conv.weight = torch.nn.Parameter(torch.ones_like(layer.depthwise.conv.weight))
+        layer.pointwise.conv.weight = torch.nn.Parameter(torch.ones_like(layer.pointwise.conv.weight))
+        test_input = torch.ones((2, 2, 3))
+        output = layer(test_input)
+        expected = torch.ones(2, 4, 2)
+        self.assertTrue(torch.all((expected == output)))
+        self.assertEqual(layer.depthwise.conv.groups,2)
+    
+    def test_BinarySplitConv(self):
+        layer = BinarySplitConv(in_channels=1, out_channels=2, kernel_size=2)
+        self.assertEqual(type(layer.depthwise.quantize),type(Binarize()))
+        self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
+        self.assertEqual(type(layer.pointwise.quantize), type(Binarize()))
+    
+    def test_TernarySplitConv(self):
+        layer = TernarySplitConv(in_channels=1, out_channels=2, kernel_size=2)
+        self.assertEqual(type(layer.depthwise.quantize),type(Ternarize()))
+        self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
+        self.assertEqual(type(layer.pointwise.quantize), type(Ternarize()))
+    
+    def test_TwoBitSplitConv(self):
+        layer = TwoBitSplitConv(in_channels=1, out_channels=2, kernel_size=2)
+        self.assertEqual(type(layer.depthwise.quantize),type(QuantizeTwoBit()))
+        self.assertEqual(layer.depthwise.channel_multiplexing_factor, 2)
+        self.assertEqual(type(layer.pointwise.quantize), type(QuantizeTwoBit()))
+    
     @SkipTest
     def test_QLSTMCell(self):
         with self.subTest("full res QLSTM cell equal PyTorch LSTM cell (with bias)"):

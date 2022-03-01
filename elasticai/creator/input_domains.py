@@ -39,8 +39,8 @@ def get_cartesian_product_from_items(
     return np.array(tuple(itertools.product(items, repeat=length)), dtype=dtype)
 
 
-def construct_domain_from_items(
-    shape: tuple[int, ...], items: Iterable, dtype="float16"
+def construct_codomain_from_elements(
+    shape: tuple[int, ...], codomain_elements: Iterable, dtype="float16"
 ) -> np.ndarray:
     """Build the numpy array containing all combinations that can be built from `items` resulting in the desired `shape`.
 
@@ -53,7 +53,7 @@ def construct_domain_from_items(
       construct_domain_from_items((2, 3), ((1, 1), (0, 0))) # will raise a ValueError
     ```
     """
-    result = np.array(items)
+    result = np.array(codomain_elements)
 
     shape_we_need_to_build = shape[
         : _calculate_the_rank_index_that_shape_sizes_match_up_to(
@@ -145,18 +145,22 @@ def _calculate_the_rank_index_that_shape_sizes_match_up_to(
     return len(requested_shape) - len(rank_size_pairs)
 
 
-def create_input_for_1d_conv(shape, items):
+def create_codomain_for_1d_conv(shape, codomain_elements):
     domain: torch.Tensor = torch.as_tensor(
-        construct_domain_from_items(shape=shape, items=items, dtype="float32")
+        construct_codomain_from_elements(
+            shape=shape, codomain_elements=codomain_elements, dtype="float32"
+        )
     )
     return domain
 
 
-def create_depthwise_input_for_1d_conv(shape, items):
+def create_codomain_for_depthwise_1d_conv(shape, codomain_elements):
     kernel_size = shape[1]
     channels = shape[0]
     domain: torch.Tensor = torch.as_tensor(
-        construct_domain_from_items(shape=(kernel_size,), items=items, dtype="float32")
+        construct_codomain_from_elements(
+            shape=(kernel_size,), codomain_elements=codomain_elements, dtype="float32"
+        )
     )
     domain = domain.reshape([-1, 1, kernel_size])
     domain = domain.repeat_interleave(channels, dim=1)
