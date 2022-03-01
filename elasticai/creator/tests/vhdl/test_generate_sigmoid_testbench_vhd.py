@@ -87,17 +87,9 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
         
         end architecture sigmoid_tb_rtl;
         """
-        x_list = torch.as_tensor(np.linspace(-5, 5, 66))
-        # calculate y always for the previous element, therefore the last input is not needed here
-        y_list = list(torch.nn.Sigmoid()(x_list[:-1]))
-        y_list.insert(0, 0)
-        # add last y value, therefore, x_list is one element shorter than y_list
-        y_list.append(1)
         sigmoid = SigmoidTestBench(
             data_width=16,
             frac_width=8,
-            x=np.linspace(-5, 5, 66),
-            y=y_list,
             component_name="sigmoid_tb",
         )
         sigmoid_code = sigmoid()

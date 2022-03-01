@@ -152,14 +152,12 @@ class Tanh(PrecomputedScalarFunction):
 
 
 class SigmoidTestBench:
-    def __init__(self, data_width, frac_width, x, y, component_name=None):
+    def __init__(self, data_width, frac_width, component_name=None):
         self.component_name = self._get_lower_case_class_name_or_component_name(
             component_name=component_name
         )
         self.data_width = data_width
         self.frac_width = frac_width
-        self.x = x
-        self.y = y
 
     @classmethod
     def _get_lower_case_class_name_or_component_name(cls, component_name):
@@ -220,7 +218,9 @@ class SigmoidTestBench:
         uut_port_map.signal_list.append("y => test_output")
 
         test_cases = TestCases(
-            x_list_for_testing=[-1281, -1000, -500], y_list_for_testing=[0, 4, 28]
+            x_list_for_testing=[-1281, -1000, -500],
+            y_list_for_testing=[0, 4, 28],
+            data_width=self.data_width,
         )
         test_process = Process(identifier="test")
         test_process.process_test_case_list = test_cases

@@ -491,7 +491,3 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         return generator
     else:
         raise ValueError
-
-
-def signal_assignment(identifier: str, statement):
-    return f"{identifier} <= {statement};"
