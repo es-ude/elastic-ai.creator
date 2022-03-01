@@ -58,34 +58,32 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
                 y => test_output
             );
         
-            test_process: process is
+            test_process: process
             begin
-                Report "======Simulation start======" severity Note;
+                report "======Simulation Start======" severity Note;
         
-                test_input <=  to_signed(-1281,16);
+                test_input <= to_signed(-1281,16);
                 wait for 1*clk_period;
                 report "The value of 'test_output' is " & integer'image(to_integer(unsigned(test_output)));
                 assert test_output=0 report "The test case -1281 fail" severity failure;
         
-                test_input <=  to_signed(-1000,16);
+                test_input <= to_signed(-1000,16);
                 wait for 1*clk_period;
                 report "The value of 'test_output' is " & integer'image(to_integer(unsigned(test_output)));
                 assert test_output=4 report "The test case -1000 fail" severity failure;
         
-                test_input <=  to_signed(-500,16);
+                test_input <= to_signed(-500,16);
                 wait for 1*clk_period;
                 report "The value of 'test_output' is " & integer'image(to_integer(unsigned(test_output)));
                 assert test_output=28 report "The test case -500 fail" severity failure;
         
         
-                -- if there is no error message, that means all test case are passed.
                 report "======Simulation Success======" severity Note;
                 report "Please check the output message." severity Note;
         
-                -- wait forever
                 wait;
         
-            end process;
+            end process test_process;
         
         end architecture sigmoid_tb_rtl;
         """

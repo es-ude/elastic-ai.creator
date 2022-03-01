@@ -7,23 +7,22 @@ from elasticai.creator.vhdl.language import _indent_and_filter_non_empty_lines
 
 
 class Keywords(Enum):
-    UUT = "uut"
+    wait = "wait"
 
 
-class UUT:
-    def __init__(self, identifier: str):
-        self.identifier = identifier
+class TestCases:
+    def __init__(self, x_list_for_testing, y_list_for_testing):
+        assert len(x_list_for_testing) == len(y_list_for_testing)
+        self.x_list_for_testing = x_list_for_testing
+        self.y_list_for_testing = y_list_for_testing
 
     def __call__(self):
-        #     uut: sigmoid
-        #     port map (
-        #         x => test_input,
-        #         y => test_output
-        #     );
-        yield f"{Keywords.UUT.value}: {self.identifier}"
-        # TODO: change with ahmads portmap
-        yield f"port map ("
-        yield from _indent_and_filter_non_empty_lines(
-            ["x => test_input,", "y => test_output"]
-        )
-        yield f");"
+        yield f'report "======Simulation Start======" severity Note;'
+        for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
+            yield f"test_input <= to_signed({x_value},16);"
+            yield f"wait for 1*clk_period;"
+            yield f"report \"The value of 'test_output' is \" & integer'image(to_integer(unsigned(test_output)));"
+            yield f'assert test_output={y_value} report "The test case {x_value} fail" severity failure;'
+        yield f'report "======Simulation Success======" severity Note;'
+        yield f'report "Please check the output message." severity Note;'
+        yield f"wait;"

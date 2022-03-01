@@ -23,8 +23,9 @@ from elasticai.creator.vhdl.language import (
     UseClause,
     InterfaceConstrained,
     Mode,
+    PortMap,
 )
-from elasticai.creator.vhdl.language_testbench import UUT
+from elasticai.creator.vhdl.language_testbench import TestCases
 from elasticai.creator.vhdl.number_representations import BitVector
 
 
@@ -151,9 +152,7 @@ class Tanh(PrecomputedScalarFunction):
 
 
 class SigmoidTestBench:
-    def __init__(
-        self, data_width, frac_width, x, y, component_name=None, process_instance=None
-    ):
+    def __init__(self, data_width, frac_width, x, y, component_name=None):
         self.component_name = self._get_lower_case_class_name_or_component_name(
             component_name=component_name
         )
@@ -161,7 +160,6 @@ class SigmoidTestBench:
         self.frac_width = frac_width
         self.x = x
         self.y = y
-        self.process_instance = process_instance
 
     @classmethod
     def _get_lower_case_class_name_or_component_name(cls, component_name):
@@ -187,6 +185,7 @@ class SigmoidTestBench:
                 ]
             ),
         )
+
         entity = Entity(self.component_name)
         entity.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
@@ -195,16 +194,7 @@ class SigmoidTestBench:
         entity.port_list = [
             "clk : out std_logic",
         ]
-        process = Process(
-            identifier="clock",
-            lookup_table_generator_function=[""],
-        )
-        process.process_statements_list = [
-            "clk <= '0'",
-            "wait for clk_period/2",
-            "clk <= '1'",
-            "wait for clk_period/2",
-        ]
+
         component = ComponentDeclaration(identifier="sigmoid")
         component.generic_list = [
             f"DATA_WIDTH : integer := {self.data_width}",
@@ -214,18 +204,43 @@ class SigmoidTestBench:
             "x : in signed(DATA_WIDTH-1 downto 0)",
             "y : out signed(DATA_WIDTH-1 downto 0)",
         ]
-        uut = UUT(identifier="sigmoid")
+
+        process = Process(
+            identifier="clock",
+        )
+        process.process_statements_list = [
+            "clk <= '0'",
+            "wait for clk_period/2",
+            "clk <= '1'",
+            "wait for clk_period/2",
+        ]
+
+        uut_port_map = PortMap(map_name="uut", component_name="sigmoid")
+        uut_port_map.signal_list.append("x => test_input")
+        uut_port_map.signal_list.append("y => test_output")
+
+        test_cases = TestCases(
+            x_list_for_testing=[-1281, -1000, -500], y_list_for_testing=[0, 4, 28]
+        )
+        test_process = Process(identifier="test")
+        test_process.process_test_case_list = test_cases
+
         architecture = Architecture(
             identifier=self.architecture_name,
             design_unit=self.component_name,
         )
-        architecture.architecture_declaration_strings_list = [
+        architecture.architecture_declaration_list = [
             "signal clk_period : time := 1 ns",
             "signal test_input : signed(16-1 downto 0):=(others=>'0')",
             "signal test_output : signed(16-1 downto 0)",
         ]
-        architecture.architecture_declaration_classes_list = [component]
-        architecture.architecture_statement_part_list = [process, uut]
+        # FIXME: doesn't work like this
+        # architecture.architecture_component_list = [component]
+        architecture.architecture_component_list.append(component)
+        architecture.architecture_process_list.append(process)
+        architecture.architecture_port_map_list.append(uut_port_map)
+        architecture.architecture_statement_part = test_process
+
         code = chain(chain(library(), entity()), architecture())
         return code
 

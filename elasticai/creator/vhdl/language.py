@@ -118,6 +118,7 @@ class Architecture:
         self._architecture_declaration_list = InterfaceList()
         self._architecture_component_list = InterfaceList()
         self._architecture_assignment_list = InterfaceList()
+        self._architecture_process_list = InterfaceList()
         self._architecture_port_map_list = InterfaceList()
         self._architecture_statement_part = None
 
@@ -154,6 +155,14 @@ class Architecture:
         self._architecture_assignment_list = InterfaceList(value)
 
     @property
+    def architecture_process_list(self):
+        return self._architecture_process_list
+
+    @architecture_process_list.setter
+    def architecture_process_list(self, value):
+        self._architecture_process_list = InterfaceList(value)
+
+    @property
     def architecture_port_map_list(self):
         return self._architecture_port_map_list
 
@@ -180,6 +189,10 @@ class Architecture:
                     self._architecture_assignment_list(), semicolon_last=True
                 )
             )
+        if len(self._architecture_process_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                self.architecture_process_list()
+            )
         if len(self._architecture_port_map_list) > 0:
             yield from _indent_and_filter_non_empty_lines(
                 self.architecture_port_map_list()
@@ -196,13 +209,14 @@ class Process:
     def __init__(
         self,
         identifier: str,
-        input_name: str,
+        input_name: str = None,
         lookup_table_generator_function: CodeGenerator = None,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
         self._process_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
+        self._process_test_case_list = []
         self.input = input_name
 
     @property
@@ -221,6 +235,15 @@ class Process:
     def process_statements_list(self, value: list[str]):
         self._process_statements_list = value
 
+    @property
+    def process_test_case_list(self):
+        return self._process_test_case_list
+
+    # TODO: add type
+    @process_test_case_list.setter
+    def process_test_case_list(self, value: list):
+        self._process_test_case_list = value
+
     def _header(self) -> Code:
         if len(self.process_declaration_list) > 0:
             yield from _append_semicolons_to_lines(self._process_declaration_list)
@@ -230,6 +253,8 @@ class Process:
             yield from _append_semicolons_to_lines(self._process_statements_list)
         if self.lookup_table_generator_function:
             yield from self.lookup_table_generator_function
+        if self.process_test_case_list:
+            yield from self.process_test_case_list()
 
     def __call__(self) -> Code:
         if self.input:
