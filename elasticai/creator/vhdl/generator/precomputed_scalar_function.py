@@ -26,14 +26,14 @@ from elasticai.creator.vhdl.number_representations import BitVector
 class DataWidthVariable(InterfaceVariable):
     def __init__(self, value: int):
         super().__init__(
-            identifier="DATA_WIDTH", variable_type=DataType.INTEGER, value=f"{value}"
+            identifier="DATA_WIDTH", identifier_type=DataType.INTEGER, value=f"{value}"
         )
 
 
 class FracWidthVariable(InterfaceVariable):
     def __init__(self, value: int):
         super().__init__(
-            identifier="FRAC_WIDTH", variable_type=DataType.INTEGER, value=f"{value}"
+            identifier="FRAC_WIDTH", identifier_type=DataType.INTEGER, value=f"{value}"
         )
 
 

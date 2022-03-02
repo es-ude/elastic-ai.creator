@@ -71,7 +71,7 @@ class EntityTest(TestCase):
         e = Entity("ident")
         e.generic_list.append(
             InterfaceVariable(
-                identifier="my_var", variable_type=DataType.INTEGER, value="16"
+                identifier="my_var", identifier_type=DataType.INTEGER, value="16"
             )
         )
         expected = ["\t\tmy_var : integer := 16"]
@@ -143,7 +143,7 @@ class EntityTest(TestCase):
     def test_InterfaceVariable_empty(self):
         interface_variable = InterfaceVariable(
             identifier="some_variable",
-            variable_type=DataType.INTEGER
+            identifier_type=DataType.INTEGER
         )
         expected = ["some_variable : integer"]
         actual = list(interface_variable())
@@ -152,7 +152,7 @@ class EntityTest(TestCase):
     def test_InterfaceVariable_all_parameters(self):
         interface_variable = InterfaceVariable(
             identifier="my_var",
-            variable_type=DataType.SIGNED,
+            identifier_type=DataType.SIGNED,
             mode=Mode.IN, range="15 downto 0",
             value="16"
         )
@@ -165,7 +165,7 @@ class EntityTest(TestCase):
             identifier="y",
             mode=Mode.OUT,
             range="x",
-            variable_type=DataType.SIGNED
+            identifier_type=DataType.SIGNED
         )
         expected = ["signal y : out signed(x)"]
         actual = list(i())
@@ -182,7 +182,7 @@ class EntityTest(TestCase):
         a = Architecture(identifier="y", design_unit="z")
         a.architecture_declaration_list.append(
             InterfaceVariable(
-                identifier="1", range="1", variable_type=DataType.SIGNED
+                identifier="1", range="1", identifier_type=DataType.SIGNED
             )
         )
         expected = [

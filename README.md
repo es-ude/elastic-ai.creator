@@ -17,7 +17,7 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 ## Requirements
 
-The dependencies of the PyTorch implementation of MTLTranslator are listed below:
+The dependencies of the PyTorch implementation of elastic.ai Creator Translator are listed below:
 - torch
 - torchvision
 - torchaudio
@@ -70,6 +70,12 @@ The installed poetry environment can be activated typing the following command i
 poetry shell
 ```
 You may consider installing poetry plugin in pycharm and adding the created environment
+
+If you want to run the syntax checks of the vhdl files you need to install [ghdl](https://github.com/ghdl/ghdl).
+Run the following command for installing:
+```bash
+sudo apt install ghdl 
+```
 
 ## Installing
 

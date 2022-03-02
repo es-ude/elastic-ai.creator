@@ -17,4 +17,4 @@ jobs:
       - run: python --version
       - run: poetry install --no-interaction --extras brevitas
       - run: cd elasticai/creator/tests
-      - run: poetry run python -m unittest discover .
+      - run: poetry run python -m unittest discover elasticai/creator/tests
