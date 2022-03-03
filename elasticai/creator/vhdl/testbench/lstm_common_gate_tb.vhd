@@ -75,7 +75,7 @@ begin
     x <= X_MEM(to_integer(idx));
     w <= W_MEM(to_integer(idx));
 
-    test_process: process is
+    test_process: process
     begin
         Report "======Simulation start======" severity Note;
 

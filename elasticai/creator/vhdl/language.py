@@ -66,7 +66,7 @@ class Mode(Enum):
 
 class _DesignUnitForEntityAndComponent:
     def __init__(
-            self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
+        self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
     ):
         self.identifier = identifier
         self._generic_list = InterfaceList()
@@ -118,6 +118,7 @@ class Architecture:
         self._architecture_declaration_list = InterfaceList()
         self._architecture_component_list = InterfaceList()
         self._architecture_assignment_list = InterfaceList()
+        self._architecture_process_list = InterfaceList()
         self._architecture_port_map_list = InterfaceList()
         self._architecture_statement_part = None
 
@@ -154,6 +155,14 @@ class Architecture:
         self._architecture_assignment_list = InterfaceList(value)
 
     @property
+    def architecture_process_list(self):
+        return self._architecture_process_list
+
+    @architecture_process_list.setter
+    def architecture_process_list(self, value):
+        self._architecture_process_list = InterfaceList(value)
+
+    @property
     def architecture_port_map_list(self):
         return self._architecture_port_map_list
 
@@ -176,10 +185,18 @@ class Architecture:
         yield f"{Keywords.BEGIN.value}"
         if len(self._architecture_assignment_list) > 0:
             yield from _indent_and_filter_non_empty_lines(
-                _add_semicolons(self._architecture_assignment_list(), semicolon_last=True)
+                _add_semicolons(
+                    self._architecture_assignment_list(), semicolon_last=True
+                )
+            )
+        if len(self._architecture_process_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                self.architecture_process_list()
             )
         if len(self._architecture_port_map_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(self.architecture_port_map_list())
+            yield from _indent_and_filter_non_empty_lines(
+                self.architecture_port_map_list()
+            )
 
         if self._architecture_statement_part:
             yield from _indent_and_filter_non_empty_lines(
@@ -190,15 +207,16 @@ class Architecture:
 
 class Process:
     def __init__(
-            self,
-            identifier: str,
-            input_name: str,
-            lookup_table_generator_function: CodeGenerator = None,
+        self,
+        identifier: str,
+        input_name: str = None,
+        lookup_table_generator_function: CodeGenerator = None,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
         self._process_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
+        self._process_test_case_list = []
         self.input = input_name
 
     @property
@@ -217,6 +235,15 @@ class Process:
     def process_statements_list(self, value: list[str]):
         self._process_statements_list = value
 
+    @property
+    def process_test_case_list(self):
+        return self._process_test_case_list
+
+    # TODO: add type
+    @process_test_case_list.setter
+    def process_test_case_list(self, value: list):
+        self._process_test_case_list = value
+
     def _header(self) -> Code:
         if len(self.process_declaration_list) > 0:
             yield from _append_semicolons_to_lines(self._process_declaration_list)
@@ -226,9 +253,14 @@ class Process:
             yield from _append_semicolons_to_lines(self._process_statements_list)
         if self.lookup_table_generator_function:
             yield from self.lookup_table_generator_function
+        if self.process_test_case_list:
+            yield from self.process_test_case_list()
 
     def __call__(self) -> Code:
-        yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
+        if self.input:
+            yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
+        else:
+            yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}"
         yield from _indent_and_filter_non_empty_lines(self._header())
         yield f"{Keywords.BEGIN.value}"
         yield from _indent_and_filter_non_empty_lines(self._footer())
@@ -268,14 +300,13 @@ class LibraryClause:
 
 class InterfaceConstrained:
     def __init__(
-            self,
-            identifier: str,
-            identifier_type: DataType,
-            range: Optional[Union[str, int]],
-            mode: Optional[Mode],
-            value: Optional[Union[str, int]],
-            declaration_type: Optional[str]
-
+        self,
+        identifier: str,
+        identifier_type: DataType,
+        range: Optional[Union[str, int]],
+        mode: Optional[Mode],
+        value: Optional[Union[str, int]],
+        declaration_type: Optional[str],
     ):
         self._identifier = identifier
         self._range = f"({range})" if range else ""
@@ -291,15 +322,31 @@ class InterfaceConstrained:
 
 
 class InterfaceSignal(InterfaceConstrained):
-    def __init__(self, identifier: str, identifier_type: DataType, range: Optional[Union[str, int]] = None,
-                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, identifier_type, range, mode, value, declaration_type="signal")
+    def __init__(
+        self,
+        identifier: str,
+        identifier_type: DataType,
+        range: Optional[Union[str, int]] = None,
+        mode: Optional[Mode] = None,
+        value: Optional[Union[str, int]] = None,
+    ):
+        super().__init__(
+            identifier, identifier_type, range, mode, value, declaration_type="signal"
+        )
 
 
 class InterfaceVariable(InterfaceConstrained):
-    def __init__(self, identifier: str, identifier_type: DataType, range: Optional[Union[str, int]] = None,
-                 mode: Optional[Mode] = None, value: Optional[Union[str, int]] = None):
-        super().__init__(identifier, identifier_type, range, mode, value, declaration_type=None)
+    def __init__(
+        self,
+        identifier: str,
+        identifier_type: DataType,
+        range: Optional[Union[str, int]] = None,
+        mode: Optional[Mode] = None,
+        value: Optional[Union[str, int]] = None,
+    ):
+        super().__init__(
+            identifier, identifier_type, range, mode, value, declaration_type=None
+        )
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
@@ -414,7 +461,7 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
 
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
-        block_type: Keywords, block_identifier: Identifier, lines: Code
+    block_type: Keywords, block_identifier: Identifier, lines: Code
 ) -> Code:
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
     yield from _indent_and_filter_non_empty_lines(lines)
@@ -444,7 +491,3 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         return generator
     else:
         raise ValueError
-
-
-def signal_assignment(identifier: str, statement):
-    return f"{identifier} <= {statement};"
