@@ -1,9 +1,16 @@
-from io import StringIO
 from itertools import chain
 
-from elasticai.creator.vhdl.generator.functions.generate_lstm_cell_vhd import component_name
-from elasticai.creator.vhdl.language import ContextClause, LibraryClause, UseClause, Entity, InterfaceVariable, \
-    DataType, Mode, Architecture, Process
+from elasticai.creator.vhdl.language import (
+    ContextClause,
+    LibraryClause,
+    UseClause,
+    Entity,
+    InterfaceVariable,
+    DataType,
+    Mode,
+    Architecture,
+    Process
+)
 
 
 class Rom:
