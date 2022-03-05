@@ -1,4 +1,7 @@
+import math
 import random
+
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -91,7 +94,7 @@ def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
         yield line
 
 
-def precomputed_logic_function_process(x_list:List[List[BitVector]], y_list:List[List[BitVector]], ) -> CodeGenerator:
+def precomputed_logic_function_process(x_list: List[List[BitVector]], y_list: List[List[BitVector]], ) -> CodeGenerator:
     """
         returns the string of a lookup table where the value of the input exactly equals x
     Args:
@@ -100,10 +103,9 @@ def precomputed_logic_function_process(x_list:List[List[BitVector]], y_list:List
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
-    
 
     lines = []
-    if len(x_list) != len(y_list) :
+    if len(x_list) != len(y_list):
         raise ValueError(
             "x_list has to be the same length as y_list, but x_list has {} elements and y_list {} elements".format(
                 len(x_list), len(y_list)
@@ -112,16 +114,16 @@ def precomputed_logic_function_process(x_list:List[List[BitVector]], y_list:List
     else:
         x_bit_vectors = []
         y_bit_vectors = []
-        for x_element,y_element in zip(x_list,y_list):
-            x_bit_vectors.append("".join(list(map(lambda x:x.__repr__(),x_element))))
-            y_bit_vectors.append("".join(list(map(lambda x:x.__repr__(),y_element))))
+        for x_element, y_element in zip(x_list, y_list):
+            x_bit_vectors.append("".join(list(map(lambda x: x.__repr__(), x_element))))
+            y_bit_vectors.append("".join(list(map(lambda x: x.__repr__(), y_element))))
         # first element
-        iterator = zip(x_bit_vectors,y_bit_vectors)
+        iterator = zip(x_bit_vectors, y_bit_vectors)
         first = next(iterator)
         lines.append(f'y <="{first[1]}" when x="{first[0]}" else')
-        for x,y in iterator:
+        for x, y in iterator:
             lines.append(f'"{y}" when x="{x}" else\n')
-        lines[-1] =lines[-1][:-5] +";"
+        lines[-1] = lines[-1][:-5] + ";"
     # build the string block
     yield lines[0]
     for line in lines[1:]:
@@ -346,3 +348,38 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     )
 
     return dict_of_signals
+
+
+def _format_array_to_string(arr: List[int], nbits: int):
+    """
+    returns String of hexadecimal values of an array
+    Args:
+        arr ([int]): the width of the data
+        nbits (int): the number of DATA_WIDTH
+    Returns:
+        returns String of hexadecimal values of an integer array
+    """
+    result_string = ""
+    for value in range(2 ** math.ceil(math.log2(len(arr)))):
+        if value < len(arr):
+            result_string += "x\"" + _int_to_hex(arr[value], nbits)[2:] + "\","
+        else:
+            result_string += "x\"" + _int_to_hex(0, nbits)[2:] + "\","
+    result_string = result_string[:-1]
+    # print(name_of_string)
+    return result_string
+
+
+def float_array_to_string(float_array, frac_bits, nbits):
+    """
+    returns String of hexadecimal values of an array
+    Args:
+        float_array ([float]): array of float values
+        frac_bits (int): the number of fraction bits
+        nbits (int): the number of bits
+    Returns:
+        returns String of hexadecimal values of float array
+    """
+    scaled_array = float_array * 2 ** frac_bits
+    int_array = scaled_array.astype(np.int16)
+    return _format_array_to_string(int_array, nbits)
