@@ -1,10 +1,22 @@
 import torch
 import unittest
+import random
+import numpy as np
 from elasticai.creator.layers import QLSTMCell
+from elasticai.creator.model_reporter import ModelReport
 
 
 # example code from here: https://pytorch.org/docs/stable/generated/torch.nn.LSTMCell.html?highlight=lstm%20cell#torch.nn.LSTMCell
 class LSTMSystemTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.ensure_reproducibility()
+
+    @staticmethod
+    def ensure_reproducibility():
+        torch.manual_seed(0)
+        random.seed(0)
+        np.random.seed(0)
+
     def define_lstm_cell(self):
         input_size = 10
         hidden_size = 20
@@ -27,6 +39,11 @@ class LSTMSystemTest(unittest.TestCase):
         for i in range(input.size()[0]):
             hx, cx = cell(input[i], (hx, cx))
             output.append(hx)
+            model_reporter = ModelReport(
+                model=cell,
+                data=[["example_0", "example_1"], [input, 0], [hx, 0]],
+                is_binary=True,
+            )
         output = torch.stack(output, dim=0)
         print(output)
 

@@ -2,7 +2,7 @@ import csv
 from typing import Sequence, Iterable, Any
 import torch
 
-from elasticai.creator.protocols import Model
+from torch.nn import Module
 
 
 class ModelReport:
@@ -18,14 +18,16 @@ class ModelReport:
 
     def __init__(
         self,
-        model: Model,
-        data: Iterable[Sequence[str, Any, Any]],
+        model: Module,
+        # FIXME: Sequence only one argument
+        # data: Iterable[Sequence[str, Any, Any]],
+        data,
         is_binary: bool,
         threshold: float = 0.5,
     ) -> None:
         model.eval()
         self.model = model
-        self.data: Iterable[Sequence[str, Any, Any]] = data
+        self.data = data
         self.evaluate(is_binary, threshold)
 
     def evaluate(self, is_binary: bool, threshold: float = 0.5) -> None:
@@ -47,6 +49,8 @@ class ModelReport:
                     self.data[0], self.data[1], self.data[2]
                 )
             ]
+        else:
+            raise NotImplementedError
 
     def write_to_csv(self, path: str) -> None:
         """
