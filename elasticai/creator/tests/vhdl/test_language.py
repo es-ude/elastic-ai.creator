@@ -38,9 +38,9 @@ class EntityTest(TestCase):
 
         expected = [
             "entity identifier is",
-            "\tgeneric (",
-            "\t\ttest",
-            "\t);",
+            "generic (",
+            "test",
+            ");",
             "end entity identifier;",
         ]
         actual = list(e())
@@ -51,9 +51,9 @@ class EntityTest(TestCase):
         e.port_list = ["test"]
         expected = [
             "entity identifier is",
-            "\tport (",
-            "\t\ttest",
-            "\t);",
+            "port (",
+            "test",
+            ");",
             "end entity identifier;",
         ]
         actual = list(e())
@@ -62,7 +62,7 @@ class EntityTest(TestCase):
     def test_entity_with_two_variables_in_generic(self):
         e = Entity("identifier")
         e.generic_list = ["first", "second"]
-        expected = ["\t\tfirst;", "\t\tsecond"]
+        expected = ["first;", "second"]
         actual = list(e())
         actual = actual[2:4]
         self.assertEqual(expected, actual)
@@ -74,7 +74,7 @@ class EntityTest(TestCase):
                 identifier="my_var", identifier_type=DataType.INTEGER, value="16"
             )
         )
-        expected = ["\t\tmy_var : integer := 16"]
+        expected = ["my_var : integer := 16"]
         actual = list(e())
         actual = actual[2:3]
         self.assertEqual(expected, actual)
@@ -111,7 +111,7 @@ class EntityTest(TestCase):
         expected = [
             "some_name_process: process(some_input)",
             "begin",
-            '\ty <= "0000000000000000";',
+            'y <= "0000000000000000";',
             "end process some_name_process;",
         ]
         actual = list(process())
@@ -131,10 +131,10 @@ class EntityTest(TestCase):
         ]
         expected = [
             "some_name_process: process(some_input)",
-            "\tvariable some_variable_name: integer := 0;",
+            "variable some_variable_name: integer := 0;",
             "begin",
-            "\tsome_variable_name := to_integer(some_variable_name);",
-            '\ty <= "0000000000000000";',
+            "some_variable_name := to_integer(some_variable_name);",
+            'y <= "0000000000000000";',
             "end process some_name_process;",
         ]
         actual = list(process())
@@ -187,7 +187,7 @@ class EntityTest(TestCase):
         )
         expected = [
             "architecture y of z is",
-            "\t1 : signed(1);",
+            "1 : signed(1);",
             "begin",
             "end architecture y;",
         ]
@@ -203,7 +203,7 @@ class EntityTest(TestCase):
         expected = [
             "architecture y of z is",
             "begin",
-            "\tsome code",
+            "some code",
             "end architecture y;",
         ]
         actual = list(a())
@@ -223,10 +223,10 @@ class EntityTest(TestCase):
         expected = [
             "architecture y of z is",
             "begin",
-            "\tsome name_process: process(x)",
-            "\tbegin",
-            "\t\tsome code",
-            "\tend process some name_process;",
+            "some name_process: process(x)",
+            "begin",
+            "some code",
+            "end process some name_process;",
             "end architecture y;",
         ]
         actual = list(a())
@@ -237,7 +237,7 @@ class EntityTest(TestCase):
         a.architecture_assignment_list.append("A <= B")
         expected = ["architecture y of z is",
                     "begin",
-                    "\tA <= B;",
+                    "A <= B;",
                     "end architecture y;"]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
@@ -262,12 +262,12 @@ class EntityTest(TestCase):
 
         expected = ["architecture lstm_cell_rtl of lstm_cell is",
                     "begin",
-                    "\tsomething: sigmoid",
-                    "\tport map (",
-                    "\t\tx => y,",
-                    "\t\ta => b,",
-                    "\t\tc => d",
-                    "\t);",
+                    "something: sigmoid",
+                    "port map (",
+                    "\tx => y,",
+                    "\ta => b,",
+                    "\tc => d",
+                    ");",
                     "end architecture lstm_cell_rtl;"
                     ]
         actual = list(architecture())
@@ -286,10 +286,10 @@ class EntityTest(TestCase):
         expected = [
             "architecture y of z is",
             "begin",
-            "\tH_OUT_process: process(o,c_new)",
-            "\tbegin",
-            "\t\th_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
-            "\tend process H_OUT_process;",
+            "H_OUT_process: process(o,c_new)",
+            "begin",
+            "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
+            "end process H_OUT_process;",
             "end architecture y;",
         ]
         actual = list(a())
