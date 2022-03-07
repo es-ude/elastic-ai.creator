@@ -9,7 +9,7 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
-from abc import abstractmethod
+
 from collections import Sequence
 from enum import Enum
 from itertools import filterfalse, chain
@@ -66,7 +66,7 @@ class Mode(Enum):
 
 class _DesignUnitForEntityAndComponent:
     def __init__(
-        self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
+            self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
     ):
         self.identifier = identifier
         self._generic_list = InterfaceList()
@@ -97,7 +97,7 @@ class _DesignUnitForEntityAndComponent:
 
     def __call__(self) -> Code:
         yield f"{self.type.value} {self.identifier} {Keywords.IS.value}"
-        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield from _filter_empty_lines(self._header())
         yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
 
 
@@ -173,33 +173,33 @@ class Architecture:
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 _add_semicolons(
                     self._architecture_declaration_list(), semicolon_last=True
                 )
             )
         if len(self._architecture_component_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self._architecture_component_list()
             )
         yield f"{Keywords.BEGIN.value}"
         if len(self._architecture_assignment_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 _add_semicolons(
                     self._architecture_assignment_list(), semicolon_last=True
                 )
             )
         if len(self._architecture_process_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self.architecture_process_list()
             )
         if len(self._architecture_port_map_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self.architecture_port_map_list()
             )
 
         if self._architecture_statement_part:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self._architecture_statement_part()
             )
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
@@ -207,10 +207,10 @@ class Architecture:
 
 class Process:
     def __init__(
-        self,
-        identifier: str,
-        input_name: str = None,
-        lookup_table_generator_function: CodeGenerator = None,
+            self,
+            identifier: str,
+            input_name: str = None,
+            lookup_table_generator_function: CodeGenerator = None,
     ):
         self.identifier = identifier
         self._process_declaration_list = []
@@ -261,9 +261,9 @@ class Process:
             yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
         else:
             yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}"
-        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield from _filter_empty_lines(self._header())
         yield f"{Keywords.BEGIN.value}"
-        yield from _indent_and_filter_non_empty_lines(self._footer())
+        yield from _filter_empty_lines(self._footer())
         yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
@@ -300,13 +300,13 @@ class LibraryClause:
 
 class InterfaceConstrained:
     def __init__(
-        self,
-        identifier: str,
-        identifier_type: DataType,
-        range: Optional[Union[str, int]],
-        mode: Optional[Mode],
-        value: Optional[Union[str, int]],
-        declaration_type: Optional[str],
+            self,
+            identifier: str,
+            identifier_type: DataType,
+            range: Optional[Union[str, int]],
+            mode: Optional[Mode],
+            value: Optional[Union[str, int]],
+            declaration_type: Optional[str],
     ):
         self._identifier = identifier
         self._range = f"({range})" if range else ""
@@ -323,12 +323,12 @@ class InterfaceConstrained:
 
 class InterfaceSignal(InterfaceConstrained):
     def __init__(
-        self,
-        identifier: str,
-        identifier_type: DataType,
-        range: Optional[Union[str, int]] = None,
-        mode: Optional[Mode] = None,
-        value: Optional[Union[str, int]] = None,
+            self,
+            identifier: str,
+            identifier_type: DataType,
+            range: Optional[Union[str, int]] = None,
+            mode: Optional[Mode] = None,
+            value: Optional[Union[str, int]] = None,
     ):
         super().__init__(
             identifier, identifier_type, range, mode, value, declaration_type="signal"
@@ -337,12 +337,12 @@ class InterfaceSignal(InterfaceConstrained):
 
 class InterfaceVariable(InterfaceConstrained):
     def __init__(
-        self,
-        identifier: str,
-        identifier_type: DataType,
-        range: Optional[Union[str, int]] = None,
-        mode: Optional[Mode] = None,
-        value: Optional[Union[str, int]] = None,
+            self,
+            identifier: str,
+            identifier_type: DataType,
+            range: Optional[Union[str, int]] = None,
+            mode: Optional[Mode] = None,
+            value: Optional[Union[str, int]] = None,
     ):
         super().__init__(
             identifier, identifier_type, range, mode, value, declaration_type=None
@@ -435,7 +435,7 @@ def _append_semicolons_to_lines(lines: Code) -> Code:
 
 def _clause(clause_type: ClauseType, interfaces: Code) -> Code:
     yield f"{clause_type.value} ("
-    yield from _indent_and_filter_non_empty_lines(_add_semicolons(interfaces))
+    yield from _filter_empty_lines(_add_semicolons(interfaces))
     yield ");"
 
 
@@ -461,10 +461,10 @@ def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
 
 # noinspection PyPep8Naming
 def _wrap_in_IS_END_block(
-    block_type: Keywords, block_identifier: Identifier, lines: Code
+        block_type: Keywords, block_identifier: Identifier, lines: Code
 ) -> Code:
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
-    yield from _indent_and_filter_non_empty_lines(lines)
+    yield from _filter_empty_lines(lines)
     yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
 
 
