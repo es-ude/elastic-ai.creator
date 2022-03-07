@@ -15,6 +15,8 @@ def main():
     with open(file_path, "w") as writer:
         for line in tanh():
             writer.write(line)
+            if line[-1] != "\n":
+                writer.write("\n")
     # indent the generated vhdl file
     format_vhdl(file_path=file_path)
 

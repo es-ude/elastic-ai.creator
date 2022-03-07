@@ -1,4 +1,5 @@
 from elasticai.creator.vhdl.generator.testbench_strings import write_testbench_file
+from elasticai.creator.vhdl.generator.vhdl_formatter import format_vhdl
 
 
 def main(path_to_testbench: str = "../../testbench/") -> None:
@@ -111,6 +112,7 @@ def main(path_to_testbench: str = "../../testbench/") -> None:
         variable_definitions_before_test_process_dict=variable_definitions_before_test_process_dict,
         variable_definitions_in_test_process_dict=variable_definitions_in_test_process_dict,
     )
+    format_vhdl("../../testbench/lstm_common_gate_tb.vhd")
 
 
 if __name__ == "__main__":

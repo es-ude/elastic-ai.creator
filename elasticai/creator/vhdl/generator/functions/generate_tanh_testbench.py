@@ -1,4 +1,5 @@
 from elasticai.creator.vhdl.generator.testbench_strings import write_testbench_file
+from elasticai.creator.vhdl.generator.vhdl_formatter import format_vhdl
 
 
 def main(path_to_testbench: str = "../../testbench/"):
@@ -50,6 +51,8 @@ def main(path_to_testbench: str = "../../testbench/"):
         output_name_for_testcases="test_output",
         math_lib=True,
     )
+    # indent the generated vhdl file
+    format_vhdl(file_path=path_to_testbench)
 
 
 if __name__ == "__main__":

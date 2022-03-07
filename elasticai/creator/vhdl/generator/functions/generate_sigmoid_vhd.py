@@ -16,6 +16,8 @@ def main():
         s = Sigmoid(data_width=16, frac_width=8, x=np.linspace(-5, 5, 66))
         for line in s():
             writer.write(line)
+            if line[-1] != "\n":
+                writer.write("\n")
     # indent the generated vhdl file
     format_vhdl(file_path=file_path)
 
