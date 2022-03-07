@@ -244,6 +244,3 @@ class SigmoidTestBench:
         code = chain(chain(library(), entity()), architecture())
         return code
 
-    def build(self) -> str:
-        lines_of_code = self.__call__()
-        return "\n".join(lines_of_code)
