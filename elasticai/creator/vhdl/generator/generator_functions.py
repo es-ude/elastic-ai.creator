@@ -1,5 +1,6 @@
 import math
 import random
+from os import path
 
 import numpy as np
 import torch
@@ -11,7 +12,9 @@ from typing import Dict, List
 from elasticai.creator.vhdl.language import CodeGenerator
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
-    FloatToBinaryFixedPointStringConverter, ToLogicEncoder, BitVector,
+    FloatToBinaryFixedPointStringConverter,
+    ToLogicEncoder,
+    BitVector,
 )
 
 
@@ -94,7 +97,10 @@ def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
         yield line
 
 
-def precomputed_logic_function_process(x_list: List[List[BitVector]], y_list: List[List[BitVector]], ) -> CodeGenerator:
+def precomputed_logic_function_process(
+    x_list: List[List[BitVector]],
+    y_list: List[List[BitVector]],
+) -> CodeGenerator:
     """
         returns the string of a lookup table where the value of the input exactly equals x
     Args:
@@ -160,7 +166,7 @@ def _floating_to_hex(f_val: float, frac_width: int, nbits: int) -> str:
 
 
 def _to_vhdl_parameter(
-        f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
+    f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
 ) -> Dict:
     """
         returns a Dictionary of one signal and his definition
@@ -174,13 +180,7 @@ def _to_vhdl_parameter(
     hex_str = _floating_to_hex(f_val, frac_width, nbits)
     hex_str_without_prefix = hex_str[2:]
 
-    return {
-        str(signal_name):
-            'X"'
-            + hex_str_without_prefix
-            + '"; -- '
-            + name_parameter
-    }
+    return {str(signal_name): 'X"' + hex_str_without_prefix + '"; -- ' + name_parameter}
 
 
 def _elastic_ai_creator_lstm() -> QLSTMCell:
@@ -362,9 +362,9 @@ def _format_array_to_string(arr: List[int], nbits: int):
     result_string = ""
     for value in range(2 ** math.ceil(math.log2(len(arr)))):
         if value < len(arr):
-            result_string += "x\"" + _int_to_hex(arr[value], nbits)[2:] + "\","
+            result_string += 'x"' + _int_to_hex(arr[value], nbits)[2:] + '",'
         else:
-            result_string += "x\"" + _int_to_hex(0, nbits)[2:] + "\","
+            result_string += 'x"' + _int_to_hex(0, nbits)[2:] + '",'
     result_string = result_string[:-1]
     # print(name_of_string)
     return result_string
@@ -383,3 +383,20 @@ def float_array_to_string(float_array, frac_bits, nbits):
     scaled_array = float_array * 2 ** frac_bits
     int_array = scaled_array.astype(np.int16)
     return _format_array_to_string(int_array, nbits)
+
+
+def get_file_path_string(folder_names: List[str], file_name: str) -> str:
+    """
+    returns String of a file path
+    Args:
+        folder_names (List(str)): the name of the folders
+        file_name (str): the name of the file
+    Returns:
+        string of the full path to a given filename
+    """
+    base_path = path.dirname(__file__)
+    file_path = base_path
+    for folder_name in folder_names:
+        file_path = path.abspath(path.join(file_path, folder_name))
+    file_path = path.abspath(path.join(file_path, file_name))
+    return file_path

@@ -1,7 +1,7 @@
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
-    SigmoidTestBench,
+    PrecomputedScalarTestBench,
 )
-from elasticai.creator.vhdl.generator.vhd_strings import get_file_path_string
+from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
 
 
 def main() -> None:
@@ -10,8 +10,16 @@ def main() -> None:
     )
 
     with open(file_path, "w") as writer:
-        s = SigmoidTestBench(component_name="sigmoid_tb", data_width=16, frac_width=8)
-        writer.write(s.build())
+        sigmoid = PrecomputedScalarTestBench(
+            component_name="sigmoid",
+            data_width=16,
+            frac_width=8,
+            x_list_for_testing=[-1281, -1000, -500],
+            y_list_for_testing=[0, 4, 28],
+        )
+        sigmoid_code = sigmoid()
+        for line in sigmoid_code:
+            writer.write(line + "\n")
 
 
 if __name__ == "__main__":
