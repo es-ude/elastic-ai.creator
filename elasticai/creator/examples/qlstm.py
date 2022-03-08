@@ -1,8 +1,10 @@
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
 from elasticai.creator.layers import QLSTM, QLSTMCell, QLinear
+from elasticai.creator.model_reporter import ModelReport
 
 
 class SinusDataset(Dataset):
@@ -50,21 +52,21 @@ class QLSTMModel(torch.nn.Module):
             input_size=1,
             hidden_size=64,
             bias=True,  # bias=False
-            state_quantizer=None,  # state_quantizer=Binarize()
-            weight_quantizer=None,  # weight_quantizer=Binarize()
-            input_gate_activation=None,  # input_gate_activation=Binarize()
-            forget_gate_activation=None,  # forget_gate_activation=Binarize()
-            cell_gate_activation=None,  # cell_gate_activation=Ternarize()
-            output_gate_activation=None,  # output_gate_activation=Binarize()
-            new_cell_state_activation=None,  # new_cell_state_activation=Ternarize()
+            state_quantizer=lambda x: x,  # state_quantizer=Binarize()
+            weight_quantizer=lambda x: x,  # weight_quantizer=Binarize()
+            input_gate_activation=lambda x: x,  # input_gate_activation=Binarize()
+            forget_gate_activation=lambda x: x,  # forget_gate_activation=Binarize()
+            cell_gate_activation=lambda x: x,  # cell_gate_activation=Ternarize()
+            output_gate_activation=lambda x: x,  # output_gate_activation=Binarize()
+            new_cell_state_activation=lambda x: x,  # new_cell_state_activation=Ternarize()
             batch_first=True,
         )
         #        self.bin = Binarize()
-        self.linear = QLinear(
+        self.linear = nn.Linear(
             in_features=window_size * 64,
             out_features=1,
             bias=True,  # bias=False
-            quantizer=None,  # quantizer=Binarize
+            # quantizer=None,  # quantizer=Binarize
         )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -140,6 +142,11 @@ if __name__ == "__main__":
     sample = ds_test[idx][0].tolist()
     predicted = ds_test[idx][0].tolist()
     target = [target_value.item() for _, target_value in ds_test[idx : idx + ws]]
+    model_reporter = ModelReport(
+        model=lstm_model,
+        data=[["example_0", "example_1"], [torch.randn(32, 100, 1)], [target[0]]],
+        is_binary=True,
+    )
 
     for i in range(ws):
         y_pred = lstm_model(torch.tensor([predicted]))

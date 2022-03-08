@@ -1,8 +1,9 @@
 import torch
+import torch.nn as nn
 import unittest
 import random
 import numpy as np
-from elasticai.creator.layers import QLSTMCell
+from elasticai.creator.layers import QLSTMCell, QLSTM
 from elasticai.creator.model_reporter import ModelReport
 
 
@@ -30,22 +31,34 @@ class LSTMSystemTest(unittest.TestCase):
         )
         return cell
 
+    def define_model_with_one_lstm_cell(self) -> nn.Module:
+        input_size = 10
+        hidden_size = 20
+        state_quantizer = lambda x: x
+        weight_quantizer = lambda x: x
+        model = nn.Sequential(
+            QLSTM(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                state_quantizer=state_quantizer,
+                weight_quantizer=weight_quantizer,
+            ),
+            nn.Sigmoid(),
+        )
+        return model
+
     def test_input(self) -> None:
-        cell = self.define_lstm_cell()
-        input = torch.randn(2, 3, 10)  # (time_steps, batch, input_size)
+        lstm_model = self.define_model_with_one_lstm_cell()
+        input = torch.randn(3, 10)  # (batch, input_size)
         hx = torch.randn(3, 20)  # (batch, hidden_size)
         cx = torch.randn(3, 20)
-        output = []
-        for i in range(input.size()[0]):
-            hx, cx = cell(input[i], (hx, cx))
-            output.append(hx)
-            model_reporter = ModelReport(
-                model=cell,
-                data=[["example_0", "example_1"], [input, 0], [hx, 0]],
-                is_binary=True,
-            )
-        output = torch.stack(output, dim=0)
+        output, cell_state = lstm_model(input, (hx, cx))
         print(output)
+        model_reporter = ModelReport(
+            model=lstm_model,
+            data=[["example_0", "example_1"], [input, 0], [output, 0]],
+            is_binary=True,
+        )
 
 
 if __name__ == "__main__":
