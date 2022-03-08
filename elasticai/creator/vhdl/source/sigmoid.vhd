@@ -1,28 +1,23 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
-
-
+use ieee.numeric_std.all;
 entity sigmoid is
-    generic (
-        DATA_WIDTH : integer := 16;
-        FRAC_WIDTH : integer := 8
-    );
-    port (
-        x : in signed(DATA_WIDTH-1 downto 0);
-        y : out signed(DATA_WIDTH-1 downto 0)
-    );
+	generic (
+		DATA_WIDTH : integer := 16;
+		FRAC_WIDTH : integer := 8
+	);
+	port (
+		x : in signed(DATA_WIDTH-1 downto 0);
+		y : out signed(DATA_WIDTH-1 downto 0)
+	);
 end entity sigmoid;
-
 architecture sigmoid_rtl of sigmoid is
-
-begin 
-    sigmoid_process:process(x)
-    variable int_x: integer := 0;
-    begin
-        int_x := to_integer(x);
-        
-        if int_x<-1280 then
+begin
+	sigmoid_process: process(x)
+		variable int_x: integer := 0;
+	begin
+		int_x := to_integer(x);
+		if int_x<-1280 then
 			y <= "0000000000000000"; -- 0
 		elsif int_x<-1240 then
 			y <= "0000000000000001"; -- 1
@@ -152,11 +147,10 @@ begin
 			y <= "0000000011111101"; -- 253
 		elsif int_x<1240 then
 			y <= "0000000011111101"; -- 253
+		elsif int_x<1280 then
+			y <= "0000000011111110"; -- 254
 		else
 			y <= "0000000100000000"; -- 256
 		end if;
-		
-    end process;                
-    
-end architecture sigmoid_rtl ; -- sigmoid_rtl
-
+	end process sigmoid_process;
+end architecture sigmoid_rtl;
