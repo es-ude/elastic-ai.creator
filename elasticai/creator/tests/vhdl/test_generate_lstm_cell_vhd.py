@@ -1,8 +1,6 @@
-import unittest
 from io import StringIO
-from os.path import exists
-from elasticai.creator.vhdl.generator.functions.generate_lstm_cell_vhd import build_lstm_cell
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.generator.lstm_cell import LstmCell
 
 
 class GenerateLSTMCellVhdTest(GeneratedVHDLCodeTest):
@@ -209,5 +207,13 @@ begin
 end architecture lstm_cell_rtl;"""
 
         string_io = StringIO("")
-        lstm_cell_code = build_lstm_cell(string_io)
-        self.check_generated_code(expected_code, lstm_cell_code)
+        # create lstm_cell as code generator
+        lstm_cell_code = LstmCell(component_name="lstm_cell", data_width=16, frac_width=8)
+        # write it to stringIO with break lines
+        for line in lstm_cell_code():
+            string_io.write(line)
+            if line[-1] != "\n":
+                string_io.write("\n")
+        # get the string from StringIO to compare it
+        generated_code = string_io.getvalue()
+        self.check_generated_code(expected_code, generated_code)
