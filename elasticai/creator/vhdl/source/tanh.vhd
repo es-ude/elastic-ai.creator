@@ -1,28 +1,23 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
-
-
+use ieee.numeric_std.all;
 entity tanh is
-    generic (
-        DATA_WIDTH : integer := 16;
-        FRAC_WIDTH : integer := 8
-    );
-    port (
-        x : in signed(DATA_WIDTH-1 downto 0);
-        y : out signed(DATA_WIDTH-1 downto 0)
-    );
+	generic (
+		DATA_WIDTH : integer := 16;
+		FRAC_WIDTH : integer := 8
+	);
+	port (
+		x : in signed(DATA_WIDTH-1 downto 0);
+		y : out signed(DATA_WIDTH-1 downto 0)
+	);
 end entity tanh;
-
 architecture tanh_rtl of tanh is
-
-begin 
-    tanh_process:process(x)
-    variable int_x: integer := 0;
-    begin
-        int_x := to_integer(x);
-        
-        if int_x<-1280 then
+begin
+	tanh_process: process(x)
+		variable int_x: integer := 0;
+	begin
+		int_x := to_integer(x);
+		if int_x<-1280 then
 			y <= "1111111100000000"; -- -256
 		elsif int_x<-1270 then
 			y <= "1111111100000001"; -- -255
@@ -538,11 +533,10 @@ begin
 			y <= "0000000011111111"; -- 255
 		elsif int_x<1270 then
 			y <= "0000000011111111"; -- 255
+		elsif int_x<1280 then
+			y <= "0000000011111111"; -- 255
 		else
 			y <= "0000000100000000"; -- 256
 		end if;
-		
-    end process;                
-    
-end architecture tanh_rtl ; -- tanh_rtl
-
+	end process tanh_process;
+end architecture tanh_rtl;

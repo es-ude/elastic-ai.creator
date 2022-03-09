@@ -1,7 +1,6 @@
 from itertools import chain
 from typing import Iterable
 
-from elasticai.creator.vhdl.generator.vhd_strings import get_mac_async_architecture_behavior_string
 from elasticai.creator.vhdl.language import (
     ContextClause,
     LibraryClause,
@@ -96,9 +95,6 @@ class MacAsync:
             identifier=self.architecture_name,
             design_unit=self.component_name,
         )
-        architecture.architecture_statement_part = (
-            get_mac_async_architecture_behavior_string
-        )
         architecture.architecture_declaration_list.append(
             InterfaceSignal(
                 identifier="product_1",
@@ -113,5 +109,13 @@ class MacAsync:
                 identifier_type=DataType.SIGNED,
             )
         )
+        architecture.architecture_statement_part.append(
+            [
+                "product_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
+                "product_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
+                "y <= product_1 + product_2 + b;"
+            ]
+        )
+
         code = chain(chain(library(), entity()), architecture())
         return code

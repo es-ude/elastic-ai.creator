@@ -120,7 +120,8 @@ class Architecture:
         self._architecture_assignment_list = InterfaceList()
         self._architecture_process_list = InterfaceList()
         self._architecture_port_map_list = InterfaceList()
-        self._architecture_statement_part = None
+        self._architecture_assignment_at_end_of_declaration_list = InterfaceList()
+        self._architecture_statement_part = InterfaceList()
 
     @property
     def architecture_declaration_list(self):
@@ -170,6 +171,14 @@ class Architecture:
     def architecture_port_map_list(self, value):
         self._architecture_port_map_list = InterfaceList(value)
 
+    @property
+    def architecture_assignment_at_end_of_declaration_list(self):
+        return self._architecture_assignment_at_end_of_declaration_list
+
+    @architecture_assignment_at_end_of_declaration_list.setter
+    def architecture_assignment_at_end_of_declaration_list(self, value):
+        self._architecture_assignment_at_end_of_declaration_list = InterfaceList(value)
+
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
@@ -196,6 +205,13 @@ class Architecture:
         if len(self._architecture_port_map_list) > 0:
             yield from _indent_and_filter_non_empty_lines(
                 self.architecture_port_map_list()
+            )
+        if len(self._architecture_assignment_at_end_of_declaration_list) > 0:
+            yield from _indent_and_filter_non_empty_lines(
+                _add_semicolons(
+                    self._architecture_assignment_at_end_of_declaration_list(),
+                    semicolon_last=True,
+                )
             )
 
         if self._architecture_statement_part:
@@ -491,3 +507,14 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         return generator
     else:
         raise ValueError
+
+
+def get_mac_async_architecture_behavior_string() -> CodeGenerator:
+    """
+    Returns:
+        string of the behavior for mac_async architecture
+    """
+    yield "\t-- behavior: y=w1*x1+w2*x2+b"
+    yield "\tproduct_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);"
+    yield "\tproduct_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);"
+    yield "\ty <= product_1 + product_2 + b;"

@@ -26,10 +26,9 @@ class GenerateMacAsyncVhdTest(GeneratedVHDLCodeTest):
             "\tsignal product_1 : signed(DATA_WIDTH-1 downto 0);",
             "\tsignal product_2 : signed(DATA_WIDTH-1 downto 0);",
             "begin",
-            "\t\t-- behavior: y=w1*x1+w2*x2+b",
-            "\t\tproduct_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
-            "\t\tproduct_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
-            "\t\ty <= product_1 + product_2 + b;",
+            "\tproduct_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
+            "\tproduct_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
+            "\ty <= product_1 + product_2 + b;",
             "end architecture mac_async_rtl;"
         ]
         component_name = "mac_async"

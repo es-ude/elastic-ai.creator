@@ -1,7 +1,5 @@
 from elasticai.creator.vhdl.generator.mac_async import MacAsync
-from elasticai.creator.vhdl.generator.vhd_strings import (
-    get_file_path_string,
-)
+from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
 
 
 def main(file_path, component_name, data_width, frac_width):

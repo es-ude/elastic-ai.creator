@@ -1,5 +1,5 @@
 from elasticai.creator.vhdl.generator.lstm_cell import LstmCell
-from elasticai.creator.vhdl.generator.vhd_strings import (
+from elasticai.creator.vhdl.generator.generator_functions import (
     get_file_path_string,
 )
 
