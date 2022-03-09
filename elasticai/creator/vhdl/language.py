@@ -508,13 +508,3 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
     else:
         raise ValueError
 
-
-def get_mac_async_architecture_behavior_string() -> CodeGenerator:
-    """
-    Returns:
-        string of the behavior for mac_async architecture
-    """
-    yield "\t-- behavior: y=w1*x1+w2*x2+b"
-    yield "\tproduct_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);"
-    yield "\tproduct_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);"
-    yield "\ty <= product_1 + product_2 + b;"
