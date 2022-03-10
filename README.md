@@ -200,27 +200,6 @@ Workflow for adding a new translation:
 
 Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
-## Model reporter
-As part of this repository an utility called [model reporter](elasticai/creator/model_reporter.py) exists which is used to produce a file with the individual identifier from a given dataset. 
-It is used for hardware comparisons, where a small subset of the data is used for comparison. 
-Example: 
-```
-ecg-path ground-truth model-prediction
-sinus/08219_107.ecg 0 0 
-atrial_fibrillation/07879_392.ecg 1 1
-sinus/08219_573.ecg 0 0
-sinus/04126_477.ecg 0 0
-atrial_fibrillation/07162_287.ecg 1 1
-atrial_fibrillation/06426_789.ecg 1 1
-atrial_fibrillation/05121_664.ecg 1 1
-```
-This is expected to use a path to help a validator to automatically extract the data from the said path and add the further predictions.
-Example usage:
-```python
-report = ModelReport(model=loaded_model, data=[labels,inputs,data[1]], is_binary=True, threshold=0.5)
-report.write_to_csv(path="results.csv")
-```
-
 ## Tests
 
 Our implementation is fully tested with unit, integration and system tests.
