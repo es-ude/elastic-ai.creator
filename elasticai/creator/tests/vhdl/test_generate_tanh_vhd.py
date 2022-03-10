@@ -22,7 +22,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
             );
         end entity tanh;
 
-        architecture tanh_rtl of tanh is
+        architecture rtl of tanh is
 
         begin 
             tanh_process: process(x)
@@ -554,7 +554,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
 
             end process tanh_process;                
 
-        end architecture tanh_rtl;
+        end architecture rtl;
         """
 
         tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))

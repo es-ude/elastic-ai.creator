@@ -22,7 +22,7 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
             );
         end entity sigmoid_tb;
         
-        architecture sigmoid_tb_rtl of sigmoid_tb is
+        architecture rtl of sigmoid_tb is
         
             signal clk_period : time := 1 ns;
             signal test_input : signed(16-1 downto 0):=(others=>'0');
@@ -82,7 +82,7 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
         
             end process test_process;
         
-        end architecture sigmoid_tb_rtl;
+        end architecture rtl;
         """
         sigmoid = PrecomputedScalarTestBench(
             data_width=16,

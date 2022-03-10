@@ -22,14 +22,14 @@ class GenerateMacAsyncVhdTest(GeneratedVHDLCodeTest):
             "\t\ty : out signed(DATA_WIDTH-1 downto 0)",
             "\t);",
             "end entity mac_async;",
-            "architecture mac_async_rtl of mac_async is",
+            "architecture rtl of mac_async is",
             "\tsignal product_1 : signed(DATA_WIDTH-1 downto 0);",
             "\tsignal product_2 : signed(DATA_WIDTH-1 downto 0);",
             "begin",
             "\tproduct_1 <= shift_right((x1 * w1), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
             "\tproduct_2 <= shift_right((x2 * w2), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
             "\ty <= product_1 + product_2 + b;",
-            "end architecture mac_async_rtl;"
+            "end architecture rtl;",
         ]
         component_name = "mac_async"
         data_width = 16

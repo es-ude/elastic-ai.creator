@@ -112,8 +112,7 @@ class ComponentDeclaration(_DesignUnitForEntityAndComponent):
 
 
 class Architecture:
-    def __init__(self, identifier: str, design_unit: str):
-        self.identifier = identifier
+    def __init__(self, design_unit: str):
         self.design_unit = design_unit
         self._architecture_declaration_list = InterfaceList()
         self._architecture_component_list = InterfaceList()
@@ -180,7 +179,7 @@ class Architecture:
         self._architecture_assignment_at_end_of_declaration_list = InterfaceList(value)
 
     def __call__(self) -> Code:
-        yield f"{Keywords.ARCHITECTURE.value} {self.identifier} {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
+        yield f"{Keywords.ARCHITECTURE.value} rtl {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
             yield from _indent_and_filter_non_empty_lines(
                 _add_semicolons(
@@ -218,7 +217,7 @@ class Architecture:
             yield from _indent_and_filter_non_empty_lines(
                 self._architecture_statement_part()
             )
-        yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} {self.identifier};"
+        yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} rtl;"
 
 
 class Process:
@@ -507,4 +506,3 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         return generator
     else:
         raise ValueError
-

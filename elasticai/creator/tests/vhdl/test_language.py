@@ -8,8 +8,9 @@ from elasticai.creator.vhdl.language import (
     Process,
     InterfaceConstrained,
     Mode,
-    Architecture, InterfaceSignal, PortMap,
-
+    Architecture,
+    InterfaceSignal,
+    PortMap,
 )
 import unittest
 from unittest import TestCase
@@ -142,8 +143,7 @@ class EntityTest(TestCase):
 
     def test_InterfaceVariable_empty(self):
         interface_variable = InterfaceVariable(
-            identifier="some_variable",
-            identifier_type=DataType.INTEGER
+            identifier="some_variable", identifier_type=DataType.INTEGER
         )
         expected = ["some_variable : integer"]
         actual = list(interface_variable())
@@ -153,8 +153,9 @@ class EntityTest(TestCase):
         interface_variable = InterfaceVariable(
             identifier="my_var",
             identifier_type=DataType.SIGNED,
-            mode=Mode.IN, range="15 downto 0",
-            value="16"
+            mode=Mode.IN,
+            range="15 downto 0",
+            value="16",
         )
         expected = ["my_var : in signed(15 downto 0) := 16"]
         actual = list(interface_variable())
@@ -162,10 +163,7 @@ class EntityTest(TestCase):
 
     def test_InterfaceSignal(self):
         i = InterfaceSignal(
-            identifier="y",
-            mode=Mode.OUT,
-            range="x",
-            identifier_type=DataType.SIGNED
+            identifier="y", mode=Mode.OUT, range="x", identifier_type=DataType.SIGNED
         )
         expected = ["signal y : out signed(x)"]
         actual = list(i())
@@ -173,23 +171,23 @@ class EntityTest(TestCase):
         self.assertEqual(expected, actual)
 
     def test_Architecture_base(self):
-        a = Architecture(identifier="y", design_unit="z")
-        expected = ["architecture y of z is", "begin", "end architecture y;"]
+        a = Architecture(design_unit="z")
+        expected = ["architecture rtl of z is", "begin", "end architecture rtl;"]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_variables(self):
-        a = Architecture(identifier="y", design_unit="z")
+        a = Architecture(design_unit="z")
         a.architecture_declaration_list.append(
             InterfaceVariable(
                 identifier="1", range="1", identifier_type=DataType.SIGNED
             )
         )
         expected = [
-            "architecture y of z is",
+            "architecture rtl of z is",
             "\t1 : signed(1);",
             "begin",
-            "end architecture y;",
+            "end architecture rtl;",
         ]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
@@ -198,13 +196,13 @@ class EntityTest(TestCase):
         def function():
             yield "some code"
 
-        a = Architecture(identifier="y", design_unit="z")
+        a = Architecture(design_unit="z")
         a.architecture_statement_part = function
         expected = [
-            "architecture y of z is",
+            "architecture rtl of z is",
             "begin",
             "\tsome code",
-            "end architecture y;",
+            "end architecture rtl;",
         ]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
@@ -218,58 +216,58 @@ class EntityTest(TestCase):
             lookup_table_generator_function=function(),
             input_name="x",
         )
-        a = Architecture(identifier="y", design_unit="z")
+        a = Architecture(design_unit="z")
         a.architecture_statement_part = dummy_process
         expected = [
-            "architecture y of z is",
+            "architecture rtl of z is",
             "begin",
             "\tsome name_process: process(x)",
             "\tbegin",
             "\t\tsome code",
             "\tend process some name_process;",
-            "end architecture y;",
+            "end architecture rtl;",
         ]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_assignment(self):
-        a = Architecture(identifier="y", design_unit="z")
+        a = Architecture(design_unit="z")
         a.architecture_assignment_list.append("A <= B")
-        expected = ["architecture y of z is",
-                    "begin",
-                    "\tA <= B;",
-                    "end architecture y;"]
+        expected = [
+            "architecture rtl of z is",
+            "begin",
+            "\tA <= B;",
+            "end architecture rtl;",
+        ]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
 
     def test_PortMap(self):
         port_map = PortMap(map_name="something", component_name="lstm")
         port_map.signal_list.append("x => y")
-        expected = ["something: lstm",
-                    "port map (",
-                    "\tx => y",
-                    ");"]
+        expected = ["something: lstm", "port map (", "\tx => y", ");"]
         actual = list(port_map())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_port_map(self):
-        architecture = Architecture(identifier="lstm_cell_rtl", design_unit="lstm_cell")
+        architecture = Architecture(design_unit="lstm_cell")
         port_map = PortMap(map_name="something", component_name="sigmoid")
         port_map.signal_list.append("x => y")
         port_map.signal_list.append("a => b")
         port_map.signal_list.append("c => d")
         architecture.architecture_port_map_list.append(port_map)
 
-        expected = ["architecture lstm_cell_rtl of lstm_cell is",
-                    "begin",
-                    "\tsomething: sigmoid",
-                    "\tport map (",
-                    "\t\tx => y,",
-                    "\t\ta => b,",
-                    "\t\tc => d",
-                    "\t);",
-                    "end architecture lstm_cell_rtl;"
-                    ]
+        expected = [
+            "architecture rtl of lstm_cell is",
+            "begin",
+            "\tsomething: sigmoid",
+            "\tport map (",
+            "\t\tx => y,",
+            "\t\ta => b,",
+            "\t\tc => d",
+            "\t);",
+            "end architecture rtl;",
+        ]
         actual = list(architecture())
         self.assertSequenceEqual(expected, actual)
 
@@ -281,16 +279,16 @@ class EntityTest(TestCase):
         dummy_process.process_statements_list.append(
             "h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0)"
         )
-        a = Architecture(identifier="y", design_unit="z")
+        a = Architecture(design_unit="z")
         a.architecture_statement_part = dummy_process
         expected = [
-            "architecture y of z is",
+            "architecture rtl of z is",
             "begin",
             "\tH_OUT_process: process(o,c_new)",
             "\tbegin",
             "\t\th_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);",
             "\tend process H_OUT_process;",
-            "end architecture y;",
+            "end architecture rtl;",
         ]
         actual = list(a())
         self.assertSequenceEqual(expected, actual)

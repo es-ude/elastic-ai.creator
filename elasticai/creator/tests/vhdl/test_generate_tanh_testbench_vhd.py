@@ -22,7 +22,7 @@ class TanhTestBenchTest(GeneratedVHDLCodeTest):
             );
         end entity tanh_tb;
         
-        architecture tanh_tb_rtl of tanh_tb is
+        architecture rtl of tanh_tb is
         
             signal clk_period : time := 1 ns;
             signal test_input : signed(16-1 downto 0):=(others=>'0');
@@ -102,7 +102,7 @@ class TanhTestBenchTest(GeneratedVHDLCodeTest):
         
             end process test_process;
         
-        end architecture tanh_tb_rtl;
+        end architecture rtl;
         """
         tanh = PrecomputedScalarTestBench(
             data_width=16,

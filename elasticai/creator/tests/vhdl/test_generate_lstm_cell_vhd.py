@@ -24,7 +24,7 @@ entity lstm_cell is
     h_out : out signed(DATA_WIDTH-1 downto 0)
   );
 end entity lstm_cell;
-architecture lstm_cell_rtl of lstm_cell is
+architecture rtl of lstm_cell is
 
     signal wii : signed(DATA_WIDTH-1 downto 0) := X"ffff"; -- W_ii;
     signal wif : signed(DATA_WIDTH-1 downto 0) := X"0089"; -- W_if;
@@ -204,11 +204,13 @@ begin
         h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
     end process H_OUT_process;
 
-end architecture lstm_cell_rtl;"""
+end architecture rtl;"""
 
         string_io = StringIO("")
         # create lstm_cell as code generator
-        lstm_cell_code = LstmCell(component_name="lstm_cell", data_width=16, frac_width=8)
+        lstm_cell_code = LstmCell(
+            component_name="lstm_cell", data_width=16, frac_width=8
+        )
         # write it to stringIO with break lines
         for line in lstm_cell_code():
             string_io.write(line)

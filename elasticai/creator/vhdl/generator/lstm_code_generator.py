@@ -47,10 +47,6 @@ class LSTMCommonGateTestBench:
     def file_name(self) -> str:
         return f"{self.component_name}_tb.vhd"
 
-    @property
-    def architecture_name(self) -> str:
-        return f"{self.component_name}_tb_rtl"
-
     def __call__(self) -> Iterable[str]:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee"]),
@@ -122,7 +118,6 @@ class LSTMCommonGateTestBench:
         test_process.process_test_case_list = test_cases
 
         architecture = Architecture(
-            identifier=self.architecture_name,
             design_unit=self.component_name + "_tb",
         )
 

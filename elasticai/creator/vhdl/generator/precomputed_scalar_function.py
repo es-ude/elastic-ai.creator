@@ -69,10 +69,6 @@ class PrecomputedScalarFunction:
     def file_name(self) -> str:
         return f"{self.component_name}.vhd"
 
-    @property
-    def architecture_name(self) -> str:
-        return f"{self.component_name}_rtl"
-
     def __call__(self) -> Iterable[str]:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee"]),
@@ -102,7 +98,6 @@ class PrecomputedScalarFunction:
         process.process_declaration_list = ["variable int_x: integer := 0"]
         process.process_statements_list = ["int_x := to_integer(x)"]
         architecture = Architecture(
-            identifier=self.architecture_name,
             design_unit=self.component_name,
         )
         architecture.architecture_statement_part = process
@@ -171,10 +166,6 @@ class PrecomputedScalarTestBench:
     def file_name(self) -> str:
         return f"{self.component_name}_tb.vhd"
 
-    @property
-    def architecture_name(self) -> str:
-        return f"{self.component_name}_tb_rtl"
-
     def __call__(self) -> Iterable[str]:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee"]),
@@ -229,7 +220,6 @@ class PrecomputedScalarTestBench:
         test_process.process_test_case_list = test_cases
 
         architecture = Architecture(
-            identifier=self.architecture_name,
             design_unit=self.component_name + "_tb",
         )
         architecture.architecture_declaration_list = [

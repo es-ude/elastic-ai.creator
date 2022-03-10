@@ -21,7 +21,6 @@ def main(example_inputs, example_outputs, file_path):
             encoded_inputs.append(list(map(lambda x: input_logic_encoder(x[0]), input)))
             encoded_outputs.append(list(map(lambda x: output_logic_encoder(x), output)))
         LUT = NaiveLUTBasedConv(
-            component_name="NaiveLUTBasedConv_rtl",
             inputs=encoded_inputs,
             outputs=encoded_outputs,
             input_width=input_logic_encoder.bit_width,

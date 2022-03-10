@@ -23,7 +23,7 @@ class LSTMCommonGateTestBenchTest(GeneratedVHDLCodeTest):
             );
         end entity lstm_common_gate_tb;
         
-        architecture lstm_common_gate_tb_rtl of lstm_common_gate_tb is
+        architecture rtl of lstm_common_gate_tb is
 
             type RAM_ARRAY is array (0 to 9) of signed(DATA_WIDTH-1 downto 0);
         
@@ -170,7 +170,7 @@ class LSTMCommonGateTestBenchTest(GeneratedVHDLCodeTest):
         
             end process test_process;
         
-        end architecture lstm_common_gate_tb_rtl;
+        end architecture rtl;
         """
         lstm_common_gate = LSTMCommonGateTestBench(
             data_width=16,

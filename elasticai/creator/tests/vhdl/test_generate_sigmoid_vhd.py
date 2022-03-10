@@ -23,7 +23,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
 
         end entity sigmoid;
 
-        architecture sigmoid_rtl of sigmoid is
+        architecture rtl of sigmoid is
         begin
 
             sigmoid_process: process(x)
@@ -168,7 +168,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
                 end if;
 
             end process sigmoid_process;
-        end architecture sigmoid_rtl;
+        end architecture rtl;
         """
         sigmoid = Sigmoid(
             data_width=16,
