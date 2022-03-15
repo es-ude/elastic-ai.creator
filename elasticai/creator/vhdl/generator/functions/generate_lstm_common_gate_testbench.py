@@ -2,6 +2,7 @@ from elasticai.creator.vhdl.generator.lstm_code_generator import (
     LSTMCommonGateTestBench,
 )
 from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
 def main() -> None:
@@ -36,6 +37,8 @@ def main() -> None:
         for line in lstm_common_gate_code:
             writer.write(line + "\n")
 
+    # indent all lines of the file
+    format_vhdl(file_path=file_path)
 
 if __name__ == "__main__":
     main()

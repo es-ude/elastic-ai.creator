@@ -6,6 +6,7 @@ from elasticai.creator.vhdl.generator.generator_functions import (
     get_file_path_string,
 )
 from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
 def main(rom_name, data_width, addr_width, array_value):
@@ -23,6 +24,9 @@ def main(rom_name, data_width, addr_width, array_value):
             writer.write(line)
             if line[-1] != "\n":
                 writer.write("\n")
+
+    # indent all lines of the file
+    format_vhdl(file_path=file_path)
 
 
 if __name__ == "__main__":

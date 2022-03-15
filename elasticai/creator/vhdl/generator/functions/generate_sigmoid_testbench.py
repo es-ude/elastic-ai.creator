@@ -2,6 +2,7 @@ from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
     PrecomputedScalarTestBench,
 )
 from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
 def main() -> None:
@@ -20,6 +21,9 @@ def main() -> None:
         sigmoid_code = sigmoid()
         for line in sigmoid_code:
             writer.write(line + "\n")
+
+    # indent all lines of the file
+    format_vhdl(file_path=file_path)
 
 
 if __name__ == "__main__":
