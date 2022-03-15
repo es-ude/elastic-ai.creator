@@ -1,5 +1,6 @@
 from elasticai.creator.vhdl.generator.mac_async import MacAsync
 from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
 def main(file_path, component_name, data_width, frac_width):
@@ -9,6 +10,9 @@ def main(file_path, component_name, data_width, frac_width):
             writer.write(line)
             if line[-1] != "\n":
                 writer.write("\n")
+
+    # indent all lines of the file
+    format_vhdl(file_path=file_path)
 
 
 if __name__ == "__main__":

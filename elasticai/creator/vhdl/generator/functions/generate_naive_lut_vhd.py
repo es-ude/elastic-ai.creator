@@ -4,6 +4,7 @@ from elasticai.creator.vhdl.generator.generator_functions import get_file_path_s
 import torch
 
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
+from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
 def main(example_inputs, example_outputs, file_path):
@@ -30,6 +31,9 @@ def main(example_inputs, example_outputs, file_path):
             writer.write(line)
             if line[-1] != "\n":
                 writer.write("\n")
+
+    # indent all lines of the file
+    format_vhdl(file_path=file_path)
 
 
 if __name__ == "__main__":
