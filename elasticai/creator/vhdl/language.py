@@ -97,7 +97,7 @@ class _DesignUnitForEntityAndComponent:
 
     def __call__(self) -> Code:
         yield f"{self.type.value} {self.identifier} {Keywords.IS.value}"
-        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield from _filter_empty_lines(self._header())
         yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
 
 
@@ -181,32 +181,32 @@ class Architecture:
     def __call__(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} rtl {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 _add_semicolons(
                     self._architecture_declaration_list(), semicolon_last=True
                 )
             )
         if len(self._architecture_component_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self._architecture_component_list()
             )
         yield f"{Keywords.BEGIN.value}"
         if len(self._architecture_assignment_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 _add_semicolons(
                     self._architecture_assignment_list(), semicolon_last=True
                 )
             )
         if len(self._architecture_process_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self.architecture_process_list()
             )
         if len(self._architecture_port_map_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self.architecture_port_map_list()
             )
         if len(self._architecture_assignment_at_end_of_declaration_list) > 0:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 _add_semicolons(
                     self._architecture_assignment_at_end_of_declaration_list(),
                     semicolon_last=True,
@@ -214,7 +214,7 @@ class Architecture:
             )
 
         if self._architecture_statement_part:
-            yield from _indent_and_filter_non_empty_lines(
+            yield from _filter_empty_lines(
                 self._architecture_statement_part()
             )
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} rtl;"
@@ -276,9 +276,9 @@ class Process:
             yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
         else:
             yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}"
-        yield from _indent_and_filter_non_empty_lines(self._header())
+        yield from _filter_empty_lines(self._header())
         yield f"{Keywords.BEGIN.value}"
-        yield from _indent_and_filter_non_empty_lines(self._footer())
+        yield from _filter_empty_lines(self._footer())
         yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
@@ -402,7 +402,7 @@ class PortMap:
     def __call__(self) -> Code:
         yield f"{self.map_name}: {self.component_name}"
         yield f"port map ("
-        yield from _indent_and_filter_non_empty_lines(_add_comma(self._signal_list()))
+        yield from _filter_empty_lines(_add_comma(self._signal_list()))
         yield ");"
 
 
@@ -450,7 +450,7 @@ def _append_semicolons_to_lines(lines: Code) -> Code:
 
 def _clause(clause_type: ClauseType, interfaces: Code) -> Code:
     yield f"{clause_type.value} ("
-    yield from _indent_and_filter_non_empty_lines(_add_semicolons(interfaces))
+    yield from _filter_empty_lines(_add_semicolons(interfaces))
     yield ");"
 
 
@@ -470,8 +470,8 @@ def _empty_code_generator() -> Code:
     return []
 
 
-def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
-    yield from map(indent, _filter_empty_lines(lines))
+# def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
+#     yield from map(indent, _filter_empty_lines(lines))
 
 
 # noinspection PyPep8Naming
@@ -479,7 +479,7 @@ def _wrap_in_IS_END_block(
     block_type: Keywords, block_identifier: Identifier, lines: Code
 ) -> Code:
     yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
-    yield from _indent_and_filter_non_empty_lines(lines)
+    yield from _filter_empty_lines(lines)
     yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
 
 
