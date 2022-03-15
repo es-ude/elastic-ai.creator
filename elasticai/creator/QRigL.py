@@ -1,4 +1,13 @@
-""" Original: version:https://github.com/nollied/rigl-torch """
+""" Original: version:https://github.com/nollied/rigl-torch 
+   cite as @misc{nollied, 
+    author = {McCreary, Dyllan},
+    title = {PyTorch Implementation of Rigging the Lottery: Making All Tickets Winners}, 
+    url = {https://github.com/nollied/rigl-torch},
+    year = {2020}, 
+    month = {Nov},
+    note = {Reimplementation/extension of the work done by Google Research: https://github.com/google-research/rigl}
+}
+"""
 from typing import List
 
 import numpy as np
