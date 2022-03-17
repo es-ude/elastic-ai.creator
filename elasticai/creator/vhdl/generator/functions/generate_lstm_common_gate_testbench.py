@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.generator.lstm_code_generator import (
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCommonGateTestBench,
 )
 from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
@@ -39,6 +39,7 @@ def main() -> None:
 
     # indent all lines of the file
     format_vhdl(file_path=file_path)
+
 
 if __name__ == "__main__":
     main()
