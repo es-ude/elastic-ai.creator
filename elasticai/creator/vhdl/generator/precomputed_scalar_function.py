@@ -19,7 +19,7 @@ from elasticai.creator.vhdl.language import (
     UseClause,
     PortMap,
 )
-from elasticai.creator.vhdl.language_testbench import TestCases
+from elasticai.creator.vhdl.language_testbench import TestCasesProcomputedScalarFunction
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -211,7 +211,7 @@ class PrecomputedScalarTestBench:
         uut_port_map.signal_list.append("x => test_input")
         uut_port_map.signal_list.append("y => test_output")
 
-        test_cases = TestCases(
+        test_cases = TestCasesProcomputedScalarFunction(
             x_list_for_testing=self.x_list_for_testing,
             y_list_for_testing=self.y_list_for_testing,
             data_width=self.data_width,

@@ -3,6 +3,9 @@ import random
 import numpy as np
 import math
 from elasticai.creator.layers import QLSTMCell
+from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
 
 """
 this module is from the lstm repo from Chao
@@ -37,6 +40,19 @@ def format_array_to_string(arr, vhdl_prefix=None, nbits=16):
     return string_to_return
 
 
+def format_array_to_string_without_prefix(arr, nbits=16):
+    string_to_return = ""
+
+    for i in range(2 ** math.ceil(math.log2(len(arr)))):
+        if i < len(arr):
+            string_to_return += 'x"' + int_to_hex(arr[i], nbits)[2:] + '",'
+        else:
+            string_to_return += 'x"' + int_to_hex(0, nbits)[2:] + '",'
+    string_to_return = string_to_return[:-1]
+
+    return string_to_return
+
+
 def float_array_to_int(float_array, frac_bits=8):
     scaled_array = float_array * 2 ** frac_bits
     int_array = scaled_array.astype(np.int16)
@@ -47,6 +63,12 @@ def float_array_to_string(float_array, vhdl_prefix=None, frac_bits=8, nbits=16):
     scaled_array = float_array * 2 ** frac_bits
     int_array = scaled_array.astype(np.int16)
     return format_array_to_string(int_array, vhdl_prefix, nbits)
+
+
+def float_array_to_string_without_prefix(float_array, frac_bits=8, nbits=16):
+    scaled_array = float_array * 2 ** frac_bits
+    int_array = scaled_array.astype(np.int16)
+    return format_array_to_string_without_prefix(int_array, nbits)
 
 
 def int_to_bit(val, nbits):
@@ -252,3 +274,34 @@ if __name__ == "__main__":
     print("x_h_test_input", x_h_test_input)
     print("c_test_input", c_test_input)
     print("h_output", h_output)
+
+    ### generate testbench for use-case ###
+    file_path_testbench = get_file_path_string(
+        folder_names=["../..", "systemTests"], file_name="lstm_cell_tb.vhd"
+    )
+
+    with open(file_path_testbench, "w") as writer:
+        lstm_cell = LSTMCellTestBench(
+            data_width=nbits,
+            frac_width=frac_bits,
+            input_size=input_size,
+            hidden_size=hidden_size,
+            test_x_h_data=float_array_to_string_without_prefix(
+                x_h_test_input,
+                frac_bits=frac_bits,
+                nbits=nbits,
+            ),
+            test_c_data=float_array_to_string_without_prefix(
+                c_test_input,
+                frac_bits=frac_bits,
+                nbits=nbits,
+            ),
+            h_out=list(h_output),
+            component_name="lstm_cell",
+        )
+        lstm_cell_code = lstm_cell()
+        for line in lstm_cell_code:
+            writer.write(line + "\n")
+
+    # indent all lines of the file
+    format_vhdl(file_path=file_path_testbench)

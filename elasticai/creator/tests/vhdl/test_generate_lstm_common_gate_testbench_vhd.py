@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.generator.lstm_code_generator import (
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCommonGateTestBench,
 )
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest

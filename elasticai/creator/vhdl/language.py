@@ -9,7 +9,6 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
-from abc import abstractmethod
 from collections import Sequence
 from enum import Enum
 from itertools import filterfalse, chain
@@ -187,9 +186,7 @@ class Architecture:
                 )
             )
         if len(self._architecture_component_list) > 0:
-            yield from _filter_empty_lines(
-                self._architecture_component_list()
-            )
+            yield from _filter_empty_lines(self._architecture_component_list())
         yield f"{Keywords.BEGIN.value}"
         if len(self._architecture_assignment_list) > 0:
             yield from _filter_empty_lines(
@@ -198,13 +195,9 @@ class Architecture:
                 )
             )
         if len(self._architecture_process_list) > 0:
-            yield from _filter_empty_lines(
-                self.architecture_process_list()
-            )
+            yield from _filter_empty_lines(self.architecture_process_list())
         if len(self._architecture_port_map_list) > 0:
-            yield from _filter_empty_lines(
-                self.architecture_port_map_list()
-            )
+            yield from _filter_empty_lines(self.architecture_port_map_list())
         if len(self._architecture_assignment_at_end_of_declaration_list) > 0:
             yield from _filter_empty_lines(
                 _add_semicolons(
@@ -214,9 +207,7 @@ class Architecture:
             )
 
         if self._architecture_statement_part:
-            yield from _filter_empty_lines(
-                self._architecture_statement_part()
-            )
+            yield from _filter_empty_lines(self._architecture_statement_part())
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} rtl;"
 
 
@@ -390,6 +381,7 @@ class PortMap:
         self.map_name = map_name
         self.component_name = component_name
         self._signal_list = InterfaceList()
+        self._generic_map_list = InterfaceList()
 
     @property
     def signal_list(self):
@@ -399,8 +391,20 @@ class PortMap:
     def signal_list(self, value):
         self._signal_list = InterfaceList(value)
 
+    @property
+    def generic_map_list(self):
+        return self._generic_map_list
+
+    @generic_map_list.setter
+    def generic_map_list(self, value):
+        self._generic_map_list = InterfaceList(value)
+
     def __call__(self) -> Code:
         yield f"{self.map_name}: {self.component_name}"
+        if len(self._generic_map_list) > 0:
+            yield f"generic map ("
+            yield from _filter_empty_lines(_add_comma(self._generic_map_list()))
+            yield ")"
         yield f"port map ("
         yield from _filter_empty_lines(_add_comma(self._signal_list()))
         yield ");"
@@ -435,6 +439,10 @@ def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
     temp = tuple(lines)
     yield from (f"{line};" for line in temp[:-1])
     yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
+
+
+def _add_is(lines: Code) -> Code:
+    yield from (f"{line} is" for line in lines)
 
 
 def _add_comma(lines: Code, comma_last: bool = False) -> Code:
