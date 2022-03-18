@@ -1,3 +1,8 @@
+import sys
+import os
+from argparse import ArgumentParser
+import shutil
+from paths import ROOT_DIR
 import torch
 import random
 import numpy as np
@@ -19,10 +24,6 @@ def int_to_hex(val, nbits):
         return hex((val + (1 << nbits)) % (1 << nbits))
     else:
         return "{0:#0{1}x}".format(val, 2 + int(nbits / 4))
-
-
-def fixed_point_multiply(x, y, frac_bits=8):
-    return int(x * y / (2 ** frac_bits))
 
 
 def format_array_to_string(arr, vhdl_prefix=None, nbits=16):
@@ -71,35 +72,6 @@ def float_array_to_string_without_prefix(float_array, frac_bits=8, nbits=16):
     scaled_array = float_array * 2 ** frac_bits
     int_array = scaled_array.astype(np.int16)
     return format_array_to_string_without_prefix(int_array, nbits)
-
-
-def int_to_bit(val, nbits):
-    format_str = "{0:0" + str(nbits) + "b}"
-    if val < 0:
-        return bin((val + (1 << nbits)) % (1 << nbits))[2:]
-    else:
-        return format_str.format(val)
-
-
-def mem_array_to_dat_file(file_name="", float_arr=None, nbits=16, frac_bits=8):
-    scaled_array = float_arr * 2 ** frac_bits
-    int_array = scaled_array.astype(np.int16)
-    # file open
-    if file_name == "":
-        print("you must specify the file name where to dump your array.\r\n")
-        return
-
-    string_to_write = ""
-    # if len(int_array) < 2**math.ceil(math.log2(len(int_array))):
-    for i in range(2 ** math.ceil(math.log2(len(int_array)))):
-        if i < len(int_array):
-            string_to_write += int_to_bit(int_array[i], nbits) + "\r"
-        else:
-            string_to_write += int_to_bit(0, nbits) + "\r"
-
-    txt_file = open(file_name, "w")
-    txt_file.write(string_to_write[:-1])
-    txt_file.close()
 
 
 def define_lstm_cell(input_size, hidden_size) -> QLSTMCell:
@@ -280,6 +252,15 @@ def generate_rom_file(
 
 
 if __name__ == "__main__":
+    args = sys.argv[1:]
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument(
+        "--path",
+        help="relative path from project root to folder for generated vhd files",
+        required=True,
+    )
+    args = arg_parser.parse_args(args)
+
     torch.manual_seed(0)
     random.seed(0)
     frac_bits = 8
@@ -306,7 +287,7 @@ if __name__ == "__main__":
 
     ## generate weights source files ##
     file_path_wi = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="wi_rom.vhd",
     )
     generate_rom_file(
@@ -318,7 +299,7 @@ if __name__ == "__main__":
         index=0,
     )
     file_path_wf = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="wf_rom.vhd",
     )
     generate_rom_file(
@@ -330,7 +311,7 @@ if __name__ == "__main__":
         index=1,
     )
     file_path_wg = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="wg_rom.vhd",
     )
     generate_rom_file(
@@ -342,7 +323,7 @@ if __name__ == "__main__":
         index=2,
     )
     file_path_wo = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="wo_rom.vhd",
     )
     generate_rom_file(
@@ -356,7 +337,7 @@ if __name__ == "__main__":
 
     ## generate bias source files ##
     file_path_bi = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="bi_rom.vhd",
     )
     generate_rom_file(
@@ -368,7 +349,7 @@ if __name__ == "__main__":
         index=0,
     )
     file_path_bf = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="bf_rom.vhd",
     )
     generate_rom_file(
@@ -380,7 +361,7 @@ if __name__ == "__main__":
         index=1,
     )
     file_path_bg = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="bg_rom.vhd",
     )
     generate_rom_file(
@@ -392,7 +373,7 @@ if __name__ == "__main__":
         index=2,
     )
     file_path_bo = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="bo_rom.vhd",
     )
     generate_rom_file(
@@ -406,7 +387,7 @@ if __name__ == "__main__":
 
     ## generate sigmoid and tanh activation source files ##
     file_path_sigmoid = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="sigmoid.vhd",
     )
 
@@ -419,7 +400,7 @@ if __name__ == "__main__":
             writer.write(line + "\n")
 
     file_path_tanh = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="tanh.vhd",
     )
 
@@ -431,7 +412,7 @@ if __name__ == "__main__":
 
     ### generate testbench file for use-case ###
     file_path_testbench = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/systemTests",
+        relative_path_from_project_root=args.path,
         file_name="lstm_cell_tb.vhd",
     )
 
@@ -470,3 +451,10 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_sigmoid)
     format_vhdl(file_path=file_path_tanh)
     format_vhdl(file_path=file_path_testbench)
+
+    ### copy static files ###
+    for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
+        shutil.copy(
+            ROOT_DIR + "/vhd_files/static_files/" + filename,
+            ROOT_DIR + "/" + args.path,
+        )
