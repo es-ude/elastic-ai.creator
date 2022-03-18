@@ -260,6 +260,8 @@ if __name__ == "__main__":
         required=True,
     )
     args = arg_parser.parse_args(args)
+    if not os.path.isdir(ROOT_DIR + "/" + args.path):
+        os.mkdir(ROOT_DIR + "/" + args.path)
 
     torch.manual_seed(0)
     random.seed(0)
