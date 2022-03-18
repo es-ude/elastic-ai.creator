@@ -11,7 +11,8 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 def main(rom_name, data_width, addr_width, array_value):
     file_path = get_file_path_string(
-        folder_names=["..", "source"], file_name=rom_name + ".vhd"
+        relative_path_from_project_root="vhd_files/source",
+        file_name=rom_name + ".vhd",
     )
     with open(file_path, "w") as writer:
         rom = Rom(

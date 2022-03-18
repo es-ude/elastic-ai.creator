@@ -1,10 +1,12 @@
 import math
 import random
+import os
 from os import path
 
 import numpy as np
 import torch
 import torch.nn as nn
+from paths import ROOT_DIR
 
 from elasticai.creator.layers import QLSTMCell
 from typing import Dict, List
@@ -385,18 +387,16 @@ def float_array_to_string(float_array, frac_bits, nbits):
     return _format_array_to_string(int_array, nbits)
 
 
-def get_file_path_string(folder_names: List[str], file_name: str) -> str:
+def get_file_path_string(
+    file_name: str,
+    relative_path_from_project_root: str,
+) -> str:
     """
     returns String of a file path
     Args:
-        folder_names (List(str)): the name of the folders
         file_name (str): the name of the file
+        relative_path_from_project_root (str): path where file should be located
     Returns:
         string of the full path to a given filename
     """
-    base_path = path.dirname(__file__)
-    file_path = base_path
-    for folder_name in folder_names:
-        file_path = path.abspath(path.join(file_path, folder_name))
-    file_path = path.abspath(path.join(file_path, file_name))
-    return file_path
+    return path.join(ROOT_DIR, relative_path_from_project_root, file_name)

@@ -306,7 +306,8 @@ if __name__ == "__main__":
 
     ## generate weights source files ##
     file_path_wi = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="wi_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="wi_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_wi,
@@ -317,7 +318,8 @@ if __name__ == "__main__":
         index=0,
     )
     file_path_wf = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="wf_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="wf_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_wf,
@@ -328,7 +330,8 @@ if __name__ == "__main__":
         index=1,
     )
     file_path_wg = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="wg_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="wg_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_wg,
@@ -339,7 +342,8 @@ if __name__ == "__main__":
         index=2,
     )
     file_path_wo = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="wo_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="wo_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_wo,
@@ -352,7 +356,8 @@ if __name__ == "__main__":
 
     ## generate bias source files ##
     file_path_bi = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="bi_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="bi_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_bi,
@@ -363,7 +368,8 @@ if __name__ == "__main__":
         index=0,
     )
     file_path_bf = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="bf_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="bf_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_bf,
@@ -374,7 +380,8 @@ if __name__ == "__main__":
         index=1,
     )
     file_path_bg = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="bg_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="bg_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_bg,
@@ -385,7 +392,8 @@ if __name__ == "__main__":
         index=2,
     )
     file_path_bo = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="bo_rom.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="bo_rom.vhd",
     )
     generate_rom_file(
         file_path=file_path_bo,
@@ -398,7 +406,8 @@ if __name__ == "__main__":
 
     ## generate sigmoid and tanh activation source files ##
     file_path_sigmoid = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="sigmoid.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="sigmoid.vhd",
     )
 
     with open(file_path_sigmoid, "w") as writer:
@@ -410,7 +419,8 @@ if __name__ == "__main__":
             writer.write(line + "\n")
 
     file_path_tanh = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="tanh.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="tanh.vhd",
     )
 
     with open(file_path_tanh, "w") as writer:
@@ -421,7 +431,8 @@ if __name__ == "__main__":
 
     ### generate testbench file for use-case ###
     file_path_testbench = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="lstm_cell_tb.vhd"
+        relative_path_from_project_root="elasticai/creator/systemTests",
+        file_name="lstm_cell_tb.vhd",
     )
 
     with open(file_path_testbench, "w") as writer:

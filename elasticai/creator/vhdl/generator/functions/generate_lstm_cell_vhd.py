@@ -19,7 +19,8 @@ def main(component_name: str, data_width: int, frac_width: int) -> None:
 
 if __name__ == "__main__":
     file_path = get_file_path_string(
-        folder_names=["..", "source"], file_name="lstm_cell.vhd"
+        relative_path_from_project_root="vhd_files/source",
+        file_name="lstm_cell.vhd",
     )
     component_name = "lstm_cell"
     DATA_WIDTH = 16

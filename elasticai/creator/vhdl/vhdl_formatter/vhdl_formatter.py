@@ -14,13 +14,15 @@ from elasticai.creator.vhdl.generator.generator_functions import get_file_path_s
 
 def format_vhdl(file_path):
     # get the path of config
-    config = get_file_path_string(["..", "vhdl_formatter"], file_name="config.json")
+    config = get_file_path_string(
+        relative_path_from_project_root="elasticai/creator/vhdl/vhdl_formatter",
+        file_name="config.json",
+    )
     # check if the vhdl file exist !
     if os.path.isfile(file_path):
         subprocess.Popen(
             "vsg -f {file_path} --style indent_only --configuration {config} --fix".format(
-                file_path=file_path,
-                config=config
+                file_path=file_path, config=config
             ),
             shell=True,
         )
