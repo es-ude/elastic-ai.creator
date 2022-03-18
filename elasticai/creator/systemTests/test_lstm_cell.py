@@ -7,6 +7,7 @@ from elasticai.creator.vhdl.generator.generator_functions import get_file_path_s
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
 from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
 
 """
 this module is from the lstm repo from Chao
@@ -395,6 +396,29 @@ if __name__ == "__main__":
         index=3,
     )
 
+    ## generate sigmoid and tanh activation source files ##
+    file_path_sigmoid = get_file_path_string(
+        folder_names=["../..", "systemTests"], file_name="sigmoid.vhd"
+    )
+
+    with open(file_path_sigmoid, "w") as writer:
+        sigmoid = Sigmoid(
+            data_width=nbits, frac_width=frac_bits, x=np.linspace(-2.5, 2.5, 256)
+        )
+        sigmoid_code = sigmoid()
+        for line in sigmoid_code:
+            writer.write(line + "\n")
+
+    file_path_tanh = get_file_path_string(
+        folder_names=["../..", "systemTests"], file_name="tanh.vhd"
+    )
+
+    with open(file_path_tanh, "w") as writer:
+        tanh = Tanh(data_width=nbits, frac_width=frac_bits, x=np.linspace(-1, 1, 256))
+        tanh_code = tanh()
+        for line in tanh_code:
+            writer.write(line + "\n")
+
     ### generate testbench file for use-case ###
     file_path_testbench = get_file_path_string(
         folder_names=["../..", "systemTests"], file_name="lstm_cell_tb.vhd"
@@ -432,4 +456,6 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_bf)
     format_vhdl(file_path=file_path_bg)
     format_vhdl(file_path=file_path_bo)
+    format_vhdl(file_path=file_path_sigmoid)
+    format_vhdl(file_path=file_path_tanh)
     format_vhdl(file_path=file_path_testbench)
