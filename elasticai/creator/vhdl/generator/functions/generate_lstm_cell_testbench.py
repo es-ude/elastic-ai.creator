@@ -7,7 +7,8 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 def main() -> None:
     file_path = get_file_path_string(
-        folder_names=["..", "testbench"], file_name="lstm_cell_tb.vhd"
+        relative_path_from_project_root="vhd_files/testbench",
+        file_name="lstm_cell_tb.vhd",
     )
 
     with open(file_path, "w") as writer:

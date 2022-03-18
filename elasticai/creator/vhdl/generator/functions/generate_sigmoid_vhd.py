@@ -7,7 +7,8 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 def main():
     file_path = get_file_path_string(
-        folder_names=["..", "source"], file_name="sigmoid.vhd"
+        relative_path_from_project_root="vhd_files/source",
+        file_name="sigmoid.vhd",
     )
 
     with open(file_path, "w") as writer:

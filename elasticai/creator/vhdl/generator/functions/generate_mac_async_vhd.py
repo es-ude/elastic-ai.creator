@@ -20,6 +20,14 @@ if __name__ == "__main__":
     data_width = 16
     frac_width = 8
     # specify the file path
-    file_path = get_file_path_string(folder_names=["..", "source"], file_name=component_name + ".vhd")
+    file_path = get_file_path_string(
+        relative_path_from_project_root="vhd_files/source",
+        file_name=component_name + ".vhd",
+    )
     # generate the vhdl-file
-    main(file_path=file_path, component_name=component_name, data_width=data_width, frac_width=frac_width)
+    main(
+        file_path=file_path,
+        component_name=component_name,
+        data_width=data_width,
+        frac_width=frac_width,
+    )

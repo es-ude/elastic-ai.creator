@@ -1,3 +1,8 @@
+import sys
+import os
+from argparse import ArgumentParser
+import shutil
+from paths import ROOT_DIR
 import torch
 import random
 import numpy as np
@@ -6,6 +11,8 @@ from elasticai.creator.layers import QLSTMCell
 from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
+from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
 
 """
 this module is from the lstm repo from Chao
@@ -17,10 +24,6 @@ def int_to_hex(val, nbits):
         return hex((val + (1 << nbits)) % (1 << nbits))
     else:
         return "{0:#0{1}x}".format(val, 2 + int(nbits / 4))
-
-
-def fixed_point_multiply(x, y, frac_bits=8):
-    return int(x * y / (2 ** frac_bits))
 
 
 def format_array_to_string(arr, vhdl_prefix=None, nbits=16):
@@ -69,35 +72,6 @@ def float_array_to_string_without_prefix(float_array, frac_bits=8, nbits=16):
     scaled_array = float_array * 2 ** frac_bits
     int_array = scaled_array.astype(np.int16)
     return format_array_to_string_without_prefix(int_array, nbits)
-
-
-def int_to_bit(val, nbits):
-    format_str = "{0:0" + str(nbits) + "b}"
-    if val < 0:
-        return bin((val + (1 << nbits)) % (1 << nbits))[2:]
-    else:
-        return format_str.format(val)
-
-
-def mem_array_to_dat_file(file_name="", float_arr=None, nbits=16, frac_bits=8):
-    scaled_array = float_arr * 2 ** frac_bits
-    int_array = scaled_array.astype(np.int16)
-    # file open
-    if file_name == "":
-        print("you must specify the file name where to dump your array.\r\n")
-        return
-
-    string_to_write = ""
-    # if len(int_array) < 2**math.ceil(math.log2(len(int_array))):
-    for i in range(2 ** math.ceil(math.log2(len(int_array)))):
-        if i < len(int_array):
-            string_to_write += int_to_bit(int_array[i], nbits) + "\r"
-        else:
-            string_to_write += int_to_bit(0, nbits) + "\r"
-
-    txt_file = open(file_name, "w")
-    txt_file.write(string_to_write[:-1])
-    txt_file.close()
 
 
 def define_lstm_cell(input_size, hidden_size) -> QLSTMCell:
@@ -252,7 +226,43 @@ def inference_model(lstm_signal_cell, frac_bits, nbits, input_size, hidden_size)
         )
 
 
+def generate_rom_file(
+    file_path,
+    weights_or_bias_list: list,
+    frac_bits: int,
+    nbits: int,
+    name: str,
+    index: int,
+):
+    with open(file_path, "w") as writer:
+        weight_or_bias_array = weights_or_bias_list[index]
+        addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
+        array_value = float_array_to_string_without_prefix(
+            float_array=weight_or_bias_array, frac_bits=frac_bits, nbits=nbits
+        )
+        rom = Rom(
+            rom_name="rom_" + name,
+            data_width=nbits,
+            addr_width=addr_width,
+            array_value=array_value,
+        )
+        rom_code = rom()
+        for line in rom_code:
+            writer.write(line + "\n")
+
+
 if __name__ == "__main__":
+    args = sys.argv[1:]
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument(
+        "--path",
+        help="relative path from project root to folder for generated vhd files",
+        required=True,
+    )
+    args = arg_parser.parse_args(args)
+    if not os.path.isdir(ROOT_DIR + "/" + args.path):
+        os.mkdir(ROOT_DIR + "/" + args.path)
+
     torch.manual_seed(0)
     random.seed(0)
     frac_bits = 8
@@ -275,9 +285,137 @@ if __name__ == "__main__":
     print("c_test_input", c_test_input)
     print("h_output", h_output)
 
-    ### generate testbench for use-case ###
+    ### generate source files for use-case ###
+
+    ## generate weights source files ##
+    file_path_wi = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="wi_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_wi,
+        weights_or_bias_list=weights_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="wi",
+        index=0,
+    )
+    file_path_wf = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="wf_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_wf,
+        weights_or_bias_list=weights_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="wf",
+        index=1,
+    )
+    file_path_wg = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="wg_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_wg,
+        weights_or_bias_list=weights_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="wg",
+        index=2,
+    )
+    file_path_wo = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="wo_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_wo,
+        weights_or_bias_list=weights_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="wo",
+        index=3,
+    )
+
+    ## generate bias source files ##
+    file_path_bi = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="bi_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_bi,
+        weights_or_bias_list=bias_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="bi",
+        index=0,
+    )
+    file_path_bf = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="bf_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_bf,
+        weights_or_bias_list=bias_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="bf",
+        index=1,
+    )
+    file_path_bg = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="bg_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_bg,
+        weights_or_bias_list=bias_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="bg",
+        index=2,
+    )
+    file_path_bo = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="bo_rom.vhd",
+    )
+    generate_rom_file(
+        file_path=file_path_bo,
+        weights_or_bias_list=bias_list,
+        frac_bits=frac_bits,
+        nbits=nbits,
+        name="bo",
+        index=3,
+    )
+
+    ## generate sigmoid and tanh activation source files ##
+    file_path_sigmoid = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="sigmoid.vhd",
+    )
+
+    with open(file_path_sigmoid, "w") as writer:
+        sigmoid = Sigmoid(
+            data_width=nbits, frac_width=frac_bits, x=np.linspace(-2.5, 2.5, 256)
+        )
+        sigmoid_code = sigmoid()
+        for line in sigmoid_code:
+            writer.write(line + "\n")
+
+    file_path_tanh = get_file_path_string(
+        relative_path_from_project_root=args.path,
+        file_name="tanh.vhd",
+    )
+
+    with open(file_path_tanh, "w") as writer:
+        tanh = Tanh(data_width=nbits, frac_width=frac_bits, x=np.linspace(-1, 1, 256))
+        tanh_code = tanh()
+        for line in tanh_code:
+            writer.write(line + "\n")
+
+    ### generate testbench file for use-case ###
     file_path_testbench = get_file_path_string(
-        folder_names=["../..", "systemTests"], file_name="lstm_cell_tb.vhd"
+        relative_path_from_project_root=args.path,
+        file_name="lstm_cell_tb.vhd",
     )
 
     with open(file_path_testbench, "w") as writer:
@@ -303,5 +441,22 @@ if __name__ == "__main__":
         for line in lstm_cell_code:
             writer.write(line + "\n")
 
-    # indent all lines of the file
+    # indent all lines of the files
+    format_vhdl(file_path=file_path_wi)
+    format_vhdl(file_path=file_path_wf)
+    format_vhdl(file_path=file_path_wg)
+    format_vhdl(file_path=file_path_wo)
+    format_vhdl(file_path=file_path_bi)
+    format_vhdl(file_path=file_path_bf)
+    format_vhdl(file_path=file_path_bg)
+    format_vhdl(file_path=file_path_bo)
+    format_vhdl(file_path=file_path_sigmoid)
+    format_vhdl(file_path=file_path_tanh)
     format_vhdl(file_path=file_path_testbench)
+
+    ### copy static files ###
+    for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
+        shutil.copy(
+            ROOT_DIR + "/vhd_files/static_files/" + filename,
+            ROOT_DIR + "/" + args.path,
+        )
