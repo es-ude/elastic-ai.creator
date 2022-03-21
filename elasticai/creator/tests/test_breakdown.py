@@ -44,7 +44,7 @@ class BreakdownTest(unittest.TestCase):
             activation=torch.nn.Identity(),
             weight_quantization=Binarize(),
             kernel_size=3,
-            group_width=2,
+            channel_width=2,
         )
         expected = torch.nn.Sequential(
             Conv2d_block(
@@ -65,7 +65,7 @@ class BreakdownTest(unittest.TestCase):
             activation=torch.nn.Identity(),
             weight_quantization=Binarize(),
             kernel_size=3,
-            group_width=2,
+            channel_width=2,
         )
         expected = torch.nn.Sequential(
             Conv2d_block(
@@ -97,7 +97,7 @@ class BreakdownTest(unittest.TestCase):
             activation=torch.nn.Identity(),
             weight_quantization=Binarize(),
             kernel_size=3,
-            group_width=8,
+            channel_width=8,
         )
         expected = torch.nn.Sequential(
             Conv2d_block(
@@ -137,7 +137,7 @@ class BreakdownTest(unittest.TestCase):
             activation=torch.nn.Identity(),
             weight_quantization=Binarize(),
             kernel_size=3,
-            group_width=8,
+            channel_width=8,
         )
         expected = torch.nn.Sequential(
             Conv2d_block(

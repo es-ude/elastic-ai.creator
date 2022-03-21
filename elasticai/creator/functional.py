@@ -4,11 +4,10 @@
 from typing import Any
 
 import torch
-from torch import jit
+from torch import jit, Tensor
 
 
-@jit.script
-def _heaviside(x):
+def _heaviside(x: Tensor):
     return torch.heaviside(x, x.new_tensor([1.0]))
 
 
