@@ -4,12 +4,12 @@
 from typing import Any
 
 import torch
-from torch import Tensor, jit
+from torch import jit
 
 
 @jit.script
 def _heaviside(x):
-    return torch.heaviside(x, torch.tensor([1.0]))
+    return torch.heaviside(x, x.new_tensor([1.0]))
 
 
 # noinspection PyPep8Naming,PyAbstractClass
