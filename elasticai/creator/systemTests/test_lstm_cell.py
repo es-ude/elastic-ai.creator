@@ -13,6 +13,10 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
 from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
+from elasticai.creator.vhdl.number_representations import (
+    FloatToBinaryFixedPointStringConverter,
+    FloatToSignedFixedPointConverter,
+)
 
 """
 this module is from the lstm repo from Chao
@@ -63,7 +67,9 @@ def float_array_to_int(float_array, frac_bits=8):
 
 
 def float_array_to_string(float_array, vhdl_prefix=None, frac_bits=8, nbits=16):
+    print("float_array", float_array)
     scaled_array = float_array * 2 ** frac_bits
+    print("scaled_array", scaled_array)
     int_array = scaled_array.astype(np.int16)
     return format_array_to_string(int_array, vhdl_prefix, nbits)
 
@@ -107,6 +113,23 @@ def define_weights_and_bias(lstm_signal_cell, frac_bits, nbits, len_weights, len
     Bf = bias[len_bias * 1 : len_bias * 2]  # B_if+B_hf
     Bg = bias[len_bias * 2 : len_bias * 3]  # B_ig+B_hg
     Bo = bias[len_bias * 3 : len_bias * 4]  # B_io+B_ho
+
+    print("Wi", Wi, type(Wi[0]))
+    Wi.astype(np.int16)
+    print("wi2", Wi)
+    for wi_element in Wi:
+        # wi_element is float 32
+        # convert to binary
+        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+            bits_used_for_fraction=frac_bits
+        )
+        f = FloatToBinaryFixedPointStringConverter(
+            total_bit_width=nbits,
+            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+        )
+        print(wi_element)
+        # print("here", f(wi_element))
+        # convert to hex
 
     print(
         float_array_to_string(

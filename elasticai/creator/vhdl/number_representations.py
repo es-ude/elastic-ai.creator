@@ -50,6 +50,21 @@ def _int_to_bin_str(number: int, bits: int) -> str:
     return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
 
 
+class FloatToHexFixedPointStringConverter:
+    def __init__(
+        self,
+        total_bit_width: int,
+        as_signed_fixed_point: FloatToSignedFixedPointConverter,
+    ):
+        self.total_bit_width = total_bit_width
+        self.as_signed_fixed_point = as_signed_fixed_point
+
+    def __call__(self, x: Union[float, int]) -> str:
+        signed_fixed_point = self.as_signed_fixed_point(x)
+        # TODO: implement hex
+        return
+
+
 def two_complements_representation(x, number_of_bits):
     if x < 0:
         unsigned_int_version = (1 << number_of_bits) + x
@@ -85,23 +100,22 @@ class ToLogicEncoder:
 
     def __getitem__(self, item: int) -> int:
         return self.mapping[item]
-    
+
     @property
     def bit_width(self):
-        return math.floor(math.log(len(self.numerics),2))
-    
-    def __call__(self, number:int):
+        return math.floor(math.log(len(self.numerics), 2))
+
+    def __call__(self, number: int):
         if number not in self.numerics:
             raise ValueError
-        return BitVector(number,self.mapping[number],self.bit_width)
-    
+        return BitVector(number, self.mapping[number], self.bit_width)
 
 
 class BitVector:
-    def __init__(self, number: int, repr:int,bit_width:int):
+    def __init__(self, number: int, repr: int, bit_width: int):
         self._number = number
         self._repr = repr
         self._bit_width = bit_width
-    
+
     def __repr__(self):
         return f"{self._repr:0{self._bit_width}b}"

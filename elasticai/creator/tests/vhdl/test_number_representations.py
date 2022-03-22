@@ -98,7 +98,7 @@ class NumberEncoderTest(TestCase):
         encoder.add_numeric(1)
         encoder.add_numeric(-1)
         self.assertEqual(1, encoder[1])
-    
+
     def test_encoder_is_to_bit_vector(self):
         encoder = ToLogicEncoder()
         encoder.add_numeric(1)
