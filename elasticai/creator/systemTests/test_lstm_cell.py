@@ -6,6 +6,7 @@ from paths import ROOT_DIR
 import torch
 import random
 import numpy as np
+from nptyping import NDArray, Float32, Int64
 import math
 from elasticai.creator.layers import QLSTMCell
 from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
@@ -24,7 +25,15 @@ this module generates all vhd files for a single lstm cell
 """
 
 
-def float_array_to_int(float_array, frac_bits=8):
+def float_array_to_int(float_array: NDArray[Float32], frac_bits: int) -> NDArray[Int64]:
+    """
+    converts an array with floating point numbers into an array with integers
+    Args:
+        float_array (NDArray[Float32]): array with floating point numbers
+        frac_bits (int): number of fraction bits
+    Returns:
+        array with integer numbers
+    """
     int_list = []
     floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
         bits_used_for_fraction=frac_bits, strict=False
@@ -34,8 +43,19 @@ def float_array_to_int(float_array, frac_bits=8):
     return np.array(int_list)
 
 
-def float_array_to_hex_string(float_array, frac_bits, nbits):
-    array_in_hex = []
+def float_array_to_hex_string(
+    float_array: NDArray[Float32], frac_bits: int, nbits: int
+) -> list[str]:
+    """
+    converts an array with floating point numbers into an array with hexadecimal numbers stored as strings
+    Args:
+        float_array (NDArray[Float32]): array with floating point numbers
+        frac_bits (int): number of fraction bits
+        nbits (int): number of bits
+    Returns:
+        list with strings with the corresponding hex representations
+    """
+    list_with_hex_representation = []
     for element in float_array:
         floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
             bits_used_for_fraction=frac_bits, strict=False
@@ -45,11 +65,21 @@ def float_array_to_hex_string(float_array, frac_bits, nbits):
             total_bit_width=nbits,
             as_signed_fixed_point=floats_to_signed_fixed_point_converter,
         )
-        array_in_hex.append(float_to_hex_fixed_point_string_converter(element))
-    return array_in_hex
+        list_with_hex_representation.append(
+            float_to_hex_fixed_point_string_converter(element)
+        )
+    return list_with_hex_representation
 
 
-def define_lstm_cell(input_size, hidden_size) -> QLSTMCell:
+def define_lstm_cell(input_size: int, hidden_size: int) -> QLSTMCell:
+    """
+    returns a QLSTM Cell with the given input and hidden size
+    Args:
+        input_size (int): input size of QLSTM Cell
+        hidden_size (int): hidden size of QLSTM Cell
+    Returns:
+        returns the corresponding QLSTM Cell
+    """
     return QLSTMCell(
         input_size=input_size,
         hidden_size=hidden_size,
@@ -58,7 +88,25 @@ def define_lstm_cell(input_size, hidden_size) -> QLSTMCell:
     )
 
 
-def define_weights_and_bias(lstm_signal_cell, frac_bits, nbits, len_weights, len_bias):
+def define_weights_and_bias(
+    lstm_signal_cell: QLSTMCell,
+    frac_bits: int,
+    nbits: int,
+    len_weights: int,
+    len_bias: int,
+) -> tuple[list[list[str]], list[list[str]]]:
+    """
+    calculates the weights and bias for the given QLSTM Cell
+    Args:
+        lstm_signal_cell (QLSTMCell): current QLSTM Cell
+        frac_bits (int): number of fraction bits
+        nbits (int): number of bits
+        len_weights (int): (input_size + hidden_size) * hidden_size
+        len_bias (int): hidden_size
+    Returns:
+        returns two lists, one for the weights and one for the bias
+        in each list are four list of strings with the hex numbers of the weights or bias
+    """
     for name, param in lstm_signal_cell.named_parameters():
 
         if name == "weight_ih":
@@ -96,7 +144,26 @@ def define_weights_and_bias(lstm_signal_cell, frac_bits, nbits, len_weights, len
     return [wi, wf, wg, wo], [bi, bf, bg, bo]
 
 
-def inference_model(lstm_signal_cell, frac_bits, nbits, input_size, hidden_size):
+def inference_model(
+    lstm_signal_cell: QLSTMCell,
+    frac_bits: int,
+    nbits: int,
+    input_size: int,
+    hidden_size: int,
+) -> tuple[list[str], list[str], NDArray[int]]:
+    """
+    do inference on defined QLSTM Cell
+    Args:
+        lstm_signal_cell (QLSTMCell): current QLSTM Cell
+        frac_bits (int): number of fraction bits
+        nbits (int): number of bits
+        input_size (int): input size of QLSTM Cell
+        hidden_size (int): hidden size of QLSTM Cell
+    Returns:
+        returns three lists/arrays
+        the first and second list are the x_h input and cx of the lstm cell
+        the third array is the hx of the lstm cell
+    """
     torch.manual_seed(0)
     random.seed(0)
 
@@ -131,13 +198,21 @@ def inference_model(lstm_signal_cell, frac_bits, nbits, input_size, hidden_size)
 
 
 def generate_rom_file(
-    file_path,
-    weights_or_bias_list: list,
-    frac_bits: int,
+    file_path: str,
+    weights_or_bias_list: list[list[str]],
     nbits: int,
     name: str,
     index: int,
-):
+) -> None:
+    """
+    generates the rom files for the weights and bias
+    Args:
+        file_path (str): paths where files should be stored
+        weights_or_bias_list (list[list[str]]): list with four lists with the hex strings for each weight or bias
+        nbits (int): number of bits
+        name (str): name for the file
+        index (int): index where content is stored in weights_or_bias_list
+    """
     with open(file_path, "w") as writer:
         weight_or_bias_array = weights_or_bias_list[index]
         addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
@@ -168,21 +243,31 @@ if __name__ == "__main__":
 
     torch.manual_seed(0)
     random.seed(0)
-    frac_bits = 8
-    nbits = 16
-    input_size = 5
-    hidden_size = 20
-    len_weights = (input_size + hidden_size) * hidden_size
-    len_bias = hidden_size
+    current_frac_bits = 8
+    current_nbits = 16
+    current_input_size = 5
+    current_hidden_size = 20
+    current_len_weights = (
+        current_input_size + current_hidden_size
+    ) * current_hidden_size
+    current_len_bias = current_hidden_size
 
-    lstm_cell = define_lstm_cell(input_size, hidden_size)
+    lstm_cell = define_lstm_cell(current_input_size, current_hidden_size)
     weights_list, bias_list = define_weights_and_bias(
-        lstm_cell, frac_bits, nbits, len_weights, len_bias
+        lstm_cell,
+        current_frac_bits,
+        current_nbits,
+        current_len_weights,
+        current_len_bias,
     )
     print("weights_list", weights_list)
     print("bias_list", bias_list)
     x_h_test_input, c_test_input, h_output = inference_model(
-        lstm_cell, frac_bits, nbits, input_size, hidden_size
+        lstm_cell,
+        current_frac_bits,
+        current_nbits,
+        current_input_size,
+        current_hidden_size,
     )
     print("x_h_test_input", x_h_test_input)
     print("c_test_input", c_test_input)
@@ -198,8 +283,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_wi,
         weights_or_bias_list=weights_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="wi",
         index=0,
     )
@@ -210,8 +294,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_wf,
         weights_or_bias_list=weights_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="wf",
         index=1,
     )
@@ -222,8 +305,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_wg,
         weights_or_bias_list=weights_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="wg",
         index=2,
     )
@@ -234,8 +316,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_wo,
         weights_or_bias_list=weights_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="wo",
         index=3,
     )
@@ -248,8 +329,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_bi,
         weights_or_bias_list=bias_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="bi",
         index=0,
     )
@@ -260,8 +340,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_bf,
         weights_or_bias_list=bias_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="bf",
         index=1,
     )
@@ -272,8 +351,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_bg,
         weights_or_bias_list=bias_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="bg",
         index=2,
     )
@@ -284,8 +362,7 @@ if __name__ == "__main__":
     generate_rom_file(
         file_path=file_path_bo,
         weights_or_bias_list=bias_list,
-        frac_bits=frac_bits,
-        nbits=nbits,
+        nbits=current_nbits,
         name="bo",
         index=3,
     )
@@ -298,7 +375,9 @@ if __name__ == "__main__":
 
     with open(file_path_sigmoid, "w") as writer:
         sigmoid = Sigmoid(
-            data_width=nbits, frac_width=frac_bits, x=np.linspace(-2.5, 2.5, 256)
+            data_width=current_nbits,
+            frac_width=current_frac_bits,
+            x=np.linspace(-2.5, 2.5, 256),
         )
         sigmoid_code = sigmoid()
         for line in sigmoid_code:
@@ -310,7 +389,11 @@ if __name__ == "__main__":
     )
 
     with open(file_path_tanh, "w") as writer:
-        tanh = Tanh(data_width=nbits, frac_width=frac_bits, x=np.linspace(-1, 1, 256))
+        tanh = Tanh(
+            data_width=current_nbits,
+            frac_width=current_frac_bits,
+            x=np.linspace(-1, 1, 256),
+        )
         tanh_code = tanh()
         for line in tanh_code:
             writer.write(line + "\n")
@@ -323,10 +406,10 @@ if __name__ == "__main__":
 
     with open(file_path_testbench, "w") as writer:
         lstm_cell = LSTMCellTestBench(
-            data_width=nbits,
-            frac_width=frac_bits,
-            input_size=input_size,
-            hidden_size=hidden_size,
+            data_width=current_nbits,
+            frac_width=current_frac_bits,
+            input_size=current_input_size,
+            hidden_size=current_hidden_size,
             test_x_h_data=form_to_hex_list(
                 x_h_test_input,
             ),
