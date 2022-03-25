@@ -61,15 +61,28 @@ class FloatToHexFixedPointStringConverter:
 
     def __call__(self, x: Union[float, int]) -> str:
         signed_fixed_point = self.as_signed_fixed_point(x)
-        # TODO: implement hex
-        return
+        return hex_representation(signed_fixed_point, self.total_bit_width)
 
 
-def two_complements_representation(x, number_of_bits):
+def _int_to_hex_str(number: int, bits: int) -> str:
+    return "{{:0{number_of_bits}x}}".format(number_of_bits=int(bits / 4)).format(number)
+
+
+def _get_unsigned_int_version(x, number_of_bits):
     if x < 0:
         unsigned_int_version = (1 << number_of_bits) + x
     else:
         unsigned_int_version = x
+    return unsigned_int_version
+
+
+def hex_representation(x, number_of_bits):
+    unsigned_int_version = _get_unsigned_int_version(x, number_of_bits)
+    return _int_to_hex_str(unsigned_int_version, number_of_bits)
+
+
+def two_complements_representation(x, number_of_bits):
+    unsigned_int_version = _get_unsigned_int_version(x, number_of_bits)
     return _int_to_bin_str(unsigned_int_version, number_of_bits)
 
 

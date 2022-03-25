@@ -14,70 +14,39 @@ from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTe
 from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
 from elasticai.creator.vhdl.number_representations import (
-    FloatToBinaryFixedPointStringConverter,
+    FloatToHexFixedPointStringConverter,
     FloatToSignedFixedPointConverter,
 )
+from elasticai.creator.vhdl.language import form_to_hex_list
 
 """
-this module is from the lstm repo from Chao
+this module generates all vhd files for a single lstm cell
 """
-
-
-def int_to_hex(val, nbits):
-    if val < 0:
-        return hex((val + (1 << nbits)) % (1 << nbits))
-    else:
-        return "{0:#0{1}x}".format(val, 2 + int(nbits / 4))
-
-
-def format_array_to_string(arr, vhdl_prefix=None, nbits=16):
-    if vhdl_prefix is None:
-        string_to_return = "X_MEM :="
-    else:
-        string_to_return = vhdl_prefix
-    string_to_return += " ("
-
-    for i in range(2 ** math.ceil(math.log2(len(arr)))):
-        if i < len(arr):
-            string_to_return += 'x"' + int_to_hex(arr[i], nbits)[2:] + '",'
-        else:
-            string_to_return += 'x"' + int_to_hex(0, nbits)[2:] + '",'
-    string_to_return = string_to_return[:-1] + ");"
-
-    return string_to_return
-
-
-def format_array_to_string_without_prefix(arr, nbits=16):
-    string_to_return = ""
-
-    for i in range(2 ** math.ceil(math.log2(len(arr)))):
-        if i < len(arr):
-            string_to_return += 'x"' + int_to_hex(arr[i], nbits)[2:] + '",'
-        else:
-            string_to_return += 'x"' + int_to_hex(0, nbits)[2:] + '",'
-    string_to_return = string_to_return[:-1]
-
-    return string_to_return
 
 
 def float_array_to_int(float_array, frac_bits=8):
-    scaled_array = float_array * 2 ** frac_bits
-    int_array = scaled_array.astype(np.int16)
-    return int_array
+    int_list = []
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_bits, strict=False
+    )
+    for element in float_array:
+        int_list.append(floats_to_signed_fixed_point_converter(element))
+    return np.array(int_list)
 
 
-def float_array_to_string(float_array, vhdl_prefix=None, frac_bits=8, nbits=16):
-    print("float_array", float_array)
-    scaled_array = float_array * 2 ** frac_bits
-    print("scaled_array", scaled_array)
-    int_array = scaled_array.astype(np.int16)
-    return format_array_to_string(int_array, vhdl_prefix, nbits)
-
-
-def float_array_to_string_without_prefix(float_array, frac_bits=8, nbits=16):
-    scaled_array = float_array * 2 ** frac_bits
-    int_array = scaled_array.astype(np.int16)
-    return format_array_to_string_without_prefix(int_array, nbits)
+def float_array_to_hex_string(float_array, frac_bits, nbits):
+    array_in_hex = []
+    for element in float_array:
+        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+            bits_used_for_fraction=frac_bits, strict=False
+        )
+        # convert to hex
+        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+            total_bit_width=nbits,
+            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+        )
+        array_in_hex.append(float_to_hex_fixed_point_string_converter(element))
+    return array_in_hex
 
 
 def define_lstm_cell(input_size, hidden_size) -> QLSTMCell:
@@ -104,99 +73,27 @@ def define_weights_and_bias(lstm_signal_cell, frac_bits, nbits, len_weights, len
     weights = np.hstack((weight_ih, weight_hh)).flatten().flatten()
     bias = bias_hh + bias_ih
 
-    Wi = weights[len_weights * 0 : len_weights * 1]  # [Wii, Whi]
-    Wf = weights[len_weights * 1 : len_weights * 2]  # [Wif, Whf]
-    Wg = weights[len_weights * 2 : len_weights * 3]  # [Wig, Whg]
-    Wo = weights[len_weights * 3 : len_weights * 4]  # [Wio, Who]
+    wi = weights[len_weights * 0 : len_weights * 1]  # [Wii, Whi]
+    wf = weights[len_weights * 1 : len_weights * 2]  # [Wif, Whf]
+    wg = weights[len_weights * 2 : len_weights * 3]  # [Wig, Whg]
+    wo = weights[len_weights * 3 : len_weights * 4]  # [Wio, Who]
 
-    Bi = bias[len_bias * 0 : len_bias * 1]  # B_ii+B_hi
-    Bf = bias[len_bias * 1 : len_bias * 2]  # B_if+B_hf
-    Bg = bias[len_bias * 2 : len_bias * 3]  # B_ig+B_hg
-    Bo = bias[len_bias * 3 : len_bias * 4]  # B_io+B_ho
+    bi = bias[len_bias * 0 : len_bias * 1]  # B_ii+B_hi
+    bf = bias[len_bias * 1 : len_bias * 2]  # B_if+B_hf
+    bg = bias[len_bias * 2 : len_bias * 3]  # B_ig+B_hg
+    bo = bias[len_bias * 3 : len_bias * 4]  # B_io+B_ho
 
-    print("Wi", Wi, type(Wi[0]))
-    Wi.astype(np.int16)
-    print("wi2", Wi)
-    for wi_element in Wi:
-        # wi_element is float 32
-        # convert to binary
-        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-            bits_used_for_fraction=frac_bits
-        )
-        f = FloatToBinaryFixedPointStringConverter(
-            total_bit_width=nbits,
-            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-        )
-        print(wi_element)
-        # print("here", f(wi_element))
-        # convert to hex
+    wi = float_array_to_hex_string(wi, frac_bits=frac_bits, nbits=nbits)
+    wf = float_array_to_hex_string(wf, frac_bits=frac_bits, nbits=nbits)
+    wg = float_array_to_hex_string(wg, frac_bits=frac_bits, nbits=nbits)
+    wo = float_array_to_hex_string(wo, frac_bits=frac_bits, nbits=nbits)
 
-    print(
-        float_array_to_string(
-            float_array=Wi,
-            vhdl_prefix="signal ROM : WI_ARRAY :=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    print(
-        float_array_to_string(
-            float_array=Wf,
-            vhdl_prefix="signal ROM : WF_ARRAY :=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    print(
-        float_array_to_string(
-            float_array=Wg,
-            vhdl_prefix="signal ROM : WG_ARRAY :=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    print(
-        float_array_to_string(
-            float_array=Wo,
-            vhdl_prefix="signal ROM : WO_ARRAY :=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
+    bi = float_array_to_hex_string(bi, frac_bits=frac_bits, nbits=nbits)
+    bf = float_array_to_hex_string(bf, frac_bits=frac_bits, nbits=nbits)
+    bg = float_array_to_hex_string(bg, frac_bits=frac_bits, nbits=nbits)
+    bo = float_array_to_hex_string(bo, frac_bits=frac_bits, nbits=nbits)
 
-    print(
-        float_array_to_string(
-            float_array=Bi,
-            vhdl_prefix="signal ROM : BI_ARRAY:=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    print(
-        float_array_to_string(
-            float_array=Bf,
-            vhdl_prefix="signal ROM : BF_ARRAY:=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    print(
-        float_array_to_string(
-            float_array=Bg,
-            vhdl_prefix="signal ROM : BG_ARRAY:=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    print(
-        float_array_to_string(
-            float_array=Bo,
-            vhdl_prefix="signal ROM : BO_ARRAY:=",
-            frac_bits=frac_bits,
-            nbits=nbits,
-        )
-    )
-    return [Wi, Wf, Wg, Wo], [Bi, Bf, Bg, Bo]
+    return [wi, wf, wg, wo], [bi, bf, bg, bo]
 
 
 def inference_model(lstm_signal_cell, frac_bits, nbits, input_size, hidden_size):
@@ -211,40 +108,24 @@ def inference_model(lstm_signal_cell, frac_bits, nbits, input_size, hidden_size)
     # cx = cx/torch.max(abs(cx))
     output = []
     for i in range(input.size()[0]):
-        print("===========round%s===========" % str(i))
-        # print("input_x",input[i])
-        # print("h_x",hx)
-        # print("c_x",cx)
         x_h_input = np.hstack(
             (input[i].detach().numpy().flatten(), hx.detach().numpy().flatten())
         )
-        print(
-            float_array_to_string(
-                x_h_input,
-                vhdl_prefix="signal test_x_h_data : X_H_ARRAY := ",
-                frac_bits=frac_bits,
-                nbits=nbits,
-            )
-        )
-        print(
-            float_array_to_string(
-                cx.detach().numpy().flatten(),
-                vhdl_prefix="signal test_c_data : C_ARRAY := ",
-                frac_bits=frac_bits,
-                nbits=nbits,
-            )
-        )
 
         hx, cx = lstm_signal_cell(input[i], (hx, cx))
-        # print("h_x out:", hx)
-        # print("c_x out:", cx)
-        print("h_out:")
-        print(float_array_to_int(hx.detach().numpy().flatten(), frac_bits=frac_bits))
         output.append(hx)
 
         return (
-            x_h_input,
-            cx.detach().numpy().flatten(),
+            float_array_to_hex_string(
+                x_h_input,
+                frac_bits=frac_bits,
+                nbits=nbits,
+            ),
+            float_array_to_hex_string(
+                cx.detach().numpy().flatten(),
+                frac_bits=frac_bits,
+                nbits=nbits,
+            ),
             float_array_to_int(hx.detach().numpy().flatten(), frac_bits=frac_bits),
         )
 
@@ -260,9 +141,8 @@ def generate_rom_file(
     with open(file_path, "w") as writer:
         weight_or_bias_array = weights_or_bias_list[index]
         addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
-        array_value = float_array_to_string_without_prefix(
-            float_array=weight_or_bias_array, frac_bits=frac_bits, nbits=nbits
-        )
+        array_value = form_to_hex_list(weight_or_bias_array)
+
         rom = Rom(
             rom_name="rom_" + name,
             data_width=nbits,
@@ -447,15 +327,11 @@ if __name__ == "__main__":
             frac_width=frac_bits,
             input_size=input_size,
             hidden_size=hidden_size,
-            test_x_h_data=float_array_to_string_without_prefix(
+            test_x_h_data=form_to_hex_list(
                 x_h_test_input,
-                frac_bits=frac_bits,
-                nbits=nbits,
             ),
-            test_c_data=float_array_to_string_without_prefix(
+            test_c_data=form_to_hex_list(
                 c_test_input,
-                frac_bits=frac_bits,
-                nbits=nbits,
             ),
             h_out=list(h_output),
             component_name="lstm_cell",
