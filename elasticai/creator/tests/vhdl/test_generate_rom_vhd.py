@@ -2,7 +2,9 @@ import math
 import numpy as np
 
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-from elasticai.creator.vhdl.generator.generator_functions import float_array_to_string
+from elasticai.creator.vhdl.generator.generator_functions import (
+    float_array_to_hex_string,
+)
 from elasticai.creator.vhdl.generator.rom import Rom
 
 
@@ -14,7 +16,7 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
         # biases for the input gate
         Bi = np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
         addr_width = math.ceil(math.log2(len(Bi)))
-        array_value = float_array_to_string(
+        array_value = float_array_to_hex_string(
             float_array=Bi, frac_bits=frac_bits, nbits=data_width
         )
 

@@ -6,69 +6,23 @@ from paths import ROOT_DIR
 import torch
 import random
 import numpy as np
-from nptyping import NDArray, Float32, Int64
+from nptyping import NDArray
 import math
 from elasticai.creator.layers import QLSTMCell
-from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from elasticai.creator.vhdl.generator.generator_functions import (
+    get_file_path_string,
+    float_array_to_int,
+    float_array_to_hex_string,
+)
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
 from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
-from elasticai.creator.vhdl.number_representations import (
-    FloatToHexFixedPointStringConverter,
-    FloatToSignedFixedPointConverter,
-)
 from elasticai.creator.vhdl.language import form_to_hex_list
 
 """
 this module generates all vhd files for a single lstm cell
 """
-
-
-def float_array_to_int(float_array: NDArray[Float32], frac_bits: int) -> NDArray[Int64]:
-    """
-    converts an array with floating point numbers into an array with integers
-    Args:
-        float_array (NDArray[Float32]): array with floating point numbers
-        frac_bits (int): number of fraction bits
-    Returns:
-        array with integer numbers
-    """
-    int_list = []
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_bits, strict=False
-    )
-    for element in float_array:
-        int_list.append(floats_to_signed_fixed_point_converter(element))
-    return np.array(int_list)
-
-
-def float_array_to_hex_string(
-    float_array: NDArray[Float32], frac_bits: int, nbits: int
-) -> list[str]:
-    """
-    converts an array with floating point numbers into an array with hexadecimal numbers stored as strings
-    Args:
-        float_array (NDArray[Float32]): array with floating point numbers
-        frac_bits (int): number of fraction bits
-        nbits (int): number of bits
-    Returns:
-        list with strings with the corresponding hex representations
-    """
-    list_with_hex_representation = []
-    for element in float_array:
-        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-            bits_used_for_fraction=frac_bits, strict=False
-        )
-        # convert to hex
-        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-            total_bit_width=nbits,
-            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-        )
-        list_with_hex_representation.append(
-            float_to_hex_fixed_point_string_converter(element)
-        )
-    return list_with_hex_representation
 
 
 def define_lstm_cell(input_size: int, hidden_size: int) -> QLSTMCell:
@@ -216,7 +170,7 @@ def generate_rom_file(
     with open(file_path, "w") as writer:
         weight_or_bias_array = weights_or_bias_list[index]
         addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
-        array_value = form_to_hex_list(weight_or_bias_array)
+        array_value = weight_or_bias_array
 
         rom = Rom(
             rom_name="rom_" + name,
@@ -410,12 +364,8 @@ if __name__ == "__main__":
             frac_width=current_frac_bits,
             input_size=current_input_size,
             hidden_size=current_hidden_size,
-            test_x_h_data=form_to_hex_list(
-                x_h_test_input,
-            ),
-            test_c_data=form_to_hex_list(
-                c_test_input,
-            ),
+            test_x_h_data=x_h_test_input,
+            test_c_data=c_test_input,
             h_out=list(h_output),
             component_name="lstm_cell",
         )

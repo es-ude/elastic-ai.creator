@@ -11,6 +11,7 @@ from elasticai.creator.vhdl.language import (
     ComponentDeclaration,
     Process,
     PortMap,
+    form_to_hex_list,
 )
 from elasticai.creator.vhdl.language_testbench import (
     TestCasesLSTMCommonGate,
@@ -174,8 +175,8 @@ class LSTMCellTestBench:
         frac_width: int,
         input_size: int,
         hidden_size: int,
-        test_x_h_data: str,
-        test_c_data: str,
+        test_x_h_data: list[str],
+        test_c_data: list[str],
         h_out: list[int],
         component_name: str = None,
     ):
@@ -369,10 +370,10 @@ class LSTMCellTestBench:
             "type C_ARRAY is array (0 to 31) of signed(16-1 downto 0)"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_x_h_data : X_H_ARRAY := ({self.test_x_h_data})"
+            f"signal test_x_h_data : X_H_ARRAY := ({form_to_hex_list(self.test_x_h_data)})"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_c_data : C_ARRAY := ({self.test_c_data})"
+            f"signal test_c_data : C_ARRAY := ({form_to_hex_list(self.test_c_data)})"
         )
         architecture.architecture_component_list.append(procedure_0)
         architecture.architecture_component_list.append(procedure_1)

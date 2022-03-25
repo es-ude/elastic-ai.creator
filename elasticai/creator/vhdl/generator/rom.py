@@ -10,6 +10,7 @@ from elasticai.creator.vhdl.language import (
     Mode,
     Architecture,
     Process,
+    form_to_hex_list,
 )
 
 
@@ -67,7 +68,8 @@ class Rom:
         )
         architecture.architecture_declaration_list.append(
             "signal ROM : {rom_name_arrat_t}:=({array_value})".format(
-                rom_name_arrat_t=self.rom_name_arrat_t, array_value=self.array_value
+                rom_name_arrat_t=self.rom_name_arrat_t,
+                array_value=form_to_hex_list(self.array_value),
             )
         )
         architecture.architecture_declaration_list.append(
