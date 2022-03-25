@@ -5,6 +5,7 @@ from os import path
 import numpy as np
 import torch
 import torch.nn as nn
+
 from paths import ROOT_DIR
 
 from elasticai.creator.layers import QLSTMCell
@@ -16,6 +17,7 @@ from elasticai.creator.vhdl.number_representations import (
     FloatToBinaryFixedPointStringConverter,
     ToLogicEncoder,
     BitVector,
+    FloatToHexFixedPointStringConverter,
 )
 
 
@@ -137,33 +139,56 @@ def precomputed_logic_function_process(
         yield line
 
 
-def _int_to_hex(val: int, nbits: int) -> str:
+def float_array_to_int(float_array: np.array, frac_bits: int) -> np.array:
     """
-        returns a string of a hexadecimal value for an integer
+    converts an array with floating point numbers into an array with integers
     Args:
-        val (int): the integer value which will converted in hexadecimal
-        nbits(int): the number of bits
+        float_array (NDArray[Float32]): array with floating point numbers
+        frac_bits (int): number of fraction bits
     Returns:
-        String of a hexadecimal value for an integer
+        array with integer numbers
     """
-    if val < 0:
-        return hex((val + (1 << nbits)) % (1 << nbits))
-    else:
-        return "{0:#0{1}x}".format(val, 2 + int(nbits / 4))
+    int_list = []
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_bits, strict=False
+    )
+    for element in float_array:
+        int_list.append(floats_to_signed_fixed_point_converter(element))
+    return np.array(int_list)
 
 
-def _floating_to_hex(f_val: float, frac_width: int, nbits: int) -> str:
+def float_array_to_hex_string(
+    float_array: np.array, frac_bits: int, nbits: int
+) -> list[str]:
     """
-        returns a string of a hexadecimal value for a floating point number
+    converts an array with floating point numbers into an array with hexadecimal numbers stored as strings
     Args:
-        f_val (int): the floating point number which will converted to hexadecimal
-        nbits(int): the number of bits
-        frac_width(int): the number of bits for the fraction
+        float_array (NDArray[Float32]): array with floating point numbers
+        frac_bits (int): number of fraction bits
+        nbits (int): number of bits
     Returns:
-        String of a hexadecimal value for a floating number
+        list with strings with the corresponding hex representations
     """
-    int_val = int(f_val * (2 ** frac_width))
-    return _int_to_hex(int_val, nbits)
+    list_with_hex_representation = []
+    for element in float_array:
+        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+            bits_used_for_fraction=frac_bits, strict=False
+        )
+        # convert to hex
+        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+            total_bit_width=nbits,
+            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+        )
+        list_with_hex_representation.append(
+            float_to_hex_fixed_point_string_converter(element)
+        )
+    # fill up to address width with zeros
+    addr_width = math.ceil(math.log2(len(list_with_hex_representation)))
+    number_of_hex_numbers = int(nbits / 4)
+    zero_string = "".join("0" for _ in range(number_of_hex_numbers))
+    for index in range(2 ** addr_width - len(list_with_hex_representation)):
+        list_with_hex_representation.append(zero_string)
+    return list_with_hex_representation
 
 
 def _to_vhdl_parameter(
@@ -178,10 +203,20 @@ def _to_vhdl_parameter(
     Returns:
         String of a hexadecimal value for an integer
     """
-    hex_str = _floating_to_hex(f_val, frac_width, nbits)
-    hex_str_without_prefix = hex_str[2:]
-
-    return {str(signal_name): 'X"' + hex_str_without_prefix + '"; -- ' + name_parameter}
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_width, strict=False
+    )
+    # convert to hex
+    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+        total_bit_width=nbits,
+        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+    )
+    return {
+        str(signal_name): 'X"'
+        + float_to_hex_fixed_point_string_converter(f_val)
+        + '"; -- '
+        + name_parameter
+    }
 
 
 def _elastic_ai_creator_lstm() -> QLSTMCell:
@@ -349,41 +384,6 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     )
 
     return dict_of_signals
-
-
-def _format_array_to_string(arr: List[int], nbits: int):
-    """
-    returns String of hexadecimal values of an array
-    Args:
-        arr ([int]): the width of the data
-        nbits (int): the number of DATA_WIDTH
-    Returns:
-        returns String of hexadecimal values of an integer array
-    """
-    result_string = ""
-    for value in range(2 ** math.ceil(math.log2(len(arr)))):
-        if value < len(arr):
-            result_string += 'x"' + _int_to_hex(arr[value], nbits)[2:] + '",'
-        else:
-            result_string += 'x"' + _int_to_hex(0, nbits)[2:] + '",'
-    result_string = result_string[:-1]
-    # print(name_of_string)
-    return result_string
-
-
-def float_array_to_string(float_array, frac_bits, nbits):
-    """
-    returns String of hexadecimal values of an array
-    Args:
-        float_array ([float]): array of float values
-        frac_bits (int): the number of fraction bits
-        nbits (int): the number of bits
-    Returns:
-        returns String of hexadecimal values of float array
-    """
-    scaled_array = float_array * 2 ** frac_bits
-    int_array = scaled_array.astype(np.int16)
-    return _format_array_to_string(int_array, nbits)
 
 
 def get_file_path_string(

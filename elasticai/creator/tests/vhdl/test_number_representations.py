@@ -2,6 +2,7 @@ from unittest import TestCase
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     two_complements_representation,
+    hex_representation,
     ToLogicEncoder,
 )
 
@@ -73,6 +74,48 @@ class BinaryTwoComplementRepresentation(TestCase):
         self.assertEqual(expected, actual)
 
 
+class HexRepresentation(TestCase):
+    def test_one(self):
+        actual = hex_representation(1, 16)
+        expected = "0001"
+        self.assertEqual(expected, actual)
+
+    def test_minus_one(self):
+        actual = hex_representation(-1, 16)
+        expected = "ffff"
+        self.assertEqual(expected, actual)
+
+    def test_two(self):
+        actual = hex_representation(2, 16)
+        expected = "0002"
+        self.assertEqual(expected, actual)
+
+    def test_minus_two(self):
+        actual = hex_representation(-2, 16)
+        expected = "fffe"
+        self.assertEqual(expected, actual)
+
+    def test_minus_four_four_bit(self):
+        actual = hex_representation(-4, 4)
+        expected = "c"
+        self.assertEqual(expected, actual)
+
+    def test_minus_three_three_bit(self):
+        actual = hex_representation(-3, 3)
+        expected = "5"
+        self.assertEqual(expected, actual)
+
+    def test_minus_256_16_bit(self):
+        actual = hex_representation(-256, 16)
+        expected = "ff00"
+        self.assertEqual(expected, actual)
+
+    def test_minus_254_16_bit(self):
+        actual = hex_representation(-254, 16)
+        expected = "ff02"
+        self.assertEqual(expected, actual)
+
+
 class NumberEncoderTest(TestCase):
     """
     Test Cases:
@@ -98,7 +141,7 @@ class NumberEncoderTest(TestCase):
         encoder.add_numeric(1)
         encoder.add_numeric(-1)
         self.assertEqual(1, encoder[1])
-    
+
     def test_encoder_is_to_bit_vector(self):
         encoder = ToLogicEncoder()
         encoder.add_numeric(1)
