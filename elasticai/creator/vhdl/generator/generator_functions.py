@@ -5,7 +5,6 @@ from os import path
 import numpy as np
 import torch
 import torch.nn as nn
-from nptyping import NDArray, Float32, Int64
 
 from paths import ROOT_DIR
 
@@ -140,7 +139,7 @@ def precomputed_logic_function_process(
         yield line
 
 
-def float_array_to_int(float_array: NDArray[Float32], frac_bits: int) -> NDArray[Int64]:
+def float_array_to_int(float_array: np.array, frac_bits: int) -> np.array:
     """
     converts an array with floating point numbers into an array with integers
     Args:
@@ -159,7 +158,7 @@ def float_array_to_int(float_array: NDArray[Float32], frac_bits: int) -> NDArray
 
 
 def float_array_to_hex_string(
-    float_array: NDArray[Float32], frac_bits: int, nbits: int
+    float_array: np.array, frac_bits: int, nbits: int
 ) -> list[str]:
     """
     converts an array with floating point numbers into an array with hexadecimal numbers stored as strings

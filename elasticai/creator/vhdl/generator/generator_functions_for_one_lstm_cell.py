@@ -3,7 +3,6 @@ import random
 
 import numpy as np
 import torch
-from nptyping import NDArray
 
 from elasticai.creator.layers import QLSTMCell
 from elasticai.creator.vhdl.generator.generator_functions import (
@@ -52,7 +51,7 @@ def inference_model(
     nbits: int,
     input_size: int,
     hidden_size: int,
-) -> tuple[list[str], list[str], NDArray[int]]:
+) -> tuple[list[str], list[str], np.array]:
     """
     do inference on defined QLSTM Cell
     Args:
