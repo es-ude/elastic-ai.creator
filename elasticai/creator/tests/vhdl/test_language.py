@@ -12,7 +12,6 @@ from elasticai.creator.vhdl.language import (
     InterfaceSignal,
     PortMap,
 )
-import unittest
 from unittest import TestCase
 from elasticai.creator.vhdl.generator.generator_functions import (
     precomputed_scalar_function_process,
@@ -80,6 +79,8 @@ class EntityTest(TestCase):
         actual = actual[2:3]
         self.assertEqual(expected, actual)
 
+
+class LibraryTest(TestCase):
     def test_library_with_extra_libraries(self):
         lib = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee", "work"]),
@@ -100,6 +101,8 @@ class EntityTest(TestCase):
         actual = list(lib())
         self.assertEqual(expected, actual)
 
+
+class ProcessTest(TestCase):
     # Note: the precomputed scalar function process is already tested, no need for trying more in- and outputs
     def test_process_empty(self):
         process = Process(
@@ -141,6 +144,8 @@ class EntityTest(TestCase):
         actual = list(process())
         self.assertEqual(expected, actual)
 
+
+class InterfaceVariableTest(TestCase):
     def test_InterfaceVariable_empty(self):
         interface_variable = InterfaceVariable(
             identifier="some_variable", identifier_type=DataType.INTEGER
@@ -161,6 +166,8 @@ class EntityTest(TestCase):
         actual = list(interface_variable())
         self.assertEqual(expected, actual)
 
+
+class InterfaceSignalTest(TestCase):
     def test_InterfaceSignal(self):
         i = InterfaceSignal(
             identifier="y", mode=Mode.OUT, range="x", identifier_type=DataType.SIGNED
@@ -170,6 +177,8 @@ class EntityTest(TestCase):
         # actual = actual[2:3]
         self.assertEqual(expected, actual)
 
+
+class ArchitectureTest(TestCase):
     def test_Architecture_base(self):
         a = Architecture(design_unit="z")
         expected = ["architecture rtl of z is", "begin", "end architecture rtl;"]
@@ -242,13 +251,6 @@ class EntityTest(TestCase):
         actual = list(a())
         self.assertSequenceEqual(expected, actual)
 
-    def test_PortMap(self):
-        port_map = PortMap(map_name="something", component_name="lstm")
-        port_map.signal_list.append("x => y")
-        expected = ["something: lstm", "port map (", "x => y", ");"]
-        actual = list(port_map())
-        self.assertSequenceEqual(expected, actual)
-
     def test_Architecture_with_port_map(self):
         architecture = Architecture(design_unit="lstm_cell")
         port_map = PortMap(map_name="something", component_name="sigmoid")
@@ -294,14 +296,10 @@ class EntityTest(TestCase):
         self.assertSequenceEqual(expected, actual)
 
 
-example = """
-entity tanh is
-    generic (
-        DATA_WIDTH : integer := 16;
-        FRAC_WIDTH : integer := 8
-    );
-    port (
-        x : in signed(DATA_WIDTH-1 downto 0);
-        y : out signed(DATA_WIDTH-1 downto 0)
-    );
-end entity tanh;"""
+class PortMapTest(TestCase):
+    def test_PortMap(self):
+        port_map = PortMap(map_name="something", component_name="lstm")
+        port_map.signal_list.append("x => y")
+        expected = ["something: lstm", "port map (", "x => y", ");"]
+        actual = list(port_map())
+        self.assertSequenceEqual(expected, actual)
