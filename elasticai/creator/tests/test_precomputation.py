@@ -67,15 +67,15 @@ class PrecomputationTest(TensorTestCase):
 
     def test_precomputation_is_json_encoding_correctly_writes_in_and_output(self):
         module = DummyModule()
+
         def call(x: torch.Tensor) -> torch.Tensor:
             return torch.flatten(x * 3)
+
         module.call = call
         precompute = Precomputation(module=module, input_domain=torch.tensor([[[1]]]))
         precompute()
         actual = json.dumps(precompute, cls=JSONEncoder)
-        expected = (
-            """{"description": [], "shape": [1, 1], "x": [[[1]]], "y": [3]}"""
-        )
+        expected = """{"description": [], "shape": [1, 1], "x": [[[1]]], "y": [3]}"""
         self.assertEqual(expected, actual)
 
     def test_precomputable_tag(self):

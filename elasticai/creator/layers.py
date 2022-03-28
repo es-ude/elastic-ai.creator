@@ -277,7 +277,9 @@ class ChannelShuffle(torch.nn.Module):
     def forward(self, x):
         num_channels = x.data.size()[1]
         original_shape = x.data.size()[2:]
-        x = x.view(x.data.size()[0],self.groups,num_channels//self.groups,*original_shape)
+        x = x.view(
+            x.data.size()[0], self.groups, num_channels // self.groups, *original_shape
+        )
         x = x.transpose(1, 2).contiguous()
         return x.view(x.data.size()[0], num_channels, *original_shape)
 
@@ -605,7 +607,9 @@ class BinarySplitConv:
 
 
 @define_split_convolution(
-    TernaryConvolution1d, _channel_multiplexing_factor=1, input_domain_elements=[-1, 0, 1]
+    TernaryConvolution1d,
+    _channel_multiplexing_factor=1,
+    input_domain_elements=[-1, 0, 1],
 )
 class TernarySplitConv:
     pass

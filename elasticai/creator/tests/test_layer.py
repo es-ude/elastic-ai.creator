@@ -15,8 +15,15 @@ from elasticai.creator.layers import (
     QConv2d,
     QLSTMCell,
     QLSTM,
-    Binarize, BatchNormedActivatedConv1d, TernaryConvolution1d, MultilevelResidualBinarizationConv1d,
-    BinaryActivatedConv1d, SplitConvolutionBase, BinarySplitConv, TernarySplitConv, TwoBitSplitConv,
+    Binarize,
+    BatchNormedActivatedConv1d,
+    TernaryConvolution1d,
+    MultilevelResidualBinarizationConv1d,
+    BinaryActivatedConv1d,
+    SplitConvolutionBase,
+    BinarySplitConv,
+    TernarySplitConv,
+    TwoBitSplitConv,
     ChannelShuffle,
 )
 from elasticai.creator.constraints import WeightClipper
@@ -266,59 +273,85 @@ class LayerTests(TensorTestCase):
             self.assertRaises(TypeError, QConv2d, 1, 1, 2, None)
 
     def test_BatchNormedActivatedConv(self):
-        layer = BatchNormedActivatedConv1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False, activation=Binarize, channel_multiplexing_factor=1)
+        layer = BatchNormedActivatedConv1d(
+            in_channels=1,
+            out_channels=2,
+            kernel_size=2,
+            groups=1,
+            bias=False,
+            activation=Binarize,
+            channel_multiplexing_factor=1,
+        )
         layer.conv.weight = torch.nn.Parameter(torch.ones_like(layer.conv.weight))
-        test_input = torch.ones((2,1,3))
+        test_input = torch.ones((2, 1, 3))
         output = layer(test_input)
-        expected = torch.ones(2,2,2)
-        self.assertTrue(torch.all((expected==output)))
-    
-    
+        expected = torch.ones(2, 2, 2)
+        self.assertTrue(torch.all((expected == output)))
+
     def test_TernaryConvolution(self):
-        layer = TernaryConvolution1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False)
-        self.assertEqual(type(layer.quantize),type(Ternarize()))
-        self.assertEqual(layer.channel_multiplexing_factor, 1)
-        
-    def test_MultilevelResidualBinarizationConv(self):
-        layer = MultilevelResidualBinarizationConv1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False)
-        self.assertEqual(type(layer.quantize),type(QuantizeTwoBit()))
-        self.assertEqual(layer.channel_multiplexing_factor, 2)
-   
-    def test_BinaryActivatedConv(self):
-        layer = BinaryActivatedConv1d(in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False)
-        self.assertEqual(type(layer.quantize),type(Binarize()))
+        layer = TernaryConvolution1d(
+            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
+        )
+        self.assertEqual(type(layer.quantize), type(Ternarize()))
         self.assertEqual(layer.channel_multiplexing_factor, 1)
 
+    def test_MultilevelResidualBinarizationConv(self):
+        layer = MultilevelResidualBinarizationConv1d(
+            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
+        )
+        self.assertEqual(type(layer.quantize), type(QuantizeTwoBit()))
+        self.assertEqual(layer.channel_multiplexing_factor, 2)
+
+    def test_BinaryActivatedConv(self):
+        layer = BinaryActivatedConv1d(
+            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
+        )
+        self.assertEqual(type(layer.quantize), type(Binarize()))
+        self.assertEqual(layer.channel_multiplexing_factor, 1)
 
     def test_SplitConvolutionBase(self):
-        layer_function = partial(BatchNormedActivatedConv1d,activation=Binarize,channel_multiplexing_factor=1)
-        layer = SplitConvolutionBase(in_channels=2, out_channels=4, kernel_size=2,convolution=layer_function,codomain_elements=[-1, 1] )
-        layer.depthwise.conv.weight = torch.nn.Parameter(torch.ones_like(layer.depthwise.conv.weight))
-        layer.pointwise.conv.weight = torch.nn.Parameter(torch.ones_like(layer.pointwise.conv.weight))
+        layer_function = partial(
+            BatchNormedActivatedConv1d,
+            activation=Binarize,
+            channel_multiplexing_factor=1,
+        )
+        layer = SplitConvolutionBase(
+            in_channels=2,
+            out_channels=4,
+            kernel_size=2,
+            convolution=layer_function,
+            codomain_elements=[-1, 1],
+        )
+        layer.depthwise.conv.weight = torch.nn.Parameter(
+            torch.ones_like(layer.depthwise.conv.weight)
+        )
+        layer.pointwise.conv.weight = torch.nn.Parameter(
+            torch.ones_like(layer.pointwise.conv.weight)
+        )
         test_input = torch.ones((2, 2, 3))
         output = layer(test_input)
         expected = torch.ones(2, 4, 2)
         self.assertTrue(torch.all((expected == output)))
-        self.assertEqual(layer.depthwise.conv.groups,2)
-    
+        self.assertEqual(layer.depthwise.conv.groups, 2)
+
     def test_BinarySplitConv(self):
         layer = BinarySplitConv(in_channels=1, out_channels=2, kernel_size=2)
-        self.assertEqual(type(layer.depthwise.quantize),type(Binarize()))
+        self.assertEqual(type(layer.depthwise.quantize), type(Binarize()))
         self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
         self.assertEqual(type(layer.pointwise.quantize), type(Binarize()))
-    
+
     def test_TernarySplitConv(self):
         layer = TernarySplitConv(in_channels=1, out_channels=2, kernel_size=2)
-        self.assertEqual(type(layer.depthwise.quantize),type(Ternarize()))
+        self.assertEqual(type(layer.depthwise.quantize), type(Ternarize()))
         self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
         self.assertEqual(type(layer.pointwise.quantize), type(Ternarize()))
-    
+
     def test_TwoBitSplitConv(self):
         layer = TwoBitSplitConv(in_channels=1, out_channels=2, kernel_size=2)
-        self.assertEqual(type(layer.depthwise.quantize),type(QuantizeTwoBit()))
+        self.assertEqual(type(layer.depthwise.quantize), type(QuantizeTwoBit()))
         self.assertEqual(layer.depthwise.channel_multiplexing_factor, 2)
         self.assertEqual(type(layer.pointwise.quantize), type(QuantizeTwoBit()))
-    
+
     @SkipTest
     def test_QLSTMCell(self):
         with self.subTest("full res QLSTM cell equal PyTorch LSTM cell (with bias)"):
@@ -415,17 +448,25 @@ class LayerTests(TensorTestCase):
                 self.assertEqual(outputs.tolist(), [[5.0], [5.0], [5.0]])
                 self.assertEqual(cell_state[0].tolist(), [5.0])
                 self.assertEqual(cell_state[1].tolist(), [-1.0])
-                
+
     def test_shuffle_block_input_and_output_same_with_1_group(self):
         layer = ChannelShuffle(groups=1)
-        input = torch.rand((2,2,3,2))
+        input = torch.rand((2, 2, 3, 2))
         output = layer(input)
-        n = torch.eq(input,output)
-        self.assertTrue(torch.all(torch.eq(input,output)).item())
+        n = torch.eq(input, output)
+        self.assertTrue(torch.all(torch.eq(input, output)).item())
 
     def test_shuffle_block_input_and_output_with_2_group(self):
         layer = ChannelShuffle(groups=2)
-        input = torch.tensor([[[1],[2],[3],[4]],])
+        input = torch.tensor(
+            [
+                [[1], [2], [3], [4]],
+            ]
+        )
         output = layer(input)
-        expected = torch.tensor([[[1],[3],[2],[4]],])
+        expected = torch.tensor(
+            [
+                [[1], [3], [2], [4]],
+            ]
+        )
         self.assertTrue(torch.all(torch.eq(output, expected)).item())

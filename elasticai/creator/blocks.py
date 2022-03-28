@@ -63,6 +63,7 @@ class Conv1d_block(nn.Module):
         x = self.activation(x)
         return x
 
+
 class Conv2d_block(nn.Module):
     """
     Sequence Conv2d - batchNorm - activation
@@ -140,7 +141,9 @@ class Linear_block(nn.Module):
             bias=bias,
         )
         if linear_quantizer is not None:
-            parametrize.register_parametrization(self.linear, "weight", linear_quantizer)
+            parametrize.register_parametrization(
+                self.linear, "weight", linear_quantizer
+            )
         self.batchnorm = nn.BatchNorm1d(out_features)
         self.activation = activation
 
@@ -193,7 +196,9 @@ class depthwiseConv1d_block(nn.Module):
             padding_mode=padding_mode,
         )
         if conv_quantizer is not None:
-            parametrize.register_parametrization(self.depthwiseConv1d, "weight", conv_quantizer)
+            parametrize.register_parametrization(
+                self.depthwiseConv1d, "weight", conv_quantizer
+            )
         self.batchnorm = nn.BatchNorm1d(in_channels)
         self.activation = activation
 
@@ -204,10 +209,11 @@ class depthwiseConv1d_block(nn.Module):
             stride=1,
             groups=1,
             bias=bias,
-
         )
         if conv_quantizer is not None:
-            parametrize.register_parametrization(self.pointwiseConv1d, "weight", pointwise_quantizer)
+            parametrize.register_parametrization(
+                self.pointwiseConv1d, "weight", pointwise_quantizer
+            )
         self.pointwise_batchnorm = nn.BatchNorm1d(out_channels)
         self.pointwise_activation = pointwise_activation
 

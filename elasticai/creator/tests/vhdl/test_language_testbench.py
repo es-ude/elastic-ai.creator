@@ -180,7 +180,7 @@ class TestCasesPrecomputedScalarFunctionTest(TestCase):
             y_list_for_testing=y_list_for_testing,
             x_variable_name=x_variable_name,
             y_variable_name=y_variable_name,
-            data_width=data_width
+            data_width=data_width,
         )
         expected = [
             f'report "======Simulation Start======" severity Note;',
@@ -198,7 +198,7 @@ class TestCasesPrecomputedScalarFunctionTest(TestCase):
             f'assert {y_variable_name}={y_list_for_testing[2]} report "The test case {x_list_for_testing[2]} fail" severity failure;',
             f'report "======Simulation Success======" severity Note;',
             f'report "Please check the output message." severity Note;',
-            f"wait;"
+            f"wait;",
         ]
         actual = list(test_cases_precomputed_scalar_function())
         self.assertSequenceEqual(expected, actual)
@@ -216,5 +216,5 @@ class TestCasesPrecomputedScalarFunctionTest(TestCase):
             y_list_for_testing,
             x_variable_name,
             y_variable_name,
-            data_width
+            data_width,
         )

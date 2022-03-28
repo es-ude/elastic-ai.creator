@@ -14,11 +14,15 @@ class IndexMaskHook:
         self.dense_grad = None
 
     def __name__(self):
-        return 'IndexMaskHook'
+        return "IndexMaskHook"
 
     def __eq__(self, other):
-        a = isinstance(other, IndexMaskHook) & (all(self.layer.shape == other.layer.shape))
-        return isinstance(other, IndexMaskHook) & (all(self.layer.shape == other.layer.shape))
+        a = isinstance(other, IndexMaskHook) & (
+            all(self.layer.shape == other.layer.shape)
+        )
+        return isinstance(other, IndexMaskHook) & (
+            all(self.layer.shape == other.layer.shape)
+        )
 
     @torch.no_grad()
     def __call__(self, grad):
@@ -52,7 +56,7 @@ class QRigLScheduler:
     Creates a Rigl scheduler for the selected Conv2d layers. This works similarly to the original Rigl [Evci et al 2021] https://arxiv.org/pdf/1911.11134.pdf , with the difference that it has a fixed
     number of connections per channel rather than a per layer fan in. This works by changing the connections, by editing a mask every few steps .This is useful in precalculated applications. It replaces the optimizer step every few steps. So it should be called like:
     if scheduler():
-        optimizer.step() 
+        optimizer.step()
     Args:
         layers. The Conv2d layers
         optimizer: a torch optimizer it will be wrapped by a function
@@ -63,8 +67,17 @@ class QRigLScheduler:
         grad_accumulation: added by the Rigl_torch author, takes the averaging score of n batches when determining the growth scores
     """
 
-    def __init__(self, weighted_layers: List[torch.nn.Module], optimizer: torch.optim.Optimizer, num_connections: int,
-                 T_end, delta=100, alpha=0.3, grad_accumulation_n=1, state_dict=None):
+    def __init__(
+        self,
+        weighted_layers: List[torch.nn.Module],
+        optimizer: torch.optim.Optimizer,
+        num_connections: int,
+        T_end,
+        delta=100,
+        alpha=0.3,
+        grad_accumulation_n=1,
+        state_dict=None,
+    ):
 
         self.layers = weighted_layers
         self.optimizer = optimizer
@@ -92,38 +105,49 @@ class QRigLScheduler:
             self.grad_accumulation_n = grad_accumulation_n
         self.backward_hook_objects = []
         for i, layer in enumerate(self.layers):
-            if getattr(layer.weight, '_has_rigl_backward_hook', False):
-                raise Exception('This model already has been registered to a RigLScheduler.')
+            if getattr(layer.weight, "_has_rigl_backward_hook", False):
+                raise Exception(
+                    "This model already has been registered to a RigLScheduler."
+                )
 
             self.backward_hook_objects.append(IndexMaskHook(i, self))
             layer.weight.register_hook(self.backward_hook_objects[-1])
-            setattr(layer.weight, '_has_rigl_backward_hook', True)
+            setattr(layer.weight, "_has_rigl_backward_hook", True)
         self.apply_mask_to_weights()
 
     def state_dict(self):
         obj = {
-            'num_connections': self.num_connections,
-            'weights_in_layer': self.weights_in_layer,
-            'delta': self.delta,
-            'alpha': self.alpha,
-            'T_end': self.T_end,
-            'grad_accumulation_n': self.grad_accumulation_n,
-            'step': self.step,
-            'rigl_steps': self.rigl_steps,
-            'backward_masks': self.backward_masks,
+            "num_connections": self.num_connections,
+            "weights_in_layer": self.weights_in_layer,
+            "delta": self.delta,
+            "alpha": self.alpha,
+            "T_end": self.T_end,
+            "grad_accumulation_n": self.grad_accumulation_n,
+            "step": self.step,
+            "rigl_steps": self.rigl_steps,
+            "backward_masks": self.backward_masks,
         }
 
         return obj
 
     def __eq__(self, other):
-        return isinstance(other, QRigLScheduler) & \
-               (self.num_connections == other.num_connections) & \
-               (self.delta == other.delta) & \
-               (self.T_end == other.T_end) & \
-               (self.alpha == other.alpha) & \
-               (self.grad_accumulation_n == other.grad_accumulation_n) & \
-               (self.weights_in_layer == other.weights_in_layer) & \
-               (torch.all(list(a == b for a, b in zip(self.backward_masks, other.backward_masks))[0]).item())
+        return (
+            isinstance(other, QRigLScheduler)
+            & (self.num_connections == other.num_connections)
+            & (self.delta == other.delta)
+            & (self.T_end == other.T_end)
+            & (self.alpha == other.alpha)
+            & (self.grad_accumulation_n == other.grad_accumulation_n)
+            & (self.weights_in_layer == other.weights_in_layer)
+            & (
+                torch.all(
+                    list(
+                        a == b
+                        for a, b in zip(self.backward_masks, other.backward_masks)
+                    )[0]
+                ).item()
+            )
+        )
 
     def load_state_dict(self, state_dict):
         for k, v in state_dict.items():
@@ -137,30 +161,36 @@ class QRigLScheduler:
         for layer_index, layer in enumerate(self.layers):
             # if sparsity is 0%, skip
 
-            mask = randomMask4D(out_channels=layer.out_channels, kernel_size=layer.kernel_size,
-                                in_channels=layer.in_channels, groups=layer.groups,
-                                params_per_channel=self.num_connections)
+            mask = randomMask4D(
+                out_channels=layer.out_channels,
+                kernel_size=layer.kernel_size,
+                in_channels=layer.in_channels,
+                groups=layer.groups,
+                params_per_channel=self.num_connections,
+            )
             layer.weight *= mask
             self.backward_masks.append(mask)
 
     def __str__(self):
-        s = 'RigLScheduler(\n'
-        s += 'layers=%i,\n' % len(self.weights_in_layer)
+        s = "RigLScheduler(\n"
+        s += "layers=%i,\n" % len(self.weights_in_layer)
 
         # calculate the number of non-zero elements out of the total number of elements
-        N_str = '['
-        S_str = '['
+        N_str = "["
+        S_str = "["
         sparsity_percentages = []
         total_params = 0
         total_conv_params = 0
         total_nonzero = 0
         total_conv_nonzero = 0
 
-        for N, mask, layer in zip(self.weights_in_layer, self.backward_masks, self.layers):
+        for N, mask, layer in zip(
+            self.weights_in_layer, self.backward_masks, self.layers
+        ):
             actual_S = torch.sum(layer.weight[mask == 0] == 0).item()
-            N_str += ('%i/%i, ' % (N - actual_S, N))
+            N_str += "%i/%i, " % (N - actual_S, N)
             sp_p = float(N - actual_S) / float(N) * 100
-            S_str += '%.2f%%, ' % sp_p
+            S_str += "%.2f%%, " % sp_p
             sparsity_percentages.append(sp_p)
             total_params += N
             total_nonzero += N - actual_S
@@ -168,29 +198,49 @@ class QRigLScheduler:
             total_conv_nonzero += N - actual_S
             total_conv_params += N
 
-        N_str = N_str[:-2] + ']'
-        S_str = S_str[:-2] + ']'
+        N_str = N_str[:-2] + "]"
+        S_str = S_str[:-2] + "]"
 
-        s += 'nonzero_params=' + N_str + ',\n'
-        s += 'nonzero_percentages=' + S_str + ',\n'
-        s += 'total_nonzero_params=' + ('%i/%i (%.2f%%)' % (
-        total_nonzero, total_params, float(total_nonzero) / float(total_params) * 100)) + ',\n'
-        s += 'total_CONV_nonzero_params=' + ('%i/%i (%.2f%%)' % (
-        total_conv_nonzero, total_conv_params, float(total_conv_nonzero) / float(total_conv_params) * 100)) + ',\n'
-        s += 'step=' + str(self.step) + ',\n'
-        s += 'num_rigl_steps=' + str(self.rigl_steps) + ',\n'
+        s += "nonzero_params=" + N_str + ",\n"
+        s += "nonzero_percentages=" + S_str + ",\n"
+        s += (
+            "total_nonzero_params="
+            + (
+                "%i/%i (%.2f%%)"
+                % (
+                    total_nonzero,
+                    total_params,
+                    float(total_nonzero) / float(total_params) * 100,
+                )
+            )
+            + ",\n"
+        )
+        s += (
+            "total_CONV_nonzero_params="
+            + (
+                "%i/%i (%.2f%%)"
+                % (
+                    total_conv_nonzero,
+                    total_conv_params,
+                    float(total_conv_nonzero) / float(total_conv_params) * 100,
+                )
+            )
+            + ",\n"
+        )
+        s += "step=" + str(self.step) + ",\n"
+        s += "num_rigl_steps=" + str(self.rigl_steps) + ",\n"
 
-        return s + ')'
+        return s + ")"
 
     @torch.no_grad()
     def reset_momentum(self):
-        #raise NotImplementedError("Not compatible with momentum yet")
+        # raise NotImplementedError("Not compatible with momentum yet")
         for layer, mask in zip(self.layers, self.backward_masks):
 
             param_state = self.optimizer.state[layer.weight]
-            if 'momentum_buffer' in param_state:
+            if "momentum_buffer" in param_state:
                 # mask the momentum matrix
-                buf = param_state['momentum_buffer']
+                buf = param_state["momentum_buffer"]
                 buf *= mask
 
     @torch.no_grad()
@@ -206,7 +256,7 @@ class QRigLScheduler:
 
     def check_if_backward_hook_should_accumulate_grad(self):
         """
-        Used by the backward hooks. Basically just checks how far away the next rigl step is, 
+        Used by the backward hooks. Basically just checks how far away the next rigl step is,
         if it's within `self.grad_accumulation_n` steps, return True.
         """
 
@@ -233,8 +283,11 @@ class QRigLScheduler:
 
         for l, layer in enumerate(self.layers):
             weight_sizes = layer.weight.shape
-            if int(self.num_connections * drop_fraction) <= 0 or weight_sizes[1] * weight_sizes[2] * weight_sizes[
-                3] <= self.num_connections:
+            if (
+                int(self.num_connections * drop_fraction) <= 0
+                or weight_sizes[1] * weight_sizes[2] * weight_sizes[3]
+                <= self.num_connections
+            ):
                 continue
 
             channel_masks = []
@@ -245,7 +298,9 @@ class QRigLScheduler:
 
                 # calculate raw scores
                 score_drop = torch.abs(layer.weight[channel])
-                score_grow = torch.abs(self.backward_hook_objects[l].dense_grad[channel])
+                score_grow = torch.abs(
+                    self.backward_hook_objects[l].dense_grad[channel]
+                )
 
                 # calculate drop/grow quantities
                 n_total = self.weights_in_layer[l] // channels
@@ -258,7 +313,8 @@ class QRigLScheduler:
                 new_values = torch.where(
                     torch.arange(n_total, device=layer.weight.device) < n_keep,
                     torch.ones_like(sorted_indices),
-                    torch.zeros_like(sorted_indices))
+                    torch.zeros_like(sorted_indices),
+                )
                 mask1 = new_values.scatter(0, sorted_indices, new_values)
 
                 # flatten grow scores
@@ -268,23 +324,29 @@ class QRigLScheduler:
                 score_grow_lifted = torch.where(
                     mask1 == 1,
                     torch.ones_like(mask1) * (torch.min(score_grow) - 1),
-                    score_grow)
+                    score_grow,
+                )
 
                 # create grow mask
                 _, sorted_indices = torch.topk(score_grow_lifted, k=n_total)
                 new_values = torch.where(
                     torch.arange(n_total, device=layer.weight.device) < n_prune,
                     torch.ones_like(sorted_indices),
-                    torch.zeros_like(sorted_indices))
+                    torch.zeros_like(sorted_indices),
+                )
                 mask2 = new_values.scatter(0, sorted_indices, new_values)
 
                 mask2_reshaped = torch.reshape(mask2, current_mask.shape)
                 grow_tensor = torch.zeros_like(layer.weight[0])
 
-                new_connections = ((mask2_reshaped == 1) & (current_mask == 0))
+                new_connections = (mask2_reshaped == 1) & (current_mask == 0)
 
                 # update new weights to be initialized as zeros and update the weight tensors
-                new_weights = torch.where(new_connections.to(layer.weight.device), grow_tensor, layer.weight[channel])
+                new_weights = torch.where(
+                    new_connections.to(layer.weight.device),
+                    grow_tensor,
+                    layer.weight[channel],
+                )
                 channel_new_weights.append(new_weights)
                 mask_combined = torch.reshape(mask1 + mask2, current_mask.shape).bool()
                 channel_masks.append(mask_combined)
