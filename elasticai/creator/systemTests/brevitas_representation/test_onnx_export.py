@@ -10,7 +10,7 @@ from elasticai.creator.brevitas.brevitas_model_comparison import (
 from elasticai.creator.brevitas.brevitas_representation import (
     BrevitasRepresentation,
 )
-from elasticai.creator.systemTests.models_definition import (
+from elasticai.creator.systemTests.brevitas_representation.models_definition import (
     create_brevitas_model,
 )
 

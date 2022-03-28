@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.language import (
 )
 
 
-class TestCasesProcomputedScalarFunction:
+class TestCasesPrecomputedScalarFunction:
     def __init__(
         self,
         x_list_for_testing: list[int],
@@ -45,9 +45,9 @@ class TestCasesProcomputedScalarFunction:
 class TestCasesLSTMCommonGate:
     def __init__(
         self,
-        x_mem_list_for_testing: list,
-        w_mem_list_for_testing: list,
-        b_list_for_testing: list,
+        x_mem_list_for_testing: list[str],
+        w_mem_list_for_testing: list[str],
+        b_list_for_testing: list[str],
         y_list_for_testing: list[int],
         y_variable_name: str = "y",
     ):
@@ -94,7 +94,7 @@ class TestCasesLSTMCommonGate:
 
 
 class TestCasesLSTMCell:
-    def __init__(self, reference_h_out):
+    def __init__(self, reference_h_out: list[int]):
         self.reference_h_out = reference_h_out
 
     def __call__(self):

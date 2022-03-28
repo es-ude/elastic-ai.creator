@@ -6,9 +6,9 @@ Obtaining a final model is typically a three stage process.
 * translate the model to a target representation, e.g. VHDL
 * compile the intermediate representation with a third party tool, e.g. Xilinx Vivado (TM)
 
-This version currently only supports [Brevitas](https://github.com/Xilinx/brevitas) as a target representation.
+This version currently only supports [Brevitas](https://github.com/Xilinx/brevitas) and parts of VHDL as target representations.
 
-The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial.
+The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at [researchgate](https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial).
 
 
 ## Table of contents
@@ -77,26 +77,12 @@ Run the following command for installing:
 sudo apt install ghdl 
 ```
 
-## Installing
-
-If you want to use the elastic.ai Creator Translator in your project you can install it via pip. 
-To install from git run the following command: 
-```bash
-pip install git+https://git.uni-due.de/embedded-systems/artificial-intelligence/toolchain/mtltranslator
-```
-To build locally in the directory run:
-```bash
-pip install  .
-```
-
 ## Structure of the Project
 
 The structure of the project is as follows.
-The [qtorch](elasticai/creator/qtorch) folder includes our implementation of quantized PyTorch layer.
-The folder [protocols](elasticai/creator/protocols) contains some general protocols for the models and layers which are also used by multiple translated languages.
-In the [translator](elasticai/creator/translator) folder there are the modules which can be used for every translation from a pytorch model to a target language.
-The subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas.
-Each language we can translate to has folders for unit tests, integration tests and system test. 
+The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
+It also includes the supported target representations, like the subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas or the subfolder [vhdl](elasticai/creator/vhdl) for the translation to Vhdl.
+Additionally, we have folders for [unit tests](elasticai/creator/tests), [integration tests](elasticai/creator/integrationTests) and [system tests](elasticai/creator/systemTests). 
 
 ## QTorch
 
@@ -116,10 +102,10 @@ For the quantization we implemented quantizers:
 - ResidualQuantization converts weights to a bit vector using the residual multilevel binarization method [RebNet, Ghasemzadeh et al. 2018](https://arxiv.org/pdf/1711.01243.pdf)
 
 
-We wrote tests for the layers which can be found in the [layers_tests](elasticai/creator/qtorch/tests/test_layer.py).
+We wrote tests for the layers which can be found in the [test_layer](elasticai/creator/tests/test_layer.py).
 To add constraints on the convolutional and linear layers you can use the [constraints](elasticai/creator/constraints.py) and can easily expand it with more constraints.
 We also implemented blocks of convolution and linear layers consisting of the convolution or linear following a batch normalisation and some activation. 
-Also consider the [tests](elasticai/creator/qtorch/tests/test_block.py) for the blocks.
+Also consider the [tests](elasticai/creator/tests/test_block.py) for the blocks.
 For getting more insight in the QTorch library consider the examples in the [examples](elasticai/creator/examples) folder.
 
 ## Users guide 
@@ -143,7 +129,7 @@ from elasticai.creator.brevitas.brevitas_representation import BrevitasRepresent
 converted_model = BrevitasRepresentation.from_pytorch(qtorch_model).translated_model
 ```
 args:
-- qtorch_model: a pytorch model (supports most of the [QTorch](https://git.uni-due.de/embedded-systems/artificial-intelligence/toolchain/qtorch) layers and some standard pytorch layers)
+- qtorch_model: a pytorch model (supports most of the [QTorch](elasticai/creator/layers.py) layers and some standard pytorch layers)
 
 returns:
 - converted_model: a Brevitas model
@@ -184,6 +170,58 @@ You can find the mappings in [translation_mapping](elasticai/creator/brevitas/tr
   - QLSTM
 - we do not support all PyTorch layers, but you can easily add them in the [translation_mapping](elasticai/creator/brevitas/translation_mapping.py).
 
+### Brevitas System Tests
+
+The [Brevitas system tests](elasticai/creator/systemTests/brevitas_representation) can be used as example use cases of our implementation.
+We created tests which check the conversion of a model like we would expect our models will look like.
+In addition, we also created tests for validating the conversion for trained models or unusual models. 
+Note that you have to use your own data set and therefore maybe do some small adaptions by using the training.
+
+### Brevitas Integration Tests
+
+Our  [Brevitas integration tests](elasticai/creator/integrationTests/brevitas_representation) are focused on testing the conversion of one specific layer. 
+We created for all our supported layers a minimal model with this layer included and test its functionality. 
+
+### Brevitas Unit Tests
+
+In addition to system and integration tests we implemented unit tests. 
+The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
+The Brevitas unit tests can be found [here](elasticai/creator/tests/brevitas_representation).
+
+## Translating to VHDL
+
+We follow the VHDL code specification of IEEE Std 1076-1993.
+For now, we support translating one LSTM cell to VHDL. 
+
+### Translations
+
+The following QTorch or PyTorch layers are translated to VHDL.
+- Pytorch Sigmoid
+- Pytorch Tanh
+- QLSTMCell
+
+An example how a QLSTMCell is translated to VHDL is shown in [generate_all_vhd_files_for_lstm_cell](elasticai/creator/vhdl/generator/functions/generate_all_vhd_files_for_lstm_cell.py).
+
+### Syntax Checking 
+
+[GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
+The command is as follows:
+```
+ghdl -s path/to/vhdl/file
+```
+So, for example for checking the sigmoid source vhdl files in our project we can run:
+```
+ghdl -s elasticai/creator/vhdl/source/sigmoid.vhd
+```
+For checking all vhdl files together in our project we can just run:
+```
+ghdl -s elasticai/creator/**/*.vhd
+```
+
+## Developers Guide
+* We use [black](https://black.readthedocs.io/en/stable/index.html) for code formatting. For instruction on setup with your IDE please refer to https://black.readthedocs.io/en/stable/integrations/editors.html#editor-integration.
+* importing `*` should be avoided in favor of explicit imports
+
 ## General Limitations
 
 By now we only support Sequential models for our translations.
@@ -206,59 +244,17 @@ Our implementation is fully tested with unit, integration and system tests.
 Please refer to the system tests as examples of how to use the Elastic Ai Creator Translator.
 You can run one explicit test with the following statement: 
 
-```python -m unittest discover -p "test_*.py" elasticai/creator/translator/path/to/test.py```
+```python -m unittest discover -p "test_*.py" elasticai/creator/path/to/test.py```
 
-If you want to run all unit tests for example, give the path to the unit tests:
+If you want to run all tests, give the path to the tests:
 
-```python -m unittest discover -p "test_*.py" elasticai/creator/translator/path/to/language/unitTests/```
+```python -m unittest discover -p "test_*.py" elasticai/creator/path/to/testfolder```
 
 You can also run all tests together:
 
 ```python -m unittest discover -p "test_*.py" elasticai/creator/translator/path/to/language/```
 
-If you want to add more tests please refer to the [Test Guidelines](test_guidelines.md).
-
-### Brevitas System Tests
-
-The [Brevitas system tests](elasticai/creator/systemTests) can be used as example use cases of our implementation.
-We created tests which check the conversion of a model like we would expect our models will look like.
-In addition, we also created tests for validating the conversion for trained models or unusual models. 
-Note that you have to use your own data set and therefore maybe do some small adaptions by using the training.
-
-### Brevitas Integration Tests
-
-Our  [Brevitas integration tests](elasticai/creator/integrationTests) are focused on testing the conversion of one specific layer. 
-We created for all our supported layers a minimal model with this layer included and test its functionality. 
-
-### Brevitas Unit Tests
-
-In addition to system and integration tests we implemented unit tests. 
-The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
-The Brevitas unit tests can be found [here](elasticai/creator/brevitas/unitTests).
-
-## VHDL Generation
-
-We follow the VHDL code specification of IEEE Std 1076-1993.
-
-### Syntax Checking 
-
-[GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
-The command is as follows:
-```
-ghdl -s path/to/vhdl/file
-```
-So, for example for checking the sigmoid source vhdl files in our project we can run:
-```
-ghdl -s elasticai/creator/vhdl/source/sigmoid.vhd
-```
-For checking all vhdl files together in our project we can just run:
-```
-ghdl -s elasticai/creator/**/*.vhd
-```
-
-## Developers Guide
-* We use [black](https://black.readthedocs.io/en/stable/index.html) for code formatting. For instruction on setup with your IDE please refer to https://black.readthedocs.io/en/stable/integrations/editors.html#editor-integration.
-* importing `*` should be avoided in favor of explicit imports
+If you want to add more tests please refer to the Test Guidelines in the following.
 
 ### Test style Guidelines
 
@@ -272,7 +268,7 @@ Files containing tests for a python module should be located in a test directory
 Each file in the test directory should contain tests for one and only one class/function defined in the module. 
 Files containing tests should be named according to the rubric
 `test_ClassName.py`.
-Next, if needed for more specific tests define a class which is a subclass of unittest.TestCase like [test_brevitas_model_comparison](elasticai/creator/integrationTests/test_brevitas_model_comparison.py) in the integration tests folder. 
+Next, if needed for more specific tests define a class which is a subclass of unittest.TestCase like [test_brevitas_model_comparison](elasticai/creator/integrationTests/brevitas_representation/test_brevitas_model_comparison.py) in the integration tests folder. 
 Then subclass it, in this class define a setUp method (and possibly tearDown) to create the global environment. 
 It avoids introducing the category of bugs associated with copying and pasting code for reuse. 
 This class should be named similarly to the file name.

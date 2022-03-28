@@ -3,7 +3,7 @@ import torch
 import random
 import numpy as np
 
-from elasticai.creator.systemTests.models_definition import (
+from elasticai.creator.systemTests.brevitas_representation.models_definition import (
     create_qtorch_model,
     create_brevitas_model,
 )
