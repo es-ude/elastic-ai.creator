@@ -7,18 +7,21 @@ import brevitas.nn as bnn
 from elasticai.creator.brevitas.translation_functions.conv import (
     translate_conv1d,
 )
-from elasticai.creator.integrationTests.conv_params_comparison import (
+from elasticai.creator.integrationTests.brevitas_representation.conv_params_comparison import (
     ConvTest,
 )
 from elasticai.creator.layers import QConv1d, Binarize, Ternarize
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
 
 
-class Conv1dTest(ConvTest):
+# When groups == in_channels and out_channels == K * in_channels, where K is a positive integer, this operation is also known as a “depthwise convolution”.
+class DepthwiseConv1dTest(ConvTest):
     @staticmethod
-    def create_qtorch_conv_layers(quantizer, padding=0, padding_mode="zeros"):
+    def create_qtorch_conv_layers(
+        in_channel, quantizer, padding=0, padding_mode="zeros"
+    ):
         return QConv1d(
-            in_channels=5,
+            in_channels=in_channel,
             out_channels=10,
             kernel_size=10,
             stride=1,
@@ -31,9 +34,11 @@ class Conv1dTest(ConvTest):
         )
 
     @staticmethod
-    def create_brevitas_conv_layer(weight_quant, bias_quant, padding_type="standard"):
+    def create_brevitas_conv_layer(
+        in_channel, weight_quant, bias_quant, padding_type="standard"
+    ):
         return bnn.QuantConv1d(
-            in_channels=5,
+            in_channels=in_channel,
             out_channels=10,
             kernel_size=10,
             stride=1,
@@ -46,27 +51,41 @@ class Conv1dTest(ConvTest):
             bias_quant=bias_quant,
         )
 
-    def test_conv1d_binary_weight_bias_quant(self):
-        layer = self.create_qtorch_conv_layers(quantizer=Binarize())
+    def test_depthwise_conv1d_binary_weight_bias_quant(self):
+        in_channel = 3
+        layer = self.create_qtorch_conv_layers(
+            in_channel=in_channel, quantizer=Binarize()
+        )
         target = self.create_brevitas_conv_layer(
-            weight_quant=bquant.BinaryWeights, bias_quant=bquant.BinaryBias
+            in_channel=in_channel,
+            weight_quant=bquant.BinaryWeights,
+            bias_quant=bquant.BinaryBias,
         )
         translated = translate_conv1d(layer)
 
         self.assertConv1dParams(target, translated)
 
-    def test_conv1d_ternary_weight_bias_quant(self):
-        layer = self.create_qtorch_conv_layers(quantizer=Ternarize())
+    def test_depthwise_conv1d_ternary_weight_bias_quant(self):
+        in_channel = 3
+        layer = self.create_qtorch_conv_layers(
+            in_channel=in_channel, quantizer=Ternarize()
+        )
         target = self.create_brevitas_conv_layer(
-            weight_quant=bquant.TernaryWeights, bias_quant=bquant.TernaryBias
+            in_channel=in_channel,
+            weight_quant=bquant.TernaryWeights,
+            bias_quant=bquant.TernaryBias,
         )
         translated = translate_conv1d(layer)
 
         self.assertConv1dParams(target, translated)
 
-    def test_conv1d_padding(self):
-        layer = self.create_qtorch_conv_layers(quantizer=Binarize(), padding="same")
+    def test_depthwise_conv1d_padding(self):
+        in_channel = 3
+        layer = self.create_qtorch_conv_layers(
+            in_channel=in_channel, quantizer=Binarize(), padding="same"
+        )
         target = self.create_brevitas_conv_layer(
+            in_channel=in_channel,
             weight_quant=bquant.BinaryWeights,
             bias_quant=bquant.BinaryBias,
             padding_type="same",
@@ -75,14 +94,19 @@ class Conv1dTest(ConvTest):
 
         self.assertConv1dParams(target, translated)
 
-    def test_conv1d_wrong_padding_mode(self):
+    def test_depthwise_conv1d_wrong_padding_mode(self):
+        in_channel = 3
         layer = self.create_qtorch_conv_layers(
-            quantizer=Binarize(), padding_mode="reflect"
+            in_channel=in_channel, quantizer=Binarize(), padding_mode="reflect"
         )
+
         self.assertRaises(NotImplementedError, translate_conv1d, layer)
 
-    def test_conv1d_on_random_input(self):
-        layer = self.create_qtorch_conv_layers(quantizer=Ternarize())
+    def test_depthwise_conv1d_on_random_input(self):
+        in_channel = 5
+        layer = self.create_qtorch_conv_layers(
+            in_channel=in_channel, quantizer=Ternarize()
+        )
 
         qtorch_model = nn.Sequential(layer)
 

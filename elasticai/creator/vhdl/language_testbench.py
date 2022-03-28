@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.language import (
 )
 
 
-class TestCasesProcomputedScalarFunction:
+class TestCasesPrecomputedScalarFunction:
     def __init__(
         self,
         x_list_for_testing: list[int],
