@@ -62,8 +62,10 @@ class Rom:
         architecture = Architecture(design_unit=self.rom_name)
 
         architecture.architecture_declaration_list.append(
-            "type rom_bi_array_t is array (0 to 2**{addr_width}-1) of std_logic_vector({data_width}-1 downto 0)".format(
-                addr_width=self.addr_width, data_width=self.data_width
+            "type {rom_name_arrat_t} is array (0 to 2**{addr_width}-1) of std_logic_vector({data_width}-1 downto 0)".format(
+                rom_name_arrat_t=self.rom_name_arrat_t,
+                addr_width=self.addr_width,
+                data_width=self.data_width,
             )
         )
         architecture.architecture_declaration_list.append(

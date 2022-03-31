@@ -2,11 +2,11 @@
 # make TESTBENCH=sigmoid
 
 # vhdl files
-FILES = elasticai/source/*
+FILES = vhd_files/source/*
 VHDLEX = .vhd
 
 # testbench
-TESTBENCHPATH = elasticai/testbench/${TESTBENCHFILE}$(VHDLEX)
+TESTBENCHPATH = vhd_files/testbench/${TESTBENCHFILE}$(VHDLEX)
 TESTBENCHFILE = ${TESTBENCH}_tb
 
 #GHDL CONFIG
