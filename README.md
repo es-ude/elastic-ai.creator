@@ -31,16 +31,9 @@ The dependencies of the PyTorch implementation of elastic.ai Creator Translator 
 ### Poetry
 
 #### Using ElasticAICreator as a dependency
-Add the following to your `pyproject.toml`
-```toml
-[[tool.poetry.source]]
-name = "elasticai"
-url = "https://git@git.uni-due.de/api/v4/projects/5522/packages/pypi/simple"
-secondary = true
-```
-Afterwards you should be able to add the ElasticAICreator to your project like so
+You can install the ElasticAICreator as a dependency using pip:
 ```bash
-poetry add elasticaicreator
+python3 -m pip install git+https://github.com/es-ude/elastic-ai.creator.git@main
 ```
 
 #### Developing the ElasticAICreator
