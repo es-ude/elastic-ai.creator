@@ -77,9 +77,9 @@ The [creator](elasticai/creator) folder includes all main concepts of our projec
 It also includes the supported target representations, like the subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas or the subfolder [vhdl](elasticai/creator/vhdl) for the translation to Vhdl.
 Additionally, we have folders for [unit tests](elasticai/creator/tests), [integration tests](elasticai/creator/integrationTests) and [system tests](elasticai/creator/systemTests). 
 
-## QTorch
+## Quantization-Aware Training
 
-QTorch is a library of quantized PyTorch layers. 
+ 
 The [layers](elasticai/creator/layers.py) file includes all implemented quantized PyTorch layers.
 These layers are the followings:
 - QConv1d for quantized Conv1d
