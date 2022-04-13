@@ -1,13 +1,10 @@
 import types
-import warnings
-from abc import abstractmethod, ABC
+from abc import abstractmethod
+from itertools import product
 from typing import Optional, Tuple, Callable, Protocol, List, Any
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
-from itertools import product
-
 from torch.nn import Module, BatchNorm1d, Parameter, Conv1d
 from torch.nn.utils.parametrize import register_parametrization
 
@@ -302,7 +299,7 @@ class QLSTMCell(torch.nn.LSTMCell):
         forget_gate_activation: The forget gate activation, expects a quantizer instance, if None will default to sigmoid
         cell_gate_activation: The cell gate activation, expects a quantizer instance, if None will default to tanh
         output_gate_activation: The output gate activation, expects a quantizer instance, if None will default to sigmoid
-        new_cell_gate_activation: The new cell gate activation, expects a quantizer instance, if None will default to tanh
+        new_cell_state_activation: The new cell gate activation, expects a quantizer instance, if None will default to tanh
     """
 
     def __init__(
