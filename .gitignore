@@ -233,4 +233,5 @@ Temporary Items
 # Compiled Static libraries
 *.lai
 
-# Executables
+# Ignore .pyc files
+*.pyc
