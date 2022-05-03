@@ -6,8 +6,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from paths import ROOT_DIR
-
 from elasticai.creator.layers import QLSTMCell
 from typing import Dict, List
 
@@ -398,4 +396,4 @@ def get_file_path_string(
     Returns:
         string of the full path to a given filename
     """
-    return path.join(ROOT_DIR, relative_path_from_project_root, file_name)
+    return path.join(relative_path_from_project_root, file_name)

@@ -8,7 +8,6 @@ from elasticai.creator.vhdl.generator.generator_functions_for_one_lstm_cell impo
     inference_model,
     define_weights_and_bias,
 )
-from paths import ROOT_DIR
 import torch
 import random
 import numpy as np
@@ -49,8 +48,8 @@ if __name__ == "__main__":
         required=True,
     )
     args = arg_parser.parse_args(args)
-    if not os.path.isdir(ROOT_DIR + "/" + args.path):
-        os.mkdir(ROOT_DIR + "/" + args.path)
+    if not os.path.isdir(args.path):
+        os.mkdir(args.path)
 
     ### set the current values ###
     torch.manual_seed(0)
@@ -188,8 +187,8 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_testbench)
 
     ### copy static files ###
-    for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
+    for filename in os.listdir("elasticai/creator/vhd_files/static_files/"):
         shutil.copy(
-            ROOT_DIR + "/vhd_files/static_files/" + filename,
-            ROOT_DIR + "/" + args.path,
+            "elasticai/creator/vhd_files/static_files/" + filename,
+            args.path,
         )
