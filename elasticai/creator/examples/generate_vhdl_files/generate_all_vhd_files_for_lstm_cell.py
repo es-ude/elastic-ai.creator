@@ -187,8 +187,8 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_testbench)
 
     ### copy static files ###
-    for filename in os.listdir("elasticai/creator/vhd_files/static_files/"):
+    for filename in os.listdir("elasticai/creator/vhdl_resources/static_files/"):
         shutil.copy(
-            "elasticai/creator/vhd_files/static_files/" + filename,
+            "elasticai/creator/vhdl_resources/static_files/" + filename,
             args.path,
         )

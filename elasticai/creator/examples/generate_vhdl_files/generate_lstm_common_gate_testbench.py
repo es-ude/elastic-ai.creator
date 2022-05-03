@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 def main() -> None:
     file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/testbench",
+        relative_path_from_project_root="vhdl_resources/testbench",
         file_name="lstm_common_gate_tb.vhd",
     )
 

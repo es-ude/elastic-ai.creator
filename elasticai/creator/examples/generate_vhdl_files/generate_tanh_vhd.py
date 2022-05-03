@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 def main():
     file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/source", file_name="tanh.vhd"
+        relative_path_from_project_root="vhdl_resources/source", file_name="tanh.vhd"
     )
     tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
     with open(file_path, "w") as writer:

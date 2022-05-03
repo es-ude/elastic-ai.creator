@@ -21,7 +21,7 @@ if __name__ == "__main__":
     frac_width = 8
     # specify the file path
     file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/source",
+        relative_path_from_project_root="vhdl_resources/source",
         file_name=component_name + ".vhd",
     )
     # generate the vhdl-file

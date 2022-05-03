@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 def main(rom_name, data_width, addr_width, array_value):
     file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/source",
+        relative_path_from_project_root="vhdl_resources/source",
         file_name=rom_name + ".vhd",
     )
     with open(file_path, "w") as writer:

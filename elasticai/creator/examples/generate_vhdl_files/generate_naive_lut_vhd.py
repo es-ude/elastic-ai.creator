@@ -38,7 +38,7 @@ def main(example_inputs, example_outputs, file_path):
 
 if __name__ == "__main__":
     file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/source",
+        relative_path_from_project_root="vhdl_resources/source",
         file_name="lut_conv.vhd",
     )
     example_inputs = create_codomain_for_1d_conv(

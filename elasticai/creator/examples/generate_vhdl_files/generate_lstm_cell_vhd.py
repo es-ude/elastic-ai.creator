@@ -19,7 +19,7 @@ def main(component_name: str, data_width: int, frac_width: int) -> None:
 
 if __name__ == "__main__":
     file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/source",
+        relative_path_from_project_root="vhdl_resources/source",
         file_name="lstm_cell.vhd",
     )
     component_name = "lstm_cell"
