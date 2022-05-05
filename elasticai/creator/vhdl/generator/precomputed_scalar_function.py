@@ -217,7 +217,7 @@ class PrecomputedScalarTestBench:
             data_width=self.data_width,
         )
         test_process = Process(identifier="test")
-        test_process.process_test_case_list = test_cases
+        test_process.process_statements_list = [t for t in test_cases()]
 
         architecture = Architecture(
             design_unit=self.component_name + "_tb",

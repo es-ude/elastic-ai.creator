@@ -149,13 +149,11 @@ begin
             wait for 2*clk_period;
             reset <= '0';
 
-            for ii in 0 to 24 loop
-                send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data);
+            for ii in 0 to 24 loop send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data);
                 wait for 10 ns;
             end loop;
 
-            for ii in 0 to 19 loop
-                send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data);
+            for ii in 0 to 19 loop send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data);
                 wait for 10 ns;
             end loop;
 
@@ -164,9 +162,8 @@ begin
             wait for 1*clk_period;
             enable <= '0';
 
-            -- reference h_out: [34, -80, -32, -28, -88, 11, -60, 6, -16, 18, -32, 46, -77, 15, 70, 27, 13, 112, -156, 3]
-            for ii in 0 to 19 loop
-                h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH));
+            -- reference h_out: [34, -80, -32, -28, -88, 11, -60, 6, -16, 18, -32, 46, -77, 15, 70, 27, 13, 112, -156, 3];
+            for ii in 0 to 19 loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH));
                 h_out_en <= '1';
                 wait for 2*clk_period;
                 report "The value of h_out(" & integer'image(ii)& ") is " & integer'image(to_integer(signed(h_out_data)));
