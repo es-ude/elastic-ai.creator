@@ -142,7 +142,7 @@ begin
 
     test_process: process
         begin
-            report "======Tests Start======" severity Note;
+            report "======Simulation Start======" severity Note;
 
             reset <= '1';
             h_out_en <= '0';
@@ -170,7 +170,7 @@ begin
             end loop;
 
             wait for 10*clk_period;
-            report "======Tests finished======" severity Note;
+            report "======Simulation Success======" severity Note;
             report "Please check the output message." severity Note;
 
             wait;
