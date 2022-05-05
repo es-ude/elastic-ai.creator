@@ -1,18 +1,5 @@
 import pathlib
-from itertools import chain
 from typing import Iterable
-
-from elasticai.creator.vhdl.language import (
-    ContextClause,
-    LibraryClause,
-    UseClause,
-    Entity,
-    InterfaceVariable,
-    DataType,
-    Mode,
-    Architecture,
-    InterfaceSignal,
-)
 
 
 class MacAsync:
