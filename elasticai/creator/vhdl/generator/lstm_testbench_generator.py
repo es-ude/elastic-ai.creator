@@ -289,13 +289,15 @@ class LSTMCellTestBench:
             map_name="uut",
             component_name="entity work." + self.component_name + "(rtl)",
         )
-        uut_port_map.generic_map_list.append("DATA_WIDTH => DATA_WIDTH")
-        uut_port_map.generic_map_list.append("FRAC_WIDTH => FRAC_WIDTH")
-        uut_port_map.generic_map_list.append("INPUT_SIZE => INPUT_SIZE")
-        uut_port_map.generic_map_list.append("HIDDEN_SIZE => HIDDEN_SIZE")
-        uut_port_map.generic_map_list.append("X_H_ADDR_WIDTH => X_H_ADDR_WIDTH")
-        uut_port_map.generic_map_list.append("HIDDEN_ADDR_WIDTH => HIDDEN_ADDR_WIDTH")
-        uut_port_map.generic_map_list.append("W_ADDR_WIDTH => W_ADDR_WIDTH")
+        uut_port_map.generic_map_list = (
+            "DATA_WIDTH => DATA_WIDTH",
+            "FRAC_WIDTH => FRAC_WIDTH",
+            "INPUT_SIZE => INPUT_SIZE",
+            "HIDDEN_SIZE => HIDDEN_SIZE",
+            "X_H_ADDR_WIDTH => X_H_ADDR_WIDTH",
+            "HIDDEN_ADDR_WIDTH => HIDDEN_ADDR_WIDTH",
+            "W_ADDR_WIDTH => W_ADDR_WIDTH"
+        )
         uut_port_map.signal_list.append("clock => clock")
         uut_port_map.signal_list.append("reset => reset")
         uut_port_map.signal_list.append("enable => enable")
@@ -384,7 +386,7 @@ class LSTMCellTestBench:
         )
         architecture.architecture_statement_part = test_process
 
-        code = chain(chain(library(), entity()), architecture())
+        code = chain(library(), entity(), architecture())
         return code
 
 

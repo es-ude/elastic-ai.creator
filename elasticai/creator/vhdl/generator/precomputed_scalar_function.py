@@ -227,14 +227,13 @@ class PrecomputedScalarTestBench:
             "signal test_input : signed(16-1 downto 0):=(others=>'0')",
             "signal test_output : signed(16-1 downto 0)",
         ]
-        # FIXME: doesn't work like this
-        # architecture.architecture_component_list = [component]
+
         architecture.architecture_component_list.append(component)
         architecture.architecture_process_list.append(process)
         architecture.architecture_port_map_list.append(uut_port_map)
         architecture.architecture_statement_part = test_process
 
-        code = chain(chain(library(), entity()), architecture())
+        code = chain(library(), entity(), architecture())
         return code
 
 

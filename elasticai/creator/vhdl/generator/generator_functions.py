@@ -1,24 +1,21 @@
 import math
 import random
 from os import path
+from typing import Dict, List
 
 import numpy as np
 import torch
 import torch.nn as nn
 
-from paths import ROOT_DIR
-
 from elasticai.creator.layers import QLSTMCell
-from typing import Dict, List
-
 from elasticai.creator.vhdl.language import CodeGenerator
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     FloatToBinaryFixedPointStringConverter,
-    ToLogicEncoder,
     BitVector,
     FloatToHexFixedPointStringConverter,
 )
+from paths import ROOT_DIR
 
 
 def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
@@ -83,7 +80,7 @@ def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
             )
             lines[-1] = "\t" + lines[-1]
         # last element only in y
-        for y in y_list[-1:]:
+        for _ in y_list[-1:]:
             lines.append("else")
             vhdl_add_assignment(
                 code=lines,
@@ -215,9 +212,7 @@ def _to_vhdl_parameter(
     )
     return {
         str(signal_name): 'X"'
-        + float_to_hex_fixed_point_string_converter(f_val)
-        + '"; -- '
-        + name_parameter
+        + float_to_hex_fixed_point_string_converter(f_val) + '"'
     }
 
 

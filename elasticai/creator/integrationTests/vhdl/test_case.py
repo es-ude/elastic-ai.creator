@@ -18,4 +18,5 @@ class VHDLFileTest(unittest.TestCase):
 
         vhdl_code = filterfalse(starts_with_comment, vhdl_code)
         vhdl_code = list(vhdl_code)
+        generated_code = list(filterfalse(starts_with_comment, generated_code))
         self.assertEqual(vhdl_code, generated_code)
