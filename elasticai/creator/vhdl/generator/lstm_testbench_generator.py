@@ -121,7 +121,7 @@ class LSTMCommonGateTestBench:
             y_list_for_testing=self.y_list_for_testing,
         )
         test_process = Process(identifier="test")
-        test_process.process_test_case_list = test_cases
+        test_process.process_statements_list = [t for t in test_cases()]
 
         architecture = Architecture(
             design_unit=self.component_name + "_tb",
@@ -312,7 +312,7 @@ class LSTMCellTestBench:
 
         test_cases = TestCasesLSTMCell(reference_h_out=self.h_out)
         test_process = Process(identifier="test")
-        test_process.process_test_case_list = test_cases
+        test_process.process_statements_list = [t for t in test_cases()]
 
         architecture = Architecture(
             design_unit=self.component_name + "_tb",

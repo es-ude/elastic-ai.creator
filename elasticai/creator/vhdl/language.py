@@ -219,48 +219,20 @@ class Process:
         lookup_table_generator_function: CodeGenerator = None,
     ):
         self.identifier = identifier
-        self._process_declaration_list = []
-        self._process_statements_list = []
+        self.process_declaration_list = []
+        self.process_statements_list = []
         self.lookup_table_generator_function = lookup_table_generator_function
-        self._process_test_case_list = []
         self.input = input_name
-
-    @property
-    def process_declaration_list(self):
-        return self._process_declaration_list
-
-    @process_declaration_list.setter
-    def process_declaration_list(self, value: list[str]):
-        self._process_declaration_list = value
-
-    @property
-    def process_statements_list(self):
-        return self._process_statements_list
-
-    @process_statements_list.setter
-    def process_statements_list(self, value: list[str]):
-        self._process_statements_list = value
-
-    @property
-    def process_test_case_list(self):
-        return self._process_test_case_list
-
-    # TODO: add type
-    @process_test_case_list.setter
-    def process_test_case_list(self, value: list):
-        self._process_test_case_list = value
 
     def _header(self) -> Code:
         if len(self.process_declaration_list) > 0:
-            yield from _append_semicolons_to_lines(self._process_declaration_list)
+            yield from _append_semicolons_to_lines(self.process_declaration_list)
 
-    def _footer(self) -> Code:
+    def _body(self) -> Code:
         if len(self.process_statements_list) > 0:
-            yield from _append_semicolons_to_lines(self._process_statements_list)
+            yield from _append_semicolons_to_lines(self.process_statements_list)
         if self.lookup_table_generator_function:
             yield from self.lookup_table_generator_function
-        if self.process_test_case_list:
-            yield from self.process_test_case_list()
 
     def __call__(self) -> Code:
         if self.input:
@@ -269,7 +241,7 @@ class Process:
             yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}"
         yield from _filter_empty_lines(self._header())
         yield f"{Keywords.BEGIN.value}"
-        yield from _filter_empty_lines(self._footer())
+        yield from _filter_empty_lines(self._body())
         yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
