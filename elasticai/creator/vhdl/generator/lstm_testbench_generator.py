@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Iterator
 import math
 
 from elasticai.creator.vhdl.language import (
@@ -11,12 +11,10 @@ from elasticai.creator.vhdl.language import (
     ComponentDeclaration,
     Process,
     PortMap,
-    form_to_hex_list,
+    form_to_hex_list, Keywords, Code, Procedure,
 )
 from elasticai.creator.vhdl.language_testbench import (
-    TestCasesLSTMCommonGate,
-    TestCasesLSTMCell,
-    Procedure,
+    TestBenchBase,
 )
 
 
@@ -386,3 +384,85 @@ class LSTMCellTestBench:
 
         code = chain(chain(library(), entity()), architecture())
         return code
+
+
+class TestCasesLSTMCommonGate(TestBenchBase):
+    def __init__(
+        self,
+        x_mem_list_for_testing: list[str],
+        w_mem_list_for_testing: list[str],
+        b_list_for_testing: list[str],
+        y_list_for_testing: list[int],
+        y_variable_name: str = "y",
+    ):
+        assert (
+            len(x_mem_list_for_testing)
+            == len(w_mem_list_for_testing)
+            == len(b_list_for_testing)
+            == len(y_list_for_testing)
+        )
+        self.x_mem_list_for_testing = x_mem_list_for_testing
+        self.w_mem_list_for_testing = w_mem_list_for_testing
+        self.y_list_for_testing = y_list_for_testing
+        self.b_list_for_testing = b_list_for_testing
+        self.y_variable_name = y_variable_name
+
+    def _body(self) -> Iterator[str]:
+        counter = 0
+        yield f"vector_len <= to_unsigned(10, VECTOR_LEN_WIDTH)"
+        for x_mem_value, w_mem_value, b, y_value in zip(
+                self.x_mem_list_for_testing,
+                self.w_mem_list_for_testing,
+                self.b_list_for_testing,
+                self.y_list_for_testing,
+        ):
+            yield f"X_MEM <= ({x_mem_value})"
+            yield f"W_MEM <= ({w_mem_value})"
+            yield f"b <= {b}"
+            yield from (
+             "reset <= '1'",
+             "wait for 2*clk_period",
+             "wait until clock = '0'",
+             "reset <= '0'",
+             "wait until ready = '1'"
+            )
+
+            yield f"report \"expected output is {y_value}, value of '{self.y_variable_name}' is \" & integer'image(to_integer(signed({self.y_variable_name})))"
+            yield f'assert {self.y_variable_name}={y_value} report "The {counter}. test case fail" severity error'
+            yield "reset <= '1'"
+            yield "wait for 1*clk_period"
+            counter = counter + 1
+
+    def __call__(self):
+        yield from iter(self)
+
+
+class TestCasesLSTMCell(TestBenchBase):
+    def __init__(self, reference_h_out: list[int]):
+        self.reference_h_out = reference_h_out
+
+    def _body(self) -> Iterator[str]:
+        yield f"reset <= '1'"
+        yield f"h_out_en <= '0'"
+        yield f"wait for 2*clk_period"
+        yield f"reset <= '0'"
+        yield f"for ii {Keywords.IN.value} 0 to 24 loop send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data)"
+        yield f"wait for 10 ns"
+        yield f"{Keywords.END.value} loop"
+        yield f"for ii {Keywords.IN.value} 0 to 19 loop send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data)"
+        yield f"wait for 10 ns"
+        yield f"{Keywords.END.value} loop"
+        yield f"enable <= '1'"
+        yield f"wait until done = '1'"
+        yield f"wait for 1*clk_period"
+        yield f"enable <= '0'"
+        yield f"-- reference h_out: {str(self.reference_h_out)}"
+        yield f"for ii in 0 to 19 loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))"
+        yield f"h_out_en <= '1'"
+        yield f"wait for 2*clk_period"
+        yield f'report "The value of h_out(" & integer\'image(ii)& ") is " & integer\'image(to_integer(signed(h_out_data)))'
+        yield f"{Keywords.END.value} loop"
+        yield f"wait for 10*clk_period"
+
+    def __call__(self) -> Iterable[Code]:
+        yield from iter(self)

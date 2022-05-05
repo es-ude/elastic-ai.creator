@@ -1,6 +1,6 @@
 import math
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Iterator
 
 import torch.nn
 
@@ -17,9 +17,9 @@ from elasticai.creator.vhdl.language import (
     ContextClause,
     LibraryClause,
     UseClause,
-    PortMap,
+    PortMap, Code,
 )
-from elasticai.creator.vhdl.language_testbench import TestCasesPrecomputedScalarFunction
+from elasticai.creator.vhdl.language_testbench import TestBenchBase
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -236,3 +236,36 @@ class PrecomputedScalarTestBench:
 
         code = chain(chain(library(), entity()), architecture())
         return code
+
+
+class TestCasesPrecomputedScalarFunction(TestBenchBase):
+    def __init__(
+        self,
+        x_list_for_testing: list[int],
+        y_list_for_testing: list[int],
+        x_variable_name: str = "test_input",
+        y_variable_name: str = "test_output",
+        data_width: int = 16,
+    ):
+        assert len(x_list_for_testing) == len(y_list_for_testing)
+        self.x_list_for_testing = x_list_for_testing
+        self.y_list_for_testing = y_list_for_testing
+        self.x_variable_name = x_variable_name
+        self.y_variable_name = y_variable_name
+        self.data_width = data_width
+
+    def __len__(self):
+        return len(self.y_list_for_testing)
+
+    def _body(self) -> Iterator[str]:
+        for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
+            yield f"{self.x_variable_name} <= to_signed({x_value},{self.data_width})"
+            yield f"wait for 1*clk_period"
+            yield f"report \"The value of '{self.y_variable_name}' is \" & integer'image(to_integer(unsigned({self.y_variable_name})))"
+            if isinstance(y_value, str):
+                yield f'assert {self.y_variable_name}="{y_value}" report "The test case {x_value} fail" severity failure'
+            else:
+                yield f'assert {self.y_variable_name}={y_value} report "The test case {x_value} fail" severity failure'
+
+    def __call__(self) -> Iterable[Code]:
+        yield from iter(self)
