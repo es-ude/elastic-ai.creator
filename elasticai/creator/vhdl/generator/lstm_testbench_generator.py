@@ -310,7 +310,7 @@ class LSTMCellTestBench:
         uut_port_map.signal_list.append("h_out_data => h_out_data")
         uut_port_map.signal_list.append("h_out_addr => h_out_addr")
 
-        test_cases = TestCasesLSTMCell(reference_h_out=self.h_out)
+        test_cases = TestCasesLSTMCell(reference_h_out=self.h_out, input_size=self.input_size, hidden_size=self.hidden_size)
         test_process = Process(identifier="test")
         test_process.process_statements_list = [t for t in test_cases()]
 
@@ -440,18 +440,24 @@ class TestCasesLSTMCommonGate(TestBenchBase):
 
 
 class TestCasesLSTMCell(TestBenchBase):
-    def __init__(self, reference_h_out: list[int]):
+    def __init__(self, reference_h_out: list[int], input_size=0, hidden_size=0):
         self.reference_h_out = reference_h_out
+
+        assert ((input_size != 0) and (hidden_size != 0)), "hidden_size and input_size is not set yet"
+
+        self.len_of_x_h_vector = input_size + hidden_size
+        self.len_of_cell_vector = hidden_size
+        self.len_of_h_vector = hidden_size
 
     def _body(self) -> Iterator[str]:
         yield f"reset <= '1'"
         yield f"h_out_en <= '0'"
         yield f"wait for 2*clk_period"
         yield f"reset <= '0'"
-        yield f"for ii {Keywords.IN.value} 0 to 24 loop send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data)"
+        yield f"for ii {Keywords.IN.value} 0 to {str(self.len_of_x_h_vector-1)} loop send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data)"
         yield f"wait for 10 ns"
         yield f"{Keywords.END.value} loop"
-        yield f"for ii {Keywords.IN.value} 0 to 19 loop send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data)"
+        yield f"for ii {Keywords.IN.value} 0 to {str(self.len_of_cell_vector-1)} loop send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data)"
         yield f"wait for 10 ns"
         yield f"{Keywords.END.value} loop"
         yield f"enable <= '1'"
@@ -459,7 +465,7 @@ class TestCasesLSTMCell(TestBenchBase):
         yield f"wait for 1*clk_period"
         yield f"enable <= '0'"
         yield f"-- reference h_out: {str(self.reference_h_out)}"
-        yield f"for ii in 0 to 19 loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))"
+        yield f"for ii in 0 to {str(self.len_of_h_vector-1)} loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))"
         yield f"h_out_en <= '1'"
         yield f"wait for 2*clk_period"
         yield f'report "The value of h_out(" & integer\'image(ii)& ") is " & integer\'image(to_integer(signed(h_out_data)))'
