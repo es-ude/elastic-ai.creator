@@ -2,6 +2,8 @@
 The module contains classes and functions for generating vhdl code similar to the language module
 This module includes CodeGenerator that are only used by the vhdl testbenches
 """
+import abc
+from abc import abstractmethod
 from typing import Iterable, Iterator
 
 from elasticai.creator.vhdl.language import (
@@ -12,8 +14,23 @@ from elasticai.creator.vhdl.language import (
     Keywords, Code,
 )
 
+class TestBenchBase(abc.ABC):
+    simulation_start_msg = 'report "======Simulation Start======" severity Note'
+    simulation_end_msgs = ('report "======Simulation Success======" severity Note',
+                           'report "Please check the output message." severity Note',
+                           'wait')
 
-class TestCasesPrecomputedScalarFunction:
+    @abstractmethod
+    def _body(self) -> Iterator[str]:
+        ...
+
+    def __iter__(self) -> Iterator[str]:
+        yield self.simulation_start_msg
+        yield from self._body()
+        yield from self.simulation_end_msgs
+
+
+class TestCasesPrecomputedScalarFunction(TestBenchBase):
     def __init__(
         self,
         x_list_for_testing: list[int],
@@ -32,8 +49,7 @@ class TestCasesPrecomputedScalarFunction:
     def __len__(self):
         return len(self.y_list_for_testing)
 
-    def __call__(self) -> Iterable[Code]:
-        yield f'report "======Simulation Start======" severity Note'
+    def _body(self) -> Iterator[str]:
         for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
             yield f"{self.x_variable_name} <= to_signed({x_value},{self.data_width})"
             yield f"wait for 1*clk_period"
@@ -42,12 +58,12 @@ class TestCasesPrecomputedScalarFunction:
                 yield f'assert {self.y_variable_name}="{y_value}" report "The test case {x_value} fail" severity failure'
             else:
                 yield f'assert {self.y_variable_name}={y_value} report "The test case {x_value} fail" severity failure'
-        yield f'report "======Simulation Success======" severity Note'
-        yield f'report "Please check the output message." severity Note'
-        yield f"wait"
+
+    def __call__(self) -> Iterable[Code]:
+        yield from iter(self)
 
 
-class TestCasesLSTMCommonGate:
+class TestCasesLSTMCommonGate(TestBenchBase):
     def __init__(
         self,
         x_mem_list_for_testing: list[str],
@@ -68,15 +84,14 @@ class TestCasesLSTMCommonGate:
         self.b_list_for_testing = b_list_for_testing
         self.y_variable_name = y_variable_name
 
-    def __call__(self):
+    def _body(self) -> Iterator[str]:
         counter = 0
-        yield f'report "======Simulation Start======" severity Note'
         yield f"vector_len <= to_unsigned(10, VECTOR_LEN_WIDTH)"
         for x_mem_value, w_mem_value, b, y_value in zip(
-            self.x_mem_list_for_testing,
-            self.w_mem_list_for_testing,
-            self.b_list_for_testing,
-            self.y_list_for_testing,
+                self.x_mem_list_for_testing,
+                self.w_mem_list_for_testing,
+                self.b_list_for_testing,
+                self.y_list_for_testing,
         ):
             yield f"X_MEM <= ({x_mem_value})"
             yield f"W_MEM <= ({w_mem_value})"
@@ -93,17 +108,15 @@ class TestCasesLSTMCommonGate:
             yield f"wait for 1*clk_period"
             counter = counter + 1
 
-        yield f'report "======Simulation Success======" severity Note'
-        yield f'report "Please check the output message." severity Note'
-        yield f"wait"
+    def __call__(self):
+        yield from iter(self)
 
 
-class TestCasesLSTMCell:
+class TestCasesLSTMCell(TestBenchBase):
     def __init__(self, reference_h_out: list[int]):
         self.reference_h_out = reference_h_out
 
-    def __call__(self):
-        yield f'report "======Tests Start======" severity Note'
+    def _body(self) -> Iterator[str]:
         yield f"reset <= '1'"
         yield f"h_out_en <= '0'"
         yield f"wait for 2*clk_period"
@@ -125,9 +138,9 @@ class TestCasesLSTMCell:
         yield f'report "The value of h_out(" & integer\'image(ii)& ") is " & integer\'image(to_integer(signed(h_out_data)))'
         yield f"{Keywords.END.value} loop"
         yield f"wait for 10*clk_period"
-        yield f'report "======Tests finished======" severity Note'
-        yield f'report "Please check the output message." severity Note'
-        yield f"wait"
+
+    def __call__(self) -> Iterable[Code]:
+        yield from iter(self)
 
 
 class Procedure:
