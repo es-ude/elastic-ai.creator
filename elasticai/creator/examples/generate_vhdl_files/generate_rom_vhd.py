@@ -20,6 +20,7 @@ def main(rom_name, data_width, addr_width, array_value):
             data_width=data_width,
             addr_width=addr_width,
             array_value=array_value,
+            resource_option="auto"
         )
         for line in rom():
             writer.write(line)
@@ -31,12 +32,14 @@ def main(rom_name, data_width, addr_width, array_value):
 
 
 if __name__ == "__main__":
-    rom_name = "rom_bi"
+    rom_name = "bi_rom"
     data_width = 12
     frac_bits = 4
     # biases for the input gate
-    Bi = np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
+    Bi = np.array([1.1])
     addr_width = math.ceil(math.log2(len(Bi)))
+    if addr_width==0:
+        addr_width = 1
     array_value = float_array_to_hex_string(
         float_array=Bi, frac_bits=frac_bits, nbits=data_width
     )

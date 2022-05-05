@@ -15,12 +15,13 @@ from elasticai.creator.vhdl.language import (
 
 
 class Rom:
-    def __init__(self, rom_name, data_width, addr_width, array_value):
+    def __init__(self, rom_name, data_width, addr_width, array_value, resource_option):
         self.rom_name = rom_name
         self.rom_name_arrat_t = f"{rom_name}_array_t".format(rom_name=rom_name)
         self.data_width = data_width
         self.addr_width = addr_width
         self.array_value = array_value
+        self.resource_option = resource_option
 
     def __call__(self):
         library = ContextClause(
@@ -78,7 +79,9 @@ class Rom:
             "attribute rom_style : string"
         )
         architecture.architecture_declaration_list.append(
-            'attribute rom_style of ROM : signal is "block"'
+            'attribute rom_style of ROM : signal is "{resource_option}"'.format(
+                resource_option=self.resource_option,
+            )
         )
 
         rom_process = Process(identifier="ROM", input_name="clk")

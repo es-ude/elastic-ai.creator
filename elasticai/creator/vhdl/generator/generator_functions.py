@@ -184,6 +184,8 @@ def float_array_to_hex_string(
         )
     # fill up to address width with zeros
     addr_width = math.ceil(math.log2(len(list_with_hex_representation)))
+    if addr_width==0:
+        addr_width = 1
     number_of_hex_numbers = int(nbits / 4)
     zero_string = "".join("0" for _ in range(number_of_hex_numbers))
     for index in range(2 ** addr_width - len(list_with_hex_representation)):

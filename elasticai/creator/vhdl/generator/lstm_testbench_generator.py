@@ -188,7 +188,9 @@ class LSTMCellTestBench:
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.x_h_addr_width = math.ceil(math.log2(input_size + hidden_size))
-        self.hidden_addr_widht = math.ceil(math.log2(hidden_size))
+        self.hidden_addr_width = math.ceil(math.log2(hidden_size))
+        if self.hidden_addr_width==0:
+            self.hidden_addr_width = 1
         self.w_addr_width = math.ceil(
             math.log2((input_size + hidden_size) * hidden_size)
         )
@@ -225,7 +227,7 @@ class LSTMCellTestBench:
             f"INPUT_SIZE : integer := {self.input_size}",
             f"HIDDEN_SIZE : integer := {self.hidden_size}",
             f"X_H_ADDR_WIDTH : integer := {self.x_h_addr_width}",
-            f"HIDDEN_ADDR_WIDTH : integer := {self.hidden_addr_widht}",
+            f"HIDDEN_ADDR_WIDTH : integer := {self.hidden_addr_width}",
             f"W_ADDR_WIDTH : integer := {self.w_addr_width}",
         ]
         entity.port_list = [
@@ -370,10 +372,10 @@ class LSTMCellTestBench:
             "type C_ARRAY is array (0 to 31) of signed(16-1 downto 0)"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_x_h_data : X_H_ARRAY := ({form_to_hex_list(self.test_x_h_data)})"
+            f"signal test_x_h_data : X_H_ARRAY := ({form_to_hex_list(self.test_x_h_data)},others=>(others=>'0'))"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_c_data : C_ARRAY := ({form_to_hex_list(self.test_c_data)})"
+            f"signal test_c_data : C_ARRAY := ({form_to_hex_list(self.test_c_data)},others=>(others=>'0'))"
         )
         architecture.architecture_component_list.append(procedure_0)
         architecture.architecture_component_list.append(procedure_1)

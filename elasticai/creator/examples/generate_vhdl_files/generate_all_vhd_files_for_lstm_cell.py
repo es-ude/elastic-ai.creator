@@ -57,8 +57,8 @@ if __name__ == "__main__":
     random.seed(0)
     current_frac_bits = 8
     current_nbits = 16
-    current_input_size = 5
-    current_hidden_size = 20
+    current_input_size = 1
+    current_hidden_size = 1
     current_len_weights = (
         current_input_size + current_hidden_size
     ) * current_hidden_size
@@ -188,8 +188,8 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_testbench)
 
     ### copy static files ###
-    for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
-        shutil.copy(
-            ROOT_DIR + "/vhd_files/static_files/" + filename,
-            ROOT_DIR + "/" + args.path,
-        )
+    # for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
+    #     shutil.copy(
+    #         ROOT_DIR + "/vhd_files/static_files/" + filename,
+    #         ROOT_DIR + "/" + args.path,
+    #     )

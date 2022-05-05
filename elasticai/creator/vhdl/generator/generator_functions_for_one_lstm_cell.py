@@ -32,13 +32,16 @@ def generate_rom_file(
     with open(file_path, "w") as writer:
         weight_or_bias_array = weights_or_bias_list[index]
         addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
+        if addr_width==0:
+            addr_width=1
         array_value = weight_or_bias_array
 
         rom = Rom(
-            rom_name="rom_" + name,
+            rom_name=name + "_rom",
             data_width=nbits,
             addr_width=addr_width,
             array_value=array_value,
+            resource_option="auto",
         )
         rom_code = rom()
         for line in rom_code:
