@@ -491,3 +491,50 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
         return generator
     else:
         raise ValueError
+
+
+class Procedure:
+    def __init__(self, identifier: str):
+        self.identifier = identifier
+        self._declaration_list = InterfaceList()
+        self._declaration_list_with_is = InterfaceList()
+        self._statement_list = InterfaceList()
+
+    @property
+    def declaration_list(self):
+        return self._declaration_list
+
+    @declaration_list.setter
+    def declaration_list(self, value):
+        self._declaration_list = InterfaceList(value)
+
+    @property
+    def declaration_list_with_is(self):
+        return self._declaration_list_with_is
+
+    @declaration_list_with_is.setter
+    def declaration_list_with_is(self, value):
+        self._declaration_list_with_is = InterfaceList(value)
+
+    @property
+    def statement_list(self):
+        return self._statement_list
+
+    @statement_list.setter
+    def statement_list(self, value):
+        self._statement_list = InterfaceList(value)
+
+    def __call__(self):
+        yield f"procedure {self.identifier} ("
+        if len(self._declaration_list) > 0:
+            yield from _filter_empty_lines(
+                _add_semicolons(self._declaration_list(), semicolon_last=True)
+            )
+        if len(self._declaration_list_with_is) > 0:
+            yield from _filter_empty_lines(_add_is(self._declaration_list_with_is()))
+        yield f"{Keywords.BEGIN.value}"
+        if len(self._statement_list) > 0:
+            yield from _filter_empty_lines(
+                _add_semicolons(self._statement_list(), semicolon_last=True)
+            )
+        yield f"{Keywords.END.value} {self.identifier};"

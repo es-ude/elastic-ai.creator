@@ -1,9 +1,6 @@
-from elasticai.creator.vhdl.language_testbench import (
-    TestCasesPrecomputedScalarFunction,
-    TestCasesLSTMCommonGate,
-    TestCasesLSTMCell,
-    Procedure,
-)
+from elasticai.creator.vhdl.language import Procedure
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import TestCasesPrecomputedScalarFunction
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import TestCasesLSTMCommonGate, TestCasesLSTMCell
 from unittest import TestCase
 
 
