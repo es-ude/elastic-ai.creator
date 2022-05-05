@@ -155,7 +155,7 @@ if __name__ == "__main__":
     )
 
     with open(file_path_testbench, "w") as writer:
-        lstm_cell = LSTMCellTestBench(
+        lstm_cell_tb = LSTMCellTestBench(
             data_width=current_nbits,
             frac_width=current_frac_bits,
             input_size=current_input_size,
@@ -165,7 +165,7 @@ if __name__ == "__main__":
             h_out=list(h_output),
             component_name="lstm_cell",
         )
-        lstm_cell_code = lstm_cell()
+        lstm_cell_code = lstm_cell_tb()
         for line in lstm_cell_code:
             writer.write(line + "\n")
 
