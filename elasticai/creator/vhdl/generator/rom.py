@@ -17,7 +17,7 @@ from elasticai.creator.vhdl.language import (
 class Rom:
     def __init__(self, rom_name, data_width, addr_width, array_value, resource_option):
         self.rom_name = rom_name
-        self.rom_name_arrat_t = f"{rom_name}_array_t".format(rom_name=rom_name)
+        self.rom_name_array_t = f"{rom_name}_array_t".format(rom_name=rom_name)
         self.data_width = data_width
         self.addr_width = addr_width
         self.array_value = array_value
@@ -64,14 +64,14 @@ class Rom:
 
         architecture.architecture_declaration_list.append(
             "type {rom_name_arrat_t} is array (0 to 2**{addr_width}-1) of std_logic_vector({data_width}-1 downto 0)".format(
-                rom_name_arrat_t=self.rom_name_arrat_t,
+                rom_name_arrat_t=self.rom_name_array_t,
                 addr_width=self.addr_width,
                 data_width=self.data_width,
             )
         )
         architecture.architecture_declaration_list.append(
             "signal ROM : {rom_name_arrat_t}:=({array_value})".format(
-                rom_name_arrat_t=self.rom_name_arrat_t,
+                rom_name_arrat_t=self.rom_name_array_t,
                 array_value=form_to_hex_list(self.array_value),
             )
         )
@@ -93,6 +93,6 @@ class Rom:
 
         architecture.architecture_statement_part = rom_process
 
-        code = chain(chain(library(), entity()), architecture())
+        code = chain(library(), entity(), architecture())
 
         return code

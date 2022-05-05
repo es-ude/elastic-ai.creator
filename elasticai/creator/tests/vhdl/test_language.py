@@ -1,3 +1,8 @@
+from unittest import TestCase
+
+from elasticai.creator.vhdl.generator.generator_functions import (
+    precomputed_scalar_function_process,
+)
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
@@ -6,15 +11,10 @@ from elasticai.creator.vhdl.language import (
     LibraryClause,
     UseClause,
     Process,
-    InterfaceConstrained,
     Mode,
     Architecture,
     InterfaceSignal,
-    PortMap,
-)
-from unittest import TestCase
-from elasticai.creator.vhdl.generator.generator_functions import (
-    precomputed_scalar_function_process,
+    PortMap, Procedure,
 )
 
 
@@ -302,4 +302,34 @@ class PortMapTest(TestCase):
         port_map.signal_list.append("x => y")
         expected = ["something: lstm", "port map (", "x => y", ");"]
         actual = list(port_map())
+        self.assertSequenceEqual(expected, actual)
+
+
+class ProcedureTest(TestCase):
+    def test_procedure(self):
+        procedure = Procedure(identifier="abc")
+        expected = ["procedure abc (", "begin", "end abc;"]
+        actual = list(procedure())
+        self.assertSequenceEqual(expected, actual)
+
+    def test_procedure_with_declaration_and_statement_list(self):
+        procedure = Procedure(identifier="abc")
+        procedure.declaration_list = [
+            "some_variable : in some_name(some_parameter)",
+        ]
+        procedure.declaration_list_with_is = [
+            "signal some_variable_1 : out some_name(some_parameter))"
+        ]
+        procedure.statement_list = [
+            "xyz <= efg",
+        ]
+        expected = [
+            "procedure abc (",
+            "some_variable : in some_name(some_parameter);",
+            "signal some_variable_1 : out some_name(some_parameter)) is",
+            "begin",
+            "xyz <= efg;",
+            "end abc;",
+        ]
+        actual = list(procedure())
         self.assertSequenceEqual(expected, actual)

@@ -1,37 +1,7 @@
-from elasticai.creator.vhdl.language import Procedure
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import TestCasesPrecomputedScalarFunction
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import TestCasesLSTMCommonGate, TestCasesLSTMCell
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import TestCasesLSTMCommonGate
 from unittest import TestCase
 
-
-class ProcedureTest(TestCase):
-    def test_procedure(self):
-        procedure = Procedure(identifier="abc")
-        expected = ["procedure abc (", "begin", "end abc;"]
-        actual = list(procedure())
-        self.assertSequenceEqual(expected, actual)
-
-    def test_procedure_with_declaration_and_statement_list(self):
-        procedure = Procedure(identifier="abc")
-        procedure.declaration_list = [
-            "some_variable : in some_name(some_parameter)",
-        ]
-        procedure.declaration_list_with_is = [
-            "signal some_variable_1 : out some_name(some_parameter))"
-        ]
-        procedure.statement_list = [
-            "xyz <= efg",
-        ]
-        expected = [
-            "procedure abc (",
-            "some_variable : in some_name(some_parameter);",
-            "signal some_variable_1 : out some_name(some_parameter)) is",
-            "begin",
-            "xyz <= efg;",
-            "end abc;",
-        ]
-        actual = list(procedure())
-        self.assertSequenceEqual(expected, actual)
 
 class TestCasesLSTMCommonGateTest(TestCase):
     def test_TestCasesLSTMCommonGate(self):
