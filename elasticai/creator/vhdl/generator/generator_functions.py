@@ -245,6 +245,7 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     b_hf = 0
     b_hg = 0
     b_ho = 0
+    b = [0, 0, 0, 0]
 
     floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
         bits_used_for_fraction=frac_width, strict=False
@@ -255,6 +256,7 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     )
 
     def update_signals(signal_names: Iterable[str], signal_values: Iterable[float]):
+        print(signal_values)
         dict_of_signals.update(
             (
                 (
@@ -273,52 +275,12 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
             update_signals(
                 signal_names=("whi", "whf", "whg", "who"), signal_values=param
             )
-        elif name == "bias_ih":
-            b_ii = param[0]
-            b_if = param[1]
-            b_ig = param[2]
-            b_io = param[3]
-        elif name == "bias_hh":
-            b_hi = param[0]
-            b_hf = param[1]
-            b_hg = param[2]
-            b_ho = param[3]
+        elif name in ("bias_ih", "bias_hh"):
+            b = [new_value + old_value for old_value, new_value in zip(b, param)]
         else:
             dict_of_signals.update("should not come to here.")
 
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_ii + b_hi,
-            frac_width,
-            data_width,
-            signal_name="bi",
-        )
-    )
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_if + b_hf,
-            frac_width,
-            data_width,
-            signal_name="bf",
-        )
-    )
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_ig + b_hg,
-            frac_width,
-            data_width,
-            signal_name="bg",
-        )
-    )
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_io + b_ho,
-            frac_width,
-            data_width,
-            signal_name="bo",
-        )
-    )
-
+    update_signals(signal_names=("bi", "bf", "bg", "bo"), signal_values=b)
     return dict_of_signals
 
 
