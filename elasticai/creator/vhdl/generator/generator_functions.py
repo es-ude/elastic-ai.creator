@@ -1,7 +1,8 @@
 import math
 import random
+from functools import partial
 from os import path
-from typing import Dict, List
+from typing import Dict, List, Iterable
 
 import numpy as np
 import torch
@@ -155,17 +156,8 @@ def float_array_to_int(float_array: np.array, frac_bits: int) -> np.array:
 
 
 def float_array_to_hex_string(
-    float_array: np.array, frac_bits: int, nbits: int
+    float_array: np.array, frac_bits: int, number_of_bits: int
 ) -> list[str]:
-    """
-    converts an array with floating point numbers into an array with hexadecimal numbers stored as strings
-    Args:
-        float_array (NDArray[Float32]): array with floating point numbers
-        frac_bits (int): number of fraction bits
-        nbits (int): number of bits
-    Returns:
-        list with strings with the corresponding hex representations
-    """
     list_with_hex_representation = []
     for element in float_array:
         floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
@@ -173,7 +165,7 @@ def float_array_to_hex_string(
         )
         # convert to hex
         float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-            total_bit_width=nbits,
+            total_bit_width=number_of_bits,
             as_signed_fixed_point=floats_to_signed_fixed_point_converter,
         )
         list_with_hex_representation.append(
@@ -181,17 +173,17 @@ def float_array_to_hex_string(
         )
     # fill up to address width with zeros
     addr_width = math.ceil(math.log2(len(list_with_hex_representation)))
-    if addr_width==0:
+    if addr_width == 0:
         addr_width = 1
-    number_of_hex_numbers = int(nbits / 4)
+    number_of_hex_numbers = int(number_of_bits / 4)
     zero_string = "".join("0" for _ in range(number_of_hex_numbers))
-    for index in range(2 ** addr_width - len(list_with_hex_representation)):
+    for index in range(2**addr_width - len(list_with_hex_representation)):
         list_with_hex_representation.append(zero_string)
     return list_with_hex_representation
 
 
 def _to_vhdl_parameter(
-    f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
+    f_val: float, frac_width: int, nbits: int, signal_name: str
 ) -> Dict:
     """
         returns a Dictionary of one signal and his definition
@@ -211,8 +203,7 @@ def _to_vhdl_parameter(
         as_signed_fixed_point=floats_to_signed_fixed_point_converter,
     )
     return {
-        str(signal_name): 'X"'
-        + float_to_hex_fixed_point_string_converter(f_val) + '"'
+        str(signal_name): 'X"' + float_to_hex_fixed_point_string_converter(f_val) + '"'
     }
 
 
@@ -255,80 +246,32 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     b_hg = 0
     b_ho = 0
 
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_width, strict=False
+    )
+    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+        total_bit_width=data_width,
+        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+    )
+
+    def update_signals(signal_names: Iterable[str], signal_values: Iterable[float]):
+        dict_of_signals.update(
+            (
+                (
+                    signal_name,
+                    f'X"{float_to_hex_fixed_point_string_converter(signal_value)}"',
+                )
+                for signal_name, signal_value in zip(signal_names, signal_values)
+            )
+        )
+
     for name, param in lstm_single_cell.named_parameters():
         if name == "weight_ih":
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[0],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_ii",
-                    signal_name="wii",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[1],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_if",
-                    signal_name="wif",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[2],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_ig",
-                    signal_name="wig",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[3],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_io",
-                    signal_name="wio",
-                )
-            )
+            signal_names = ("wii", "wif", "wig", "wio")
+            update_signals(signal_names, param)
         elif name == "weight_hh":
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[0],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_hi",
-                    signal_name="whi",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[1],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_hf",
-                    signal_name="whf",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[2],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_hg",
-                    signal_name="whg",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[3],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_ho",
-                    signal_name="who",
-                )
+            update_signals(
+                signal_names=("whi", "whf", "whg", "who"), signal_values=param
             )
         elif name == "bias_ih":
             b_ii = param[0]
@@ -348,7 +291,6 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
             b_ii + b_hi,
             frac_width,
             data_width,
-            name_parameter="b_ii + b_hi",
             signal_name="bi",
         )
     )
@@ -357,7 +299,6 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
             b_if + b_hf,
             frac_width,
             data_width,
-            name_parameter="b_if + b_hf",
             signal_name="bf",
         )
     )
@@ -366,7 +307,6 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
             b_ig + b_hg,
             frac_width,
             data_width,
-            name_parameter="b_ig + b_hg",
             signal_name="bg",
         )
     )
@@ -375,7 +315,6 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
             b_io + b_ho,
             frac_width,
             data_width,
-            name_parameter="b_io + b_ho",
             signal_name="bo",
         )
     )

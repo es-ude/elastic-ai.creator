@@ -64,6 +64,7 @@ class FloatToHexFixedPointStringConverter:
         return hex_representation(signed_fixed_point, self.total_bit_width)
 
 
+
 def _int_to_hex_str(number: int, bits: int) -> str:
     return "{{:0{number_of_bits}x}}".format(number_of_bits=int(bits / 4)).format(number)
 

@@ -41,7 +41,7 @@ if __name__ == "__main__":
     if addr_width==0:
         addr_width = 1
     array_value = float_array_to_hex_string(
-        float_array=Bi, frac_bits=frac_bits, nbits=data_width
+        float_array=Bi, frac_bits=frac_bits, number_of_bits=data_width
     )
     # generate the vhdl file
     main(rom_name, data_width, addr_width, array_value)

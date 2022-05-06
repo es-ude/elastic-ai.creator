@@ -90,12 +90,12 @@ def inference_model(
             float_array_to_hex_string(
                 x_h_input,
                 frac_bits=frac_bits,
-                nbits=nbits,
+                number_of_bits=nbits,
             ),
             float_array_to_hex_string(
                 cx.detach().numpy().flatten(),
                 frac_bits=frac_bits,
-                nbits=nbits,
+                number_of_bits=nbits,
             ),
             float_array_to_int(hx.detach().numpy().flatten(), frac_bits=frac_bits),
         )
@@ -144,14 +144,14 @@ def define_weights_and_bias(
     bg = bias[len_bias * 2 : len_bias * 3]  # B_ig+B_hg
     bo = bias[len_bias * 3 : len_bias * 4]  # B_io+B_ho
 
-    wi = float_array_to_hex_string(wi, frac_bits=frac_bits, nbits=nbits)
-    wf = float_array_to_hex_string(wf, frac_bits=frac_bits, nbits=nbits)
-    wg = float_array_to_hex_string(wg, frac_bits=frac_bits, nbits=nbits)
-    wo = float_array_to_hex_string(wo, frac_bits=frac_bits, nbits=nbits)
+    wi = float_array_to_hex_string(wi, frac_bits=frac_bits, number_of_bits=nbits)
+    wf = float_array_to_hex_string(wf, frac_bits=frac_bits, number_of_bits=nbits)
+    wg = float_array_to_hex_string(wg, frac_bits=frac_bits, number_of_bits=nbits)
+    wo = float_array_to_hex_string(wo, frac_bits=frac_bits, number_of_bits=nbits)
 
-    bi = float_array_to_hex_string(bi, frac_bits=frac_bits, nbits=nbits)
-    bf = float_array_to_hex_string(bf, frac_bits=frac_bits, nbits=nbits)
-    bg = float_array_to_hex_string(bg, frac_bits=frac_bits, nbits=nbits)
-    bo = float_array_to_hex_string(bo, frac_bits=frac_bits, nbits=nbits)
+    bi = float_array_to_hex_string(bi, frac_bits=frac_bits, number_of_bits=nbits)
+    bf = float_array_to_hex_string(bf, frac_bits=frac_bits, number_of_bits=nbits)
+    bg = float_array_to_hex_string(bg, frac_bits=frac_bits, number_of_bits=nbits)
+    bo = float_array_to_hex_string(bo, frac_bits=frac_bits, number_of_bits=nbits)
 
     return [wi, wf, wg, wo], [bi, bf, bg, bo]

@@ -17,7 +17,7 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
         Bi = np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
         addr_width = math.ceil(math.log2(len(Bi)))
         array_value = float_array_to_hex_string(
-            float_array=Bi, frac_bits=frac_bits, nbits=data_width
+            float_array=Bi, frac_bits=frac_bits, number_of_bits=data_width
         )
 
         generate_rom = Rom(
