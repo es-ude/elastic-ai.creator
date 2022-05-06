@@ -21,7 +21,5 @@ if __name__ == "__main__":
         relative_path_from_project_root="vhd_files/source",
         file_name="lstm_cell.vhd",
     )
-    component_name = "lstm_cell"
-    DATA_WIDTH = 16
-    FRAC_WIDTH = 8
-    main(component_name=component_name, data_width=DATA_WIDTH, frac_width=FRAC_WIDTH)
+
+    main(component_name="lstm_cell", data_width=16, frac_width=8)

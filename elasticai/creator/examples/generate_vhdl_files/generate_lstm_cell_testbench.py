@@ -113,7 +113,6 @@ def main() -> None:
         for line in lstm_cell_code:
             writer.write(line + "\n")
 
-    # indent all lines of the file
     format_vhdl(file_path=file_path)
 
 

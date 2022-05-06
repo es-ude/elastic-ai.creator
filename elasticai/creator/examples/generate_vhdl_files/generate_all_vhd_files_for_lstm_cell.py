@@ -52,7 +52,6 @@ if __name__ == "__main__":
     if not os.path.isdir(ROOT_DIR + "/" + args.path):
         os.mkdir(ROOT_DIR + "/" + args.path)
 
-    ### set the current values ###
     torch.manual_seed(0)
     random.seed(0)
     current_frac_bits = 8
@@ -169,7 +168,6 @@ if __name__ == "__main__":
         for line in lstm_cell_code:
             writer.write(line + "\n")
 
-    # indent all lines of the files
     for value in weight_name_index_dict.values():
         file_path_weight = get_file_path_string(
             relative_path_from_project_root=args.path,
@@ -186,10 +184,3 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_sigmoid)
     format_vhdl(file_path=file_path_tanh)
     format_vhdl(file_path=file_path_testbench)
-
-    ### copy static files ###
-    # for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
-    #     shutil.copy(
-    #         ROOT_DIR + "/vhd_files/static_files/" + filename,
-    #         ROOT_DIR + "/" + args.path,
-    #     )
