@@ -1,4 +1,3 @@
-import sys
 import os
 from argparse import ArgumentParser
 
@@ -40,14 +39,13 @@ def define_lstm_cell(input_size: int, hidden_size: int) -> QLSTMCell:
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
         "--path",
-        help="relative path from project root to folder for generated vhd files",
+        help="path to folder for generated vhd files",
         required=True,
     )
-    args = arg_parser.parse_args(args)
+    args = arg_parser.parse_args()
     if not os.path.isdir(args.path):
         os.mkdir(args.path)
 
@@ -164,5 +162,5 @@ if __name__ == "__main__":
 
     # copy static files
     # TODO: Maybe create a mapping, which files are needed for a specific model
-    for file_name in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
-        copy_static_file(file_name, destination_path(file_name))
+    for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
+        copy_static_file(file, destination_path(file))
