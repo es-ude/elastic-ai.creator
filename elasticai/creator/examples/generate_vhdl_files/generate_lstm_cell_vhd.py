@@ -1,11 +1,24 @@
+from argparse import ArgumentParser
+
 from elasticai.creator.vhdl.generator.lstm_cell import LstmCell
-from elasticai.creator.vhdl.generator.generator_functions import (
-    get_file_path_string,
-)
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
-def main(component_name: str, data_width: int, frac_width: int) -> None:
+def main() -> None:
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument(
+        "--file",
+        help="filepath of the generated vhd file",
+        required=True,
+    )
+    args = arg_parser.parse_args()
+    file_path = args.file
+
+    component_name = "lstm_cell"
+    data_width = 16
+    frac_width = 8
+
+    # generate the vhdl file
     with open(file_path, "w") as writer:
         code = LstmCell(component_name, data_width, frac_width)
         for line in code():
@@ -18,12 +31,5 @@ def main(component_name: str, data_width: int, frac_width: int) -> None:
 
 
 if __name__ == "__main__":
-    file_path = get_file_path_string(
-        relative_path_from_project_root="vhdl_resources/source",
-        file_name="lstm_cell.vhd",
-    )
-    component_name = "lstm_cell"
-    DATA_WIDTH = 16
-    FRAC_WIDTH = 8
-    # generate the vhdl file
-    main(component_name=component_name, data_width=DATA_WIDTH, frac_width=FRAC_WIDTH)
+    main()
+

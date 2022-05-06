@@ -1,6 +1,5 @@
 import math
 import random
-from os import path
 
 import numpy as np
 import torch
@@ -382,18 +381,3 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     )
 
     return dict_of_signals
-
-
-def get_file_path_string(
-    file_name: str,
-    relative_path_from_project_root: str,
-) -> str:
-    """
-    returns String of a file path
-    Args:
-        file_name (str): the name of the file
-        relative_path_from_project_root (str): path where file should be located
-    Returns:
-        string of the full path to a given filename
-    """
-    return path.join(relative_path_from_project_root, file_name)
