@@ -1,7 +1,7 @@
-import os
 import subprocess
 
-from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from elasticai.creator.resource_utils import get_full_path
+from elasticai.creator.vhdl import vhdl_formatter
 
 """
     we are using vsg (VHDL Style Guide) for indenting the generated vhdl files
@@ -14,17 +14,9 @@ from elasticai.creator.vhdl.generator.generator_functions import get_file_path_s
 
 def format_vhdl(file_path):
     # get the path of config
-    config = get_file_path_string(
-        relative_path_from_project_root="elasticai/creator/vhdl/vhdl_formatter",
-        file_name="config.json",
-    )
+    config_path = get_full_path(package=vhdl_formatter, file_name="config.json")
     # check if the vhdl file exist !
-    if os.path.isfile(file_path):
-        subprocess.Popen(
-            "vsg -f {file_path} --style indent_only --configuration {config} --fix".format(
-                file_path=file_path, config=config
-            ),
-            shell=True,
-        )
-    else:
-        print("no such a file")
+    subprocess.Popen(
+        f"vsg -f {file_path} --style indent_only --configuration {config_path} --fix",
+        shell=True
+    )
