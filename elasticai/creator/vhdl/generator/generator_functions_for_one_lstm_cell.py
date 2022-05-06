@@ -11,6 +11,9 @@ from elasticai.creator.vhdl.generator.generator_functions import (
 )
 
 from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.number_representations import (
+    FloatToSignedFixedPointConverter,
+)
 
 
 def generate_rom_file(
@@ -32,8 +35,8 @@ def generate_rom_file(
     with open(file_path, "w") as writer:
         weight_or_bias_array = weights_or_bias_list[index]
         addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
-        if addr_width==0:
-            addr_width=1
+        if addr_width == 0:
+            addr_width = 1
         array_value = weight_or_bias_array
 
         rom = Rom(
@@ -78,11 +81,13 @@ def inference_model(
     # hx = hx/torch.max(abs(hx))
     # cx = cx/torch.max(abs(cx))
     output = []
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_bits, strict=False
+    )
     for i in range(input.size()[0]):
         x_h_input = np.hstack(
             (input[i].detach().numpy().flatten(), hx.detach().numpy().flatten())
         )
-
         hx, cx = lstm_signal_cell(input[i], (hx, cx))
         output.append(hx)
 
@@ -97,7 +102,7 @@ def inference_model(
                 frac_bits=frac_bits,
                 number_of_bits=nbits,
             ),
-            float_array_to_int(hx.detach().numpy().flatten(), frac_bits=frac_bits),
+            floats_to_signed_fixed_point_converter(hx.detach().numpy().flatten()),
         )
 
 

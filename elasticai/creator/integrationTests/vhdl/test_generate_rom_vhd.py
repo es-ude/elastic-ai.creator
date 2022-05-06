@@ -3,29 +3,40 @@ import numpy as np
 
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 from elasticai.creator.vhdl.generator.generator_functions import (
-    float_array_to_hex_string,
+    fill_list_with_hex_zeros_up_to_power_of_two,
 )
+
 from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.number_representations import (
+    FloatToSignedFixedPointConverter,
+    FloatToHexFixedPointStringConverter,
+)
 
 
 class GenerateROMVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
         rom_name = "rom_bi"
         data_width = 12
-        frac_bits = 4
+        frac_width = 4
         # biases for the input gate
         Bi = np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
         addr_width = math.ceil(math.log2(len(Bi)))
-        array_value = float_array_to_hex_string(
-            float_array=Bi, frac_bits=frac_bits, number_of_bits=data_width
+        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+            bits_used_for_fraction=frac_width, strict=False
         )
+        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+            total_bit_width=data_width,
+            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+        )
+        array_value = [float_to_hex_fixed_point_string_converter(x) for x in Bi]
+        array_value = fill_list_with_hex_zeros_up_to_power_of_two(array_value)
 
         generate_rom = Rom(
             rom_name=rom_name,
             data_width=data_width,
             addr_width=addr_width,
             array_value=array_value,
-            resource_option="auto"
+            resource_option="auto",
         )
         generated_code = list(generate_rom())
 

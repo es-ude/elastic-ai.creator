@@ -137,74 +137,18 @@ def precomputed_logic_function_process(
         yield line
 
 
-def float_array_to_int(float_array: np.array, frac_bits: int) -> np.array:
+def fill_list_with_hex_zeros_up_to_power_of_two(hex_list: list[str]) -> list[str]:
     """
-    converts an array with floating point numbers into an array with integers
-    Args:
-        float_array (NDArray[Float32]): array with floating point numbers
-        frac_bits (int): number of fraction bits
-    Returns:
-        array with integer numbers
+    Takes a list of strings determines, the length of the first element and appends a hex representation of zero to it
+    as often as necessary to reach a total length of `hex_list` that matches a power of two.
+    The first element of `hex_list` is assumed be a hexadecimal number.
+    All the strings in `hex_list` are assumed to have the same length.
+    We assume that `hex_list` is not empty.
     """
-    int_list = []
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_bits, strict=False
-    )
-    for element in float_array:
-        int_list.append(floats_to_signed_fixed_point_converter(element))
-    return np.array(int_list)
-
-
-def float_array_to_hex_string(
-    float_array: np.array, frac_bits: int, number_of_bits: int
-) -> list[str]:
-    list_with_hex_representation = []
-    for element in float_array:
-        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-            bits_used_for_fraction=frac_bits, strict=False
-        )
-        # convert to hex
-        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-            total_bit_width=number_of_bits,
-            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-        )
-        list_with_hex_representation.append(
-            float_to_hex_fixed_point_string_converter(element)
-        )
-    # fill up to address width with zeros
-    addr_width = math.ceil(math.log2(len(list_with_hex_representation)))
-    if addr_width == 0:
-        addr_width = 1
-    number_of_hex_numbers = int(number_of_bits / 4)
-    zero_string = "".join("0" for _ in range(number_of_hex_numbers))
-    for index in range(2**addr_width - len(list_with_hex_representation)):
-        list_with_hex_representation.append(zero_string)
-    return list_with_hex_representation
-
-
-def _to_vhdl_parameter(
-    f_val: float, frac_width: int, nbits: int, signal_name: str
-) -> Dict:
-    """
-        returns a Dictionary of one signal and his definition
-    Args:
-        f_val (float): a floating point number
-        nbits(int): the number of bits
-        frac_width(int): the number of bits for the fraction
-    Returns:
-        String of a hexadecimal value for an integer
-    """
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_width, strict=False
-    )
-    # convert to hex
-    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-        total_bit_width=nbits,
-        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-    )
-    return {
-        str(signal_name): 'X"' + float_to_hex_fixed_point_string_converter(f_val) + '"'
-    }
+    hex_number_length = len(hex_list[0])
+    next_exponent_for_power_of_two = math.ceil(math.log2(len(hex_list)))
+    number_of_missing_zeros = 2**next_exponent_for_power_of_two - len(hex_list)
+    return hex_list + ["".join(["0"] * hex_number_length)] * number_of_missing_zeros
 
 
 def _elastic_ai_creator_lstm() -> QLSTMCell:
@@ -221,14 +165,8 @@ def _ensure_reproducibility():
 def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Dict:
     """
     returns Dict of signals names as key and their definition as value
-    Args:
-        data_width (int): the width of the data
-        frac_width (int): the fraction part of data_width
-    Returns:
-        Dict of the signal names and their definitions
     """
     dict_of_signals = {}
-    # define the lstm cell
     _ensure_reproducibility()
     lstm_single_cell = _elastic_ai_creator_lstm()
 
@@ -236,15 +174,7 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     # weight_hh_l[k] : `(W_hi|W_hf|W_hg|W_ho)`
     # bias_ih_l[k] :  `(b_ii|b_if|b_ig|b_io)`
     # bias_hh_l[k] :  `(W_hi|W_hf|W_hg|b_ho)`
-    b_ii = 0
-    b_if = 0
-    b_ig = 0
-    b_io = 0
 
-    b_hi = 0
-    b_hf = 0
-    b_hg = 0
-    b_ho = 0
     b = [0, 0, 0, 0]
 
     floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
