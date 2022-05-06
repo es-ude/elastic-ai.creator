@@ -31,7 +31,6 @@ def main(rom_name, data_width, addr_width, array_value):
             if line[-1] != "\n":
                 writer.write("\n")
 
-    # indent all lines of the file
     format_vhdl(file_path=file_path)
 
 
@@ -55,5 +54,4 @@ if __name__ == "__main__":
     array_value = [float_to_hex_fixed_point_string_converter(x) for x in Bi]
     array_value = fill_list_with_hex_zeros_up_to_power_of_two(array_value)
 
-    # generate the vhdl file
     main(rom_name, data_width, addr_width, array_value)

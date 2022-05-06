@@ -11,7 +11,6 @@ def main(file_path, component_name, data_width, frac_width):
             if line[-1] != "\n":
                 writer.write("\n")
 
-    # indent all lines of the file
     format_vhdl(file_path=file_path)
 
 
@@ -19,12 +18,10 @@ if __name__ == "__main__":
     component_name = "mac_async"
     data_width = 16
     frac_width = 8
-    # specify the file path
     file_path = get_file_path_string(
         relative_path_from_project_root="vhd_files/source",
         file_name=component_name + ".vhd",
     )
-    # generate the vhdl-file
     main(
         file_path=file_path,
         component_name=component_name,
