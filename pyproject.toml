@@ -10,12 +10,12 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.9"
-torch = "^1.10.0"
+python = "^3.9"
+torch = "^1.11"
 brevitas = { version = "^0.7.0", optional = true }
-onnx = { version = "^1.10.2", optional = true }
-onnxoptimizer = { version = "^0.2.6", optional = true }
-torchvision = { version = "^0.11.2", optional = true }
+onnx = { version = "^1.10", optional = true }
+onnxoptimizer = { version = "^0.2", optional = true }
+torchvision = { version = "^0", optional = true }
 MonkeyType = "^21.5.0"
 bitarray = "^2.3.5"
 vsg = "^3.9.0"
