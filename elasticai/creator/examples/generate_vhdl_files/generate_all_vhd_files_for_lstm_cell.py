@@ -184,3 +184,9 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_sigmoid)
     format_vhdl(file_path=file_path_tanh)
     format_vhdl(file_path=file_path_testbench)
+
+    for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
+        shutil.copy(
+            ROOT_DIR + "/vhd_files/static_files/" + filename,
+            ROOT_DIR + "/" + args.path,
+        )
