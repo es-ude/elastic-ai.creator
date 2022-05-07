@@ -1,20 +1,12 @@
-from io import StringIO
-from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-from elasticai.creator.vhdl.generator.lstm_cell import LstmCell
-
-
-class GenerateLSTMCellVhdTest(GeneratedVHDLCodeTest):
-    # the test will fail if you try to align the string with the same indent with the function (--)
-    def test_compare_files(self) -> None:
-        expected_code = """library ieee, work;
+library ieee, work;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.all;
 
 entity lstm_cell is
   generic (
-    DATA_WIDTH : integer := 16;
-    FRAC_WIDTH : integer := 8
+    DATA_WIDTH : integer := {data_width};
+    FRAC_WIDTH : integer := {frac_width}
   );
   port (
     x : in signed(DATA_WIDTH-1 downto 0);
@@ -26,43 +18,43 @@ entity lstm_cell is
 end entity lstm_cell;
 architecture rtl of lstm_cell is
 
-    signal wii : signed(DATA_WIDTH-1 downto 0) := X"ffff"; -- W_ii;
-    signal wif : signed(DATA_WIDTH-1 downto 0) := X"0089"; -- W_if;
-    signal wig : signed(DATA_WIDTH-1 downto 0) := X"ff2e"; -- W_ig;
-    signal wio : signed(DATA_WIDTH-1 downto 0) := X"ff44"; -- W_io;
-    signal whi : signed(DATA_WIDTH-1 downto 0) := X"ff9e"; -- W_hi;
-    signal whf : signed(DATA_WIDTH-1 downto 0) := X"0044"; -- W_hf;
-    signal whg : signed(DATA_WIDTH-1 downto 0) := X"fffb"; -- W_hg;
-    signal who : signed(DATA_WIDTH-1 downto 0) := X"00ca"; -- W_ho;
-    signal bi : signed(DATA_WIDTH-1 downto 0) := X"fef5"; -- b_ii + b_hi;
-    signal bf : signed(DATA_WIDTH-1 downto 0) := X"ff9b"; -- b_if + b_hf;
-    signal bg : signed(DATA_WIDTH-1 downto 0) := X"ff4a"; -- b_ig + b_hg;
-    signal bo : signed(DATA_WIDTH-1 downto 0) := X"ffd8"; -- b_io + b_ho;
+    signal wii : signed(DATA_WIDTH-1 downto 0) := {wii}; -- W_ii;
+    signal wif : signed(DATA_WIDTH-1 downto 0) := {wif}; -- W_if;
+    signal wig : signed(DATA_WIDTH-1 downto 0) := {wig}; -- W_ig;
+    signal wio : signed(DATA_WIDTH-1 downto 0) := {wio}; -- W_io;
+    signal whi : signed(DATA_WIDTH-1 downto 0) := {whi}; -- W_hi;
+    signal whf : signed(DATA_WIDTH-1 downto 0) := {whf}; -- W_hf;
+    signal whg : signed(DATA_WIDTH-1 downto 0) := {whg}; -- W_hg;
+    signal who : signed(DATA_WIDTH-1 downto 0) := {who}; -- W_ho;
+    signal bi : signed(DATA_WIDTH-1 downto 0) := {bi}; -- b_ii + b_hi;
+    signal bf : signed(DATA_WIDTH-1 downto 0) := {bf}; -- b_if + b_hf;
+    signal bg : signed(DATA_WIDTH-1 downto 0) := {bg}; -- b_ig + b_hg;
+    signal bo : signed(DATA_WIDTH-1 downto 0) := {bo}; -- b_io + b_ho;
         
 -- Intermediate results
 -- Input gate without/with activation
--- i = \sigma(W_{ii} x + b_{ii} + W_{hi} h + b_{hi})
+-- i = \sigma(W_{{ii}} x + b_{{ii}} + W_{{hi}} h + b_{{hi}})
 signal i_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 signal i : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Forget gate without/with activation
--- f = \sigma(W_{if} x + b_{if} + W_{hf} h + b_{hf})
+-- f = \sigma(W_{{if}} x + b_{{if}} + W_{{hf}} h + b_{{hf}})
 signal f_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 signal f : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Cell gate without/with activation
--- g = \tanh(W_{ig} x + b_{ig} + W_{hg} h + b_{hg})
+-- g = \tanh(W_{{ig}} x + b_{{ig}} + W_{{hg}} h + b_{{hg}})
 signal g_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 signal g : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
 
 
 -- Output gate without/with activation
--- o = \sigma(W_{io} x + b_{io} + W_{ho} h + b_{ho})
+-- o = \sigma(W_{{io}} x + b_{{io}} + W_{{ho}} h + b_{{ho}})
 signal o_wo_activation : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 signal o : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
@@ -204,18 +196,4 @@ begin
         h_new <= shift_right((o*c_new), FRAC_WIDTH)(DATA_WIDTH-1 downto 0);
     end process H_OUT_process;
 
-end architecture rtl;"""
-
-        string_io = StringIO("")
-        # create lstm_cell as code generator
-        lstm_cell_code = LstmCell(
-            component_name="lstm_cell", data_width=16, frac_width=8
-        )
-        # write it to stringIO with break lines
-        for line in lstm_cell_code():
-            string_io.write(line)
-            if line[-1] != "\n":
-                string_io.write("\n")
-        # get the string from StringIO to compare it
-        generated_code = string_io.getvalue()
-        self.check_generated_code(expected_code, generated_code)
+end architecture rtl;

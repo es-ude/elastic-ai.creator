@@ -22,7 +22,7 @@ class FloatToSignedFixedPointConverter:
     def __call__(self, x: float) -> int:
         x_tmp = float(x)
         x_tmp = x_tmp * self.one
-        if not x_tmp.is_integer() and self._strict:
+        if self._strict and not x_tmp.is_integer():
             raise ValueError(
                 f"{x} not convertible to fixed point number using {self.bits_used_for_fraction} bits for fractional part"
             )

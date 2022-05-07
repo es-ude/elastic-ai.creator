@@ -11,6 +11,9 @@ from elasticai.creator.vhdl.generator.generator_functions import (
 )
 
 from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.number_representations import (
+    FloatToSignedFixedPointConverter,
+)
 
 
 def generate_rom_file(
@@ -32,13 +35,16 @@ def generate_rom_file(
     with open(file_path, "w") as writer:
         weight_or_bias_array = weights_or_bias_list[index]
         addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
+        if addr_width == 0:
+            addr_width = 1
         array_value = weight_or_bias_array
 
         rom = Rom(
-            rom_name="rom_" + name,
+            rom_name=name + "_rom",
             data_width=nbits,
             addr_width=addr_width,
             array_value=array_value,
+            resource_option="auto",
         )
         rom_code = rom()
         for line in rom_code:
@@ -75,11 +81,13 @@ def inference_model(
     # hx = hx/torch.max(abs(hx))
     # cx = cx/torch.max(abs(cx))
     output = []
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_bits, strict=False
+    )
     for i in range(input.size()[0]):
         x_h_input = np.hstack(
             (input[i].detach().numpy().flatten(), hx.detach().numpy().flatten())
         )
-
         hx, cx = lstm_signal_cell(input[i], (hx, cx))
         output.append(hx)
 
@@ -87,14 +95,14 @@ def inference_model(
             float_array_to_hex_string(
                 x_h_input,
                 frac_bits=frac_bits,
-                nbits=nbits,
+                number_of_bits=nbits,
             ),
             float_array_to_hex_string(
                 cx.detach().numpy().flatten(),
                 frac_bits=frac_bits,
-                nbits=nbits,
+                number_of_bits=nbits,
             ),
-            float_array_to_int(hx.detach().numpy().flatten(), frac_bits=frac_bits),
+            floats_to_signed_fixed_point_converter(hx.detach().numpy().flatten()),
         )
 
 
@@ -141,14 +149,14 @@ def define_weights_and_bias(
     bg = bias[len_bias * 2 : len_bias * 3]  # B_ig+B_hg
     bo = bias[len_bias * 3 : len_bias * 4]  # B_io+B_ho
 
-    wi = float_array_to_hex_string(wi, frac_bits=frac_bits, nbits=nbits)
-    wf = float_array_to_hex_string(wf, frac_bits=frac_bits, nbits=nbits)
-    wg = float_array_to_hex_string(wg, frac_bits=frac_bits, nbits=nbits)
-    wo = float_array_to_hex_string(wo, frac_bits=frac_bits, nbits=nbits)
+    wi = float_array_to_hex_string(wi, frac_bits=frac_bits, number_of_bits=nbits)
+    wf = float_array_to_hex_string(wf, frac_bits=frac_bits, number_of_bits=nbits)
+    wg = float_array_to_hex_string(wg, frac_bits=frac_bits, number_of_bits=nbits)
+    wo = float_array_to_hex_string(wo, frac_bits=frac_bits, number_of_bits=nbits)
 
-    bi = float_array_to_hex_string(bi, frac_bits=frac_bits, nbits=nbits)
-    bf = float_array_to_hex_string(bf, frac_bits=frac_bits, nbits=nbits)
-    bg = float_array_to_hex_string(bg, frac_bits=frac_bits, nbits=nbits)
-    bo = float_array_to_hex_string(bo, frac_bits=frac_bits, nbits=nbits)
+    bi = float_array_to_hex_string(bi, frac_bits=frac_bits, number_of_bits=nbits)
+    bf = float_array_to_hex_string(bf, frac_bits=frac_bits, number_of_bits=nbits)
+    bg = float_array_to_hex_string(bg, frac_bits=frac_bits, number_of_bits=nbits)
+    bo = float_array_to_hex_string(bo, frac_bits=frac_bits, number_of_bits=nbits)
 
     return [wi, wf, wg, wo], [bi, bf, bg, bo]

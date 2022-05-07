@@ -1,6 +1,6 @@
 import math
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Iterator
 
 import torch.nn
 
@@ -17,9 +17,9 @@ from elasticai.creator.vhdl.language import (
     ContextClause,
     LibraryClause,
     UseClause,
-    PortMap,
+    PortMap, Code,
 )
-from elasticai.creator.vhdl.language_testbench import TestCasesPrecomputedScalarFunction
+from elasticai.creator.vhdl.language_testbench import TestBenchBase
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -217,7 +217,7 @@ class PrecomputedScalarTestBench:
             data_width=self.data_width,
         )
         test_process = Process(identifier="test")
-        test_process.process_test_case_list = test_cases
+        test_process.process_statements_list = [t for t in test_cases()]
 
         architecture = Architecture(
             design_unit=self.component_name + "_tb",
@@ -227,12 +227,44 @@ class PrecomputedScalarTestBench:
             "signal test_input : signed(16-1 downto 0):=(others=>'0')",
             "signal test_output : signed(16-1 downto 0)",
         ]
-        # FIXME: doesn't work like this
-        # architecture.architecture_component_list = [component]
+
         architecture.architecture_component_list.append(component)
         architecture.architecture_process_list.append(process)
         architecture.architecture_port_map_list.append(uut_port_map)
         architecture.architecture_statement_part = test_process
 
-        code = chain(chain(library(), entity()), architecture())
+        code = chain(library(), entity(), architecture())
         return code
+
+
+class TestCasesPrecomputedScalarFunction(TestBenchBase):
+    def __init__(
+        self,
+        x_list_for_testing: list[int],
+        y_list_for_testing: list[int],
+        x_variable_name: str = "test_input",
+        y_variable_name: str = "test_output",
+        data_width: int = 16,
+    ):
+        assert len(x_list_for_testing) == len(y_list_for_testing)
+        self.x_list_for_testing = x_list_for_testing
+        self.y_list_for_testing = y_list_for_testing
+        self.x_variable_name = x_variable_name
+        self.y_variable_name = y_variable_name
+        self.data_width = data_width
+
+    def __len__(self):
+        return len(self.y_list_for_testing)
+
+    def _body(self) -> Iterator[str]:
+        for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
+            yield f"{self.x_variable_name} <= to_signed({x_value},{self.data_width})"
+            yield f"wait for 1*clk_period"
+            yield f"report \"The value of '{self.y_variable_name}' is \" & integer'image(to_integer(unsigned({self.y_variable_name})))"
+            if isinstance(y_value, str):
+                yield f'assert {self.y_variable_name}="{y_value}" report "The test case {x_value} fail" severity failure'
+            else:
+                yield f'assert {self.y_variable_name}={y_value} report "The test case {x_value} fail" severity failure'
+
+    def __call__(self) -> Iterable[Code]:
+        yield from iter(self)

@@ -13,7 +13,6 @@ def main(component_name: str, data_width: int, frac_width: int) -> None:
             if line[-1] != "\n":
                 writer.write("\n")
 
-    # indent all lines of the file
     format_vhdl(file_path=file_path)
 
 
@@ -22,8 +21,5 @@ if __name__ == "__main__":
         relative_path_from_project_root="vhd_files/source",
         file_name="lstm_cell.vhd",
     )
-    component_name = "lstm_cell"
-    DATA_WIDTH = 16
-    FRAC_WIDTH = 8
-    # generate the vhdl file
-    main(component_name=component_name, data_width=DATA_WIDTH, frac_width=FRAC_WIDTH)
+
+    main(component_name="lstm_cell", data_width=16, frac_width=8)

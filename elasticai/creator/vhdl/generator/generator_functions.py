@@ -1,24 +1,19 @@
-import math
 import random
 from os import path
+from typing import Dict, List, Iterable
 
-import numpy as np
 import torch
 import torch.nn as nn
 
-from paths import ROOT_DIR
-
 from elasticai.creator.layers import QLSTMCell
-from typing import Dict, List
-
 from elasticai.creator.vhdl.language import CodeGenerator
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     FloatToBinaryFixedPointStringConverter,
-    ToLogicEncoder,
     BitVector,
     FloatToHexFixedPointStringConverter,
 )
+from paths import ROOT_DIR
 
 
 def vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
@@ -83,7 +78,7 @@ def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
             )
             lines[-1] = "\t" + lines[-1]
         # last element only in y
-        for y in y_list[-1:]:
+        for _ in y_list[-1:]:
             lines.append("else")
             vhdl_add_assignment(
                 code=lines,
@@ -139,86 +134,6 @@ def precomputed_logic_function_process(
         yield line
 
 
-def float_array_to_int(float_array: np.array, frac_bits: int) -> np.array:
-    """
-    converts an array with floating point numbers into an array with integers
-    Args:
-        float_array (NDArray[Float32]): array with floating point numbers
-        frac_bits (int): number of fraction bits
-    Returns:
-        array with integer numbers
-    """
-    int_list = []
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_bits, strict=False
-    )
-    for element in float_array:
-        int_list.append(floats_to_signed_fixed_point_converter(element))
-    return np.array(int_list)
-
-
-def float_array_to_hex_string(
-    float_array: np.array, frac_bits: int, nbits: int
-) -> list[str]:
-    """
-    converts an array with floating point numbers into an array with hexadecimal numbers stored as strings
-    Args:
-        float_array (NDArray[Float32]): array with floating point numbers
-        frac_bits (int): number of fraction bits
-        nbits (int): number of bits
-    Returns:
-        list with strings with the corresponding hex representations
-    """
-    list_with_hex_representation = []
-    for element in float_array:
-        floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-            bits_used_for_fraction=frac_bits, strict=False
-        )
-        # convert to hex
-        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-            total_bit_width=nbits,
-            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-        )
-        list_with_hex_representation.append(
-            float_to_hex_fixed_point_string_converter(element)
-        )
-    # fill up to address width with zeros
-    addr_width = math.ceil(math.log2(len(list_with_hex_representation)))
-    number_of_hex_numbers = int(nbits / 4)
-    zero_string = "".join("0" for _ in range(number_of_hex_numbers))
-    for index in range(2 ** addr_width - len(list_with_hex_representation)):
-        list_with_hex_representation.append(zero_string)
-    return list_with_hex_representation
-
-
-def _to_vhdl_parameter(
-    f_val: float, frac_width: int, nbits: int, name_parameter: str, signal_name: str
-) -> Dict:
-    """
-        returns a Dictionary of one signal and his definition
-    Args:
-        f_val (float): a floating point number
-        nbits(int): the number of bits
-        frac_width(int): the number of bits for the fraction
-    Returns:
-        String of a hexadecimal value for an integer
-    """
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_width, strict=False
-    )
-    # convert to hex
-    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-        total_bit_width=nbits,
-        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-    )
-    return {
-        str(signal_name): 'X"'
-        + float_to_hex_fixed_point_string_converter(f_val)
-        + '"; -- '
-        + name_parameter
-    }
-
-
 def _elastic_ai_creator_lstm() -> QLSTMCell:
     return QLSTMCell(
         1, 1, state_quantizer=nn.Identity(), weight_quantizer=nn.Identity()
@@ -233,14 +148,8 @@ def _ensure_reproducibility():
 def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Dict:
     """
     returns Dict of signals names as key and their definition as value
-    Args:
-        data_width (int): the width of the data
-        frac_width (int): the fraction part of data_width
-    Returns:
-        Dict of the signal names and their definitions
     """
     dict_of_signals = {}
-    # define the lstm cell
     _ensure_reproducibility()
     lstm_single_cell = _elastic_ai_creator_lstm()
 
@@ -248,141 +157,43 @@ def generate_signal_definitions_for_lstm(data_width: int, frac_width: int) -> Di
     # weight_hh_l[k] : `(W_hi|W_hf|W_hg|W_ho)`
     # bias_ih_l[k] :  `(b_ii|b_if|b_ig|b_io)`
     # bias_hh_l[k] :  `(W_hi|W_hf|W_hg|b_ho)`
-    b_ii = 0
-    b_if = 0
-    b_ig = 0
-    b_io = 0
 
-    b_hi = 0
-    b_hf = 0
-    b_hg = 0
-    b_ho = 0
+    b = [0, 0, 0, 0]
+
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_width, strict=False
+    )
+    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+        total_bit_width=data_width,
+        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+    )
+
+    def update_signals(signal_names: Iterable[str], signal_values: Iterable[float]):
+        print(signal_values)
+        dict_of_signals.update(
+            (
+                (
+                    signal_name,
+                    f'X"{float_to_hex_fixed_point_string_converter(signal_value)}"',
+                )
+                for signal_name, signal_value in zip(signal_names, signal_values)
+            )
+        )
 
     for name, param in lstm_single_cell.named_parameters():
         if name == "weight_ih":
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[0],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_ii",
-                    signal_name="wii",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[1],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_if",
-                    signal_name="wif",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[2],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_ig",
-                    signal_name="wig",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[3],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_io",
-                    signal_name="wio",
-                )
-            )
+            signal_names = ("wii", "wif", "wig", "wio")
+            update_signals(signal_names, param)
         elif name == "weight_hh":
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[0],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_hi",
-                    signal_name="whi",
-                )
+            update_signals(
+                signal_names=("whi", "whf", "whg", "who"), signal_values=param
             )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[1],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_hf",
-                    signal_name="whf",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[2],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_hg",
-                    signal_name="whg",
-                )
-            )
-            dict_of_signals.update(
-                _to_vhdl_parameter(
-                    param[3],
-                    frac_width,
-                    data_width,
-                    name_parameter="W_ho",
-                    signal_name="who",
-                )
-            )
-        elif name == "bias_ih":
-            b_ii = param[0]
-            b_if = param[1]
-            b_ig = param[2]
-            b_io = param[3]
-        elif name == "bias_hh":
-            b_hi = param[0]
-            b_hf = param[1]
-            b_hg = param[2]
-            b_ho = param[3]
+        elif name in ("bias_ih", "bias_hh"):
+            b = [new_value + old_value for old_value, new_value in zip(b, param)]
         else:
             dict_of_signals.update("should not come to here.")
 
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_ii + b_hi,
-            frac_width,
-            data_width,
-            name_parameter="b_ii + b_hi",
-            signal_name="bi",
-        )
-    )
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_if + b_hf,
-            frac_width,
-            data_width,
-            name_parameter="b_if + b_hf",
-            signal_name="bf",
-        )
-    )
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_ig + b_hg,
-            frac_width,
-            data_width,
-            name_parameter="b_ig + b_hg",
-            signal_name="bg",
-        )
-    )
-    dict_of_signals.update(
-        _to_vhdl_parameter(
-            b_io + b_ho,
-            frac_width,
-            data_width,
-            name_parameter="b_io + b_ho",
-            signal_name="bo",
-        )
-    )
-
+    update_signals(signal_names=("bi", "bf", "bg", "bo"), signal_values=b)
     return dict_of_signals
 
 

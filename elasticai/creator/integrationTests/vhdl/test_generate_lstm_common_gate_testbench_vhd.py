@@ -1,17 +1,16 @@
+import pathlib
+
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCommonGateTestBench,
 )
-from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
-from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
+from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
 
-def main() -> None:
-    file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/testbench",
-        file_name="lstm_common_gate_tb.vhd",
-    )
+class LSTMCommonGateTestBenchTest(GeneratedVHDLCodeTest):
+    def test_compare_files(self) -> None:
+        with open(pathlib.Path(__file__).parent.resolve().joinpath("expected_common_gate_testbench.vhd"), 'r') as f:
+            expected_code = f.read()
 
-    with open(file_path, "w") as writer:
         lstm_common_gate = LSTMCommonGateTestBench(
             data_width=16,
             frac_width=8,
@@ -35,12 +34,7 @@ def main() -> None:
             y_list_for_testing=[142, 105, 159, 82, 150],
         )
         lstm_common_gate_code = lstm_common_gate()
+        lstm_common_gate_code_str = ""
         for line in lstm_common_gate_code:
-            writer.write(line + "\n")
-
-    # indent all lines of the file
-    format_vhdl(file_path=file_path)
-
-
-if __name__ == "__main__":
-    main()
+            lstm_common_gate_code_str += line + "\n"
+        self.check_generated_code(expected_code, lstm_common_gate_code_str)

@@ -1,22 +1,19 @@
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCellTestBench,
 )
-from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
-from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
+from elasticai.creator.integrationTests.vhdl.test_case import VHDLFileTest
 
 
-def main() -> None:
-    file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/testbench",
-        file_name="lstm_cell_tb.vhd",
-    )
+class LSTMCellTestBenchTest(VHDLFileTest):
+    maxDiff = None
 
-    with open(file_path, "w") as writer:
+    def test_compare_files(self) -> None:
         lstm_cell = LSTMCellTestBench(
             data_width=16,
             frac_width=8,
             input_size=5,
             hidden_size=20,
+            component_name="lstm_cell",
             test_x_h_data=[
                 "018a",
                 "ffb5",
@@ -107,14 +104,8 @@ def main() -> None:
                 -156,
                 3,
             ],
-            component_name="lstm_common_gate",
         )
         lstm_cell_code = lstm_cell()
-        for line in lstm_cell_code:
-            writer.write(line + "\n")
-
-    format_vhdl(file_path=file_path)
-
-
-if __name__ == "__main__":
-    main()
+        self.compareToFile(
+            "expected_lstm_cell_testbench.vhd", lstm_cell_code
+        )
