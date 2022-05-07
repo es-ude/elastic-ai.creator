@@ -1,10 +1,7 @@
-import math
 import random
-from functools import partial
 from os import path
 from typing import Dict, List, Iterable
 
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -135,20 +132,6 @@ def precomputed_logic_function_process(
     yield lines[0]
     for line in lines[1:]:
         yield line
-
-
-def fill_list_with_hex_zeros_up_to_power_of_two(hex_list: list[str]) -> list[str]:
-    """
-    Takes a list of strings determines, the length of the first element and appends a hex representation of zero to it
-    as often as necessary to reach a total length of `hex_list` that matches a power of two.
-    The first element of `hex_list` is assumed be a hexadecimal number.
-    All the strings in `hex_list` are assumed to have the same length.
-    We assume that `hex_list` is not empty.
-    """
-    hex_number_length = len(hex_list[0])
-    next_exponent_for_power_of_two = math.ceil(math.log2(len(hex_list)))
-    number_of_missing_zeros = 2**next_exponent_for_power_of_two - len(hex_list)
-    return hex_list + ["".join(["0"] * hex_number_length)] * number_of_missing_zeros
 
 
 def _elastic_ai_creator_lstm() -> QLSTMCell:

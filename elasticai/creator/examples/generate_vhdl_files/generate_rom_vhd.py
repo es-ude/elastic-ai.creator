@@ -3,9 +3,11 @@ import numpy as np
 
 from elasticai.creator.vhdl.generator.generator_functions import (
     get_file_path_string,
-    fill_list_with_hex_zeros_up_to_power_of_two,
 )
-from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.generator.rom import (
+    Rom,
+    pad_with_zeros,
+)
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     FloatToHexFixedPointStringConverter,
@@ -52,6 +54,6 @@ if __name__ == "__main__":
         as_signed_fixed_point=floats_to_signed_fixed_point_converter,
     )
     array_value = [float_to_hex_fixed_point_string_converter(x) for x in Bi]
-    array_value = fill_list_with_hex_zeros_up_to_power_of_two(array_value)
+    array_value = pad_with_zeros(array_value)
 
     main(rom_name, data_width, addr_width, array_value)
