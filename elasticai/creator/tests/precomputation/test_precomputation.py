@@ -1,5 +1,5 @@
 import json
-from collections import Iterable
+from typing import Iterable
 
 import torch
 

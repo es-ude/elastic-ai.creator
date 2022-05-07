@@ -275,7 +275,7 @@ name = "numpy"
 version = "1.22.4"
 description = "NumPy is the fundamental package for array computing with Python."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.8"
 
 [[package]]
@@ -616,7 +616,6 @@ use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
->>>>>>> 219a029 (resolve dependency version conflicts)
 category = "dev"
 optional = false
 python-versions = "*"
@@ -789,8 +788,12 @@ python-versions = "~3.9"
 content-hash = "39165760cf8c1b5fca2c7bd6c654db29440a81c212b7c998962497fb41bf5347"
 =======
 python-versions = "^3.9"
+<<<<<<< HEAD
 content-hash = "246301007e3007d15fcc2187b910dc0c6bdc9cbffb7d369f387aa14c42523507"
 >>>>>>> 219a029 (resolve dependency version conflicts)
+=======
+content-hash = "792ed63f3fb53baa3399d43e9b72df0668053d18ba3c28c6240c99186d6fbcaa"
+>>>>>>> 3620fa0 (fix dependencies + onnx integration tests)
 
 [metadata.files]
 astroid = [
