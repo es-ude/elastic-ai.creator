@@ -33,7 +33,6 @@ mypy-extensions = ">=0.4.3"
 pathspec = ">=0.9.0"
 platformdirs = ">=2"
 tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
-typing-extensions = {version = ">=3.10.0.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
 colorama = ["colorama (>=0.4.3)"]
@@ -757,7 +756,6 @@ docs = ["proselint (>=0.10.2)", "sphinx (>=3)", "sphinx-argparse (>=0.2.5)", "sp
 testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", "pytest (>=4)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.1)", "pytest-mock (>=2)", "pytest-randomly (>=1)", "pytest-timeout (>=1)", "packaging (>=20.0)"]
 
 [[package]]
->>>>>>> 219a029 (resolve dependency version conflicts)
 name = "vsg"
 version = "3.11.0"
 description = "VHDL Style Guide"
@@ -783,17 +781,8 @@ systemtests = ["torchvision"]
 
 [metadata]
 lock-version = "1.1"
-<<<<<<< HEAD
 python-versions = "~3.9"
 content-hash = "39165760cf8c1b5fca2c7bd6c654db29440a81c212b7c998962497fb41bf5347"
-=======
-python-versions = "^3.9"
-<<<<<<< HEAD
-content-hash = "246301007e3007d15fcc2187b910dc0c6bdc9cbffb7d369f387aa14c42523507"
->>>>>>> 219a029 (resolve dependency version conflicts)
-=======
-content-hash = "792ed63f3fb53baa3399d43e9b72df0668053d18ba3c28c6240c99186d6fbcaa"
->>>>>>> 3620fa0 (fix dependencies + onnx integration tests)
 
 [metadata.files]
 astroid = [
