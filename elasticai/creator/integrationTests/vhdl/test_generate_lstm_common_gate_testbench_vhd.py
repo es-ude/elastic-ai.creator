@@ -3,12 +3,11 @@ from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
 )
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 from elasticai.creator.resource_utils import read_text
-import elasticai.creator.integrationTests.vhdl
 
 
 class LSTMCommonGateTestBenchTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
-        expected_code = read_text(elasticai.creator.integrationTests.vhdl, "expected_common_gate_testbench.vhd")
+        expected_code = read_text("elasticai.creator.integrationTests.vhdl", "expected_common_gate_testbench.vhd")
 
         lstm_common_gate = LSTMCommonGateTestBench(
             data_width=16,
