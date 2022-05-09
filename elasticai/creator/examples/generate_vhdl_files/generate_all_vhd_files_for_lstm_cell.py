@@ -10,7 +10,7 @@ import torch
 import random
 import numpy as np
 
-from elasticai.creator.vhdl.resources import copy_static_file
+from elasticai.creator.resource_utils import copy_file
 from elasticai.creator.layers import QLSTMCell
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
@@ -162,4 +162,4 @@ if __name__ == "__main__":
     # copy static files
     # TODO: Maybe create a mapping, which files are needed for a specific model
     for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
-        copy_static_file(file, destination_path(file))
+        copy_file("elasticai.creator.vhdl.resources.static_files", file, destination_path(file))
