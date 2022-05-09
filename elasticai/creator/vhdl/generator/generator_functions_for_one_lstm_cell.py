@@ -6,8 +6,8 @@ import torch
 
 from elasticai.creator.layers import QLSTMCell
 from elasticai.creator.vhdl.generator.generator_functions import (
-    float_array_to_hex_string,
-    float_array_to_int,
+    float_array_to_hex_string,  # FIXME: This does not exist
+    float_array_to_int,  # FIXME: This does not exist
 )
 
 from elasticai.creator.vhdl.generator.rom import Rom
