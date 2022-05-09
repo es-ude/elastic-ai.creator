@@ -1,5 +1,4 @@
 import random
-from os import path
 from typing import Dict, List, Iterable
 
 import torch
