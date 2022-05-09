@@ -57,8 +57,8 @@ if __name__ == "__main__":
     random.seed(0)
     current_frac_bits = 8
     current_nbits = 16
-    current_input_size = 5
-    current_hidden_size = 20
+    current_input_size = 1
+    current_hidden_size = 1
     current_len_weights = (
         current_input_size + current_hidden_size
     ) * current_hidden_size
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     # generate testbench file for use-case
     file_path_testbench = destination_path("lstm_cell_tb.vhd")
     with open(file_path_testbench, "w") as writer:
-        lstm_cell = LSTMCellTestBench(
+        lstm_cell_tb = LSTMCellTestBench(
             data_width=current_nbits,
             frac_width=current_frac_bits,
             input_size=current_input_size,
@@ -145,11 +145,10 @@ if __name__ == "__main__":
             h_out=list(h_output),
             component_name="lstm_cell",
         )
-        lstm_cell_code = lstm_cell()
+        lstm_cell_code = lstm_cell_tb()
         for line in lstm_cell_code:
             writer.write(line + "\n")
 
-    # indent all lines of the files
     for value in weight_name_index_dict.values():
         format_vhdl(file_path=destination_path(f"{value}_rom.vhd"))
 

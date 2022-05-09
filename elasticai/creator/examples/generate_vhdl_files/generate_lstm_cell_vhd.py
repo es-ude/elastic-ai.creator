@@ -26,7 +26,6 @@ def main() -> None:
             if line[-1] != "\n":
                 writer.write("\n")
 
-    # indent all lines of the file
     format_vhdl(file_path=file_path)
 
 

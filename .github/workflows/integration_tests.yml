@@ -1,0 +1,19 @@
+name: integration-tests
+on: [push]
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+      - run: python --version
+      - run: poetry install --no-interaction --extras brevitas
+      - run: poetry run python -m unittest discover elasticai/creator/integrationTests

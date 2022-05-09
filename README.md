@@ -15,18 +15,6 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 [[_TOC_]]
 
-## Requirements
-
-The dependencies of the PyTorch implementation of elastic.ai Creator Translator are listed below:
-- torch
-- torchvision
-- torchaudio
-- matplotlib
-- numpy
-- scikit-learn
-- brevitas
-- onnx
-- onnxoptimizer
 
 ### Poetry
 
@@ -81,19 +69,6 @@ Additionally, we have folders for [unit tests](elasticai/creator/tests), [integr
 
  
 The [layers](elasticai/creator/layers.py) file includes all implemented quantized PyTorch layers.
-These layers are the followings:
-- QConv1d for quantized Conv1d
-- QConv2d for quantized Conv2d
-- QLinear for quantized Linear
-- QLSTMCell for quantized LSTMCell
-- QLSTM for stacking QLSTMCell
-
-For the quantization we implemented quantizers:
-- Binarize which converts the weights to be -1 or 1
-- Ternarize which converts the weights to be -1 or 0 or 1
-- QuantizeTwoBit use Residual Quantization to quantize to two bits
-- ResidualQuantization converts weights to a bit vector using the residual multilevel binarization method [RebNet, Ghasemzadeh et al. 2018](https://arxiv.org/pdf/1711.01243.pdf)
-
 
 We wrote tests for the layers which can be found in the [test_layer](elasticai/creator/tests/test_layer.py).
 To add constraints on the convolutional and linear layers you can use the [constraints](elasticai/creator/constraints.py) and can easily expand it with more constraints.

@@ -1,3 +1,4 @@
+import math
 from itertools import chain
 
 from elasticai.creator.vhdl.language import (
@@ -15,12 +16,13 @@ from elasticai.creator.vhdl.language import (
 
 
 class Rom:
-    def __init__(self, rom_name, data_width, addr_width, array_value):
+    def __init__(self, rom_name, data_width, addr_width, array_value, resource_option):
         self.rom_name = rom_name
-        self.rom_name_arrat_t = f"{rom_name}_array_t".format(rom_name=rom_name)
+        self.rom_name_array_t = f"{rom_name}_array_t".format(rom_name=rom_name)
         self.data_width = data_width
         self.addr_width = addr_width
         self.array_value = array_value
+        self.resource_option = resource_option
 
     def __call__(self):
         library = ContextClause(
@@ -63,14 +65,14 @@ class Rom:
 
         architecture.architecture_declaration_list.append(
             "type {rom_name_arrat_t} is array (0 to 2**{addr_width}-1) of std_logic_vector({data_width}-1 downto 0)".format(
-                rom_name_arrat_t=self.rom_name_arrat_t,
+                rom_name_arrat_t=self.rom_name_array_t,
                 addr_width=self.addr_width,
                 data_width=self.data_width,
             )
         )
         architecture.architecture_declaration_list.append(
             "signal ROM : {rom_name_arrat_t}:=({array_value})".format(
-                rom_name_arrat_t=self.rom_name_arrat_t,
+                rom_name_arrat_t=self.rom_name_array_t,
                 array_value=form_to_hex_list(self.array_value),
             )
         )
@@ -78,7 +80,9 @@ class Rom:
             "attribute rom_style : string"
         )
         architecture.architecture_declaration_list.append(
-            'attribute rom_style of ROM : signal is "block"'
+            'attribute rom_style of ROM : signal is "{resource_option}"'.format(
+                resource_option=self.resource_option,
+            )
         )
 
         rom_process = Process(identifier="ROM", input_name="clk")
@@ -90,6 +94,20 @@ class Rom:
 
         architecture.architecture_statement_part = rom_process
 
-        code = chain(chain(library(), entity()), architecture())
+        code = chain(library(), entity(), architecture())
 
         return code
+
+
+def pad_with_zeros(hex_list: list[str]) -> list[str]:
+    """
+    Takes a list of strings determines, the length of the first element and appends a hex representation of zero to it
+    as often as necessary to reach a total length of `hex_list` that matches a power of two.
+    The first element of `hex_list` is assumed be a hexadecimal number.
+    All the strings in `hex_list` are assumed to have the same length.
+    We assume that `hex_list` is not empty.
+    """
+    hex_number_length = len(hex_list[0])
+    next_exponent_for_power_of_two = max(1, math.ceil(math.log2(len(hex_list))))
+    number_of_missing_zeros = 2**next_exponent_for_power_of_two - len(hex_list)
+    return hex_list + ["".join(["0"] * hex_number_length)] * number_of_missing_zeros

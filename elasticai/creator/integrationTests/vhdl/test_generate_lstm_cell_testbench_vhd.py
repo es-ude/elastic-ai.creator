@@ -1,25 +1,19 @@
-from argparse import ArgumentParser
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
+    LSTMCellTestBench,
+)
+from elasticai.creator.integrationTests.vhdl.test_case import VHDLFileTest
 
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
-from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
+class LSTMCellTestBenchTest(VHDLFileTest):
+    maxDiff = None
 
-def main() -> None:
-    arg_parser = ArgumentParser()
-    arg_parser.add_argument(
-        "--file",
-        help="filepath of the generated vhd file",
-        required=True,
-    )
-    args = arg_parser.parse_args()
-    file_path = args.file
-
-    with open(file_path, "w") as writer:
+    def test_compare_files(self) -> None:
         lstm_cell = LSTMCellTestBench(
             data_width=16,
             frac_width=8,
             input_size=5,
             hidden_size=20,
+            component_name="lstm_cell",
             test_x_h_data=[
                 "018a",
                 "ffb5",
@@ -110,14 +104,8 @@ def main() -> None:
                 -156,
                 3,
             ],
-            component_name="lstm_common_gate",
         )
         lstm_cell_code = lstm_cell()
-        for line in lstm_cell_code:
-            writer.write(line + "\n")
-
-    format_vhdl(file_path=file_path)
-
-
-if __name__ == "__main__":
-    main()
+        self.compareToFile(
+            "expected_lstm_cell_testbench.vhd", lstm_cell_code
+        )

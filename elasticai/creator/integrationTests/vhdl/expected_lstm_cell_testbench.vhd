@@ -1,14 +1,3 @@
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
-    LSTMCellTestBench,
-)
-from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-
-
-class LSTMCellTestBenchTest(GeneratedVHDLCodeTest):
-    maxDiff = None
-
-    def test_compare_files(self) -> None:
-        expected_code = """
 library ieee, work;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -58,9 +47,9 @@ architecture rtl of lstm_cell_tb is
     type X_H_ARRAY is array (0 to 31) of signed(16-1 downto 0);
     type C_ARRAY is array (0 to 31) of signed(16-1 downto 0);
 
-    signal test_x_h_data : X_H_ARRAY := (x"018a",x"ffb5",x"fdd3",x"0091",x"feeb",x"0099",x"fe72",x"ffa9",x"01da",x"ffc9",x"ff42",x"0090",x"0042",x"ffd4",x"ff53",x"00f0",x"007d",x"0134",x"0015",x"fecd",x"ffff",x"ff7c",x"ffb2",x"fe6c",x"01b4",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000");
+    signal test_x_h_data : X_H_ARRAY := (x"018a",x"ffb5",x"fdd3",x"0091",x"feeb",x"0099",x"fe72",x"ffa9",x"01da",x"ffc9",x"ff42",x"0090",x"0042",x"ffd4",x"ff53",x"00f0",x"007d",x"0134",x"0015",x"fecd",x"ffff",x"ff7c",x"ffb2",x"fe6c",x"01b4",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",others=>(others=>'0'));
 
-    signal test_c_data : C_ARRAY := (x"0034",x"ff8d",x"ff6e",x"ff72",x"fee0",x"ffaf",x"fee9",x"ffeb",x"ffe9",x"00af",x"ff2a",x"0000",x"ff40",x"002f",x"009f",x"00a3",x"ffc2",x"024d",x"fe1f",x"fff4",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000");
+    signal test_c_data : C_ARRAY := (x"0034",x"ff8d",x"ff6e",x"ff72",x"fee0",x"ffaf",x"fee9",x"ffeb",x"ffe9",x"00af",x"ff2a",x"0000",x"ff40",x"002f",x"009f",x"00a3",x"ffc2",x"024d",x"fe1f",x"fff4",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",others=>(others=>'0'));
 
     procedure send_x_h_data (
         addr_in : in std_logic_vector(X_H_ADDR_WIDTH-1 downto 0);
@@ -142,20 +131,18 @@ begin
 
     test_process: process
         begin
-            report "======Tests Start======" severity Note;
+            report "======Simulation Start======" severity Note;
 
             reset <= '1';
             h_out_en <= '0';
             wait for 2*clk_period;
             reset <= '0';
 
-            for ii in 0 to 24 loop
-                send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data);
+            for ii in 0 to 24 loop send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data);
                 wait for 10 ns;
             end loop;
 
-            for ii in 0 to 19 loop
-                send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data);
+            for ii in 0 to 19 loop send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data);
                 wait for 10 ns;
             end loop;
 
@@ -164,16 +151,15 @@ begin
             wait for 1*clk_period;
             enable <= '0';
 
-            -- reference h_out: [34, -80, -32, -28, -88, 11, -60, 6, -16, 18, -32, 46, -77, 15, 70, 27, 13, 112, -156, 3]
-            for ii in 0 to 19 loop
-                h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH));
+            -- reference h_out: [34, -80, -32, -28, -88, 11, -60, 6, -16, 18, -32, 46, -77, 15, 70, 27, 13, 112, -156, 3];
+            for ii in 0 to 19 loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH));
                 h_out_en <= '1';
                 wait for 2*clk_period;
                 report "The value of h_out(" & integer'image(ii)& ") is " & integer'image(to_integer(signed(h_out_data)));
             end loop;
 
             wait for 10*clk_period;
-            report "======Tests finished======" severity Note;
+            report "======Simulation Success======" severity Note;
             report "Please check the output message." severity Note;
 
             wait;
@@ -181,108 +167,3 @@ begin
     end process test_process;
 
 end architecture rtl;
-        """
-        lstm_cell = LSTMCellTestBench(
-            data_width=16,
-            frac_width=8,
-            input_size=5,
-            hidden_size=20,
-            component_name="lstm_cell",
-            test_x_h_data=[
-                "018a",
-                "ffb5",
-                "fdd3",
-                "0091",
-                "feeb",
-                "0099",
-                "fe72",
-                "ffa9",
-                "01da",
-                "ffc9",
-                "ff42",
-                "0090",
-                "0042",
-                "ffd4",
-                "ff53",
-                "00f0",
-                "007d",
-                "0134",
-                "0015",
-                "fecd",
-                "ffff",
-                "ff7c",
-                "ffb2",
-                "fe6c",
-                "01b4",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-            ],
-            test_c_data=[
-                "0034",
-                "ff8d",
-                "ff6e",
-                "ff72",
-                "fee0",
-                "ffaf",
-                "fee9",
-                "ffeb",
-                "ffe9",
-                "00af",
-                "ff2a",
-                "0000",
-                "ff40",
-                "002f",
-                "009f",
-                "00a3",
-                "ffc2",
-                "024d",
-                "fe1f",
-                "fff4",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-                "0000",
-            ],
-            h_out=[
-                34,
-                -80,
-                -32,
-                -28,
-                -88,
-                11,
-                -60,
-                6,
-                -16,
-                18,
-                -32,
-                46,
-                -77,
-                15,
-                70,
-                27,
-                13,
-                112,
-                -156,
-                3,
-            ],
-        )
-        lstm_cell_code = lstm_cell()
-        lstm_cell_code_str = ""
-        for line in lstm_cell_code:
-            lstm_cell_code_str += line + "\n"
-        self.check_generated_code(
-            expected_code, lstm_cell_code_str, check_comments=True
-        )
