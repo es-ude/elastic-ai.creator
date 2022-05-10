@@ -5,15 +5,25 @@ import numpy as np
 import torch
 
 from elasticai.creator.layers import QLSTMCell
-from elasticai.creator.vhdl.generator.generator_functions import (
-    float_array_to_hex_string,
-    float_array_to_int,
-)
 
-from elasticai.creator.vhdl.generator.rom import Rom
+from elasticai.creator.vhdl.generator.rom import Rom, pad_with_zeros
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
+    FloatToHexFixedPointStringConverter
 )
+
+
+def float_array_to_hex_string(bi, frac_bits, number_of_bits):
+    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+        bits_used_for_fraction=frac_bits, strict=False
+    )
+    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
+        total_bit_width=number_of_bits,
+        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
+    )
+    array_value = [float_to_hex_fixed_point_string_converter(x) for x in bi]
+    array_value = pad_with_zeros(array_value)
+    return array_value
 
 
 def generate_rom_file(

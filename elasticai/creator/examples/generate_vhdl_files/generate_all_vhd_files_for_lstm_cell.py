@@ -1,19 +1,17 @@
-import sys
 import os
 from argparse import ArgumentParser
-import shutil
 
 from elasticai.creator.vhdl.generator.generator_functions_for_one_lstm_cell import (
     generate_rom_file,
     inference_model,
     define_weights_and_bias,
 )
-from paths import ROOT_DIR
 import torch
 import random
 import numpy as np
+
+from elasticai.creator.resource_utils import copy_file
 from elasticai.creator.layers import QLSTMCell
-from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
@@ -41,17 +39,20 @@ def define_lstm_cell(input_size: int, hidden_size: int) -> QLSTMCell:
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
         "--path",
-        help="relative path from project root to folder for generated vhd files",
+        help="path to folder for generated vhd files",
         required=True,
     )
-    args = arg_parser.parse_args(args)
-    if not os.path.isdir(ROOT_DIR + "/" + args.path):
-        os.mkdir(ROOT_DIR + "/" + args.path)
+    args = arg_parser.parse_args()
+    if not os.path.isdir(args.path):
+        os.mkdir(args.path)
 
+    def destination_path(file_name: str) -> str:
+        return os.path.join(args.path, file_name)
+
+    # set the current values
     torch.manual_seed(0)
     random.seed(0)
     current_frac_bits = 8
@@ -84,44 +85,32 @@ if __name__ == "__main__":
     print("c_test_input", c_test_input)
     print("h_output", h_output)
 
-    ### generate source files for use-case ###
+    # generate source files for use-case
 
-    ## generate weights source files ##
+    # generate weights source files
     weight_name_index_dict = {0: "wi", 1: "wf", 2: "wg", 3: "wo"}
     for key, value in weight_name_index_dict.items():
-        file_path_weight = get_file_path_string(
-            relative_path_from_project_root=args.path,
-            file_name=value + "_rom.vhd",
-        )
         generate_rom_file(
-            file_path=file_path_weight,
+            file_path=destination_path(f"{value}_rom.vhd"),
             weights_or_bias_list=weights_list,
             nbits=current_nbits,
             name=value,
             index=key,
         )
 
-    ## generate bias source files ##
+    # generate bias source files
     bias_name_index_dict = {0: "bi", 1: "bf", 2: "bg", 3: "bo"}
     for key, value in bias_name_index_dict.items():
-        file_path_bias = get_file_path_string(
-            relative_path_from_project_root=args.path,
-            file_name=value + "_rom.vhd",
-        )
         generate_rom_file(
-            file_path=file_path_bias,
+            file_path=destination_path(f"{value}_rom.vhd"),
             weights_or_bias_list=bias_list,
             nbits=current_nbits,
             name=value,
             index=key,
         )
 
-    ## generate sigmoid and tanh activation source files ##
-    file_path_sigmoid = get_file_path_string(
-        relative_path_from_project_root=args.path,
-        file_name="sigmoid.vhd",
-    )
-
+    # generate sigmoid and tanh activation source files
+    file_path_sigmoid = destination_path("sigmoid.vhd")
     with open(file_path_sigmoid, "w") as writer:
         sigmoid = Sigmoid(
             data_width=current_nbits,
@@ -132,11 +121,7 @@ if __name__ == "__main__":
         for line in sigmoid_code:
             writer.write(line + "\n")
 
-    file_path_tanh = get_file_path_string(
-        relative_path_from_project_root=args.path,
-        file_name="tanh.vhd",
-    )
-
+    file_path_tanh = destination_path("tanh.vhd")
     with open(file_path_tanh, "w") as writer:
         tanh = Tanh(
             data_width=current_nbits,
@@ -147,12 +132,8 @@ if __name__ == "__main__":
         for line in tanh_code:
             writer.write(line + "\n")
 
-    ### generate testbench file for use-case ###
-    file_path_testbench = get_file_path_string(
-        relative_path_from_project_root=args.path,
-        file_name="lstm_cell_tb.vhd",
-    )
-
+    # generate testbench file for use-case
+    file_path_testbench = destination_path("lstm_cell_tb.vhd")
     with open(file_path_testbench, "w") as writer:
         lstm_cell_tb = LSTMCellTestBench(
             data_width=current_nbits,
@@ -169,24 +150,16 @@ if __name__ == "__main__":
             writer.write(line + "\n")
 
     for value in weight_name_index_dict.values():
-        file_path_weight = get_file_path_string(
-            relative_path_from_project_root=args.path,
-            file_name=value + "_rom.vhd",
-        )
-        format_vhdl(file_path=file_path_weight)
+        format_vhdl(file_path=destination_path(f"{value}_rom.vhd"))
+
     for value in bias_name_index_dict.values():
-        file_path_bias = get_file_path_string(
-            relative_path_from_project_root=args.path,
-            file_name=value + "_rom.vhd",
-        )
-        format_vhdl(file_path=file_path_bias)
+        format_vhdl(file_path=destination_path(f"{value}_rom.vhd"))
 
     format_vhdl(file_path=file_path_sigmoid)
     format_vhdl(file_path=file_path_tanh)
     format_vhdl(file_path=file_path_testbench)
 
-    for filename in os.listdir(ROOT_DIR + "/vhd_files/static_files/"):
-        shutil.copy(
-            ROOT_DIR + "/vhd_files/static_files/" + filename,
-            ROOT_DIR + "/" + args.path,
-        )
+    # copy static files
+    # TODO: Maybe create a mapping, which files are needed for a specific model
+    for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
+        copy_file("elasticai.creator.vhdl.resources.static_files", file, destination_path(file))

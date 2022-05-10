@@ -1,15 +1,18 @@
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
-    PrecomputedScalarTestBench,
-)
-from elasticai.creator.vhdl.generator.generator_functions import get_file_path_string
+from argparse import ArgumentParser
+
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import PrecomputedScalarTestBench
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
 def main() -> None:
-    file_path = get_file_path_string(
-        relative_path_from_project_root="vhd_files/testbench",
-        file_name="tanh_tb.vhd",
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument(
+        "--file",
+        help="filepath of the generated vhd file",
+        required=True,
     )
+    args = arg_parser.parse_args()
+    file_path = args.file
 
     with open(file_path, "w") as writer:
         tanh = PrecomputedScalarTestBench(

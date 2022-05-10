@@ -1,15 +1,13 @@
-import pathlib
-
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCommonGateTestBench,
 )
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.resource_utils import read_text
 
 
 class LSTMCommonGateTestBenchTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
-        with open(pathlib.Path(__file__).parent.resolve().joinpath("expected_common_gate_testbench.vhd"), 'r') as f:
-            expected_code = f.read()
+        expected_code = read_text("elasticai.creator.integrationTests.vhdl", "expected_common_gate_testbench.vhd")
 
         lstm_common_gate = LSTMCommonGateTestBench(
             data_width=16,
