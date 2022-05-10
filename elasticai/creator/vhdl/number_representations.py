@@ -121,14 +121,4 @@ class ToLogicEncoder:
     def __call__(self, number: int):
         if number not in self.numerics:
             raise ValueError
-        return BitVector(number, self.mapping[number], self.bit_width)
-
-
-class BitVector:
-    def __init__(self, number: int, repr: int, bit_width: int):
-        self._number = number
-        self._repr = repr
-        self._bit_width = bit_width
-
-    def __repr__(self):
-        return f"{self._repr:0{self._bit_width}b}"
+        return _int_to_bin_str(self.mapping[number], self.bit_width)

@@ -1,10 +1,10 @@
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCellTestBench,
 )
-from elasticai.creator.integrationTests.vhdl.test_case import VHDLFileTest
+from elasticai.creator.integrationTests.vhdl.vhdl_file_test_case import VHDLFileTestCase
 
 
-class LSTMCellTestBenchTest(VHDLFileTest):
+class LSTMCellTestBenchTest(VHDLFileTestCase):
     maxDiff = None
 
     def test_compare_files(self) -> None:

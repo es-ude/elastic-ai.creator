@@ -1,7 +1,6 @@
 import unittest
 
 from elasticai.creator.masks import fixed_offset_mask4D, randomMask4D
-import numpy as np
 import torch
 
 

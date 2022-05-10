@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
-from elasticai.creator.layers import QLSTM, QLSTMCell, QLinear
+from elasticai.creator.layers import QLSTM, QLinear
 
 
 class SinusDataset(Dataset):
