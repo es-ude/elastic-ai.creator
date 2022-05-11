@@ -18,5 +18,5 @@ def format_vhdl(file_path):
     # check if the vhdl file exist !
     subprocess.Popen(
         f"vsg -f {file_path} --style indent_only --configuration {config_path} --fix",
-        shell=True
+        shell=True,
     )

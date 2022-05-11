@@ -10,7 +10,10 @@ from elasticai.creator.vhdl.language import (
     Architecture,
     Process,
     PortMap,
-    form_to_hex_list, Keywords, Code, Procedure,
+    form_to_hex_list,
+    Keywords,
+    Code,
+    Procedure,
 )
 from elasticai.creator.vhdl.language_testbench import (
     TestBenchBase,
@@ -38,7 +41,7 @@ class LSTMCellTestBench:
         self.hidden_size = hidden_size
         self.x_h_addr_width = math.ceil(math.log2(input_size + hidden_size))
         self.hidden_addr_width = math.ceil(math.log2(hidden_size))
-        if self.hidden_addr_width==0:
+        if self.hidden_addr_width == 0:
             self.hidden_addr_width = 1
         self.w_addr_width = math.ceil(
             math.log2((input_size + hidden_size) * hidden_size)
@@ -147,7 +150,7 @@ class LSTMCellTestBench:
             "HIDDEN_SIZE => HIDDEN_SIZE",
             "X_H_ADDR_WIDTH => X_H_ADDR_WIDTH",
             "HIDDEN_ADDR_WIDTH => HIDDEN_ADDR_WIDTH",
-            "W_ADDR_WIDTH => W_ADDR_WIDTH"
+            "W_ADDR_WIDTH => W_ADDR_WIDTH",
         )
         uut_port_map.signal_list.append("clock => clock")
         uut_port_map.signal_list.append("reset => reset")
@@ -163,7 +166,11 @@ class LSTMCellTestBench:
         uut_port_map.signal_list.append("h_out_data => h_out_data")
         uut_port_map.signal_list.append("h_out_addr => h_out_addr")
 
-        test_cases = TestCasesLSTMCell(reference_h_out=self.h_out, input_size=self.input_size, hidden_size=self.hidden_size)
+        test_cases = TestCasesLSTMCell(
+            reference_h_out=self.h_out,
+            input_size=self.input_size,
+            hidden_size=self.hidden_size,
+        )
         test_process = Process(identifier="test")
         test_process.process_statements_list = [t for t in test_cases()]
 
@@ -266,20 +273,20 @@ class TestCasesLSTMCommonGate(TestBenchBase):
         counter = 0
         yield f"vector_len <= to_unsigned(10, VECTOR_LEN_WIDTH)"
         for x_mem_value, w_mem_value, b, y_value in zip(
-                self.x_mem_list_for_testing,
-                self.w_mem_list_for_testing,
-                self.b_list_for_testing,
-                self.y_list_for_testing,
+            self.x_mem_list_for_testing,
+            self.w_mem_list_for_testing,
+            self.b_list_for_testing,
+            self.y_list_for_testing,
         ):
             yield f"X_MEM <= ({x_mem_value})"
             yield f"W_MEM <= ({w_mem_value})"
             yield f"b <= {b}"
             yield from (
-             "reset <= '1'",
-             "wait for 2*clk_period",
-             "wait until clock = '0'",
-             "reset <= '0'",
-             "wait until ready = '1'"
+                "reset <= '1'",
+                "wait for 2*clk_period",
+                "wait until clock = '0'",
+                "reset <= '0'",
+                "wait until ready = '1'",
             )
 
             yield f"report \"expected output is {y_value}, value of '{self.y_variable_name}' is \" & integer'image(to_integer(signed({self.y_variable_name})))"
@@ -296,7 +303,9 @@ class TestCasesLSTMCell(TestBenchBase):
     def __init__(self, reference_h_out: list[int], input_size=0, hidden_size=0):
         self.reference_h_out = reference_h_out
 
-        assert ((input_size != 0) and (hidden_size != 0)), "hidden_size and input_size is not set yet"
+        assert (input_size != 0) and (
+            hidden_size != 0
+        ), "hidden_size and input_size is not set yet"
 
         self.len_of_x_h_vector = input_size + hidden_size
         self.len_of_cell_vector = hidden_size

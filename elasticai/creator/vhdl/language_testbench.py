@@ -9,9 +9,11 @@ from typing import Iterator
 
 class TestBenchBase(abc.ABC):
     simulation_start_msg = 'report "======Simulation Start======" severity Note'
-    simulation_end_msgs = ('report "======Simulation Success======" severity Note',
-                           'report "Please check the output message." severity Note',
-                           'wait')
+    simulation_end_msgs = (
+        'report "======Simulation Success======" severity Note',
+        'report "Please check the output message." severity Note',
+        "wait",
+    )
 
     @abstractmethod
     def _body(self) -> Iterator[str]:
@@ -21,5 +23,3 @@ class TestBenchBase(abc.ABC):
         yield self.simulation_start_msg
         yield from self._body()
         yield from self.simulation_end_msgs
-
-

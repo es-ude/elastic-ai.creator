@@ -162,4 +162,6 @@ if __name__ == "__main__":
     # copy static files
     # TODO: Maybe create a mapping, which files are needed for a specific model
     for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
-        copy_file("elasticai.creator.vhdl.generator.templates", file, destination_path(file))
+        copy_file(
+            "elasticai.creator.vhdl.generator.templates", file, destination_path(file)
+        )

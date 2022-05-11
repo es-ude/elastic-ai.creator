@@ -1,6 +1,8 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import precomputed_scalar_function_process
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+    precomputed_scalar_function_process,
+)
 from elasticai.creator.vhdl.language import (
     Entity,
     InterfaceVariable,
@@ -12,7 +14,8 @@ from elasticai.creator.vhdl.language import (
     Mode,
     Architecture,
     InterfaceSignal,
-    PortMap, Procedure,
+    PortMap,
+    Procedure,
 )
 
 

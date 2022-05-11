@@ -14,11 +14,15 @@ from elasticai.creator.vhdl.language import (
     ContextClause,
     LibraryClause,
     UseClause,
-    PortMap, Code, CodeGenerator,
+    PortMap,
+    Code,
+    CodeGenerator,
 )
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
-from elasticai.creator.vhdl.number_representations import FloatToSignedFixedPointConverter, \
-    FloatToBinaryFixedPointStringConverter
+from elasticai.creator.vhdl.number_representations import (
+    FloatToSignedFixedPointConverter,
+    FloatToBinaryFixedPointStringConverter,
+)
 
 
 def _vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:

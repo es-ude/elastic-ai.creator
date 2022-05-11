@@ -106,6 +106,4 @@ class LSTMCellTestBenchTest(VHDLFileTestCase):
             ],
         )
         lstm_cell_code = lstm_cell()
-        self.compareToFile(
-            "expected_lstm_cell_testbench.vhd", lstm_cell_code
-        )
+        self.compareToFile("expected_lstm_cell_testbench.vhd", lstm_cell_code)
