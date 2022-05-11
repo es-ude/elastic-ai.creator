@@ -1,113 +1,46 @@
 import math
-from itertools import chain
+from functools import partial
 
-from elasticai.creator.vhdl.language import (
-    ContextClause,
-    LibraryClause,
-    UseClause,
-    Entity,
-    InterfaceVariable,
-    DataType,
-    Mode,
-    Architecture,
-    Process,
-    form_to_hex_list,
-)
+from elasticai.creator.resource_utils import read_text
+from elasticai.creator.vhdl.number_representations import hex_representation
+
+
+def pad_with_zeros(numbers: list[int], target_length: int) -> list[int]:
+    return numbers + [0] * (target_length - len(numbers))
 
 
 class Rom:
-    def __init__(self, rom_name, data_width, addr_width, array_value, resource_option):
+    def __init__(
+        self, rom_name: str, data_width: int, values: list[int], resource_option: str
+    ):
         self.rom_name = rom_name
-        self.rom_name_array_t = f"{rom_name}_array_t".format(rom_name=rom_name)
         self.data_width = data_width
-        self.addr_width = addr_width
-        self.array_value = array_value
+        self.addr_width = self._calculate_required_addr_width_to_access_items(values)
+        padded_values = pad_with_zeros(values, 2**self.addr_width)
+        to_hex = partial(hex_representation, num_bits=data_width)
+        self.hex_values = list(map(to_hex, padded_values))
         self.resource_option = resource_option
 
+    @staticmethod
+    def _calculate_required_addr_width_to_access_items(items: list) -> int:
+        return max(1, math.ceil(math.log2(len(items))))
+
     def __call__(self):
-        library = ContextClause(
-            library_clause=LibraryClause(logical_name_list=["ieee"]),
-            use_clause=UseClause(
-                selected_names=[
-                    "ieee.std_logic_1164.all",
-                    "ieee.std_logic_unsigned.all",
-                ]
-            ),
-        )
-        entity = Entity(identifier=self.rom_name)
-        entity.port_list.append(
-            InterfaceVariable(
-                identifier="clk", identifier_type=DataType.STD_LOGIC, mode=Mode.IN
-            )
-        )
-        entity.port_list.append(
-            InterfaceVariable(
-                identifier="en", identifier_type=DataType.STD_LOGIC, mode=Mode.IN
-            )
-        )
-        entity.port_list.append(
-            InterfaceVariable(
-                identifier="addr",
-                identifier_type=DataType.STD_LOGIC_VECTOR,
-                mode=Mode.IN,
-                range="{addr_width}-1 downto 0".format(addr_width=self.addr_width),
-            )
-        )
-        entity.port_list.append(
-            InterfaceVariable(
-                identifier="data",
-                identifier_type=DataType.STD_LOGIC_VECTOR,
-                mode=Mode.OUT,
-                range="{data_width}-1 downto 0".format(data_width=self.data_width),
-            )
-        )
-        architecture = Architecture(design_unit=self.rom_name)
-
-        architecture.architecture_declaration_list.append(
-            "type {rom_name_arrat_t} is array (0 to 2**{addr_width}-1) of std_logic_vector({data_width}-1 downto 0)".format(
-                rom_name_arrat_t=self.rom_name_array_t,
-                addr_width=self.addr_width,
-                data_width=self.data_width,
-            )
-        )
-        architecture.architecture_declaration_list.append(
-            "signal ROM : {rom_name_arrat_t}:=({array_value})".format(
-                rom_name_arrat_t=self.rom_name_array_t,
-                array_value=form_to_hex_list(self.array_value),
-            )
-        )
-        architecture.architecture_declaration_list.append(
-            "attribute rom_style : string"
-        )
-        architecture.architecture_declaration_list.append(
-            'attribute rom_style of ROM : signal is "{resource_option}"'.format(
-                resource_option=self.resource_option,
-            )
+        template = read_text(
+            "elasticai.creator.vhdl.generator.templates", "rom.tpl.vhd"
         )
 
-        rom_process = Process(identifier="ROM", input_name="clk")
-        rom_process.process_statements_list.append(
-            "if rising_edge(clk) then\nif (en = '1') then\ndata <= ROM(conv_integer(addr))"
+        code = template.format(
+            rom_name=self.rom_name,
+            rom_addr_bitwidth=self.addr_width,
+            rom_data_bitwidth=self.data_width,
+            rom_value=",".join(self.hex_values),
+            rom_resource_option=f'"{self.resource_option}"',
         )
-        rom_process.process_statements_list.append("end if")
-        rom_process.process_statements_list.append("end if")
 
-        architecture.architecture_statement_part = rom_process
+        stripped_code_lines = map(str.strip, code.splitlines())
 
-        code = chain(library(), entity(), architecture())
+        def not_empty(line):
+            return len(line) > 0
 
-        return code
-
-
-def pad_with_zeros(hex_list: list[str]) -> list[str]:
-    """
-    Takes a list of strings determines, the length of the first element and appends a hex representation of zero to it
-    as often as necessary to reach a total length of `hex_list` that matches a power of two.
-    The first element of `hex_list` is assumed be a hexadecimal number.
-    All the strings in `hex_list` are assumed to have the same length.
-    We assume that `hex_list` is not empty.
-    """
-    hex_number_length = len(hex_list[0])
-    next_exponent_for_power_of_two = max(1, math.ceil(math.log2(len(hex_list))))
-    number_of_missing_zeros = 2**next_exponent_for_power_of_two - len(hex_list)
-    return hex_list + ["".join(["0"] * hex_number_length)] * number_of_missing_zeros
+        yield from filter(not_empty, stripped_code_lines)
