@@ -1,10 +1,10 @@
 from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
     LSTMCellTestBench,
 )
-from elasticai.creator.integrationTests.vhdl.test_case import VHDLFileTest
+from elasticai.creator.integrationTests.vhdl.vhdl_file_test_case import VHDLFileTestCase
 
 
-class LSTMCellTestBenchTest(VHDLFileTest):
+class LSTMCellTestBenchTest(VHDLFileTestCase):
     maxDiff = None
 
     def test_compare_files(self) -> None:
@@ -106,6 +106,4 @@ class LSTMCellTestBenchTest(VHDLFileTest):
             ],
         )
         lstm_cell_code = lstm_cell()
-        self.compareToFile(
-            "expected_lstm_cell_testbench.vhd", lstm_cell_code
-        )
+        self.compareToFile("expected_lstm_cell_testbench.vhd", lstm_cell_code)

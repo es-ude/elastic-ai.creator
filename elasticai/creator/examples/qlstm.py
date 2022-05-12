@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
-from elasticai.creator.layers import QLSTM, QLSTMCell, QLinear
+from elasticai.creator.layers import QLSTM, QLinear
 
 
 class SinusDataset(Dataset):
@@ -115,18 +115,15 @@ if __name__ == "__main__":
         train_loss = sum(losses) / len(losses)
 
         with torch.no_grad():
-            val_loss = (
-                sum(
-                    loss_fn(
-                        lstm_model(X).view(
-                            -1,
-                        ),
-                        y,
-                    )
-                    for X, y in dl_test
+            val_loss = sum(
+                loss_fn(
+                    lstm_model(X).view(
+                        -1,
+                    ),
+                    y,
                 )
-                / len(dl_test)
-            )
+                for X, y in dl_test
+            ) / len(dl_test)
 
         print(
             "Epoch: {}/{}; Loss: {}; Val_Loss: {}".format(

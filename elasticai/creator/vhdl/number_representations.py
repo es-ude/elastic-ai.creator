@@ -46,10 +46,6 @@ class FloatToBinaryFixedPointStringConverter:
         return two_complements_representation(signed_fixed_point, self.total_bit_width)
 
 
-def _int_to_bin_str(number: int, bits: int) -> str:
-    return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
-
-
 class FloatToHexFixedPointStringConverter:
     def __init__(
         self,
@@ -64,8 +60,14 @@ class FloatToHexFixedPointStringConverter:
         return hex_representation(signed_fixed_point, self.total_bit_width)
 
 
+def _int_to_bin_str(number: int, bits: int) -> str:
+    return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
+
+
 def _int_to_hex_str(number: int, bits: int) -> str:
-    return "{{:0{number_of_bits}x}}".format(number_of_bits=int(bits / 4)).format(number)
+    return 'x"{{:0{number_of_bits}x}}"'.format(number_of_bits=int(bits / 4)).format(
+        number
+    )
 
 
 def _get_unsigned_int_version(x, number_of_bits):
@@ -76,9 +78,9 @@ def _get_unsigned_int_version(x, number_of_bits):
     return unsigned_int_version
 
 
-def hex_representation(x, number_of_bits):
-    unsigned_int_version = _get_unsigned_int_version(x, number_of_bits)
-    return _int_to_hex_str(unsigned_int_version, number_of_bits)
+def hex_representation(x: int, num_bits: int) -> str:
+    unsigned_int_version = _get_unsigned_int_version(x, num_bits)
+    return _int_to_hex_str(unsigned_int_version, num_bits)
 
 
 def two_complements_representation(x, number_of_bits):
@@ -115,20 +117,10 @@ class ToLogicEncoder:
         return self.mapping[item]
 
     @property
-    def bit_width(self):
+    def bit_width(self) -> int:
         return math.floor(math.log(len(self.numerics), 2))
 
-    def __call__(self, number: int):
+    def __call__(self, number: int) -> str:
         if number not in self.numerics:
             raise ValueError
-        return BitVector(number, self.mapping[number], self.bit_width)
-
-
-class BitVector:
-    def __init__(self, number: int, repr: int, bit_width: int):
-        self._number = number
-        self._repr = repr
-        self._bit_width = bit_width
-
-    def __repr__(self):
-        return f"{self._repr:0{self._bit_width}b}"
+        return _int_to_bin_str(self.mapping[number], self.bit_width)

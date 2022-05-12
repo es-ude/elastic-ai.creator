@@ -14,7 +14,9 @@ def _get_file(package: resources.Package, file_name: str) -> Traversable:
     raise FileNotFoundError(f"The file '{file_name}' does not exist.")
 
 
-def read_text(package: resources.Package, file_name: str, encoding: str = "utf-8") -> str:
+def read_text(
+    package: resources.Package, file_name: str, encoding: str = "utf-8"
+) -> str:
     return _get_file(package, file_name).read_text(encoding)
 
 
@@ -22,7 +24,9 @@ def read_bytes(package: resources.Package, file_name: str) -> bytes:
     return _get_file(package, file_name).read_bytes()
 
 
-def copy_file(package: resources.Package, file_name: str, destination: PathType) -> None:
+def copy_file(
+    package: resources.Package, file_name: str, destination: PathType
+) -> None:
     data = read_bytes(package, file_name)
     with open(destination, "wb") as out_file:
         out_file.write(data)

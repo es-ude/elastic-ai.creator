@@ -9,7 +9,7 @@ from elasticai.creator.layers import QLSTMCell
 from elasticai.creator.vhdl.generator.rom import Rom, pad_with_zeros
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
-    FloatToHexFixedPointStringConverter
+    FloatToHexFixedPointStringConverter,
 )
 
 
@@ -53,7 +53,7 @@ def generate_rom_file(
             rom_name=name + "_rom",
             data_width=nbits,
             addr_width=addr_width,
-            array_value=array_value,
+            values=array_value,
             resource_option="auto",
         )
         rom_code = rom()

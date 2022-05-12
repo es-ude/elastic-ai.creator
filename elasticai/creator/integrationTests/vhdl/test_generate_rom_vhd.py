@@ -1,15 +1,10 @@
-import math
 import numpy as np
 
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 
-from elasticai.creator.vhdl.generator.rom import (
-    Rom,
-    pad_with_zeros,
-)
+from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
-    FloatToHexFixedPointStringConverter,
 )
 
 
@@ -20,22 +15,15 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
         frac_width = 4
         # biases for the input gate
         Bi = np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6])
-        addr_width = math.ceil(math.log2(len(Bi)))
         floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
             bits_used_for_fraction=frac_width, strict=False
         )
-        float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-            total_bit_width=data_width,
-            as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-        )
-        array_value = [float_to_hex_fixed_point_string_converter(x) for x in Bi]
-        array_value = pad_with_zeros(array_value)
+        values = [floats_to_signed_fixed_point_converter(x) for x in Bi]
 
         generate_rom = Rom(
             rom_name=rom_name,
             data_width=data_width,
-            addr_width=addr_width,
-            array_value=array_value,
+            values=values,
             resource_option="auto",
         )
         generated_code = list(generate_rom())
@@ -60,7 +48,9 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
             "begin",
             "ROM_process: process(clk)",
             "begin",
-            "if rising_edge(clk) then\nif (en = '1') then\ndata <= ROM(conv_integer(addr));",
+            "if rising_edge(clk) then",
+            "if (en = '1') then",
+            "data <= ROM(conv_integer(addr));",
             "end if;",
             "end if;",
             "end process ROM_process;",
