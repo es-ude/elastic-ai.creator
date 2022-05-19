@@ -58,7 +58,7 @@ if __name__ == "__main__":
     current_frac_bits = 8
     current_nbits = 16
     current_input_size = 1
-    current_hidden_size = 1
+    current_hidden_size = 20
     current_len_weights = (
         current_input_size + current_hidden_size
     ) * current_hidden_size

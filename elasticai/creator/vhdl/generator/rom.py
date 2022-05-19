@@ -16,7 +16,7 @@ class Rom:
         self.rom_name = rom_name
         self.data_width = data_width
         self.addr_width = self._calculate_required_addr_width_to_access_items(values)
-        padded_values = pad_with_zeros(values, 2**self.addr_width)
+        padded_values = pad_with_zeros(values, 2 ** self.addr_width)
         to_hex = partial(hex_representation, num_bits=data_width)
         self.hex_values = list(map(to_hex, padded_values))
         self.resource_option = resource_option
