@@ -1,12 +1,10 @@
 import random
 from functools import partial
-
-import numpy as np
 import torch
+import numpy as np
+from torch.nn import LSTM
 
-from elasticai.creator.layers import QLSTMCell
 
-from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
 )
@@ -19,47 +17,19 @@ def float_list_to_fixed_point(values: list[float], frac_bits: int) -> list[int]:
     return list(map(signed_fixed_point_converter, values))
 
 
-def generate_rom_file(
-    file_path: str,
-    weights_or_bias_list: list[list[int]],
-    nbits: int,
-    name: str,
-    index: int,
-) -> None:
-    """
-    generates the rom files for the weights and bias
-    Args:
-        file_path (str): paths where files should be stored
-        weights_or_bias_list (list[list[int]]): list with four lists with the fixed point values for each weight or bias
-        nbits (int): number of bits
-        name (str): name for the file
-        index (int): index where content is stored in weights_or_bias_list
-    """
-    with open(file_path, "w") as writer:
-        rom = Rom(
-            rom_name=name + "_rom",
-            data_width=nbits,
-            values=list(weights_or_bias_list[index]),
-            resource_option="auto",
-        )
-        rom_code = rom()
-        for line in rom_code:
-            writer.write(line + "\n")
-
-
-def inference_model(
-    lstm_signal_cell: QLSTMCell,
+def inference_lstm_layer(
+    lstm_layer: LSTM,
     frac_bits: int,
     input_size: int,
     hidden_size: int,
 ) -> tuple[list[int], list[int], np.array]:
     """
-    do inference on defined QLSTM Cell
+    do inference on the given multilayer LSTM
     Args:
-        lstm_signal_cell (QLSTMCell): current QLSTM Cell
+        lstm_layer (QLSTMCell): current LSTM layer
         frac_bits (int): number of fraction bits
-        input_size (int): input size of QLSTM Cell
-        hidden_size (int): hidden size of QLSTM Cell
+        input_size (int): input size of LSTM layer
+        hidden_size (int): hidden size of LSTM layer
     Returns:
         returns three lists/arrays
         the first and second list are the x_h input and cx of the lstm cell
@@ -76,33 +46,32 @@ def inference_model(
         x_h_input = np.hstack(
             (input[i].detach().numpy().flatten(), hx.detach().numpy().flatten())
         )
-        hx, cx = lstm_signal_cell(input[i], (hx, cx))
-
+        outputs, (hx, cx) = lstm_layer(input[i], (hx, cx))
+        c_array = cx.detach().numpy().flatten()
+        h_out_array = hx.detach().numpy().flatten()
         return (
             float_list_to_fixed_point(
                 x_h_input,
                 frac_bits=frac_bits,
             ),
             float_list_to_fixed_point(
-                cx.detach().numpy().flatten(),
+                c_array,
                 frac_bits=frac_bits,
             ),
-            float_list_to_fixed_point(
-                hx.detach().numpy().flatten(), frac_bits=frac_bits
-            ),
+            float_list_to_fixed_point(h_out_array, frac_bits=frac_bits),
         )
 
 
-def define_weights_and_bias(
-    lstm_signal_cell: QLSTMCell,
+def define_weights_and_bias_of_lstm_layer(
+    lstm_layer: LSTM,
     frac_bits: int,
     len_weights: int,
     len_bias: int,
 ) -> tuple[list[list[int]], list[list[int]]]:
     """
-    calculates the weights and bias for the given QLSTM Cell
+    calculates the weights and bias for the 1st layer of the given multilayer LSTM
     Args:
-        lstm_signal_cell (QLSTMCell): current QLSTM Cell
+        lstm_layer (torch.nn.LSTM): current LSTM
         frac_bits (int): number of fraction bits
         len_weights (int): (input_size + hidden_size) * hidden_size
         len_bias (int): hidden_size
@@ -110,15 +79,15 @@ def define_weights_and_bias(
         returns two lists, one for the weights and one for the bias
         in each list are four list of strings with the hex numbers of the weights or bias
     """
-    for name, param in lstm_signal_cell.named_parameters():
-
-        if name == "weight_ih":
+    for name, param in lstm_layer.named_parameters():
+        print(name, param.size())
+        if name == "weight_ih_l0":
             weight_ih = param.detach().numpy()
-        elif name == "weight_hh":
+        elif name == "weight_hh_l0":
             weight_hh = param.detach().numpy()
-        elif name == "bias_ih":
+        elif name == "bias_ih_l0":
             bias_ih = param.detach().numpy()
-        elif name == "bias_hh":
+        elif name == "bias_hh_l0":
             bias_hh = param.detach().numpy()
 
     weights = np.hstack((weight_ih, weight_hh)).flatten().flatten()

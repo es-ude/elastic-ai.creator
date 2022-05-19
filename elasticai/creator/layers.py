@@ -120,7 +120,7 @@ class ResidualQuantization(torch.nn.Module):
         super().__init__()
         self.num_bits = num_bits
         self.weight = torch.nn.Parameter(
-            torch.Tensor([0.5**i for i in range(1, num_bits)])
+            torch.Tensor([0.5 ** i for i in range(1, num_bits)])
         )
 
     def forward(self, inputs):

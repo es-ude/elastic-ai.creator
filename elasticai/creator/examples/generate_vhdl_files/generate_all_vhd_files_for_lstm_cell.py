@@ -58,7 +58,7 @@ if __name__ == "__main__":
     current_frac_bits = 8
     current_nbits = 16
     current_input_size = 1
-    current_hidden_size = 1
+    current_hidden_size = 20
     current_len_weights = (
         current_input_size + current_hidden_size
     ) * current_hidden_size
@@ -68,7 +68,6 @@ if __name__ == "__main__":
     weights_list, bias_list = define_weights_and_bias(
         lstm_cell,
         current_frac_bits,
-        current_nbits,
         current_len_weights,
         current_len_bias,
     )
@@ -77,7 +76,6 @@ if __name__ == "__main__":
     x_h_test_input, c_test_input, h_output = inference_model(
         lstm_cell,
         current_frac_bits,
-        current_nbits,
         current_input_size,
         current_hidden_size,
     )
@@ -160,7 +158,6 @@ if __name__ == "__main__":
     format_vhdl(file_path=file_path_testbench)
 
     # copy static files
-    # TODO: Maybe create a mapping, which files are needed for a specific model
     for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
         copy_file(
             "elasticai.creator.vhdl.generator.templates", file, destination_path(file)

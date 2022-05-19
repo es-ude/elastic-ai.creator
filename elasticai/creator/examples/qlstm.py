@@ -115,15 +115,18 @@ if __name__ == "__main__":
         train_loss = sum(losses) / len(losses)
 
         with torch.no_grad():
-            val_loss = sum(
-                loss_fn(
-                    lstm_model(X).view(
-                        -1,
-                    ),
-                    y,
+            val_loss = (
+                sum(
+                    loss_fn(
+                        lstm_model(X).view(
+                            -1,
+                        ),
+                        y,
+                    )
+                    for X, y in dl_test
                 )
-                for X, y in dl_test
-            ) / len(dl_test)
+                / len(dl_test)
+            )
 
         print(
             "Epoch: {}/{}; Loss: {}; Val_Loss: {}".format(
