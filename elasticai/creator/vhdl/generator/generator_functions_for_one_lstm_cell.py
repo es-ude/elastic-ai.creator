@@ -1,34 +1,27 @@
-import math
 import random
+from functools import partial
 
 import numpy as np
 import torch
 
 from elasticai.creator.layers import QLSTMCell
 
-from elasticai.creator.vhdl.generator.rom import Rom, pad_with_zeros
+from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
-    FloatToHexFixedPointStringConverter,
 )
 
 
-def float_array_to_hex_string(bi, frac_bits, number_of_bits):
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
+def float_list_to_fixed_point(values: list[float], frac_bits: int) -> list[int]:
+    signed_fixed_point_converter = FloatToSignedFixedPointConverter(
         bits_used_for_fraction=frac_bits, strict=False
     )
-    float_to_hex_fixed_point_string_converter = FloatToHexFixedPointStringConverter(
-        total_bit_width=number_of_bits,
-        as_signed_fixed_point=floats_to_signed_fixed_point_converter,
-    )
-    array_value = [float_to_hex_fixed_point_string_converter(x) for x in bi]
-    array_value = pad_with_zeros(array_value)
-    return array_value
+    return list(map(signed_fixed_point_converter, values))
 
 
 def generate_rom_file(
     file_path: str,
-    weights_or_bias_list: list[list[str]],
+    weights_or_bias_list: list[list[int]],
     nbits: int,
     name: str,
     index: int,
@@ -37,23 +30,16 @@ def generate_rom_file(
     generates the rom files for the weights and bias
     Args:
         file_path (str): paths where files should be stored
-        weights_or_bias_list (list[list[str]]): list with four lists with the hex strings for each weight or bias
+        weights_or_bias_list (list[list[int]]): list with four lists with the fixed point values for each weight or bias
         nbits (int): number of bits
         name (str): name for the file
         index (int): index where content is stored in weights_or_bias_list
     """
     with open(file_path, "w") as writer:
-        weight_or_bias_array = weights_or_bias_list[index]
-        addr_width = math.ceil(math.log2(len(weight_or_bias_array)))
-        if addr_width == 0:
-            addr_width = 1
-        array_value = weight_or_bias_array
-
         rom = Rom(
             rom_name=name + "_rom",
             data_width=nbits,
-            addr_width=addr_width,
-            values=array_value,
+            values=list(weights_or_bias_list[index]),
             resource_option="auto",
         )
         rom_code = rom()
@@ -64,10 +50,9 @@ def generate_rom_file(
 def inference_model(
     lstm_signal_cell: QLSTMCell,
     frac_bits: int,
-    nbits: int,
     input_size: int,
     hidden_size: int,
-) -> tuple[list[str], list[str], np.array]:
+) -> tuple[list[int], list[int], np.array]:
     """
     do inference on defined QLSTM Cell
     Args:
@@ -90,45 +75,39 @@ def inference_model(
     # input = input/torch.max(abs(input))
     # hx = hx/torch.max(abs(hx))
     # cx = cx/torch.max(abs(cx))
-    output = []
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_bits, strict=False
-    )
+
     for i in range(input.size()[0]):
         x_h_input = np.hstack(
             (input[i].detach().numpy().flatten(), hx.detach().numpy().flatten())
         )
         hx, cx = lstm_signal_cell(input[i], (hx, cx))
-        output.append(hx)
 
         return (
-            float_array_to_hex_string(
+            float_list_to_fixed_point(
                 x_h_input,
                 frac_bits=frac_bits,
-                number_of_bits=nbits,
             ),
-            float_array_to_hex_string(
+            float_list_to_fixed_point(
                 cx.detach().numpy().flatten(),
                 frac_bits=frac_bits,
-                number_of_bits=nbits,
             ),
-            floats_to_signed_fixed_point_converter(hx.detach().numpy().flatten()),
+            float_list_to_fixed_point(
+                hx.detach().numpy().flatten(), frac_bits=frac_bits
+            ),
         )
 
 
 def define_weights_and_bias(
     lstm_signal_cell: QLSTMCell,
     frac_bits: int,
-    nbits: int,
     len_weights: int,
     len_bias: int,
-) -> tuple[list[list[str]], list[list[str]]]:
+) -> tuple[list[list[int]], list[list[int]]]:
     """
     calculates the weights and bias for the given QLSTM Cell
     Args:
         lstm_signal_cell (QLSTMCell): current QLSTM Cell
         frac_bits (int): number of fraction bits
-        nbits (int): number of bits
         len_weights (int): (input_size + hidden_size) * hidden_size
         len_bias (int): hidden_size
     Returns:
@@ -159,14 +138,8 @@ def define_weights_and_bias(
     bg = bias[len_bias * 2 : len_bias * 3]  # B_ig+B_hg
     bo = bias[len_bias * 3 : len_bias * 4]  # B_io+B_ho
 
-    wi = float_array_to_hex_string(wi, frac_bits=frac_bits, number_of_bits=nbits)
-    wf = float_array_to_hex_string(wf, frac_bits=frac_bits, number_of_bits=nbits)
-    wg = float_array_to_hex_string(wg, frac_bits=frac_bits, number_of_bits=nbits)
-    wo = float_array_to_hex_string(wo, frac_bits=frac_bits, number_of_bits=nbits)
+    to_fixed_point = partial(float_list_to_fixed_point, frac_bits=frac_bits)
+    fixed_point_weights = list(map(to_fixed_point, [wi, wf, wg, wo]))
+    fixed_point_bias = list(map(to_fixed_point, [bi, bf, bg, bo]))
 
-    bi = float_array_to_hex_string(bi, frac_bits=frac_bits, number_of_bits=nbits)
-    bf = float_array_to_hex_string(bf, frac_bits=frac_bits, number_of_bits=nbits)
-    bg = float_array_to_hex_string(bg, frac_bits=frac_bits, number_of_bits=nbits)
-    bo = float_array_to_hex_string(bo, frac_bits=frac_bits, number_of_bits=nbits)
-
-    return [wi, wf, wg, wo], [bi, bf, bg, bo]
+    return fixed_point_weights, fixed_point_bias
