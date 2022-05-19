@@ -138,8 +138,8 @@ if __name__ == "__main__":
             frac_width=current_frac_bits,
             input_size=current_input_size,
             hidden_size=current_hidden_size,
-            test_x_h_data=x_h_test_input,  # FIXME: This expects a list[str] but x_h_test_input is a list[int] (fixed point)
-            test_c_data=c_test_input,  # FIXME: This expects a list[str] but c_test_input is a list[int] (fixed point)
+            test_x_h_data=x_h_test_input,
+            test_c_data=c_test_input,
             h_out=list(h_output),
             component_name="lstm_cell",
         )

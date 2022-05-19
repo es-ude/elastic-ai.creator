@@ -1,3 +1,4 @@
+from functools import partial
 from itertools import chain
 from typing import Iterable, Iterator
 import math
@@ -10,7 +11,6 @@ from elasticai.creator.vhdl.language import (
     Architecture,
     Process,
     PortMap,
-    form_to_hex_list,
     Keywords,
     Code,
     Procedure,
@@ -18,6 +18,7 @@ from elasticai.creator.vhdl.language import (
 from elasticai.creator.vhdl.language_testbench import (
     TestBenchBase,
 )
+from elasticai.creator.vhdl.number_representations import hex_representation
 
 
 class LSTMCellTestBench:
@@ -27,8 +28,8 @@ class LSTMCellTestBench:
         frac_width: int,
         input_size: int,
         hidden_size: int,
-        test_x_h_data: list[str],
-        test_c_data: list[str],
+        test_x_h_data: list[int],
+        test_c_data: list[int],
         h_out: list[int],
         component_name: str = None,
     ):
@@ -46,8 +47,9 @@ class LSTMCellTestBench:
         self.w_addr_width = math.ceil(
             math.log2((input_size + hidden_size) * hidden_size)
         )
-        self.test_x_h_data = test_x_h_data
-        self.test_c_data = test_c_data
+        to_hex = partial(hex_representation, num_bits=data_width)
+        self.test_x_h_data = list(map(to_hex, test_x_h_data))
+        self.test_c_data = list(map(to_hex, test_c_data))
         self.h_out = h_out
 
     @classmethod
@@ -230,10 +232,10 @@ class LSTMCellTestBench:
             "type C_ARRAY is array (0 to 31) of signed(16-1 downto 0)"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_x_h_data : X_H_ARRAY := ({form_to_hex_list(self.test_x_h_data)},others=>(others=>'0'))"
+            f"signal test_x_h_data : X_H_ARRAY := ({','.join(self.test_x_h_data)},others=>(others=>'0'))"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_c_data : C_ARRAY := ({form_to_hex_list(self.test_c_data)},others=>(others=>'0'))"
+            f"signal test_c_data : C_ARRAY := ({','.join(self.test_c_data)},others=>(others=>'0'))"
         )
         architecture.architecture_component_list.append(procedure_0)
         architecture.architecture_component_list.append(procedure_1)
