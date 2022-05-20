@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ needs.bump-version.outputs.new_sha }
+          ref: ${{ needs.bump-version.outputs.new_sha }}
       - uses: actions/setup-python@v1
         with:
           python-version: 3.9
