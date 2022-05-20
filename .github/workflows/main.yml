@@ -48,11 +48,11 @@ jobs:
           name: github-actions
           email: action@github.com
 
-        - name: Get new SHA
-          id: sha
-          run: |
-            new_sha=$(git rev-parse HEAD)
-            echo "::set-output name=SHA::$new_sha"
+      - name: Get new SHA
+        id: sha
+        run: |
+          new_sha=$(git rev-parse HEAD)
+          echo "::set-output name=SHA::$new_sha"
 
   bump-version:
     name: Bump Semantic Version
