@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Protocol, Iterable, runtime_checkable
+from typing import Any, Iterable, Protocol, TypeVar, runtime_checkable
 
 from torch import Tensor
 

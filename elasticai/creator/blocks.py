@@ -1,7 +1,8 @@
+from elasticai.creator.layers import QConv1d, QConv2d, QLinear
 from torch import nn
-from torch.nn import Conv1d, Linear, Conv2d
+from torch.nn import Conv1d, Conv2d, Linear
 from torch.nn.utils import parametrize
-from elasticai.creator.layers import QConv1d, QLinear, QConv2d
+
 
 """
 Modules that work as a sequence of 3  or more layers. Useful for writing more compact models

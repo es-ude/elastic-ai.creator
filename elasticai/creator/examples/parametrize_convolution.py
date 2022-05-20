@@ -1,7 +1,7 @@
 import torch
+from elasticai.creator.layers import Binarize
 from torch.nn import Conv1d
 from torch.nn.utils.parametrize import register_parametrization
-from elasticai.creator.layers import Binarize
 
 layer = Conv1d(in_channels=2, out_channels=3, kernel_size=(1,), bias=False)
 

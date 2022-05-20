@@ -1,9 +1,8 @@
 from typing import Tuple
-from torch import nn
 
 from brevitas.export import BrevitasONNXManager
-
 from elasticai.creator.brevitas.translation_mapping import ConversionMapping
+from torch import nn
 from torch.nn import Module
 
 

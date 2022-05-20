@@ -1,13 +1,8 @@
 from typing import Callable
 
 from elasticai.creator.brevitas.translation_functions import (
-    translate_conv1d,
-    translate_conv2d,
-    translate_linear_layer,
-    translate_binarize_layer,
-    translate_ternarize_layer,
-    translate_layer,
-)
+    translate_binarize_layer, translate_conv1d, translate_conv2d,
+    translate_layer, translate_linear_layer, translate_ternarize_layer)
 from torch.nn import Module
 
 

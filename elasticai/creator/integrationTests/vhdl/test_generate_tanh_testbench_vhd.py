@@ -1,7 +1,7 @@
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
-    PrecomputedScalarTestBench,
-)
-from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.tests.vhdl.vhdl_file_testcase import \
+    GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import \
+    PrecomputedScalarTestBench
 
 
 class TanhTestBenchTest(GeneratedVHDLCodeTest):

@@ -1,16 +1,11 @@
-from torch import nn
-
 import brevitas.nn as bnn
-
-from elasticai.creator.brevitas.translation_functions.quantizers import (
-    translate_binarize_layer,
-    translate_ternarize_layer,
-)
-from elasticai.creator.brevitas.brevitas_model_comparison import (
-    BrevitasModelComparisonTestCase,
-)
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
+from elasticai.creator.brevitas.brevitas_model_comparison import \
+    BrevitasModelComparisonTestCase
+from elasticai.creator.brevitas.translation_functions.quantizers import (
+    translate_binarize_layer, translate_ternarize_layer)
 from elasticai.creator.layers import Binarize, Ternarize
+from torch import nn
 
 
 class QuantizersTest(BrevitasModelComparisonTestCase):
