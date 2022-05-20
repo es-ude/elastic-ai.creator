@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Set up Python 3.9
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: 3.9
 
@@ -75,4 +75,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository_username: __token__
           repository_password: ${{ secrets.TESTPYPI_ACCOUNT_API_TOKEN }}
-
