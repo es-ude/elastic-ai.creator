@@ -3,8 +3,11 @@ import unittest
 
 import numpy as np
 import torch
+
 from elasticai.creator.systemTests.brevitas_representation.models_definition import (
-    create_brevitas_model, create_qtorch_model)
+    create_brevitas_model,
+    create_qtorch_model,
+)
 
 
 class InputSystemTest(unittest.TestCase):

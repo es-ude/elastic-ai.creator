@@ -3,9 +3,15 @@ from typing import Callable, Sequence, Union
 
 import numpy as np
 import torch
-from elasticai.creator.tags_utils import (ModuleProto, TaggedModule, get_tags,
-                                          has_tag, tag)
 from torch import Tensor
+
+from elasticai.creator.tags_utils import (
+    ModuleProto,
+    TaggedModule,
+    get_tags,
+    has_tag,
+    tag,
+)
 
 _precomputable_tag = "precomputable"
 

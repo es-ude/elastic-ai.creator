@@ -1,8 +1,9 @@
 from typing import Dict
 
+from torch.nn import Module
+
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
 from elasticai.creator.layers import Binarize, Ternarize
-from torch.nn import Module
 
 
 def set_quantizers(layer: Module, args: Dict) -> None:

@@ -1,8 +1,10 @@
 from brevitas.core.function_wrapper import InplaceTensorClampSte, TensorClamp
-from brevitas.quant.base import (NarrowIntQuant, PerTensorConstScaling2bit,
-                                 SignedBinaryClampedConst)
-from brevitas.quant.solver import (ActQuantSolver, BiasQuantSolver,
-                                   WeightQuantSolver)
+from brevitas.quant.base import (
+    NarrowIntQuant,
+    PerTensorConstScaling2bit,
+    SignedBinaryClampedConst,
+)
+from brevitas.quant.solver import ActQuantSolver, BiasQuantSolver, WeightQuantSolver
 
 
 class BinaryWeights(SignedBinaryClampedConst, WeightQuantSolver):

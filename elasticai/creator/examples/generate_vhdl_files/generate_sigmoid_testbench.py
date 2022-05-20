@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import \
-    PrecomputedScalarTestBench
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+    PrecomputedScalarTestBench,
+)
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 

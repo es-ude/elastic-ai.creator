@@ -1,9 +1,10 @@
 from types import SimpleNamespace
 
 import torch
+from torch import Tensor
+
 from elasticai.creator.functional import binarize
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
-from torch import Tensor
 
 
 class BinarizeFunctionTest(TensorTestCase):

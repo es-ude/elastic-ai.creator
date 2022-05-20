@@ -1,9 +1,11 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import \
-    TestCasesLSTMCommonGate
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import \
-    TestCasesPrecomputedScalarFunction
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
+    TestCasesLSTMCommonGate,
+)
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+    TestCasesPrecomputedScalarFunction,
+)
 
 
 class TestCasesLSTMCommonGateTest(TestCase):

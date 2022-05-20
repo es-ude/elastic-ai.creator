@@ -1,7 +1,8 @@
 import unittest
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import \
-    precomputed_scalar_function_process
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+    precomputed_scalar_function_process,
+)
 
 
 class PrecomputedScalarFunctionProcessTest(unittest.TestCase):

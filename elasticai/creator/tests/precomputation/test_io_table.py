@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+
 from elasticai.creator.io_table import IOTable, group_tables
 
 

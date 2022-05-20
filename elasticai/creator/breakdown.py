@@ -1,10 +1,11 @@
 import types
 
 import torch.nn
+from torch.nn.utils import parametrize
+
 from elasticai.creator.blocks import Conv2d_block
 from elasticai.creator.layers import ChannelShuffle
 from elasticai.creator.masks import fixedOffsetMask4D
-from torch.nn.utils import parametrize
 
 "Implementation of the breakdown. Used to represent multiple layers with a fixed width."
 
