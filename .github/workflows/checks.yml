@@ -4,8 +4,7 @@ on:
   # including: opening, reviewing, but also updating the head of
   # the corresponding branch
   pull_request:
-    branches:
-      - "ci-cd"
+
 jobs:
   integration-tests:
     uses: ./.github/workflows/integration_tests.yml
