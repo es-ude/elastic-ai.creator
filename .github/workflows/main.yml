@@ -73,16 +73,17 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "action@github.com"
-      - name: create changelog
-        run: |
-          semantic-release changelog > CHANGELOG.md
-          git add CHANGELOG.md
       - name: bump version
         id: version
         run: |
           new_version=$(semantic-release print-version)
           echo "::set-output name=VERSION::$new_version"
           semantic-release version
+      - name: create changelog
+        run: |
+          semantic-release changelog > CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m"update changelog"
       - name: push new version and tag
         uses: github-actions-x/commit@v2.9
         with:
