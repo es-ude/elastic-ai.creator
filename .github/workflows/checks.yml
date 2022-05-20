@@ -1,0 +1,21 @@
+name: Checks
+on:
+  # run the workflow whenever changes to a pull request are made
+  # including: opening, reviewing, but also updating the head of
+  # the corresponding branch
+  pull_request:
+    branches:
+      - "ci-cd"
+jobs:
+  integration-tests:
+    uses: ./.github/workflows/integration_tests.yml
+  unit-tests:
+    uses: ./.github/workflows/unit_tests.yml
+  commitlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v2
