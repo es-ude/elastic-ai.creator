@@ -2,7 +2,7 @@ name: Test and Publish
 on:
   push:
     branches:
-      - main
+      - ci-cd
 
 jobs:
   unit-tests:
@@ -54,8 +54,8 @@ jobs:
           new_sha=$(git rev-parse HEAD)
           echo "::set-output name=SHA::$new_sha"
 
-  bump-version:
-    name: Bump Semantic Version
+  semantic-release:
+    name: Bump Version and Release
     runs-on: ubuntu-latest
     concurrency: push
     needs: [unit-tests, integration-tests, beautify]
@@ -69,57 +69,10 @@ jobs:
           ref: ${{ needs.beautify.outputs.new_sha }}
       - name: install relekang/python-semantic-release
         run: python3 -m pip install python-semantic-release
-      - name: configure git
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "action@github.com"
-      - name: bump version
-        id: version
-        run: |
-          new_version=$(semantic-release print-version)
-          echo "::set-output name=VERSION::$new_version"
-          semantic-release version
-      - name: create changelog
-        run: |
-          semantic-release changelog > CHANGELOG.md
-          git add CHANGELOG.md
-          git commit -m"update changelog"
-      - name: push new version and tag
-        uses: github-actions-x/commit@v2.9
+      - name: Semantic Release
+        uses: relekang/python-semantic-release@master
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: format('v{0}', ${{ steps.version.outputs.VERSION }})
-          name: github-actions
-          email: action@github.com
-      - name: get new sha
-        id: sha
-        run: |
-          new_sha=$(git rev-parse HEAD)
-          echo "::set-output name=SHA::$new_sha"
-
-
-  publish:
-    name: Build and Publish
-    runs-on: ubuntu-latest
-    concurrency: push
-    needs: [unit-tests, integration-tests, beautify, bump-version]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ needs.bump-version.outputs.new_sha }}
-      - uses: actions/setup-python@v1
-        with:
-          python-version: 3.9
-      - uses: Gr1N/setup-poetry@v7
-      - uses: actions/cache@v2
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-      - name: build
-        run: poetry build
-      - name: publish
-        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_PROJECT_API_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository_username: __token__
+          repository_password: ${{ secrets.TESTPYPI_ACCOUNT_API_TOKEN }}
 
