@@ -1,0 +1,6 @@
+name: TestAndPublish
+
+on:
+  release:
+    types:
+      -
