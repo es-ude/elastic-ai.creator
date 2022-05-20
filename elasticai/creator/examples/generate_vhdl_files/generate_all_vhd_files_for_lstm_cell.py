@@ -1,20 +1,19 @@
 import os
+import random
 from argparse import ArgumentParser
 
-from elasticai.creator.vhdl.generator.generator_functions_for_one_lstm_cell import (
-    generate_rom_file,
-    inference_model,
-    define_weights_and_bias,
-)
-import torch
-import random
 import numpy as np
-
-from elasticai.creator.resource_utils import copy_file
+import torch
 from elasticai.creator.layers import QLSTMCell
+from elasticai.creator.resource_utils import copy_file
+from elasticai.creator.vhdl.generator.generator_functions_for_one_lstm_cell import (
+    define_weights_and_bias, generate_rom_file, inference_model)
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import \
+    LSTMCellTestBench
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+    Sigmoid, Tanh)
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
+
 
 """
 this module generates all vhd files for a single lstm cell

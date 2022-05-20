@@ -1,10 +1,8 @@
 from unittest import TestCase
+
 from elasticai.creator.vhdl.number_representations import (
-    FloatToSignedFixedPointConverter,
-    two_complements_representation,
-    hex_representation,
-    ToLogicEncoder,
-)
+    FloatToSignedFixedPointConverter, ToLogicEncoder, hex_representation,
+    two_complements_representation)
 
 
 class FixedPointConverterTest(TestCase):

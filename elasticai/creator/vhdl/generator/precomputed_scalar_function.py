@@ -3,26 +3,14 @@ from itertools import chain
 from typing import Iterable, Iterator
 
 import torch.nn
-
-from elasticai.creator.vhdl.language import (
-    Entity,
-    ComponentDeclaration,
-    InterfaceVariable,
-    DataType,
-    Architecture,
-    Process,
-    ContextClause,
-    LibraryClause,
-    UseClause,
-    PortMap,
-    Code,
-    CodeGenerator,
-)
+from elasticai.creator.vhdl.language import (Architecture, Code, CodeGenerator,
+                                             ComponentDeclaration,
+                                             ContextClause, DataType, Entity,
+                                             InterfaceVariable, LibraryClause,
+                                             PortMap, Process, UseClause)
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
 from elasticai.creator.vhdl.number_representations import (
-    FloatToSignedFixedPointConverter,
-    FloatToBinaryFixedPointStringConverter,
-)
+    FloatToBinaryFixedPointStringConverter, FloatToSignedFixedPointConverter)
 
 
 def _vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:

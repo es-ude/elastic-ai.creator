@@ -1,11 +1,9 @@
 import numpy as np
-
-from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-
+from elasticai.creator.tests.vhdl.vhdl_file_testcase import \
+    GeneratedVHDLCodeTest
 from elasticai.creator.vhdl.generator.rom import Rom
-from elasticai.creator.vhdl.number_representations import (
-    FloatToSignedFixedPointConverter,
-)
+from elasticai.creator.vhdl.number_representations import \
+    FloatToSignedFixedPointConverter
 
 
 class GenerateROMVhdTest(GeneratedVHDLCodeTest):

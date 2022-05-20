@@ -1,8 +1,7 @@
 import unittest
 
-from elasticai.creator.brevitas.brevitas_model_comparison import (
-    BrevitasModelMatcher,
-)
+from elasticai.creator.brevitas.brevitas_model_comparison import \
+    BrevitasModelMatcher
 
 
 def dummy_model():

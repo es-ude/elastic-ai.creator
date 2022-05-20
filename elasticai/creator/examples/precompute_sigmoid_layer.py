@@ -1,10 +1,7 @@
 import numpy as np
-from torch import nn, Tensor
-
 from elasticai.creator.precomputation import (
-    precomputable,
-    get_precomputations_from_direct_children,
-)
+    get_precomputations_from_direct_children, precomputable)
+from torch import Tensor, nn
 
 model = nn.Sequential(
     precomputable(

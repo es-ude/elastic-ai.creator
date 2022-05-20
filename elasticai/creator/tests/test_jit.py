@@ -2,11 +2,10 @@ import pathlib
 import re
 
 import torch
-from torch import jit
-from torch.nn.functional import hardtanh
-
 from elasticai.creator.layers import Binarize
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from torch import jit
+from torch.nn.functional import hardtanh
 
 
 class JitTests(TensorTestCase):

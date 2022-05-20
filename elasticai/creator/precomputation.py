@@ -1,19 +1,11 @@
 import json
-from typing import Union, Callable, Sequence
+from typing import Callable, Sequence, Union
 
-import numpy
 import numpy as np
 import torch
+from elasticai.creator.tags_utils import (ModuleProto, Tagged, TaggedModule,
+                                          get_tags, has_tag, tag)
 from torch import Tensor
-
-from elasticai.creator.tags_utils import (
-    has_tag,
-    get_tags,
-    tag,
-    Tagged,
-    ModuleProto,
-    TaggedModule,
-)
 
 _precomputable_tag = "precomputable"
 

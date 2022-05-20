@@ -1,22 +1,18 @@
 import types
 import warnings
-from abc import abstractmethod, ABC
-from typing import Optional, Tuple, Callable, Protocol, List, Any
+from abc import ABC, abstractmethod
+from itertools import product
+from typing import Any, Callable, List, Optional, Protocol, Tuple
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor
-from itertools import product
-
-from torch.nn import Module, BatchNorm1d, Parameter, Conv1d
-from torch.nn.utils.parametrize import register_parametrization
-
 from elasticai.creator.functional import binarize as BinarizeFn
 from elasticai.creator.input_domains import (
-    create_codomain_for_depthwise_1d_conv,
-    create_codomain_for_1d_conv,
-)
+    create_codomain_for_1d_conv, create_codomain_for_depthwise_1d_conv)
 from elasticai.creator.precomputation import precomputable
+from torch import Tensor
+from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
+from torch.nn.utils.parametrize import register_parametrization
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
 
@@ -120,7 +116,7 @@ class ResidualQuantization(torch.nn.Module):
         super().__init__()
         self.num_bits = num_bits
         self.weight = torch.nn.Parameter(
-            torch.Tensor([0.5 ** i for i in range(1, num_bits)])
+            torch.Tensor([0.5**i for i in range(1, num_bits)])
         )
 
     def forward(self, inputs):

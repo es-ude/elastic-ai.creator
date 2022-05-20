@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 
 import numpy as np
-
 from elasticai.creator.vhdl.generator.precomputed_scalar_function import Tanh
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
