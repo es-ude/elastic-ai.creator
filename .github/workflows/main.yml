@@ -61,7 +61,7 @@ jobs:
     needs: [unit-test, integration-tests, beautify]
     outputs:
       new_version: ${{ steps.version.outputs.VERSION }}
-      new_sha: ${{ steps.version.sha.SHA }}
+      new_sha: ${{ steps.sha.outputs.SHA }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -79,7 +79,7 @@ jobs:
         uses: github-actions-x/commit@v2.9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: format('v{0}', ${{ new_version }})
+          commit-message: format('v{0}', ${{ steps.version.outputs.VERSION }})
           name: github-actions
           email: action@github.com
       - name: get new sha
