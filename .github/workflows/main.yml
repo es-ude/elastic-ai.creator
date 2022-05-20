@@ -93,7 +93,7 @@ jobs:
     name: Build and Publish
     runs-on: ubuntu-latest
     concurrency: push
-    needs: [unit-tests, integration-tests, beautify]
+    needs: [unit-tests, integration-tests, beautify, bump-version]
     steps:
       - uses: actions/checkout@v2
         with:
