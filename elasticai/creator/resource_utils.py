@@ -1,8 +1,7 @@
-from typing import Union
-from pathlib import PurePath
-from importlib.abc import Traversable
 from importlib import resources
-
+from importlib.abc import Traversable
+from pathlib import PurePath
+from typing import Union
 
 PathType = Union[str, PurePath]
 

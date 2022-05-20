@@ -1,5 +1,5 @@
 import math
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import torch
 from torch.nn import Parameter

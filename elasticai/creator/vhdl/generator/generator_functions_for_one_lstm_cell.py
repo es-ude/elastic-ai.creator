@@ -3,13 +3,10 @@ from functools import partial
 
 import numpy as np
 import torch
-
 from elasticai.creator.layers import QLSTMCell
-
 from elasticai.creator.vhdl.generator.rom import Rom
-from elasticai.creator.vhdl.number_representations import (
-    FloatToSignedFixedPointConverter,
-)
+from elasticai.creator.vhdl.number_representations import \
+    FloatToSignedFixedPointConverter
 
 
 def float_list_to_fixed_point(values: list[float], frac_bits: int) -> list[int]:

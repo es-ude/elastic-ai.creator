@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import \
+    LSTMCellTestBench
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 

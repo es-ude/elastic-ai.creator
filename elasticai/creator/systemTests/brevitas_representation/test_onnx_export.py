@@ -1,18 +1,14 @@
 import unittest
 
 import brevitas.nn as bnn
-from torch import nn
-
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
-from elasticai.creator.brevitas.brevitas_model_comparison import (
-    BrevitasModelComparisonTestCase,
-)
-from elasticai.creator.brevitas.brevitas_representation import (
-    BrevitasRepresentation,
-)
-from elasticai.creator.systemTests.brevitas_representation.models_definition import (
-    create_brevitas_model,
-)
+from elasticai.creator.brevitas.brevitas_model_comparison import \
+    BrevitasModelComparisonTestCase
+from elasticai.creator.brevitas.brevitas_representation import \
+    BrevitasRepresentation
+from elasticai.creator.systemTests.brevitas_representation.models_definition import \
+    create_brevitas_model
+from torch import nn
 
 
 def create_small_brevitas_model():

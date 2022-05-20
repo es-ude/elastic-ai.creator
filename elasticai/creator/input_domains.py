@@ -1,6 +1,5 @@
-import itertools
 import itertools as ite
-from typing import List, Dict, Union, Iterable
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import torch
