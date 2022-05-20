@@ -51,3 +51,5 @@ command_line = "-m unittest discover ."
 [tool.semantic_release]
 version_toml = "pyproject.toml:tool.poetry.version"
 major_on_zero = false
+commit_parser = "emoji_parser"
+
