@@ -19,7 +19,7 @@ entity dual_port_2_clock_ram is
 generic (
     RAM_WIDTH : integer := 64;                      -- Specify RAM data width
     RAM_DEPTH_WIDTH : integer := 8;                    -- Specify RAM depth (number of entries)
-    RAM_PERFORMANCE : string := "LOW_LATENCY";      -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
+    RAM_PERFORMANCE : string := "LOW_LATENCY";      -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY"
     INIT_FILE : string := ""                        -- Specify name/location of RAM initialization file if using one (leave blank if not)
     );
 

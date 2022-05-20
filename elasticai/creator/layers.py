@@ -424,7 +424,7 @@ class QLSTM(torch.nn.Module):
             input = torch.stack(torch.unbind(input), dim=1)
 
         # Implementation based on
-        # https://github.com/pytorch/pytorch/blob/master/benchmarks/fastrnns/custom_lstms.py#L184
+        # https://github.com/pytorch/pytorch/blob/bb7fd1fcfbd2507272fd9b3f2610ef02bfba5692/benchmarks/fastrnns/custom_lstms.py#L184
         inputs = torch.unbind(input, dim=0)
         outputs = []
         for i in range(len(inputs)):
