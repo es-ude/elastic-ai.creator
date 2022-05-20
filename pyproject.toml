@@ -48,6 +48,6 @@ omit = ["elasticai/examples/*py"]
 source = ["elasticai"]
 command_line = "-m unittest discover ."
 
-[tool.semantic-release]
+[tool.semantic_release]
 version_toml = "pyproject.toml:tool.poetry.version"
 major_on_zero = false
