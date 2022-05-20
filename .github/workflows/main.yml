@@ -69,6 +69,10 @@ jobs:
           ref: ${{ needs.beautify.outputs.new_sha }}
       - name: install relekang/python-semantic-release
         run: python3 -m pip install python-semantic-release
+      - name: configure git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "action@github.com"
       - name: bump version
         id: version
         run: |
