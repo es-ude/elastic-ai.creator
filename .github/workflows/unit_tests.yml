@@ -1,4 +1,4 @@
-name: unit-tests
+name: UnitTest
 on: [push]
 jobs:
   run-tests:
@@ -15,6 +15,6 @@ jobs:
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
       - run: poetry --version
       - run: python --version
-      - run: poetry install --no-interaction --extras brevitas
+      - run: poetry install --no-interaction
       - run: cd elasticai/creator/tests
       - run: poetry run python -m unittest discover elasticai/creator/tests
