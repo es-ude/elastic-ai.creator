@@ -58,7 +58,7 @@ jobs:
     name: Bump Semantic Version
     runs-on: ubuntu-latest
     concurrency: push
-    needs: [unit-test, integration-tests, beautify]
+    needs: [unit-tests, integration-tests, beautify]
     outputs:
       new_version: ${{ steps.version.outputs.VERSION }}
       new_sha: ${{ steps.sha.outputs.SHA }}
@@ -93,7 +93,7 @@ jobs:
     name: Build and Publish
     runs-on: ubuntu-latest
     concurrency: push
-    needs: [unit-test, integration-tests, beautify]
+    needs: [unit-tests, integration-tests, beautify]
     steps:
       - uses: actions/checkout@v2
         with:
