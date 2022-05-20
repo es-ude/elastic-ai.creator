@@ -3,13 +3,19 @@ from typing import Callable, Sequence, Union
 
 import numpy as np
 import torch
-from elasticai.creator.tags_utils import (ModuleProto, Tagged, TaggedModule,
-                                          get_tags, has_tag, tag)
 from torch import Tensor
+
+from elasticai.creator.tags_utils import (
+    ModuleProto,
+    TaggedModule,
+    get_tags,
+    has_tag,
+    tag,
+)
 
 _precomputable_tag = "precomputable"
 
-TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, numpy.ndarray]
+TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, np.ndarray]
 
 
 class Precomputation:
