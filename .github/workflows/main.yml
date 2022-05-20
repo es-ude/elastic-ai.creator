@@ -35,10 +35,10 @@ jobs:
         run: python -m black .
 
       - name: Install isort
-        run: python -m pip install "isort >=4,<5"
+        run: python -m pip install isort
 
       - name: Sort imports
-        run: python -m isort -y -rc .
+        run: python -m isort --profile black .
 
       - name: Commit and push changes
         uses: github-actions-x/commit@v2.9
