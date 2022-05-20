@@ -2,7 +2,7 @@ name: Test and Publish
 on:
   push:
     branches:
-      - main
+      - ci-cd
 
 jobs:
   unit-tests:
@@ -90,7 +90,7 @@ jobs:
 
 
   publish:
-    name: Publish
+    name: Build and Publish
     runs-on: ubuntu-latest
     concurrency: push
     needs: [unit-test, integration-tests, beautify]
