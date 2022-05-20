@@ -1,12 +1,14 @@
 import unittest
 
 import brevitas.nn as bnn
-import elasticai.creator.brevitas.brevitas_quantizers as bquant
 import torch
-from elasticai.creator.brevitas.translation_functions.linear import \
-    translate_linear_layer
-from elasticai.creator.layers import Binarize, QLinear, Ternarize
 from torch import nn
+
+import elasticai.creator.brevitas.brevitas_quantizers as bquant
+from elasticai.creator.brevitas.translation_functions.linear import (
+    translate_linear_layer,
+)
+from elasticai.creator.layers import Binarize, QLinear, Ternarize
 
 
 class LinearLayerTest(unittest.TestCase):

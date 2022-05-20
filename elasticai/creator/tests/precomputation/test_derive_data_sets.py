@@ -3,12 +3,15 @@ import unittest
 
 import numpy as np
 import torch
-from elasticai.creator.input_domains import (construct_codomain_from_elements,
-                                             create_input_data,
-                                             create_io_table,
-                                             find_unique_elements,
-                                             get_cartesian_product_from_items)
 from numpy.testing import assert_equal as assertNPArrayEqual
+
+from elasticai.creator.input_domains import (
+    construct_codomain_from_elements,
+    create_input_data,
+    create_io_table,
+    find_unique_elements,
+    get_cartesian_product_from_items,
+)
 
 
 def PyTorchAdapter():

@@ -4,11 +4,12 @@ from functools import partial
 
 import torch
 import torchvision
-from elasticai.creator.constraints import WeightClipper
-from elasticai.creator.layers import Binarize, QConv2d, QLinear
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
+
+from elasticai.creator.constraints import WeightClipper
+from elasticai.creator.layers import Binarize, QConv2d, QLinear
 
 xy_train = torchvision.datasets.FashionMNIST(
     root="data/",

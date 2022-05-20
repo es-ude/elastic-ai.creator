@@ -3,10 +3,18 @@ from functools import partial
 from itertools import chain
 from typing import Iterable, Iterator
 
-from elasticai.creator.vhdl.language import (Architecture, Code, ContextClause,
-                                             Entity, Keywords, LibraryClause,
-                                             PortMap, Procedure, Process,
-                                             UseClause)
+from elasticai.creator.vhdl.language import (
+    Architecture,
+    Code,
+    ContextClause,
+    Entity,
+    Keywords,
+    LibraryClause,
+    PortMap,
+    Procedure,
+    Process,
+    UseClause,
+)
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
 from elasticai.creator.vhdl.number_representations import hex_representation
 

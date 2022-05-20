@@ -1,7 +1,6 @@
 import functools
 from typing import Any, Callable
 
-
 """
 The meta programming functions in this module are mostly used to implement the decorator software design patterns 
 that allow users to add support for elastic ai functionalities, such as *precomputing* to custom `torch.nn.Module`s.

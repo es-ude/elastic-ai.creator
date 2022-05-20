@@ -6,13 +6,16 @@ from typing import Any, Callable, List, Optional, Protocol, Tuple
 
 import torch
 import torch.nn.functional as F
-from elasticai.creator.functional import binarize as BinarizeFn
-from elasticai.creator.input_domains import (
-    create_codomain_for_1d_conv, create_codomain_for_depthwise_1d_conv)
-from elasticai.creator.precomputation import precomputable
 from torch import Tensor
 from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
+
+from elasticai.creator.functional import binarize as BinarizeFn
+from elasticai.creator.input_domains import (
+    create_codomain_for_1d_conv,
+    create_codomain_for_depthwise_1d_conv,
+)
+from elasticai.creator.precomputation import precomputable
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
 

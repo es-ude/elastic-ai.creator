@@ -1,8 +1,9 @@
 from typing import Any, Callable, List
 
 import torch
-from elasticai.creator.tags_utils import get_tags
 from torch.nn import Module
+
+from elasticai.creator.tags_utils import get_tags
 
 
 def _preprocess_tags(tags: dict):

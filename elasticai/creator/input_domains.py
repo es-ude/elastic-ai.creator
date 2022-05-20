@@ -1,4 +1,4 @@
-import itertools as ite
+import itertools
 from typing import Dict, Iterable, List, Union
 
 import numpy as np
@@ -25,7 +25,7 @@ def create_input_data(
     table = np.zeros([n_values] + input_dim, dtype=dtype)
 
     for vector, i in zip(
-        ite.product(domain, repeat=int(np.prod(input_dim))), range(n_values)
+        itertools.product(domain, repeat=int(np.prod(input_dim))), range(n_values)
     ):
         table[i] = np.reshape(np.asarray(vector), input_dim)
 

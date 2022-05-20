@@ -1,8 +1,10 @@
 from typing import Union
 
 import brevitas.nn as bnn
-from elasticai.creator.brevitas.translation_functions.translation_function_tools import \
-    set_quantizers
+
+from elasticai.creator.brevitas.translation_functions.translation_function_tools import (
+    set_quantizers,
+)
 from elasticai.creator.layers import QConv1d, QConv2d
 
 

@@ -1,12 +1,22 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import \
-    precomputed_scalar_function_process
-from elasticai.creator.vhdl.language import (Architecture, ContextClause,
-                                             DataType, Entity, InterfaceSignal,
-                                             InterfaceVariable, LibraryClause,
-                                             Mode, PortMap, Procedure, Process,
-                                             UseClause)
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+    precomputed_scalar_function_process,
+)
+from elasticai.creator.vhdl.language import (
+    Architecture,
+    ContextClause,
+    DataType,
+    Entity,
+    InterfaceSignal,
+    InterfaceVariable,
+    LibraryClause,
+    Mode,
+    PortMap,
+    Procedure,
+    Process,
+    UseClause,
+)
 
 
 class EntityTest(TestCase):
