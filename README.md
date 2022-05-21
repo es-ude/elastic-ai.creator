@@ -13,50 +13,20 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 ## Table of contents
 
-[[_TOC_]]
+- [Install](#install)
+- [Users Guide](#users-guide)
+- [Developers Guide](#developers-guide)
 
 
-### Poetry
 
-#### Using ElasticAICreator as a dependency
+
+#### Install
 You can install the ElasticAICreator as a dependency using pip:
 ```bash
 python3 -m pip install git+https://github.com/es-ude/elastic-ai.creator.git@main
 ```
 
-#### Developing the ElasticAICreator
-For easy creating a virtual environment and having a guaranteed working environment you can use the
-[poetry](https://python-poetry.org/) module.
 
-(before installing poetry make sure you have python3.9 installed on your system)
-
-poetry can be installed in the following way:
-```bash
-pip install poetry
-```
-if your default python version is not (3.9.*) you need to run the following command first:
-```bash
-poetry env use python3.9
-```
-
-After installing poetry you can create an environment and pull all necessary dependencies by just typing the following
-command in the project root folder where the ```poetry.lock``` and ```pyproject.toml``` is located:
-
-```bash
-poetry install
-```
-
-The installed poetry environment can be activated typing the following command in the project root folder:
-```bash
-poetry shell
-```
-You may consider installing poetry plugin in pycharm and adding the created environment
-
-If you want to run the syntax checks of the vhdl files you need to install [ghdl](https://github.com/ghdl/ghdl).
-Run the following command for installing:
-```bash
-sudo apt install ghdl
-```
 
 ## Structure of the Project
 
@@ -86,7 +56,7 @@ As a user one want to convert an existing pytorch model to one of our languages.
 
 Please refer to the system test of each language as an example.
 
-## Translating to Brevitas
+### Translating to Brevitas
 
 How to translate a given PyTorch model consisting of QTorch layers to Brevitas?
 This is how to translate a given model to a Brevitas model:
@@ -186,15 +156,55 @@ For checking all vhdl files together in our project we can just run:
 ghdl -s elasticai/creator/**/*.vhd
 ```
 
-## Developers Guide
-* We use [black](https://black.readthedocs.io/en/stable/index.html) for code formatting. For instruction on setup with your IDE please refer to https://black.readthedocs.io/en/stable/integrations/editors.html#editor-integration.
-* importing `*` should be avoided in favor of explicit imports
-
 ## General Limitations
 
 By now we only support Sequential models for our translations.
 
-## Developers introductory Guide and Glossary
+## Developers Guide
+For easy creating a virtual environment and having a guaranteed working environment you can use the
+[poetry](https://python-poetry.org/) module.
+
+(before installing poetry make sure you have python3.9 installed on your system)
+
+poetry can be installed in the following way:
+```bash
+pip install poetry
+```
+if your default python version is not (3.9.*) you need to run the following command first:
+```bash
+poetry env use python3.9
+```
+
+After installing poetry you can create an environment and pull all necessary dependencies by just typing the following
+command in the project root folder where the ```poetry.lock``` and ```pyproject.toml``` is located:
+
+```bash
+poetry install
+```
+
+The installed poetry environment can be activated typing the following command in the project root folder:
+```bash
+poetry shell
+```
+You may consider installing poetry plugin in pycharm and adding the created environment
+
+If you want to run the syntax checks of the vhdl files you need to install [ghdl](https://github.com/ghdl/ghdl).
+Run the following command for installing:
+```bash
+sudo apt install ghdl
+```
+
+## Pre-Commit
+To enforce consistency in code and commit-messages we use several tools, all of them are organized via
+[pre-commit](https://pre-commit.com/). This way they are automatically run before each commit. In case the detect a
+problem the commit will be aborted. In many cases the tools will fix the problems automatically. However, you can have another
+look at the files, stage again and commit.
+
+* Install pre-commit
+* We follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary) guidelines for commit messages
+  To allow [commitlint](https://github.com/conventional-changelog/commitlint) to check your messages
+  before committing and pushing you need to [install commitlint](https://github.com/conventional-changelog/commitlint#getting-started)
+
 
 New translation targets should be located in their own folder, e.g. Brevitas for translating from any language to Brevitas.
 Workflow for adding a new translation:
@@ -206,7 +216,7 @@ Workflow for adding a new translation:
 
 Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
-## Tests
+### Tests
 
 Our implementation is fully tested with unit, integration and system tests.
 Please refer to the system tests as examples of how to use the Elastic Ai Creator Translator.
