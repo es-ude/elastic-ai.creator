@@ -74,4 +74,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository_username: __token__
-          repository_password: ${{ secrets.TESTPYPI_ACCOUNT_API_TOKEN }}
+          repository_password: ${{ secrets.PYPI_TEST_ACCOUNT_API_TOKEN }}
