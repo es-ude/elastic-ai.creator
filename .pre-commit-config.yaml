@@ -1,25 +1,26 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+default_install_hook_types: [pre-commit, commit-msg]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
-        stages: [commit]
+        stages: [commit, manual ]
     -   id: end-of-file-fixer
-        stages: [ commit ]
+        stages: [ commit, manual ]
     -   id: check-yaml
-        stages: [ commit ]
+        stages: [ commit, manual ]
     -   id: check-added-large-files
-        stages: [ commit ]
+        stages: [ commit, manual ]
     -   id: check-merge-conflict
-        stages: [ commit ]
+        stages: [ commit, manual ]
     -   id: check-toml
-        stages: [ commit ]
+        stages: [ commit, manual ]
     -   id: check-vcs-permalinks
-        stages: [ commit ]
+        stages: [ commit, manual ]
     -   id: no-commit-to-branch
-        stages: [ commit ]
+        stages: [ commit, manual ]
 #-   repo: https://github.com/pre-commit/mirrors-mypy
 #    rev: v0.950
 #    hooks:
@@ -33,14 +34,14 @@ repos:
   rev: 5.10.1
   hooks:
       - id: isort
-        stages: [ commit ]
+        stages: [ commit, manual ]
 - repo: https://github.com/psf/black
   rev: 22.3.0
   hooks:
       - id: black
-        stages: [ commit ]
+        stages: [ commit, manual ]
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v8.0.0
   hooks:
       - id: commitlint
-        stages: [commit-msg]
+        stages: [commit-msg, manual]
