@@ -3,7 +3,9 @@ name: pre-commit
 on:
   workflow_call:
   workflow_dispatch:
-
+  push:
+    branches:
+      - pre-commit-hooks-test
 
 jobs:
   pre-commit:
