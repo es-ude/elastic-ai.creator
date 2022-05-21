@@ -4,16 +4,26 @@ on:
   # including: opening, reviewing, but also updating the head of
   # the corresponding branch
   pull_request:
+  workflow_call:
 
 jobs:
   integration-tests:
     uses: ./.github/workflows/integration_tests.yml
   unit-tests:
     uses: ./.github/workflows/unit_tests.yml
-  commitlint:
+  lint-commit-messages:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v2
+  type-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install mypy
+        run: python3 -m pip install mypy
+      - name: run mypy
+        run:
+          mypy .

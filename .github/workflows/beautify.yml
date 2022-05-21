@@ -1,19 +1,14 @@
-name: Test and Publish
+name: Beautify
 on:
-  push:
-    branches:
-      - ci-cd
+  workflow_call:
 
 jobs:
-  checks:
-    uses: ./.github/workflows/checks.yml
-
   # the jobs below are taken from the actions in https://github.com/relekang/python-semantic-release under MIT License
   beautify:
     name: Beautify
     runs-on: ubuntu-latest
     concurrency: push
-    needs: [ checks ]
+    needs: [ unit-tests, integration-tests ]
     outputs:
       new_sha: ${{ steps.sha.outputs.SHA }}
 
@@ -51,25 +46,3 @@ jobs:
         run: |
           new_sha=$(git rev-parse HEAD)
           echo "::set-output name=SHA::$new_sha"
-
-  semantic-release:
-    name: Bump Version and Release
-    runs-on: ubuntu-latest
-    concurrency: push
-    needs: [checks, beautify]
-    outputs:
-      new_version: ${{ steps.version.outputs.VERSION }}
-      new_sha: ${{ steps.sha.outputs.SHA }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.beautify.outputs.new_sha }}
-      - name: install relekang/python-semantic-release
-        run: python3 -m pip install python-semantic-release
-      - name: Semantic Release
-        uses: relekang/python-semantic-release@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          repository_username: __token__
-          repository_password: ${{ secrets.PYPI_TEST_ACCOUNT_API_TOKEN }}
