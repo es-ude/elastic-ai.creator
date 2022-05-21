@@ -5,6 +5,8 @@ venv
 simulation
 simulation/*
 node_modules
+.mypy_cache
+
 
 # python build output
 dist/
