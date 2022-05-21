@@ -49,12 +49,3 @@ jobs:
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v2
-  type-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: install mypy
-        run: python3 -m pip install mypy
-      - name: run mypy
-        run:
-          mypy .
