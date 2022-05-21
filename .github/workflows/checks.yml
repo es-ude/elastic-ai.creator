@@ -8,9 +8,40 @@ on:
 
 jobs:
   integration-tests:
-    uses: ./.github/workflows/integration_tests.yml
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+      - run: python --version
+      - run: poetry install --no-interaction --extras brevitas
+      - run: poetry run python -m unittest discover elasticai/creator/integrationTests
   unit-tests:
-    uses: ./.github/workflows/unit_tests.yml
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+      - run: python --version
+      - run: poetry install --no-interaction
+      - run: cd elasticai/creator/tests
+      - run: poetry run python -m unittest discover elasticai/creator/tests
   lint-commit-messages:
     runs-on: ubuntu-latest
     steps:
