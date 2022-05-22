@@ -61,13 +61,21 @@ class FloatToHexFixedPointStringConverter:
 
 
 def _int_to_bin_str(number: int, bits: int) -> str:
+    if number < 0:
+        raise ValueError("Negative values are not supported.")
+    if bits <= 0 or (number > 0 and math.log2(number) > bits):
+        raise ValueError(f"The number {number} cannot be represented with {bits} bits.")
     return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
 
 
 def _int_to_hex_str(number: int, bits: int) -> str:
-    return 'x"{{:0{number_of_bits}x}}"'.format(number_of_bits=int(bits / 4)).format(
-        number
-    )
+    if number < 0:
+        raise ValueError("Negative values are not supported.")
+    if bits <= 0 or (number > 0 and math.log2(number) > bits):
+        raise ValueError(f"The number {number} cannot be represented with {bits} bits.")
+    return 'x"{{:0{number_of_bits}x}}"'.format(
+        number_of_bits=math.ceil(bits / 4)
+    ).format(number)
 
 
 def _get_unsigned_int_version(x, number_of_bits):
