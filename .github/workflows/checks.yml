@@ -1,9 +1,8 @@
 name: Checks
 on:
-  # run the workflow whenever changes to a pull request are made
-  # including: opening, reviewing, but also updating the head of
-  # the corresponding branch
   pull_request:
+    branches-ignore:
+      - 'main'
   workflow_call:
 
 jobs:
