@@ -1,11 +1,10 @@
 import brevitas.nn as bnn
-
 from torch.nn import Module
 
-from elasticai.creator.layers import QLinear
 from elasticai.creator.brevitas.translation_functions.translation_function_tools import (
     set_quantizers,
 )
+from elasticai.creator.layers import QLinear
 
 
 def translate_linear_layer(layer: QLinear) -> bnn.QuantLinear:

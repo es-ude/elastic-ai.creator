@@ -1,7 +1,7 @@
 import numpy as np
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import Tanh
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.generator.precomputed_scalar_function import Tanh
 
 
 class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
@@ -24,7 +24,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
 
         architecture rtl of tanh is
 
-        begin 
+        begin
             tanh_process: process(x)
             variable int_x: integer := 0;
             begin
@@ -552,7 +552,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                     y <= "0000000100000000"; -- 256
                 end if;
 
-            end process tanh_process;                
+            end process tanh_process;
 
         end architecture rtl;
         """

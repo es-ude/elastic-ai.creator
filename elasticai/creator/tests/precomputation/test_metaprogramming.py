@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 from unittest import TestCase
 
-from elasticai.creator.metaprogramming import add_method, add_instance_attribute
+from elasticai.creator.metaprogramming import add_instance_attribute, add_method
 
 
 class TestWrappingClasses(TestCase):

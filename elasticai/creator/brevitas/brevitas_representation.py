@@ -1,10 +1,10 @@
 from typing import Tuple
-from torch import nn
 
 from brevitas.export import BrevitasONNXManager
+from torch import nn
+from torch.nn import Module
 
 from elasticai.creator.brevitas.translation_mapping import ConversionMapping
-from torch.nn import Module
 
 
 class BrevitasRepresentation:

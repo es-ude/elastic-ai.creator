@@ -1,16 +1,16 @@
 from functools import partial
 from io import StringIO
 
-from torch.nn import Sequential, MaxPool1d, Conv1d
+from torch.nn import Conv1d, MaxPool1d, Sequential
 
 from elasticai.creator.input_domains import (
     create_codomain_for_1d_conv,
     create_codomain_for_depthwise_1d_conv,
 )
-from elasticai.creator.layers import QConv1d, Binarize
+from elasticai.creator.layers import Binarize, QConv1d
 from elasticai.creator.precomputation import (
-    precomputable,
     get_precomputations_from_direct_children,
+    precomputable,
 )
 
 model = Sequential(

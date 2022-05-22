@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """Basic Qtorch application"""
-import torch
 from functools import partial
-from torch import nn
+
+import torch
+import torchvision
+from torch import nn, optim
 from torch.nn import functional as F
-from torch import optim
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 from elasticai.creator.constraints import WeightClipper
 from elasticai.creator.layers import Binarize, QConv2d, QLinear
-import torchvision
 
 xy_train = torchvision.datasets.FashionMNIST(
     root="data/",

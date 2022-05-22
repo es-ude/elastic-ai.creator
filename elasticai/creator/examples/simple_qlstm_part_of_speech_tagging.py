@@ -3,8 +3,7 @@ We perform a simple part of speech tagging using a quantized lstm network.
 We proceed analogue to https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html#example-an-lstm-for-part-of-speech-tagging
 """
 import torch
-from torch import nn
-from torch import optim
+from torch import nn, optim
 from torch.nn import functional as F
 
 from elasticai.creator.layers import QLSTM, Binarize

@@ -1,20 +1,19 @@
 import types
 import warnings
-from abc import abstractmethod, ABC
-from typing import Optional, Tuple, Callable, Protocol, List, Any
+from abc import ABC, abstractmethod
+from itertools import product
+from typing import Any, Callable, List, Optional, Protocol, Tuple
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from itertools import product
-
-from torch.nn import Module, BatchNorm1d, Parameter, Conv1d
+from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.functional import binarize as BinarizeFn
 from elasticai.creator.input_domains import (
-    create_codomain_for_depthwise_1d_conv,
     create_codomain_for_1d_conv,
+    create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation import precomputable
 
@@ -120,7 +119,7 @@ class ResidualQuantization(torch.nn.Module):
         super().__init__()
         self.num_bits = num_bits
         self.weight = torch.nn.Parameter(
-            torch.Tensor([0.5 ** i for i in range(1, num_bits)])
+            torch.Tensor([0.5**i for i in range(1, num_bits)])
         )
 
     def forward(self, inputs):
@@ -425,7 +424,7 @@ class QLSTM(torch.nn.Module):
             input = torch.stack(torch.unbind(input), dim=1)
 
         # Implementation based on
-        # https://github.com/pytorch/pytorch/blob/master/benchmarks/fastrnns/custom_lstms.py#L184
+        # https://github.com/pytorch/pytorch/blob/bb7fd1fcfbd2507272fd9b3f2610ef02bfba5692/benchmarks/fastrnns/custom_lstms.py#L184
         inputs = torch.unbind(input, dim=0)
         outputs = []
         for i in range(len(inputs)):

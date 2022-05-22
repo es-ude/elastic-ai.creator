@@ -1,14 +1,16 @@
 import itertools
 import unittest
+
 import numpy as np
-from numpy.testing import assert_equal as assertNPArrayEqual
 import torch
+from numpy.testing import assert_equal as assertNPArrayEqual
+
 from elasticai.creator.input_domains import (
-    create_input_data,
-    find_unique_elements,
-    create_io_table,
-    get_cartesian_product_from_items,
     construct_codomain_from_elements,
+    create_input_data,
+    create_io_table,
+    find_unique_elements,
+    get_cartesian_product_from_items,
 )
 
 

@@ -1,0 +1,49 @@
+name: Checks
+on:
+  pull_request:
+  workflow_call:
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+      - run: python --version
+      - run: poetry install --no-interaction --extras brevitas
+      - run: poetry run python -m unittest discover elasticai/creator/integrationTests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+      - run: python --version
+      - run: poetry install --no-interaction
+      - run: cd elasticai/creator/tests
+      - run: poetry run python -m unittest discover elasticai/creator/tests
+  lint-commit-messages:
+    name: Lint Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v2

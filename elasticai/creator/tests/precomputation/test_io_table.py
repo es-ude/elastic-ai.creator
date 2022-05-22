@@ -1,6 +1,8 @@
 import unittest
-from elasticai.creator.io_table import IOTable, group_tables
+
 import numpy as np
+
+from elasticai.creator.io_table import IOTable, group_tables
 
 
 class test_Io_table_builder(unittest.TestCase):

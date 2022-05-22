@@ -6,8 +6,8 @@ from elasticai.creator.vhdl import vhdl_formatter
 """
     we are using vsg (VHDL Style Guide) for indenting the generated vhdl files
     config.json defines the indentation size, since the default indentation size is 2 spaces
-    
-    source : 
+
+    source :
         https://github.com/jeremiah-c-leary/vhdl-style-guide/tree/master
 """
 

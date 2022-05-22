@@ -1,5 +1,5 @@
-import unittest
 import importlib.resources
+import unittest
 from itertools import filterfalse
 
 from elasticai.creator.vhdl.language import Code

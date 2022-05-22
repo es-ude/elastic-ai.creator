@@ -1,32 +1,33 @@
 import unittest
 from functools import partial
 from typing import Optional, Tuple
-from unittest.mock import patch
 from unittest import SkipTest
+from unittest.mock import patch
+
 import torch
 from torch import Tensor
 
+from elasticai.creator.constraints import WeightClipper
 from elasticai.creator.layers import (
-    ResidualQuantization,
-    Ternarize,
-    QuantizeTwoBit,
-    QLinear,
+    QLSTM,
+    BatchNormedActivatedConv1d,
+    Binarize,
+    BinaryActivatedConv1d,
+    BinarySplitConv,
+    ChannelShuffle,
+    MultilevelResidualBinarizationConv1d,
     QConv1d,
     QConv2d,
+    QLinear,
     QLSTMCell,
-    QLSTM,
-    Binarize,
-    BatchNormedActivatedConv1d,
-    TernaryConvolution1d,
-    MultilevelResidualBinarizationConv1d,
-    BinaryActivatedConv1d,
+    QuantizeTwoBit,
+    ResidualQuantization,
     SplitConvolutionBase,
-    BinarySplitConv,
+    Ternarize,
+    TernaryConvolution1d,
     TernarySplitConv,
     TwoBitSplitConv,
-    ChannelShuffle,
 )
-from elasticai.creator.constraints import WeightClipper
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 

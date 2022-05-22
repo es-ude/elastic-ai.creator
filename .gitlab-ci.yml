@@ -28,7 +28,7 @@ before_script:
   - python -V  # Print out python version for debugging
   - pip install poetry
   - poetry install
-  - poetry config repositories.elasticaicreator ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi 
+  - poetry config repositories.elasticaicreator ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
 
 test:
   script:
@@ -40,7 +40,7 @@ publish:
   script:
     - poetry build
     - poetry run pip install dist/*.whl
-    - poetry publish -r elasticaicreator -ugitlab-ci-token -p${CI_JOB_TOKEN} 
+    - poetry publish -r elasticaicreator -ugitlab-ci-token -p${CI_JOB_TOKEN}
   artifacts:
     paths:
       - dist/*.whl

@@ -4,18 +4,18 @@ from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
     precomputed_scalar_function_process,
 )
 from elasticai.creator.vhdl.language import (
-    Entity,
-    InterfaceVariable,
-    DataType,
-    ContextClause,
-    LibraryClause,
-    UseClause,
-    Process,
-    Mode,
     Architecture,
+    ContextClause,
+    DataType,
+    Entity,
     InterfaceSignal,
+    InterfaceVariable,
+    LibraryClause,
+    Mode,
     PortMap,
     Procedure,
+    Process,
+    UseClause,
 )
 
 
