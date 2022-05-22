@@ -43,6 +43,7 @@ jobs:
       - run: cd elasticai/creator/tests
       - run: poetry run python -m unittest discover elasticai/creator/tests
   lint-commit-messages:
+    name: Lint Commit Messages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

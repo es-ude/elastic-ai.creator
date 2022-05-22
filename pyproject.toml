@@ -51,10 +51,10 @@ command_line = "-m unittest discover ."
 [tool.semantic_release]
 version_toml = "pyproject.toml:tool.poetry.version"
 major_on_zero = false
-repository = "testpypi"
+repository = "pypi"
 upload_to_release = false
 build_command = "python3 -m pip install poetry && poetry build"
-branch = "ci-cd"
+branch = "main"
 parser_angular_allowed_types="build,chore,ci,docs,feat,fix,perf,style,refactor,test"
 parser_angular_minor_types="feat"
 parser_angular_patch_types="fix,perf"
