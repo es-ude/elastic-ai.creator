@@ -45,7 +45,7 @@ architecture rtl of lstm_cell is
     constant MATRIX_LENGHT : integer := (INPUT_SIZE + HIDDEN_SIZE) * HIDDEN_SIZE;
 
     signal n_clock : std_logic;
-    
+
     -- The state machine controls the gate component to be reused over time
     type state_t is (s_gates, s_i, s_f, s_g, s_o, s_c, s_h,s_update, idle);
     signal cell_state : state_t;
@@ -75,7 +75,7 @@ architecture rtl of lstm_cell is
     signal new_h : signed((DATA_WIDTH-1) downto 0):= (others => '0');
 
     signal idx_hidden_out : integer range 0 to HIDDEN_SIZE;
-    
+
     signal test_matrix_idx_s : integer range 0 to MATRIX_LENGHT;
     signal test_hidden_idx_s  : integer range 0 to HIDDEN_SIZE;
     signal test_running_state : integer range 0 to 7;
@@ -100,7 +100,7 @@ architecture rtl of lstm_cell is
     signal std_bg_out : std_logic_vector((DATA_WIDTH-1) downto 0):= (others => '0');
     signal std_bo_out : std_logic_vector((DATA_WIDTH-1) downto 0):= (others => '0');
     signal std_b_read_addr : std_logic_vector((HIDDEN_ADDR_WIDTH-1) downto 0):= (others => '0');
-    
+
     type BUFFER_ARRAY is array (0 to HIDDEN_SIZE-1) of signed(DATA_WIDTH-1 downto 0);
     signal buffer_c_t: BUFFER_ARRAY;
     signal buffer_h_t: BUFFER_ARRAY;
@@ -174,7 +174,7 @@ port map  (
     addr => std_b_read_addr,
     data => std_bi_out
 );
-b_i_data <= signed(std_bi_out); 
+b_i_data <= signed(std_bi_out);
 
 -- [Bif+Bhf]
 rom_bf : entity work.bf_rom(rtl)
@@ -275,7 +275,7 @@ begin
                     cell_state <= idle;
                 end if;
             else
-                done <= '1';    
+                done <= '1';
             end if;
         end if;
     end if;
@@ -288,14 +288,14 @@ gate_process : process(clock, gate_process_enable, reset)
     variable mul_i, mul_f, mul_g, mul_o : signed(DATA_WIDTH-1 downto 0);
     variable var_matrix_idx : integer range 0 to MATRIX_LENGHT;
     variable var_hidden_idx : integer range 0 to HIDDEN_SIZE;
-    variable var_x_h_data : signed(DATA_WIDTH-1 downto 0); 
-    variable var_w_i_data : signed(DATA_WIDTH-1 downto 0); 
-    variable var_w_g_data : signed(DATA_WIDTH-1 downto 0); 
-    variable var_w_o_data : signed(DATA_WIDTH-1 downto 0); 
-    variable var_w_f_data : signed(DATA_WIDTH-1 downto 0); 
+    variable var_x_h_data : signed(DATA_WIDTH-1 downto 0);
+    variable var_w_i_data : signed(DATA_WIDTH-1 downto 0);
+    variable var_w_g_data : signed(DATA_WIDTH-1 downto 0);
+    variable var_w_o_data : signed(DATA_WIDTH-1 downto 0);
+    variable var_w_f_data : signed(DATA_WIDTH-1 downto 0);
 begin
     if reset = '1' then
-    
+
         var_x_h_idx := 0;
         var_matrix_idx := 0;
         var_hidden_idx := 0;
@@ -307,7 +307,7 @@ begin
         dot_sum_g := (others=>'0');
         dot_sum_o := (others=>'0');
     elsif rising_edge(clock) then
-        
+
         if gate_process_enable = '1' and gate_process_done='0' then
             if is_data_prefetched ='0' then
                 is_data_prefetched := '1';
@@ -316,7 +316,7 @@ begin
                 var_w_i_data := w_i_data;
                 var_w_g_data := w_g_data;
                 var_w_o_data := w_o_data;
-                
+
             else
 
 --                if var_x_h_idx = 1 then   -- need to change this depends on the clock of partB
@@ -327,12 +327,12 @@ begin
                 mul_f := multiply_16_8(var_x_h_data, var_w_f_data);
                 mul_g := multiply_16_8(var_x_h_data, var_w_g_data);
                 mul_o := multiply_16_8(var_x_h_data, var_w_o_data);
-        
+
                 dot_sum_i := dot_sum_i + mul_i;
                 dot_sum_f := dot_sum_f + mul_f;
                 dot_sum_g := dot_sum_g + mul_g;
                 dot_sum_o := dot_sum_o + mul_o;
-                
+
                 var_x_h_idx := var_x_h_idx + 1;
                 var_matrix_idx := var_matrix_idx + 1;
                 is_data_prefetched := '0';
@@ -342,15 +342,15 @@ begin
                     dot_sum_f := dot_sum_f+b_f_data;
                     dot_sum_g := dot_sum_g+b_g_data;
                     dot_sum_o := dot_sum_o+b_o_data;
-                    
+
                     i_gate_out <= dot_sum_i;
                     f_gate_out <= dot_sum_f;
                     g_gate_out <= dot_sum_g;
                     o_gate_out <= dot_sum_o;
-                    
+
                     idx_hidden_out <= var_hidden_idx;
                     var_x_h_idx := 0;
-                    
+
                     var_hidden_idx := var_hidden_idx +1;
                     if var_hidden_idx=HIDDEN_SIZE then
                         -- finished all gates
@@ -414,7 +414,7 @@ vector_hadamard_product: process(reset, clk_hadamard, gates_out_valid)
     variable var_c_read_data, var_f_gate_act, var_i_gate_act, var_g_gate_act, var_o_gate_act : signed(DATA_WIDTH-1 downto 0);
     variable var_new_c_act : signed(DATA_WIDTH-1 downto 0);
 begin
-    
+
     if rising_edge(clk_hadamard) then
         if reset = '1' then
             var_running_state := 0;
@@ -422,19 +422,19 @@ begin
             new_h_idx := 0;
             update_cnt := 0;
             vector_hadamard_product_done <='0';
-            
+
         else
 
             if gates_out_valid='1' and var_running_state = 0 then
                 var_running_state := 1;
-                
+
             elsif var_running_state=1 then
                 var_f_gate_act := f_gate_act;
                 var_i_gate_act := i_gate_act;
                 var_c_read_data := c_read_data;
                 var_g_gate_act := g_gate_act;
                 var_o_gate_act := o_gate_act;
-                
+
                 mul_f_c := multiply_16_8(var_f_gate_act, var_c_read_data);
                 mul_i_g := multiply_16_8(var_i_gate_act,var_g_gate_act);
                 var_new_c := mul_f_c + mul_i_g;
@@ -450,7 +450,7 @@ begin
                 new_h <= var_new_h;
                 var_buffer_h_t(new_h_idx) := var_new_h;
                 new_h_idx := new_h_idx+1;
-                
+
                 if gate_process_done='0' then
                     var_running_state := 0;
                 else

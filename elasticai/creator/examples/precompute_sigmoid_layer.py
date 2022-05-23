@@ -1,9 +1,9 @@
 import numpy as np
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from elasticai.creator.precomputation import (
-    precomputable,
     get_precomputations_from_direct_children,
+    precomputable,
 )
 
 model = nn.Sequential(

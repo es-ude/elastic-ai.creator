@@ -1,9 +1,9 @@
 import random
 from functools import partial
-import torch
-import numpy as np
-from torch.nn import LSTM
 
+import numpy as np
+import torch
+from torch.nn import LSTM
 
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,

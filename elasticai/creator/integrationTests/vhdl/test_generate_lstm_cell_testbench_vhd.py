@@ -1,7 +1,5 @@
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import (
-    LSTMCellTestBench,
-)
 from elasticai.creator.integrationTests.vhdl.vhdl_file_test_case import VHDLFileTestCase
+from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
 
 
 class LSTMCellTestBenchTest(VHDLFileTestCase):

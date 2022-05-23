@@ -1,11 +1,11 @@
 import unittest
 from types import SimpleNamespace
 
-from elasticai.creator.layers import Binarize, Ternarize
+import elasticai.creator.brevitas.brevitas_quantizers as bquant
 from elasticai.creator.brevitas.translation_functions.translation_function_tools import (
     set_quantizers,
 )
-import elasticai.creator.brevitas.brevitas_quantizers as bquant
+from elasticai.creator.layers import Binarize, Ternarize
 
 
 class LayerMock:

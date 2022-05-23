@@ -1,17 +1,15 @@
 import unittest
+
+import brevitas.nn as bnn
 import torch
 from torch import nn
 
-import brevitas.nn as bnn
-
-from elasticai.creator.brevitas.translation_functions.conv import (
-    translate_conv1d,
-)
+import elasticai.creator.brevitas.brevitas_quantizers as bquant
+from elasticai.creator.brevitas.translation_functions.conv import translate_conv1d
 from elasticai.creator.integrationTests.brevitas_representation.conv_params_comparison import (
     ConvTest,
 )
-from elasticai.creator.layers import QConv1d, Binarize, Ternarize
-import elasticai.creator.brevitas.brevitas_quantizers as bquant
+from elasticai.creator.layers import Binarize, QConv1d, Ternarize
 
 
 class Conv1dTest(ConvTest):

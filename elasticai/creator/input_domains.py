@@ -1,11 +1,10 @@
 import itertools
-import itertools as ite
-from typing import List, Dict, Union, Iterable
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import torch
-from torch import Tensor
-from torch.nn import Module
+
+from elasticai.creator.mlframework import Module, Tensor
 
 
 def create_input_data(
@@ -26,7 +25,7 @@ def create_input_data(
     table = np.zeros([n_values] + input_dim, dtype=dtype)
 
     for vector, i in zip(
-        ite.product(domain, repeat=int(np.prod(input_dim))), range(n_values)
+        itertools.product(domain, repeat=int(np.prod(input_dim))), range(n_values)
     ):
         table[i] = np.reshape(np.asarray(vector), input_dim)
 
@@ -81,7 +80,7 @@ def create_io_table(
     """
     if channel_wise:
         num_channels = inputs.shape[-1]
-        io_table = [{} for _ in range(num_channels)]
+        io_table: Union[list[dict], dict] = [{} for _ in range(num_channels)]
         for input, output in zip(inputs, outputs):
             for channel in range(num_channels):
                 io_table[channel][tuple(input[:, channel].flatten().tolist())] = tuple(
@@ -104,16 +103,14 @@ def find_unique_elements(input: np.ndarray) -> np.ndarray:
     Returns:
         numpy.ndarray: A set array
     """
-    original_shape = list(input.shape)
     output = np.unique(input, axis=0)
-
-    return output.reshape(original_shape[1:].insert(0, output.shape[0]))
+    return output
 
 
 def depthwise_inputs(
     conv_layer: Module,
     kernel_size: tuple[int],
-    codomain: List[int],
+    codomain: List[Union[int, float]],
 ) -> np.ndarray:
     """Calculate the inputs for depthwise convolution .
     Args:
@@ -123,7 +120,7 @@ def depthwise_inputs(
     Returns:
       np.ndarray: The inputs
     """
-    n_channels = conv_layer.in_channels
+    n_channels: int = conv_layer.in_channels
     inputs = create_input_data(list(kernel_size), codomain)
     inputs = np.reshape(inputs, [-1, 1, *kernel_size])
     stacked_inputs = inputs.copy()
@@ -154,7 +151,7 @@ def create_codomain_for_1d_conv(shape, codomain_elements):
     return domain
 
 
-def create_codomain_for_depthwise_1d_conv(shape, codomain_elements):
+def create_codomain_for_depthwise_1d_conv(shape, codomain_elements) -> Tensor:
     kernel_size = shape[1]
     channels = shape[0]
     domain: torch.Tensor = torch.as_tensor(

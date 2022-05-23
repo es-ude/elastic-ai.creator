@@ -1,17 +1,16 @@
+import random
 import unittest
 
-import torch
-from torch import nn
-import random
-import numpy as np
-
-from brevitas import quant
 import brevitas.nn as bnn
+import numpy as np
+import torch
+from brevitas import quant
+from torch import nn
 
+import elasticai.creator.brevitas.brevitas_quantizers as bquant
 from elasticai.creator.brevitas.brevitas_model_comparison import (
     BrevitasModelComparisonTestCase,
 )
-import elasticai.creator.brevitas.brevitas_quantizers as bquant
 
 
 class TestModelComparison(BrevitasModelComparisonTestCase):

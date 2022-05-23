@@ -1,8 +1,9 @@
-from unittest import TestCase
-from typing import Callable, Iterable, Any
 from itertools import zip_longest
-from torch.nn import Module
+from typing import Any, Callable, Iterable
+from unittest import TestCase
+
 from torch import Tensor
+from torch.nn import Module
 
 
 class BrevitasModelMatcher:

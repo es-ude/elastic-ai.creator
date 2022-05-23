@@ -4,6 +4,14 @@ elasticai/creator/translator/systemTests/expected_model/processed_data.pickle
 venv
 simulation
 simulation/*
+node_modules
+.mypy_cache
+package-lock.json
+package.json
+.coverage
+*.onnx
+htmlcov
+
 
 # python build output
 dist/

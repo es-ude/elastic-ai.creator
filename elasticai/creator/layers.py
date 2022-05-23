@@ -1,22 +1,21 @@
 import types
 import warnings
-from abc import abstractmethod, ABC
-from typing import Optional, Tuple, Callable, Protocol, List, Any
+from abc import abstractmethod
+from itertools import product
+from typing import Any, Callable, List, Optional, Protocol, Tuple
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
-from itertools import product
-
-from torch.nn import Module, BatchNorm1d, Parameter, Conv1d
+from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.functional import binarize as BinarizeFn
 from elasticai.creator.input_domains import (
-    create_codomain_for_depthwise_1d_conv,
     create_codomain_for_1d_conv,
+    create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation import precomputable
+from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
 
@@ -120,7 +119,7 @@ class ResidualQuantization(torch.nn.Module):
         super().__init__()
         self.num_bits = num_bits
         self.weight = torch.nn.Parameter(
-            torch.Tensor([0.5 ** i for i in range(1, num_bits)])
+            torch.Tensor([0.5**i for i in range(1, num_bits)])
         )
 
     def forward(self, inputs):
@@ -204,11 +203,11 @@ class QConv1d(torch.nn.Conv1d):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple[int, ...],
+        kernel_size: Tuple[int],
         quantizer: Module,
-        stride: Tuple[int, ...] = (1,),
+        stride: Tuple[int] = (1,),
         padding: int = 0,
-        dilation: Tuple[int, ...] = (1,),
+        dilation: Tuple[int] = (1,),
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
@@ -420,20 +419,21 @@ class QLSTM(torch.nn.Module):
 
     def forward(
         self, input: torch.Tensor, state: Tuple[torch.Tensor, torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         if self.batch_first:
             input = torch.stack(torch.unbind(input), dim=1)
 
         # Implementation based on
-        # https://github.com/pytorch/pytorch/blob/master/benchmarks/fastrnns/custom_lstms.py#L184
+        # https://github.com/pytorch/pytorch/blob/bb7fd1fcfbd2507272fd9b3f2610ef02bfba5692/benchmarks/fastrnns/custom_lstms.py#L184
         inputs = torch.unbind(input, dim=0)
         outputs = []
         for i in range(len(inputs)):
-            state = output, cell_state = self.cell(inputs[i], state)
+            output, cell_state = self.cell(inputs[i], state)
+            state = output, cell_state
             outputs += [output]
         stack_dim = 1 if self.batch_first else 0
-        outputs = torch.stack(outputs, dim=stack_dim)
-        return outputs, state
+        result = torch.stack(outputs, dim=stack_dim)
+        return result, state
 
 
 class BatchNormedActivatedConv1d(torch.nn.Module):
@@ -521,7 +521,7 @@ class BinaryActivatedConv1d:
 class SplitConvolutionBase(torch.nn.Module):
     def __init__(
         self,
-        convolution: BatchNormedActivatedConv1d,
+        convolution: TaggedModule,
         kernel_size,
         in_channels,
         out_channels,
@@ -535,14 +535,13 @@ class SplitConvolutionBase(torch.nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.codomain_elements = codomain_elements
-
         self.depthwise = convolution(
             kernel_size=kernel_size,
             in_channels=in_channels,
             groups=in_channels,
             out_channels=in_channels,
             bias=False,
-        )
+        )  # type: ignore
         self.pointwise = convolution(
             kernel_size=1,
             in_channels=in_channels * self.depthwise.channel_multiplexing_factor,
@@ -552,7 +551,7 @@ class SplitConvolutionBase(torch.nn.Module):
         )
         depthwise_shape = (in_channels, kernel_size)
 
-        def depthwise_input():
+        def depthwise_input() -> Tensor:
             return create_codomain_for_depthwise_1d_conv(
                 depthwise_shape, self.codomain_elements
             )
@@ -562,7 +561,10 @@ class SplitConvolutionBase(torch.nn.Module):
         )
         self.depthwise = depthwise_precomputable_tag(self.depthwise)
 
-        pointwise_shape = (1, in_channels * self.depthwise.channel_multiplexing_factor)
+        pointwise_shape = (
+            1,
+            in_channels * self.depthwise.channel_multiplexing_factor,
+        )
 
         def pointwise_input():
             return create_codomain_for_1d_conv(

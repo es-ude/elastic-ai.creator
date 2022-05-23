@@ -1,23 +1,15 @@
 import json
-from typing import Union, Callable, Sequence
+from typing import Callable, Sequence, Union
 
-import numpy
 import numpy as np
 import torch
 from torch import Tensor
 
-from elasticai.creator.tags_utils import (
-    has_tag,
-    get_tags,
-    tag,
-    Tagged,
-    ModuleProto,
-    TaggedModule,
-)
+from elasticai.creator.tags_utils import Module, TaggedModule, get_tags, has_tag, tag
 
 _precomputable_tag = "precomputable"
 
-TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, numpy.ndarray]
+TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, np.ndarray]
 
 
 class Precomputation:
@@ -29,7 +21,7 @@ class Precomputation:
     There is no way currently to load an exported Precomputation object.
     """
 
-    def __init__(self, module: ModuleProto, input_domain: TensorLike) -> None:
+    def __init__(self, module: Module, input_domain: TensorLike) -> None:
         super().__init__()
         self.module = module
         self.input_domain = input_domain
@@ -40,7 +32,7 @@ class Precomputation:
             self.input_domain = self.input_domain()
 
     @staticmethod
-    def from_precomputable_tagged(module: ModuleProto):
+    def from_precomputable_tagged(module: Module):
         if not has_tag(module, _precomputable_tag):
             raise TypeError
         info_for_precomputation = get_tags(module)[_precomputable_tag]
@@ -113,8 +105,8 @@ def get_precomputations_recursively(module) -> Precomputation:
 
 def precomputable(
     input_shape: Sequence[int],
-    input_generator: Callable[[Sequence[float]], np.ndarray],
-) -> Callable[[ModuleProto], TaggedModule]:
+    input_generator: Callable[[], Tensor],
+) -> Callable[[type[Module]], type[TaggedModule]]:
     """Add all necessary information to allow later tools to precompute the specified module
 
     The arguments provided will be used to determine the input data that needs
@@ -148,7 +140,7 @@ def precomputable(
         "input_generator": input_generator,
     }
 
-    def decorator(module: ModuleProto) -> TaggedModule:
+    def decorator(module: Module) -> TaggedModule:
         return tag(module, precomputable=tag_content)
 
     return decorator

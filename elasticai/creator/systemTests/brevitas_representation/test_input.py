@@ -1,11 +1,12 @@
-import unittest
-import torch
 import random
+import unittest
+
 import numpy as np
+import torch
 
 from elasticai.creator.systemTests.brevitas_representation.models_definition import (
-    create_qtorch_model,
     create_brevitas_model,
+    create_qtorch_model,
 )
 
 

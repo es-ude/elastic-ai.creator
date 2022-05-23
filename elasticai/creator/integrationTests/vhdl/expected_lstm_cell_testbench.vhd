@@ -15,7 +15,7 @@ entity lstm_cell_tb is
         HIDDEN_ADDR_WIDTH : integer := 5;
         W_ADDR_WIDTH : integer := 9
     );
-    port ( 
+    port (
         clk : out std_logic
     );
 end entity lstm_cell_tb;
@@ -126,7 +126,7 @@ begin
         h_out_addr => h_out_addr
 
     );
-    
+
     clk <= clock;
 
     test_process: process
