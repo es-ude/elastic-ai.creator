@@ -165,3 +165,15 @@ class NumberEncoderTest(TestCase):
                 expected = parameter[0]
                 actual = encoder[parameter[1]]
                 self.assertEqual(expected, actual)
+
+    def test_registering_numbers_in_batch(self):
+        one_by_one = ToLogicEncoder()
+        by_batch = ToLogicEncoder()
+        batch = [1, 0, -1]
+        for number in batch:
+            one_by_one.add_numeric(number)
+        by_batch.add_symbols(batch)
+        self.assertTrue(
+            by_batch == one_by_one,
+            "expected: {}, actual: {}".format(one_by_one, by_batch),
+        )

@@ -1,5 +1,5 @@
 import math
-from typing import Union
+from typing import Iterable, Iterator, Union
 
 
 class FloatToSignedFixedPointConverter:
@@ -113,6 +113,13 @@ class ToLogicEncoder:
         mapping = dict(((value, index) for index, value in enumerate(sorted_numerics)))
         self.mapping.update(mapping)
 
+    def __len__(self):
+        return len(self.numerics)
+
+    def __iter__(self) -> Iterator[tuple[int, int]]:
+        for symbol, encoded_symbol in self.mapping.values():
+            yield symbol, encoded_symbol
+
     def __getitem__(self, item: int) -> int:
         return self.mapping[item]
 
@@ -120,7 +127,15 @@ class ToLogicEncoder:
     def bit_width(self) -> int:
         return math.floor(math.log(len(self.numerics), 2))
 
+    def add_symbols(self, symbols: list[int]) -> None:
+        for symbol in symbols:
+            self.numerics.add(symbol)
+        self._update_mapping()
+
     def __call__(self, number: int) -> str:
         if number not in self.numerics:
             raise ValueError
         return _int_to_bin_str(self.mapping[number], self.bit_width)
+
+    def __eq__(self, other: "ToLogicEncoder") -> bool:
+        return self.numerics == other.numerics and self.mapping == other.mapping
