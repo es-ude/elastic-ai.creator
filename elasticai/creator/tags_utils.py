@@ -20,7 +20,7 @@ T_co = TypeVar("T_co", bound=Module, covariant=True)
 
 
 @runtime_checkable
-class TaggedModule(Generic[T_co], Tagged, Protocol):
+class TaggedModule(Tagged, Module, Protocol):
     ...
 
 

@@ -106,7 +106,7 @@ def get_precomputations_recursively(module) -> Precomputation:
 def precomputable(
     input_shape: Sequence[int],
     input_generator: Callable[[], Tensor],
-) -> Callable[[Module], TaggedModule]:
+) -> Callable[[type[Module]], type[TaggedModule]]:
     """Add all necessary information to allow later tools to precompute the specified module
 
     The arguments provided will be used to determine the input data that needs
