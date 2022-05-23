@@ -27,16 +27,14 @@ systemtests = ['torchvision']
 
 [tool.poetry.dev-dependencies]
 python-language-server = "^0.36.2"
-coverage = "^6.2"
-flake8 = "*"
-tox = "*"
 black = ">21.12"
 torchvision = "^0.11.2"
+prospector = {extras = ["with_mypy"], version = "^1.7.7"}
 
 
-[tool.flake8]
+
+[tool.pylint]
 max-line-length = 88
-extended-ignore = ["E203"]
 
 
 [build-system]
@@ -44,8 +42,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
-omit = ["elasticai/examples/*py"]
-source = ["elasticai"]
+omit = ["elasticai/creator/examples/*py", "elasticai/creator/tests/*py", "elasticai/creator/*Tests/*py", "elasticai/**/__init__.py"]
+source = ["elasticai/creator"]
 command_line = "-m unittest discover ."
 
 [tool.semantic_release]

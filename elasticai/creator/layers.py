@@ -1,11 +1,10 @@
 import types
 import warnings
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from itertools import product
 from typing import Any, Callable, List, Optional, Protocol, Tuple
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
@@ -16,6 +15,7 @@ from elasticai.creator.input_domains import (
     create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation import precomputable
+from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
 
@@ -203,11 +203,11 @@ class QConv1d(torch.nn.Conv1d):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple[int, ...],
+        kernel_size: Tuple[int],
         quantizer: Module,
-        stride: Tuple[int, ...] = (1,),
+        stride: Tuple[int] = (1,),
         padding: int = 0,
-        dilation: Tuple[int, ...] = (1,),
+        dilation: Tuple[int] = (1,),
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
@@ -419,7 +419,7 @@ class QLSTM(torch.nn.Module):
 
     def forward(
         self, input: torch.Tensor, state: Tuple[torch.Tensor, torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         if self.batch_first:
             input = torch.stack(torch.unbind(input), dim=1)
 
@@ -428,11 +428,12 @@ class QLSTM(torch.nn.Module):
         inputs = torch.unbind(input, dim=0)
         outputs = []
         for i in range(len(inputs)):
-            state = output, cell_state = self.cell(inputs[i], state)
+            output, cell_state = self.cell(inputs[i], state)
+            state = output, cell_state
             outputs += [output]
         stack_dim = 1 if self.batch_first else 0
-        outputs = torch.stack(outputs, dim=stack_dim)
-        return outputs, state
+        result = torch.stack(outputs, dim=stack_dim)
+        return result, state
 
 
 class BatchNormedActivatedConv1d(torch.nn.Module):
@@ -520,7 +521,7 @@ class BinaryActivatedConv1d:
 class SplitConvolutionBase(torch.nn.Module):
     def __init__(
         self,
-        convolution: BatchNormedActivatedConv1d,
+        convolution: TaggedModule,
         kernel_size,
         in_channels,
         out_channels,
@@ -534,14 +535,13 @@ class SplitConvolutionBase(torch.nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.codomain_elements = codomain_elements
-
         self.depthwise = convolution(
             kernel_size=kernel_size,
             in_channels=in_channels,
             groups=in_channels,
             out_channels=in_channels,
             bias=False,
-        )
+        )  # type: ignore
         self.pointwise = convolution(
             kernel_size=1,
             in_channels=in_channels * self.depthwise.channel_multiplexing_factor,
@@ -551,7 +551,7 @@ class SplitConvolutionBase(torch.nn.Module):
         )
         depthwise_shape = (in_channels, kernel_size)
 
-        def depthwise_input():
+        def depthwise_input() -> Tensor:
             return create_codomain_for_depthwise_1d_conv(
                 depthwise_shape, self.codomain_elements
             )
@@ -561,7 +561,10 @@ class SplitConvolutionBase(torch.nn.Module):
         )
         self.depthwise = depthwise_precomputable_tag(self.depthwise)
 
-        pointwise_shape = (1, in_channels * self.depthwise.channel_multiplexing_factor)
+        pointwise_shape = (
+            1,
+            in_channels * self.depthwise.channel_multiplexing_factor,
+        )
 
         def pointwise_input():
             return create_codomain_for_1d_conv(

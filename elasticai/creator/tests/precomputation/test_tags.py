@@ -8,7 +8,7 @@ class TagTest(TensorTestCase):
     def test_precompute_block(self):
         module = SimpleNamespace()
         module = tag(module, precomputed=None)
-        self.assertIn("precomputed", module.elasticai_tags().keys())
+        self.assertIn("precomputed", module.elasticai_tags.keys())
 
     def test_precomputed_blocks_children_are_accessible(self):
         def children_generator():

@@ -1,4 +1,7 @@
-import types
+"""Implementation of the breakdown. Used to represent multiple layers with
+a fixed width.
+"""
+from typing import Union
 
 import torch.nn
 from torch.nn.utils import parametrize
@@ -6,8 +9,6 @@ from torch.nn.utils import parametrize
 from elasticai.creator.blocks import Conv2d_block
 from elasticai.creator.layers import ChannelShuffle
 from elasticai.creator.masks import fixedOffsetMask4D
-
-"Implementation of the breakdown. Used to represent multiple layers with a fixed width."
 
 
 def generate_conv2d_sequence_with_width(
@@ -19,12 +20,18 @@ def generate_conv2d_sequence_with_width(
     activation,
 ):
     """
-    This will generate a sequential model composed of multiple layers, each a weight with channel width length.
-    After the first block the channels are shuffled so the information of each output channel is composed from one in each input channel.
-    eg: 256x256 1x1 convolution with channel width of 8. Each channel of the first layer will join information of 8 points  making 256/8 = 32 parts per out channel.
-    So 32 groups and 256(out) = 256*32 output channels in the first layer. the second layer will again join 8  of those 32 resulting in 256*4
-    groups and out channels. The last to keep the width will have a smaller number of groups e.g 256*4/8 = 128 groups. This has the effect of making very small kernels,
-    being able to be represented by a much smaller amount of LUTs than a 256:1 mapping.
+    This will generate a sequential model composed of multiple layers, each a
+    weight with channel width length.
+    After the first block the channels are shuffled so the information of each
+    output channel is composed from one in each input channel.
+    eg: 256x256 1x1 convolution with channel width of 8. Each channel of the
+     first layer will join information of 8 points  making 256/8 = 32 parts per out channel.
+    So 32 groups and 256(out) = 256*32 output channels in the first layer. the
+     second layer will again join 8  of those 32 resulting in 256*4
+    groups and out channels. The last to keep the width will have a smaller
+     number of groups e.g 256*4/8 = 128 groups. This has the effect of making very small kernels,
+    being able to be represented by a much smaller amount of LUTs than a 256:1
+     mapping.
 
     Args:
         in_channels:
@@ -37,7 +44,7 @@ def generate_conv2d_sequence_with_width(
     Returns:
 
     """
-    layers = []
+    layers: list[Union[Conv2d_block, ChannelShuffle]] = []
     if in_channels < channel_width:
         raise ValueError(
             "Channel width cannot be bigger than the number of input channels"
@@ -74,13 +81,15 @@ def generate_conv2d_sequence_with_width(
 
 class BreakdownConv2dBlock(torch.nn.Module):
     """
-    Implementation of the kernel breakdown where each each channel will only select one row of the original nxn offset by
+    Implementation of the kernel breakdown where each each channel will only
+     select one row of the original nxn offset by
     a module of its own index.
     Args:
      conv_quantizer: The quantizer of the first QConv1d
      activation: an instance of the activation  after the first batch norm,
      pointwise_quantizer: the quantizer of the second Qconv1d
-     pointwise_activation: an instance of the activation after the second batch norm,
+     pointwise_activation: an instance of the activation after the second
+                           batch norm,
      pointwise_channel_width: the channel width of the pointwise convolution
     """
 

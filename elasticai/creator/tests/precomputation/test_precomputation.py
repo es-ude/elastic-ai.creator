@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from elasticai.creator.precomputation import JSONEncoder, Precomputation, precomputable
-from elasticai.creator.tags_utils import ModuleProto, get_tags
+from elasticai.creator.tags_utils import Module, get_tags
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 
@@ -22,7 +22,7 @@ class DummyModule:
         return ""
 
     # noinspection PyMethodMayBeStatic
-    def named_children(self) -> Iterable[tuple[str, "ModuleProto"]]:
+    def named_children(self) -> Iterable[tuple[str, "Module"]]:
         yield from ()
 
     def __call__(self, x: torch.Tensor, *args, **kwargs) -> torch.Tensor:
