@@ -100,42 +100,42 @@ class ToLogicEncoder:
     """
 
     def __init__(self):
-        self.numerics = set()
-        self.mapping = dict()
+        self._symbols = set()
+        self._mapping = dict()
 
-    def add_numeric(self, numeric_representation: int) -> None:
-        self.numerics.add(numeric_representation)
+    def register_symbol(self, numeric_representation: int) -> None:
+        self._symbols.add(numeric_representation)
         self._update_mapping()
 
     def _update_mapping(self) -> None:
-        sorted_numerics = list(self.numerics)
+        sorted_numerics = list(self._symbols)
         sorted_numerics.sort()
         mapping = dict(((value, index) for index, value in enumerate(sorted_numerics)))
-        self.mapping.update(mapping)
+        self._mapping.update(mapping)
 
     def __len__(self):
-        return len(self.numerics)
+        return len(self._symbols)
 
     def __iter__(self) -> Iterator[tuple[int, int]]:
-        for symbol, encoded_symbol in self.mapping.values():
+        for symbol, encoded_symbol in self._mapping.values():
             yield symbol, encoded_symbol
 
     def __getitem__(self, item: int) -> int:
-        return self.mapping[item]
+        return self._mapping[item]
 
     @property
     def bit_width(self) -> int:
-        return math.floor(math.log(len(self.numerics), 2))
+        return math.floor(math.log(len(self._symbols), 2))
 
-    def add_symbols(self, symbols: list[int]) -> None:
+    def register_symbols(self, symbols: list[int]) -> None:
         for symbol in symbols:
-            self.numerics.add(symbol)
+            self._symbols.add(symbol)
         self._update_mapping()
 
     def __call__(self, number: int) -> str:
-        if number not in self.numerics:
+        if number not in self._symbols:
             raise ValueError
-        return _int_to_bin_str(self.mapping[number], self.bit_width)
+        return _int_to_bin_str(self._mapping[number], self.bit_width)
 
     def __eq__(self, other: "ToLogicEncoder") -> bool:
-        return self.numerics == other.numerics and self.mapping == other.mapping
+        return self._symbols == other._symbols and self._mapping == other._mapping

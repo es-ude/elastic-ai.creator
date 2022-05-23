@@ -128,33 +128,33 @@ class NumberEncoderTest(TestCase):
 
     def test_binarization_minus_one_is_zero(self):
         encoder = ToLogicEncoder()
-        encoder.add_numeric(-1)
+        encoder.register_symbol(-1)
         self.assertEqual(0, encoder[-1])
 
     def test_binarization_minus_1_to_0_and_1to1(self):
         encoder = ToLogicEncoder()
-        encoder.add_numeric(-1)
-        encoder.add_numeric(1)
+        encoder.register_symbol(-1)
+        encoder.register_symbol(1)
         self.assertEqual(1, encoder[1])
 
     def test_encoder_is_monotonous(self):
         encoder = ToLogicEncoder()
-        encoder.add_numeric(1)
-        encoder.add_numeric(-1)
+        encoder.register_symbol(1)
+        encoder.register_symbol(-1)
         self.assertEqual(1, encoder[1])
 
     def test_encoder_to_bit_vector(self):
         encoder = ToLogicEncoder()
-        encoder.add_numeric(1)
-        encoder.add_numeric(-1)
+        encoder.register_symbol(1)
+        encoder.register_symbol(-1)
         bits = encoder(-1)
         self.assertEqual("0", bits)
 
     def test_ternarization_minus1_to_00(self):
         encoder = ToLogicEncoder()
-        encoder.add_numeric(-1)
-        encoder.add_numeric(0)
-        encoder.add_numeric(1)
+        encoder.register_symbol(-1)
+        encoder.register_symbol(0)
+        encoder.register_symbol(1)
         test_parameters = (
             (0, -1),
             (1, 0),
@@ -171,8 +171,8 @@ class NumberEncoderTest(TestCase):
         by_batch = ToLogicEncoder()
         batch = [1, 0, -1]
         for number in batch:
-            one_by_one.add_numeric(number)
-        by_batch.add_symbols(batch)
+            one_by_one.register_symbol(number)
+        by_batch.register_symbols(batch)
         self.assertTrue(
             by_batch == one_by_one,
             "expected: {}, actual: {}".format(one_by_one, by_batch),
