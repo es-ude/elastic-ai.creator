@@ -8,6 +8,8 @@ node_modules
 .mypy_cache
 package-lock.json
 package.json
+.coverage
+*.onnx
 
 
 # python build output
