@@ -44,8 +44,8 @@ architecture rtl of lstm_cell_tb is
     signal h_out_addr : std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0) :=(others=>'0');
     signal h_out_data : std_logic_vector(DATA_WIDTH-1 downto 0):=(others=>'0');
 
-    type X_H_ARRAY is array (0 to 31) of signed(16-1 downto 0);
-    type C_ARRAY is array (0 to 31) of signed(16-1 downto 0);
+    type X_H_ARRAY is array (0 to 511) of signed(16-1 downto 0);
+    type C_ARRAY is array (0 to 511) of signed(16-1 downto 0);
 
     signal test_x_h_data : X_H_ARRAY := (x"018a",x"ffb5",x"fdd3",x"0091",x"feeb",x"0099",x"fe72",x"ffa9",x"01da",x"ffc9",x"ff42",x"0090",x"0042",x"ffd4",x"ff53",x"00f0",x"007d",x"0134",x"0015",x"fecd",x"ffff",x"ff7c",x"ffb2",x"fe6c",x"01b4",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",x"0000",others=>(others=>'0'));
 
