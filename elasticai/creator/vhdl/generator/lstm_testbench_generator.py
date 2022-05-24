@@ -224,10 +224,10 @@ class LSTMCellTestBench:
             "signal h_out_data : std_logic_vector(DATA_WIDTH-1 downto 0):=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
-            "type X_H_ARRAY is array (0 to 31) of signed(16-1 downto 0)"
+            "type X_H_ARRAY is array (0 to 511) of signed(16-1 downto 0)"
         )
         architecture.architecture_declaration_list.append(
-            "type C_ARRAY is array (0 to 31) of signed(16-1 downto 0)"
+            "type C_ARRAY is array (0 to 511) of signed(16-1 downto 0)"
         )
         architecture.architecture_declaration_list.append(
             f"signal test_x_h_data : X_H_ARRAY := ({','.join(self.test_x_h_data)},others=>(others=>'0'))"

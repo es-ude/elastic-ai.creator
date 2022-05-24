@@ -80,7 +80,6 @@ def define_weights_and_bias_of_lstm_layer(
         in each list are four list of strings with the hex numbers of the weights or bias
     """
     for name, param in lstm_layer.named_parameters():
-        print(name, param.size())
         if name == "weight_ih_l0":
             weight_ih = param.detach().numpy()
         elif name == "weight_hh_l0":
