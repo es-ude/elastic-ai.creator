@@ -135,7 +135,7 @@ class ToLogicEncoder:
     def bit_width(self) -> int:
         return math.floor(math.log(len(self._symbols), 2))
 
-    def register_symbols(self, symbols: list[int]) -> None:
+    def register_symbols(self, symbols: Iterable[int]) -> None:
         for symbol in symbols:
             self._symbols.add(symbol)
         self._update_mapping()

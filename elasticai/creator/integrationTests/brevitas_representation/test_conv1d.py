@@ -9,7 +9,7 @@ from elasticai.creator.brevitas.translation_functions.conv import translate_conv
 from elasticai.creator.integrationTests.brevitas_representation.conv_params_comparison import (
     ConvTest,
 )
-from elasticai.creator.layers import Binarize, QConv1d, Ternarize
+from elasticai.creator.qat.layers import Binarize, QConv1d, Ternarize
 
 
 class Conv1dTest(ConvTest):

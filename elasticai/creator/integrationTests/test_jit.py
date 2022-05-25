@@ -5,7 +5,7 @@ import torch
 from torch import jit
 from torch.nn.functional import hardtanh
 
-from elasticai.creator.layers import Binarize
+from elasticai.creator.qat.layers import Binarize
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
 

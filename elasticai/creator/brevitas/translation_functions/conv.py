@@ -5,7 +5,7 @@ import brevitas.nn as bnn
 from elasticai.creator.brevitas.translation_functions.translation_function_tools import (
     set_quantizers,
 )
-from elasticai.creator.layers import QConv1d, QConv2d
+from elasticai.creator.qat.layers import QConv1d, QConv2d
 
 
 def translate_conv(layer: Union[QConv1d, QConv2d]) -> dict:

@@ -1,7 +1,7 @@
 import numpy as np
 from torch import Tensor, nn
 
-from elasticai.creator.precomputation import (
+from elasticai.creator.precomputation.precomputation import (
     get_precomputations_from_direct_children,
     precomputable,
 )

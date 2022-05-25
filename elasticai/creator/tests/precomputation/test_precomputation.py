@@ -1,10 +1,13 @@
 import json
 from collections import Iterable
 
-import numpy as np
 import torch
 
-from elasticai.creator.precomputation import JSONEncoder, Precomputation, precomputable
+from elasticai.creator.precomputation.precomputation import (
+    JSONEncoder,
+    Precomputation,
+    precomputable,
+)
 from elasticai.creator.tags_utils import Module, get_tags
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 

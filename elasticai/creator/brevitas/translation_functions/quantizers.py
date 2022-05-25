@@ -1,7 +1,7 @@
 import brevitas.nn as bnn
 
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
-from elasticai.creator.layers import Binarize, Ternarize
+from elasticai.creator.qat.layers import Binarize, Ternarize
 
 
 def translate_binarize_layer(layer: Binarize) -> bnn.QuantIdentity:

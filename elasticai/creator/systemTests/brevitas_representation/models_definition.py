@@ -2,7 +2,7 @@ import brevitas.nn as bnn
 from torch import nn
 
 import elasticai.creator.brevitas.brevitas_quantizers as bquant
-from elasticai.creator.layers import Binarize, QConv1d, QLinear
+from elasticai.creator.qat.layers import Binarize, QConv1d, QLinear
 
 
 def create_qtorch_model():

@@ -3,14 +3,14 @@ import unittest
 import torch
 from torch.nn.utils import parametrize
 
-from elasticai.creator.blocks import Conv2d_block
-from elasticai.creator.breakdown import (
+from elasticai.creator.precomputation.breakdown import (
     BreakdownConv2dBlock,
     depthwisePointwiseBreakdownConv2dBlock,
     generate_conv2d_sequence_with_width,
 )
-from elasticai.creator.layers import Binarize, ChannelShuffle
-from elasticai.creator.masks import fixedOffsetMask4D
+from elasticai.creator.qat.blocks import Conv2d_block
+from elasticai.creator.qat.layers import Binarize, ChannelShuffle
+from elasticai.creator.qat.masks import fixedOffsetMask4D
 
 
 class BreakdownTest(unittest.TestCase):

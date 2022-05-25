@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from numpy.testing import assert_equal as assertNPArrayEqual
 
-from elasticai.creator.input_domains import (
+from elasticai.creator.precomputation.input_domains import (
     construct_codomain_from_elements,
     create_input_data,
     create_io_table,

@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import numpy as np
 import torch
 
-from elasticai.creator.layers import QLSTMCell
+from elasticai.creator.qat.layers import QLSTMCell
 from elasticai.creator.resource_utils import copy_file
 from elasticai.creator.vhdl.generator.generator_functions_for_one_lstm_cell import (
     define_weights_and_bias,

@@ -1,4 +1,3 @@
-import unittest
 from functools import partial
 from typing import Optional, Tuple
 from unittest import SkipTest
@@ -7,8 +6,8 @@ from unittest.mock import patch
 import torch
 from torch import Tensor
 
-from elasticai.creator.constraints import WeightClipper
-from elasticai.creator.layers import (
+from elasticai.creator.qat.constraints import WeightClipper
+from elasticai.creator.qat.layers import (
     QLSTM,
     BatchNormedActivatedConv1d,
     Binarize,
@@ -422,7 +421,7 @@ class LayerTests(TensorTestCase):
             self.assertListEqual(actual_outputs[1], target_outputs[1])
 
     def test_QLSTM(self):
-        lstm_cell_id = "elasticai.creator.layers.QLSTMCell"
+        lstm_cell_id = "elasticai.creator.qat.layers.QLSTMCell"
         qlstm_parameters = {
             "input_size": 0,
             "hidden_size": 1,
