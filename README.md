@@ -1,4 +1,4 @@
-# Elastic.ai Creator
+# ElasticAi.creator
 
 Design, train and compile neural networks optimized specifically for FPGAs.
 Obtaining a final model is typically a three stage process.
@@ -13,19 +13,19 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 ## Table of contents
 
-- [Install](#install)
 - [Users Guide](#users-guide)
+  - [Install](#install)
 - [Developers Guide](#developers-guide)
+  - [Install Dev Dependencies](#install-dev-dependencies)
 
 
-
+## Users Guide
 
 #### Install
-You can install the ElasticAICreator as a dependency using pip:
+You can install the ElasticAI.creator as a dependency using pip:
 ```bash
-python3 -m pip install git+https://github.com/es-ude/elastic-ai.creator.git@main
+python3 -m pip install "elasticai.creator"
 ```
-
 
 
 ## Structure of the Project
@@ -35,110 +35,51 @@ The [creator](elasticai/creator) folder includes all main concepts of our projec
 It also includes the supported target representations, like the subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas or the subfolder [vhdl](elasticai/creator/vhdl) for the translation to Vhdl.
 Additionally, we have folders for [unit tests](elasticai/creator/tests), [integration tests](elasticai/creator/integrationTests) and [system tests](elasticai/creator/systemTests).
 
-## Quantization-Aware Training
 
+## General Limitations
 
-The [layers](elasticai/creator/layers.py) file includes all implemented quantized PyTorch layers.
+By now we only support Sequential models for our translations.
 
-We wrote tests for the layers which can be found in the [test_layer](elasticai/creator/tests/test_layer.py).
-To add constraints on the convolutional and linear layers you can use the [constraints](elasticai/creator/constraints.py) and can easily expand it with more constraints.
-We also implemented blocks of convolution and linear layers consisting of the convolution or linear following a batch normalisation and some activation.
-Also consider the [tests](elasticai/creator/tests/test_block.py) for the blocks.
-For getting more insight in the QTorch library consider the examples in the [examples](elasticai/creator/examples) folder.
-
-## Users guide
-
-As a user one want to convert an existing pytorch model to one of our languages.
-1. Add our translator as a dependency in your project.
-2. Instantiate the model.
-3. Optionally you can train it or load some weights.
-4. Input the model in the translation function like shown in the following.
-
-Please refer to the system test of each language as an example.
-
-### Translating to Brevitas
-
-How to translate a given PyTorch model consisting of QTorch layers to Brevitas?
-This is how to translate a given model to a Brevitas model:
-
-```python
-from elasticai.creator.brevitas.brevitas_representation import BrevitasRepresentation
-
-converted_model = BrevitasRepresentation.from_pytorch(qtorch_model).translated_model
+## Developers Guide
+### Install Dev Dependencies
+- [poetry](https://python-poetry.org/)
+- recommended:
+  - [pre-commit](https://pre-commit.com/)
+  - [commitlint](https://github.com/conventional-changelog/commitlint) to help following our [conventional commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary) guidelines
+poetry can be installed in the following way:
+```bash
+pip install poetry
+pip install pre-commit
+poetry install -D
+pre-commit install
+npm install --save-dev @commitlint/{config-conventional,cli}
+sudo apt install ghdl
 ```
-args:
-- qtorch_model: a pytorch model (supports most of the [QTorch](elasticai/creator/layers.py) layers and some standard pytorch layers)
 
-returns:
-- converted_model: a Brevitas model
+### Commit Message Scopes
 
-Example usages are shown here: [Brevitas system tests](elasticai/creator/systemTests).
-We also support to translate a brevitas model to onnx which is shown in the system test.
+- **qat**: quantization-aware-training
+  - Examples: `QConv1D`, `QLSTM`, autograd functions, etc.
+- **readme**
+- **precomputation**: entities that deal with the precomputation of ML components
+  - Examples: the `precomputable` decorator or the `IOTable` class
+- **vhdl**: vhdl code generation
+  - Examples: `vhdl.TruthTable`, `vhdl.LSTMCell`
+- **gh-workflow**
+- **pyproject**: changes to the `pyproject.toml` file will typically either update run or dev dependencies
+- **typing**: changing type annotations and changes to code to allow consistent type annotations
+- **pre-commit**
 
-### Translations
+### Adding new translation targets
+New translation targets should be located in their own folder, e.g. Brevitas for translating from any language to Brevitas.
+Workflow for adding a new translation:
+1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
+2. Identify and label relevant structures, in the base cases it can be simply separate layers.
+3. Map each structure to its function which will convert it, like for [example](elasticai/creator/brevitas/translation_mapping.py).
+4. Do such conversions.
+5. Recreate connections based on 1.
 
-The following QTorch or PyTorch layers are translated to the corresponding Brevitas layers:
-
-- QConv1d to QuantConv1d
-- QConv2d to QuantConv2d
-- QLinear to QuantLinear
-- Binarize to QuantIdentity
-- Ternarize to QuantIdentity
-- PyTorch MaxPool1d to PyTorch MaxPool1d
-- PyTorch BatchNorm1d to PyTorch BatchNorm1d
-- PyTorch Flatten to PyTorch Flatten
-- PyTorch Sigmoid to PyTorch Sigmoid
-
-You can find the mappings in [translation_mapping](elasticai/creator/brevitas/translation_mapping.py) and can easily add more PyTorch layers.
-
-### Supported Layers for Brevitas Translation
-
-- QuantConv1d: quantized 1d convolution with weight- and bias-quantization
-- QuantConv2d: quantized 2d convolution with weight- and bias-quantization
-- QuantLinear: quantized linear layer with weight- and bias-quantization
-- QuantIdentity(act_quant=quantizers.BinaryActivation): binary activation layer
-- QuantIdentity(act_quant=quantizers.TernaryActivation): ternary activation layer
-
-### Limitations for Brevitas Translation
-
-- we do not support all QTorch layers in the QTorch repository. Not supported layers are:
-  - Ternarization with more complex thresholds e.g threshold of 0.1
-  - ResidualQuantization
-  - QuantizeTwoBit
-  - QLSTM
-- we do not support all PyTorch layers, but you can easily add them in the [translation_mapping](elasticai/creator/brevitas/translation_mapping.py).
-
-### Brevitas System Tests
-
-The [Brevitas system tests](elasticai/creator/systemTests/brevitas_representation) can be used as example use cases of our implementation.
-We created tests which check the conversion of a model like we would expect our models will look like.
-In addition, we also created tests for validating the conversion for trained models or unusual models.
-Note that you have to use your own data set and therefore maybe do some small adaptions by using the training.
-
-### Brevitas Integration Tests
-
-Our  [Brevitas integration tests](elasticai/creator/integrationTests/brevitas_representation) are focused on testing the conversion of one specific layer.
-We created for all our supported layers a minimal model with this layer included and test its functionality.
-
-### Brevitas Unit Tests
-
-In addition to system and integration tests we implemented unit tests.
-The unit tests of each module is named like the model but starting with "test_" and can be found in the unitTest folder.
-The Brevitas unit tests can be found [here](elasticai/creator/tests/brevitas_representation).
-
-## Translating to VHDL
-
-We follow the VHDL code specification of IEEE Std 1076-1993.
-For now, we support translating one LSTM cell to VHDL.
-
-### Translations
-
-The following QTorch or PyTorch layers are translated to VHDL.
-- Pytorch Sigmoid
-- Pytorch Tanh
-- QLSTMCell
-
-An example how a QLSTMCell is translated to VHDL is shown in [generate_all_vhd_files_for_lstm_cell](elasticai/creator/vhdl/generator/functions/generate_all_vhd_files_for_lstm_cell.py).
+Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
 ### Syntax Checking
 
@@ -155,66 +96,6 @@ For checking all vhdl files together in our project we can just run:
 ```
 ghdl -s elasticai/creator/**/*.vhd
 ```
-
-## General Limitations
-
-By now we only support Sequential models for our translations.
-
-## Developers Guide
-For easy creating a virtual environment and having a guaranteed working environment you can use the
-[poetry](https://python-poetry.org/) module.
-
-(before installing poetry make sure you have python3.9 installed on your system)
-
-poetry can be installed in the following way:
-```bash
-pip install poetry
-```
-if your default python version is not (3.9.*) you need to run the following command first:
-```bash
-poetry env use python3.9
-```
-
-After installing poetry you can create an environment and pull all necessary dependencies by just typing the following
-command in the project root folder where the ```poetry.lock``` and ```pyproject.toml``` is located:
-
-```bash
-poetry install
-```
-
-The installed poetry environment can be activated typing the following command in the project root folder:
-```bash
-poetry shell
-```
-You may consider installing poetry plugin in pycharm and adding the created environment
-
-If you want to run the syntax checks of the vhdl files you need to install [ghdl](https://github.com/ghdl/ghdl).
-Run the following command for installing:
-```bash
-sudo apt install ghdl
-```
-
-## Pre-Commit
-To enforce consistency in code and commit-messages we use several tools, all of them are organized via
-[pre-commit](https://pre-commit.com/). This way they are automatically run before each commit. In case the detect a
-problem the commit will be aborted. In many cases the tools will fix the problems automatically. However, you can have another
-look at the files, stage again and commit.
-
-* Install pre-commit
-* We follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary) guidelines for commit messages
-  To allow [commitlint](https://github.com/conventional-changelog/commitlint) to check your messages
-  before committing and pushing you need to [install commitlint](https://github.com/conventional-changelog/commitlint#getting-started)
-
-
-New translation targets should be located in their own folder, e.g. Brevitas for translating from any language to Brevitas.
-Workflow for adding a new translation:
-1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
-2. Identify and label relevant structures, in the base cases it can be simply separate layers.
-3. Map each structure to its function which will convert it, like for [example](elasticai/creator/brevitas/translation_mapping.py).
-4. Do such conversions.
-5. Recreate connections based on 1.
-
-Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
 ### Tests
 
