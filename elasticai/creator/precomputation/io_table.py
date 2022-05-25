@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Union
 
 import numpy as np
 
@@ -7,30 +7,35 @@ class IOTable:
     def __init__(self, inputs: np.ndarray, outputs: np.ndarray):
         self.inputs = inputs
         self.outputs = outputs
-        pass
-
-    @property
-    def tables(self):
-        return self.inputs, self.outputs
 
     def __getitem__(self, item):
         return self.inputs[item], self.outputs[item]
 
+    def __len__(self):
+        return len(self.inputs)
+
+    def __iter__(self) -> Iterator[tuple]:
+        for i in range(len(self)):
+            yield self[i]
+
     def get_table_as_dict(self) -> Dict:
-        """given a list or single input,output table pair will return a list of dictionaries for each io pair. Said tables will be flatenned.
+        """given a list or single input,output table pair will return a list of dictionaries for each io pair.
+            Said tables will be flatenned.
         Args:
             tables: io tables in the format
         Returns:
-          dict: A list of dictionaries for the io_tables both ends will be flattened and transformed into tuples to facilitate iterating.
+          dict: A list of dictionaries for the io_tables both ends will be flattened and transformed into tuples to
+                facilitate iterating.
         """
 
-        dic_table = {}
-        n = self.tables
-        for input, output in self:
-            dic_table[tuple(input.flatten().tolist())] = tuple(
-                output.flatten().tolist()
-            )
-        return dic_table
+        def to_tuple(x: np.ndarray) -> tuple[Union[float, int], ...]:
+            # noinspection PyTypeChecker
+            native_python: list[
+                Union[float, int]
+            ] = x.flatten().tolist()  # typecheck ignore
+            return tuple(native_python)
+
+        return {to_tuple(x): to_tuple(y) for x, y in self}
 
     def grouped(self, groups: int) -> Iterator["IOTable"]:
         """given an input, output pair return a list of arrays describing the io Tables of each group.
@@ -40,8 +45,8 @@ class IOTable:
         Returns:
           List[IOTable]: The grouped tables as a list of input output objects
         """
-        inputs = self.tables[0]
-        outputs = self.tables[1]
+        inputs = self.inputs
+        outputs = self.outputs
         assert (
             inputs.shape[1] % groups == 0 & outputs.shape[1] % groups == 0
         ), "the first dimension of the arrays should be divisible by the number of groups"

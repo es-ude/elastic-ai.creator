@@ -12,8 +12,8 @@ class IOTableBuilderTestCase(unittest.TestCase):
         table = IOTable(inputs, outputs)
         result = list(table.grouped(groups=1))
         self.assertTrue(
-            np.all(inputs == result[0].tables[0]),
-            np.all(outputs == result[0].tables[1]),
+            np.all(inputs == result[0].inputs),
+            np.all(outputs == result[0].outputs),
         )
 
     def test_group_tables_depthwise(self):
@@ -53,7 +53,7 @@ class IOTableBuilderTestCase(unittest.TestCase):
         outputs = np.array([[2], [3], [4]])
         Iotable = IOTable(inputs, outputs)
         dict = Iotable.get_table_as_dict()
-        self.assertTrue((dict == {(1,): (2,), (2,): (3,), (3,): (4,)}))
+        self.assertEqual(dict, {(1,): (2,), (2,): (3,), (3,): (4,)})
 
     def test_create_io_dict_depthwise(self) -> None:
         io_list = [
@@ -61,5 +61,5 @@ class IOTableBuilderTestCase(unittest.TestCase):
             IOTable(np.asarray([[3, 4], [5, 6]]), np.asarray([[2], [5]])),
         ]
         dict_list = io_list[0].get_table_as_dict(), io_list[1].get_table_as_dict()
-        self.assertTrue((dict_list[0] == {(1, 2): (1,), (3, 4): (6,)}))
-        self.assertTrue((dict_list[1] == {(3, 4): (2,), (5, 6): (5,)}))
+        self.assertEqual(dict_list[0], {(1, 2): (1,), (3, 4): (6,)})
+        self.assertEqual(dict_list[1], {(3, 4): (2,), (5, 6): (5,)})
