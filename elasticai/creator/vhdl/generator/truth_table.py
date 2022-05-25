@@ -6,9 +6,9 @@ from typing import Iterable, Iterator, Protocol, Sequence, Union
 import numpy as np
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.generator.templates.utils import expand_multiline_template
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
+from elasticai.creator.vhdl.templates.utils import expand_multiline_template
 
 
 # noinspection PyPropertyDefinition
@@ -102,7 +102,7 @@ class TruthTableVHDLDesignCaseWhen(TruthTableVHDLDesign):
         ]
         code = expand_multiline_template(
             read_text(
-                "elasticai.creator.vhdl.generator.templates.precomputed_convs",
+                "elasticai.creator.vhdl.templates.precomputed_convs",
                 "truth_table.tpl.vhd",
             ),
             cases=cases,

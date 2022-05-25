@@ -1,8 +1,8 @@
 import doctest
 from unittest import TestCase
 
-import elasticai.creator.vhdl.generator.templates.utils
-from elasticai.creator.vhdl.generator.templates.utils import expand_multiline_template
+import elasticai.creator.vhdl.templates.utils
+from elasticai.creator.vhdl.templates.utils import expand_multiline_template
 
 
 class ExpandTemplatesTestCase(TestCase):
@@ -89,7 +89,5 @@ class ExpandTemplatesTestCase(TestCase):
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(
-        doctest.DocTestSuite(elasticai.creator.vhdl.generator.templates.utils)
-    )
+    tests.addTests(doctest.DocTestSuite(elasticai.creator.vhdl.templates.utils))
     return tests
