@@ -14,14 +14,14 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 ## Table of contents
 
 - [Users Guide](#users-guide)
-  - [install](#ug-install)
+  - [Install](#install)
 - [Developers Guide](#developers-guide)
-  - [dependencies](#dg-deps)
+  - [Install Dev Dependencies](#install-dev-dependencies)
 
 
 ## Users Guide
 
-#### Install {#ug-install}
+#### Install
 You can install the ElasticAI.creator as a dependency using pip:
 ```bash
 python3 -m pip install "elasticai.creator"
@@ -41,7 +41,7 @@ Additionally, we have folders for [unit tests](elasticai/creator/tests), [integr
 By now we only support Sequential models for our translations.
 
 ## Developers Guide
-### Dependencies {#dg-deps}
+### Install Dev Dependencies
 - [poetry](https://python-poetry.org/)
 - recommended:
   - [pre-commit](https://pre-commit.com/)
