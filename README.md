@@ -56,6 +56,20 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
+### Commit Message Scopes
+
+- **qat**: quantization-aware-training
+  - Examples: `QConv1D`, `QLSTM`, autograd functions, etc.
+- **readme**
+- **precomputation**: entities that deal with the precomputation of ML components
+  - Examples: the `precomputable` decorator or the `IOTable` class
+- **vhdl**: vhdl code generation
+  - Examples: `vhdl.TruthTable`, `vhdl.LSTMCell`
+- **gh-workflow**
+- **pyproject**: changes to the `pyproject.toml` file will typically either update run or dev dependencies
+- **typing**: changing type annotations and changes to code to allow consistent type annotations
+- **pre-commit**
+
 ### Adding new translation targets
 New translation targets should be located in their own folder, e.g. Brevitas for translating from any language to Brevitas.
 Workflow for adding a new translation:
