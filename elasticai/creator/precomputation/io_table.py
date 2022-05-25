@@ -1,6 +1,7 @@
-from typing import Dict, Iterator, List, Union
+from typing import Dict, Iterator, List, Literal, Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 class IOTable:
@@ -28,7 +29,9 @@ class IOTable:
                 facilitate iterating.
         """
 
-        def to_tuple(x: np.ndarray) -> tuple[Union[float, int], ...]:
+        def to_tuple(
+            x: NDArray[Union[np.float_, np.int_]]
+        ) -> tuple[Union[float, int], ...]:
             # noinspection PyTypeChecker
             native_python: list[
                 Union[float, int]
