@@ -6,11 +6,6 @@ from elasticai.creator.vhdl.generator.templates.utils import expand_multiline_te
 
 
 class ExpandTemplatesTestCase(TestCase):
-    """
-    Tests:
-        - raise ValueError in case the expanded key is not the only item in that line
-    """
-
     @staticmethod
     def get_result_string(template, **kwargs) -> str:
         return "\n".join(expand_multiline_template(template, **kwargs))
@@ -82,6 +77,14 @@ class ExpandTemplatesTestCase(TestCase):
         values = [0, 1]
         expected = "\t0 $second\n\t1 $second"
         actual = self.get_result_string(template, first=values, second=values)
+        self.assertEqual(expected, actual)
+
+    def test_expand_two_keys_by_running_twice(self):
+        template = "\t$first $second"
+        values = [0, 1]
+        expected = "\t0 0\n\t0 1\n\t1 0\n\t1 1"
+        actual = self.get_result_string(template, first=values)
+        actual = self.get_result_string(actual, first=values, second=values)
         self.assertEqual(expected, actual)
 
 

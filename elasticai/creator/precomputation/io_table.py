@@ -33,9 +33,7 @@ class IOTable:
             x: NDArray[Union[np.float_, np.int_]]
         ) -> tuple[Union[float, int], ...]:
             # noinspection PyTypeChecker
-            native_python: list[
-                Union[float, int]
-            ] = x.flatten().tolist()  # typecheck ignore
+            native_python: list[Union[float, int]] = x.flatten().tolist()
             return tuple(native_python)
 
         return {to_tuple(x): to_tuple(y) for x, y in self}
