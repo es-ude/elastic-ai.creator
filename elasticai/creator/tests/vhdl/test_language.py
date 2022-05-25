@@ -1,8 +1,5 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
-    precomputed_scalar_function_process,
-)
 from elasticai.creator.vhdl.language import (
     Architecture,
     ContextClause,
@@ -16,6 +13,9 @@ from elasticai.creator.vhdl.language import (
     Procedure,
     Process,
     UseClause,
+)
+from elasticai.creator.vhdl.precomputed_scalar_function import (
+    precomputed_scalar_function_process,
 )
 
 

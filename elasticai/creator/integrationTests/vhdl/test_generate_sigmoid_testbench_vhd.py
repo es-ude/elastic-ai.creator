@@ -1,5 +1,5 @@
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import (
+from elasticai.creator.vhdl.precomputed_scalar_function import (
     PrecomputedScalarTestBench,
 )
 

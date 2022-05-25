@@ -7,13 +7,13 @@ import torch
 
 from elasticai.creator.qat.layers import QLSTMCell
 from elasticai.creator.resource_utils import copy_file
-from elasticai.creator.vhdl.generator.generator_functions_for_one_lstm_cell import (
+from elasticai.creator.vhdl.generator_functions_for_one_lstm_cell import (
     define_weights_and_bias,
     generate_rom_file,
     inference_model,
 )
-from elasticai.creator.vhdl.generator.lstm_testbench_generator import LSTMCellTestBench
-from elasticai.creator.vhdl.generator.precomputed_scalar_function import Sigmoid, Tanh
+from elasticai.creator.vhdl.lstm_testbench_generator import LSTMCellTestBench
+from elasticai.creator.vhdl.precomputed_scalar_function import Sigmoid, Tanh
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 """
@@ -159,6 +159,4 @@ if __name__ == "__main__":
 
     # copy static files
     for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
-        copy_file(
-            "elasticai.creator.vhdl.generator.templates", file, destination_path(file)
-        )
+        copy_file("elasticai.creator.vhdl.templates", file, destination_path(file))

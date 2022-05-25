@@ -91,9 +91,9 @@ def hex_representation(x: int, num_bits: int) -> str:
     return _int_to_hex_str(unsigned_int_version, num_bits)
 
 
-def two_complements_representation(x, number_of_bits):
-    unsigned_int_version = _get_unsigned_int_version(x, number_of_bits)
-    return _int_to_bin_str(unsigned_int_version, number_of_bits)
+def two_complements_representation(x, num_bits):
+    unsigned_int_version = _get_unsigned_int_version(x, num_bits)
+    return _int_to_bin_str(unsigned_int_version, num_bits)
 
 
 class ToLogicEncoder:

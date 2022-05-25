@@ -2,10 +2,10 @@ from argparse import ArgumentParser
 
 import numpy as np
 
-from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
 )
+from elasticai.creator.vhdl.rom import Rom
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
