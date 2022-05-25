@@ -3,8 +3,6 @@ from unittest import TestCase
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     ToLogicEncoder,
-    _int_to_bin_str,
-    _int_to_hex_str,
     hex_representation,
     two_complements_representation,
 )
@@ -35,36 +33,30 @@ class FixedPointConverterTest(TestCase):
             )
 
 
-class IntToBinStrTest(TestCase):
+class BinaryTwoComplementRepresentation(TestCase):
     def test_zero_with_zero_bits(self):
         with self.assertRaises(ValueError):
-            _ = _int_to_bin_str(0, bits=0)
+            _ = two_complements_representation(0, num_bits=0)
 
     def test_five_with_minus_one_bits(self):
         with self.assertRaises(ValueError):
-            _ = _int_to_bin_str(5, bits=-1)
+            _ = two_complements_representation(5, num_bits=-1)
 
     def test_zero_with_one_bits(self):
-        actual = _int_to_bin_str(0, bits=1)
+        actual = two_complements_representation(0, num_bits=1)
         expected = "0"
         self.assertEqual(expected, actual)
 
     def test_zero_with_three_bits(self):
-        actual = _int_to_bin_str(0, bits=3)
+        actual = two_complements_representation(0, num_bits=3)
         expected = "000"
         self.assertEqual(expected, actual)
 
     def test_five_with_four_bits(self):
-        actual = _int_to_bin_str(5, bits=4)
+        actual = two_complements_representation(5, num_bits=4)
         expected = "0101"
         self.assertEqual(expected, actual)
 
-    def test_minus_one_with_two_bits(self):
-        with self.assertRaises(ValueError):
-            _ = _int_to_bin_str(-1, bits=2)
-
-
-class BinaryTwoComplementRepresentation(TestCase):
     def test_one(self):
         actual = two_complements_representation(1, 1)
         expected = "1"
@@ -106,36 +98,25 @@ class BinaryTwoComplementRepresentation(TestCase):
         self.assertEqual(expected, actual)
 
 
-class IntToHexStrTest(TestCase):
+class HexRepresentation(TestCase):
     def test_zero_with_zero_bits(self):
         with self.assertRaises(ValueError):
-            _ = _int_to_hex_str(0, bits=0)
+            _ = hex_representation(0, num_bits=0)
 
     def test_five_with_minus_one_bits(self):
         with self.assertRaises(ValueError):
-            _ = _int_to_hex_str(5, bits=-1)
+            _ = hex_representation(5, num_bits=-1)
 
     def test_zero_with_one_bits(self):
-        actual = _int_to_hex_str(0, bits=1)
+        actual = hex_representation(0, num_bits=1)
         expected = 'x"0"'
         self.assertEqual(expected, actual)
 
     def test_zero_with_seven_bits(self):
-        actual = _int_to_hex_str(0, bits=7)
+        actual = hex_representation(0, num_bits=7)
         expected = 'x"00"'
         self.assertEqual(expected, actual)
 
-    def test_255_with_12_bits(self):
-        actual = _int_to_hex_str(255, bits=12)
-        expected = 'x"0ff"'
-        self.assertEqual(expected, actual)
-
-    def test_minus_one_with_two_bits(self):
-        with self.assertRaises(ValueError):
-            _ = _int_to_hex_str(-1, bits=2)
-
-
-class HexRepresentation(TestCase):
     def test_one(self):
         actual = hex_representation(1, 16)
         expected = 'x"0001"'
@@ -174,6 +155,11 @@ class HexRepresentation(TestCase):
     def test_minus_254_16_bit(self):
         actual = hex_representation(-254, 16)
         expected = 'x"ff02"'
+        self.assertEqual(expected, actual)
+
+    def test_255_with_12_bits(self):
+        actual = hex_representation(255, num_bits=12)
+        expected = 'x"0ff"'
         self.assertEqual(expected, actual)
 
 

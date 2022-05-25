@@ -289,7 +289,8 @@ class InterfaceConstrained:
 
     def __call__(self) -> Code:
         yield from (
-            f"{self._declaration_type}{self._identifier} :{self._mode}{self._identifier_type.value}{self._range}{self._value}",
+            f"{self._declaration_type}{self._identifier} :"
+            f"{self._mode}{self._identifier_type.value}{self._range}{self._value}",
         )
 
 
@@ -442,15 +443,6 @@ def _join_lines(lines) -> str:
 
 def _empty_code_generator() -> Code:
     return []
-
-
-def form_to_hex_list(lines: Code):
-    hex_string = "".join(f'x"{line}",' for line in lines[:-1])
-    return hex_string + f'x"{lines[-1]}"'
-
-
-# def _indent_and_filter_non_empty_lines(lines: Code) -> Code:
-#     yield from map(indent, _filter_empty_lines(lines))
 
 
 # noinspection PyPep8Naming

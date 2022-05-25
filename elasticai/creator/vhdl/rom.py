@@ -26,9 +26,7 @@ class Rom:
         return max(1, math.ceil(math.log2(len(items))))
 
     def __call__(self):
-        template = read_text(
-            "elasticai.creator.vhdl.generator.templates", "rom.tpl.vhd"
-        )
+        template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
         code = template.format(
             rom_name=self.rom_name,
