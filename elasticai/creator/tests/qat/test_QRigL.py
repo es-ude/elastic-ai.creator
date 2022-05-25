@@ -3,7 +3,7 @@ import unittest
 import torch
 from torch.nn import Conv2d
 
-from elasticai.creator.QRigL import QRigLScheduler
+from elasticai.creator.qat.QRigL import QRigLScheduler
 
 
 class test_QRigl(unittest.TestCase):

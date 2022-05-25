@@ -1,3 +1,5 @@
+"""Interfaces/Adapters to the used machine learning framework"""
+
 from typing import Iterable, Protocol, Union, runtime_checkable
 
 from numpy.typing import ArrayLike

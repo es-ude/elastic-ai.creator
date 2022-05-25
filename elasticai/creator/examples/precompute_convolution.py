@@ -3,15 +3,15 @@ from io import StringIO
 
 from torch.nn import Conv1d, MaxPool1d, Sequential
 
-from elasticai.creator.input_domains import (
+from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_1d_conv,
     create_codomain_for_depthwise_1d_conv,
 )
-from elasticai.creator.layers import Binarize, QConv1d
-from elasticai.creator.precomputation import (
+from elasticai.creator.precomputation.precomputation import (
     get_precomputations_from_direct_children,
     precomputable,
 )
+from elasticai.creator.qat.layers import Binarize, QConv1d
 
 model = Sequential(
     QConv1d(

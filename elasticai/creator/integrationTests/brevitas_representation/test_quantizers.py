@@ -9,7 +9,7 @@ from elasticai.creator.brevitas.translation_functions.quantizers import (
     translate_binarize_layer,
     translate_ternarize_layer,
 )
-from elasticai.creator.layers import Binarize, Ternarize
+from elasticai.creator.qat.layers import Binarize, Ternarize
 
 
 class QuantizersTest(BrevitasModelComparisonTestCase):

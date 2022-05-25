@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import torch
 
-from elasticai.creator.masks import randomMask4D
+from elasticai.creator.qat.masks import randomMask4D
 
 
 class IndexMaskHook:

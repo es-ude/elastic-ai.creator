@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import torch
 
-from elasticai.creator.layers import QLSTMCell
+from elasticai.creator.qat.layers import QLSTMCell
 from elasticai.creator.vhdl.generator.rom import Rom
 from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from elasticai.creator.io_table import IOTable
+from elasticai.creator.precomputation.io_table import IOTable
 
 
 class IOTableBuilderTestCase(unittest.TestCase):

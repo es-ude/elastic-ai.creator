@@ -6,7 +6,7 @@ import torch
 from torch import nn, optim
 from torch.nn import functional as F
 
-from elasticai.creator.layers import QLSTM, Binarize
+from elasticai.creator.qat.layers import QLSTM, Binarize
 
 
 def prepare_sequence(seq, to_ix):

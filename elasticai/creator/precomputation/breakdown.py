@@ -6,9 +6,9 @@ from typing import Union
 import torch.nn
 from torch.nn.utils import parametrize
 
-from elasticai.creator.blocks import Conv2d_block
-from elasticai.creator.layers import ChannelShuffle
-from elasticai.creator.masks import fixedOffsetMask4D
+from elasticai.creator.qat.blocks import Conv2d_block
+from elasticai.creator.qat.layers import ChannelShuffle
+from elasticai.creator.qat.masks import fixedOffsetMask4D
 
 
 def generate_conv2d_sequence_with_width(

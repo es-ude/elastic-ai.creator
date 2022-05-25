@@ -8,7 +8,7 @@ import elasticai.creator.brevitas.brevitas_quantizers as bquant
 from elasticai.creator.brevitas.translation_functions.linear import (
     translate_linear_layer,
 )
-from elasticai.creator.layers import Binarize, QLinear, Ternarize
+from elasticai.creator.qat.layers import Binarize, QLinear, Ternarize
 
 
 class LinearLayerTest(unittest.TestCase):

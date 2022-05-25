@@ -8,8 +8,8 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from elasticai.creator.constraints import WeightClipper
-from elasticai.creator.layers import Binarize, QConv2d, QLinear
+from elasticai.creator.qat.constraints import WeightClipper
+from elasticai.creator.qat.layers import Binarize, QConv2d, QLinear
 
 xy_train = torchvision.datasets.FashionMNIST(
     root="data/",
