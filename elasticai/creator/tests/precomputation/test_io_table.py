@@ -10,7 +10,7 @@ class IOTableBuilderTestCase(unittest.TestCase):
         inputs = np.asarray([[1, 2], [3, 4]])
         outputs = np.asarray([[4, 5], [5, 4]])
         table = IOTable(inputs, outputs)
-        result = table.grouped(groups=1)
+        result = list(table.grouped(groups=1))
         self.assertTrue(
             np.all(inputs == result[0].tables[0]),
             np.all(outputs == result[0].tables[1]),
