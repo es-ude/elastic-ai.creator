@@ -169,13 +169,6 @@ class QuantizeTwoBit(torch.nn.Module):
 
 
 def _init_quantizable_convolution(self, quantizer, bias, constraints):
-    warnings.warn(
-        f"{type(self).__name__} is deprecated, use pytorch parametrization "
-        "instead. "
-        "See https://pytorch.org/tutorials/intermediate/parametrizations.html",
-        DeprecationWarning,
-        stacklevel=3,
-    )
     if isinstance(quantizer, Module):
         register_parametrization(self, "weight", quantizer)
         if bias:
