@@ -9,6 +9,7 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
+from collections.abc import Sequence
 from enum import Enum
 from itertools import filterfalse, chain
 from typing import Callable, Iterable, Union, Literal, Optional, Sequence
