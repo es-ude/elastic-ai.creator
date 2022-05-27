@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 
 import numpy as np
@@ -9,14 +10,22 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 def main():
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
-        "--file",
-        help="filepath of the generated vhd file",
+        "--path",
+        help="path to folder for generated vhd files",
         required=True,
     )
     args = arg_parser.parse_args()
-    file_path = args.file
+    if not os.path.isdir(args.path):
+        os.mkdir(args.path)
+    component_name = "tanh"
+    file_path = os.path.join(args.path, f"{component_name}.vhd")
 
-    tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
+    tanh = Tanh(
+        component_name=component_name,
+        data_width=16,
+        frac_width=8,
+        x=np.linspace(-5, 5, 259),
+    )
     with open(file_path, "w") as writer:
         tanh_code = tanh()
         for line in tanh_code:
