@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.6.1 (2022-05-27)
+### Fix
+* **vhdl:** Saving generated examples to a directory instead of a giving an explicit file path ([`eb41d8d`](https://github.com/es-ude/elastic-ai.creator/commit/eb41d8db9af5171ac2826f41e98b5d85598b582d))
+
 ## v0.6.0 (2022-05-25)
 ### Fix
 * **vhdl:** Move missing files ([`e4ae3c2`](https://github.com/es-ude/elastic-ai.creator/commit/e4ae3c2815a33b8f4f33c9578ab5cae0842277aa))
