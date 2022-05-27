@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 
 import numpy as np
@@ -12,14 +13,16 @@ from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 def main():
     arg_parser = ArgumentParser()
     arg_parser.add_argument(
-        "--file",
-        help="filepath of the generated vhd file",
+        "--path",
+        help="path to folder for generated vhd files",
         required=True,
     )
     args = arg_parser.parse_args()
-    file_path = args.file
-
+    if not os.path.isdir(args.path):
+        os.mkdir(args.path)
     rom_name = "bi_rom"
+    file_path = os.path.join(args.path, f"{rom_name}.vhd")
+
     data_width = 12
     frac_width = 4
     # biases for the input gate
