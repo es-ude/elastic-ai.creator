@@ -2,6 +2,157 @@ import math
 from typing import Iterable, Iterator, Union
 
 
+class FixedPoint:
+    __slots__ = ["_value", "_frac_bits", "_total_bits", "_signed", "_strict"]
+
+    def __init__(
+        self,
+        value: float,
+        total_bits: int,
+        frac_bits: int,
+        signed: bool = False,
+        strict: bool = False,
+    ) -> None:
+        self._value = float(value)
+        self._total_bits = total_bits
+        self._frac_bits = frac_bits
+        self._signed = signed
+        self._strict = strict
+        self._assert_range(self._value, self._total_bits, self._frac_bits, self._signed)
+        self._assert_strict_convertable(self._value, self._frac_bits, self._strict)
+
+    def __int__(self) -> int:
+        fp_value = self._calculate_signed_fixed_point(
+            self._value, self._frac_bits, self._strict
+        )
+        if not self._signed and fp_value < 0:
+            fp_value = self._calculate_two_complement(fp_value, self._total_bits)
+        return fp_value
+
+    def __float__(self) -> float:
+        return self._calculate_float_from_fixed_point(
+            int(self), self._total_bits, self._frac_bits, self._signed
+        )
+
+    def __str__(self) -> str:
+        return str(int(self))
+
+    def __repr__(self) -> str:
+        return "FixedPoint(value={}, total_bits={}, frac_bits={}, signed={}, strict={})".format(
+            self._value, self._total_bits, self._frac_bits, self._signed, self._strict
+        )
+
+    @staticmethod
+    def _assert_range(
+        value: float, total_bits: int, frac_bits: int, signed: int
+    ) -> None:
+        num_bits = total_bits - frac_bits
+        max_value = 2 ** (num_bits if signed else num_bits - 1)
+        min_value = max_value * (-1)
+
+        in_signed_range = min_value < value < max_value
+        in_unsigned_range = min_value <= value < max_value
+
+        if (signed and not in_signed_range) or (not signed and not in_unsigned_range):
+            interval_str = (
+                f"({min_value}, {max_value})"
+                if signed
+                else f"[{min_value}, {max_value})"
+            )
+            raise ValueError(
+                (
+                    f"Value {value} cannot expressed as a fixed point value with {total_bits} total bits "
+                    f"and {frac_bits} fraction bits (value range: {interval_str})"
+                )
+            )
+
+    @staticmethod
+    def _assert_strict_convertable(value: float, frac_bits: int, strict: bool) -> None:
+        if strict:
+            FixedPoint._calculate_signed_fixed_point(value, frac_bits, strict)
+
+    @staticmethod
+    def _calculate_signed_fixed_point(
+        value: float, frac_bits: int, strict: bool
+    ) -> int:
+        one = 1 << frac_bits
+        fp_value = value * one
+        if strict and not fp_value.is_integer():
+            raise ValueError(
+                f"{value} not convertible to fixed point number using {frac_bits} bits for fractional part."
+            )
+        return int(fp_value)
+
+    @staticmethod
+    def _calculate_float_from_fixed_point(
+        value: int, total_bits: int, frac_bits: int, signed: bool
+    ) -> float:
+        fp_value = value
+        if not signed:
+            is_negative = fp_value & (1 << total_bits - 1) > 0
+            if is_negative:
+                fp_value = FixedPoint._calculate_two_complement(fp_value, total_bits)
+                fp_value *= -1
+        one = 1 << frac_bits
+        return fp_value / one
+
+    @staticmethod
+    def _calculate_two_complement(value: int, num_bits: int) -> int:
+        mask = int("1" * num_bits, 2)
+        return (abs(value) ^ mask) + 1
+
+    @staticmethod
+    def from_int(
+        value: int,
+        total_bits: int,
+        frac_bits: int,
+        signed: bool = False,
+        strict: bool = False,
+    ) -> "FixedPoint":
+        float_value = FixedPoint._calculate_float_from_fixed_point(
+            value, total_bits, frac_bits, signed
+        )
+        return FixedPoint(
+            value=float_value,
+            total_bits=total_bits,
+            frac_bits=frac_bits,
+            signed=signed,
+            strict=strict,
+        )
+
+    @property
+    def total_bits(self) -> int:
+        return self._total_bits
+
+    @property
+    def frac_bits(self) -> int:
+        return self._frac_bits
+
+    @property
+    def init_value(self) -> float:
+        return self._value
+
+    @property
+    def strict(self) -> bool:
+        return self._strict
+
+    def to_bin(self) -> str:
+        if self._signed and int(self) < 0:
+            raise ValueError(
+                "Signed negative values cannot converted to binary representation."
+            )
+        return "{{0:0{num_bits}b}}".format(num_bits=self._total_bits).format(int(self))
+
+    def to_hex(self) -> str:
+        if self._signed and int(self) < 0:
+            raise ValueError(
+                "Signed negative values cannot converted to hexadecimal representation."
+            )
+        return 'x"{{:0{num_bits}x}}"'.format(
+            num_bits=math.ceil(self._total_bits / 4)
+        ).format(int(self))
+
+
 class FloatToSignedFixedPointConverter:
     """
     Create a fixed point representation as an unsigned int data type using two complements.
