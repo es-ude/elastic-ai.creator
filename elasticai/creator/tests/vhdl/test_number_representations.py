@@ -1,11 +1,231 @@
+from functools import partial
 from unittest import TestCase
 
 from elasticai.creator.vhdl.number_representations import (
+    FixedPoint,
     FloatToSignedFixedPointConverter,
     ToLogicEncoder,
     hex_representation,
     two_complements_representation,
 )
+
+
+class FixedPointTest(TestCase):
+    def test_zero(self):
+        fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
+        self.assertEqual(0, int(fp_value))
+
+    def test_1_with_8_total_bits_3_frac_bits(self):
+        fp_value = FixedPoint(1, total_bits=8, frac_bits=3)
+        self.assertEqual(8, int(fp_value))
+
+    def test_minus_1_with_8_total_bits_3_frac_bits(self):
+        fp_value = FixedPoint(-1, total_bits=8, frac_bits=3)
+        self.assertEqual(248, int(fp_value))
+
+    def test_minus_3_21_with_16_total_bits_12_frac_bits(self):
+        fp_value = FixedPoint(-3.21, total_bits=16, frac_bits=12)
+        self.assertEqual(52388, int(fp_value))
+
+    def test_initialize_with_value_not_in_range(self):
+        with self.assertRaises(ValueError):
+            _ = FixedPoint(100, total_bits=4, frac_bits=2)
+
+    def test_fixed_point_to_float_5_36(self):
+        fp_value = FixedPoint(5.36, total_bits=12, frac_bits=6)
+        self.assertAlmostEqual(5.36, float(fp_value), places=2)
+
+    def test_fixed_point_to_float_minus_5_36(self):
+        fp_value = FixedPoint(-5.36, total_bits=16, frac_bits=12)
+        self.assertAlmostEqual(-5.36, float(fp_value), places=2)
+
+    def test_to_hex_zero_with_one_bits(self):
+        fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
+        self.assertEqual('x"0"', fp_value.to_hex())
+
+    def test_to_hex_zero_with_six_bits(self):
+        fp_value = FixedPoint(0, total_bits=6, frac_bits=0)
+        self.assertEqual('x"00"', fp_value.to_hex())
+
+    def test_to_hex_zero_with_sixteen_bits(self):
+        fp_value = FixedPoint(0, total_bits=16, frac_bits=0)
+        self.assertEqual('x"0000"', fp_value.to_hex())
+
+    def test_to_hex_minus_one_with_sixteen_bits(self):
+        fp_value = FixedPoint(-1, total_bits=16, frac_bits=0)
+        self.assertEqual('x"ffff"', fp_value.to_hex())
+
+    def test_to_hex_minus_three_with_three_bits(self):
+        fp_value = FixedPoint(-3, total_bits=3, frac_bits=0)
+        self.assertEqual('x"5"', fp_value.to_hex())
+
+    def test_to_hex_minus_254_with_sixteen_bits(self):
+        fp_value = FixedPoint(-254, total_bits=16, frac_bits=0)
+        self.assertEqual('x"ff02"', fp_value.to_hex())
+
+    def test_to_hex_minus_19_5_with_16_bits(self):
+        fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
+        self.assertEqual('x"ec80"', fp_value.to_hex())
+
+    def test_to_bin_zero_with_one_bits(self):
+        fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
+        self.assertEqual('"0"', fp_value.to_bin())
+
+    def test_to_bin_zero_with_three_bits(self):
+        fp_value = FixedPoint(0, total_bits=3, frac_bits=0)
+        self.assertEqual('"000"', fp_value.to_bin())
+
+    def test_to_bin_five_with_four_bits(self):
+        fp_value = FixedPoint(5, total_bits=4, frac_bits=0)
+        self.assertEqual('"0101"', fp_value.to_bin())
+
+    def test_to_bin_minus_one_with_two_bits(self):
+        fp_value = FixedPoint(-1, total_bits=2, frac_bits=0)
+        self.assertEqual('"11"', fp_value.to_bin())
+
+    def test_to_bin_minus_two_with_two_bits(self):
+        fp_value = FixedPoint(-2, total_bits=2, frac_bits=0)
+        self.assertEqual('"10"', fp_value.to_bin())
+
+    def test_to_bin_minus_256_with_sixteen_bits(self):
+        fp_value = FixedPoint(-256, total_bits=16, frac_bits=0)
+        self.assertEqual('"1111111100000000"', fp_value.to_bin())
+
+    def test_to_bin_minus_254_with_sixteen_bits(self):
+        fp_value = FixedPoint(-254, total_bits=16, frac_bits=0)
+        self.assertEqual('"1111111100000010"', fp_value.to_bin())
+
+    def test_to_bin_minus_19_5_with_16_bits(self):
+        fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
+        self.assertEqual('"1110110010000000"', fp_value.to_bin())
+
+    def test_from_int(self):
+        fp_value = FixedPoint.from_int(52388, total_bits=16, frac_bits=12)
+        self.assertAlmostEqual(-3.21, float(fp_value), places=2)
+
+    def test_repr(self):
+        fp_value = FixedPoint(value=3.2, total_bits=8, frac_bits=4)
+        target_repr = "FixedPoint(value=3.2, total_bits=8, frac_bits=4)"
+        self.assertEqual(target_repr, repr(fp_value))
+
+    def test_str(self):
+        fp_value = FixedPoint(5, total_bits=8, frac_bits=4)
+        target_str = "80"
+        self.assertEqual(target_str, str(fp_value))
+
+    def test_bin_iter(self):
+        fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
+        actual_bin = list(fp_value.bin_iter())[::-1]
+        expected_bin = [1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+        self.assertEqual(expected_bin, actual_bin)
+
+    def test_neg_0(self):
+        fp_value = FixedPoint(0, total_bits=8, frac_bits=2)
+        self.assertEqual(0, float(-fp_value))
+
+    def test_neg_minus_5(self):
+        fp_value = FixedPoint(-5, total_bits=8, frac_bits=2)
+        self.assertEqual(5, float(-fp_value))
+
+    def test_neg_9(self):
+        fp_value = FixedPoint(9, total_bits=8, frac_bits=2)
+        self.assertEqual(-9, float(-fp_value))
+
+    def test_invert_6(self):
+        fp_value = FixedPoint(6, total_bits=8, frac_bits=2)
+        self.assertEqual(231, int(~fp_value))
+
+    def test_invert_minus_15(self):
+        fp_value = FixedPoint(-15, total_bits=8, frac_bits=2)
+        self.assertEqual(59, int(~fp_value))
+
+    def test_abs_minus_5(self):
+        fp_value = FixedPoint(-5, total_bits=8, frac_bits=2)
+        self.assertEqual(5, abs(fp_value))
+
+    def test_abs_5(self):
+        fp_value = FixedPoint(5, total_bits=8, frac_bits=2)
+        self.assertEqual(5, abs(fp_value))
+
+    def test_eq(self):
+        to_fp = partial(FixedPoint, total_bits=8, frac_bits=4)
+        self.assertEqual(to_fp(5.9), to_fp(5.9))
+
+    def test_ne(self):
+        to_fp = partial(FixedPoint, total_bits=8, frac_bits=4)
+        self.assertNotEqual(to_fp(4.9), to_fp(4.2))
+
+    def test_lt(self):
+        to_fp = partial(FixedPoint, total_bits=8, frac_bits=4)
+        self.assertLess(to_fp(4.2), to_fp(4.9))
+
+    def test_le(self):
+        to_fp = partial(FixedPoint, total_bits=8, frac_bits=4)
+        self.assertLessEqual(to_fp(4.2), to_fp(4.9))
+        self.assertLessEqual(to_fp(4.2), to_fp(4.2))
+
+    def test_gt(self):
+        to_fp = partial(FixedPoint, total_bits=8, frac_bits=4)
+        self.assertGreater(to_fp(4.9), to_fp(4.2))
+
+    def test_ge(self):
+        to_fp = partial(FixedPoint, total_bits=8, frac_bits=4)
+        self.assertGreaterEqual(to_fp(4.9), to_fp(4.2))
+        self.assertGreaterEqual(to_fp(4.9), to_fp(4.9))
+
+    def test_add(self):
+        fp1 = FixedPoint(-2.5, total_bits=8, frac_bits=4)
+        fp2 = FixedPoint(5, total_bits=8, frac_bits=4)
+        result = FixedPoint(2.5, total_bits=8, frac_bits=4)
+        self.assertEqual(result, fp1 + fp2)
+
+    def test_add_overflow(self):
+        fp1 = FixedPoint(4, total_bits=8, frac_bits=4)
+        fp2 = FixedPoint(5, total_bits=8, frac_bits=4)
+        result = FixedPoint(-7, total_bits=8, frac_bits=4)
+        self.assertEqual(result, fp1 + fp2)
+
+    def test_add_incompatible(self):
+        fp1 = FixedPoint(3, total_bits=8, frac_bits=4)
+        fp2 = FixedPoint(2.5, total_bits=8, frac_bits=2)
+        with self.assertRaises(ValueError):
+            _ = fp1 + fp2
+
+    def test_sub(self):
+        fp1 = FixedPoint(3, total_bits=8, frac_bits=4)
+        fp2 = FixedPoint(4.5, total_bits=8, frac_bits=4)
+        result = FixedPoint(-1.5, total_bits=8, frac_bits=4)
+        self.assertEqual(result, fp1 - fp2)
+
+    def test_sub_overflow(self):
+        fp1 = FixedPoint(-4, total_bits=8, frac_bits=4)
+        fp2 = FixedPoint(5, total_bits=8, frac_bits=4)
+        result = FixedPoint(7, total_bits=8, frac_bits=4)
+        self.assertEqual(result, fp1 - fp2)
+
+    def test_sub_incompatible(self):
+        fp1 = FixedPoint(3, total_bits=8, frac_bits=4)
+        fp2 = FixedPoint(2.5, total_bits=8, frac_bits=2)
+        with self.assertRaises(ValueError):
+            _ = fp1 - fp2
+
+    def test_and(self):
+        fp1 = FixedPoint(5, total_bits=4, frac_bits=0)
+        fp2 = FixedPoint(6, total_bits=4, frac_bits=0)
+        result = FixedPoint(4, total_bits=4, frac_bits=0)
+        self.assertEqual(result, fp1 & fp2)
+
+    def test_or(self):
+        fp1 = FixedPoint(5, total_bits=4, frac_bits=0)
+        fp2 = FixedPoint(6, total_bits=4, frac_bits=0)
+        result = FixedPoint(7, total_bits=4, frac_bits=0)
+        self.assertEqual(result, fp1 | fp2)
+
+    def test_xor(self):
+        fp1 = FixedPoint(5, total_bits=4, frac_bits=0)
+        fp2 = FixedPoint(6, total_bits=4, frac_bits=0)
+        result = FixedPoint(3, total_bits=4, frac_bits=0)
+        self.assertEqual(result, fp1 ^ fp2)
 
 
 class FixedPointConverterTest(TestCase):

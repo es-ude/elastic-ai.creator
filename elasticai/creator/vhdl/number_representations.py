@@ -1,5 +1,179 @@
 import math
-from typing import Iterable, Iterator, Union
+from typing import Any, Iterable, Iterator, Union
+
+
+class FixedPoint:
+    __slots__ = ["_value", "_frac_bits", "_total_bits"]
+
+    def __init__(
+        self,
+        value: float,
+        total_bits: int,
+        frac_bits: int,
+    ) -> None:
+        self._value = float(value)
+        self._total_bits = total_bits
+        self._frac_bits = frac_bits
+        FixedPoint._assert_range(self._value, self._total_bits, self._frac_bits)
+
+    def __int__(self) -> int:
+        fp_int = int(self._value * (1 << self._frac_bits))
+        if fp_int < 0:
+            fp_int = FixedPoint._calculate_two_complement(fp_int, self._total_bits)
+        return fp_int
+
+    def __float__(self) -> float:
+        return FixedPoint._calculate_float_from_fixed_point(
+            int(self), self._total_bits, self._frac_bits
+        )
+
+    def __eq__(self, other: Any) -> bool:
+        return float(self) == float(other)
+
+    def __ne__(self, other: Any) -> bool:
+        return float(self) != float(other)
+
+    def __lt__(self, other: Any) -> bool:
+        return float(self) < float(other)
+
+    def __le__(self, other: Any) -> bool:
+        return float(self) <= float(other)
+
+    def __gt__(self, other: Any) -> bool:
+        return float(self) > float(other)
+
+    def __ge__(self, other: Any) -> bool:
+        return float(self) >= float(other)
+
+    def __add__(self, other: "FixedPoint") -> "FixedPoint":
+        FixedPoint._assert_is_compatible(self, other)
+        return self._identical_fixed_point_from_int(
+            FixedPoint.discard_leading_bits(
+                int(self) + int(other), num_bits=self._total_bits
+            )
+        )
+
+    def __sub__(self, other: "FixedPoint") -> "FixedPoint":
+        return self + (-other)
+
+    def __and__(self, other: "FixedPoint") -> "FixedPoint":
+        FixedPoint._assert_is_compatible(self, other)
+        return self._identical_fixed_point_from_int(int(self) & int(other))
+
+    def __or__(self, other: "FixedPoint") -> "FixedPoint":
+        FixedPoint._assert_is_compatible(self, other)
+        return self._identical_fixed_point_from_int(int(self) | int(other))
+
+    def __xor__(self, other: "FixedPoint") -> "FixedPoint":
+        FixedPoint._assert_is_compatible(self, other)
+        return self._identical_fixed_point_from_int(int(self) ^ int(other))
+
+    def __invert__(self) -> "FixedPoint":
+        return self._identical_fixed_point_from_int(
+            FixedPoint._invert_int(int(self), num_bits=self._total_bits)
+        )
+
+    def __neg__(self) -> "FixedPoint":
+        return self._identical_fixed_point(-self._value)
+
+    def __abs__(self) -> "FixedPoint":
+        return self._identical_fixed_point(abs(self._value))
+
+    def __str__(self) -> str:
+        return str(int(self))
+
+    def __repr__(self) -> str:
+        return f"FixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
+
+    def _identical_fixed_point(self, value: float) -> "FixedPoint":
+        return FixedPoint(
+            value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
+        )
+
+    def _identical_fixed_point_from_int(self, value: int) -> "FixedPoint":
+        return FixedPoint.from_int(
+            value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
+        )
+
+    @staticmethod
+    def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
+        max_value = 2 ** (total_bits - frac_bits - 1)
+        min_value = max_value * (-1)
+
+        if not min_value <= value < max_value:
+            raise ValueError(
+                (
+                    f"Value {value} cannot represented as a fixed point value with {total_bits} total bits "
+                    f"and {frac_bits} fraction bits (value range: [{min_value}, {max_value}))."
+                )
+            )
+
+    @staticmethod
+    def _assert_is_compatible(fp1: "FixedPoint", fp2: "FixedPoint") -> None:
+        if not (fp1.total_bits == fp2.total_bits and fp1.frac_bits == fp2.frac_bits):
+            raise ValueError(
+                (
+                    f"FixedPoint objects not compatible (total_bits: {fp1.total_bits} != {fp2.total_bits}); "
+                    f"frac_bits: {fp1.frac_bits} != {fp2.frac_bits})."
+                )
+            )
+
+    @staticmethod
+    def _invert_int(value: int, num_bits: int) -> int:
+        return value ^ int("1" * num_bits, 2)
+
+    @staticmethod
+    def discard_leading_bits(value: int, num_bits: int) -> int:
+        return value & int("1" * num_bits, 2)
+
+    @staticmethod
+    def _calculate_two_complement(value: int, num_bits: int) -> int:
+        return FixedPoint._invert_int(abs(value), num_bits) + 1
+
+    @staticmethod
+    def _calculate_float_from_fixed_point(
+        value: int, total_bits: int, frac_bits: int
+    ) -> float:
+        if value > 2**total_bits - 1:
+            raise ValueError(
+                f"Value {value} cannot interpreted as a fixed point with {total_bits} total bits."
+            )
+        is_negative = value & (1 << total_bits - 1) > 0
+        if is_negative:
+            value = FixedPoint._calculate_two_complement(value, total_bits)
+            value *= -1
+        return value / (1 << frac_bits)
+
+    @staticmethod
+    def from_int(
+        value: int,
+        total_bits: int,
+        frac_bits: int,
+    ) -> "FixedPoint":
+        return FixedPoint(
+            value=FixedPoint._calculate_float_from_fixed_point(
+                value, total_bits=total_bits, frac_bits=frac_bits
+            ),
+            total_bits=total_bits,
+            frac_bits=frac_bits,
+        )
+
+    @property
+    def total_bits(self) -> int:
+        return self._total_bits
+
+    @property
+    def frac_bits(self) -> int:
+        return self._frac_bits
+
+    def bin_iter(self) -> Iterator[int]:
+        return ((int(self) >> i) & 1 for i in range(self._total_bits))
+
+    def to_bin(self) -> str:
+        return f'"{int(self):0{self._total_bits}b}"'
+
+    def to_hex(self) -> str:
+        return f'x"{int(self):0{math.ceil(self._total_bits / 4)}x}"'
 
 
 class FloatToSignedFixedPointConverter:
