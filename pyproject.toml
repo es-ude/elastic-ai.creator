@@ -12,10 +12,8 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.10"
 torch = "^1.11"
-brevitas = { version = "^0.7.0", optional = true }
 protobuf = {version = "~3.16", optional = true}
 onnx = { version = "^1.11", optional = true }
-onnxoptimizer = { version = "^0.2", optional = true }
 torchvision = { version = "^0", optional = true }
 MonkeyType = "^21.5.0"
 bitarray = "^2.3.5"
@@ -23,7 +21,7 @@ vsg = "^3.9.0"
 numpy = "^1.22.3"
 
 [tool.poetry.extras]
-brevitas = ['brevitas', 'onnx', 'onnxoptimizer', "protobuf"]
+onnx = ["onnx", "numpy", "protobuf"]
 examples = ['torchvision']
 systemtests = ['torchvision']
 
