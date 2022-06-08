@@ -5,13 +5,8 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from elasticai.creator.tags_utils import (
-    has_tag,
-    get_tags,
-    tag,
-    ModuleProto,
-    TaggedModule,
-)
+from elasticai.creator.mlframework import Module
+from elasticai.creator.tags_utils import TaggedModule, get_tags, has_tag, tag
 
 _precomputable_tag = "precomputable"
 
@@ -112,7 +107,7 @@ def get_precomputations_recursively(module) -> Precomputation:
 def precomputable(
     input_shape: Sequence[int],
     input_generator: Callable[[Sequence[float | int]], np.ndarray],
-) -> Callable[[ModuleProto], TaggedModule]:
+) -> Callable[[Module], TaggedModule]:
     """Add all necessary information to allow later tools to precompute the specified module
 
     The arguments provided will be used to determine the input data that needs
