@@ -8,6 +8,11 @@ from elasticai.creator.onnx import ModuleWrapper
 from elasticai.creator.tags_utils import tag
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
 
+ONNX_HEADER = """ir_version: 4
+producer_name: "pytorch"
+producer_version: "1.11.0"
+"""
+
 
 class OnnxExportTest(TensorTestCase):
     """
@@ -40,15 +45,15 @@ class OnnxExportTest(TensorTestCase):
 
     @classmethod
     def get_simple_string_representation(cls, operation_name, domain) -> str:
-        template = """ir_version: 7
-producer_name: "pytorch"
-producer_version: "1.10"
-graph {
+        template = (
+            ONNX_HEADER
+            + """graph {
   node {
     output: "1"
     name: "Wrapper_0"
     op_type: "Wrapper"
 """
+        )
         attributes = cls.build_attributes(
             """name: "operation_name"
       s: "{operation_name}"
@@ -156,10 +161,9 @@ opset_import {
 
     @staticmethod
     def get_string_representation_with_tag(operation_name, input_shape) -> str:
-        template = """ir_version: 7
-producer_name: "pytorch"
-producer_version: "1.10"
-graph {{
+        template = (
+            ONNX_HEADER
+            + """graph {{
   node {{
     output: "1"
     name: "Wrapper_0"
@@ -198,6 +202,7 @@ opset_import {{
   version: 1
 }}
 """
+        )
         template = template.format(
             operation_name=operation_name, input_shape=input_shape
         )

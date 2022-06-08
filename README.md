@@ -2,11 +2,11 @@
 
 Design, train and compile neural networks optimized specifically for FPGAs.
 Obtaining a final model is typically a three stage process.
-* design and train it using the layers provided in the `elasticai.creator` package.
+* design and train it using the layers provided in the `elasticai.creator.qat` package.
 * translate the model to a target representation, e.g. VHDL
 * compile the intermediate representation with a third party tool, e.g. Xilinx Vivado (TM)
 
-This version currently only supports [Brevitas](https://github.com/Xilinx/brevitas) and parts of VHDL as target representations.
+This version currently only supports parts of VHDL as target representations.
 
 The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at [researchgate](https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial).
 
@@ -32,8 +32,8 @@ python3 -m pip install "elasticai.creator"
 
 The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
-It also includes the supported target representations, like the subfolder [brevitas](elasticai/creator/brevitas) is for the translation to Brevitas or the subfolder [vhdl](elasticai/creator/vhdl) for the translation to Vhdl.
-Additionally, we have folders for [unit tests](elasticai/creator/tests), [integration tests](elasticai/creator/integrationTests) and [system tests](elasticai/creator/systemTests).
+It also includes the supported target representations, like the subfolder [vhdl](elasticai/creator/vhdl) is for the translation to vhdl.
+Additionally, we have folders for [unit tests](elasticai/creator/tests) and [integration tests](elasticai/creator/integrationTests).
 
 
 ## General Limitations
@@ -56,6 +56,13 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
+### Install/Compile ONNX dependency
+```bash
+sudo apt install python3-dev libprotobuf-dev protobuf-compiler
+export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+poetry install --extras onnx
+```
+
 ### Commit Message Scopes
 
 - **qat**: quantization-aware-training
@@ -71,11 +78,11 @@ sudo apt install ghdl
 - **pre-commit**
 
 ### Adding new translation targets
-New translation targets should be located in their own folder, e.g. Brevitas for translating from any language to Brevitas.
+New translation targets should be located in their own folder, e.g. vhdl for translating from any language to vhdl.
 Workflow for adding a new translation:
 1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
 2. Identify and label relevant structures, in the base cases it can be simply separate layers.
-3. Map each structure to its function which will convert it, like for [example](elasticai/creator/brevitas/translation_mapping.py).
+3. Map each structure to its function which will convert it.
 4. Do such conversions.
 5. Recreate connections based on 1.
 
@@ -127,8 +134,7 @@ Files containing tests for a python module should be located in a test directory
 Each file in the test directory should contain tests for one and only one class/function defined in the module.
 Files containing tests should be named according to the rubric
 `test_ClassName.py`.
-Next, if needed for more specific tests define a class which is a subclass of unittest.TestCase like [test_brevitas_model_comparison](elasticai/creator/integrationTests/brevitas_representation/test_brevitas_model_comparison.py) in the integration tests folder.
-Then subclass it, in this class define a setUp method (and possibly tearDown) to create the global environment.
+Next, if needed for more specific tests define a class. Then subclass it, in this class define a setUp method (and possibly tearDown) to create the global environment.
 It avoids introducing the category of bugs associated with copying and pasting code for reuse.
 This class should be named similarly to the file name.
 There's a category of bugs that appear if  the initialization parameters defined at the top of the test file are directly used: some tests require the initialization parameters to be changed slightly.
