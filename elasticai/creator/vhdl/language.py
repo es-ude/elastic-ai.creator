@@ -11,8 +11,8 @@ of code as strings.
 """
 from collections.abc import Sequence
 from enum import Enum
-from itertools import filterfalse, chain
-from typing import Callable, Iterable, Union, Literal, Optional, Sequence
+from itertools import chain, filterfalse
+from typing import Callable, Iterable, Literal, Optional, Sequence, Union
 
 Identifier = str
 Code = Iterable[str]
