@@ -2,6 +2,24 @@
 
 <!--next-version-placeholder-->
 
+## v0.8.0 (2022-06-08)
+### Feature
+* **gh-workflow:** Increase python version ([`02403e6`](https://github.com/es-ude/elastic-ai.creator/commit/02403e6cb7d8c9acc4357d9649fd2ae0834030a0))
+* **pyproject:** Drop brevitas support ([`103f188`](https://github.com/es-ude/elastic-ai.creator/commit/103f1882c8da81cdf114f10b1b76c2ce89a07cba))
+* Bump python version to 3.10 ([`47f5f07`](https://github.com/es-ude/elastic-ai.creator/commit/47f5f0718460a966faaa937b2c6b016720434082))
+
+### Fix
+* **pyproject:** Update poetry lock file ([`0116934`](https://github.com/es-ude/elastic-ai.creator/commit/0116934b994c4e743b1be009172de0e07acd9182))
+* **pyproject:** Update poetry lock file ([`9230672`](https://github.com/es-ude/elastic-ai.creator/commit/92306722dabe5c4196e79a7cbbebab1e75ac3e6d))
+* **pyproject:** Correct deps ([`7935ba1`](https://github.com/es-ude/elastic-ai.creator/commit/7935ba19bcbda7e47ddbc358c12af3aa2a01df0a))
+* **precomputation:** Change ModuleProto to Module ([`cfe418e`](https://github.com/es-ude/elastic-ai.creator/commit/cfe418e41889708a53c255a8a7abcd6f1648f8f2))
+* **gh-workflow:** Set more explicit python version ([`9c44093`](https://github.com/es-ude/elastic-ai.creator/commit/9c44093c6cd41d05a2d178e6e113bd10f7b86016))
+* **vhdl:** Fix import of Sequence type ([`2c463ac`](https://github.com/es-ude/elastic-ai.creator/commit/2c463acdbdae0ed7dc9fa99730f53db94deb7142))
+* **pyproject:** Set correct version numbers and add protobuf dependency ([`260e5fb`](https://github.com/es-ude/elastic-ai.creator/commit/260e5fb31c425ad9ba2ec31f2fa292961fd28ffa))
+* Specify exact python version in github workflow ([`f3ffb18`](https://github.com/es-ude/elastic-ai.creator/commit/f3ffb183e86b722cec5efb31e0937c4810542aef))
+* Fix dependencies + onnx integration tests ([`f06d0f8`](https://github.com/es-ude/elastic-ai.creator/commit/f06d0f8436ca2a7ed3410aee4ad36df1cdad45c0))
+* Resolve dependency version conflicts ([`32bd544`](https://github.com/es-ude/elastic-ai.creator/commit/32bd544b2e74b8b57497f3fd604deb5ed86ebb42))
+
 ## v0.7.0 (2022-06-05)
 ### Feature
 * **vhdl:** Add rich comparison methods, multiple operators and a bit iterator to FixedPoint ([`116b006`](https://github.com/es-ude/elastic-ai.creator/commit/116b00647c05ef6854d3cbd1ab0f79c58f0c450d))
