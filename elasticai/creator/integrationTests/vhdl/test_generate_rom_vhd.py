@@ -1,22 +1,16 @@
-from functools import partial
-
-import numpy as np
-
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.rom import Rom
 
 
 class GenerateROMVhdTest(GeneratedVHDLCodeTest):
     def test_compare_files(self) -> None:
-        to_fixed_point = partial(FixedPoint, total_bits=12, frac_bits=4)
-
         # biases for the input gate
         bi = [1.1, 2.2, 3.3, 4.4, 5.5, 6.6]
 
         generate_rom = Rom(
             rom_name="rom_bi",
-            values=list(map(to_fixed_point, bi)),
+            values=float_values_to_fixed_point(bi, total_bits=12, frac_bits=4),
             resource_option="auto",
         )
         generated_code = list(generate_rom())

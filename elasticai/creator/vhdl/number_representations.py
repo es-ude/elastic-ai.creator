@@ -1,5 +1,6 @@
 import math
 from collections.abc import Sequence
+from functools import partial
 from typing import Any, Iterable, Iterator, Union
 
 
@@ -187,6 +188,12 @@ def infer_total_and_frac_bits(values: Sequence[FixedPoint]) -> tuple[int, int]:
                 "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
             )
     return total_bits, frac_bits
+
+
+def float_values_to_fixed_point(
+    values: list[float], total_bits: int, frac_bits: int
+) -> list[FixedPoint]:
+    return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
 
 class FloatToSignedFixedPointConverter:

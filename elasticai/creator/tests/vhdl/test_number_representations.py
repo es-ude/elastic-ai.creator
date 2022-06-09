@@ -5,6 +5,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     FloatToSignedFixedPointConverter,
     ToLogicEncoder,
+    float_values_to_fixed_point,
     hex_representation,
     infer_total_and_frac_bits,
     two_complements_representation,
@@ -276,6 +277,21 @@ class InferTotalAndFracBits(TestCase):
         )
         self.assertEqual(8, total_bits)
         self.assertEqual(4, frac_bits)
+
+
+class FloatValuesToFixedPoint(TestCase):
+    def test_empty_list(self):
+        actual = float_values_to_fixed_point([], total_bits=8, frac_bits=4)
+        self.assertListEqual([], actual)
+
+    def test_full_list(self):
+        actual = float_values_to_fixed_point(
+            values=[1, 2, 3],
+            total_bits=8,
+            frac_bits=4,
+        )
+        target = [FixedPoint(value, total_bits=8, frac_bits=4) for value in range(1, 4)]
+        self.assertListEqual(target, actual)
 
 
 class FixedPointConverterTest(TestCase):
