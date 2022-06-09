@@ -41,63 +41,63 @@ class FixedPointTest(TestCase):
 
     def test_to_hex_zero_with_one_bits(self):
         fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
-        self.assertEqual('x"0"', fp_value.to_hex())
+        self.assertEqual("0", fp_value.to_hex())
 
     def test_to_hex_zero_with_six_bits(self):
         fp_value = FixedPoint(0, total_bits=6, frac_bits=0)
-        self.assertEqual('x"00"', fp_value.to_hex())
+        self.assertEqual("00", fp_value.to_hex())
 
     def test_to_hex_zero_with_sixteen_bits(self):
         fp_value = FixedPoint(0, total_bits=16, frac_bits=0)
-        self.assertEqual('x"0000"', fp_value.to_hex())
+        self.assertEqual("0000", fp_value.to_hex())
 
     def test_to_hex_minus_one_with_sixteen_bits(self):
         fp_value = FixedPoint(-1, total_bits=16, frac_bits=0)
-        self.assertEqual('x"ffff"', fp_value.to_hex())
+        self.assertEqual("ffff", fp_value.to_hex())
 
     def test_to_hex_minus_three_with_three_bits(self):
         fp_value = FixedPoint(-3, total_bits=3, frac_bits=0)
-        self.assertEqual('x"5"', fp_value.to_hex())
+        self.assertEqual("5", fp_value.to_hex())
 
     def test_to_hex_minus_254_with_sixteen_bits(self):
         fp_value = FixedPoint(-254, total_bits=16, frac_bits=0)
-        self.assertEqual('x"ff02"', fp_value.to_hex())
+        self.assertEqual("ff02", fp_value.to_hex())
 
     def test_to_hex_minus_19_5_with_16_bits(self):
         fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
-        self.assertEqual('x"ec80"', fp_value.to_hex())
+        self.assertEqual("ec80", fp_value.to_hex())
 
     def test_to_bin_zero_with_one_bits(self):
         fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
-        self.assertEqual('"0"', fp_value.to_bin())
+        self.assertEqual("0", fp_value.to_bin())
 
     def test_to_bin_zero_with_three_bits(self):
         fp_value = FixedPoint(0, total_bits=3, frac_bits=0)
-        self.assertEqual('"000"', fp_value.to_bin())
+        self.assertEqual("000", fp_value.to_bin())
 
     def test_to_bin_five_with_four_bits(self):
         fp_value = FixedPoint(5, total_bits=4, frac_bits=0)
-        self.assertEqual('"0101"', fp_value.to_bin())
+        self.assertEqual("0101", fp_value.to_bin())
 
     def test_to_bin_minus_one_with_two_bits(self):
         fp_value = FixedPoint(-1, total_bits=2, frac_bits=0)
-        self.assertEqual('"11"', fp_value.to_bin())
+        self.assertEqual("11", fp_value.to_bin())
 
     def test_to_bin_minus_two_with_two_bits(self):
         fp_value = FixedPoint(-2, total_bits=2, frac_bits=0)
-        self.assertEqual('"10"', fp_value.to_bin())
+        self.assertEqual("10", fp_value.to_bin())
 
     def test_to_bin_minus_256_with_sixteen_bits(self):
         fp_value = FixedPoint(-256, total_bits=16, frac_bits=0)
-        self.assertEqual('"1111111100000000"', fp_value.to_bin())
+        self.assertEqual("1111111100000000", fp_value.to_bin())
 
     def test_to_bin_minus_254_with_sixteen_bits(self):
         fp_value = FixedPoint(-254, total_bits=16, frac_bits=0)
-        self.assertEqual('"1111111100000010"', fp_value.to_bin())
+        self.assertEqual("1111111100000010", fp_value.to_bin())
 
     def test_to_bin_minus_19_5_with_16_bits(self):
         fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
-        self.assertEqual('"1110110010000000"', fp_value.to_bin())
+        self.assertEqual("1110110010000000", fp_value.to_bin())
 
     def test_from_int(self):
         fp_value = FixedPoint.from_int(52388, total_bits=16, frac_bits=12)

@@ -170,10 +170,10 @@ class FixedPoint:
         return ((int(self) >> i) & 1 for i in range(self._total_bits))
 
     def to_bin(self) -> str:
-        return f'"{int(self):0{self._total_bits}b}"'
+        return f"{int(self):0{self._total_bits}b}"
 
     def to_hex(self) -> str:
-        return f'x"{int(self):0{math.ceil(self._total_bits / 4)}x}"'
+        return f"{int(self):0{math.ceil(self._total_bits / 4)}x}"
 
 
 class FloatToSignedFixedPointConverter:

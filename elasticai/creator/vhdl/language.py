@@ -9,7 +9,6 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
-from collections.abc import Sequence
 from enum import Enum
 from itertools import chain, filterfalse
 from typing import Callable, Iterable, Literal, Optional, Sequence, Union
@@ -524,3 +523,11 @@ class Procedure:
                 _add_semicolons(self._statement_list(), semicolon_last=True)
             )
         yield f"{Keywords.END.value} {self.identifier};"
+
+
+def hex_representation(hex_value: str) -> str:
+    return f'x"{hex_value}"'
+
+
+def bin_representation(bin_value: str) -> str:
+    return f'"{bin_value}"'
