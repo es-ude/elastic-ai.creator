@@ -6,6 +6,7 @@ from elasticai.creator.vhdl.number_representations import (
     FloatToSignedFixedPointConverter,
     ToLogicEncoder,
     hex_representation,
+    infer_total_and_frac_bits,
     two_complements_representation,
 )
 
@@ -226,6 +227,55 @@ class FixedPointTest(TestCase):
         fp2 = FixedPoint(6, total_bits=4, frac_bits=0)
         result = FixedPoint(3, total_bits=4, frac_bits=0)
         self.assertEqual(result, fp1 ^ fp2)
+
+
+class InferTotalAndFracBits(TestCase):
+    def test_infer_empty_list(self):
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits([])
+
+    def test_infer_mixed_total_bits(self):
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits(
+                [
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=12, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                ]
+            )
+
+    def test_infer_mixed_frac_bits(self):
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits(
+                [
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=5),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                ]
+            )
+
+    def test_infer_mixed_total_and_frac_bits(self):
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits(
+                [
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=5),
+                    FixedPoint(0, total_bits=12, frac_bits=4),
+                ]
+            )
+
+    def test_infer_valid_list(self):
+        total_bits, frac_bits = infer_total_and_frac_bits(
+            [
+                FixedPoint(0, total_bits=8, frac_bits=4),
+                FixedPoint(0, total_bits=8, frac_bits=4),
+            ]
+        )
+        self.assertEqual(8, total_bits)
+        self.assertEqual(4, frac_bits)
 
 
 class FixedPointConverterTest(TestCase):

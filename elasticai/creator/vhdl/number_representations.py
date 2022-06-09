@@ -1,4 +1,5 @@
 import math
+from collections.abc import Sequence
 from typing import Any, Iterable, Iterator, Union
 
 
@@ -48,7 +49,7 @@ class FixedPoint:
     def __add__(self, other: "FixedPoint") -> "FixedPoint":
         FixedPoint._assert_is_compatible(self, other)
         return self._identical_fixed_point_from_int(
-            FixedPoint.discard_leading_bits(
+            FixedPoint._discard_leading_bits(
                 int(self) + int(other), num_bits=self._total_bits
             )
         )
@@ -123,7 +124,7 @@ class FixedPoint:
         return value ^ int("1" * num_bits, 2)
 
     @staticmethod
-    def discard_leading_bits(value: int, num_bits: int) -> int:
+    def _discard_leading_bits(value: int, num_bits: int) -> int:
         return value & int("1" * num_bits, 2)
 
     @staticmethod
@@ -174,6 +175,18 @@ class FixedPoint:
 
     def to_hex(self) -> str:
         return f"{int(self):0{math.ceil(self._total_bits / 4)}x}"
+
+
+def infer_total_and_frac_bits(values: Sequence[FixedPoint]) -> tuple[int, int]:
+    if len(values) == 0:
+        raise ValueError("Cannot infer total bits and frac bits from an empty list.")
+    total_bits, frac_bits = values[0].total_bits, values[0].frac_bits
+    for value in values[1:]:
+        if value.total_bits != total_bits or value.frac_bits != frac_bits:
+            raise ValueError(
+                "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
+            )
+    return total_bits, frac_bits
 
 
 class FloatToSignedFixedPointConverter:
