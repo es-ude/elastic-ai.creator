@@ -1,5 +1,4 @@
 import math
-from functools import partial
 from itertools import chain
 from typing import Iterable, Iterator
 
@@ -14,38 +13,40 @@ from elasticai.creator.vhdl.language import (
     Procedure,
     Process,
     UseClause,
+    hex_representation,
 )
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
-from elasticai.creator.vhdl.number_representations import hex_representation
+from elasticai.creator.vhdl.number_representations import (
+    FixedPoint,
+    infer_total_and_frac_bits,
+)
 
 
 class LSTMCellTestBench:
     def __init__(
         self,
-        data_width: int,
-        frac_width: int,
         input_size: int,
         hidden_size: int,
-        test_x_h_data: list[int],
-        test_c_data: list[int],
-        h_out: list[int],
+        test_x_h_data: list[FixedPoint],
+        test_c_data: list[FixedPoint],
+        h_out: list[FixedPoint],
         component_name: str = None,
     ):
         self.component_name = self._get_lower_case_class_name_or_component_name(
             component_name=component_name
         )
-        self.data_width = data_width
-        self.frac_width = frac_width
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.x_h_addr_width = math.ceil(math.log2(input_size + hidden_size))
-        self.hidden_addr_width = math.ceil(math.log2(hidden_size))
-        if self.hidden_addr_width == 0:
-            self.hidden_addr_width = 1
+        self.hidden_addr_width = max(1, math.ceil(math.log2(hidden_size)))
         self.w_addr_width = math.ceil(
             math.log2((input_size + hidden_size) * hidden_size)
         )
-        to_hex = partial(hex_representation, num_bits=data_width)
+        self.data_width, self.frac_width = infer_total_and_frac_bits(test_x_h_data)
+
+        def to_hex(value: FixedPoint) -> str:
+            return hex_representation(value.to_hex())
+
         self.test_x_h_data = list(map(to_hex, test_x_h_data))
         self.test_c_data = list(map(to_hex, test_c_data))
         self.h_out = h_out
@@ -251,10 +252,10 @@ class LSTMCellTestBench:
 class TestCasesLSTMCommonGate(TestBenchBase):
     def __init__(
         self,
-        x_mem_list_for_testing: list[str],
-        w_mem_list_for_testing: list[str],
-        b_list_for_testing: list[str],
-        y_list_for_testing: list[int],
+        x_mem_list_for_testing: list[FixedPoint],
+        w_mem_list_for_testing: list[FixedPoint],
+        b_list_for_testing: list[FixedPoint],
+        y_list_for_testing: list[FixedPoint],
         y_variable_name: str = "y",
     ):
         assert (
@@ -263,10 +264,14 @@ class TestCasesLSTMCommonGate(TestBenchBase):
             == len(b_list_for_testing)
             == len(y_list_for_testing)
         )
-        self.x_mem_list_for_testing = x_mem_list_for_testing
-        self.w_mem_list_for_testing = w_mem_list_for_testing
-        self.y_list_for_testing = y_list_for_testing
-        self.b_list_for_testing = b_list_for_testing
+
+        def to_hex(value: FixedPoint) -> str:
+            return hex_representation(value.to_hex())
+
+        self.x_mem_list_for_testing = list(map(to_hex, x_mem_list_for_testing))
+        self.w_mem_list_for_testing = list(map(to_hex, w_mem_list_for_testing))
+        self.b_list_for_testing = list(map(to_hex, b_list_for_testing))
+        self.y_list_for_testing = list(map(int, y_list_for_testing))
         self.y_variable_name = y_variable_name
 
     def _body(self) -> Iterator[str]:
@@ -300,8 +305,13 @@ class TestCasesLSTMCommonGate(TestBenchBase):
 
 
 class TestCasesLSTMCell(TestBenchBase):
-    def __init__(self, reference_h_out: list[int], input_size=0, hidden_size=0):
-        self.reference_h_out = reference_h_out
+    def __init__(
+        self,
+        reference_h_out: list[FixedPoint],
+        input_size: int = 0,
+        hidden_size: int = 0,
+    ):
+        self.reference_h_out = list(map(int, reference_h_out))
 
         assert (input_size != 0) and (
             hidden_size != 0
