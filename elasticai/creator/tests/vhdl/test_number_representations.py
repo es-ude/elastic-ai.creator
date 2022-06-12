@@ -279,7 +279,7 @@ class InferTotalAndFracBits(TestCase):
         self.assertEqual(4, frac_bits)
 
 
-class FloatValuesToFixedPoint(TestCase):
+class FloatValuesToFixedPointTest(TestCase):
     def test_empty_list(self):
         actual = float_values_to_fixed_point([], total_bits=8, frac_bits=4)
         self.assertListEqual([], actual)
@@ -289,6 +289,21 @@ class FloatValuesToFixedPoint(TestCase):
             values=[1, 2, 3],
             total_bits=8,
             frac_bits=4,
+        )
+        target = [FixedPoint(value, total_bits=8, frac_bits=4) for value in range(1, 4)]
+        self.assertListEqual(target, actual)
+
+
+class IntValuesToFixedPointTest(TestCase):
+    def test_empty_list(self):
+        actual = float_values_to_fixed_point([], total_bits=8, frac_bits=0)
+        self.assertListEqual([], actual)
+
+    def test_full_list(self):
+        actual = float_values_to_fixed_point(
+            values=[1, 2, 3],
+            total_bits=8,
+            frac_bits=0,
         )
         target = [FixedPoint(value, total_bits=8, frac_bits=4) for value in range(1, 4)]
         self.assertListEqual(target, actual)

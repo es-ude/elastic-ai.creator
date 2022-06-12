@@ -1,6 +1,5 @@
 import math
 from collections.abc import Sequence
-from functools import partial
 from typing import Any, Iterable, Iterator, Union
 
 
@@ -194,6 +193,12 @@ def float_values_to_fixed_point(
     values: list[float], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
     return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
+
+
+def int_values_to_fixed_point(
+    values: list[int], total_bits: int, frac_bits: int
+) -> list[FixedPoint]:
+    return list(map(lambda x: FixedPoint.from_int(x, total_bits, frac_bits), values))
 
 
 class FloatToSignedFixedPointConverter:
