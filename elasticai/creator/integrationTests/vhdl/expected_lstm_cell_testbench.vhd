@@ -151,7 +151,7 @@ begin
             wait for 1*clk_period;
             enable <= '0';
 
-            -- reference h_out: [34, -80, -32, -28, -88, 11, -60, 6, -16, 18, -32, 46, -77, 15, 70, 27, 13, 112, -156, 3];
+            -- reference h_out: [34, -80, -32, -28, -88, 11, -60, 6, -16, 18, -32, 46, -77, 15, 70, 27, 13, 112, -126, 3];
             for ii in 0 to 19 loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH));
                 h_out_en <= '1';
                 wait for 2*clk_period;
