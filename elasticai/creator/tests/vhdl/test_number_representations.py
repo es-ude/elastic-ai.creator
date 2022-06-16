@@ -278,6 +278,35 @@ class InferTotalAndFracBits(TestCase):
         self.assertEqual(8, total_bits)
         self.assertEqual(4, frac_bits)
 
+    def test_infer_multiple_valid_lists(self):
+        values = [
+            FixedPoint(0, total_bits=8, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
+        total_bits, frac_bits = infer_total_and_frac_bits(values, values, values)
+        self.assertEqual(8, total_bits)
+        self.assertEqual(4, frac_bits)
+
+    def test_infer_multiple_invalid_lists(self):
+        values1 = [
+            FixedPoint(0, total_bits=8, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
+        values2 = [
+            FixedPoint(0, total_bits=12, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits(values1, values2)
+
+    def test_infer_multiple_lists_with_empty_list(self):
+        values = [
+            FixedPoint(0, total_bits=8, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits(values, [])
+
 
 class FloatValuesToFixedPointTest(TestCase):
     def test_empty_list(self):

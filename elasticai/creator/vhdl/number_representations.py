@@ -177,15 +177,16 @@ class FixedPoint:
         return f"{int(self):0{math.ceil(self._total_bits / 4)}x}"
 
 
-def infer_total_and_frac_bits(values: Sequence[FixedPoint]) -> tuple[int, int]:
-    if len(values) == 0:
+def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
+    if sum(len(value_list) == 0 for value_list in values) > 0:
         raise ValueError("Cannot infer total bits and frac bits from an empty list.")
-    total_bits, frac_bits = values[0].total_bits, values[0].frac_bits
-    for value in values[1:]:
-        if value.total_bits != total_bits or value.frac_bits != frac_bits:
-            raise ValueError(
-                "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
-            )
+    total_bits, frac_bits = values[0][0].total_bits, values[0][0].frac_bits
+    for value_list in values:
+        for value in value_list:
+            if value.total_bits != total_bits or value.frac_bits != frac_bits:
+                raise ValueError(
+                    "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
+                )
     return total_bits, frac_bits
 
 
