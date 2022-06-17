@@ -229,6 +229,14 @@ class FixedPointTest(TestCase):
         result = FixedPoint(3, total_bits=4, frac_bits=0)
         self.assertEqual(result, fp1 ^ fp2)
 
+    def test_to_signed_int_positive_value(self):
+        fp = FixedPoint(5, total_bits=8, frac_bits=4)
+        self.assertEqual(80, fp.to_signed_int())
+
+    def test_to_signed_int_negative_value(self):
+        fp = FixedPoint(-5, total_bits=8, frac_bits=4)
+        self.assertEqual(-80, fp.to_signed_int())
+
 
 class InferTotalAndFracBits(TestCase):
     def test_infer_empty_list(self):

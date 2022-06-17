@@ -170,6 +170,9 @@ class FixedPoint:
     def bin_iter(self) -> Iterator[int]:
         return ((int(self) >> i) & 1 for i in range(self._total_bits))
 
+    def to_signed_int(self) -> int:
+        return int(abs(self)) * (-1 if self < 0 else 1)
+
     def to_bin(self) -> str:
         return f"{int(self):0{self._total_bits}b}"
 
