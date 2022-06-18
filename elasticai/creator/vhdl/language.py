@@ -225,7 +225,7 @@ class Process:
         if len(self.process_statements_list) > 0:
             yield from _append_semicolons_to_lines(self.process_statements_list)
         if self.lookup_table_generator_function:
-            yield from self.lookup_table_generator_function
+            yield from self.lookup_table_generator_function()
 
     def __call__(self) -> Code:
         if self.input:
