@@ -1,4 +1,7 @@
+from functools import partial
+
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.precomputed_scalar_function import (
     PrecomputedScalarTestBench,
 )
@@ -15,7 +18,7 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
         entity sigmoid_tb is
             generic (
                 DATA_WIDTH : integer := 16;
-                FRAC_WIDTH : integer := 8
+                FRAC_WIDTH : integer := 0
             );
             port (
                 clk : out std_logic
@@ -31,7 +34,7 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
             component sigmoid is
                 generic (
                     DATA_WIDTH : integer := 16;
-                    FRAC_WIDTH : integer := 8
+                    FRAC_WIDTH : integer := 0
                 );
                 port (
                     x : in signed(DATA_WIDTH-1 downto 0);
@@ -84,12 +87,11 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
 
         end architecture rtl;
         """
+        to_fp = partial(float_values_to_fixed_point, total_bits=16, frac_bits=0)
         sigmoid = PrecomputedScalarTestBench(
-            data_width=16,
-            frac_width=8,
             component_name="sigmoid",
-            x_list_for_testing=[-1281, -1000, -500],
-            y_list_for_testing=[0, 4, 28],
+            x_list_for_testing=to_fp([-1281, -1000, -500]),
+            y_list_for_testing=to_fp([0, 4, 28]),
         )
         sigmoid_code = sigmoid()
         sigmoid_code_str = ""

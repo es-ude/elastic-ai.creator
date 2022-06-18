@@ -3,7 +3,10 @@ from unittest import TestCase
 
 from elasticai.creator.vhdl.language import hex_representation
 from elasticai.creator.vhdl.lstm_testbench_generator import TestCasesLSTMCommonGate
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.number_representations import (
+    FixedPoint,
+    float_values_to_fixed_point,
+)
 from elasticai.creator.vhdl.precomputed_scalar_function import (
     TestCasesPrecomputedScalarFunction,
 )
@@ -100,30 +103,36 @@ class TestCasesLSTMCommonGateTest(TestCase):
 
 
 class TestCasesPrecomputedScalarFunctionTest(TestCase):
+    def setUp(self) -> None:
+        self.data_width, self.frac_width = 8, 0
+        self.fp_list = partial(
+            float_values_to_fixed_point,
+            total_bits=self.data_width,
+            frac_bits=self.frac_width,
+        )
+
     def test_TestCasesPrecomputedScalarFunction(self):
         x_list_for_testing = [1, 2, 3]
-        y_list_for_testing = [-5, "some_string", -3]
+        y_list_for_testing = [-5, -2, -3]
         x_variable_name = "x_name"
         y_variable_name = "y_name"
-        data_width = 3
         test_cases_precomputed_scalar_function = TestCasesPrecomputedScalarFunction(
-            x_list_for_testing=x_list_for_testing,
-            y_list_for_testing=y_list_for_testing,
+            x_list_for_testing=self.fp_list(x_list_for_testing),
+            y_list_for_testing=self.fp_list(y_list_for_testing),
             x_variable_name=x_variable_name,
             y_variable_name=y_variable_name,
-            data_width=data_width,
         )
         expected = [
             f'report "======Simulation Start======" severity Note',
-            f"{x_variable_name} <= to_signed({x_list_for_testing[0]},{data_width})",
+            f"{x_variable_name} <= to_signed({x_list_for_testing[0]},{self.data_width})",
             f"wait for 1*clk_period",
             f"report \"The value of '{y_variable_name}' is \" & integer'image(to_integer(unsigned({y_variable_name})))",
             f'assert {y_variable_name}={y_list_for_testing[0]} report "The test case {x_list_for_testing[0]} fail" severity failure',
-            f"{x_variable_name} <= to_signed({x_list_for_testing[1]},{data_width})",
+            f"{x_variable_name} <= to_signed({x_list_for_testing[1]},{self.data_width})",
             f"wait for 1*clk_period",
             f"report \"The value of '{y_variable_name}' is \" & integer'image(to_integer(unsigned({y_variable_name})))",
-            f'assert {y_variable_name}="{y_list_for_testing[1]}" report "The test case {x_list_for_testing[1]} fail" severity failure',
-            f"{x_variable_name} <= to_signed({x_list_for_testing[2]},{data_width})",
+            f'assert {y_variable_name}={y_list_for_testing[1]} report "The test case {x_list_for_testing[1]} fail" severity failure',
+            f"{x_variable_name} <= to_signed({x_list_for_testing[2]},{self.data_width})",
             f"wait for 1*clk_period",
             f"report \"The value of '{y_variable_name}' is \" & integer'image(to_integer(unsigned({y_variable_name})))",
             f'assert {y_variable_name}={y_list_for_testing[2]} report "The test case {x_list_for_testing[2]} fail" severity failure',
@@ -134,18 +143,16 @@ class TestCasesPrecomputedScalarFunctionTest(TestCase):
         actual = list(test_cases_precomputed_scalar_function())
         self.assertSequenceEqual(expected, actual)
 
-    def test_TestCasesPrecomputedScalarFunction_different_lenghts_of_list(self):
+    def test_TestCasesPrecomputedScalarFunction_different_lengths_of_list(self):
         x_list_for_testing = [1, 2, 3]
         y_list_for_testing = [-5, -3]
         x_variable_name = "x_name"
         y_variable_name = "y_name"
-        data_width = 3
         self.assertRaises(
             AssertionError,
             TestCasesPrecomputedScalarFunction,
-            x_list_for_testing,
-            y_list_for_testing,
+            self.fp_list(x_list_for_testing),
+            self.fp_list(y_list_for_testing),
             x_variable_name,
             y_variable_name,
-            data_width,
         )

@@ -12,7 +12,7 @@ class LSTMCellTestBenchTest(VHDLFileTestCase):
     maxDiff = None
 
     def test_compare_files(self) -> None:
-        fp_args = {"total_bits": 16, "frac_bits": 8}
+        fp_args = dict(total_bits=16, frac_bits=8)
         ints_to_fp = partial(int_values_to_fixed_point, **fp_args)
         floats_to_fp = partial(float_values_to_fixed_point, **fp_args)
 

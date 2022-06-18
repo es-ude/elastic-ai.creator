@@ -17,91 +17,91 @@ from elasticai.creator.vhdl.language import (
     PortMap,
     Process,
     UseClause,
+    bin_representation,
 )
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
 from elasticai.creator.vhdl.number_representations import (
-    FloatToBinaryFixedPointStringConverter,
-    FloatToSignedFixedPointConverter,
+    FixedPoint,
+    float_values_to_fixed_point,
+    infer_total_and_frac_bits,
 )
 
 
-def _vhdl_add_assignment(code: list, line_id: str, value: str, comment=None) -> None:
-    new_code_fragment = f'{line_id} <= "{value}";'
+def _vhdl_add_assignment(
+    code: list, line_id: str, value: str, comment: str = None
+) -> None:
+    new_code_fragment = f"{line_id} <= {bin_representation(value)};"
     if comment is not None:
         new_code_fragment += f" -- {comment}"
     code.append(new_code_fragment)
 
 
-def precomputed_scalar_function_process(x_list, y_list) -> CodeGenerator:
+def precomputed_scalar_function_process(
+    x: list[FixedPoint], y: list[FixedPoint]
+) -> CodeGenerator:
     """
         returns the string of a lookup table
     Args:
-        y_list : output List contains integers
-        x_list: input List contains integers
+        x (FixedPoint): input list
+        y (FixedPoint) : output list
     Returns:
         String of lookup table (if/elsif statements for vhdl file)
     """
-    as_signed_fixed_point = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=8, strict=False
-    )
-    as_binary_string = FloatToBinaryFixedPointStringConverter(
-        total_bit_width=16, as_signed_fixed_point=as_signed_fixed_point
-    )
-    x_list.sort()
+    x.sort()
     lines = []
-    if len(x_list) == 0 and len(y_list) == 1:
+    if len(x) == 0 and len(y) == 1:
         _vhdl_add_assignment(
             code=lines,
             line_id="y",
-            value=as_binary_string(y_list[0]),
+            value=y[0].to_bin(),
         )
-    elif len(x_list) != len(y_list) - 1:
+    elif len(x) != len(y) - 1:
         raise ValueError(
-            "x_list has to be one element shorter than y_list, but x_list has {} elements and y_list {} elements".format(
-                len(x_list), len(y_list)
-            )
+            f"x has to be one element shorter than y, but x has {len(x)} elements and y {len(y)} elements"
         )
     else:
-        smallest_possible_output = y_list[0]
-        biggest_possible_output = y_list[-1]
+        smallest_possible_output = y[0]
+        biggest_possible_output = y[-1]
 
         # first element
-        for x in x_list[:1]:
-            lines.append("if int_x<{0} then".format(as_signed_fixed_point(x)))
+        for x_value in x[:1]:
+            lines.append(f"if int_x<{x_value.to_signed_int()} then")
             _vhdl_add_assignment(
                 code=lines,
                 line_id="y",
-                value=as_binary_string(smallest_possible_output),
-                comment=as_signed_fixed_point(smallest_possible_output),
+                value=smallest_possible_output.to_bin(),
+                comment=str(smallest_possible_output.to_signed_int()),
             )
             lines[-1] = "\t" + lines[-1]
-        for current_x, current_y in zip(x_list[1:], y_list[1:-1]):
-            lines.append(
-                "elsif int_x<{0} then".format(as_signed_fixed_point(current_x))
-            )
+        for current_x, current_y in zip(x[1:], y[1:-1]):
+            lines.append(f"elsif int_x<{current_x.to_signed_int()} then")
             _vhdl_add_assignment(
                 code=lines,
                 line_id="y",
-                value=as_binary_string(current_y),
-                comment=as_signed_fixed_point(current_y),
+                value=current_y.to_bin(),
+                comment=str(current_y.to_signed_int()),
             )
             lines[-1] = "\t" + lines[-1]
         # last element only in y
-        for _ in y_list[-1:]:
+        for _ in y[-1:]:
             lines.append("else")
             _vhdl_add_assignment(
                 code=lines,
                 line_id="y",
-                value=as_binary_string(biggest_possible_output),
-                comment=as_signed_fixed_point(biggest_possible_output),
+                value=biggest_possible_output.to_bin(),
+                comment=str(biggest_possible_output.to_signed_int()),
             )
             lines[-1] = "\t" + lines[-1]
         if len(lines) != 0:
             lines.append("end if;")
+
     # build the string block
-    yield lines[0]
-    for line in lines[1:]:
-        yield line
+
+    def generator() -> Code:
+        for line in lines:
+            yield line
+
+    return generator
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -120,7 +120,11 @@ class FracWidthVariable(InterfaceVariable):
 
 class PrecomputedScalarFunction:
     def __init__(
-        self, data_width, frac_width, x, y, component_name=None, process_instance=None
+        self,
+        x: list[FixedPoint],
+        y: list[FixedPoint],
+        component_name: str = None,
+        process_instance: Process = None,
     ):
         """
         We calculate the function with an algorithm equivalent to:
@@ -135,8 +139,8 @@ class PrecomputedScalarFunction:
         self.component_name = self._get_lower_case_class_name_or_component_name(
             component_name=component_name
         )
-        self.data_width = data_width
-        self.frac_width = frac_width
+
+        self.data_width, self.frac_width = infer_total_and_frac_bits(x, y)
         self.x = x
         self.y = y
         self.process_instance = process_instance
@@ -173,7 +177,7 @@ class PrecomputedScalarFunction:
         process = Process(
             identifier=self.component_name,
             lookup_table_generator_function=precomputed_scalar_function_process(
-                x_list=self.x, y_list=self.y
+                x=self.x, y=self.y
             ),
             input_name="x",
         )
@@ -188,53 +192,44 @@ class PrecomputedScalarFunction:
 
 
 class Sigmoid(PrecomputedScalarFunction):
-    def __init__(self, data_width, frac_width, x, component_name=None):
-        x_list = torch.as_tensor(x)
+    def __init__(self, x: list[FixedPoint], component_name: str = None):
+        x_tensor = torch.as_tensor(list(map(float, x)))
         # calculate y always for the previous element, therefore the last input is not needed here
-        y_list = list(torch.nn.Sigmoid()(x_list[:-1]))
-        y_list.insert(0, 0)
-        # add last y value, therefore, x_list is one element shorter than y_list
-        y_list.append(1)
-        super(Sigmoid, self).__init__(
-            data_width=data_width,
-            frac_width=frac_width,
-            x=x,
-            y=y_list,
-            component_name=component_name,
-        )
+        y = torch.nn.Sigmoid()(x_tensor[:-1]).tolist()
+        y.insert(0, 0)
+        # add last y value, therefore, x_tensor is one element shorter than y_tensor
+        y.append(1)
+        y = float_values_to_fixed_point(y, *infer_total_and_frac_bits(x))
+
+        super(Sigmoid, self).__init__(x=x, y=y, component_name=component_name)
 
 
 class Tanh(PrecomputedScalarFunction):
-    def __init__(self, data_width, frac_width, x, component_name=None):
-        y_list = [-1]
+    def __init__(self, x: list[FixedPoint], component_name: str = None):
+        y_list = [-1.0]
         # calculate y always for the previous element, therefore the last input is not needed here
         for x_element in x[:-1]:
-            y_list.append(math.tanh(x_element))
+            y_list.append(math.tanh(float(x_element)))
         # add last y value, therefore, x_list is one element shorter than y_list
         y_list.append(1)
-        super(Tanh, self).__init__(
-            data_width=data_width,
-            frac_width=frac_width,
-            x=x,
-            y=y_list,
-            component_name=component_name,
-        )
+        y = float_values_to_fixed_point(y_list, *infer_total_and_frac_bits(x))
+
+        super(Tanh, self).__init__(x=x, y=y, component_name=component_name)
 
 
 class PrecomputedScalarTestBench:
     def __init__(
         self,
-        data_width: int,
-        frac_width: int,
-        x_list_for_testing: list,
-        y_list_for_testing: list,
+        x_list_for_testing: list[FixedPoint],
+        y_list_for_testing: list[FixedPoint],
         component_name: str = None,
     ):
         self.component_name = self._get_lower_case_class_name_or_component_name(
             component_name=component_name
         )
-        self.data_width = data_width
-        self.frac_width = frac_width
+        self.data_width, self.frac_width = infer_total_and_frac_bits(
+            x_list_for_testing, y_list_for_testing
+        )
         self.x_list_for_testing = x_list_for_testing
         self.y_list_for_testing = y_list_for_testing
 
@@ -296,7 +291,6 @@ class PrecomputedScalarTestBench:
         test_cases = TestCasesPrecomputedScalarFunction(
             x_list_for_testing=self.x_list_for_testing,
             y_list_for_testing=self.y_list_for_testing,
-            data_width=self.data_width,
         )
         test_process = Process(identifier="test")
         test_process.process_statements_list = [t for t in test_cases()]
@@ -322,18 +316,23 @@ class PrecomputedScalarTestBench:
 class TestCasesPrecomputedScalarFunction(TestBenchBase):
     def __init__(
         self,
-        x_list_for_testing: list[int],
-        y_list_for_testing: list[int],
+        x_list_for_testing: list[FixedPoint],
+        y_list_for_testing: list[FixedPoint],
         x_variable_name: str = "test_input",
         y_variable_name: str = "test_output",
-        data_width: int = 16,
     ):
         assert len(x_list_for_testing) == len(y_list_for_testing)
-        self.x_list_for_testing = x_list_for_testing
-        self.y_list_for_testing = y_list_for_testing
+        self.data_width, _ = infer_total_and_frac_bits(
+            x_list_for_testing, y_list_for_testing
+        )
+        self.x_list_for_testing = [
+            value.to_signed_int() for value in x_list_for_testing
+        ]
+        self.y_list_for_testing = [
+            value.to_signed_int() for value in y_list_for_testing
+        ]
         self.x_variable_name = x_variable_name
         self.y_variable_name = y_variable_name
-        self.data_width = data_width
 
     def __len__(self):
         return len(self.y_list_for_testing)

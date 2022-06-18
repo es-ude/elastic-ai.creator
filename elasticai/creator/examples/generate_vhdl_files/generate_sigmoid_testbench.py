@@ -1,6 +1,8 @@
 import os
 from argparse import ArgumentParser
+from functools import partial
 
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.precomputed_scalar_function import (
     PrecomputedScalarTestBench,
 )
@@ -20,13 +22,13 @@ def main() -> None:
     component_name = "sigmoid_tb"
     file_path = os.path.join(args.path, f"{component_name}.vhd")
 
+    to_fp = partial(float_values_to_fixed_point, total_bits=16, frac_bits=2)
+
     with open(file_path, "w") as writer:
         sigmoid = PrecomputedScalarTestBench(
             component_name=component_name,
-            data_width=16,
-            frac_width=8,
-            x_list_for_testing=[-1281, -1000, -500],
-            y_list_for_testing=[0, 4, 28],
+            x_list_for_testing=to_fp([-1281, -1000, -500]),
+            y_list_for_testing=to_fp([0, 4, 28]),
         )
         sigmoid_code = sigmoid()
         for line in sigmoid_code:

@@ -42,7 +42,9 @@ class LSTMCellTestBench:
         self.w_addr_width = math.ceil(
             math.log2((input_size + hidden_size) * hidden_size)
         )
-        self.data_width, self.frac_width = infer_total_and_frac_bits(test_x_h_data)
+        self.data_width, self.frac_width = infer_total_and_frac_bits(
+            test_x_h_data, test_c_data, h_out
+        )
 
         def to_hex(value: FixedPoint) -> str:
             return hex_representation(value.to_hex())
