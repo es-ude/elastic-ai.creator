@@ -1,5 +1,6 @@
 import math
 from collections.abc import Sequence
+from itertools import chain
 from typing import Any, Iterable, Iterator, Union
 
 
@@ -184,12 +185,11 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     if sum(len(value_list) == 0 for value_list in values) > 0:
         raise ValueError("Cannot infer total bits and frac bits from an empty list.")
     total_bits, frac_bits = values[0][0].total_bits, values[0][0].frac_bits
-    for value_list in values:
-        for value in value_list:
-            if value.total_bits != total_bits or value.frac_bits != frac_bits:
-                raise ValueError(
-                    "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
-                )
+    for value in chain(*values):
+        if value.total_bits != total_bits or value.frac_bits != frac_bits:
+            raise ValueError(
+                "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
+            )
     return total_bits, frac_bits
 
 
