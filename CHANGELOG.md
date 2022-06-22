@@ -2,6 +2,23 @@
 
 <!--next-version-placeholder-->
 
+## v0.9.0 (2022-06-22)
+### Feature
+* **vhdl:** Integrate FixedPoint type ([`b67a609`](https://github.com/es-ude/elastic-ai.creator/commit/b67a6096023a51ff4882a8cdd03a7765884c8d93))
+* **vhdl:** Add function to convert FixedPoint to signed int representation ([`03001ed`](https://github.com/es-ude/elastic-ai.creator/commit/03001ed608ac934e8bbdcdfa1acb2fc7c163a89a))
+* **vhdl:** Verify total bits and frac bits for multiple lists ([`360d318`](https://github.com/es-ude/elastic-ai.creator/commit/360d318db0076d9077ceb94f3f7904d95e2b12f6))
+* **vhdl:** Integrate FixedPoint datatype in the LSTM test bench classes ([`7cbb88a`](https://github.com/es-ude/elastic-ai.creator/commit/7cbb88a7f77728776e0e976dcc68505b4162f0cc))
+* **vhdl:** Add function to convert a list of ints to a list of FixedPoint objects ([`abece1f`](https://github.com/es-ude/elastic-ai.creator/commit/abece1fd38af607c5f5734aeacd77a1743ff3411))
+* **vhdl:** Add function to convert list of float values to a list of FixedPoint objects ([`02b26d8`](https://github.com/es-ude/elastic-ai.creator/commit/02b26d868cad2a5a5bed2350a2929cf362ccdca8))
+* **vhdl:** Change Rom that it uses the FixedPoint datatype ([`876cdb8`](https://github.com/es-ude/elastic-ai.creator/commit/876cdb821ff0ac67ae2345c8a36e4a742cce0949))
+* **vhdl:** Add a function to infer total and frac bits from a sequence of FixedPoint values ([`9cc2b72`](https://github.com/es-ude/elastic-ai.creator/commit/9cc2b721b147628b2abf524129eeaac8f68520d5))
+* **vhdl:** Separate hex/bin representation from vhdl hex/bin representation ([`eb8fe60`](https://github.com/es-ude/elastic-ai.creator/commit/eb8fe60300ee7572500f9f9d11b62a9c5abff802))
+
+### Fix
+* **vhdl:** Correct usage of the lookup_table_generator_function according to the type hints ([`9812ee8`](https://github.com/es-ude/elastic-ai.creator/commit/9812ee85cd467e261af942b30493ac0e970ea5e4))
+* **vhdl:** Remove old brevitas code ([`86a8104`](https://github.com/es-ude/elastic-ai.creator/commit/86a8104cb6049dc016a5c8da08a7d2abc011935b))
+* **vhdl:** Change value so that it fits into the value range of a fixed point value ([`b4e973e`](https://github.com/es-ude/elastic-ai.creator/commit/b4e973ebb8a087351e07966821229f69dc345d79))
+
 ## v0.8.0 (2022-06-08)
 ### Feature
 * **gh-workflow:** Increase python version ([`02403e6`](https://github.com/es-ude/elastic-ai.creator/commit/02403e6cb7d8c9acc4357d9649fd2ae0834030a0))
