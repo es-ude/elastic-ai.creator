@@ -1,13 +1,13 @@
-import importlib.resources
 import unittest
 from itertools import filterfalse
 
+from elasticai.creator import resource_utils
 from elasticai.creator.vhdl.language import Code
 
 
 class VHDLFileTestCase(unittest.TestCase):
     def compareToFile(self, vhdl_file: str, generated_code: Code):
-        vhdl_code = importlib.resources.read_text(
+        vhdl_code = resource_utils.read_text(
             "elasticai.creator.integrationTests.vhdl", vhdl_file
         )
 

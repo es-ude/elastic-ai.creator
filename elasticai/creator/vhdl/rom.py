@@ -1,28 +1,37 @@
 import math
-from functools import partial
+from collections.abc import Sequence
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.number_representations import hex_representation
+from elasticai.creator.vhdl.language import hex_representation
+from elasticai.creator.vhdl.number_representations import (
+    FixedPoint,
+    infer_total_and_frac_bits,
+)
 
 
-def pad_with_zeros(numbers: list[int], target_length: int) -> list[int]:
-    return numbers + [0] * (target_length - len(numbers))
+def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedPoint]:
+    zero = FixedPoint(0, *infer_total_and_frac_bits(numbers))
+    return numbers + [zero] * (target_length - len(numbers))
 
 
 class Rom:
     def __init__(
-        self, rom_name: str, data_width: int, values: list[int], resource_option: str
+        self,
+        rom_name: str,
+        values: Sequence[FixedPoint],
+        resource_option: str,
     ):
         self.rom_name = rom_name
-        self.data_width = data_width
+        self.data_width, _ = infer_total_and_frac_bits(values)
         self.addr_width = self._calculate_required_addr_width_to_access_items(values)
-        padded_values = pad_with_zeros(values, 2**self.addr_width)
-        to_hex = partial(hex_representation, num_bits=data_width)
-        self.hex_values = list(map(to_hex, padded_values))
+        padded_values = pad_with_zeros(list(values), 2**self.addr_width)
+        self.hex_values = list(
+            map(lambda fp: hex_representation(fp.to_hex()), padded_values)
+        )
         self.resource_option = resource_option
 
     @staticmethod
-    def _calculate_required_addr_width_to_access_items(items: list) -> int:
+    def _calculate_required_addr_width_to_access_items(items: Sequence) -> int:
         return max(1, math.ceil(math.log2(len(items))))
 
     def __call__(self):

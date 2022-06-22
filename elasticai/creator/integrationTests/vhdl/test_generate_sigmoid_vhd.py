@@ -1,6 +1,7 @@
 import numpy as np
 
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.precomputed_scalar_function import Sigmoid
 
 
@@ -36,7 +37,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
                 elsif int_x<-1240 then
                     y <= "0000000000000001"; -- 1
                 elsif int_x<-1201 then
-                    y <= "0000000000000001"; -- 1
+                    y <= "0000000000000010"; -- 2
                 elsif int_x<-1161 then
                     y <= "0000000000000010"; -- 2
                 elsif int_x<-1122 then
@@ -162,7 +163,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
                 elsif int_x<1240 then
                     y <= "0000000011111101"; -- 253
                 elsif int_x<1280 then
-                    y <= "0000000011111110"; -- 254
+                    y <= "0000000011111101"; -- 253
                 else
                     y <= "0000000100000000"; -- 256
                 end if;
@@ -170,12 +171,11 @@ class SigmoidTest(GeneratedVHDLCodeTest):
             end process sigmoid_process;
         end architecture rtl;
         """
-        sigmoid = Sigmoid(
-            data_width=16,
-            frac_width=8,
-            x=np.linspace(-5, 5, 66),
-            component_name="sigmoid",
+        # noinspection PyTypeChecker
+        data = float_values_to_fixed_point(
+            np.linspace(-5, 5, 66).tolist(), total_bits=16, frac_bits=8
         )
+        sigmoid = Sigmoid(x=data, component_name="sigmoid")
         sigmoid_code = sigmoid()
         sigmoid_code_str = ""
         for line in sigmoid_code:

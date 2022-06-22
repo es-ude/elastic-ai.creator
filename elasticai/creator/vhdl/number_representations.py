@@ -1,5 +1,7 @@
 import math
-from typing import Any, Iterable, Iterator, Union
+from collections.abc import Sequence
+from itertools import chain
+from typing import Any, Iterable, Iterator
 
 
 class FixedPoint:
@@ -48,7 +50,7 @@ class FixedPoint:
     def __add__(self, other: "FixedPoint") -> "FixedPoint":
         FixedPoint._assert_is_compatible(self, other)
         return self._identical_fixed_point_from_int(
-            FixedPoint.discard_leading_bits(
+            FixedPoint._discard_leading_bits(
                 int(self) + int(other), num_bits=self._total_bits
             )
         )
@@ -123,7 +125,7 @@ class FixedPoint:
         return value ^ int("1" * num_bits, 2)
 
     @staticmethod
-    def discard_leading_bits(value: int, num_bits: int) -> int:
+    def _discard_leading_bits(value: int, num_bits: int) -> int:
         return value & int("1" * num_bits, 2)
 
     @staticmethod
@@ -169,69 +171,38 @@ class FixedPoint:
     def bin_iter(self) -> Iterator[int]:
         return ((int(self) >> i) & 1 for i in range(self._total_bits))
 
+    def to_signed_int(self) -> int:
+        return int(abs(self)) * (-1 if self < 0 else 1)
+
     def to_bin(self) -> str:
-        return f'"{int(self):0{self._total_bits}b}"'
+        return f"{int(self):0{self._total_bits}b}"
 
     def to_hex(self) -> str:
-        return f'x"{int(self):0{math.ceil(self._total_bits / 4)}x}"'
+        return f"{int(self):0{math.ceil(self._total_bits / 4)}x}"
 
 
-class FloatToSignedFixedPointConverter:
-    """
-    Create a fixed point representation as an unsigned int data type using two complements.
-
-    We might want to have this create its own type `FixedPointNumber` in
-    the future. That way we could make sure that the conversion is idempotent
-    for numbers that are fixed point already.
-    """
-
-    def __init__(self, bits_used_for_fraction: int, strict=True):
-        self.bits_used_for_fraction = bits_used_for_fraction
-        self._strict = strict
-
-    @property
-    def one(self) -> int:
-        return 1 << self.bits_used_for_fraction
-
-    def __call__(self, x: float) -> int:
-        x_tmp = float(x)
-        x_tmp = x_tmp * self.one
-        if self._strict and not x_tmp.is_integer():
+def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
+    if sum(len(value_list) == 0 for value_list in values) > 0:
+        raise ValueError("Cannot infer total bits and frac bits from an empty list.")
+    total_bits, frac_bits = values[0][0].total_bits, values[0][0].frac_bits
+    for value in chain(*values):
+        if value.total_bits != total_bits or value.frac_bits != frac_bits:
             raise ValueError(
-                f"{x} not convertible to fixed point number using {self.bits_used_for_fraction} bits for fractional part"
+                "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
             )
-        return int(x_tmp)
-
-    def to_string(self, x: float) -> str:
-        return str(self.__call__(x))
+    return total_bits, frac_bits
 
 
-class FloatToBinaryFixedPointStringConverter:
-    def __init__(
-        self,
-        total_bit_width: int,
-        as_signed_fixed_point: FloatToSignedFixedPointConverter,
-    ):
-        self.total_bit_width = total_bit_width
-        self.as_signed_fixed_point = as_signed_fixed_point
-
-    def __call__(self, x: Union[float, int]) -> str:
-        signed_fixed_point = self.as_signed_fixed_point(x)
-        return two_complements_representation(signed_fixed_point, self.total_bit_width)
+def float_values_to_fixed_point(
+    values: list[float], total_bits: int, frac_bits: int
+) -> list[FixedPoint]:
+    return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
 
-class FloatToHexFixedPointStringConverter:
-    def __init__(
-        self,
-        total_bit_width: int,
-        as_signed_fixed_point: FloatToSignedFixedPointConverter,
-    ):
-        self.total_bit_width = total_bit_width
-        self.as_signed_fixed_point = as_signed_fixed_point
-
-    def __call__(self, x: Union[float, int]) -> str:
-        signed_fixed_point = self.as_signed_fixed_point(x)
-        return hex_representation(signed_fixed_point, self.total_bit_width)
+def int_values_to_fixed_point(
+    values: list[int], total_bits: int, frac_bits: int
+) -> list[FixedPoint]:
+    return list(map(lambda x: FixedPoint.from_int(x, total_bits, frac_bits), values))
 
 
 def _int_to_bin_str(number: int, bits: int) -> str:
@@ -240,34 +211,6 @@ def _int_to_bin_str(number: int, bits: int) -> str:
     if bits <= 0 or (number > 0 and math.log2(number) > bits):
         raise ValueError(f"The number {number} cannot be represented with {bits} bits.")
     return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
-
-
-def _int_to_hex_str(number: int, bits: int) -> str:
-    if number < 0:
-        raise ValueError("Negative values are not supported.")
-    if bits <= 0 or (number > 0 and math.log2(number) > bits):
-        raise ValueError(f"The number {number} cannot be represented with {bits} bits.")
-    return 'x"{{:0{number_of_bits}x}}"'.format(
-        number_of_bits=math.ceil(bits / 4)
-    ).format(number)
-
-
-def _get_unsigned_int_version(x, number_of_bits):
-    if x < 0:
-        unsigned_int_version = (1 << number_of_bits) + x
-    else:
-        unsigned_int_version = x
-    return unsigned_int_version
-
-
-def hex_representation(x: int, num_bits: int) -> str:
-    unsigned_int_version = _get_unsigned_int_version(x, num_bits)
-    return _int_to_hex_str(unsigned_int_version, num_bits)
-
-
-def two_complements_representation(x, num_bits):
-    unsigned_int_version = _get_unsigned_int_version(x, num_bits)
-    return _int_to_bin_str(unsigned_int_version, num_bits)
 
 
 class ToLogicEncoder:

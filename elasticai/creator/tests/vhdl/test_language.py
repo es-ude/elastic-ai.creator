@@ -1,3 +1,4 @@
+from functools import partial
 from unittest import TestCase
 
 from elasticai.creator.vhdl.language import (
@@ -14,6 +15,7 @@ from elasticai.creator.vhdl.language import (
     Process,
     UseClause,
 )
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.precomputed_scalar_function import (
     precomputed_scalar_function_process,
 )
@@ -104,13 +106,16 @@ class LibraryTest(TestCase):
 
 
 class ProcessTest(TestCase):
+    def setUp(self) -> None:
+        self.fp_list = partial(float_values_to_fixed_point, total_bits=16, frac_bits=8)
+
     # Note: the precomputed scalar function process is already tested, no need for trying more in- and outputs
     def test_process_empty(self):
         process = Process(
             identifier="some_name",
             input_name="some_input",
             lookup_table_generator_function=precomputed_scalar_function_process(
-                x_list=[], y_list=[0]
+                x=[], y=self.fp_list([0])
             ),
         )
         expected = [
@@ -127,7 +132,7 @@ class ProcessTest(TestCase):
             identifier="some_name",
             input_name="some_input",
             lookup_table_generator_function=precomputed_scalar_function_process(
-                x_list=[], y_list=[0]
+                x=[], y=self.fp_list([0])
             ),
         )
         process.process_declaration_list = ["variable some_variable_name: integer := 0"]
@@ -219,7 +224,10 @@ class ArchitectureTest(TestCase):
 
     def test_Architecture_with_architecture_part_as_process(self):
         def function():
-            yield "some code"
+            def generator():
+                yield "some code"
+
+            return generator
 
         dummy_process = Process(
             identifier="some name",

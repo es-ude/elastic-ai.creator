@@ -1,9 +1,8 @@
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import PurePath
-from typing import Union
 
-PathType = Union[str, PurePath]
+PathType = str | PurePath
 
 
 def _get_file(package: resources.Package, file_name: str) -> Traversable:

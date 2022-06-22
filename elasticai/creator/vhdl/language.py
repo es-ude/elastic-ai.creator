@@ -9,7 +9,6 @@ The core of this module is the `CodeGenerator`. Code generators are callables th
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
-from collections.abc import Sequence
 from enum import Enum
 from itertools import chain, filterfalse
 from typing import Callable, Iterable, Literal, Optional, Sequence, Union
@@ -226,7 +225,7 @@ class Process:
         if len(self.process_statements_list) > 0:
             yield from _append_semicolons_to_lines(self.process_statements_list)
         if self.lookup_table_generator_function:
-            yield from self.lookup_table_generator_function
+            yield from self.lookup_table_generator_function()
 
     def __call__(self) -> Code:
         if self.input:
@@ -524,3 +523,11 @@ class Procedure:
                 _add_semicolons(self._statement_list(), semicolon_last=True)
             )
         yield f"{Keywords.END.value} {self.identifier};"
+
+
+def hex_representation(hex_value: str) -> str:
+    return f'x"{hex_value}"'
+
+
+def bin_representation(bin_value: str) -> str:
+    return f'"{bin_value}"'

@@ -1,11 +1,7 @@
 import os
 from argparse import ArgumentParser
 
-import numpy as np
-
-from elasticai.creator.vhdl.number_representations import (
-    FloatToSignedFixedPointConverter,
-)
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.rom import Rom
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
@@ -26,18 +22,14 @@ def main():
     data_width = 12
     frac_width = 4
     # biases for the input gate
-    Bi = np.array([1.1])
-
-    floats_to_signed_fixed_point_converter = FloatToSignedFixedPointConverter(
-        bits_used_for_fraction=frac_width, strict=False
-    )
-    array_value = [floats_to_signed_fixed_point_converter(x) for x in Bi]
+    bi = [1.1]
 
     with open(file_path, "w") as writer:
         rom = Rom(
             rom_name=rom_name,
-            data_width=data_width,
-            values=array_value,
+            values=float_values_to_fixed_point(
+                bi, total_bits=data_width, frac_bits=frac_width
+            ),
             resource_option="auto",
         )
         for line in rom():

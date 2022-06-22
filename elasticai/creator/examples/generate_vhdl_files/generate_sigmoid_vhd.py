@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.precomputed_scalar_function import Sigmoid
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
@@ -20,14 +21,18 @@ def main():
     component_name = "sigmoid"
     file_path = os.path.join(args.path, f"{component_name}.vhd")
 
+    # noinspection PyTypeChecker
+    data = float_values_to_fixed_point(
+        np.linspace(-5, 5, 66).tolist(), total_bits=16, frac_bits=8
+    )
+
+    sigmoid = Sigmoid(
+        component_name=component_name,
+        x=data,
+    )
+    sigmoid_code = sigmoid()
+
     with open(file_path, "w") as writer:
-        sigmoid = Sigmoid(
-            component_name=component_name,
-            data_width=16,
-            frac_width=8,
-            x=np.linspace(-5, 5, 66),
-        )
-        sigmoid_code = sigmoid()
         for line in sigmoid_code:
             writer.write(line + "\n")
 

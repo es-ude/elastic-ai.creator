@@ -3,10 +3,9 @@ from unittest import TestCase
 
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
-    FloatToSignedFixedPointConverter,
     ToLogicEncoder,
-    hex_representation,
-    two_complements_representation,
+    float_values_to_fixed_point,
+    infer_total_and_frac_bits,
 )
 
 
@@ -41,63 +40,63 @@ class FixedPointTest(TestCase):
 
     def test_to_hex_zero_with_one_bits(self):
         fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
-        self.assertEqual('x"0"', fp_value.to_hex())
+        self.assertEqual("0", fp_value.to_hex())
 
     def test_to_hex_zero_with_six_bits(self):
         fp_value = FixedPoint(0, total_bits=6, frac_bits=0)
-        self.assertEqual('x"00"', fp_value.to_hex())
+        self.assertEqual("00", fp_value.to_hex())
 
     def test_to_hex_zero_with_sixteen_bits(self):
         fp_value = FixedPoint(0, total_bits=16, frac_bits=0)
-        self.assertEqual('x"0000"', fp_value.to_hex())
+        self.assertEqual("0000", fp_value.to_hex())
 
     def test_to_hex_minus_one_with_sixteen_bits(self):
         fp_value = FixedPoint(-1, total_bits=16, frac_bits=0)
-        self.assertEqual('x"ffff"', fp_value.to_hex())
+        self.assertEqual("ffff", fp_value.to_hex())
 
     def test_to_hex_minus_three_with_three_bits(self):
         fp_value = FixedPoint(-3, total_bits=3, frac_bits=0)
-        self.assertEqual('x"5"', fp_value.to_hex())
+        self.assertEqual("5", fp_value.to_hex())
 
     def test_to_hex_minus_254_with_sixteen_bits(self):
         fp_value = FixedPoint(-254, total_bits=16, frac_bits=0)
-        self.assertEqual('x"ff02"', fp_value.to_hex())
+        self.assertEqual("ff02", fp_value.to_hex())
 
     def test_to_hex_minus_19_5_with_16_bits(self):
         fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
-        self.assertEqual('x"ec80"', fp_value.to_hex())
+        self.assertEqual("ec80", fp_value.to_hex())
 
     def test_to_bin_zero_with_one_bits(self):
         fp_value = FixedPoint(0, total_bits=1, frac_bits=0)
-        self.assertEqual('"0"', fp_value.to_bin())
+        self.assertEqual("0", fp_value.to_bin())
 
     def test_to_bin_zero_with_three_bits(self):
         fp_value = FixedPoint(0, total_bits=3, frac_bits=0)
-        self.assertEqual('"000"', fp_value.to_bin())
+        self.assertEqual("000", fp_value.to_bin())
 
     def test_to_bin_five_with_four_bits(self):
         fp_value = FixedPoint(5, total_bits=4, frac_bits=0)
-        self.assertEqual('"0101"', fp_value.to_bin())
+        self.assertEqual("0101", fp_value.to_bin())
 
     def test_to_bin_minus_one_with_two_bits(self):
         fp_value = FixedPoint(-1, total_bits=2, frac_bits=0)
-        self.assertEqual('"11"', fp_value.to_bin())
+        self.assertEqual("11", fp_value.to_bin())
 
     def test_to_bin_minus_two_with_two_bits(self):
         fp_value = FixedPoint(-2, total_bits=2, frac_bits=0)
-        self.assertEqual('"10"', fp_value.to_bin())
+        self.assertEqual("10", fp_value.to_bin())
 
     def test_to_bin_minus_256_with_sixteen_bits(self):
         fp_value = FixedPoint(-256, total_bits=16, frac_bits=0)
-        self.assertEqual('"1111111100000000"', fp_value.to_bin())
+        self.assertEqual("1111111100000000", fp_value.to_bin())
 
     def test_to_bin_minus_254_with_sixteen_bits(self):
         fp_value = FixedPoint(-254, total_bits=16, frac_bits=0)
-        self.assertEqual('"1111111100000010"', fp_value.to_bin())
+        self.assertEqual("1111111100000010", fp_value.to_bin())
 
     def test_to_bin_minus_19_5_with_16_bits(self):
         fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
-        self.assertEqual('"1110110010000000"', fp_value.to_bin())
+        self.assertEqual("1110110010000000", fp_value.to_bin())
 
     def test_from_int(self):
         fp_value = FixedPoint.from_int(52388, total_bits=16, frac_bits=12)
@@ -227,160 +226,121 @@ class FixedPointTest(TestCase):
         result = FixedPoint(3, total_bits=4, frac_bits=0)
         self.assertEqual(result, fp1 ^ fp2)
 
+    def test_to_signed_int_positive_value(self):
+        fp = FixedPoint(5, total_bits=8, frac_bits=4)
+        self.assertEqual(80, fp.to_signed_int())
 
-class FixedPointConverterTest(TestCase):
-    def test_get_zero(self):
-        f = FloatToSignedFixedPointConverter(bits_used_for_fraction=0)
-        self.assertEqual(0, f(0))
+    def test_to_signed_int_negative_value(self):
+        fp = FixedPoint(-5, total_bits=8, frac_bits=4)
+        self.assertEqual(-80, fp.to_signed_int())
 
-    def test_get_one_with_2bits_for_fraction(self):
-        f = FloatToSignedFixedPointConverter(bits_used_for_fraction=2)
-        self.assertEqual(1 << 2, f(1))
 
-    def test_get_one_with_3bits_for_fraction(self):
-        f = FloatToSignedFixedPointConverter(bits_used_for_fraction=3)
-        self.assertEqual(1 << 3, f(1))
+class InferTotalAndFracBits(TestCase):
+    def test_infer_empty_list(self):
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits([])
 
-    def test_raise_error_if_not_convertible(self):
-        f = FloatToSignedFixedPointConverter(bits_used_for_fraction=0)
-        try:
-            f(0.5)
-            self.fail()
-        except ValueError as e:
-            self.assertEqual(
-                "0.5 not convertible to fixed point number using 0 bits for fractional part",
-                str(e),
+    def test_infer_mixed_total_bits(self):
+        with self.assertRaises(ValueError):
+            _, _ = infer_total_and_frac_bits(
+                [
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=12, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                ]
             )
 
-
-class BinaryTwoComplementRepresentation(TestCase):
-    def test_zero_with_zero_bits(self):
+    def test_infer_mixed_frac_bits(self):
         with self.assertRaises(ValueError):
-            _ = two_complements_representation(0, num_bits=0)
+            _, _ = infer_total_and_frac_bits(
+                [
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=5),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                ]
+            )
 
-    def test_five_with_minus_one_bits(self):
+    def test_infer_mixed_total_and_frac_bits(self):
         with self.assertRaises(ValueError):
-            _ = two_complements_representation(5, num_bits=-1)
+            _, _ = infer_total_and_frac_bits(
+                [
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=4),
+                    FixedPoint(0, total_bits=8, frac_bits=5),
+                    FixedPoint(0, total_bits=12, frac_bits=4),
+                ]
+            )
 
-    def test_zero_with_one_bits(self):
-        actual = two_complements_representation(0, num_bits=1)
-        expected = "0"
-        self.assertEqual(expected, actual)
+    def test_infer_valid_list(self):
+        total_bits, frac_bits = infer_total_and_frac_bits(
+            [
+                FixedPoint(0, total_bits=8, frac_bits=4),
+                FixedPoint(0, total_bits=8, frac_bits=4),
+            ]
+        )
+        self.assertEqual(8, total_bits)
+        self.assertEqual(4, frac_bits)
 
-    def test_zero_with_three_bits(self):
-        actual = two_complements_representation(0, num_bits=3)
-        expected = "000"
-        self.assertEqual(expected, actual)
+    def test_infer_multiple_valid_lists(self):
+        values = [
+            FixedPoint(0, total_bits=8, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
+        total_bits, frac_bits = infer_total_and_frac_bits(values, values, values)
+        self.assertEqual(8, total_bits)
+        self.assertEqual(4, frac_bits)
 
-    def test_five_with_four_bits(self):
-        actual = two_complements_representation(5, num_bits=4)
-        expected = "0101"
-        self.assertEqual(expected, actual)
-
-    def test_one(self):
-        actual = two_complements_representation(1, 1)
-        expected = "1"
-        self.assertEqual(expected, actual)
-
-    def test_minus_one(self):
-        actual = two_complements_representation(-1, 2)
-        expected = "11"
-        self.assertEqual(expected, actual)
-
-    def test_minus_two(self):
-        actual = two_complements_representation(-2, 2)
-        expected = "10"
-        self.assertEqual(expected, actual)
-
-    def test_two(self):
-        actual = two_complements_representation(2, 3)
-        expected = "010"
-        self.assertEqual(expected, actual)
-
-    def test_minus_four(self):
-        actual = two_complements_representation(-4, 3)
-        expected = "100"
-        self.assertEqual(expected, actual)
-
-    def test_minus_three_three_bit(self):
-        actual = two_complements_representation(-3, 3)
-        expected = "101"
-        self.assertEqual(expected, actual)
-
-    def test_minus_256_16_bit(self):
-        actual = two_complements_representation(-256, 16)
-        expected = "1111111100000000"
-        self.assertEqual(expected, actual)
-
-    def test_minus_254_16_bit(self):
-        actual = two_complements_representation(-254, 16)
-        expected = "1111111100000010"
-        self.assertEqual(expected, actual)
-
-
-class HexRepresentation(TestCase):
-    def test_zero_with_zero_bits(self):
+    def test_infer_multiple_invalid_lists(self):
+        values1 = [
+            FixedPoint(0, total_bits=8, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
+        values2 = [
+            FixedPoint(0, total_bits=12, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
         with self.assertRaises(ValueError):
-            _ = hex_representation(0, num_bits=0)
+            _, _ = infer_total_and_frac_bits(values1, values2)
 
-    def test_five_with_minus_one_bits(self):
+    def test_infer_multiple_lists_with_empty_list(self):
+        values = [
+            FixedPoint(0, total_bits=8, frac_bits=4),
+            FixedPoint(0, total_bits=8, frac_bits=4),
+        ]
         with self.assertRaises(ValueError):
-            _ = hex_representation(5, num_bits=-1)
+            _, _ = infer_total_and_frac_bits(values, [])
 
-    def test_zero_with_one_bits(self):
-        actual = hex_representation(0, num_bits=1)
-        expected = 'x"0"'
-        self.assertEqual(expected, actual)
 
-    def test_zero_with_seven_bits(self):
-        actual = hex_representation(0, num_bits=7)
-        expected = 'x"00"'
-        self.assertEqual(expected, actual)
+class FloatValuesToFixedPointTest(TestCase):
+    def test_empty_list(self):
+        actual = float_values_to_fixed_point([], total_bits=8, frac_bits=4)
+        self.assertListEqual([], actual)
 
-    def test_one(self):
-        actual = hex_representation(1, 16)
-        expected = 'x"0001"'
-        self.assertEqual(expected, actual)
+    def test_full_list(self):
+        actual = float_values_to_fixed_point(
+            values=[1, 2, 3],
+            total_bits=8,
+            frac_bits=4,
+        )
+        target = [FixedPoint(value, total_bits=8, frac_bits=4) for value in range(1, 4)]
+        self.assertListEqual(target, actual)
 
-    def test_minus_one(self):
-        actual = hex_representation(-1, 16)
-        expected = 'x"ffff"'
-        self.assertEqual(expected, actual)
 
-    def test_two(self):
-        actual = hex_representation(2, 16)
-        expected = 'x"0002"'
-        self.assertEqual(expected, actual)
+class IntValuesToFixedPointTest(TestCase):
+    def test_empty_list(self):
+        actual = float_values_to_fixed_point([], total_bits=8, frac_bits=0)
+        self.assertListEqual([], actual)
 
-    def test_minus_two(self):
-        actual = hex_representation(-2, 16)
-        expected = 'x"fffe"'
-        self.assertEqual(expected, actual)
-
-    def test_minus_four_four_bit(self):
-        actual = hex_representation(-4, 4)
-        expected = 'x"c"'
-        self.assertEqual(expected, actual)
-
-    def test_minus_three_three_bit(self):
-        actual = hex_representation(-3, 3)
-        expected = 'x"5"'
-        self.assertEqual(expected, actual)
-
-    def test_minus_256_16_bit(self):
-        actual = hex_representation(-256, 16)
-        expected = 'x"ff00"'
-        self.assertEqual(expected, actual)
-
-    def test_minus_254_16_bit(self):
-        actual = hex_representation(-254, 16)
-        expected = 'x"ff02"'
-        self.assertEqual(expected, actual)
-
-    def test_255_with_12_bits(self):
-        actual = hex_representation(255, num_bits=12)
-        expected = 'x"0ff"'
-        self.assertEqual(expected, actual)
+    def test_full_list(self):
+        actual = float_values_to_fixed_point(
+            values=[1, 2, 3],
+            total_bits=8,
+            frac_bits=0,
+        )
+        target = [FixedPoint(value, total_bits=8, frac_bits=4) for value in range(1, 4)]
+        self.assertListEqual(target, actual)
 
 
 class NumberEncoderTest(TestCase):

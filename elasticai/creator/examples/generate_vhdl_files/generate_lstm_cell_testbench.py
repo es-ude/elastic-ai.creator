@@ -1,7 +1,12 @@
 import os
 from argparse import ArgumentParser
+from functools import partial
 
 from elasticai.creator.vhdl.lstm_testbench_generator import LSTMCellTestBench
+from elasticai.creator.vhdl.number_representations import (
+    float_values_to_fixed_point,
+    int_values_to_fixed_point,
+)
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 
@@ -18,13 +23,15 @@ def main() -> None:
     component_name = "lstm_cell_tb"
     file_path = os.path.join(args.path, f"{component_name}.vhd")
 
-    with open(file_path, "w") as writer:
-        lstm_cell = LSTMCellTestBench(
-            data_width=16,
-            frac_width=8,
-            input_size=5,
-            hidden_size=20,
-            test_x_h_data=[
+    fp_args = dict(total_bits=16, frac_bits=8)
+    ints_to_fp = partial(int_values_to_fixed_point, **fp_args)
+    floats_to_fp = partial(float_values_to_fixed_point, **fp_args)
+
+    lstm_cell = LSTMCellTestBench(
+        input_size=5,
+        hidden_size=20,
+        test_x_h_data=ints_to_fp(
+            [
                 0x018A,
                 0xFFB5,
                 0xFDD3,
@@ -57,8 +64,10 @@ def main() -> None:
                 0x0000,
                 0x0000,
                 0x0000,
-            ],
-            test_c_data=[
+            ]
+        ),
+        test_c_data=ints_to_fp(
+            [
                 0x0034,
                 0xFF8D,
                 0xFF6E,
@@ -91,8 +100,10 @@ def main() -> None:
                 0x0000,
                 0x0000,
                 0x0000,
-            ],
-            h_out=[
+            ]
+        ),
+        h_out=floats_to_fp(
+            [
                 34,
                 -80,
                 -32,
@@ -111,12 +122,15 @@ def main() -> None:
                 27,
                 13,
                 112,
-                -156,
+                -126,
                 3,
-            ],
-            component_name=component_name,
-        )
-        lstm_cell_code = lstm_cell()
+            ]
+        ),
+        component_name=component_name,
+    )
+    lstm_cell_code = lstm_cell()
+
+    with open(file_path, "w") as writer:
         for line in lstm_cell_code:
             writer.write(line + "\n")
 

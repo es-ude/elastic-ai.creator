@@ -1,6 +1,7 @@
 import numpy as np
 
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.precomputed_scalar_function import Tanh
 
 
@@ -233,7 +234,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<-287 then
                     y <= "1111111100101110"; -- -210
                 elsif int_x<-277 then
-                    y <= "1111111100110001"; -- -207
+                    y <= "1111111100110010"; -- -206
                 elsif int_x<-267 then
                     y <= "1111111100110101"; -- -203
                 elsif int_x<-257 then
@@ -243,7 +244,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<-238 then
                     y <= "1111111101000001"; -- -191
                 elsif int_x<-228 then
-                    y <= "1111111101000101"; -- -187
+                    y <= "1111111101000110"; -- -186
                 elsif int_x<-218 then
                     y <= "1111111101001010"; -- -182
                 elsif int_x<-208 then
@@ -255,17 +256,17 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<-178 then
                     y <= "1111111101100000"; -- -160
                 elsif int_x<-168 then
-                    y <= "1111111101100110"; -- -154
+                    y <= "1111111101100111"; -- -153
                 elsif int_x<-158 then
                     y <= "1111111101101101"; -- -147
                 elsif int_x<-148 then
-                    y <= "1111111101110011"; -- -141
+                    y <= "1111111101110100"; -- -140
                 elsif int_x<-138 then
-                    y <= "1111111101111010"; -- -134
+                    y <= "1111111101111011"; -- -133
                 elsif int_x<-128 then
                     y <= "1111111110000010"; -- -126
                 elsif int_x<-119 then
-                    y <= "1111111110001001"; -- -119
+                    y <= "1111111110001010"; -- -118
                 elsif int_x<-109 then
                     y <= "1111111110010001"; -- -111
                 elsif int_x<-99 then
@@ -279,31 +280,31 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<-59 then
                     y <= "1111111110111101"; -- -67
                 elsif int_x<-49 then
-                    y <= "1111111111000110"; -- -58
+                    y <= "1111111111000111"; -- -57
                 elsif int_x<-39 then
-                    y <= "1111111111001111"; -- -49
+                    y <= "1111111111010000"; -- -48
                 elsif int_x<-29 then
-                    y <= "1111111111011001"; -- -39
+                    y <= "1111111111011010"; -- -38
                 elsif int_x<-19 then
-                    y <= "1111111111100011"; -- -29
+                    y <= "1111111111100100"; -- -28
                 elsif int_x<-9 then
-                    y <= "1111111111101101"; -- -19
+                    y <= "1111111111101110"; -- -18
                 elsif int_x<0 then
-                    y <= "1111111111110111"; -- -9
+                    y <= "1111111111111000"; -- -8
                 elsif int_x<9 then
                     y <= "0000000000000000"; -- 0
                 elsif int_x<19 then
-                    y <= "0000000000001001"; -- 9
+                    y <= "0000000000001000"; -- 8
                 elsif int_x<29 then
-                    y <= "0000000000010011"; -- 19
+                    y <= "0000000000010010"; -- 18
                 elsif int_x<39 then
-                    y <= "0000000000011101"; -- 29
+                    y <= "0000000000011100"; -- 28
                 elsif int_x<49 then
-                    y <= "0000000000100111"; -- 39
+                    y <= "0000000000100110"; -- 38
                 elsif int_x<59 then
-                    y <= "0000000000110001"; -- 49
+                    y <= "0000000000110000"; -- 48
                 elsif int_x<69 then
-                    y <= "0000000000111010"; -- 58
+                    y <= "0000000000111001"; -- 57
                 elsif int_x<79 then
                     y <= "0000000001000011"; -- 67
                 elsif int_x<89 then
@@ -317,17 +318,17 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<128 then
                     y <= "0000000001101111"; -- 111
                 elsif int_x<138 then
-                    y <= "0000000001110111"; -- 119
+                    y <= "0000000001110110"; -- 118
                 elsif int_x<148 then
                     y <= "0000000001111110"; -- 126
                 elsif int_x<158 then
-                    y <= "0000000010000110"; -- 134
+                    y <= "0000000010000101"; -- 133
                 elsif int_x<168 then
-                    y <= "0000000010001101"; -- 141
+                    y <= "0000000010001100"; -- 140
                 elsif int_x<178 then
                     y <= "0000000010010011"; -- 147
                 elsif int_x<188 then
-                    y <= "0000000010011010"; -- 154
+                    y <= "0000000010011001"; -- 153
                 elsif int_x<198 then
                     y <= "0000000010100000"; -- 160
                 elsif int_x<208 then
@@ -339,7 +340,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<238 then
                     y <= "0000000010110110"; -- 182
                 elsif int_x<248 then
-                    y <= "0000000010111011"; -- 187
+                    y <= "0000000010111010"; -- 186
                 elsif int_x<257 then
                     y <= "0000000010111111"; -- 191
                 elsif int_x<267 then
@@ -349,7 +350,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
                 elsif int_x<287 then
                     y <= "0000000011001011"; -- 203
                 elsif int_x<297 then
-                    y <= "0000000011001111"; -- 207
+                    y <= "0000000011001110"; -- 206
                 elsif int_x<307 then
                     y <= "0000000011010010"; -- 210
                 elsif int_x<317 then
@@ -556,8 +557,11 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
 
         end architecture rtl;
         """
-
-        tanh = Tanh(data_width=16, frac_width=8, x=np.linspace(-5, 5, 259))
+        # noinspection PyTypeChecker
+        data = float_values_to_fixed_point(
+            np.linspace(-5, 5, 259).tolist(), total_bits=16, frac_bits=8
+        )
+        tanh = Tanh(x=data)
         tanh_code = tanh()
         tanh_code_str = ""
         for line in tanh_code:
