@@ -65,6 +65,10 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.beautify.outputs.new_sha }}
+      - name: Set up Python 3.10.0
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.10.0
       - name: install relekang/python-semantic-release
         run: python3 -m pip install python-semantic-release
       - name: Semantic Release
