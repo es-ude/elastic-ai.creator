@@ -5,11 +5,34 @@ from typing import Any, Iterable, Iterator
 
 
 class FixedPoint:
+    """
+    A data type that converts a given number to the corresponding fixed-point representation.
+    A fixed-point value is an unsigned integer in two's complement.
+
+    Parameters:
+        value (float | int): Value to be represented as fixed-point value.
+        total_bits (int): Total number of bits of the fixed-point representation (including number of fractional bits).
+        frac_bits (int): Number of bits to represent the fractional part of the number.
+
+    Examples:
+        >>> fixed_point_value = FixedPoint(-2.9, total_bits=8, frac_bits=4)
+        >>> int(fixed_point_value)
+        210
+        >>> float(fixed_point_value)
+        -2.875
+        >>> fixed_point_value.to_signed_int()
+        -46
+        >>> fixed_point_value.to_bin()
+        '11010010'
+        >>> fixed_point_value.to_hex()
+        'd2'
+    """
+
     __slots__ = ["_value", "_frac_bits", "_total_bits"]
 
     def __init__(
         self,
-        value: float,
+        value: float | int,
         total_bits: int,
         frac_bits: int,
     ) -> None:
