@@ -16,7 +16,7 @@ def format_vhdl(file_path):
     # get the path of config
     config_path = get_full_path(package=vhdl_formatter, file_name="config.json")
     # check if the vhdl file exist !
-    subprocess.Popen(
+    subprocess.run(
         f"vsg -f {file_path} --style indent_only --configuration {config_path} --fix",
         shell=True,
     )
