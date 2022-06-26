@@ -19,6 +19,7 @@ MonkeyType = "^21.5.0"
 bitarray = "^2.3.5"
 vsg = "^3.9.0"
 numpy = "^1.23.0"
+matplotlib = "^3.5.2"
 
 [tool.poetry.extras]
 onnx = ["onnx", "numpy", "protobuf"]
