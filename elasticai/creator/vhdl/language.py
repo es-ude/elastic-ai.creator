@@ -16,7 +16,7 @@ from typing import Callable, Iterable, Literal, Optional, Sequence, Union
 Identifier = str
 Code = Iterable[str]
 CodeGenerator = Callable[[], Code]
-CodeGeneratorCompatible = Union[Code, CodeGenerator, str]
+CodeGeneratorCompatible = Code | CodeGenerator | str
 
 
 class Keywords(Enum):
@@ -274,9 +274,9 @@ class InterfaceConstrained:
         self,
         identifier: str,
         identifier_type: DataType,
-        range: Optional[Union[str, int]],
+        range: Optional[str | int],
         mode: Optional[Mode],
-        value: Optional[Union[str, int]],
+        value: Optional[str | int],
         declaration_type: Optional[str],
     ):
         self._identifier = identifier
@@ -298,9 +298,9 @@ class InterfaceSignal(InterfaceConstrained):
         self,
         identifier: str,
         identifier_type: DataType,
-        range: Optional[Union[str, int]] = None,
+        range: Optional[str | int] = None,
         mode: Optional[Mode] = None,
-        value: Optional[Union[str, int]] = None,
+        value: Optional[str | int] = None,
     ):
         super().__init__(
             identifier, identifier_type, range, mode, value, declaration_type="signal"
@@ -312,9 +312,9 @@ class InterfaceVariable(InterfaceConstrained):
         self,
         identifier: str,
         identifier_type: DataType,
-        range: Optional[Union[str, int]] = None,
+        range: Optional[str | int] = None,
         mode: Optional[Mode] = None,
-        value: Optional[Union[str, int]] = None,
+        value: Optional[str | int] = None,
     ):
         super().__init__(
             identifier, identifier_type, range, mode, value, declaration_type=None
