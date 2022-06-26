@@ -56,13 +56,6 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
-### Install/Compile ONNX dependency
-```bash
-sudo apt install python3-dev libprotobuf-dev protobuf-compiler
-export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-poetry install --extras onnx
-```
-
 ### Commit Message Scopes
 
 - **qat**: quantization-aware-training
