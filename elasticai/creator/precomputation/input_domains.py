@@ -1,5 +1,5 @@
 import itertools
-from typing import Dict, Iterable, List, Union
+from typing import Iterable
 
 import numpy as np
 import torch
@@ -8,12 +8,12 @@ from elasticai.creator.mlframework import Module, Tensor
 
 
 def create_input_data(
-    input_dim: List[int], domain: List[Union[int, float]], dtype="float16"
+    input_dim: list[int], domain: list[int | float], dtype="float16"
 ) -> np.ndarray:
     """The function creates possible inputs for a submodel given input dimensions .
     Args:
-        input_dim (List[int]): The dimensions of the input, can be a tuple too.
-        domain (List[Union[int, float]]): The possible values of the input
+        input_dim (list[int]): The dimensions of the input, can be a tuple too.
+        domain (list[int | float]): The possible values of the input
 
     Returns:
         numpy.ndarray: An array of possible inputs
@@ -67,20 +67,20 @@ def construct_codomain_from_elements(
 
 
 def create_io_table(
-    inputs: np.ndarray, outputs: List[Tensor], channel_wise=True
-) -> Union[Dict, List[Dict]]:
+    inputs: np.ndarray, outputs: list[Tensor], channel_wise=True
+) -> dict | list[dict]:
     """The function creates io tables given an array of inputs and a model .
     Args:
         inputs (np.ndarray): The inputs
-        outputs (List [torch.Tensor]): The outputs
+        outputs (list[Tensor]): The outputs
         channel_wise (bool): default is False. If True, function returns a list with one table per channel in inputs.
 
     Returns:
-        Dict: The inputs mapped to outputs
+        dict: The inputs mapped to outputs
     """
     if channel_wise:
         num_channels = inputs.shape[-1]
-        io_table: Union[list[dict], dict] = [{} for _ in range(num_channels)]
+        io_table: list[dict] | dict = [{} for _ in range(num_channels)]
         for input, output in zip(inputs, outputs):
             for channel in range(num_channels):
                 io_table[channel][tuple(input[:, channel].flatten().tolist())] = tuple(
@@ -95,28 +95,27 @@ def create_io_table(
     return io_table
 
 
-def find_unique_elements(input: np.ndarray) -> np.ndarray:
+def find_unique_elements(input_values: np.ndarray) -> np.ndarray:
     """Filters an input into its unique elements.
     Args:
-        input (np.ndarray): The array to be filtered
+        input_values (np.ndarray): The array to be filtered
 
     Returns:
         numpy.ndarray: A set array
     """
-    output = np.unique(input, axis=0)
+    output = np.unique(input_values, axis=0)
     return output
 
 
 def depthwise_inputs(
     conv_layer: Module,
     kernel_size: tuple[int],
-    codomain: List[Union[int, float]],
+    codomain: list[int | float],
 ) -> np.ndarray:
     """Calculate the inputs for depthwise convolution .
     Args:
-        conv_layer: Layer, the convolutional layer
-        codomain: List[int], the codomain for the block
-        outputs: list the outputs from a previous layer
+        conv_layer (Module): Layer, the convolutional layer
+        codomain (list[int | float]): the codomain for the block
     Returns:
       np.ndarray: The inputs
     """

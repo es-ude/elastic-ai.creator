@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, List, Literal, Union
+from typing import Iterator
 
 import numpy as np
 from numpy.typing import NDArray
@@ -19,7 +19,7 @@ class IOTable:
         for i in range(len(self)):
             yield self[i]
 
-    def get_table_as_dict(self) -> Dict:
+    def get_table_as_dict(self) -> dict:
         """given a list or single input,output table pair will return a list of dictionaries for each io pair.
             Said tables will be flatenned.
         Args:
@@ -29,11 +29,9 @@ class IOTable:
                 facilitate iterating.
         """
 
-        def to_tuple(
-            x: NDArray[Union[np.float_, np.int_]]
-        ) -> tuple[Union[float, int], ...]:
+        def to_tuple(x: NDArray[np.float_ | np.int_]) -> tuple[float | int, ...]:
             # noinspection PyTypeChecker
-            native_python: list[Union[float, int]] = x.flatten().tolist()
+            native_python: list[float | int] = x.flatten().tolist()
             return tuple(native_python)
 
         return {to_tuple(x): to_tuple(y) for x, y in self}
@@ -44,7 +42,7 @@ class IOTable:
             table: IOTable the target IOTable
             groups: int the number of groups that will separate the said tables, those groups will break the tables along the first non-batch dimension.
         Returns:
-          List[IOTable]: The grouped tables as a list of input output objects
+          list[IOTable]: The grouped tables as a list of input output objects
         """
         inputs = self.inputs
         outputs = self.outputs

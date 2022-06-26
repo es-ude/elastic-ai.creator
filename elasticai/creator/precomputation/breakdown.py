@@ -1,14 +1,12 @@
 """Implementation of the breakdown. Used to represent multiple layers with
 a fixed width.
 """
-from typing import Union
-
 import torch.nn
 from torch.nn.utils import parametrize
 
-from elasticai.creator.qat.blocks import Conv2d_block
+from elasticai.creator.qat.blocks import Conv2dBlock
 from elasticai.creator.qat.layers import ChannelShuffle
-from elasticai.creator.qat.masks import fixedOffsetMask4D
+from elasticai.creator.qat.masks import FixedOffsetMask4d
 
 
 def generate_conv2d_sequence_with_width(
@@ -44,18 +42,18 @@ def generate_conv2d_sequence_with_width(
     Returns:
 
     """
-    layers: list[Union[Conv2d_block, ChannelShuffle]] = []
+    layers: list[Conv2dBlock | ChannelShuffle] = []
     if in_channels < channel_width:
         raise ValueError(
             "Channel width cannot be bigger than the number of input channels"
         )
     next_in_channels = in_channels
-    next_groups = (in_channels) // channel_width
+    next_groups = in_channels // channel_width
     next_out_channels = out_channels * next_groups
 
     while next_out_channels >= out_channels:
         layers.append(
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=next_in_channels,
                 out_channels=next_out_channels,
                 kernel_size=kernel_size,
@@ -115,7 +113,7 @@ class BreakdownConv2dBlock(torch.nn.Module):
         else:
             breakdown_multiplier = kernel_size * groups
         super().__init__()
-        self.Conv2d = Conv2d_block(
+        self.Conv2d = Conv2dBlock(
             in_channels=in_channels,
             out_channels=out_channels * breakdown_multiplier,
             kernel_size=kernel_size,
@@ -132,7 +130,7 @@ class BreakdownConv2dBlock(torch.nn.Module):
             parametrize.register_parametrization(
                 self.depthwiseConv2d, "weight", conv_quantizer
             )
-        mask = fixedOffsetMask4D(
+        mask = FixedOffsetMask4d(
             out_channels=out_channels * breakdown_multiplier,
             in_channels=in_channels,
             kernel_size=kernel_size,
@@ -142,7 +140,7 @@ class BreakdownConv2dBlock(torch.nn.Module):
         )
         parametrize.register_parametrization(self.Conv2d.conv2d, "weight", mask)
         self.shuffle = ChannelShuffle(groups=groups)
-        self.pointwiseConv2d = Conv2d_block(
+        self.pointwiseConv2d = Conv2dBlock(
             in_channels=out_channels * breakdown_multiplier,
             out_channels=out_channels,
             kernel_size=1,
