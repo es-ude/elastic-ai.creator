@@ -110,7 +110,7 @@ class FixedPoint:
     def __repr__(self) -> str:
         return f"FixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
 
-    def _identical_fixed_point(self, value: float) -> "FixedPoint":
+    def _identical_fixed_point(self, value: float | int) -> "FixedPoint":
         return FixedPoint(
             value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
         )
@@ -121,7 +121,7 @@ class FixedPoint:
         )
 
     @staticmethod
-    def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
+    def _assert_range(value: float | int, total_bits: int, frac_bits: int) -> None:
         max_value = 2 ** (total_bits - frac_bits - 1)
         min_value = max_value * (-1)
 
@@ -217,7 +217,7 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
 
 
 def float_values_to_fixed_point(
-    values: list[float], total_bits: int, frac_bits: int
+    values: list[float | int], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
     return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
