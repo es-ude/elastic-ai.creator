@@ -1,7 +1,7 @@
 import types
 from abc import abstractmethod
 from itertools import product
-from typing import Any, Callable, List, Optional, Protocol, Tuple
+from typing import Any, Callable, Optional, Protocol
 
 import torch
 from torch import Tensor
@@ -31,12 +31,12 @@ class Quantize(Protocol):
 
     @property
     @abstractmethod
-    def codomain(self) -> List[float]:
+    def codomain(self) -> list[float]:
         ...
 
     @property
     @abstractmethod
-    def thresholds(self) -> List[float]:
+    def thresholds(self) -> list[float]:
         ...
 
 
@@ -195,11 +195,11 @@ class QConv1d(torch.nn.Conv1d):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple[int],
+        kernel_size: tuple[int],
         quantizer: Module,
-        stride: Tuple[int] = (1,),
+        stride: tuple[int] = (1,),
         padding: int = 0,
-        dilation: Tuple[int] = (1,),
+        dilation: tuple[int] = (1,),
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
@@ -331,8 +331,8 @@ class QLSTMCell(torch.nn.LSTMCell):
         return input_tensor
 
     def forward(
-        self, x: torch.Tensor, hx: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, x: torch.Tensor, hx: Optional[tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         # Implementation based on
         # https://github.com/pytorch/pytorch/blob/e9ef087d2d12051341db485c8ac64ea64649823d/benchmarks/fastrnns/cells.py#L25
         if hx is None:
@@ -410,8 +410,8 @@ class QLSTM(torch.nn.Module):
         self.batch_first = batch_first
 
     def forward(
-        self, input: torch.Tensor, state: Tuple[torch.Tensor, torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+        self, input: torch.Tensor, state: tuple[torch.Tensor, torch.Tensor] = None
+    ) -> tuple[torch.Tensor, Optional[tuple[torch.Tensor, torch.Tensor]]]:
         if self.batch_first:
             input = torch.stack(torch.unbind(input), dim=1)
 

@@ -8,9 +8,9 @@ from elasticai.creator.precomputation.breakdown import (
     depthwisePointwiseBreakdownConv2dBlock,
     generate_conv2d_sequence_with_width,
 )
-from elasticai.creator.qat.blocks import Conv2d_block
+from elasticai.creator.qat.blocks import Conv2dBlock
 from elasticai.creator.qat.layers import Binarize, ChannelShuffle
-from elasticai.creator.qat.masks import fixedOffsetMask4D
+from elasticai.creator.qat.masks import FixedOffsetMask4d
 
 
 class BreakdownTest(unittest.TestCase):
@@ -47,7 +47,7 @@ class BreakdownTest(unittest.TestCase):
             channel_width=2,
         )
         expected = torch.nn.Sequential(
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=2,
                 out_channels=4,
                 activation=torch.nn.Identity(),
@@ -68,7 +68,7 @@ class BreakdownTest(unittest.TestCase):
             channel_width=2,
         )
         expected = torch.nn.Sequential(
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=4,
                 out_channels=4,
                 activation=torch.nn.Identity(),
@@ -77,7 +77,7 @@ class BreakdownTest(unittest.TestCase):
                 groups=2,
             ),
             ChannelShuffle(groups=2),
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=4,
                 out_channels=2,
                 activation=torch.nn.Identity(),
@@ -100,7 +100,7 @@ class BreakdownTest(unittest.TestCase):
             channel_width=8,
         )
         expected = torch.nn.Sequential(
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=256,
                 out_channels=256 * 32,
                 activation=torch.nn.Identity(),
@@ -109,7 +109,7 @@ class BreakdownTest(unittest.TestCase):
                 groups=32,
             ),
             ChannelShuffle(groups=32),
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=256 * 32,
                 out_channels=256 * 4,
                 activation=torch.nn.Identity(),
@@ -117,7 +117,7 @@ class BreakdownTest(unittest.TestCase):
                 kernel_size=3,
                 groups=256 * 4,
             ),
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=256 * 4,
                 out_channels=256,
                 activation=torch.nn.Identity(),
@@ -140,7 +140,7 @@ class BreakdownTest(unittest.TestCase):
             channel_width=8,
         )
         expected = torch.nn.Sequential(
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=64,
                 out_channels=256 * 8,
                 activation=torch.nn.Identity(),
@@ -149,7 +149,7 @@ class BreakdownTest(unittest.TestCase):
                 groups=8,
             ),
             ChannelShuffle(groups=8),
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=256 * 8,
                 out_channels=256,
                 activation=torch.nn.Identity(),
@@ -190,7 +190,7 @@ class BreakdownTest(unittest.TestCase):
             padding_mode="zeros",
         )
         expected = torch.nn.Sequential(
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=32,
                 out_channels=16 * 4 * 2,
                 activation=torch.nn.Identity(),
@@ -199,7 +199,7 @@ class BreakdownTest(unittest.TestCase):
                 groups=4,
             ),
             ChannelShuffle(groups=4),
-            Conv2d_block(
+            Conv2dBlock(
                 in_channels=16 * 4 * 2,
                 out_channels=16,
                 activation=torch.nn.Identity(),
@@ -208,7 +208,7 @@ class BreakdownTest(unittest.TestCase):
                 groups=16,
             ),
         )
-        mask = fixedOffsetMask4D(
+        mask = FixedOffsetMask4d(
             out_channels=16 * 4 * 2,
             in_channels=32,
             kernel_size=2,

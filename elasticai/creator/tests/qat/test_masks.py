@@ -2,12 +2,12 @@ import unittest
 
 import torch
 
-from elasticai.creator.qat.masks import fixed_offset_mask4D, randomMask4D
+from elasticai.creator.qat.masks import fixed_offset_mask_4d, random_mask_4d
 
 
 class test_masks(unittest.TestCase):
     def test_fixedOffsetMask4D_channel_offset(self):
-        mask = fixed_offset_mask4D(
+        mask = fixed_offset_mask_4d(
             out_channels=4,
             kernel_size=(1, 1),
             in_channels=2,
@@ -23,7 +23,7 @@ class test_masks(unittest.TestCase):
         self.assertTrue(torch.all(torch.eq(mask, expected)))
 
     def test_fixedOffsetMask4D_channel_offset_width2(self):
-        mask = fixed_offset_mask4D(
+        mask = fixed_offset_mask_4d(
             out_channels=2,
             kernel_size=(1, 1),
             in_channels=4,
@@ -39,7 +39,7 @@ class test_masks(unittest.TestCase):
         self.assertTrue(torch.all(torch.eq(mask, expected)))
 
     def test_fixedOffsetMask4D_axis_offset(self):
-        mask = fixed_offset_mask4D(
+        mask = fixed_offset_mask_4d(
             out_channels=4,
             kernel_size=(2, 1),
             in_channels=2,
@@ -59,7 +59,7 @@ class test_masks(unittest.TestCase):
         self.assertTrue(torch.all(torch.eq(mask, expected)))
 
     def test_randomMask4D(self):
-        mask = randomMask4D(
+        mask = random_mask_4d(
             out_channels=4,
             kernel_size=(2, 2),
             in_channels=2,

@@ -9,7 +9,7 @@ Modules that work as a sequence of 3  or more layers. Useful for writing more co
 
 # when applying constraints to blocks loop with model.modules()
 # finish with nn.Identity as an activation if not using Softmax
-class Conv1d_block(nn.Module):
+class Conv1dBlock(nn.Module):
     """
     Sequence QConv1d - batchNorm - activation
     uses default batchNorm parameters. Most other parameters affect QConv1d
@@ -63,7 +63,7 @@ class Conv1d_block(nn.Module):
         return x
 
 
-class Conv2d_block(nn.Module):
+class Conv2dBlock(nn.Module):
     """
     Sequence Conv2d - batchNorm - activation
     uses default batchNorm parameters. Most other parameters affect QConv1d
@@ -116,7 +116,7 @@ class Conv2d_block(nn.Module):
         return x
 
 
-class Linear_block(nn.Module):
+class LinearBlock(nn.Module):
     """
     Sequence Linear - batchNorm - activation
     uses default batchNorm parameters. Most other parameters affect Qconv1d
@@ -153,7 +153,7 @@ class Linear_block(nn.Module):
         return x
 
 
-class depthwiseConv1d_block(nn.Module):
+class DepthwiseConv1dBlock(nn.Module):
     """
     Sequence depthwise Conv1d - batchNorm -activation, 1x1 Conv1d - batchnorm - activation
     uses default batchNorm parameters. Most other parameters affect Qconv1d
