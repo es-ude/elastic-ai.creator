@@ -1,10 +1,10 @@
 """Interfaces/Adapters to the used machine learning framework"""
 
-from typing import Iterable, Protocol, Union, runtime_checkable
+from typing import Iterable, Protocol, runtime_checkable
 
 from numpy.typing import ArrayLike
 
-Index = Union[int, slice, tuple[Union[int, slice]]]
+Index = int | slice | tuple[int | slice]
 
 
 class Tensor(Protocol):

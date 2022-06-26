@@ -1,4 +1,4 @@
-from typing import Any, Callable, List
+from typing import Any, Callable
 
 import torch
 from torch.nn import Module
@@ -11,7 +11,7 @@ def _preprocess_tags(tags: dict):
     unprocessed = []
     for key, value in tags.items():
         to_check = value
-        if isinstance(value, List):
+        if isinstance(value, list):
             to_check = value[0]
         if isinstance(to_check, int):
             processed[key + "_i"] = value
@@ -41,7 +41,7 @@ class AutogradWrapper(torch.autograd.Function):
         raise NotImplementedError
 
     @staticmethod
-    def forward(ctx: Any, input: Any, callable) -> Any:
+    def forward(ctx: Any, input: Any, callable: Callable) -> Any:
         return callable(input)
 
     @staticmethod
