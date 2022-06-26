@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.10.0 (2022-06-26)
+### Feature
+* **vhdl:** Format_vhdl function blocks the process until formatting is complete ([`a8a1bd0`](https://github.com/es-ude/elastic-ai.creator/commit/a8a1bd0e7a4db075d0cef4a9eb125a860a697719))
+
+### Documentation
+* **readme:** Remove compile instructions for onnx as they are no longer needed ([`3bee70a`](https://github.com/es-ude/elastic-ai.creator/commit/3bee70abe4185a0a6708ffc998bdc74004f90b8a))
+* **vhdl:** Add a docstring with an example to the FixedPoint class ([`961d766`](https://github.com/es-ude/elastic-ai.creator/commit/961d76678d366730f57bbd69b43c38124c003bf7))
+
 ## v0.9.0 (2022-06-22)
 ### Feature
 * **vhdl:** Integrate FixedPoint type ([`b67a609`](https://github.com/es-ude/elastic-ai.creator/commit/b67a6096023a51ff4882a8cdd03a7765884c8d93))
