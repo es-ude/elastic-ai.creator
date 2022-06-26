@@ -228,14 +228,6 @@ def int_values_to_fixed_point(
     return list(map(lambda x: FixedPoint.from_int(x, total_bits, frac_bits), values))
 
 
-def _int_to_bin_str(number: int, bits: int) -> str:
-    if number < 0:
-        raise ValueError("Negative values are not supported.")
-    if bits <= 0 or (number > 0 and math.log2(number) > bits):
-        raise ValueError(f"The number {number} cannot be represented with {bits} bits.")
-    return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
-
-
 class ToLogicEncoder:
     """
     Throughout our implementations we have to deal with two different levels of representations for numbers:
@@ -251,18 +243,33 @@ class ToLogicEncoder:
         self._symbols = set()
         self._mapping = dict()
 
+    def _update_mapping(self) -> None:
+        sorted_numerics = sorted(self._symbols)
+        mapping = {value: index for index, value in enumerate(sorted_numerics)}
+        self._mapping.update(mapping)
+
     def register_symbol(self, numeric_representation: int) -> None:
         self._symbols.add(numeric_representation)
         self._update_mapping()
 
-    def _update_mapping(self) -> None:
-        sorted_numerics = list(self._symbols)
-        sorted_numerics.sort()
-        mapping = dict(((value, index) for index, value in enumerate(sorted_numerics)))
-        self._mapping.update(mapping)
+    def register_symbols(self, symbols: Iterable[int]) -> None:
+        for symbol in symbols:
+            self._symbols.add(symbol)
+        self._update_mapping()
+
+    @staticmethod
+    def _int_to_bin(number: int, num_bits: int) -> str:
+        return f"{number:0{num_bits}b}"
+
+    @property
+    def bit_width(self) -> int:
+        return math.floor(math.log2(len(self._symbols)))
 
     def __len__(self):
         return len(self._symbols)
+
+    def __eq__(self, other: "ToLogicEncoder") -> bool:
+        return self._symbols == other._symbols and self._mapping == other._mapping
 
     def __iter__(self) -> Iterator[tuple[int, int]]:
         for symbol, encoded_symbol in self._mapping.values():
@@ -271,19 +278,7 @@ class ToLogicEncoder:
     def __getitem__(self, item: int) -> int:
         return self._mapping[item]
 
-    @property
-    def bit_width(self) -> int:
-        return math.floor(math.log(len(self._symbols), 2))
-
-    def register_symbols(self, symbols: Iterable[int]) -> None:
-        for symbol in symbols:
-            self._symbols.add(symbol)
-        self._update_mapping()
-
     def __call__(self, number: int) -> str:
         if number not in self._symbols:
             raise ValueError
-        return _int_to_bin_str(self._mapping[number], self.bit_width)
-
-    def __eq__(self, other: "ToLogicEncoder") -> bool:
-        return self._symbols == other._symbols and self._mapping == other._mapping
+        return self._int_to_bin(self._mapping[number], self.bit_width)
