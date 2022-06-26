@@ -1,5 +1,5 @@
 import json
-from typing import Callable, Sequence, Union
+from typing import Callable, Sequence
 
 import numpy as np
 import torch
@@ -10,7 +10,7 @@ from elasticai.creator.tags_utils import TaggedModule, get_tags, has_tag, tag
 
 _precomputable_tag = "precomputable"
 
-TensorLike = Union[Callable[[], "TensorLike"], torch.Tensor, np.ndarray]
+TensorLike = Callable[[], "TensorLike"] | torch.Tensor | np.ndarray
 
 
 class Precomputation:

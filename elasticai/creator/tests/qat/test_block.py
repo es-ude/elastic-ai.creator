@@ -3,18 +3,14 @@ import unittest
 import torch
 from torch import nn
 
-from elasticai.creator.qat.blocks import (
-    Conv1d_block,
-    Linear_block,
-    depthwiseConv1d_block,
-)
+from elasticai.creator.qat.blocks import Conv1dBlock, DepthwiseConv1dBlock, LinearBlock
 from elasticai.creator.qat.layers import Binarize, Ternarize
 
 
 class BlockTests(unittest.TestCase):
     def test_conv1d_block(self):
         with self.subTest("test params"):
-            module = Conv1d_block(
+            module = Conv1dBlock(
                 in_channels=2,
                 out_channels=32,
                 kernel_size=3,
@@ -32,7 +28,7 @@ class BlockTests(unittest.TestCase):
             self.assertEqual(module.batch_norm.num_features, 32)
 
         with self.subTest("test call"):
-            module = Conv1d_block(
+            module = Conv1dBlock(
                 in_channels=1,
                 out_channels=32,
                 kernel_size=3,
@@ -52,7 +48,7 @@ class BlockTests(unittest.TestCase):
             self.assertEqual(list(out.size()), [1, 32, 30])
 
         with self.subTest("test codomain"):
-            module = Conv1d_block(
+            module = Conv1dBlock(
                 in_channels=1,
                 out_channels=32,
                 kernel_size=3,
@@ -72,7 +68,7 @@ class BlockTests(unittest.TestCase):
 
     def test_Depthwiseconv1d_block(self):
         with self.subTest("test params"):
-            module = depthwiseConv1d_block(
+            module = DepthwiseConv1dBlock(
                 in_channels=4,
                 out_channels=32,
                 kernel_size=3,
@@ -92,7 +88,7 @@ class BlockTests(unittest.TestCase):
             self.assertEqual(module.pointwise_batchnorm.num_features, 32)
 
         with self.subTest("test call"):
-            module = depthwiseConv1d_block(
+            module = DepthwiseConv1dBlock(
                 in_channels=2,
                 out_channels=32,
                 kernel_size=3,
@@ -114,7 +110,7 @@ class BlockTests(unittest.TestCase):
 
     def test_Linear_block(self):
         with self.subTest("test params"):
-            module = Linear_block(
+            module = LinearBlock(
                 in_features=16,
                 out_features=4,
                 linear_quantizer=Binarize(),
@@ -125,7 +121,7 @@ class BlockTests(unittest.TestCase):
             self.assertEqual(module.batchnorm.num_features, 4)
 
         with self.subTest("test call"):
-            module = Linear_block(
+            module = LinearBlock(
                 in_features=16,
                 out_features=4,
                 linear_quantizer=Binarize(),

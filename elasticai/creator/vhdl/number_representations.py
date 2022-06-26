@@ -5,11 +5,34 @@ from typing import Any, Iterable, Iterator
 
 
 class FixedPoint:
+    """
+    A data type that converts a given number to the corresponding fixed-point representation.
+    A fixed-point value is an unsigned integer in two's complement.
+
+    Parameters:
+        value (float | int): Value to be represented as fixed-point value.
+        total_bits (int): Total number of bits of the fixed-point representation (including number of fractional bits).
+        frac_bits (int): Number of bits to represent the fractional part of the number.
+
+    Examples:
+        >>> fixed_point_value = FixedPoint(-2.9, total_bits=8, frac_bits=4)
+        >>> int(fixed_point_value)
+        210
+        >>> float(fixed_point_value)
+        -2.875
+        >>> fixed_point_value.to_signed_int()
+        -46
+        >>> fixed_point_value.to_bin()
+        '11010010'
+        >>> fixed_point_value.to_hex()
+        'd2'
+    """
+
     __slots__ = ["_value", "_frac_bits", "_total_bits"]
 
     def __init__(
         self,
-        value: float,
+        value: float | int,
         total_bits: int,
         frac_bits: int,
     ) -> None:
@@ -87,7 +110,7 @@ class FixedPoint:
     def __repr__(self) -> str:
         return f"FixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
 
-    def _identical_fixed_point(self, value: float) -> "FixedPoint":
+    def _identical_fixed_point(self, value: float | int) -> "FixedPoint":
         return FixedPoint(
             value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
         )
@@ -98,7 +121,7 @@ class FixedPoint:
         )
 
     @staticmethod
-    def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
+    def _assert_range(value: float | int, total_bits: int, frac_bits: int) -> None:
         max_value = 2 ** (total_bits - frac_bits - 1)
         min_value = max_value * (-1)
 
@@ -194,7 +217,7 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
 
 
 def float_values_to_fixed_point(
-    values: list[float], total_bits: int, frac_bits: int
+    values: list[float | int], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
     return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
@@ -203,14 +226,6 @@ def int_values_to_fixed_point(
     values: list[int], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
     return list(map(lambda x: FixedPoint.from_int(x, total_bits, frac_bits), values))
-
-
-def _int_to_bin_str(number: int, bits: int) -> str:
-    if number < 0:
-        raise ValueError("Negative values are not supported.")
-    if bits <= 0 or (number > 0 and math.log2(number) > bits):
-        raise ValueError(f"The number {number} cannot be represented with {bits} bits.")
-    return "{{0:0{number_of_bits}b}}".format(number_of_bits=bits).format(number)
 
 
 class ToLogicEncoder:
@@ -228,18 +243,33 @@ class ToLogicEncoder:
         self._symbols = set()
         self._mapping = dict()
 
+    def _update_mapping(self) -> None:
+        sorted_numerics = sorted(self._symbols)
+        mapping = {value: index for index, value in enumerate(sorted_numerics)}
+        self._mapping.update(mapping)
+
     def register_symbol(self, numeric_representation: int) -> None:
         self._symbols.add(numeric_representation)
         self._update_mapping()
 
-    def _update_mapping(self) -> None:
-        sorted_numerics = list(self._symbols)
-        sorted_numerics.sort()
-        mapping = dict(((value, index) for index, value in enumerate(sorted_numerics)))
-        self._mapping.update(mapping)
+    def register_symbols(self, symbols: Iterable[int]) -> None:
+        for symbol in symbols:
+            self._symbols.add(symbol)
+        self._update_mapping()
+
+    @staticmethod
+    def _int_to_bin(number: int, num_bits: int) -> str:
+        return f"{number:0{num_bits}b}"
+
+    @property
+    def bit_width(self) -> int:
+        return math.floor(math.log2(len(self._symbols)))
 
     def __len__(self):
         return len(self._symbols)
+
+    def __eq__(self, other: "ToLogicEncoder") -> bool:
+        return self._symbols == other._symbols and self._mapping == other._mapping
 
     def __iter__(self) -> Iterator[tuple[int, int]]:
         for symbol, encoded_symbol in self._mapping.values():
@@ -248,19 +278,7 @@ class ToLogicEncoder:
     def __getitem__(self, item: int) -> int:
         return self._mapping[item]
 
-    @property
-    def bit_width(self) -> int:
-        return math.floor(math.log(len(self._symbols), 2))
-
-    def register_symbols(self, symbols: Iterable[int]) -> None:
-        for symbol in symbols:
-            self._symbols.add(symbol)
-        self._update_mapping()
-
     def __call__(self, number: int) -> str:
         if number not in self._symbols:
             raise ValueError
-        return _int_to_bin_str(self._mapping[number], self.bit_width)
-
-    def __eq__(self, other: "ToLogicEncoder") -> bool:
-        return self._symbols == other._symbols and self._mapping == other._mapping
+        return self._int_to_bin(self._mapping[number], self.bit_width)

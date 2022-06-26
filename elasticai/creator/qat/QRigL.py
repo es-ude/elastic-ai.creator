@@ -1,10 +1,8 @@
 """ Original: version:https://github.com/nollied/rigl-torch """
-from typing import List
-
 import numpy as np
 import torch
 
-from elasticai.creator.qat.masks import randomMask4D
+from elasticai.creator.qat.masks import random_mask_4d
 
 
 class IndexMaskHook:
@@ -53,8 +51,11 @@ def _create_step_wrapper(scheduler, optimizer):
 
 class QRigLScheduler:
     """
-    Creates a Rigl scheduler for the selected Conv2d layers. This works similarly to the original Rigl [Evci et al 2021] https://arxiv.org/pdf/1911.11134.pdf , with the difference that it has a fixed
-    number of connections per channel rather than a per layer fan in. This works by changing the connections, by editing a mask every few steps .This is useful in precalculated applications. It replaces the optimizer step every few steps. So it should be called like:
+    Creates a Rigl scheduler for the selected Conv2d layers. This works similarly to the
+    original Rigl [Evci et al 2021] https://arxiv.org/pdf/1911.11134.pdf , with the difference that it has a fixed
+    number of connections per channel rather than a per layer fan in. This works by changing the connections,
+    by editing a mask every few steps .This is useful in precalculated applications. It replaces the optimizer step
+    every few steps. So it should be called like:
     if scheduler():
         optimizer.step()
     Args:
@@ -69,7 +70,7 @@ class QRigLScheduler:
 
     def __init__(
         self,
-        weighted_layers: List[torch.nn.Module],
+        weighted_layers: list[torch.nn.Module],
         optimizer: torch.optim.Optimizer,
         num_connections: int,
         T_end,
@@ -161,7 +162,7 @@ class QRigLScheduler:
         for layer_index, layer in enumerate(self.layers):
             # if sparsity is 0%, skip
 
-            mask = randomMask4D(
+            mask = random_mask_4d(
                 out_channels=layer.out_channels,
                 kernel_size=layer.kernel_size,
                 in_channels=layer.in_channels,

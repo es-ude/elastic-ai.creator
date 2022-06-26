@@ -1,7 +1,6 @@
-import importlib.resources
 from abc import ABC, abstractmethod
 from string import Template
-from typing import Iterable, Iterator, Protocol, Sequence, Union
+from typing import Iterable, Iterator, Protocol, Sequence
 
 import numpy as np
 

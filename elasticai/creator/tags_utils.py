@@ -1,4 +1,4 @@
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 from elasticai.creator.mlframework import Module
 

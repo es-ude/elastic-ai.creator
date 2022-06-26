@@ -7,8 +7,6 @@ jobs:
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    env:
-      CMAKE_ARGS: "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -19,8 +17,6 @@ jobs:
         with:
           path: ~/.cache/pypoetry/virtualenvs
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-      - run: sudo apt-get install -y python3-dev libprotobuf-dev protobuf-compiler
-      - run: poetry --version
       - run: python --version
       - run: poetry install --no-interaction --extras onnx
       - run: poetry run python -m unittest discover elasticai/creator/integrationTests
@@ -37,7 +33,6 @@ jobs:
         with:
           path: ~/.cache/pypoetry/virtualenvs
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-      - run: poetry --version
       - run: python --version
       - run: poetry install --no-interaction
       - run: cd elasticai/creator/tests

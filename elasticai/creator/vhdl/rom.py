@@ -2,7 +2,7 @@ import math
 from collections.abc import Sequence
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.language import hex_representation
+from elasticai.creator.vhdl.language import Code, hex_representation
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
@@ -34,7 +34,7 @@ class Rom:
     def _calculate_required_addr_width_to_access_items(items: Sequence) -> int:
         return max(1, math.ceil(math.log2(len(items))))
 
-    def __call__(self):
+    def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
         code = template.format(
