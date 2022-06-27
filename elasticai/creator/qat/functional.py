@@ -8,7 +8,7 @@ from torch import jit
 
 
 def _heaviside(x):
-    return torch.heaviside(x, torch.tensor([1.0]))
+    return torch.heaviside(x, torch.tensor([1.0], device=x.device))
 
 
 # noinspection PyPep8Naming,PyAbstractClass
