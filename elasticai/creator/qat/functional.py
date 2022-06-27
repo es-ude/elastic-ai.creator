@@ -7,7 +7,6 @@ import torch
 from torch import Tensor, jit
 
 
-@jit.script
 def _heaviside(x):
     return torch.heaviside(x, torch.tensor([1.0]))
 
