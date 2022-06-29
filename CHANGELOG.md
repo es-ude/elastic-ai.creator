@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.10.1 (2022-06-29)
+### Fix
+* **gh-workflow:** Fix error in the main.yml ([`4a6ff5e`](https://github.com/es-ude/elastic-ai.creator/commit/4a6ff5e61f35661a3ef83ce4335c109333834d6d))
+* **gh-workflow:** Try to fix the error with the semantic release tool ([`bc115f8`](https://github.com/es-ude/elastic-ai.creator/commit/bc115f899bd85e720448bfa67fe9964bb56c594b))
+
 ## v0.10.0 (2022-06-26)
 ### Feature
 * **vhdl:** Format_vhdl function blocks the process until formatting is complete ([`a8a1bd0`](https://github.com/es-ude/elastic-ai.creator/commit/a8a1bd0e7a4db075d0cef4a9eb125a860a697719))
