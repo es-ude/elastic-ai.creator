@@ -1,6 +1,6 @@
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.vhdl.components.rom import Rom
 from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
-from elasticai.creator.vhdl.rom import Rom
 
 
 class GenerateROMVhdTest(GeneratedVHDLCodeTest):

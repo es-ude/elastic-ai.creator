@@ -1,12 +1,14 @@
 import math
 from collections.abc import Sequence
+from typing import Optional
 
-from elasticai.creator.resource_utils import read_text
+from elasticai.creator.resource_utils import PathType, read_text, read_text_from_path
 from elasticai.creator.vhdl.language import Code, hex_representation
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
+from elasticai.creator.vhdl.vhdl_component import VHDLComponent
 
 
 def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedPoint]:
@@ -14,13 +16,13 @@ def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedP
     return numbers + [zero] * (target_length - len(numbers))
 
 
-class Rom:
+class Rom(VHDLComponent):
     def __init__(
         self,
         rom_name: str,
         values: Sequence[FixedPoint],
         resource_option: str,
-    ):
+    ) -> None:
         self.rom_name = rom_name
         self.data_width, _ = infer_total_and_frac_bits(values)
         self.addr_width = self._calculate_required_addr_width_to_access_items(values)
@@ -34,8 +36,15 @@ class Rom:
     def _calculate_required_addr_width_to_access_items(items: Sequence) -> int:
         return max(1, math.ceil(math.log2(len(items))))
 
-    def __call__(self) -> Code:
-        template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
+    @property
+    def file_name(self) -> str:
+        return f"{self.rom_name}.vhd"
+
+    def __call__(self, custom_template: Optional[PathType] = None) -> Code:
+        if custom_template is None:
+            template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
+        else:
+            template = read_text_from_path(custom_template)
 
         code = template.format(
             rom_name=self.rom_name,
@@ -45,9 +54,4 @@ class Rom:
             rom_resource_option=f'"{self.resource_option}"',
         )
 
-        stripped_code_lines = map(str.strip, code.splitlines())
-
-        def not_empty(line):
-            return len(line) > 0
-
-        yield from filter(not_empty, stripped_code_lines)
+        yield from code.splitlines()
