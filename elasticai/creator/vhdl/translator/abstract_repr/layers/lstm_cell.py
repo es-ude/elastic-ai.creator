@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Any, Iterator
 
 import numpy as np
 
@@ -12,7 +12,6 @@ from elasticai.creator.vhdl.components.tanh import Tanh
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
-    infer_total_and_frac_bits,
 )
 from elasticai.creator.vhdl.translator.abstract_repr.custom_template_mapping import (
     CustomTemplateMapping,
@@ -66,7 +65,7 @@ class LSTMCell:
         )
 
     def translate(
-        self, custom_template_mapping: CustomTemplateMapping
+        self, custom_template_mapping: CustomTemplateMapping, **kwargs: Any
     ) -> Iterator[tuple[str, list[str]]]:
         weights, bias = self._build_weights()
         rom_names = (
@@ -80,8 +79,9 @@ class LSTMCell:
 
         sigmoid = Sigmoid(
             x=self._to_fp(
-                np.linspace(-2.5, 2.5, 256).tolist(),  # type: ignore
-                *infer_total_and_frac_bits(weights[0]),
+                np.linspace(*kwargs["sigmoid_linspace_args"]).tolist(),  # type: ignore
+                total_bits=kwargs["total_bits"],
+                frac_bits=kwargs["frac_bits"],
             )
         )
         yield sigmoid.file_name, list(
@@ -90,18 +90,17 @@ class LSTMCell:
 
         tanh = Tanh(
             x=self._to_fp(
-                np.linspace(-1, 1, 256).tolist(),  # type: ignore
-                *infer_total_and_frac_bits(weights[0]),
+                np.linspace(*kwargs["tanh_linspace_args"]).tolist(),  # type: ignore
+                total_bits=kwargs["total_bits"],
+                frac_bits=kwargs["frac_bits"],
             )
         )
         yield tanh.file_name, list(
             tanh(custom_template=custom_template_mapping.get(Tanh))
         )
 
-        for static_comp_cls in (LSTMCellVHDL, LSTMCommon, DualPort2ClockRam):
-            static_comp_obj = static_comp_cls()
-            yield static_comp_obj.file_name, list(
-                static_comp_obj(
-                    custom_template=custom_template_mapping.get(static_comp_cls)
-                )
+        for static_cls in (LSTMCellVHDL, LSTMCommon, DualPort2ClockRam):
+            static_obj = static_cls()
+            yield static_obj.file_name, list(
+                static_obj(custom_template=custom_template_mapping.get(static_cls))
             )
