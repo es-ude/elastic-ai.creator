@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Iterator
 
 import numpy as np
 
@@ -16,6 +16,16 @@ from elasticai.creator.vhdl.number_representations import (
 from elasticai.creator.vhdl.translator.abstract_repr.custom_template_mapping import (
     CustomTemplateMapping,
 )
+from elasticai.creator.vhdl.translator.abstract_repr.fixed_point_args import (
+    FixedPointArgs,
+)
+
+
+@dataclass
+class LSTMCellTranslationArgs:
+    fixed_point_args: FixedPointArgs
+    sigmoid_linspace_args: tuple[float, float, int]
+    tanh_linspace_args: tuple[float, float, int]
 
 
 @dataclass
@@ -38,6 +48,14 @@ class LSTMCell:
     bias_io: list[FixedPoint]
     bias_ho: list[FixedPoint]
 
+    @staticmethod
+    def _to_fp(
+        values: list[float], total_bits: int, frac_bits: int
+    ) -> list[FixedPoint]:
+        return float_values_to_fixed_point(
+            values, total_bits=total_bits, frac_bits=frac_bits
+        )
+
     def _build_weights(
         self,
     ) -> tuple[tuple[list[FixedPoint], ...], tuple[list[FixedPoint], ...]]:
@@ -56,16 +74,10 @@ class LSTMCell:
 
         return (w_i, w_f, w_g, w_o), (b_i, b_f, b_g, b_o)
 
-    @staticmethod
-    def _to_fp(
-        values: list[float], total_bits: int, frac_bits: int
-    ) -> list[FixedPoint]:
-        return float_values_to_fixed_point(
-            values, total_bits=total_bits, frac_bits=frac_bits
-        )
-
     def translate(
-        self, custom_template_mapping: CustomTemplateMapping, **kwargs: Any
+        self,
+        translation_args: LSTMCellTranslationArgs,
+        custom_template_mapping: CustomTemplateMapping,
     ) -> Iterator[tuple[str, list[str]]]:
         weights, bias = self._build_weights()
         rom_names = (
@@ -79,9 +91,9 @@ class LSTMCell:
 
         sigmoid = Sigmoid(
             x=self._to_fp(
-                np.linspace(*kwargs["sigmoid_linspace_args"]).tolist(),  # type: ignore
-                total_bits=kwargs["total_bits"],
-                frac_bits=kwargs["frac_bits"],
+                np.linspace(*translation_args.sigmoid_linspace_args).tolist(),  # type: ignore
+                total_bits=translation_args.fixed_point_args.total_bits,
+                frac_bits=translation_args.fixed_point_args.frac_bits,
             )
         )
         yield sigmoid.file_name, list(
@@ -90,9 +102,9 @@ class LSTMCell:
 
         tanh = Tanh(
             x=self._to_fp(
-                np.linspace(*kwargs["tanh_linspace_args"]).tolist(),  # type: ignore
-                total_bits=kwargs["total_bits"],
-                frac_bits=kwargs["frac_bits"],
+                np.linspace(*translation_args.tanh_linspace_args).tolist(),  # type: ignore
+                total_bits=translation_args.fixed_point_args.total_bits,
+                frac_bits=translation_args.fixed_point_args.frac_bits,
             )
         )
         yield tanh.file_name, list(
