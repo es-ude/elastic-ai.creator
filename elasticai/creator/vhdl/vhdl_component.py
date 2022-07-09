@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Iterator, Protocol
 
 from elasticai.creator.resource_utils import Package, read_text
 from elasticai.creator.vhdl.language import Code
@@ -25,3 +25,6 @@ class VHDLStaticComponent:
     def __call__(self) -> Code:
         code = read_text(self._template_package, self._file_name)
         yield from code.splitlines()
+
+
+VHDLModule = Iterator[VHDLComponent]
