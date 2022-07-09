@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Callable, Iterator
 
 import numpy as np
 
@@ -9,23 +9,8 @@ from elasticai.creator.vhdl.components.lstm_common import LSTMCommon
 from elasticai.creator.vhdl.components.rom import Rom
 from elasticai.creator.vhdl.components.sigmoid import Sigmoid
 from elasticai.creator.vhdl.components.tanh import Tanh
-from elasticai.creator.vhdl.number_representations import (
-    FixedPoint,
-    float_values_to_fixed_point,
-)
-from elasticai.creator.vhdl.translator.abstract_repr.custom_template_mapping import (
-    CustomTemplateMapping,
-)
-from elasticai.creator.vhdl.translator.abstract_repr.fixed_point_args import (
-    FixedPointArgs,
-)
-
-
-@dataclass
-class LSTMCellTranslationArgs:
-    fixed_point_args: FixedPointArgs
-    sigmoid_linspace_args: tuple[float, float, int]
-    tanh_linspace_args: tuple[float, float, int]
+from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
 @dataclass
@@ -48,14 +33,6 @@ class LSTMCell:
     bias_io: list[FixedPoint]
     bias_ho: list[FixedPoint]
 
-    @staticmethod
-    def _to_fp(
-        values: list[float], total_bits: int, frac_bits: int
-    ) -> list[FixedPoint]:
-        return float_values_to_fixed_point(
-            values, total_bits=total_bits, frac_bits=frac_bits
-        )
-
     def _build_weights(
         self,
     ) -> tuple[tuple[list[FixedPoint], ...], tuple[list[FixedPoint], ...]]:
@@ -76,43 +53,33 @@ class LSTMCell:
 
     def translate(
         self,
-        translation_args: LSTMCellTranslationArgs,
-        custom_template_mapping: CustomTemplateMapping,
-    ) -> Iterator[tuple[str, list[str]]]:
+        fixed_point_factory: Callable[[float | int], FixedPoint],
+        sigmoid_linspace_args: tuple[float, float, int],
+        tanh_linspace_args: tuple[float, float, int],
+    ) -> Iterator[tuple[str, Code]]:
+        def to_fp(values: list[float | int]) -> list[FixedPoint]:
+            return list(map(fixed_point_factory, values))
+
         weights, bias = self._build_weights()
         rom_names = (
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
         for rom_values, rom_name in zip(weights + bias, rom_names):
             rom = Rom(rom_name=rom_name, values=rom_values, resource_option="auto")
-            yield rom.file_name, list(
-                rom(custom_template=custom_template_mapping.get(Rom))
-            )
+            yield rom.file_name, list(rom())
 
         sigmoid = Sigmoid(
-            x=self._to_fp(
-                np.linspace(*translation_args.sigmoid_linspace_args).tolist(),  # type: ignore
-                total_bits=translation_args.fixed_point_args.total_bits,
-                frac_bits=translation_args.fixed_point_args.frac_bits,
-            )
+            x=to_fp(np.linspace(*sigmoid_linspace_args).tolist()),  # type: ignore
+            component_name="sigmoid",
         )
-        yield sigmoid.file_name, list(
-            sigmoid(custom_template=custom_template_mapping.get(Sigmoid))
-        )
+        yield sigmoid.file_name, list(sigmoid())
 
         tanh = Tanh(
-            x=self._to_fp(
-                np.linspace(*translation_args.tanh_linspace_args).tolist(),  # type: ignore
-                total_bits=translation_args.fixed_point_args.total_bits,
-                frac_bits=translation_args.fixed_point_args.frac_bits,
-            )
+            x=to_fp(np.linspace(*tanh_linspace_args).tolist()),  # type: ignore
+            component_name="tanh",
         )
-        yield tanh.file_name, list(
-            tanh(custom_template=custom_template_mapping.get(Tanh))
-        )
+        yield tanh.file_name, list(tanh())
 
         for static_cls in (LSTMCellVHDL, LSTMCommon, DualPort2ClockRam):
             static_obj = static_cls()
-            yield static_obj.file_name, list(
-                static_obj(custom_template=custom_template_mapping.get(static_cls))
-            )
+            yield static_obj.file_name, list(static_obj())

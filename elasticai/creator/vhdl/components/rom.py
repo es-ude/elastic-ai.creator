@@ -1,14 +1,12 @@
 import math
 from collections.abc import Sequence
-from typing import Optional
 
-from elasticai.creator.resource_utils import PathType, read_text, read_text_from_path
+from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.language import Code, hex_representation
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent
 
 
 def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedPoint]:
@@ -16,7 +14,7 @@ def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedP
     return numbers + [zero] * (target_length - len(numbers))
 
 
-class Rom(VHDLComponent):
+class Rom:
     def __init__(
         self,
         rom_name: str,
@@ -40,11 +38,8 @@ class Rom(VHDLComponent):
     def file_name(self) -> str:
         return f"{self.rom_name}.vhd"
 
-    def __call__(self, custom_template: Optional[PathType] = None) -> Code:
-        if custom_template is None:
-            template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
-        else:
-            template = read_text_from_path(custom_template)
+    def __call__(self) -> Code:
+        template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
         code = template.format(
             rom_name=self.rom_name,
