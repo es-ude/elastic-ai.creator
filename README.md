@@ -49,8 +49,8 @@ By now we only support Sequential models for our translations.
 poetry can be installed in the following way:
 ```bash
 pip install poetry
-pip install pre-commit
-poetry install -D
+poetry install
+poetry shell
 pre-commit install
 npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
