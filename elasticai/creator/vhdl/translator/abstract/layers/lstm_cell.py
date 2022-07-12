@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterator
+from typing import Callable
 
 import numpy as np
 
@@ -15,28 +15,28 @@ from elasticai.creator.vhdl.vhdl_component import VHDLModule
 
 @dataclass
 class LSTMCell:
-    weights_ii: list[list[FixedPoint]]
-    weights_hi: list[list[FixedPoint]]
-    weights_if: list[list[FixedPoint]]
-    weights_hf: list[list[FixedPoint]]
-    weights_ig: list[list[FixedPoint]]
-    weights_hg: list[list[FixedPoint]]
-    weights_io: list[list[FixedPoint]]
-    weights_ho: list[list[FixedPoint]]
+    weights_ii: list[list[float]]
+    weights_hi: list[list[float]]
+    weights_if: list[list[float]]
+    weights_hf: list[list[float]]
+    weights_ig: list[list[float]]
+    weights_hg: list[list[float]]
+    weights_io: list[list[float]]
+    weights_ho: list[list[float]]
 
-    bias_ii: list[FixedPoint]
-    bias_hi: list[FixedPoint]
-    bias_if: list[FixedPoint]
-    bias_hf: list[FixedPoint]
-    bias_ig: list[FixedPoint]
-    bias_hg: list[FixedPoint]
-    bias_io: list[FixedPoint]
-    bias_ho: list[FixedPoint]
+    bias_ii: list[float]
+    bias_hi: list[float]
+    bias_if: list[float]
+    bias_hf: list[float]
+    bias_ig: list[float]
+    bias_hg: list[float]
+    bias_io: list[float]
+    bias_ho: list[float]
 
     def _build_weights(
-        self,
+        self, to_fixed_point: Callable[[list[float]], list[FixedPoint]]
     ) -> tuple[tuple[list[FixedPoint], ...], tuple[list[FixedPoint], ...]]:
-        def concat_weights(a, b) -> list[FixedPoint]:
+        def concat_weights(a, b) -> list[float]:
             return np.hstack((a, b)).flatten().tolist()  # type: ignore
 
         w_i = concat_weights(self.weights_ii, self.weights_hi)
@@ -49,18 +49,21 @@ class LSTMCell:
         b_g = self.bias_ig + self.bias_hg
         b_o = self.bias_io + self.bias_ho
 
-        return (w_i, w_f, w_g, w_o), (b_i, b_f, b_g, b_o)
+        weights = tuple(map(to_fixed_point, (w_i, w_f, w_g, w_o)))
+        bias = tuple(map(to_fixed_point, (b_i, b_f, b_g, b_o)))
+
+        return weights, bias
 
     def translate(
         self,
-        fixed_point_factory: Callable[[float | int], FixedPoint],
+        fixed_point_factory: Callable[[float], FixedPoint],
         sigmoid_linspace_args: tuple[float, float, int],
         tanh_linspace_args: tuple[float, float, int],
     ) -> VHDLModule:
-        def to_fp(values: list[float | int]) -> list[FixedPoint]:
+        def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(fixed_point_factory, values))
 
-        weights, bias = self._build_weights()
+        weights, bias = self._build_weights(to_fixed_point=to_fp)
         rom_names = (
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
