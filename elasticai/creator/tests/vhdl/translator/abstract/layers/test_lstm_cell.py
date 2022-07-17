@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers.lstm_cell import LSTMCell
 
 
-class TestLSTMCell(TestCase):
+class LSTMCellTest(TestCase):
     def setUp(self) -> None:
         self.cell = LSTMCell(
             weights_ii=[[1, 2], [3, 4]],
