@@ -1,8 +1,8 @@
-from typing import Any, Iterator, Protocol
+from typing import Any, Protocol
 
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent
+from elasticai.creator.vhdl.vhdl_component import VHDLModule
 
 
 class Translatable(Protocol):
-    def translate(self, *args: Any, **kwargs: Any) -> Iterator[VHDLComponent]:
+    def translate(self, *args: Any, **kwargs: Any) -> VHDLModule:
         ...
