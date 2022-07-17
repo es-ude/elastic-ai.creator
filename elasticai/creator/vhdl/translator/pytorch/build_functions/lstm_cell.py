@@ -1,18 +1,15 @@
-from torch import Tensor
-from torch.nn import LSTMCell
+import torch
 
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_cell import (
-    LSTMCell as AbstractLSTMCell,
-)
+from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
 
 
 def _extract_weights(
-    lstm_cell: LSTMCell,
+    lstm_cell: torch.nn.LSTMCell,
 ) -> dict[str, list[list[float]] | list[float], ...]:
     hidden_size = lstm_cell.hidden_size
 
     def split_weight(
-        weight: Tensor, names: list[str]
+        weight: torch.Tensor, names: list[str]
     ) -> dict[str, list[list[float]] | list[float]]:
         weight = weight.detach().numpy()
 
@@ -40,5 +37,5 @@ def _extract_weights(
     return dict(**weights_i, **weights_h, **bias_i, **bias_h)
 
 
-def build_lstm_cell(lstm_cell: LSTMCell) -> AbstractLSTMCell:
-    return AbstractLSTMCell(**_extract_weights(lstm_cell))
+def build_lstm_cell(lstm_cell: torch.nn.LSTMCell) -> LSTMCell:
+    return LSTMCell(**_extract_weights(lstm_cell))
