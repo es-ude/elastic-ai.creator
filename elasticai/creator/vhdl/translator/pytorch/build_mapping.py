@@ -13,13 +13,21 @@ class BuildMapping:
         self._mapping = {"torch.nn.LSTMCell": build_lstm_cell}
 
     @staticmethod
-    def _get_cls_name(layer_cls: type[torch.nn.Module]) -> str:
-        return f"{layer_cls.__module__}.{layer_cls.__name__}"
+    def _infer_type(x: type | object) -> type:
+        return x if isinstance(x, type) else type(x)
 
-    def get(self, layer_cls: type[torch.nn.Module]) -> BuildFunction | None:
-        return self._mapping.get(self._get_cls_name(layer_cls))
+    @staticmethod
+    def _get_cls_name(cls: type) -> str:
+        return f"{cls.__module__}.{cls.__name__}"
+
+    def get(
+        self, layer: type[torch.nn.Module] | torch.nn.Module
+    ) -> BuildFunction | None:
+        return self._mapping.get(self._get_cls_name(self._infer_type(layer)))
 
     def set(
-        self, layer_cls: type[torch.nn.Module], build_function: BuildFunction
+        self,
+        layer: type[torch.nn.Module] | torch.nn.Module,
+        build_function: BuildFunction,
     ) -> None:
-        self._mapping[self._get_cls_name(layer_cls)] = build_function
+        self._mapping[self._get_cls_name(self._infer_type(layer))] = build_function
