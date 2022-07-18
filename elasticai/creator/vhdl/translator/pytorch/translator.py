@@ -30,13 +30,13 @@ def translate_model(
         lambda x: not isinstance(x, torch.nn.Sequential), model.modules()
     )
     for layer in flat_model:
-        build_fn = build_mapping.get(type(layer))
+        build_fn = build_mapping.get(layer)
         if build_fn is not None:
             yield build_fn(layer)
 
 
 def generate_code(
-    translatable_model: Iterator[Translatable],
+    translatable_model: Iterable[Translatable],
     translation_args: dict[str, dict[str, Any]],
 ) -> Iterator[ModuleDirectory]:
     for module_index, module in enumerate(translatable_model):
@@ -56,7 +56,7 @@ def generate_code(
         )
 
 
-def save_code(modules: Iterator[ModuleDirectory], destination_path: PathType) -> None:
+def save_code(modules: Iterable[ModuleDirectory], destination_path: PathType) -> None:
     for module in modules:
         module_path = os.path.join(destination_path, module.dir_name)
         os.makedirs(module_path, exist_ok=True)
