@@ -10,7 +10,7 @@ BuildFunction = Callable[[torch.nn.Module], Translatable]
 
 class BuildMapping:
     def __init__(self) -> None:
-        self._mapping = {"torch.nn.LSTMCell": build_lstm_cell}
+        self._mapping = {"torch.nn.modules.rnn.LSTMCell": build_lstm_cell}
 
     @staticmethod
     def _infer_type(x: type | object) -> type:
