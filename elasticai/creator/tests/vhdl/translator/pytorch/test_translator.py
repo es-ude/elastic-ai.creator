@@ -1,10 +1,11 @@
+import unittest
 from dataclasses import dataclass
 from typing import Iterable
-from unittest import TestCase
 
 import torch.nn
 
 from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
 from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_mapping import BuildMapping
 from elasticai.creator.vhdl.translator.pytorch.translator import (
@@ -56,7 +57,7 @@ def unpack_module_directories(
     ]
 
 
-class TranslatorTest(TestCase):
+class TranslatorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.build_mapping = BuildMapping()
         self.build_mapping.set(torch.nn.LSTMCell, fake_build_function)
@@ -69,8 +70,7 @@ class TranslatorTest(TestCase):
     def test_translate_model_with_one_layer(self) -> None:
         model = torch.nn.Sequential(torch.nn.LSTMCell(input_size=1, hidden_size=2))
 
-        translated_model = translator.translate_model(model, self.build_mapping)
-        translated_model = list(translated_model)
+        translated_model = list(translator.translate_model(model, self.build_mapping))
 
         self.assertEqual(len(translated_model), 1)
         self.assertEqual(type(translated_model[0]), TranslatableMock)
@@ -94,3 +94,25 @@ class TranslatorTest(TestCase):
         ]
 
         self.assertEqual(code, expected_code)
+
+    @unittest.SkipTest
+    def test_translate_model_correct_ordering_of_layers(self):
+        class Model(torch.nn.Module):
+            def __init__(self) -> None:
+                super().__init__()
+                self.lstm_cell_2 = torch.nn.LSTMCell(input_size=2, hidden_size=3)
+                self.lstm_cell_1 = torch.nn.LSTMCell(input_size=1, hidden_size=2)
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                return self.lstm_cell_2(self.lstm_cell_1(x))
+
+        def extract_input_hidden_size(cell: LSTMCell) -> tuple[int, int]:
+            hidden_size = len(cell.weights_ii)
+            input_size = len(cell.weights_ii[0]) if hidden_size > 0 else 0
+            return input_size, hidden_size
+
+        model = Model()
+        translated = list(translator.translate_model(model, BuildMapping()))
+
+        self.assertEqual(extract_input_hidden_size(translated[0]), (1, 2))  # type: ignore
+        self.assertEqual(extract_input_hidden_size(translated[1]), (2, 3))  # type: ignore
