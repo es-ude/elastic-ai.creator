@@ -2,8 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Iterable, Iterator
 
-import torch.nn
-from torch.nn import Module
+import torch
 
 from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.language import Code
@@ -26,8 +25,20 @@ class ModuleDirectory:
 
 
 def translate_model(
-    model: Module, build_function_mapping: BuildFunctionMapping
+    model: torch.nn.Module, build_function_mapping: BuildFunctionMapping
 ) -> Iterator[Translatable]:
+    """
+    Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
+    as an iterator of Translatable objects.
+
+    Parameters:
+        model (torch.nn.Module): The PyTorch-model that should be translated.
+        build_function_mapping (BuildFunctionMapping):
+            Object that maps a given PyTorch-layer to its corresponding build function.
+
+    Returns:
+        Iterator[Translatable]: Iterator that yields for each layer one Translatable object.
+    """
     flat_model = filter(
         lambda x: not isinstance(x, torch.nn.Sequential), model.modules()
     )
@@ -41,6 +52,26 @@ def generate_code(
     translatable_layers: Iterable[Translatable],
     translation_args: dict[str, dict[str, Any]],
 ) -> Iterator[ModuleDirectory]:
+    """
+    Takes an iterable of Translatable objects a dictionary of arguments for each Translatable object type and performs
+    the translation from the intermediate representation to the actual VHDL code.
+
+    Parameters:
+        translatable_layers (Iterable[Translatable]):
+            The intermediate representation as an iterator of Translatable objects.
+        translation_args (dict[str, dict[str, Any]]):
+            Dictionary with the translation arguments for each kind of Translatable included in the translatable_layers.
+            The dictionary must have the following form:
+            args = {
+                "translatable_name": {"arg1": "value1", ...}
+            }
+
+    Returns:
+        Iterator[ModuleDirectory]:
+            Iterator of containers that holds the actual VHDL code. The ModuleDirectory objects holds all CodeFile
+            objects for one Translatable object (module) and the directory name of that module. One CodeFile object
+            holds the file name of that code files and the actual code as an iterable of str (lines).
+    """
     for module_index, module in enumerate(translatable_layers):
         module_class_name = type(module).__name__
 
@@ -56,6 +87,14 @@ def generate_code(
 
 
 def save_code(code: Iterable[ModuleDirectory], path: PathType) -> None:
+    """
+    Saves the generated code on the file system.
+
+    Parameters:
+        code (Iterable[ModuleDirectory]): The generated code that should be saved.
+        path (PathType):
+            The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
+    """
     for module in code:
         module_path = os.path.join(path, module.dir_name)
         os.makedirs(module_path, exist_ok=True)
