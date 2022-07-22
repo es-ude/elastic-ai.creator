@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.translator.pytorch.build_functions import build_lstm
 BuildFunction = Callable[[torch.nn.Module], Translatable]
 
 
-class BuildMapping:
+class BuildFunctionMapping:
     def __init__(self) -> None:
         self._mapping = {"torch.nn.modules.rnn.LSTMCell": build_lstm_cell}
 

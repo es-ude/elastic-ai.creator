@@ -59,8 +59,8 @@ class LSTMCell:
     def translate(
         self,
         fixed_point_factory: Callable[[float], FixedPoint],
-        sigmoid_linspace_args: tuple[float, float, int],
-        tanh_linspace_args: tuple[float, float, int],
+        sigmoid_resolution: tuple[float, float, int],
+        tanh_resolution: tuple[float, float, int],
     ) -> VHDLModule:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(fixed_point_factory, values))
@@ -73,12 +73,12 @@ class LSTMCell:
             yield Rom(rom_name=rom_name, values=rom_values, resource_option="auto")
 
         yield Sigmoid(
-            x=to_fp(np.linspace(*sigmoid_linspace_args).tolist()),  # type: ignore
+            x=to_fp(np.linspace(*sigmoid_resolution).tolist()),  # type: ignore
             component_name="sigmoid",
         )
 
         yield Tanh(
-            x=to_fp(np.linspace(*tanh_linspace_args).tolist()),  # type: ignore
+            x=to_fp(np.linspace(*tanh_resolution).tolist()),  # type: ignore
             component_name="tanh",
         )
 

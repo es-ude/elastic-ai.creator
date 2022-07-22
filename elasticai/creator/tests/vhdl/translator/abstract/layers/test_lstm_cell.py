@@ -34,8 +34,8 @@ class LSTMCellTest(TestCase):
 
         self.translation_args = dict(
             fixed_point_factory=partial(FixedPoint, total_bits=8, frac_bits=2),
-            sigmoid_linspace_args=(-2.5, 2.5, 256),
-            tanh_linspace_args=(-1, 1, 256),
+            sigmoid_resolution=(-2.5, 2.5, 256),
+            tanh_resolution=(-1, 1, 256),
         )
 
     def test_correct_number_of_components(self) -> None:

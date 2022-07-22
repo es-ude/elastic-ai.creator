@@ -7,7 +7,9 @@ import torch.nn
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
 from elasticai.creator.vhdl.translator.pytorch import translator
-from elasticai.creator.vhdl.translator.pytorch.build_mapping import BuildMapping
+from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
+    BuildFunctionMapping,
+)
 from elasticai.creator.vhdl.translator.pytorch.translator import (
     CodeFile,
     ModuleDirectory,
@@ -49,17 +51,17 @@ def unpack_module_directories(
     modules: Iterable[ModuleDirectory],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
     def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
-        return code_file.file_name, list(code_file.code_lines)
+        return code_file.file_name, list(code_file.code)
 
     return [
-        (module.dir_name, list(map(unpack_code_file, module.code_files)))
+        (module.dir_name, list(map(unpack_code_file, module.files)))
         for module in modules
     ]
 
 
 class TranslatorTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.build_mapping = BuildMapping()
+        self.build_mapping = BuildFunctionMapping()
         self.build_mapping.set(torch.nn.LSTMCell, fake_build_function)
 
     def test_translate_model_empty_model(self) -> None:
@@ -79,7 +81,7 @@ class TranslatorTest(unittest.TestCase):
         model = torch.nn.Sequential(torch.nn.LSTMCell(input_size=1, hidden_size=2))
         translated_model = translator.translate_model(model, self.build_mapping)
         modules = translator.generate_code(
-            translatable_model=translated_model, translation_args=dict()
+            translatable_layers=translated_model, translation_args=dict()
         )
 
         code = unpack_module_directories(modules)
@@ -112,7 +114,7 @@ class TranslatorTest(unittest.TestCase):
             return input_size, hidden_size
 
         model = Model()
-        translated = list(translator.translate_model(model, BuildMapping()))
+        translated = list(translator.translate_model(model, BuildFunctionMapping()))
 
         self.assertEqual(extract_input_hidden_size(translated[0]), (1, 2))  # type: ignore
         self.assertEqual(extract_input_hidden_size(translated[1]), (2, 3))  # type: ignore
