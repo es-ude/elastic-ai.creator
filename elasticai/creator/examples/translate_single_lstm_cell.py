@@ -1,0 +1,52 @@
+import argparse
+from functools import partial
+from pathlib import Path
+
+import torch.nn
+
+from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.translator.pytorch import translator
+from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
+    BuildFunctionMapping,
+)
+
+
+def read_commandline_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--build_dir", required=True, type=Path)
+    return parser.parse_args()
+
+
+class LSTMCellModel(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.lstm_cell_1 = torch.nn.LSTMCell(input_size=10, hidden_size=100)
+        self.lstm_cell_2 = torch.nn.LSTMCell(input_size=100, hidden_size=10)
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.lstm_cell_2(self.lstm_cell_1(x)[0])
+
+
+def main() -> None:
+    args = read_commandline_args()
+
+    model = LSTMCellModel()
+
+    translated = translator.translate_model(
+        model=model, build_function_mapping=BuildFunctionMapping()
+    )
+    code = translator.generate_code(
+        translatable_layers=translated,
+        translation_args=dict(
+            LSTMCell=dict(
+                fixed_point_factory=partial(FixedPoint, total_bits=16, frac_bits=8),
+                sigmoid_resolution=(-2.5, 2.5, 256),
+                tanh_resolution=(-1, 1, 256),
+            )
+        ),
+    )
+    translator.save_code(code=code, path=args.build_dir)
+
+
+if __name__ == "__main__":
+    main()
