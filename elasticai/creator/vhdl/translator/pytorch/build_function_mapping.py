@@ -8,9 +8,9 @@ from elasticai.creator.vhdl.translator.pytorch.build_functions import build_lstm
 BuildFunction = Callable[[torch.nn.Module], Translatable]
 
 
-class BuildFunctionMapping:
-    def __init__(self) -> None:
-        self._mapping = {"torch.nn.modules.rnn.LSTMCell": build_lstm_cell}
+class BuildFunctionMapping(Mapping[str, BuildFunction]):
+    def __init__(self, mapping: dict[str, BuildFunction]):
+        self._mapping = mapping
 
     @staticmethod
     def _infer_type(x: type | object) -> type:
@@ -20,14 +20,26 @@ class BuildFunctionMapping:
     def _get_cls_name(cls: type) -> str:
         return f"{cls.__module__}.{cls.__name__}"
 
-    def get(
-        self, layer: type[torch.nn.Module] | torch.nn.Module
+    def get_from_layer(
+        self, layer: torch.nn.Module | type[torch.nn.Module]
     ) -> BuildFunction | None:
         return self._mapping.get(self._get_cls_name(self._infer_type(layer)))
 
-    def set(
-        self,
-        layer: type[torch.nn.Module] | torch.nn.Module,
-        build_function: BuildFunction,
-    ) -> None:
-        self._mapping[self._get_cls_name(self._infer_type(layer))] = build_function
+    def __getitem__(self, key: str) -> BuildFunction:
+        return self._mapping[key]
+
+    def __len__(self) -> int:
+        return len(self._mapping)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._mapping)
+
+    def to_dict(self) -> dict[str, BuildFunction]:
+        return self._mapping.copy()
+
+
+class DefaultBuildFunctionMapping(BuildFunctionMapping):
+    def __init__(self):
+        super().__init__(
+            mapping={"torch.nn.modules.rnn.LSTMCell": build_lstm_cell},
+        )
