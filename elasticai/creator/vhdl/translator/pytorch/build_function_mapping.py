@@ -1,4 +1,5 @@
-from typing import Callable
+from collections.abc import Mapping
+from typing import Callable, Iterator
 
 import torch
 
