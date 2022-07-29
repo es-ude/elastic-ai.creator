@@ -5,12 +5,10 @@ from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
 
 def _extract_weights(
     lstm_cell: torch.nn.LSTMCell,
-) -> dict[str, list[list[float]] | list[float], ...]:
+) -> dict[str, list]:
     hidden_size = lstm_cell.hidden_size
 
-    def split_weight(
-        weight: torch.Tensor, names: list[str]
-    ) -> dict[str, list[list[float]] | list[float]]:
+    def split_weight(weight: torch.Tensor, names: list[str]) -> dict[str, list]:
         weight = weight.detach().numpy()
 
         lstm_weights = dict()
