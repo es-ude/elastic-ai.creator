@@ -1,6 +1,5 @@
 import math
 from itertools import chain
-from typing import Iterable, Iterator
 
 from elasticai.creator.vhdl.language import (
     Architecture,
@@ -63,7 +62,7 @@ class LSTMCellTestBench:
     def file_name(self) -> str:
         return f"{self.component_name}_tb.vhd"
 
-    def __call__(self) -> Iterable[str]:
+    def __call__(self) -> Code:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee", "work"]),
             use_clause=UseClause(
@@ -276,7 +275,7 @@ class TestCasesLSTMCommonGate(TestBenchBase):
         self.y_list_for_testing = list(map(int, y_list_for_testing))
         self.y_variable_name = y_variable_name
 
-    def _body(self) -> Iterator[str]:
+    def _body(self) -> Code:
         counter = 0
         yield f"vector_len <= to_unsigned(10, VECTOR_LEN_WIDTH)"
         for x_mem_value, w_mem_value, b, y_value in zip(
@@ -302,7 +301,7 @@ class TestCasesLSTMCommonGate(TestBenchBase):
             yield "wait for 1*clk_period"
             counter = counter + 1
 
-    def __call__(self):
+    def __call__(self) -> Code:
         yield from iter(self)
 
 
@@ -323,7 +322,7 @@ class TestCasesLSTMCell(TestBenchBase):
         self.len_of_cell_vector = hidden_size
         self.len_of_h_vector = hidden_size
 
-    def _body(self) -> Iterator[str]:
+    def _body(self) -> Code:
         yield f"reset <= '1'"
         yield f"h_out_en <= '0'"
         yield f"wait for 2*clk_period"
@@ -346,5 +345,5 @@ class TestCasesLSTMCell(TestBenchBase):
         yield f"{Keywords.END.value} loop"
         yield f"wait for 10*clk_period"
 
-    def __call__(self) -> Iterable[Code]:
+    def __call__(self) -> Code:
         yield from iter(self)

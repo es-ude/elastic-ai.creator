@@ -4,11 +4,11 @@ import numpy as np
 import torch
 from torch.nn import LSTM, LSTMCell
 
+from elasticai.creator.vhdl.components.rom import Rom
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
 )
-from elasticai.creator.vhdl.rom import Rom
 
 
 def generate_rom_file(

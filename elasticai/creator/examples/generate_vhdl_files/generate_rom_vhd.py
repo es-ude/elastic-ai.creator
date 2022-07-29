@@ -1,8 +1,8 @@
 import os
 from argparse import ArgumentParser
 
+from elasticai.creator.vhdl.components.rom import Rom
 from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
-from elasticai.creator.vhdl.rom import Rom
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
 

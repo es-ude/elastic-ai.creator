@@ -2,12 +2,11 @@
 The module contains classes and functions for generating vhdl code similar to the language module
 This module includes CodeGenerator that are only used by the vhdl testbenches
 """
-import abc
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Iterator
 
 
-class TestBenchBase(abc.ABC):
+class TestBenchBase(ABC):
     simulation_start_msg = 'report "======Simulation Start======" severity Note'
     simulation_end_msgs = (
         'report "======Simulation Success======" severity Note',
