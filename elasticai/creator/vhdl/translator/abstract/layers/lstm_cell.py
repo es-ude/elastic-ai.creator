@@ -12,11 +12,19 @@ from elasticai.creator.vhdl.components import (
 )
 from elasticai.creator.vhdl.components.lstm_cell import LSTMCell as LSTMCellVHDL
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
 from elasticai.creator.vhdl.vhdl_component import VHDLModule
 
 
 @dataclass
-class LSTMCell:
+class LSTMCellTranslationArguments:
+    fixed_point_factory: Callable[[float], FixedPoint]
+    sigmoid_resolution: tuple[float, float, int]
+    tanh_resolution: tuple[float, float, int]
+
+
+@dataclass
+class LSTMCell(Translatable):
     weights_ii: list[list[float]]
     weights_hi: list[list[float]]
     weights_if: list[list[float]]
@@ -56,14 +64,9 @@ class LSTMCell:
 
         return weights, bias
 
-    def translate(
-        self,
-        fixed_point_factory: Callable[[float], FixedPoint],
-        sigmoid_resolution: tuple[float, float, int],
-        tanh_resolution: tuple[float, float, int],
-    ) -> VHDLModule:
+    def translate(self, args: LSTMCellTranslationArguments) -> VHDLModule:
         def to_fp(values: list[float]) -> list[FixedPoint]:
-            return list(map(fixed_point_factory, values))
+            return list(map(args.fixed_point_factory, values))
 
         weights, bias = self._build_weights(to_fixed_point=to_fp)
         rom_names = (
@@ -73,12 +76,12 @@ class LSTMCell:
             yield Rom(rom_name=rom_name, values=rom_values, resource_option="auto")
 
         yield Sigmoid(
-            x=to_fp(np.linspace(*sigmoid_resolution).tolist()),  # type: ignore
+            x=to_fp(np.linspace(*args.sigmoid_resolution).tolist()),  # type: ignore
             component_name="sigmoid",
         )
 
         yield Tanh(
-            x=to_fp(np.linspace(*tanh_resolution).tolist()),  # type: ignore
+            x=to_fp(np.linspace(*args.tanh_resolution).tolist()),  # type: ignore
             component_name="tanh",
         )
 

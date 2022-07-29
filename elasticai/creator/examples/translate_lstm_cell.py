@@ -7,7 +7,7 @@ import torch.nn
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
-    BuildFunctionMapping,
+    DefaultBuildFunctionMapping,
 )
 
 
@@ -33,9 +33,9 @@ def main() -> None:
     model = LSTMCellModel()
 
     translated = translator.translate_model(
-        model=model, build_function_mapping=BuildFunctionMapping()
+        model=model, build_function_mapping=DefaultBuildFunctionMapping()
     )
-    code = translator.generate_code(
+    code_repr = translator.generate_code(
         translatable_layers=translated,
         translation_args=dict(
             LSTMCell=dict(
@@ -45,7 +45,7 @@ def main() -> None:
             )
         ),
     )
-    translator.save_code(code=code, path=args.build_dir)
+    translator.save_code(code_repr=code_repr, path=args.build_dir)
 
 
 if __name__ == "__main__":

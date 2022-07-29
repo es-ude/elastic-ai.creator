@@ -1,6 +1,6 @@
 import unittest
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Any, Iterable
 
 import torch.nn
 
@@ -34,7 +34,7 @@ class VHDLComponentMock:
 class TranslatableMock:
     components: list[VHDLComponent]
 
-    def translate(self, *args, **kwargs) -> VHDLModule:
+    def translate(self, args: Any) -> VHDLModule:
         yield from self.components
 
 
@@ -45,6 +45,11 @@ def fake_build_function(module: torch.nn.Module) -> TranslatableMock:
             VHDLComponentMock(name="component2", code=["4", "5", "6"]),
         ]
     )
+
+
+class MockBuildFunctionMapping(BuildFunctionMapping):
+    def __init__(self) -> None:
+        super().__init__(mapping={"torch.nn.modules.rnn.LSTMCell": fake_build_function})
 
 
 def unpack_module_directories(
@@ -61,8 +66,7 @@ def unpack_module_directories(
 
 class TranslatorTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.build_mapping = BuildFunctionMapping()
-        self.build_mapping.set(torch.nn.LSTMCell, fake_build_function)
+        self.build_mapping = MockBuildFunctionMapping()
 
     def test_translate_model_empty_model(self) -> None:
         model = torch.nn.Sequential()

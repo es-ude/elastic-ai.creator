@@ -8,7 +8,10 @@ from elasticai.creator.vhdl.components.rom import Rom
 from elasticai.creator.vhdl.components.sigmoid import Sigmoid
 from elasticai.creator.vhdl.components.tanh import Tanh
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_cell import LSTMCell
+from elasticai.creator.vhdl.translator.abstract.layers.lstm_cell import (
+    LSTMCell,
+    LSTMCellTranslationArguments,
+)
 
 
 class LSTMCellTest(TestCase):
@@ -32,18 +35,18 @@ class LSTMCellTest(TestCase):
             bias_ho=[8, 9],
         )
 
-        self.translation_args = dict(
+        self.translation_args = LSTMCellTranslationArguments(
             fixed_point_factory=partial(FixedPoint, total_bits=8, frac_bits=2),
             sigmoid_resolution=(-2.5, 2.5, 256),
             tanh_resolution=(-1, 1, 256),
         )
 
     def test_correct_number_of_components(self) -> None:
-        vhdl_components = list(self.cell.translate(**self.translation_args))
+        vhdl_components = list(self.cell.translate(self.translation_args))
         self.assertEqual(len(vhdl_components), 13)
 
     def test_contains_all_needed_components(self) -> None:
-        vhdl_components = self.cell.translate(**self.translation_args)
+        vhdl_components = self.cell.translate(self.translation_args)
 
         target_components = [
             (Rom, "wi_rom.vhd"),

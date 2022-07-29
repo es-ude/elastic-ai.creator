@@ -43,14 +43,14 @@ def translate_model(
         lambda x: not isinstance(x, torch.nn.Sequential), model.modules()
     )
     for layer in flat_model:
-        build_fn = build_function_mapping.get(layer)
+        build_fn = build_function_mapping.get_from_layer(layer)
         if build_fn is not None:
             yield build_fn(layer)
 
 
 def generate_code(
     translatable_layers: Iterable[Translatable],
-    translation_args: dict[str, dict[str, Any]],
+    translation_args: dict[str, Any],
 ) -> Iterator[ModuleDirectory]:
     """
     Takes an iterable of Translatable objects a dictionary of arguments for each Translatable object type and performs
@@ -61,10 +61,6 @@ def generate_code(
             The intermediate representation as an iterator of Translatable objects.
         translation_args (dict[str, dict[str, Any]]):
             Dictionary with the translation arguments for each kind of Translatable included in the translatable_layers.
-            The dictionary must have the following form:
-            args = {
-                "translatable_name": {"arg1": "value1", ...}
-            }
 
     Returns:
         Iterator[ModuleDirectory]:
@@ -76,9 +72,8 @@ def generate_code(
         module_class_name = type(module).__name__
 
         args = translation_args.get(module_class_name)
-        args = dict() if args is None else args
 
-        components = module.translate(**args)
+        components = module.translate(args)
         files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
 
         yield ModuleDirectory(
@@ -86,16 +81,16 @@ def generate_code(
         )
 
 
-def save_code(code: Iterable[ModuleDirectory], path: PathType) -> None:
+def save_code(code_repr: Iterable[ModuleDirectory], path: PathType) -> None:
     """
     Saves the generated code on the file system.
 
     Parameters:
-        code (Iterable[ModuleDirectory]): The generated code that should be saved.
+        code_repr (Iterable[ModuleDirectory]): The generated code that should be saved.
         path (PathType):
             The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
     """
-    for module in code:
+    for module in code_repr:
         module_path = os.path.join(path, module.dir_name)
         os.makedirs(module_path, exist_ok=True)
 
