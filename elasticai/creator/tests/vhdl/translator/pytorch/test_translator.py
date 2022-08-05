@@ -8,6 +8,7 @@ from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
 from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
+    DEFAULT_BUILD_FUNCTION_MAPPING,
     BuildFunctionMapping,
 )
 from elasticai.creator.vhdl.translator.pytorch.translator import (
@@ -118,7 +119,9 @@ class TranslatorTest(unittest.TestCase):
             return input_size, hidden_size
 
         model = Model()
-        translated = list(translator.translate_model(model, BuildFunctionMapping()))
+        translated = list(
+            translator.translate_model(model, DEFAULT_BUILD_FUNCTION_MAPPING)
+        )
 
         self.assertEqual(extract_input_hidden_size(translated[0]), (1, 2))  # type: ignore
         self.assertEqual(extract_input_hidden_size(translated[1]), (2, 3))  # type: ignore

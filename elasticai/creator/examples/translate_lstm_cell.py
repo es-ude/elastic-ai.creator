@@ -10,7 +10,7 @@ from elasticai.creator.vhdl.translator.abstract.layers import (
 )
 from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
-    DefaultBuildFunctionMapping,
+    DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 
 
@@ -36,7 +36,7 @@ def main() -> None:
     model = LSTMCellModel()
 
     translated = translator.translate_model(
-        model=model, build_function_mapping=DefaultBuildFunctionMapping()
+        model=model, build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING
     )
     code_repr = translator.generate_code(
         translatable_layers=translated,

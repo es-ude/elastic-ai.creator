@@ -13,6 +13,15 @@ class BuildFunctionMapping(Mapping[str, BuildFunction]):
     def __init__(self, mapping: dict[str, BuildFunction]):
         self._mapping = mapping
 
+    def __getitem__(self, key: str) -> BuildFunction:
+        return self._mapping[key]
+
+    def __len__(self) -> int:
+        return len(self._mapping)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._mapping)
+
     @staticmethod
     def _infer_type(x: type | object) -> type:
         return x if isinstance(x, type) else type(x)
@@ -26,21 +35,24 @@ class BuildFunctionMapping(Mapping[str, BuildFunction]):
     ) -> BuildFunction | None:
         return self._mapping.get(self._get_cls_name(self._infer_type(layer)))
 
-    def __getitem__(self, key: str) -> BuildFunction:
-        return self._mapping[key]
-
-    def __len__(self) -> int:
-        return len(self._mapping)
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._mapping)
-
     def to_dict(self) -> dict[str, BuildFunction]:
         return self._mapping.copy()
 
+    def join_with_dict(self, other: dict[str, BuildFunction]) -> "BuildFunctionMapping":
+        """
+        Join this build function mapping with another mapping and returns the new resulting mapping. If the current
+        mapping and the other mapping share keys, the other mapping keys will overwrite the current keys.
 
-class DefaultBuildFunctionMapping(BuildFunctionMapping):
-    def __init__(self):
-        super().__init__(
-            mapping={"torch.nn.modules.rnn.LSTMCell": build_lstm_cell},
-        )
+        Parameters:
+            other (dict[str, BuildFunction]): Dictionary that maps the path of a module to its BuildFunction.
+
+        Returns:
+            BuildFunctionMapping: The resulting build function mapping after joining both mappings.
+
+        """
+        return BuildFunctionMapping(mapping=self._mapping | other)
+
+
+DEFAULT_BUILD_FUNCTION_MAPPING = BuildFunctionMapping(
+    mapping={"torch.nn.modules.rnn.LSTMCell": build_lstm_cell}
+)

@@ -8,6 +8,7 @@ from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
 from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
+    DEFAULT_BUILD_FUNCTION_MAPPING,
     BuildFunctionMapping,
 )
 
@@ -25,7 +26,8 @@ class ModuleDirectory:
 
 
 def translate_model(
-    model: torch.nn.Module, build_function_mapping: BuildFunctionMapping
+    model: torch.nn.Module,
+    build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
 ) -> Iterator[Translatable]:
     """
     Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
@@ -34,7 +36,8 @@ def translate_model(
     Parameters:
         model (torch.nn.Module): The PyTorch-model that should be translated.
         build_function_mapping (BuildFunctionMapping):
-            Object that maps a given PyTorch-layer to its corresponding build function.
+            Object that maps a given PyTorch-layer to its corresponding build function. If not given the default build
+            functions will be used.
 
     Returns:
         Iterator[Translatable]: Iterator that yields for each layer one Translatable object.
