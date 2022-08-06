@@ -20,16 +20,12 @@ class BuildFunctionMapping(Mapping[str, BuildFunction]):
         return iter(self._mapping)
 
     @staticmethod
-    def _infer_type(x: type | object) -> type:
-        return x if isinstance(x, type) else type(x)
+    def _get_cls_name(obj: Any) -> str:
+        return f"{type(obj).__module__}.{type(obj).__name__}"
 
-    @staticmethod
-    def _get_cls_name(cls: type) -> str:
-        return f"{cls.__module__}.{cls.__name__}"
-
-    def get_from_layer(self, layer: Any | type) -> BuildFunction | None:
-        x = self._get_cls_name(self._infer_type(layer))
-        return self._mapping.get(x)
+    def get_from_layer(self, layer: Any) -> BuildFunction | None:
+        print(self._get_cls_name(layer))
+        return self._mapping.get(self._get_cls_name(layer))
 
     def to_dict(self) -> dict[str, BuildFunction]:
         return self._mapping.copy()
