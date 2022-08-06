@@ -6,10 +6,12 @@ import torch.nn
 
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
-from elasticai.creator.vhdl.translator.pytorch import translator
-from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
-    DEFAULT_BUILD_FUNCTION_MAPPING,
+from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
+)
+from elasticai.creator.vhdl.translator.pytorch import translator
+from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
+    DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 from elasticai.creator.vhdl.translator.pytorch.translator import (
     CodeFile,

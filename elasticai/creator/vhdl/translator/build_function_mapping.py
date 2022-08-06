@@ -1,12 +1,9 @@
 from collections.abc import Mapping
-from typing import Callable, Iterator
-
-import torch
+from typing import Any, Callable, Iterator
 
 from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
-from elasticai.creator.vhdl.translator.pytorch.build_functions import build_lstm_cell
 
-BuildFunction = Callable[[torch.nn.Module], Translatable]
+BuildFunction = Callable[[Any], Translatable]
 
 
 class BuildFunctionMapping(Mapping[str, BuildFunction]):
@@ -30,10 +27,9 @@ class BuildFunctionMapping(Mapping[str, BuildFunction]):
     def _get_cls_name(cls: type) -> str:
         return f"{cls.__module__}.{cls.__name__}"
 
-    def get_from_layer(
-        self, layer: torch.nn.Module | type[torch.nn.Module]
-    ) -> BuildFunction | None:
-        return self._mapping.get(self._get_cls_name(self._infer_type(layer)))
+    def get_from_layer(self, layer: Any | type) -> BuildFunction | None:
+        x = self._get_cls_name(self._infer_type(layer))
+        return self._mapping.get(x)
 
     def to_dict(self) -> dict[str, BuildFunction]:
         return self._mapping.copy()
@@ -51,8 +47,3 @@ class BuildFunctionMapping(Mapping[str, BuildFunction]):
 
         """
         return BuildFunctionMapping(mapping=self._mapping | other)
-
-
-DEFAULT_BUILD_FUNCTION_MAPPING = BuildFunctionMapping(
-    mapping={"torch.nn.modules.rnn.LSTMCell": build_lstm_cell}
-)

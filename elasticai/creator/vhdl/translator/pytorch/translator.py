@@ -7,9 +7,11 @@ import torch
 from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
-from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
-    DEFAULT_BUILD_FUNCTION_MAPPING,
+from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
+)
+from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
+    DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 
 

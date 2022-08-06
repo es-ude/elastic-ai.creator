@@ -9,7 +9,7 @@ from elasticai.creator.vhdl.translator.abstract.layers import (
     LSTMCellTranslationArguments,
 )
 from elasticai.creator.vhdl.translator.pytorch import translator
-from elasticai.creator.vhdl.translator.pytorch.build_function_mapping import (
+from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 
