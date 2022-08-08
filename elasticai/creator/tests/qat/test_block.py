@@ -47,25 +47,6 @@ class BlockTests(unittest.TestCase):
             out = module(input)
             self.assertEqual(list(out.size()), [1, 32, 30])
 
-        with self.subTest("test codomain"):
-            module = Conv1dBlock(
-                in_channels=1,
-                out_channels=32,
-                kernel_size=3,
-                conv_quantizer=Binarize(),
-                activation=Ternarize(),
-                stride=1,
-                padding=0,
-                dilation=1,
-                groups=1,
-                bias=True,
-                padding_mode="zeros",
-                constraints=None,
-            )
-            module.eval()
-            codomain = module.codomain
-            self.assertEqual(codomain, Ternarize().codomain)
-
     def test_Depthwiseconv1d_block(self):
         with self.subTest("test params"):
             module = DepthwiseConv1dBlock(

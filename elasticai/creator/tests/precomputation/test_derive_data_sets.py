@@ -39,9 +39,6 @@ class DeriveDataSetsTests(unittest.TestCase):
         table = create_input_data([1], [0, 1, -1])
         self.assertTrue((table == [[-1], [0], [1]]).all())
 
-    def test_create_input_data_raiseSystemExit(self) -> None:
-        self.assertRaises(MemoryError, create_input_data, [6, 6], [-1, 1])
-
     def test_create_io_table_basic(self) -> None:
         inputs = np.array([[1], [2], [3]])
         outputs = [
