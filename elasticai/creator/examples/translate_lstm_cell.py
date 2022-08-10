@@ -5,9 +5,7 @@ from pathlib import Path
 import torch.nn
 
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers import (
-    LSTMCellTranslationArguments,
-)
+from elasticai.creator.vhdl.translator.abstract.layers import LSTMTranslationArguments
 from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
@@ -41,7 +39,7 @@ def main() -> None:
     code_repr = translator.generate_code(
         translatable_layers=translated,
         translation_args=dict(
-            LSTMCell=LSTMCellTranslationArguments(
+            LSTMCell=LSTMTranslationArguments(
                 fixed_point_factory=partial(FixedPoint, total_bits=16, frac_bits=8),
                 sigmoid_resolution=(-2.5, 2.5, 256),
                 tanh_resolution=(-1, 1, 256),

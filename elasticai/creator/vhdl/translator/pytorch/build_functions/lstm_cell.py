@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
+from elasticai.creator.vhdl.translator.abstract.layers import LSTM
 
 
 def _extract_weights(
@@ -35,5 +35,5 @@ def _extract_weights(
     return dict(**weights_i, **weights_h, **bias_i, **bias_h)
 
 
-def build_lstm_cell(lstm_cell: torch.nn.LSTMCell) -> LSTMCell:
-    return LSTMCell(**_extract_weights(lstm_cell))
+def build_lstm_cell(lstm_cell: torch.nn.LSTMCell) -> LSTM:
+    return LSTM(**_extract_weights(lstm_cell))

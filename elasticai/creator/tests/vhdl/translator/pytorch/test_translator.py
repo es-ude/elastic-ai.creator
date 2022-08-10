@@ -5,7 +5,7 @@ from typing import Any, Iterable
 import torch.nn
 
 from elasticai.creator.vhdl.language import Code
-from elasticai.creator.vhdl.translator.abstract.layers import LSTMCell
+from elasticai.creator.vhdl.translator.abstract.layers import LSTM
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -115,7 +115,7 @@ class TranslatorTest(unittest.TestCase):
             def forward(self, x: torch.Tensor) -> torch.Tensor:
                 return self.lstm_cell_2(self.lstm_cell_1(x))
 
-        def extract_input_hidden_size(cell: LSTMCell) -> tuple[int, int]:
+        def extract_input_hidden_size(cell: LSTM) -> tuple[int, int]:
             hidden_size = len(cell.weights_ii)
             input_size = len(cell.weights_ii[0]) if hidden_size > 0 else 0
             return input_size, hidden_size

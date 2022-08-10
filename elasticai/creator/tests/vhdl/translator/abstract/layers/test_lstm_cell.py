@@ -8,15 +8,15 @@ from elasticai.creator.vhdl.components.rom import Rom
 from elasticai.creator.vhdl.components.sigmoid import Sigmoid
 from elasticai.creator.vhdl.components.tanh import Tanh
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_cell import (
-    LSTMCell,
-    LSTMCellTranslationArguments,
+from elasticai.creator.vhdl.translator.abstract.layers.lstm import (
+    LSTM,
+    LSTMTranslationArguments,
 )
 
 
 class LSTMCellTest(TestCase):
     def setUp(self) -> None:
-        self.cell = LSTMCell(
+        self.cell = LSTM(
             weights_ii=[[1, 2], [3, 4]],
             weights_hi=[[2, 3], [4, 5]],
             weights_if=[[3, 4], [5, 6]],
@@ -35,7 +35,7 @@ class LSTMCellTest(TestCase):
             bias_ho=[8, 9],
         )
 
-        self.translation_args = LSTMCellTranslationArguments(
+        self.translation_args = LSTMTranslationArguments(
             fixed_point_factory=partial(FixedPoint, total_bits=8, frac_bits=2),
             sigmoid_resolution=(-2.5, 2.5, 256),
             tanh_resolution=(-1, 1, 256),

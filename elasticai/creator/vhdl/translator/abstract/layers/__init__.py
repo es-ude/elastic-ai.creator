@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_cell import (
-    LSTMCell,
-    LSTMCellTranslationArguments,
+from elasticai.creator.vhdl.translator.abstract.layers.lstm import (
+    LSTM,
+    LSTMTranslationArguments,
 )
