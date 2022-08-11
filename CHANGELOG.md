@@ -2,6 +2,41 @@
 
 <!--next-version-placeholder-->
 
+## v0.11.0 (2022-08-11)
+### Feature
+* **vhdl:** Adapt the example to the changes of the translation ([`6a5644e`](https://github.com/es-ude/elastic-ai.creator/commit/6a5644e30a7cd00ed1be1c2cb6fa2e0b4b114c1e))
+* **vhdl:** Change translation from LSTMCell to LSTM ([`5e4f1cf`](https://github.com/es-ude/elastic-ai.creator/commit/5e4f1cff380fabd3685660a0c279b9098c4ef278))
+* **vhdl:** Removed the possibility to get a build function from a type ([`dbc2e8f`](https://github.com/es-ude/elastic-ai.creator/commit/dbc2e8ffd95f5ddc2476fede9d170c9d4eb020c2))
+* **vhdl:** Make build function mapping more general so that it can be reused for other frameworks ([`3369d7f`](https://github.com/es-ude/elastic-ai.creator/commit/3369d7fb6a7d08930514a7c0553c9efe65fc54b9))
+* **vhdl:** Change build function mapping to a different approach ([`b1b79b2`](https://github.com/es-ude/elastic-ai.creator/commit/b1b79b2e5e9ea0cf627b16a41f1f75bf434b795e))
+* **vhdl:** Add LSTMCellTranslationArguments to __init__.py file ([`061ead4`](https://github.com/es-ude/elastic-ai.creator/commit/061ead404dc82ddc79ac75c155328ad5733eb04a))
+* **vhdl:** Pass an DTO to a translatable instead of raw arguments to fix typing errors ([`2c33869`](https://github.com/es-ude/elastic-ai.creator/commit/2c33869cce5bed725a90ea3a4980bc026aec1ac4))
+* **vhdl:** Pass an DTO to a translatable instead of raw arguments to fix typing errors ([`4738725`](https://github.com/es-ude/elastic-ai.creator/commit/4738725d09ca9114064c4c42dd2818fc6d5c973b))
+* **vhdl:** Implement a more functional build function mapping ([`1425e03`](https://github.com/es-ude/elastic-ai.creator/commit/1425e0304cf35617106199936d3b014c0d8ca483))
+* **examples:** Add an example using the vhdl translator for pytorch ([`395adcd`](https://github.com/es-ude/elastic-ai.creator/commit/395adcd3e843b7f55f6156ba183dc8800055ef51))
+* **vhdl:** Add the ability to infer the build function from a given layer object or type ([`306df14`](https://github.com/es-ude/elastic-ai.creator/commit/306df1427177d15c1b1e2c59b2e774a2a6e2c471))
+* **vhdl:** First untested draft for the pytorch translator ([`7e59462`](https://github.com/es-ude/elastic-ai.creator/commit/7e5946259381af397e1ccd25006815af8256026f))
+* **vhdl:** Implementation of the mapping of a torch module to the corresponding build function ([`b076fa3`](https://github.com/es-ude/elastic-ai.creator/commit/b076fa32cef3c64f8fcc45df24814f4333c90b5c))
+* **vhdl:** Use __init__ files to simplify the usage ([`3cc07ee`](https://github.com/es-ude/elastic-ai.creator/commit/3cc07ee048a349ef5a6a5383dcd829d64b48de2d))
+* **vhdl:** Add a build function to create an abstract LSTMCell object from a PyTorch LSTMCell ([`baca5bb`](https://github.com/es-ude/elastic-ai.creator/commit/baca5bb6c22692cf9bfc02a9147711b8869930fd))
+* **vhdl:** Abstract LSTM cell takes float weights instead of FixedPoint weights ([`a5818cc`](https://github.com/es-ude/elastic-ai.creator/commit/a5818cc0edd918ef3ca49e843738823e988bfd79))
+* **vhdl:** Introduce translation arguments ([`2c3a8c7`](https://github.com/es-ude/elastic-ai.creator/commit/2c3a8c72cfe8df70fd960e692d4fe037e2e86b6f))
+* **vhdl:** Add a protocol specify a translatable layer ([`0fa966e`](https://github.com/es-ude/elastic-ai.creator/commit/0fa966e7f99ef2adb19321b3ca92202616b4c0a2))
+* **vhdl:** Add ability to pass kwargs to the translate function of a translatable layer ([`196812e`](https://github.com/es-ude/elastic-ai.creator/commit/196812eecd0dc49a1b8c2d6675b9018ca07e003e))
+* **vhdl:** Implementation of a LSTMCell class that can be translated to VHDL ([`ace37fe`](https://github.com/es-ude/elastic-ai.creator/commit/ace37fe4b215327bc5b43344ffcd0c44a4822dda))
+
+### Fix
+* **vhdl:** Remove print call ([`55164b7`](https://github.com/es-ude/elastic-ai.creator/commit/55164b78c61f37f4cdadde0385965ee540e4f555))
+* **vhdl:** Rename LSTMCell translatable to LSTM ([`e05cd04`](https://github.com/es-ude/elastic-ai.creator/commit/e05cd042daf0420b2046607e00eeef3606a6defb))
+* **examples:** Use LSTMTranslationArguments object instead of a dictionary ([`98a4d97`](https://github.com/es-ude/elastic-ai.creator/commit/98a4d97f8fbd217f67ed4009ab63ccc4705f720d))
+* **vhdl:** Fix mypy typing errors ([`e1dba31`](https://github.com/es-ude/elastic-ai.creator/commit/e1dba317585c269ad58719184fb4764cc66485ae))
+* **vhdl:** Fix wrong pytorch lstm cell class path ([`85a733c`](https://github.com/es-ude/elastic-ai.creator/commit/85a733cb5ff821bb602b5021f6438b7d5909382e))
+* **vhdl:** Fix test ([`528910c`](https://github.com/es-ude/elastic-ai.creator/commit/528910cf3fe28958ebb7b246104e83df77bbf3f4))
+
+### Documentation
+* **vhdl:** Add some docstrings to the functions of the translator ([`6f9215e`](https://github.com/es-ude/elastic-ai.creator/commit/6f9215e5fc35287517d884a702bf887d7a09aa7f))
+* **readme:** Fix commands of install dev dependencies ([`870e2de`](https://github.com/es-ude/elastic-ai.creator/commit/870e2de30f48223d8005bcf1240b624ebb314ad7))
+
 ## v0.10.1 (2022-06-29)
 ### Fix
 * **gh-workflow:** Fix error in the main.yml ([`4a6ff5e`](https://github.com/es-ude/elastic-ai.creator/commit/4a6ff5e61f35661a3ef83ce4335c109333834d6d))
