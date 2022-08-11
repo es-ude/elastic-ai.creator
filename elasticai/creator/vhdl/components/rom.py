@@ -20,7 +20,7 @@ class Rom:
         rom_name: str,
         values: Sequence[FixedPoint],
         resource_option: str,
-    ):
+    ) -> None:
         self.rom_name = rom_name
         self.data_width, _ = infer_total_and_frac_bits(values)
         self.addr_width = self._calculate_required_addr_width_to_access_items(values)
@@ -34,6 +34,10 @@ class Rom:
     def _calculate_required_addr_width_to_access_items(items: Sequence) -> int:
         return max(1, math.ceil(math.log2(len(items))))
 
+    @property
+    def file_name(self) -> str:
+        return f"{self.rom_name}.vhd"
+
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
@@ -45,9 +49,4 @@ class Rom:
             rom_resource_option=f'"{self.resource_option}"',
         )
 
-        stripped_code_lines = map(str.strip, code.splitlines())
-
-        def not_empty(line):
-            return len(line) > 0
-
-        yield from filter(not_empty, stripped_code_lines)
+        yield from code.splitlines()
