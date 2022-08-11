@@ -18,20 +18,20 @@ def read_commandline_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-class LSTMCellModel(torch.nn.Module):
+class LSTMModel(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.lstm_cell_1 = torch.nn.LSTMCell(input_size=10, hidden_size=100)
-        self.lstm_cell_2 = torch.nn.LSTMCell(input_size=100, hidden_size=10)
+        self.lstm_1 = torch.nn.LSTM(input_size=10, hidden_size=100)
+        self.lstm_2 = torch.nn.LSTM(input_size=100, hidden_size=10)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.lstm_cell_2(self.lstm_cell_1(x)[0])
+        return self.lstm_2(self.lstm_1(x)[0])
 
 
 def main() -> None:
     args = read_commandline_args()
 
-    model = LSTMCellModel()
+    model = LSTMModel()
 
     translated = translator.translate_model(
         model=model, build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING
@@ -39,7 +39,7 @@ def main() -> None:
     code_repr = translator.generate_code(
         translatable_layers=translated,
         translation_args=dict(
-            LSTMCell=LSTMTranslationArguments(
+            LSTM=LSTMTranslationArguments(
                 fixed_point_factory=partial(FixedPoint, total_bits=16, frac_bits=8),
                 sigmoid_resolution=(-2.5, 2.5, 256),
                 tanh_resolution=(-1, 1, 256),
