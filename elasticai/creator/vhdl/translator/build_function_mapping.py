@@ -24,7 +24,6 @@ class BuildFunctionMapping(Mapping[str, BuildFunction]):
         return f"{type(obj).__module__}.{type(obj).__name__}"
 
     def get_from_layer(self, layer: Any) -> BuildFunction | None:
-        print(self._get_cls_name(layer))
         return self._mapping.get(self._get_cls_name(layer))
 
     def to_dict(self) -> dict[str, BuildFunction]:
