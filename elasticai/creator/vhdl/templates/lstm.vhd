@@ -7,13 +7,13 @@ use ieee.numeric_std.all;
 library work;
 use work.lstm_common.all;
 
-entity lstm_cell is
+entity lstm is
     generic (
         DATA_WIDTH  : integer := 8;    -- that fixed point data has 16bits
         FRAC_WIDTH  : integer := 4;     -- and 8bits is for the factional part
 
-        INPUT_SIZE  : integer := 5;     -- same as input_size of the lstm_cell in PyTorch
-        HIDDEN_SIZE : integer := 3;     -- same as hidden_size of the lstm_cell in PyTorch
+        INPUT_SIZE  : integer := 5;     -- same as input_size of the lstm in PyTorch
+        HIDDEN_SIZE : integer := 3;     -- same as hidden_size of the lstm in PyTorch
 
         X_H_ADDR_WIDTH : integer := 3;  -- equals to ceil(log2(input_size+hidden_size))
         HIDDEN_ADDR_WIDTH  : integer := 2; -- equals to ceil(log2(input_size))
@@ -37,9 +37,9 @@ entity lstm_cell is
         h_out_addr : in std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0); -- each rising_edge update h_out_data
         h_out_data : out std_logic_vector(DATA_WIDTH-1 downto 0)  --  accordingly when h_out_en is high
     );
-end lstm_cell;
+end lstm;
 
-architecture rtl of lstm_cell is
+architecture rtl of lstm is
 
     constant VECTOR_LENGTH : integer := INPUT_SIZE + HIDDEN_SIZE;
     constant MATRIX_LENGHT : integer := (INPUT_SIZE + HIDDEN_SIZE) * HIDDEN_SIZE;

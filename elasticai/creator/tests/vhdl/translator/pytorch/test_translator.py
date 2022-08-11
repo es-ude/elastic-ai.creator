@@ -50,11 +50,6 @@ def fake_build_function(module: torch.nn.Module) -> TranslatableMock:
     )
 
 
-class MockBuildFunctionMapping(BuildFunctionMapping):
-    def __init__(self) -> None:
-        super().__init__(mapping={"torch.nn.modules.rnn.LSTMCell": fake_build_function})
-
-
 def unpack_module_directories(
     modules: Iterable[ModuleDirectory],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
@@ -69,7 +64,9 @@ def unpack_module_directories(
 
 class TranslatorTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.build_mapping = MockBuildFunctionMapping()
+        self.build_mapping = BuildFunctionMapping(
+            mapping={"torch.nn.modules.rnn.LSTM": fake_build_function}
+        )
 
     def test_translate_model_empty_model(self) -> None:
         model = torch.nn.Sequential()
@@ -77,7 +74,7 @@ class TranslatorTest(unittest.TestCase):
         self.assertEqual(len(list(translated_model)), 0)
 
     def test_translate_model_with_one_layer(self) -> None:
-        model = torch.nn.Sequential(torch.nn.LSTMCell(input_size=1, hidden_size=2))
+        model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
 
         translated_model = list(translator.translate_model(model, self.build_mapping))
 
@@ -85,7 +82,7 @@ class TranslatorTest(unittest.TestCase):
         self.assertEqual(type(translated_model[0]), TranslatableMock)
 
     def test_generate_code(self) -> None:
-        model = torch.nn.Sequential(torch.nn.LSTMCell(input_size=1, hidden_size=2))
+        model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
         translated_model = translator.translate_model(model, self.build_mapping)
         modules = translator.generate_code(
             translatable_layers=translated_model, translation_args=dict()
@@ -109,15 +106,15 @@ class TranslatorTest(unittest.TestCase):
         class Model(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
-                self.lstm_cell_2 = torch.nn.LSTMCell(input_size=2, hidden_size=3)
-                self.lstm_cell_1 = torch.nn.LSTMCell(input_size=1, hidden_size=2)
+                self.lstm_2 = torch.nn.LSTM(input_size=2, hidden_size=3)
+                self.lstm_1 = torch.nn.LSTM(input_size=1, hidden_size=2)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.lstm_cell_2(self.lstm_cell_1(x))
+                return self.lstm_2(self.lstm_1(x))
 
-        def extract_input_hidden_size(cell: LSTM) -> tuple[int, int]:
-            hidden_size = len(cell.weights_ii)
-            input_size = len(cell.weights_ii[0]) if hidden_size > 0 else 0
+        def extract_input_hidden_size(lstm: LSTM) -> tuple[int, int]:
+            hidden_size = len(lstm.weights_hh[0][0])
+            input_size = len(lstm.weights_ih[0][0])
             return input_size, hidden_size
 
         model = Model()

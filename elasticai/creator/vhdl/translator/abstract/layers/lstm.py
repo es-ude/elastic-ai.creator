@@ -3,6 +3,7 @@ from typing import Callable
 
 import numpy as np
 
+from elasticai.creator.vhdl.components import LSTM as LSTM_VHDL
 from elasticai.creator.vhdl.components import (
     DualPort2ClockRam,
     LSTMCommon,
@@ -10,7 +11,6 @@ from elasticai.creator.vhdl.components import (
     Sigmoid,
     Tanh,
 )
-from elasticai.creator.vhdl.components.lstm_cell import LSTMCell as LSTMCellVHDL
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
 from elasticai.creator.vhdl.vhdl_component import VHDLModule
@@ -92,5 +92,5 @@ class LSTM(Translatable):
             component_name="tanh",
         )
 
-        for static_cls in (LSTMCellVHDL, LSTMCommon, DualPort2ClockRam):
+        for static_cls in (LSTM_VHDL, LSTMCommon, DualPort2ClockRam):
             yield static_cls()

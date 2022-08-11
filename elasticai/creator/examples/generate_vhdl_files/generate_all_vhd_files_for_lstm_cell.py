@@ -133,7 +133,7 @@ def main() -> None:
     format_vhdl(file_path=file_path_testbench)
 
     # copy static files
-    for file in ["dual_port_2_clock_ram.vhd", "lstm_cell.vhd", "lstm_common.vhd"]:
+    for file in ["dual_port_2_clock_ram.vhd", "lstm.vhd", "lstm_common.vhd"]:
         copy_file("elasticai.creator.vhdl.templates", file, destination_path(file))
 
 
