@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.nn import LSTM, LSTMCell
 
-from elasticai.creator.vhdl.components.rom import Rom
+from elasticai.creator.vhdl.components.rom_component import RomComponent
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
@@ -26,7 +26,7 @@ def generate_rom_file(
         resource_option (str): resource option
     """
     with open(file_path, "w") as writer:
-        rom = Rom(
+        rom = RomComponent(
             rom_name=rom_name,
             values=values,
             resource_option=resource_option,

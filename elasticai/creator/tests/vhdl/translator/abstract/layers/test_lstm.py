@@ -1,22 +1,26 @@
 from functools import partial
 from unittest import TestCase
 
-from elasticai.creator.vhdl.components.dual_port_2_clock_ram import DualPort2ClockRam
-from elasticai.creator.vhdl.components.lstm import LSTM as LSTMComponent
-from elasticai.creator.vhdl.components.lstm_common import LSTMCommon
-from elasticai.creator.vhdl.components.rom import Rom
-from elasticai.creator.vhdl.components.sigmoid import Sigmoid
-from elasticai.creator.vhdl.components.tanh import Tanh
+from elasticai.creator.vhdl.components.dual_port_2_clock_ram_component import (
+    DualPort2ClockRamComponent,
+)
+from elasticai.creator.vhdl.components.lstm_common_component import LSTMCommonComponent
+from elasticai.creator.vhdl.components.lstm_component import (
+    LSTMComponent as LSTMComponent,
+)
+from elasticai.creator.vhdl.components.rom_component import RomComponent
+from elasticai.creator.vhdl.components.sigmoid_component import SigmoidComponent
+from elasticai.creator.vhdl.components.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.lstm import (
-    LSTM,
+from elasticai.creator.vhdl.translator.abstract.layers.abstract_lstm import (
+    AbstractLSTM,
     LSTMTranslationArguments,
 )
 
 
 class LSTMTest(TestCase):
     def setUp(self) -> None:
-        self.lstm = LSTM(
+        self.lstm = AbstractLSTM(
             weights_ih=[[[1, 2], [3, 4], [5, 6], [7, 8]]],
             weights_hh=[[[1], [2], [3], [4]]],
             biases_ih=[[1, 2, 3, 4]],
@@ -37,19 +41,19 @@ class LSTMTest(TestCase):
         vhdl_components = self.lstm.translate(self.translation_args)
 
         target_components = [
-            (Rom, "wi_rom.vhd"),
-            (Rom, "wf_rom.vhd"),
-            (Rom, "wg_rom.vhd"),
-            (Rom, "wo_rom.vhd"),
-            (Rom, "bi_rom.vhd"),
-            (Rom, "bf_rom.vhd"),
-            (Rom, "bg_rom.vhd"),
-            (Rom, "bo_rom.vhd"),
-            (Sigmoid, "sigmoid.vhd"),
-            (Tanh, "tanh.vhd"),
+            (RomComponent, "wi_rom.vhd"),
+            (RomComponent, "wf_rom.vhd"),
+            (RomComponent, "wg_rom.vhd"),
+            (RomComponent, "wo_rom.vhd"),
+            (RomComponent, "bi_rom.vhd"),
+            (RomComponent, "bf_rom.vhd"),
+            (RomComponent, "bg_rom.vhd"),
+            (RomComponent, "bo_rom.vhd"),
+            (SigmoidComponent, "sigmoid.vhd"),
+            (TanhComponent, "tanh.vhd"),
             (LSTMComponent, "lstm.vhd"),
-            (LSTMCommon, "lstm_common.vhd"),
-            (DualPort2ClockRam, "dual_port_2_clock_ram.vhd"),
+            (LSTMCommonComponent, "lstm_common.vhd"),
+            (DualPort2ClockRamComponent, "dual_port_2_clock_ram.vhd"),
         ]
         actual_components = [(type(x), x.file_name) for x in vhdl_components]
 

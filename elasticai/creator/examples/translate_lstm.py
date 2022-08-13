@@ -39,7 +39,7 @@ def main() -> None:
     code_repr = translator.generate_code(
         translatable_layers=translated,
         translation_args=dict(
-            LSTM=LSTMTranslationArguments(
+            AbstractLSTM=LSTMTranslationArguments(
                 fixed_point_factory=partial(FixedPoint, total_bits=16, frac_bits=8),
                 sigmoid_resolution=(-2.5, 2.5, 256),
                 tanh_resolution=(-1, 1, 256),

@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.translator.abstract.layers.lstm import (
-    LSTM,
+from elasticai.creator.vhdl.translator.abstract.layers.abstract_lstm import (
+    AbstractLSTM,
     LSTMTranslationArguments,
 )

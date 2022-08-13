@@ -22,8 +22,8 @@ class CodeFile:
 
 
 @dataclass
-class ModuleDirectory:
-    dir_name: str
+class Module:
+    module_name: str
     files: Iterable[CodeFile]
 
 
@@ -56,7 +56,7 @@ def translate_model(
 def generate_code(
     translatable_layers: Iterable[Translatable],
     translation_args: dict[str, Any],
-) -> Iterator[ModuleDirectory]:
+) -> Iterator[Module]:
     """
     Takes an iterable of Translatable objects a dictionary of arguments for each Translatable object type and performs
     the translation from the intermediate representation to the actual VHDL code.
@@ -68,9 +68,9 @@ def generate_code(
             Dictionary with the translation arguments for each kind of Translatable included in the translatable_layers.
 
     Returns:
-        Iterator[ModuleDirectory]:
-            Iterator of containers that holds the actual VHDL code. The ModuleDirectory objects holds all CodeFile
-            objects for one Translatable object (module) and the directory name of that module. One CodeFile object
+        Iterator[Module]:
+            Iterator of containers that holds the actual VHDL code. The Module objects holds all CodeFile
+            objects for one Translatable object (module) and the name of that module. One CodeFile object
             holds the file name of that code files and the actual code as an iterable of str (lines).
     """
     for module_index, module in enumerate(translatable_layers):
@@ -81,22 +81,20 @@ def generate_code(
         components = module.translate(args)
         files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
 
-        yield ModuleDirectory(
-            dir_name=f"{module_index}_{module_class_name}", files=files
-        )
+        yield Module(module_name=f"{module_index}_{module_class_name}", files=files)
 
 
-def save_code(code_repr: Iterable[ModuleDirectory], path: PathType) -> None:
+def save_code(code_repr: Iterable[Module], path: PathType) -> None:
     """
     Saves the generated code on the file system.
 
     Parameters:
-        code_repr (Iterable[ModuleDirectory]): The generated code that should be saved.
+        code_repr (Iterable[Module]): The generated code that should be saved.
         path (PathType):
             The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
     """
     for module in code_repr:
-        module_path = os.path.join(path, module.dir_name)
+        module_path = os.path.join(path, module.module_name)
         os.makedirs(module_path, exist_ok=True)
 
         for code_file in module.files:
