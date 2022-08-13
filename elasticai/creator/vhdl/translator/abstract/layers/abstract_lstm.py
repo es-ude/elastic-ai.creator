@@ -3,13 +3,13 @@ from typing import Callable
 
 import numpy as np
 
-from elasticai.creator.vhdl.components import LSTM as LSTM_VHDL
 from elasticai.creator.vhdl.components import (
-    DualPort2ClockRam,
-    LSTMCommon,
-    Rom,
-    Sigmoid,
-    Tanh,
+    DualPort2ClockRamComponent,
+    LSTMCommonComponent,
+    LSTMComponent,
+    RomComponent,
+    SigmoidComponent,
+    TanhComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
@@ -24,7 +24,7 @@ class LSTMTranslationArguments:
 
 
 @dataclass
-class LSTM(Translatable):
+class AbstractLSTM(Translatable):
     """
     Abstract representation of an LSTM layer that can be directly translated to an iterable of VHDLComponent objects.
     Currently, no stacked LSTMs are supported (only single layer LSTMs are supported).
@@ -80,17 +80,23 @@ class LSTM(Translatable):
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
         for rom_values, rom_name in zip(weights + bias, rom_names):
-            yield Rom(rom_name=rom_name, values=rom_values, resource_option="auto")
+            yield RomComponent(
+                rom_name=rom_name, values=rom_values, resource_option="auto"
+            )
 
-        yield Sigmoid(
+        yield SigmoidComponent(
             x=to_fp(np.linspace(*args.sigmoid_resolution).tolist()),  # type: ignore
             component_name="sigmoid",
         )
 
-        yield Tanh(
+        yield TanhComponent(
             x=to_fp(np.linspace(*args.tanh_resolution).tolist()),  # type: ignore
             component_name="tanh",
         )
 
-        for static_cls in (LSTM_VHDL, LSTMCommon, DualPort2ClockRam):
+        for static_cls in (
+            LSTMComponent,
+            LSTMCommonComponent,
+            DualPort2ClockRamComponent,
+        ):
             yield static_cls()

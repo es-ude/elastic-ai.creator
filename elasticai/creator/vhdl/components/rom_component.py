@@ -14,7 +14,7 @@ def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedP
     return numbers + [zero] * (target_length - len(numbers))
 
 
-class Rom:
+class RomComponent:
     def __init__(
         self,
         rom_name: str,

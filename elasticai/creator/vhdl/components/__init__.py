@@ -1,6 +1,8 @@
-from elasticai.creator.vhdl.components.dual_port_2_clock_ram import DualPort2ClockRam
-from elasticai.creator.vhdl.components.lstm import LSTM
-from elasticai.creator.vhdl.components.lstm_common import LSTMCommon
-from elasticai.creator.vhdl.components.rom import Rom
-from elasticai.creator.vhdl.components.sigmoid import Sigmoid
-from elasticai.creator.vhdl.components.tanh import Tanh
+from elasticai.creator.vhdl.components.dual_port_2_clock_ram_component import (
+    DualPort2ClockRamComponent,
+)
+from elasticai.creator.vhdl.components.lstm_common_component import LSTMCommonComponent
+from elasticai.creator.vhdl.components.lstm_component import LSTMComponent
+from elasticai.creator.vhdl.components.rom_component import RomComponent
+from elasticai.creator.vhdl.components.sigmoid_component import SigmoidComponent
+from elasticai.creator.vhdl.components.tanh_component import TanhComponent

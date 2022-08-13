@@ -5,7 +5,7 @@ from elasticai.creator.vhdl.precomputed_scalar_function import (
 )
 
 
-class Sigmoid:
+class SigmoidComponent:
     def __init__(self, x: list[FixedPoint], component_name: str = "sigmoid") -> None:
         self._sigmoid = PrecomputedSigmoid(x=x, component_name=component_name)
         self._component_name = component_name

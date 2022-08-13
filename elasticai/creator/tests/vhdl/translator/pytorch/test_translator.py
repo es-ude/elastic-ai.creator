@@ -5,7 +5,7 @@ from typing import Any, Iterable
 import torch.nn
 
 from elasticai.creator.vhdl.language import Code
-from elasticai.creator.vhdl.translator.abstract.layers import LSTM
+from elasticai.creator.vhdl.translator.abstract.layers import AbstractLSTM
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -13,10 +13,7 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.translator.pytorch.translator import (
-    CodeFile,
-    ModuleDirectory,
-)
+from elasticai.creator.vhdl.translator.pytorch.translator import CodeFile, Module
 from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
@@ -51,13 +48,13 @@ def fake_build_function(module: torch.nn.Module) -> TranslatableMock:
 
 
 def unpack_module_directories(
-    modules: Iterable[ModuleDirectory],
+    modules: Iterable[Module],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
     def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
         return code_file.file_name, list(code_file.code)
 
     return [
-        (module.dir_name, list(map(unpack_code_file, module.files)))
+        (module.module_name, list(map(unpack_code_file, module.files)))
         for module in modules
     ]
 
@@ -112,7 +109,7 @@ class TranslatorTest(unittest.TestCase):
             def forward(self, x: torch.Tensor) -> torch.Tensor:
                 return self.lstm_2(self.lstm_1(x))
 
-        def extract_input_hidden_size(lstm: LSTM) -> tuple[int, int]:
+        def extract_input_hidden_size(lstm: AbstractLSTM) -> tuple[int, int]:
             hidden_size = len(lstm.weights_hh[0][0])
             input_size = len(lstm.weights_ih[0][0])
             return input_size, hidden_size

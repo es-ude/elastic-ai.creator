@@ -1,7 +1,7 @@
 import os
 from argparse import ArgumentParser
 
-from elasticai.creator.vhdl.components.rom import Rom
+from elasticai.creator.vhdl.components.rom_component import RomComponent
 from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 from elasticai.creator.vhdl.vhdl_formatter.vhdl_formatter import format_vhdl
 
@@ -25,7 +25,7 @@ def main():
     bi = [1.1]
 
     with open(file_path, "w") as writer:
-        rom = Rom(
+        rom = RomComponent(
             rom_name=rom_name,
             values=float_values_to_fixed_point(
                 bi, total_bits=data_width, frac_bits=frac_width
