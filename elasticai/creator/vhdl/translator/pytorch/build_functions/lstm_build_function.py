@@ -2,10 +2,10 @@ from collections.abc import Iterator
 
 import torch
 
-from elasticai.creator.vhdl.translator.abstract.layers import AbstractLSTM
+from elasticai.creator.vhdl.translator.abstract.layers import LSTMTranslatable
 
 
-def build_lstm(lstm: torch.nn.LSTM) -> AbstractLSTM:
+def build_lstm(lstm: torch.nn.LSTM) -> LSTMTranslatable:
     def to_list(tensor: torch.Tensor) -> list:
         return tensor.detach().numpy().tolist()
 
@@ -13,7 +13,7 @@ def build_lstm(lstm: torch.nn.LSTM) -> AbstractLSTM:
         for i in range(lstm.num_layers):
             yield to_list(getattr(lstm, f"{weight_prefix}_l{i}"))
 
-    return AbstractLSTM(
+    return LSTMTranslatable(
         weights_ih=list(get_weights("weight_ih")),
         weights_hh=list(get_weights("weight_hh")),
         biases_ih=list(get_weights("bias_ih")),

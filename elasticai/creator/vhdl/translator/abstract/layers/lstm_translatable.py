@@ -17,14 +17,14 @@ from elasticai.creator.vhdl.vhdl_component import VHDLModule
 
 
 @dataclass
-class LSTMTranslationArguments:
+class LSTMTranslationArgs:
     fixed_point_factory: Callable[[float], FixedPoint]
     sigmoid_resolution: tuple[float, float, int]
     tanh_resolution: tuple[float, float, int]
 
 
 @dataclass
-class AbstractLSTM(Translatable):
+class LSTMTranslatable(Translatable):
     """
     Abstract representation of an LSTM layer that can be directly translated to an iterable of VHDLComponent objects.
     Currently, no stacked LSTMs are supported (only single layer LSTMs are supported).
@@ -71,7 +71,7 @@ class AbstractLSTM(Translatable):
 
         return final_weights, final_biases
 
-    def translate(self, args: LSTMTranslationArguments) -> VHDLModule:
+    def translate(self, args: LSTMTranslationArgs) -> VHDLModule:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 
