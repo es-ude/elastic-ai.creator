@@ -1,4 +1,3 @@
-from functools import partial
 from unittest import TestCase
 
 from elasticai.creator.vhdl.components.dual_port_2_clock_ram_component import (
@@ -18,7 +17,7 @@ from elasticai.creator.vhdl.translator.abstract.layers.lstm_translatable import 
 )
 
 
-class LSTMTest(TestCase):
+class LSTMTranslatableTest(TestCase):
     def setUp(self) -> None:
         self.lstm = LSTMTranslatable(
             weights_ih=[[[1, 2], [3, 4], [5, 6], [7, 8]]],
@@ -28,7 +27,7 @@ class LSTMTest(TestCase):
         )
 
         self.translation_args = LSTMTranslationArgs(
-            fixed_point_factory=partial(FixedPoint, total_bits=8, frac_bits=2),
+            fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=2),
             sigmoid_resolution=(-2.5, 2.5, 256),
             tanh_resolution=(-1, 1, 256),
         )
