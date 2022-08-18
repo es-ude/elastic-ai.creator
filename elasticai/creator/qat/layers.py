@@ -7,8 +7,8 @@ import torch
 from torch import Tensor
 from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
-from elasticai.creator.mlframework import Tensor, Module
 
+from elasticai.creator.mlframework import Module, Tensor
 from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_1d_conv,
     create_codomain_for_depthwise_1d_conv,

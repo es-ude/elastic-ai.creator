@@ -78,7 +78,6 @@ class LayerTests(TensorTestCase):
             out = layer(torch.unsqueeze(torch.Tensor([2]), 0))
             self.assertEqual(out.requires_grad, True)
 
-
     def test_Qlinear(self):
         with self.subTest("test call if binarized and has bias"):
             layer = QLinear(1, 2, Binarize())
