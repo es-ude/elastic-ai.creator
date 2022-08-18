@@ -50,15 +50,6 @@ class LayerTests(TensorTestCase):
             layer = ResidualQuantization()
             out = layer(torch.unsqueeze(torch.Tensor([2]), 0))
             self.assertEqual(out.requires_grad, True)
-        with self.subTest("thresholds"):
-            layer = ResidualQuantization()
-            threshold = layer.thresholds
-            self.assertEqual(layer.thresholds.tolist(), [0, 0.5])
-        with self.subTest("codomain"):
-            layer = ResidualQuantization()
-            self.assertSequenceEqual(
-                layer.codomain, [(x, y) for x in [-1, 1] for y in [-1, 1]]
-            )
 
     def test_Ternarize(self):
         with self.subTest("test call with different values 1,-1,0"):
@@ -71,10 +62,6 @@ class LayerTests(TensorTestCase):
             layer = Ternarize()
             out = layer(torch.Tensor([2]))
             self.assertEqual(out.requires_grad, False)
-
-        with self.subTest("thresholds"):
-            layer = Ternarize(0.25)
-            self.assertEqual(layer.thresholds.tolist(), [0.25, -0.25])
 
         with self.subTest("Check if widening is trainable when option True"):
             layer = Ternarize(zero_window_width=0.5, trainable=True)
@@ -90,12 +77,7 @@ class LayerTests(TensorTestCase):
             layer = QuantizeTwoBit(0.3)
             out = layer(torch.unsqueeze(torch.Tensor([2]), 0))
             self.assertEqual(out.requires_grad, True)
-        with self.subTest("Check thresholds value with factors 0.3"):
-            layer = QuantizeTwoBit(0.3)
-            thresholds = layer.thresholds.tolist()
-            self.assertEqual(
-                [0.0, round(thresholds[1], 2)], [0.0, 0.3]
-            )  # precision loss
+
 
     def test_Qlinear(self):
         with self.subTest("test call if binarized and has bias"):
