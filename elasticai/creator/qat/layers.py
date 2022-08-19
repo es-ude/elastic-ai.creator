@@ -8,6 +8,7 @@ from torch import Tensor
 from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
 
+from elasticai.creator.mlframework import Module, Tensor
 from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_1d_conv,
     create_codomain_for_depthwise_1d_conv,
@@ -17,27 +18,7 @@ from elasticai.creator.qat.functional import binarize as BinarizeFn
 from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
-
-
-class Quantize(Protocol):
-    """
-    Protocol to be adhered to by quantizations with properties to simplify translation to other levels of abstraction.
-    Codomain is used for precalculation of convolutions by obtaining the codomain of the quantization prior to the convolution.
-    Threshold is used on MVTUs.
-    """
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Tensor:
-        ...
-
-    @property
-    @abstractmethod
-    def codomain(self) -> list[float]:
-        ...
-
-    @property
-    @abstractmethod
-    def thresholds(self) -> list[float]:
-        ...
+Quantize = Module
 
 
 class Binarize(torch.nn.Module):
@@ -50,14 +31,6 @@ class Binarize(torch.nn.Module):
     @staticmethod
     def forward(x):
         return BinarizeFn.apply(x)
-
-    @property
-    def codomain(self):
-        return [-1, 1]
-
-    @property
-    def thresholds(self):
-        return torch.Tensor([0.0])
 
     @staticmethod
     def right_inverse(x: Tensor) -> Tensor:
@@ -92,17 +65,9 @@ class Ternarize(torch.nn.Module):
             no_gradient = rounded - clipped
         return clipped + no_gradient
 
-    @property
-    def codomain(self):
-        return [-1, 0, 1]
-
     @staticmethod
     def right_inverse(x: Tensor) -> Tensor:
         return x
-
-    @property
-    def thresholds(self):
-        return torch.Tensor([0.5 / self.widening_factor, -0.5 / self.widening_factor])
 
 
 class ResidualQuantization(torch.nn.Module):
@@ -128,18 +93,6 @@ class ResidualQuantization(torch.nn.Module):
             out.append(out[-1] - torch.abs(factor) * bin(out[-1]))
         return bin(torch.cat(out, dim=1))
 
-    @property
-    def codomain(self):
-        return list(product([-1, 1], repeat=self.num_bits))
-
-    @property
-    def thresholds(self):
-        threshold = [torch.Tensor([0.0])]
-        for factor in self.weight:
-            threshold.append(threshold[-1] + torch.abs(factor))
-
-        return torch.flatten(torch.stack(threshold, 0))
-
 
 class QuantizeTwoBit(torch.nn.Module):
     """
@@ -157,14 +110,6 @@ class QuantizeTwoBit(torch.nn.Module):
         first_half = binarize(input)
         second_half = input - self.factors * binarize(input)
         return binarize(torch.cat((first_half, second_half), dim=1))
-
-    @property
-    def codomain(self):
-        return [[x, y] for x in [-1, 1] for y in [-1, 1]]
-
-    @property
-    def thresholds(self):
-        return torch.cat((torch.Tensor([0.0]), self.factors), 0)
 
 
 def _init_quantizable_convolution(self, quantizer, bias, constraints):

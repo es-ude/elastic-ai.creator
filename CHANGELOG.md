@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.11.1 (2022-08-18)
+### Fix
+* **qat:** Remove deprecated threshold and codomain properties ([`5db9669`](https://github.com/es-ude/elastic-ai.creator/commit/5db9669fc3942851e65607a869bb822430df7836))
+
 ## v0.11.0 (2022-08-11)
 ### Feature
 * **vhdl:** Adapt the example to the changes of the translation ([`6a5644e`](https://github.com/es-ude/elastic-ai.creator/commit/6a5644e30a7cd00ed1be1c2cb6fa2e0b4b114c1e))
