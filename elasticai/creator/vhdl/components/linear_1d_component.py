@@ -22,7 +22,7 @@ class Linear1dComponent:
         self.in_features = in_features
         self.out_features = out_features
         self.data_width = self._derive_data_width(fixed_point_factory)
-        self.addr_width = self._calculate_addr_width(in_features * out_features)
+        self.addr_width = self._calculate_addr_width(in_features)
 
     @staticmethod
     def _derive_data_width(fixed_point_factory: Callable[[float], FixedPoint]) -> int:
