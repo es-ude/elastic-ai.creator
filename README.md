@@ -69,14 +69,16 @@ VHDLStaticComponent <|-- LSTMCommonComponent
 VHDLStaticComponent <|-- DualPort2ClockRamComponent
 ```
 
-Static VHDL files that have no placeholders are represented by a `VHDLStaticComponent`. A layer (e.g. an LSTM layer)
-consists of more than one VHDLComponent. For this reason we call a `Iterable[VHDLComponent]` a `VHDLModule`.
+Static VHDL files that have no placeholders are represented by a `VHDLStaticComponent`.
+
+A layer (e.g. an LSTM layer) can consist of more than one VHDLComponent. For this reason we call a
+`Iterable[VHDLComponent]` a `VHDLModule`.
 
 #### Translatables
 
 In order to represent a layer independently of the machine learning framework used, every layer that needs to be
 translated is represented as translatable. A `Translatable` class has a `translate` function that takes a
-DTO (Data Transfer Object) which receives all necessary parameters from the user to translate the layer to VHDL and
+DTO (Data Transfer Object) which contains all necessary parameters from the user to translate the layer to VHDL and
 returns a `VHDLModule` as the result of the translation.
 
 An incomplete class diagram showing this for the `LSTMTranslatable` and `Linear1dTranslatable` is the following:
@@ -140,7 +142,7 @@ translate_model ---> |"Iterator[Translatable]"| generate_code
 generate_code ---> |"Iterator[CodeModule]"| save_code
 save_code ---> stop([Stop])
 model[/Model/] -.- translate_model
-build_function_mapping[[BuildFunctionMapping]] <-.-> |Get BuildFunctions| translate_model
+build_function_mapping[[BuildFunctionMapping]] <-.-> |Request BuildFunctions| translate_model
 translation_args[/Translation arguments for each Translatable/] -.- generate_code
 save_code -.-> saved_data[/Saved VHDL files/]
 ```
