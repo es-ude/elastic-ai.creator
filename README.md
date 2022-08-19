@@ -63,6 +63,7 @@ VHDLComponent <|.. VHDLStaticComponent
 VHDLComponent <|.. SigmoidComponent
 VHDLComponent <|.. TanhComponent
 VHDLComponent <|.. RomComponent
+VHDLComponent <|.. Linear1dComponent
 VHDLStaticComponent <|-- LSTMComponent
 VHDLStaticComponent <|-- LSTMCommonComponent
 VHDLStaticComponent <|-- DualPort2ClockRamComponent
@@ -78,7 +79,7 @@ translated is represented as translatable. A `Translatable` class has a `transla
 DTO (Data Transfer Object) which receives all necessary parameters from the user to translate the layer to VHDL and
 returns a `VHDLModule` as the result of the translation.
 
-An incomplete class diagram showing this for the `AbstractLSTM` layer is the following:
+An incomplete class diagram showing this for the `LSTMTranslatable` and `Linear1dTranslatable` is the following:
 
 ```mermaid
 classDiagram
@@ -86,20 +87,33 @@ class Translatable {
     <<interface>>
     +translate(Any args) VHDLModule
 }
+
 class LSTMTranslatable {
     +weights_ih
     +weights_hh
     +biases_ih
     +biases_hh
-    +translate(LSTMTranslationArguments args) VHDLModule
+    +translate(LSTMTranslationArgs args) VHDLModule
 }
 class LSTMTranslationArgs {
     +fixed_point_factory
     +sigmoid_resolution
     +tanh_resolution
 }
+
+class Linear1dTranslatable {
+    +weight
+    +bias
+    +translate(Linear1dTranslationArgs args) VHDLModule
+}
+class Linear1dTranslationArgs {
+    +fixed_point_factory
+}
+
 Translatable <|.. LSTMTranslatable
 LSTMTranslatable -- LSTMTranslationArgs
+Translatable <|.. Linear1dTranslatable
+Linear1dTranslatable -- Linear1dTranslationArgs
 ```
 
 #### Build Functions
