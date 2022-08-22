@@ -60,11 +60,10 @@ class LSTMTranslatable(Translatable):
         weights = weights[0]  # Currently only supporting one layer LSTMs
         w_i, w_f, w_g, w_o = weights.reshape(4, -1).tolist()
 
-        b_ih = reshape_params(self.biases_ih)
-        b_hh = reshape_params(self.biases_hh)
-        biases = np.concatenate((b_ih, b_hh), axis=2)
-        biases = biases[0]  # Currently only supporting one layer LSTMs
-        b_i, b_f, b_g, b_o = biases.tolist()
+        bias = np.add(self.biases_ih, self.biases_hh)
+        bias = reshape_params(bias)
+        bias = bias[0]  # Currently only supporting one layer LSTMs
+        b_i, b_f, b_g, b_o = bias.tolist()
 
         final_weights = tuple(map(to_fixed_point, (w_i, w_f, w_g, w_o)))
         final_biases = tuple(map(to_fixed_point, (b_i, b_f, b_g, b_o)))
