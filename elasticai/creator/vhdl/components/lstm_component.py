@@ -1,8 +1,11 @@
-import math
 from dataclasses import dataclass, field
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
+from elasticai.creator.vhdl.components.utils import (
+    calculate_addr_width,
+    derive_fixed_point_params_from_factory,
+)
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
@@ -14,28 +17,15 @@ class LSTMComponent:
     fixed_point_factory: Callable[[float], FixedPoint]
     work_library_name: str = field(default="work")
 
-    def __post_init__(self):
-        self.data_width, self.frac_width = self._derive_data_and_frac_width(
+    def __post_init__(self) -> None:
+        self.data_width, self.frac_width = derive_fixed_point_params_from_factory(
             self.fixed_point_factory
         )
-        self.x_h_addr_width = self._calculate_addr_width(
-            self.input_size + self.hidden_size
-        )
-        self.hidden_addr_width = self._calculate_addr_width(self.input_size)
-        self.w_addr_width = self._calculate_addr_width(
+        self.x_h_addr_width = calculate_addr_width(self.input_size + self.hidden_size)
+        self.hidden_addr_width = calculate_addr_width(self.input_size)
+        self.w_addr_width = calculate_addr_width(
             (self.input_size + self.hidden_size) * self.hidden_size
         )
-
-    @staticmethod
-    def _derive_data_and_frac_width(
-        fixed_point_factory: Callable[[float], FixedPoint]
-    ) -> tuple[int, int]:
-        value = fixed_point_factory(0)
-        return value.total_bits, value.frac_bits
-
-    @staticmethod
-    def _calculate_addr_width(num_items: int) -> int:
-        return max(1, math.ceil(math.log2(num_items)))
 
     @property
     def file_name(self) -> str:

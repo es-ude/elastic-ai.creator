@@ -88,15 +88,10 @@ class LSTMTranslatable(Translatable):
                 rom_name=rom_name, values=rom_values, resource_option="auto"
             )
 
-        yield SigmoidComponent(
-            x=to_fp(np.linspace(*args.sigmoid_resolution).tolist()),  # type: ignore
-            component_name="sigmoid",
-        )
-
-        yield TanhComponent(
-            x=to_fp(np.linspace(*args.tanh_resolution).tolist()),  # type: ignore
-            component_name="tanh",
-        )
+        precomputed_sigmoid_inputs = to_fp(np.linspace(*args.sigmoid_resolution).tolist())  # type: ignore
+        precomputed_tanh_inputs = to_fp(np.linspace(*args.tanh_resolution).tolist())  # type: ignore
+        yield SigmoidComponent(x=precomputed_sigmoid_inputs)
+        yield TanhComponent(x=precomputed_tanh_inputs)
 
         input_size, hidden_size = self._derive_input_and_hidden_size()
         yield LSTMComponent(
@@ -107,5 +102,4 @@ class LSTMTranslatable(Translatable):
         )
 
         yield LSTMCommonComponent()
-
         yield DualPort2ClockRamComponent()

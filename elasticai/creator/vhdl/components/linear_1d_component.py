@@ -1,36 +1,31 @@
-import math
+from dataclasses import dataclass
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
+from elasticai.creator.vhdl.components.utils import (
+    calculate_addr_width,
+    derive_fixed_point_params_from_factory,
+)
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
+@dataclass
 class Linear1dComponent:
-    def __init__(
-        self,
-        in_features: int,
-        out_features: int,
-        fixed_point_factory: Callable[[float], FixedPoint],
-    ) -> None:
+    in_features: int
+    out_features: int
+    fixed_point_factory: Callable[[float], FixedPoint]
 
-        if out_features != 1:
+    def __post_init__(self) -> None:
+        if self.out_features != 1:
             raise NotImplementedError(
                 "Currently only one bias is supported (which implies that out_features must be 1)."
             )
 
-        self.in_features = in_features
-        self.out_features = out_features
-        self.data_width = self._derive_data_width(fixed_point_factory)
-        self.addr_width = self._calculate_addr_width(in_features)
-
-    @staticmethod
-    def _derive_data_width(fixed_point_factory: Callable[[float], FixedPoint]) -> int:
-        return fixed_point_factory(0).total_bits
-
-    @staticmethod
-    def _calculate_addr_width(num_items: int) -> int:
-        return max(1, math.ceil(math.log2(num_items)))
+        self.data_width, _ = derive_fixed_point_params_from_factory(
+            self.fixed_point_factory
+        )
+        self.addr_width = calculate_addr_width(self.in_features)
 
     @property
     def file_name(self) -> str:
