@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import chain
 from typing import Callable
 
@@ -17,6 +17,7 @@ from elasticai.creator.vhdl.vhdl_component import VHDLModule
 @dataclass
 class Linear1dTranslationArgs:
     fixed_point_factory: Callable[[float], FixedPoint]
+    work_library_name: str = field(default="work")
 
 
 @dataclass
@@ -34,6 +35,7 @@ class Linear1dTranslatable:
             in_features=in_features,
             out_features=out_features,
             fixed_point_factory=args.fixed_point_factory,
+            work_library_name=args.work_library_name,
         )
 
         flat_weight = chain(*self.weight)

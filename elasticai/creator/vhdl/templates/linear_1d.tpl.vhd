@@ -2,8 +2,8 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library work;
-use work.lstm_common.all;
+library {work_library_name};
+use {work_library_name}.lstm_common.all;
 
 entity linear_1d is
   generic (
@@ -84,7 +84,7 @@ begin
     addr <= addr_s;
 
     -- Weights
-    rom_w : entity work.w_rom(rtl)
+    rom_w : entity {work_library_name}.w_rom(rtl)
     port map  (
         clk  => n_clock,
         en   => '1',
@@ -94,7 +94,7 @@ begin
     w_in <= signed(std_w_in);
 
     -- Bias
-    rom_b : entity work.b_rom(rtl)
+    rom_b : entity {work_library_name}.b_rom(rtl)
     port map  (
         clk  => n_clock,
         en   => '1',

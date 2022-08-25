@@ -36,15 +36,17 @@ def main() -> None:
     model = LSTMModel()
 
     fixed_point_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+    work_library_name = "xil_defaultlib"
     translation_args = dict(
         LSTMTranslatable=LSTMTranslationArgs(
             fixed_point_factory=fixed_point_factory,
             sigmoid_resolution=(-2.5, 2.5, 256),
             tanh_resolution=(-1, 1, 256),
-            work_library_name="xil_defaultlib",
+            work_library_name=work_library_name,
         ),
         Linear1dTranslatable=Linear1dTranslationArgs(
             fixed_point_factory=fixed_point_factory,
+            work_library_name=work_library_name,
         ),
     )
 

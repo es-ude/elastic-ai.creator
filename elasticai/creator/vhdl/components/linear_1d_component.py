@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
@@ -15,6 +15,7 @@ class Linear1dComponent:
     in_features: int
     out_features: int
     fixed_point_factory: Callable[[float], FixedPoint]
+    work_library_name: str = field(default="work")
 
     def __post_init__(self) -> None:
         if self.out_features != 1:
@@ -35,6 +36,7 @@ class Linear1dComponent:
         template = read_text("elasticai.creator.vhdl.templates", "linear_1d.tpl.vhd")
 
         code = template.format(
+            work_library_name=self.work_library_name,
             addr_width=self.addr_width,
             data_width=self.out_features,
             in_feature_count=self.in_features,

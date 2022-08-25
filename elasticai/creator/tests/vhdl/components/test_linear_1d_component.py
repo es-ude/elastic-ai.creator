@@ -10,6 +10,7 @@ class Linear1dComponentTest(unittest.TestCase):
             in_features=20,
             out_features=1,
             fixed_point_factory=FixedPoint.get_factory(total_bits=16, frac_bits=8),
+            work_library_name="work",
         )
 
     def test_derives_correct_data_width(self) -> None:
