@@ -34,24 +34,28 @@ def main() -> None:
     args = read_commandline_args()
 
     model = LSTMModel()
-    fixed_point_factory = FixedPoint.get_factory(total_bits=16, frac_bits=8)
 
-    translated = translator.translate_model(
-        model=model, build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING
-    )
-    code_repr = translator.generate_code(
-        translatable_layers=translated,
-        translation_args=dict(
-            LSTMTranslatable=LSTMTranslationArgs(
-                fixed_point_factory=fixed_point_factory,
-                sigmoid_resolution=(-2.5, 2.5, 256),
-                tanh_resolution=(-1, 1, 256),
-            ),
-            Linear1dTranslatable=Linear1dTranslationArgs(
-                fixed_point_factory=fixed_point_factory,
-            ),
+    fixed_point_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+    translation_args = dict(
+        LSTMTranslatable=LSTMTranslationArgs(
+            fixed_point_factory=fixed_point_factory,
+            sigmoid_resolution=(-2.5, 2.5, 256),
+            tanh_resolution=(-1, 1, 256),
+            work_library_name="xil_defaultlib",
+        ),
+        Linear1dTranslatable=Linear1dTranslationArgs(
+            fixed_point_factory=fixed_point_factory,
         ),
     )
+
+    translatable_layers = translator.translate_model(
+        model=model, build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING
+    )
+
+    code_repr = translator.generate_code(
+        translatable_layers=translatable_layers, translation_args=translation_args
+    )
+
     translator.save_code(code_repr=code_repr, path=args.build_dir)
 
 

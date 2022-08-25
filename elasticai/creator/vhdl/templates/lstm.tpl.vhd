@@ -4,20 +4,20 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library xil_defaultlib;
-use xil_defaultlib.lstm_common.all;
+library {work_library_name};
+use {work_library_name}.lstm_common.all;
 
 entity lstm is
     generic (
-        DATA_WIDTH  : integer := 8;    -- that fixed point data has 16bits
-        FRAC_WIDTH  : integer := 4;     -- and 8bits is for the factional part
+        DATA_WIDTH  : integer := {data_width};                -- that fixed point data has {data_width}bits
+        FRAC_WIDTH  : integer := {frac_width};                -- and {frac_width}bits is for the factional part
 
-        INPUT_SIZE  : integer := 5;     -- same as input_size of the lstm in PyTorch
-        HIDDEN_SIZE : integer := 3;     -- same as hidden_size of the lstm in PyTorch
+        INPUT_SIZE  : integer := {input_size};                -- same as input_size of the lstm in PyTorch
+        HIDDEN_SIZE : integer := {hidden_size};               -- same as hidden_size of the lstm in PyTorch
 
-        X_H_ADDR_WIDTH : integer := 3;  -- equals to ceil(log2(input_size+hidden_size))
-        HIDDEN_ADDR_WIDTH  : integer := 2; -- equals to ceil(log2(input_size))
-        W_ADDR_WIDTH : integer := 5     -- equals to ceil(log2((input_size+hidden_size)*hidden_size)
+        X_H_ADDR_WIDTH : integer := {x_h_addr_width};         -- equals to ceil(log2(input_size+hidden_size))
+        HIDDEN_ADDR_WIDTH  : integer := {hidden_addr_width};  -- equals to ceil(log2(input_size))
+        W_ADDR_WIDTH : integer := {w_addr_width}              -- equals to ceil(log2((input_size+hidden_size)*hidden_size)
         );
     port (
         clock     : in std_logic;
@@ -139,12 +139,12 @@ clk_hadamard_internal <= clock;
 --------------------------------------------------------
 
 -- Instantiation x input buffer
-buffer_h : entity xil_defaultlib.dual_port_2_clock_ram(rtl)
+buffer_h : entity {work_library_name}.dual_port_2_clock_ram(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
     RAM_PERFORMANCE => "LOW_LATENCY",
-    INIT_FILE => ""--"/home/chao/git/lstm/data/x_h.dat" -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
+        INIT_FILE => ""--"/home/chao/git/lstm/data/x_h.dat" -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
 )
 port map  (
     addra  => x_h_config_addr,
@@ -164,7 +164,7 @@ x_h_config_addr <= state_update_x_h_addr;
 x_h_config_data <= state_update_x_h_data;
 x_h_config_we <= state_update_we;
 
-buffer_c : entity xil_defaultlib.dual_port_2_clock_ram(rtl)
+buffer_c : entity {work_library_name}.dual_port_2_clock_ram(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => HIDDEN_ADDR_WIDTH,
@@ -192,7 +192,7 @@ c_config_data <= state_update_cell_data;
 c_config_we <= state_update_we;
 
 
-temp_h : entity xil_defaultlib.dual_port_2_clock_ram(rtl)
+temp_h : entity {work_library_name}.dual_port_2_clock_ram(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
@@ -213,7 +213,7 @@ port map  (
 );
 
 
-temp_c : entity xil_defaultlib.dual_port_2_clock_ram(rtl)
+temp_c : entity {work_library_name}.dual_port_2_clock_ram(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
@@ -355,13 +355,13 @@ begin
 
 end process;
 
-SHARED_SIGMOID : entity xil_defaultlib.sigmoid(rtl)
+SHARED_SIGMOID : entity {work_library_name}.sigmoid(rtl)
 port map (
     sigmoid_in,
     sigmoid_out
 );
 
-SHARED_TANH : entity xil_defaultlib.tanh(rtl)
+SHARED_TANH : entity {work_library_name}.tanh(rtl)
 port map (
     tanh_in,
     tanh_out
@@ -488,7 +488,7 @@ h_out_data <= std_temp_h_read_data;
 
 -- weights
 -- [Wii,Whi]
-rom_wi : entity xil_defaultlib.wi_rom(rtl)
+rom_wi : entity {work_library_name}.wi_rom(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -498,7 +498,7 @@ port map  (
 w_i_data <= signed(std_wi_out);
 
 -- [Wif,Whf]
-rom_wf : entity xil_defaultlib.wf_rom(rtl)
+rom_wf : entity {work_library_name}.wf_rom(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -508,7 +508,7 @@ port map  (
 w_f_data <= signed(std_wf_out);
 
 -- [Wig,Whg]
-rom_wg : entity xil_defaultlib.wg_rom(rtl)
+rom_wg : entity {work_library_name}.wg_rom(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -518,7 +518,7 @@ port map  (
 w_g_data <= signed(std_wg_out);
 
 -- [Wif,Whf]
-rom_wo : entity xil_defaultlib.wo_rom(rtl)
+rom_wo : entity {work_library_name}.wo_rom(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -529,7 +529,7 @@ w_o_data <= signed(std_wo_out);
 
 -- biases
 -- [Bii+Bhi]
-rom_bi : entity xil_defaultlib.bi_rom(rtl)
+rom_bi : entity {work_library_name}.bi_rom(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized
@@ -539,7 +539,7 @@ port map  (
 b_i_data <= signed(std_bi_out);
 
 -- [Bif+Bhf]
-rom_bf : entity xil_defaultlib.bf_rom(rtl)
+rom_bf : entity {work_library_name}.bf_rom(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized
@@ -549,7 +549,7 @@ port map  (
 b_f_data <= signed(std_bf_out);
 
 -- [Big+Bhg]
-rom_bg : entity xil_defaultlib.bg_rom(rtl)
+rom_bg : entity {work_library_name}.bg_rom(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized
@@ -559,7 +559,7 @@ port map  (
 b_g_data <= signed(std_bg_out);
 
 -- [Bio+Bho]
-rom_bo : entity xil_defaultlib.bo_rom(rtl)
+rom_bo : entity {work_library_name}.bo_rom(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized

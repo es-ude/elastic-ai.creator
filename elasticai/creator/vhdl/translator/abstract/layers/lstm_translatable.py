@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 import numpy as np
@@ -21,6 +21,7 @@ class LSTMTranslationArgs:
     fixed_point_factory: Callable[[float], FixedPoint]
     sigmoid_resolution: tuple[float, float, int]
     tanh_resolution: tuple[float, float, int]
+    work_library_name: str = field(default="work")
 
 
 @dataclass
@@ -70,6 +71,10 @@ class LSTMTranslatable(Translatable):
 
         return final_weights, final_biases
 
+    def _derive_input_and_hidden_size(self) -> tuple[int, int]:
+        _, hidden_size, input_size = np.shape(self.weights_ih)
+        return input_size, hidden_size // 4
+
     def translate(self, args: LSTMTranslationArgs) -> VHDLModule:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
@@ -93,9 +98,14 @@ class LSTMTranslatable(Translatable):
             component_name="tanh",
         )
 
-        for static_cls in (
-            LSTMComponent,
-            LSTMCommonComponent,
-            DualPort2ClockRamComponent,
-        ):
-            yield static_cls()
+        input_size, hidden_size = self._derive_input_and_hidden_size()
+        yield LSTMComponent(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            fixed_point_factory=args.fixed_point_factory,
+            work_library_name=args.work_library_name,
+        )
+
+        yield LSTMCommonComponent()
+
+        yield DualPort2ClockRamComponent()
