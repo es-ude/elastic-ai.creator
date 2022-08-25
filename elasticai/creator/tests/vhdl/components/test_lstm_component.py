@@ -21,7 +21,7 @@ class LSTMComponentTest(unittest.TestCase):
         self.assertEqual(3, self.lstm.x_h_addr_width)
 
     def test_hidden_addr_width_correct_set(self):
-        self.assertEqual(2, self.lstm.hidden_addr_width)
+        self.assertEqual(3, self.lstm.hidden_addr_width)
 
     def test_w_addr_width_correct_set(self):
         self.assertEqual(5, self.lstm.w_addr_width)
