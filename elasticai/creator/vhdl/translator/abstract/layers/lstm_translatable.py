@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 import numpy as np
@@ -17,14 +17,15 @@ from elasticai.creator.vhdl.vhdl_component import VHDLModule
 
 
 @dataclass
-class LSTMTranslationArguments:
+class LSTMTranslationArgs:
     fixed_point_factory: Callable[[float], FixedPoint]
     sigmoid_resolution: tuple[float, float, int]
     tanh_resolution: tuple[float, float, int]
+    work_library_name: str = field(default="work")
 
 
 @dataclass
-class AbstractLSTM(Translatable):
+class LSTMTranslatable(Translatable):
     """
     Abstract representation of an LSTM layer that can be directly translated to an iterable of VHDLComponent objects.
     Currently, no stacked LSTMs are supported (only single layer LSTMs are supported).
@@ -60,18 +61,21 @@ class AbstractLSTM(Translatable):
         weights = weights[0]  # Currently only supporting one layer LSTMs
         w_i, w_f, w_g, w_o = weights.reshape(4, -1).tolist()
 
-        b_ih = reshape_params(self.biases_ih)
-        b_hh = reshape_params(self.biases_hh)
-        biases = np.concatenate((b_ih, b_hh), axis=2)
-        biases = biases[0]  # Currently only supporting one layer LSTMs
-        b_i, b_f, b_g, b_o = biases.tolist()
+        bias = np.add(self.biases_ih, self.biases_hh)
+        bias = reshape_params(bias)
+        bias = bias[0]  # Currently only supporting one layer LSTMs
+        b_i, b_f, b_g, b_o = bias.tolist()
 
         final_weights = tuple(map(to_fixed_point, (w_i, w_f, w_g, w_o)))
         final_biases = tuple(map(to_fixed_point, (b_i, b_f, b_g, b_o)))
 
         return final_weights, final_biases
 
-    def translate(self, args: LSTMTranslationArguments) -> VHDLModule:
+    def _derive_input_and_hidden_size(self) -> tuple[int, int]:
+        _, hidden_size, input_size = np.shape(self.weights_ih)
+        return input_size, hidden_size // 4
+
+    def translate(self, args: LSTMTranslationArgs) -> VHDLModule:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 
@@ -84,19 +88,18 @@ class AbstractLSTM(Translatable):
                 rom_name=rom_name, values=rom_values, resource_option="auto"
             )
 
-        yield SigmoidComponent(
-            x=to_fp(np.linspace(*args.sigmoid_resolution).tolist()),  # type: ignore
-            component_name="sigmoid",
+        precomputed_sigmoid_inputs = to_fp(np.linspace(*args.sigmoid_resolution).tolist())  # type: ignore
+        precomputed_tanh_inputs = to_fp(np.linspace(*args.tanh_resolution).tolist())  # type: ignore
+        yield SigmoidComponent(x=precomputed_sigmoid_inputs)
+        yield TanhComponent(x=precomputed_tanh_inputs)
+
+        input_size, hidden_size = self._derive_input_and_hidden_size()
+        yield LSTMComponent(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            fixed_point_factory=args.fixed_point_factory,
+            work_library_name=args.work_library_name,
         )
 
-        yield TanhComponent(
-            x=to_fp(np.linspace(*args.tanh_resolution).tolist()),  # type: ignore
-            component_name="tanh",
-        )
-
-        for static_cls in (
-            LSTMComponent,
-            LSTMCommonComponent,
-            DualPort2ClockRamComponent,
-        ):
-            yield static_cls()
+        yield LSTMCommonComponent()
+        yield DualPort2ClockRamComponent()

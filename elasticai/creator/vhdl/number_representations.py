@@ -1,7 +1,8 @@
 import math
 from collections.abc import Sequence
+from functools import partial
 from itertools import chain
-from typing import Any, Iterable, Iterator
+from typing import Any, Callable, Iterable, Iterator
 
 
 class FixedPoint:
@@ -182,6 +183,12 @@ class FixedPoint:
             total_bits=total_bits,
             frac_bits=frac_bits,
         )
+
+    @staticmethod
+    def get_factory(
+        total_bits: int, frac_bits: int
+    ) -> Callable[[float | int], "FixedPoint"]:
+        return partial(FixedPoint, total_bits=total_bits, frac_bits=frac_bits)
 
     @property
     def total_bits(self) -> int:

@@ -15,13 +15,15 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 - [Users Guide](#users-guide)
   - [Install](#install)
+- [Structure of the Project](#structure-of-the-project)
+- [General Limitations](#general-limitations)
 - [Developers Guide](#developers-guide)
   - [Install Dev Dependencies](#install-dev-dependencies)
 
 
 ## Users Guide
 
-#### Install
+### Install
 You can install the ElasticAI.creator as a dependency using pip:
 ```bash
 python3 -m pip install "elasticai.creator"
