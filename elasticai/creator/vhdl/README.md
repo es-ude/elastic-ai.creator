@@ -25,7 +25,7 @@ VHDLComponent <|.. SigmoidComponent
 VHDLComponent <|.. TanhComponent
 VHDLComponent <|.. RomComponent
 VHDLComponent <|.. Linear1dComponent
-VHDLStaticComponent <|-- LSTMComponent
+VHDLComponent <|-- LSTMComponent
 VHDLStaticComponent <|-- LSTMCommonComponent
 VHDLStaticComponent <|-- DualPort2ClockRamComponent
 ```
@@ -62,6 +62,7 @@ class LSTMTranslationArgs {
     +fixed_point_factory
     +sigmoid_resolution
     +tanh_resolution
+    +work_library_name
 }
 
 class Linear1dTranslatable {
@@ -71,6 +72,7 @@ class Linear1dTranslatable {
 }
 class Linear1dTranslationArgs {
     +fixed_point_factory
+    +work_library_name
 }
 
 Translatable <|.. LSTMTranslatable
