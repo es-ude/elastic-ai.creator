@@ -2,6 +2,29 @@
 
 <!--next-version-placeholder-->
 
+## v0.12.0 (2022-08-26)
+### Feature
+* **vhdl:** Make work library name customizable ([`95fd8aa`](https://github.com/es-ude/elastic-ai.creator/commit/95fd8aa0d7e512aeb04893de2df2e58cc4b3e641))
+* **vhdl:** Insert values in the updated lstm.vhd template ([`4d9dccb`](https://github.com/es-ude/elastic-ai.creator/commit/4d9dccbdb11afebb466f476c22539828bf5458b1))
+* **examples:** Add linear layer to the translation example ([`5f1e1db`](https://github.com/es-ude/elastic-ai.creator/commit/5f1e1db8da7ce533cb592d56ca97e25ca563a60e))
+* **vhdl:** Add an easy way to get a fixed point factory ([`d98ff03`](https://github.com/es-ude/elastic-ai.creator/commit/d98ff0351f739859ed668a2ec295421e29fd24ec))
+* **vhdl:** Implement the translation of a linear1d layer ([`b627e78`](https://github.com/es-ude/elastic-ai.creator/commit/b627e780d054adcdd89009d87aa33fa31c913504))
+
+### Fix
+* **vhdl:** Remove some comments ([`13cc1a1`](https://github.com/es-ude/elastic-ai.creator/commit/13cc1a1ade14ccc7aa686523270dec20936ed14d))
+* **vhdl:** Remove unused work library ([`c68fd9d`](https://github.com/es-ude/elastic-ai.creator/commit/c68fd9d00b152c5bdb70d2d2c90ca8d3e9f381d0))
+* **vhdl:** Fix test ([`c125bf1`](https://github.com/es-ude/elastic-ai.creator/commit/c125bf16297ee9e39660ee904ab54268e8901d48))
+* **vhdl:** Add changes from Chao after testing the translator ([`5a5d532`](https://github.com/es-ude/elastic-ai.creator/commit/5a5d5325a3f598e0163d4eac0601b5961c2f5780))
+* **vhdl:** Pre-add input-hidden and hidden-hidden bias ([`750941c`](https://github.com/es-ude/elastic-ai.creator/commit/750941c3150cabefa2f393f6b12105a358a70f7f))
+* **vhdl:** Fix calculation of the addr_width of the linear1d layer ([`6fa2b2a`](https://github.com/es-ude/elastic-ai.creator/commit/6fa2b2a3bc83d3a51eb955d1464501662f6676a8))
+
+### Documentation
+* **vhdl:** Adapt diagrams to the latest changes ([`c1750eb`](https://github.com/es-ude/elastic-ai.creator/commit/c1750eb19f92a705f8f36ccefc9729d3545f0743))
+* **readme:** Move translator documentation to the vhdl package ([`9a90949`](https://github.com/es-ude/elastic-ai.creator/commit/9a90949528978ff4732f585986a71cedd44e82a5))
+* **readme:** Small changes of the documentation ([`9e7699c`](https://github.com/es-ude/elastic-ai.creator/commit/9e7699ce617581f67f85cf4ef7d945d99df241be))
+* **readme:** Update documentation according the newly added linear1d layer ([`41e2486`](https://github.com/es-ude/elastic-ai.creator/commit/41e24868aecbf310ee4c9ad815f6ccc0da3f9f9b))
+* **readme:** Add documentation on how the translator works ([`91ebea3`](https://github.com/es-ude/elastic-ai.creator/commit/91ebea3fb7e7883f56b2cd9152769d151449a49a))
+
 ## v0.11.1 (2022-08-18)
 ### Fix
 * **qat:** Remove deprecated threshold and codomain properties ([`5db9669`](https://github.com/es-ude/elastic-ai.creator/commit/5db9669fc3942851e65607a869bb822430df7836))
