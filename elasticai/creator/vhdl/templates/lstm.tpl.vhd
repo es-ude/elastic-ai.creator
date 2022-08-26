@@ -144,7 +144,7 @@ generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
     RAM_PERFORMANCE => "LOW_LATENCY",
-        INIT_FILE => ""--"/home/chao/git/lstm/data/x_h.dat" -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
+        INIT_FILE => ""  -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
 )
 port map  (
     addra  => x_h_config_addr,
@@ -169,7 +169,7 @@ generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => HIDDEN_ADDR_WIDTH,
     RAM_PERFORMANCE => "LOW_LATENCY",
-    INIT_FILE => "" --"/home/chao/git/lstm/data/c.dat"
+    INIT_FILE => ""
 )
 port map  (
     addra  => c_config_addr,
@@ -197,7 +197,7 @@ generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
     RAM_PERFORMANCE => "LOW_LATENCY",
-    INIT_FILE => ""--"/home/chao/git/lstm/data/x_h.dat" -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
+    INIT_FILE => ""  -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
 )
 port map  (
     addra  => temp_h_config_addr,
@@ -218,7 +218,7 @@ generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
     RAM_PERFORMANCE => "LOW_LATENCY",
-    INIT_FILE => ""--"/home/chao/git/lstm/data/x_h.dat" -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
+    INIT_FILE => ""  -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
 )
 port map  (
     addra  => temp_c_config_addr,
