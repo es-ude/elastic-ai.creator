@@ -14,10 +14,10 @@ class binarize(torch.autograd.Function):
         x = args[0]
         out_of_range = torch.logical_or(torch.gt(x, 1.0), torch.lt(x, -1.0))
         ctx.save_for_backward(out_of_range)
-        y = torch.where(x >= 0, 1., -1.)
+        y = torch.where(x >= 0, 1.0, -1.0)
         return y
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         (out_of_range,) = ctx.saved_tensors
-        return grad_outputs[0]*torch.where(out_of_range, 0., 1.)
+        return grad_outputs[0] * torch.where(out_of_range, 0.0, 1.0)
