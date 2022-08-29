@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.12.1 (2022-08-29)
+### Fix
+* **qat:** Reimplement binarize ([`9bbccdd`](https://github.com/es-ude/elastic-ai.creator/commit/9bbccddfc6ce6c2b928166cdfaf1112b294dba17))
+
 ## v0.12.0 (2022-08-26)
 ### Feature
 * **vhdl:** Make work library name customizable ([`95fd8aa`](https://github.com/es-ude/elastic-ai.creator/commit/95fd8aa0d7e512aeb04893de2df2e58cc4b3e641))
