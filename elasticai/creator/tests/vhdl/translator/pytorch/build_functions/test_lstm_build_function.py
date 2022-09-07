@@ -22,10 +22,10 @@ class LSTMBuildFunctionTest(TestCase):
         self.lstm.bias_hh_l0 = arange_parameter(start=12, end=16, shape=(4,))
 
     def test_build_lstm_layer_weights_correct_set(self) -> None:
-        lstm_translatable = build_lstm(self.lstm)
+        lstm_module = build_lstm(self.lstm)
 
-        self.assertEqual(lstm_translatable.weights_ih, [[[0.0], [1.0], [2.0], [3.0]]])
-        self.assertEqual(lstm_translatable.weights_hh, [[[4.0], [5.0], [6.0], [7.0]]])
+        self.assertEqual(lstm_module.weights_ih, [[[0.0], [1.0], [2.0], [3.0]]])
+        self.assertEqual(lstm_module.weights_hh, [[[4.0], [5.0], [6.0], [7.0]]])
 
-        self.assertEqual(lstm_translatable.biases_ih, [[8.0, 9.0, 10.0, 11.0]])
-        self.assertEqual(lstm_translatable.biases_hh, [[12.0, 13.0, 14.0, 15.0]])
+        self.assertEqual(lstm_module.biases_ih, [[8.0, 9.0, 10.0, 11.0]])
+        self.assertEqual(lstm_module.biases_hh, [[12.0, 13.0, 14.0, 15.0]])
