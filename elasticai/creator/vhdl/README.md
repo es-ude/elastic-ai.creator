@@ -14,6 +14,10 @@ An incomplete class diagram illustrating this is the following:
 
 ```mermaid
 classDiagram
+class VHDLModule {
+    <<interface>>
+    +components(args: Any) Iterable VHDLComponent
+}
 class VHDLComponent {
     <<interface>>
     +String file_name
@@ -35,23 +39,23 @@ Static VHDL files that have no placeholders are represented by a `VHDLStaticComp
 A layer (e.g. an LSTM layer) can consist of more than one VHDLComponent. For this reason we call a
 `Iterable[VHDLComponent]` a `VHDLModule`.
 
-## Translatables
+## VHDLModules
 
 In order to represent a layer independently of the machine learning framework used, every layer that needs to be
-translated is represented as translatable. A `Translatable` class has a `translate` function that takes a
+translated is represented as VHDLModule. A `VHDLModule` class has a `components` function that takes a
 DTO (Data Transfer Object) which contains all necessary parameters from the user to translate the layer to VHDL and
 returns a `VHDLModule` as the result of the translation.
 
-An incomplete class diagram showing this for the `LSTMTranslatable` and `Linear1dTranslatable` is the following:
+An incomplete class diagram showing this for the `LSTMModule` and `Linear1dModule` is the following:
 
 ```mermaid
 classDiagram
-class Translatable {
+class VHDLModule {
     <<interface>>
-    +translate(Any args) VHDLModule
+    +components(args: Any) Iterable VHDLComponent
 }
 
-class LSTMTranslatable {
+class LSTMModule {
     +weights_ih
     +weights_hh
     +biases_ih
@@ -65,7 +69,7 @@ class LSTMTranslationArgs {
     +work_library_name
 }
 
-class Linear1dTranslatable {
+class Linear1dModule {
     +weight
     +bias
     +translate(Linear1dTranslationArgs args) VHDLModule
@@ -75,18 +79,18 @@ class Linear1dTranslationArgs {
     +work_library_name
 }
 
-Translatable <|.. LSTMTranslatable
-LSTMTranslatable -- LSTMTranslationArgs
-Translatable <|.. Linear1dTranslatable
-Linear1dTranslatable -- Linear1dTranslationArgs
+VHDLModule <|.. LSTMModule
+LSTMModule -- LSTMTranslationArgs
+VHDLModule <|.. Linear1dModule
+Linear1dModule -- Linear1dTranslationArgs
 ```
 
 ## Build Functions
 
-To convert a layer from a particular machine learning framework to the corresponding translatable, we use build
+To convert a layer from a particular machine learning framework to the corresponding VHDLModule, we use build
 functions for each layer of the machine learning framework. A build function is a function that takes the current layer
-object of the machine learning framework and returns a `Translatable` object. In this build function, all the
-necessary parameters of the layer are extracted and these parameters are used to create the corresponding translatable
+object of the machine learning framework and returns a `VHDLModule` object. In this build function, all the
+necessary parameters of the layer are extracted and these parameters are used to create the corresponding VHDLModule
 object. To translate a model of a machine learning framework, there is a `BuildFunctionMapping` that maps all supported
 layers to their corresponding build function.
 
@@ -101,11 +105,11 @@ the functions `translate_model`, `generate_code` and `save_code` which can be fo
 ```mermaid
 flowchart TD
 start([Start]) ---> translate_model
-translate_model ---> |"Iterator[Translatable]"| generate_code
+translate_model ---> |"Iterator[VHDLModule]"| generate_code
 generate_code ---> |"Iterator[CodeModule]"| save_code
 save_code ---> stop([Stop])
 model[/Model/] -.- translate_model
 build_function_mapping[[BuildFunctionMapping]] <-.-> |Request BuildFunctions| translate_model
-translation_args[/Translation arguments for each Translatable/] -.- generate_code
+translation_args[/Translation arguments for each VHDLModule/] -.- generate_code
 save_code -.-> saved_data[/Saved VHDL files/]
 ```

@@ -4,7 +4,6 @@ from typing import Any
 
 import elasticai.creator.qat.layers as qtorch
 from elasticai.creator.vhdl.language import Code
-from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -21,23 +20,23 @@ class MockVHDLComponent(VHDLComponent):
 
 
 @dataclass
-class MockTranslatable(Translatable):
-    components: list[VHDLComponent]
+class MockModule(VHDLModule):
+    vhdl_components: list[VHDLComponent]
 
-    def translate(self, args: Any) -> VHDLModule:
-        return self.components
-
-
-def mock_build_function1(layer: Any) -> Translatable:
-    return MockTranslatable([MockVHDLComponent()])
+    def components(self, args: Any) -> list[VHDLComponent]:
+        return self.vhdl_components
 
 
-def mock_build_function2(layer: Any) -> Translatable:
-    return MockTranslatable([MockVHDLComponent()])
+def mock_build_function1(layer: Any) -> VHDLModule:
+    return MockModule([MockVHDLComponent()])
 
 
-def mock_build_function3(layer: Any) -> Translatable:
-    return MockTranslatable([MockVHDLComponent()])
+def mock_build_function2(layer: Any) -> VHDLModule:
+    return MockModule([MockVHDLComponent()])
+
+
+def mock_build_function3(layer: Any) -> VHDLModule:
+    return MockModule([MockVHDLComponent()])
 
 
 class BuildFunctionMappingTest(unittest.TestCase):

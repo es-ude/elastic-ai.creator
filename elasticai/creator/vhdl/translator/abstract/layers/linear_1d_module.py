@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import chain
 from typing import Callable
@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.components import (
     RomComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLModule
+from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
 @dataclass
@@ -21,11 +21,11 @@ class Linear1dTranslationArgs:
 
 
 @dataclass
-class Linear1dTranslatable:
+class Linear1dModule(VHDLModule):
     weight: list[list[float]]
     bias: list[float]
 
-    def translate(self, args: Linear1dTranslationArgs) -> VHDLModule:
+    def components(self, args: Linear1dTranslationArgs) -> Iterator[VHDLComponent]:
         def to_fp(values: Iterable[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 

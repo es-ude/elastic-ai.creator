@@ -1,25 +1,23 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.components.dual_port_2_clock_ram_component import (
+from elasticai.creator.vhdl.components import (
     DualPort2ClockRamComponent,
+    LSTMCommonComponent,
+    LSTMComponent,
+    RomComponent,
+    SigmoidComponent,
+    TanhComponent,
 )
-from elasticai.creator.vhdl.components.lstm_common_component import LSTMCommonComponent
-from elasticai.creator.vhdl.components.lstm_component import (
-    LSTMComponent as LSTMComponent,
-)
-from elasticai.creator.vhdl.components.rom_component import RomComponent
-from elasticai.creator.vhdl.components.sigmoid_component import SigmoidComponent
-from elasticai.creator.vhdl.components.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_translatable import (
-    LSTMTranslatable,
+from elasticai.creator.vhdl.translator.abstract.layers import (
+    LSTMModule,
     LSTMTranslationArgs,
 )
 
 
-class LSTMTranslatableTest(TestCase):
+class LSTMModuleTest(TestCase):
     def setUp(self) -> None:
-        self.lstm = LSTMTranslatable(
+        self.lstm = LSTMModule(
             weights_ih=[[[1, 2], [3, 4], [5, 6], [7, 8]]],
             weights_hh=[[[1], [2], [3], [4]]],
             biases_ih=[[1, 2, 3, 4]],
@@ -33,11 +31,11 @@ class LSTMTranslatableTest(TestCase):
         )
 
     def test_correct_number_of_components(self) -> None:
-        vhdl_components = list(self.lstm.translate(self.translation_args))
+        vhdl_components = list(self.lstm.components(self.translation_args))
         self.assertEqual(len(vhdl_components), 13)
 
     def test_contains_all_needed_components(self) -> None:
-        vhdl_components = self.lstm.translate(self.translation_args)
+        vhdl_components = self.lstm.components(self.translation_args)
 
         target_components = [
             (RomComponent, "wi_rom.vhd"),

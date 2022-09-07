@@ -1,8 +1,8 @@
-from elasticai.creator.vhdl.translator.abstract.layers.linear_1d_translatable import (
-    Linear1dTranslatable,
+from elasticai.creator.vhdl.translator.abstract.layers.linear_1d_module import (
+    Linear1dModule,
     Linear1dTranslationArgs,
 )
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_translatable import (
-    LSTMTranslatable,
+from elasticai.creator.vhdl.translator.abstract.layers.lstm_module import (
+    LSTMModule,
     LSTMTranslationArgs,
 )

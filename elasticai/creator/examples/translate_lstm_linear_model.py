@@ -55,7 +55,7 @@ def main() -> None:
     )
 
     code_repr = translator.generate_code(
-        translatable_layers=translatable_layers, translation_args=translation_args
+        vhdl_modules=translatable_layers, translation_args=translation_args
     )
 
     translator.save_code(code_repr=code_repr, path=args.build_dir)
