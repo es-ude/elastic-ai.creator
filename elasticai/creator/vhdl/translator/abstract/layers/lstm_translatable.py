@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.components import (
     TanhComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLModule, VHDLComponent
+from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
 @dataclass

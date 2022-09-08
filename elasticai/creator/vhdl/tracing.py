@@ -1,9 +1,9 @@
 from typing import Any, Callable
 
-import torch.fx as fx
 import torch
-
+import torch.fx as fx
 from torch.nn.functional import relu
+
 from elasticai.creator.qat.layers import Binarize
 
 
@@ -41,7 +41,6 @@ if __name__ == "__main__":
 
     gm: fx.GraphModule = fx.GraphModule(model, graph)
 
-
     def prepare_arguments_for_new_node(arg: Any) -> Any:
         if isinstance(arg, fx.Node):
             return node_args[arg.name]
@@ -53,12 +52,21 @@ if __name__ == "__main__":
         else:
             if node.op == "call_module" and node.target == "linear":
                 model.binarize = Binarize()
-                new_node = new_graph.call_module(module_name="binarize", args=tuple([prepare_arguments_for_new_node(arg) for arg in node.args]))
+                new_node = new_graph.call_module(
+                    module_name="binarize",
+                    args=tuple(
+                        [prepare_arguments_for_new_node(arg) for arg in node.args]
+                    ),
+                )
                 node_args[node.name] = new_node
-                new_node = new_graph.call_module("lstm_container.batch_norm", args=(new_node,))
+                new_node = new_graph.call_module(
+                    "lstm_container.batch_norm", args=(new_node,)
+                )
                 node_args["output"] = new_node
             else:
-                new_node = new_graph.node_copy(node, transform_argument_for_old_node_to_new_node)
+                new_node = new_graph.node_copy(
+                    node, transform_argument_for_old_node_to_new_node
+                )
                 node_args[node.name] = new_node
     print(new_graph)
 
@@ -69,4 +77,4 @@ if __name__ == "__main__":
     gm.graph.lint()
 
     print(tracer.trace(gm))
-    gm(torch.tensor([[[1.], [1.]]]))
+    gm(torch.tensor([[[1.0], [1.0]]]))
