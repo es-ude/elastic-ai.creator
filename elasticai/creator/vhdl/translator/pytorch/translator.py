@@ -6,13 +6,13 @@ import torch
 
 from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.language import Code
-from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
+from elasticai.creator.vhdl.vhdl_component import VHDLModule
 
 
 @dataclass
@@ -30,7 +30,7 @@ class CodeModule:
 def translate_model(
     model: torch.nn.Module,
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
-) -> Iterator[Translatable]:
+) -> Iterator[VHDLModule]:
     """
     Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
     as an iterator of Translatable objects.
@@ -42,7 +42,7 @@ def translate_model(
             functions will be used.
 
     Returns:
-        Iterator[Translatable]: Iterator that yields for each layer one Translatable object.
+        Iterator[VHDLModule]: Iterator that yields for each layer one Translatable object.
     """
     flat_model = filter(
         lambda x: not isinstance(x, torch.nn.Sequential), model.modules()
@@ -54,7 +54,7 @@ def translate_model(
 
 
 def generate_code(
-    translatable_layers: Iterable[Translatable],
+    translatable_layers: Iterable[VHDLModule],
     translation_args: dict[str, Any],
 ) -> Iterator[CodeModule]:
     """
@@ -62,7 +62,7 @@ def generate_code(
     the translation from the intermediate representation to the actual VHDL code.
 
     Parameters:
-        translatable_layers (Iterable[Translatable]):
+        translatable_layers (Iterable[VHDLModule]):
             The intermediate representation as an iterator of Translatable objects.
         translation_args (dict[str, dict[str, Any]]):
             Dictionary with the translation arguments for each kind of Translatable included in the translatable_layers.

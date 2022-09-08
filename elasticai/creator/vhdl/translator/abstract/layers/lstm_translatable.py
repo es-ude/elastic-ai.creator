@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Iterable
 
 import numpy as np
 
@@ -12,8 +12,7 @@ from elasticai.creator.vhdl.components import (
     TanhComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.translatable import Translatable
-from elasticai.creator.vhdl.vhdl_component import VHDLModule
+from elasticai.creator.vhdl.vhdl_component import VHDLModule, VHDLComponent
 
 
 @dataclass
@@ -25,7 +24,7 @@ class LSTMTranslationArgs:
 
 
 @dataclass
-class LSTMTranslatable(Translatable):
+class LSTMModule(VHDLModule):
     """
     Abstract representation of an LSTM layer that can be directly translated to an iterable of VHDLComponent objects.
     Currently, no stacked LSTMs are supported (only single layer LSTMs are supported).
@@ -75,7 +74,7 @@ class LSTMTranslatable(Translatable):
         _, hidden_size, input_size = np.shape(self.weights_ih)
         return input_size, hidden_size // 4
 
-    def translate(self, args: LSTMTranslationArgs) -> VHDLModule:
+    def translate(self, args: LSTMTranslationArgs) -> Iterable[VHDLComponent]:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 
