@@ -27,4 +27,6 @@ class VHDLStaticComponent:
         yield from code.splitlines()
 
 
-VHDLModule = Iterable[VHDLComponent]
+class VHDLModule(Protocol):
+    def translate(self) -> Iterable[VHDLComponent]:
+        ...

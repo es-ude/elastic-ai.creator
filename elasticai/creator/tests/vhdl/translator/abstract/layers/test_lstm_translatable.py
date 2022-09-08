@@ -12,14 +12,14 @@ from elasticai.creator.vhdl.components.sigmoid_component import SigmoidComponent
 from elasticai.creator.vhdl.components.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers.lstm_translatable import (
-    LSTMTranslatable,
+    LSTMModule,
     LSTMTranslationArgs,
 )
 
 
 class LSTMTranslatableTest(TestCase):
     def setUp(self) -> None:
-        self.lstm = LSTMTranslatable(
+        self.lstm = LSTMModule(
             weights_ih=[[[1, 2], [3, 4], [5, 6], [7, 8]]],
             weights_hh=[[[1], [2], [3], [4]]],
             biases_ih=[[1, 2, 3, 4]],

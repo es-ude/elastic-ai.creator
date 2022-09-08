@@ -3,6 +3,6 @@ from elasticai.creator.vhdl.translator.abstract.layers.linear_1d_translatable im
     Linear1dTranslationArgs,
 )
 from elasticai.creator.vhdl.translator.abstract.layers.lstm_translatable import (
-    LSTMTranslatable,
+    LSTMModule,
     LSTMTranslationArgs,
 )
