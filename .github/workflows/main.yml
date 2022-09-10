@@ -71,7 +71,7 @@ jobs:
           python-version: 3.10.0
       - name: Install dependencies
         run: |
-          python3 -m pip install poetry --upgrade pip
+          python3 -m pip install poetry==1.1.15 --upgrade pip
           poetry config virtualenvs.create false
           poetry install --no-interaction --extras onnx --extras examples
       - name: Semantic Release
