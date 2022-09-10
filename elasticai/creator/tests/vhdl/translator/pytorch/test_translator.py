@@ -18,7 +18,7 @@ from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
 @dataclass
-class VHDLComponentMock:
+class VHDLComponentMock(VHDLComponent):
     name: str
     code: list[str]
 
@@ -31,16 +31,16 @@ class VHDLComponentMock:
 
 
 @dataclass
-class TranslatableMock:
-    components: list[VHDLComponent]
+class VHDLModuleMock(VHDLModule):
+    vhdl_components: list[VHDLComponent]
 
-    def translate(self, args: Any) -> VHDLModule:
-        yield from self.components
+    def components(self, args: Any) -> list[VHDLComponent]:
+        yield from self.vhdl_components
 
 
-def fake_build_function(module: torch.nn.Module) -> TranslatableMock:
-    return TranslatableMock(
-        components=[
+def fake_build_function(module: torch.nn.Module) -> VHDLModuleMock:
+    return VHDLModuleMock(
+        vhdl_components=[
             VHDLComponentMock(name="component1", code=["1", "2", "3"]),
             VHDLComponentMock(name="component2", code=["4", "5", "6"]),
         ]
@@ -76,19 +76,19 @@ class TranslatorTest(unittest.TestCase):
         translated_model = list(translator.translate_model(model, self.build_mapping))
 
         self.assertEqual(len(translated_model), 1)
-        self.assertEqual(type(translated_model[0]), TranslatableMock)
+        self.assertEqual(type(translated_model[0]), VHDLModuleMock)
 
     def test_generate_code(self) -> None:
         model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
         translated_model = translator.translate_model(model, self.build_mapping)
         modules = translator.generate_code(
-            translatable_layers=translated_model, translation_args=dict()
+            vhdl_modules=translated_model, translation_args=dict()
         )
 
         code = unpack_module_directories(modules)
         expected_code = [
             (
-                "0_TranslatableMock",
+                "0_VHDLModuleMock",
                 [
                     ("component1", ["1", "2", "3"]),
                     ("component2", ["4", "5", "6"]),

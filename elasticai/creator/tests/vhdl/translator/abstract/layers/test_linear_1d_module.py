@@ -7,20 +7,20 @@ from elasticai.creator.vhdl.components import (
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
-    Linear1dTranslatable,
+    Linear1dModule,
     Linear1dTranslationArgs,
 )
 
 
-class Linear1dTranslatableTest(unittest.TestCase):
+class Linear1dModuleTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.linear = Linear1dTranslatable(weight=[[1, 2, 3]], bias=[1])
+        self.linear = Linear1dModule(weight=[[1, 2, 3]], bias=[1])
         self.translation_args = Linear1dTranslationArgs(
             fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4)
         )
 
     def test_contains_all_needed_components(self) -> None:
-        vhdl_components = self.linear.translate(self.translation_args)
+        vhdl_components = self.linear.components(self.translation_args)
 
         target_components = [
             (Linear1dComponent, "linear_1d.vhd"),

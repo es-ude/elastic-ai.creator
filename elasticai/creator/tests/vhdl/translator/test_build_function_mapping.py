@@ -1,6 +1,6 @@
 import unittest
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 import elasticai.creator.qat.layers as qtorch
 from elasticai.creator.vhdl.language import Code
@@ -20,23 +20,23 @@ class MockVHDLComponent(VHDLComponent):
 
 
 @dataclass
-class MockTranslatable(VHDLModule):
-    components: list[VHDLComponent]
+class MockModule(VHDLModule):
+    vhdl_components: list[VHDLComponent]
 
-    def translate(self, args: Any) -> Iterable[VHDLComponent]:
-        return self.components
+    def components(self, args: Any) -> list[VHDLComponent]:
+        return self.vhdl_components
 
 
 def mock_build_function1(layer: Any) -> VHDLModule:
-    return MockTranslatable([MockVHDLComponent()])
+    return MockModule([MockVHDLComponent()])
 
 
 def mock_build_function2(layer: Any) -> VHDLModule:
-    return MockTranslatable([MockVHDLComponent()])
+    return MockModule([MockVHDLComponent()])
 
 
 def mock_build_function3(layer: Any) -> VHDLModule:
-    return MockTranslatable([MockVHDLComponent()])
+    return MockModule([MockVHDLComponent()])
 
 
 class BuildFunctionMappingTest(unittest.TestCase):

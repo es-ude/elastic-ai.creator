@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Callable, Iterable
+from typing import Callable, Iterator
 
 import numpy as np
 
@@ -74,7 +74,7 @@ class LSTMModule(VHDLModule):
         _, hidden_size, input_size = np.shape(self.weights_ih)
         return input_size, hidden_size // 4
 
-    def translate(self, args: LSTMTranslationArgs) -> Iterable[VHDLComponent]:
+    def components(self, args: LSTMTranslationArgs) -> Iterator[VHDLComponent]:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 

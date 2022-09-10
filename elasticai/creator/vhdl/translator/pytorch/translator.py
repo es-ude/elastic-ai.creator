@@ -33,7 +33,7 @@ def translate_model(
 ) -> Iterator[VHDLModule]:
     """
     Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
-    as an iterator of Translatable objects.
+    as an iterator of VHDLModule objects.
 
     Parameters:
         model (torch.nn.Module): The PyTorch-model that should be translated.
@@ -42,7 +42,7 @@ def translate_model(
             functions will be used.
 
     Returns:
-        Iterator[VHDLModule]: Iterator that yields for each layer one Translatable object.
+        Iterator[VHDLModule]: Iterator that yields for each layer one VHDLModule object.
     """
     flat_model = filter(
         lambda x: not isinstance(x, torch.nn.Sequential), model.modules()
@@ -54,31 +54,31 @@ def translate_model(
 
 
 def generate_code(
-    translatable_layers: Iterable[VHDLModule],
+    vhdl_modules: Iterable[VHDLModule],
     translation_args: dict[str, Any],
 ) -> Iterator[CodeModule]:
     """
-    Takes an iterable of Translatable objects a dictionary of arguments for each Translatable object type and performs
+    Takes an iterable of VHDLModule objects a dictionary of arguments for each VHDLModule object type and performs
     the translation from the intermediate representation to the actual VHDL code.
 
     Parameters:
-        translatable_layers (Iterable[VHDLModule]):
-            The intermediate representation as an iterator of Translatable objects.
+        vhdl_modules (Iterable[VHDLModule]):
+            The intermediate representation as an iterator of VHDLModule objects.
         translation_args (dict[str, dict[str, Any]]):
-            Dictionary with the translation arguments for each kind of Translatable included in the translatable_layers.
+            Dictionary with the translation arguments for each kind of VHDLModule included in the vhdl_modules.
 
     Returns:
         Iterator[CodeModule]:
             Iterator of containers that holds the actual VHDL code. The CodeModule objects holds all CodeFile
-            objects for one Translatable object (module) and the name of that module. One CodeFile object
+            objects for one VHDLModule object (module) and the name of that module. One CodeFile object
             holds the file name of that code files and the actual code as an iterable of str (lines).
     """
-    for module_index, module in enumerate(translatable_layers):
+    for module_index, module in enumerate(vhdl_modules):
         module_class_name = type(module).__name__
 
         args = translation_args.get(module_class_name)
 
-        components = module.translate(args)
+        components = module.components(args)
         files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
 
         yield CodeModule(module_name=f"{module_index}_{module_class_name}", files=files)
