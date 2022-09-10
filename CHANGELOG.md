@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.13.0 (2022-09-10)
+### Feature
+* **gh-workflow:** Explicitly set poetry version ([`82d202f`](https://github.com/es-ude/elastic-ai.creator/commit/82d202f0229e7931fc7371f69abe0d1fe3a58134))
+* **vhdl:** Remove translatable protocol ([`ca52a92`](https://github.com/es-ude/elastic-ai.creator/commit/ca52a92d1bdc017773b872eaa5011b5117394472))
+* **vhdl:** Remove translatable protocol ([`37412e8`](https://github.com/es-ude/elastic-ai.creator/commit/37412e87d89d16c9159cf12ef00032343119100c))
+
 ## v0.12.1 (2022-08-29)
 ### Fix
 * **qat:** Reimplement binarize ([`9bbccdd`](https://github.com/es-ude/elastic-ai.creator/commit/9bbccddfc6ce6c2b928166cdfaf1112b294dba17))
