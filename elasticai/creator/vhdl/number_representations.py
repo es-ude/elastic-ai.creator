@@ -171,18 +171,27 @@ class FixedPoint:
         return value / (1 << frac_bits)
 
     @staticmethod
+    def _calculate_float_from_signed_fixed_point(
+        value: int, total_bits: int, frac_bits: int
+    ) -> float:
+        float_value = value / (1 << frac_bits)
+        FixedPoint._assert_range(float_value, total_bits, frac_bits)
+        return float_value
+
+    @staticmethod
     def from_int(
-        value: int,
-        total_bits: int,
-        frac_bits: int,
+        value: int, total_bits: int, frac_bits: int, signed_int: bool = False
     ) -> "FixedPoint":
-        return FixedPoint(
-            value=FixedPoint._calculate_float_from_fixed_point(
+        if signed_int:
+            float_value = FixedPoint._calculate_float_from_signed_fixed_point(
                 value, total_bits=total_bits, frac_bits=frac_bits
-            ),
-            total_bits=total_bits,
-            frac_bits=frac_bits,
-        )
+            )
+        else:
+            float_value = FixedPoint._calculate_float_from_fixed_point(
+                value, total_bits=total_bits, frac_bits=frac_bits
+            )
+
+        return FixedPoint(value=float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
     def get_factory(
