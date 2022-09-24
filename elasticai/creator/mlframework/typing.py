@@ -1,6 +1,6 @@
 """Interfaces/Adapters to the used machine learning framework"""
 
-from typing import Iterable, Protocol, runtime_checkable
+from typing import Any, Iterable, Protocol, runtime_checkable
 
 from numpy.typing import ArrayLike
 
@@ -30,5 +30,5 @@ class Module(Protocol):
     def named_children(self) -> Iterable[tuple[str, "Module"]]:
         ...
 
-    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor:
+    def __call__(self, x: Any, *args: Any, **kwargs: Any) -> Any:
         ...
