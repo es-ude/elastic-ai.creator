@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.14.0 (2022-09-28)
+### Feature
+* **vhdl:** Implement from_unsigned_int and from_signed_int function and remove unused function ([`aca77f5`](https://github.com/es-ude/elastic-ai.creator/commit/aca77f5eac396f21821b07706ff250b2589dd037))
+
+### Fix
+* **vhdl:** Reimplement unsigned_int_values_to_fixed_point function ([`cdd069e`](https://github.com/es-ude/elastic-ai.creator/commit/cdd069e6adffa882bb34fea2b7179891c282045b))
+
 ## v0.13.0 (2022-09-10)
 ### Feature
 * **gh-workflow:** Explicitly set poetry version ([`82d202f`](https://github.com/es-ude/elastic-ai.creator/commit/82d202f0229e7931fc7371f69abe0d1fe3a58134))
