@@ -98,8 +98,12 @@ class FixedPointTest(TestCase):
         fp_value = FixedPoint(-19.5, total_bits=16, frac_bits=8)
         self.assertEqual("1110110010000000", fp_value.to_bin())
 
-    def test_from_int(self):
-        fp_value = FixedPoint.from_int(52388, total_bits=16, frac_bits=12)
+    def test_from_unsigned_int(self):
+        fp_value = FixedPoint.from_unsigned_int(52388, total_bits=16, frac_bits=12)
+        self.assertAlmostEqual(-3.21, float(fp_value), places=2)
+
+    def test_from_signed_int(self):
+        fp_value = FixedPoint.from_signed_int(-13148, total_bits=16, frac_bits=12)
         self.assertAlmostEqual(-3.21, float(fp_value), places=2)
 
     def test_repr(self):
