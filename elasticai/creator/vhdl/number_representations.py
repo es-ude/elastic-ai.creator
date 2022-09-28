@@ -9,12 +9,10 @@ class FixedPoint:
     """
     A data type that converts a given number to the corresponding fixed-point representation.
     A fixed-point value is an unsigned integer in two's complement.
-
     Parameters:
         value (float | int): Value to be represented as fixed-point value.
         total_bits (int): Total number of bits of the fixed-point representation (including number of fractional bits).
         frac_bits (int): Number of bits to represent the fractional part of the number.
-
     Examples:
         >>> fixed_point_value = FixedPoint(-2.9, total_bits=8, frac_bits=4)
         >>> int(fixed_point_value)
@@ -49,9 +47,9 @@ class FixedPoint:
         return fp_int
 
     def __float__(self) -> float:
-        return FixedPoint._calculate_float_from_fixed_point(
+        return FixedPoint.from_unsigned_int(
             int(self), self._total_bits, self._frac_bits
-        )
+        )._value
 
     def __eq__(self, other: Any) -> bool:
         return float(self) == float(other)
@@ -117,7 +115,7 @@ class FixedPoint:
         )
 
     def _identical_fixed_point_from_int(self, value: int) -> "FixedPoint":
-        return FixedPoint.from_int(
+        return FixedPoint.from_unsigned_int(
             value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
         )
 
@@ -157,9 +155,7 @@ class FixedPoint:
         return FixedPoint._invert_int(abs(value), num_bits) + 1
 
     @staticmethod
-    def _calculate_float_from_fixed_point(
-        value: int, total_bits: int, frac_bits: int
-    ) -> float:
+    def from_unsigned_int(value: int, total_bits: int, frac_bits: int) -> "FixedPoint":
         if value > 2**total_bits - 1:
             raise ValueError(
                 f"Value {value} cannot interpreted as a fixed point with {total_bits} total bits."
@@ -168,21 +164,14 @@ class FixedPoint:
         if is_negative:
             value = FixedPoint._calculate_two_complement(value, total_bits)
             value *= -1
-        return value / (1 << frac_bits)
+        float_value = value / (1 << frac_bits)
+        return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
-    def from_int(
-        value: int,
-        total_bits: int,
-        frac_bits: int,
-    ) -> "FixedPoint":
-        return FixedPoint(
-            value=FixedPoint._calculate_float_from_fixed_point(
-                value, total_bits=total_bits, frac_bits=frac_bits
-            ),
-            total_bits=total_bits,
-            frac_bits=frac_bits,
-        )
+    def from_signed_int(value: int, total_bits: int, frac_bits: int) -> "FixedPoint":
+        float_value = value / (1 << frac_bits)
+        FixedPoint._assert_range(float_value, total_bits, frac_bits)
+        return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
     def get_factory(
@@ -229,10 +218,12 @@ def float_values_to_fixed_point(
     return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
 
-def int_values_to_fixed_point(
+def unsigned_int_values_to_fixed_point(
     values: list[int], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
-    return list(map(lambda x: FixedPoint.from_int(x, total_bits, frac_bits), values))
+    return list(
+        map(lambda x: FixedPoint.from_unsigned_int(x, total_bits, frac_bits), values)
+    )
 
 
 class ToLogicEncoder:
