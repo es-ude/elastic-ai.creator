@@ -218,6 +218,14 @@ def float_values_to_fixed_point(
     return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
 
+def unsigned_int_values_to_fixed_point(
+    values: list[int], total_bits: int, frac_bits: int
+) -> list[FixedPoint]:
+    return list(
+        map(lambda x: FixedPoint.from_unsigned_int(x, total_bits, frac_bits), values)
+    )
+
+
 class ToLogicEncoder:
     """
     Throughout our implementations we have to deal with two different levels of representations for numbers:

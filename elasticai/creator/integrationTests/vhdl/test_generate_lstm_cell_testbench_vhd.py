@@ -4,7 +4,7 @@ from elasticai.creator.integrationTests.vhdl.vhdl_file_test_case import VHDLFile
 from elasticai.creator.vhdl.lstm_testbench_generator import LSTMCellTestBench
 from elasticai.creator.vhdl.number_representations import (
     float_values_to_fixed_point,
-    int_values_to_fixed_point,
+    unsigned_int_values_to_fixed_point,
 )
 
 
@@ -13,7 +13,7 @@ class LSTMCellTestBenchTest(VHDLFileTestCase):
 
     def test_compare_files(self) -> None:
         fp_args = dict(total_bits=16, frac_bits=8)
-        ints_to_fp = partial(int_values_to_fixed_point, **fp_args)
+        ints_to_fp = partial(unsigned_int_values_to_fixed_point, **fp_args)
         floats_to_fp = partial(float_values_to_fixed_point, **fp_args)
 
         lstm_cell = LSTMCellTestBench(
