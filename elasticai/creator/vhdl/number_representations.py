@@ -1,8 +1,42 @@
 import math
-from collections.abc import Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from functools import partial
 from itertools import chain
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any, Callable
+
+
+def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
+    max_value = 2 ** (total_bits - frac_bits - 1)
+    min_value = max_value * (-1)
+    if not min_value <= value < max_value:
+        raise ValueError(
+            (
+                f"Value {value} cannot represented as a fixed point value with {total_bits} total bits "
+                f"and {frac_bits} fraction bits (value range: [{min_value}, {max_value}))."
+            )
+        )
+
+
+def _assert_is_compatible(fp1: "FixedPoint", fp2: "FixedPoint") -> None:
+    if not (fp1.total_bits == fp2.total_bits and fp1.frac_bits == fp2.frac_bits):
+        raise ValueError(
+            (
+                f"FixedPoint objects not compatible (total_bits: {fp1.total_bits} != {fp2.total_bits}); "
+                f"frac_bits: {fp1.frac_bits} != {fp2.frac_bits})."
+            )
+        )
+
+
+def _invert_int(value: int, num_bits: int) -> int:
+    return value ^ int("1" * num_bits, 2)
+
+
+def _discard_leading_bits(value: int, num_bits: int) -> int:
+    return value & int("1" * num_bits, 2)
+
+
+def _calculate_two_complement(value: int, num_bits: int) -> int:
+    return _invert_int(abs(value), num_bits) + 1
 
 
 class FixedPoint:
@@ -10,7 +44,7 @@ class FixedPoint:
     A data type that converts a given number to the corresponding fixed-point representation.
     A fixed-point value is an unsigned integer in two's complement.
     Parameters:
-        value (float | int): Value to be represented as fixed-point value.
+        value (float): Value to be represented as fixed-point value.
         total_bits (int): Total number of bits of the fixed-point representation (including number of fractional bits).
         frac_bits (int): Number of bits to represent the fractional part of the number.
     Examples:
@@ -29,21 +63,16 @@ class FixedPoint:
 
     __slots__ = ["_value", "_frac_bits", "_total_bits"]
 
-    def __init__(
-        self,
-        value: float | int,
-        total_bits: int,
-        frac_bits: int,
-    ) -> None:
+    def __init__(self, value: float, total_bits: int, frac_bits: int) -> None:
         self._value = float(value)
         self._total_bits = total_bits
         self._frac_bits = frac_bits
-        FixedPoint._assert_range(self._value, self._total_bits, self._frac_bits)
+        _assert_range(self._value, self._total_bits, self._frac_bits)
 
     def __int__(self) -> int:
         fp_int = int(self._value * (1 << self._frac_bits))
         if fp_int < 0:
-            fp_int = FixedPoint._calculate_two_complement(fp_int, self._total_bits)
+            fp_int = _calculate_two_complement(fp_int, self._total_bits)
         return fp_int
 
     def __float__(self) -> float:
@@ -70,31 +99,29 @@ class FixedPoint:
         return float(self) >= float(other)
 
     def __add__(self, other: "FixedPoint") -> "FixedPoint":
-        FixedPoint._assert_is_compatible(self, other)
+        _assert_is_compatible(self, other)
         return self._identical_fixed_point_from_int(
-            FixedPoint._discard_leading_bits(
-                int(self) + int(other), num_bits=self._total_bits
-            )
+            _discard_leading_bits(int(self) + int(other), num_bits=self._total_bits)
         )
 
     def __sub__(self, other: "FixedPoint") -> "FixedPoint":
         return self + (-other)
 
     def __and__(self, other: "FixedPoint") -> "FixedPoint":
-        FixedPoint._assert_is_compatible(self, other)
+        _assert_is_compatible(self, other)
         return self._identical_fixed_point_from_int(int(self) & int(other))
 
     def __or__(self, other: "FixedPoint") -> "FixedPoint":
-        FixedPoint._assert_is_compatible(self, other)
+        _assert_is_compatible(self, other)
         return self._identical_fixed_point_from_int(int(self) | int(other))
 
     def __xor__(self, other: "FixedPoint") -> "FixedPoint":
-        FixedPoint._assert_is_compatible(self, other)
+        _assert_is_compatible(self, other)
         return self._identical_fixed_point_from_int(int(self) ^ int(other))
 
     def __invert__(self) -> "FixedPoint":
         return self._identical_fixed_point_from_int(
-            FixedPoint._invert_int(int(self), num_bits=self._total_bits)
+            _invert_int(int(self), num_bits=self._total_bits)
         )
 
     def __neg__(self) -> "FixedPoint":
@@ -109,7 +136,7 @@ class FixedPoint:
     def __repr__(self) -> str:
         return f"FixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
 
-    def _identical_fixed_point(self, value: float | int) -> "FixedPoint":
+    def _identical_fixed_point(self, value: float) -> "FixedPoint":
         return FixedPoint(
             value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
         )
@@ -120,41 +147,6 @@ class FixedPoint:
         )
 
     @staticmethod
-    def _assert_range(value: float | int, total_bits: int, frac_bits: int) -> None:
-        max_value = 2 ** (total_bits - frac_bits - 1)
-        min_value = max_value * (-1)
-
-        if not min_value <= value < max_value:
-            raise ValueError(
-                (
-                    f"Value {value} cannot represented as a fixed point value with {total_bits} total bits "
-                    f"and {frac_bits} fraction bits (value range: [{min_value}, {max_value}))."
-                )
-            )
-
-    @staticmethod
-    def _assert_is_compatible(fp1: "FixedPoint", fp2: "FixedPoint") -> None:
-        if not (fp1.total_bits == fp2.total_bits and fp1.frac_bits == fp2.frac_bits):
-            raise ValueError(
-                (
-                    f"FixedPoint objects not compatible (total_bits: {fp1.total_bits} != {fp2.total_bits}); "
-                    f"frac_bits: {fp1.frac_bits} != {fp2.frac_bits})."
-                )
-            )
-
-    @staticmethod
-    def _invert_int(value: int, num_bits: int) -> int:
-        return value ^ int("1" * num_bits, 2)
-
-    @staticmethod
-    def _discard_leading_bits(value: int, num_bits: int) -> int:
-        return value & int("1" * num_bits, 2)
-
-    @staticmethod
-    def _calculate_two_complement(value: int, num_bits: int) -> int:
-        return FixedPoint._invert_int(abs(value), num_bits) + 1
-
-    @staticmethod
     def from_unsigned_int(value: int, total_bits: int, frac_bits: int) -> "FixedPoint":
         if value > 2**total_bits - 1:
             raise ValueError(
@@ -162,7 +154,7 @@ class FixedPoint:
             )
         is_negative = value & (1 << total_bits - 1) > 0
         if is_negative:
-            value = FixedPoint._calculate_two_complement(value, total_bits)
+            value = _calculate_two_complement(value, total_bits)
             value *= -1
         float_value = value / (1 << frac_bits)
         return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
@@ -170,13 +162,10 @@ class FixedPoint:
     @staticmethod
     def from_signed_int(value: int, total_bits: int, frac_bits: int) -> "FixedPoint":
         float_value = value / (1 << frac_bits)
-        FixedPoint._assert_range(float_value, total_bits, frac_bits)
         return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
-    def get_factory(
-        total_bits: int, frac_bits: int
-    ) -> Callable[[float | int], "FixedPoint"]:
+    def get_factory(total_bits: int, frac_bits: int) -> Callable[[float], "FixedPoint"]:
         return partial(FixedPoint, total_bits=total_bits, frac_bits=frac_bits)
 
     @property
@@ -200,6 +189,67 @@ class FixedPoint:
         return f"{int(self):0{math.ceil(self._total_bits / 4)}x}"
 
 
+class ClippedFixedPoint(FixedPoint):
+    def __init__(self, value: float, total_bits: int, frac_bits: int) -> None:
+        max_value = (2 ** (total_bits - 1) - 1) / (1 << frac_bits)
+        min_value = 2 ** (total_bits - frac_bits - 1) * (-1)
+        if min_value <= value <= max_value:
+            super().__init__(value=value, total_bits=total_bits, frac_bits=frac_bits)
+        else:
+            super().__init__(
+                value=max_value if value > max_value else min_value,
+                total_bits=total_bits,
+                frac_bits=frac_bits,
+            )
+
+    def __float__(self) -> float:
+        return ClippedFixedPoint.from_unsigned_int(
+            int(self), self._total_bits, self._frac_bits
+        )._value
+
+    def __repr__(self) -> str:
+        return f"ClippedFixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
+
+    def _identical_fixed_point(self, value: float) -> "ClippedFixedPoint":
+        return ClippedFixedPoint(
+            value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
+        )
+
+    def _identical_fixed_point_from_int(self, value: int) -> "ClippedFixedPoint":
+        return ClippedFixedPoint.from_unsigned_int(
+            value=value, total_bits=self._total_bits, frac_bits=self._frac_bits
+        )
+
+    @staticmethod
+    def from_unsigned_int(
+        value: int, total_bits: int, frac_bits: int
+    ) -> "ClippedFixedPoint":
+        value = _discard_leading_bits(value, num_bits=total_bits)
+        is_negative = value & (1 << total_bits - 1) > 0
+        if is_negative:
+            value = _calculate_two_complement(value, total_bits)
+            value *= -1
+        float_value = value / (1 << frac_bits)
+        return ClippedFixedPoint(
+            float_value, total_bits=total_bits, frac_bits=frac_bits
+        )
+
+    @staticmethod
+    def from_signed_int(
+        value: int, total_bits: int, frac_bits: int
+    ) -> "ClippedFixedPoint":
+        float_value = value / (1 << frac_bits)
+        return ClippedFixedPoint(
+            float_value, total_bits=total_bits, frac_bits=frac_bits
+        )
+
+    @staticmethod
+    def get_factory(
+        total_bits: int, frac_bits: int
+    ) -> Callable[[float], "ClippedFixedPoint"]:
+        return partial(ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits)
+
+
 def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     if sum(len(value_list) == 0 for value_list in values) > 0:
         raise ValueError("Cannot infer total bits and frac bits from an empty list.")
@@ -213,7 +263,7 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
 
 
 def float_values_to_fixed_point(
-    values: list[float | int], total_bits: int, frac_bits: int
+    values: list[float], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
     return list(map(lambda x: FixedPoint(x, total_bits, frac_bits), values))
 
