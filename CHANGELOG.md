@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.15.0 (2022-09-29)
+### Feature
+* **vhdl:** Implement clipped fixed point representation ([`8e53506`](https://github.com/es-ude/elastic-ai.creator/commit/8e53506fce0ba5adaa124ccd61de3b340bf1c95f))
+
 ## v0.14.0 (2022-09-28)
 ### Feature
 * **vhdl:** Implement from_unsigned_int and from_signed_int function and remove unused function ([`aca77f5`](https://github.com/es-ude/elastic-ai.creator/commit/aca77f5eac396f21821b07706ff250b2589dd037))
