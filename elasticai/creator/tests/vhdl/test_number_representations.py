@@ -2,6 +2,7 @@ from functools import partial
 from unittest import TestCase
 
 from elasticai.creator.vhdl.number_representations import (
+    ClippedFixedPoint,
     FixedPoint,
     ToLogicEncoder,
     float_values_to_fixed_point,
@@ -237,6 +238,63 @@ class FixedPointTest(TestCase):
     def test_to_signed_int_negative_value(self):
         fp = FixedPoint(-5, total_bits=8, frac_bits=4)
         self.assertEqual(-80, fp.to_signed_int())
+
+
+class ClippedFixedPointTest(TestCase):
+    def test_conversion_value_in_bounds(self) -> None:
+        fp = ClippedFixedPoint(5.251, total_bits=8, frac_bits=4)
+        self.assertEqual(84, int(fp))
+        self.assertEqual(5.25, float(fp))
+
+    def test_conversion_value_out_of_lower_bound(self) -> None:
+        fp = ClippedFixedPoint(-9.25, total_bits=8, frac_bits=4)
+        self.assertEqual(128, int(fp))
+        self.assertEqual(-8, float(fp))
+
+    def test_conversion_value_out_of_upper_bound(self) -> None:
+        fp = ClippedFixedPoint(8, total_bits=8, frac_bits=4)
+        self.assertEqual(127, int(fp))
+        self.assertEqual(7.9375, float(fp))
+
+    def test_repr_value_out_of_bounds(self) -> None:
+        fp = ClippedFixedPoint(10, total_bits=8, frac_bits=4)
+        self.assertEqual(
+            "ClippedFixedPoint(value=7.9375, total_bits=8, frac_bits=4)", repr(fp)
+        )
+
+    def test_repr_value_in_bounds(self) -> None:
+        fp = ClippedFixedPoint(5.21, total_bits=8, frac_bits=4)
+        self.assertEqual(
+            "ClippedFixedPoint(value=5.21, total_bits=8, frac_bits=4)", repr(fp)
+        )
+
+    def test_from_unsigned_int_value_in_bounds(self) -> None:
+        fp = ClippedFixedPoint.from_unsigned_int(62, total_bits=8, frac_bits=4)
+        self.assertEqual(62, int(fp))
+        self.assertEqual(3.875, float(fp))
+
+    def test_from_unsigned_int_value_out_of_bounds(self) -> None:
+        fp = ClippedFixedPoint.from_unsigned_int(830, total_bits=8, frac_bits=4)
+        self.assertEqual(62, int(fp))
+        self.assertEqual(3.875, float(fp))
+
+    def test_from_signed_int_value_in_bounds(self) -> None:
+        fp = ClippedFixedPoint.from_signed_int(-100, total_bits=8, frac_bits=4)
+        self.assertEqual(156, int(fp))
+        self.assertEqual(-6.25, float(fp))
+
+    def test_from_signed_int_value_out_of_bounds(self) -> None:
+        fp = ClippedFixedPoint.from_signed_int(-255, total_bits=8, frac_bits=4)
+        self.assertEqual(128, int(fp))
+        self.assertEqual(-8, float(fp))
+
+    def test_get_factory(self) -> None:
+        factory = ClippedFixedPoint.get_factory(total_bits=8, frac_bits=4)
+        fp = factory(1)
+        self.assertEqual(ClippedFixedPoint, type(fp))
+        self.assertEqual(8, fp.total_bits)
+        self.assertEqual(4, fp.frac_bits)
+        self.assertEqual(1, float(fp))
 
 
 class InferTotalAndFracBits(TestCase):
