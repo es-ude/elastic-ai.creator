@@ -1,8 +1,6 @@
-from typing import Any, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from elasticai.creator.mlframework import Module
-
-T = TypeVar("T")
 
 
 @runtime_checkable
@@ -16,16 +14,14 @@ class Tagged(Protocol):
         ...
 
 
-T_co = TypeVar("T_co", bound=Module, covariant=True)
-
-
 @runtime_checkable
 class TaggedModule(Tagged, Module, Protocol):
     ...
 
 
-def tag(module: TaggedModule, **new_tags: Any) -> TaggedModule:
-    """Add tags to any object wrapping it in a TagWrapper if necessary
+def tag(module: Any, **new_tags: Any) -> TaggedModule:
+    """
+    Add tags to any object wrapping it in a TagWrapper if necessary
 
     new_tags will override possibly existing tags
     """
