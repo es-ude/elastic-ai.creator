@@ -1,11 +1,17 @@
+import re
 from copy import deepcopy
 from typing import Any, Callable, Iterable
 
 from elasticai.creator.mlframework.typing import Module
 from elasticai.creator.vhdl.evaluators.evaluator import Evaluator
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
 
 DataLoader = Iterable[tuple[Any, Any]]
+
+
+def get_attribute_names(obj: object, regex: str) -> list[str]:
+    all_attributes = obj.__dict__.keys()
+    return [attr for attr in all_attributes if re.fullmatch(regex, attr) is not None]
 
 
 class FixedPointConfigFinder(Evaluator):
@@ -15,17 +21,15 @@ class FixedPointConfigFinder(Evaluator):
         self.total_bits = total_bits
 
     def _to_fixed_point(self, value: float, frac_bits: int) -> int:
-        to_fp = FixedPoint.get_factory(self.total_bits, frac_bits)
+        to_fp = ClippedFixedPoint.get_factory(self.total_bits, frac_bits)
         return to_fp(value).to_signed_int()
 
     def _to_float(self, value: int, frac_bits: int) -> float:
-        fp = FixedPoint.from_int(value, self.total_bits, frac_bits, signed_int=True)
+        fp = ClippedFixedPoint.from_signed_int(value, self.total_bits, frac_bits)
         return float(fp)
 
     def _apply_to_params(self, model: Module, callable: Callable) -> None:
-        if model.parameters() is not None:
-            state_dict = model.state_dict()
-            print(state_dict)
+        ...
 
     def run(self) -> dict[str, int]:
         for frac_bits in range(self.total_bits):

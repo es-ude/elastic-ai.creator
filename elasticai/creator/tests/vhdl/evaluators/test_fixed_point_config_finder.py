@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import dataclass
 
 import torch
 from torch.nn import Linear, Module
@@ -8,6 +9,7 @@ from torch.nn.parameter import Parameter
 from elasticai.creator.vhdl.evaluators.fixed_point_config_finder import (
     DataLoader,
     FixedPointConfigFinder,
+    get_attribute_names,
 )
 
 # class MyModel(Module):
@@ -32,6 +34,24 @@ class MyModel(Module):
 
 def create_data_loader(samples: list[float], labels: list[float]) -> DataLoader:
     return [(samples, labels)]
+
+
+class AttributeMatchingTest(unittest.TestCase):
+    def test_get_all_attribute_names_simple_class(self) -> None:
+        @dataclass
+        class Point:
+            x: float
+            y: float
+
+        actual = get_attribute_names(Point(1, 2), regex=".*")
+        expected = ["x", "y"]
+        self.assertEqual(expected, actual)
+
+    def test_get_weight_attribute_names_of_lstm_layer(self) -> None:
+        lstm = torch.nn.LSTM(input_size=1, hidden_size=2)
+        actual = get_attribute_names(lstm, regex="weight.*")
+        expected = ["weight_ih_l0", "weight_hh_l0"]
+        self.assertEqual(expected, actual)
 
 
 class FixedPointConfigurationFinderTest(unittest.TestCase):
