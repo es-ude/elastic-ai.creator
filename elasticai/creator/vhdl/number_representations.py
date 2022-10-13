@@ -4,6 +4,8 @@ from functools import partial
 from itertools import chain
 from typing import Any, Callable
 
+FixedPointFactory = Callable[[float], "FixedPoint"]
+
 
 def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
     max_value = 2 ** (total_bits - frac_bits - 1)
@@ -165,7 +167,7 @@ class FixedPoint:
         return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
-    def get_factory(total_bits: int, frac_bits: int) -> Callable[[float], "FixedPoint"]:
+    def get_factory(total_bits: int, frac_bits: int) -> FixedPointFactory:
         return partial(FixedPoint, total_bits=total_bits, frac_bits=frac_bits)
 
     @property
