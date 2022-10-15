@@ -3,13 +3,13 @@ import unittest
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.vhdl.custom_layers.linear import FixedPointLinear, Linear
+from elasticai.creator.vhdl.custom_layers.linear import FixedPointLinear, _BaseLinear
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
-class LinearTest(unittest.TestCase):
+class BaseLinearTest(unittest.TestCase):
     def test_default_linear(self) -> None:
-        linear = Linear(in_features=3, out_features=1)
+        linear = _BaseLinear(in_features=3, out_features=1)
         linear.weight = Parameter(torch.ones_like(linear.weight))
         linear.bias = Parameter(torch.ones_like(linear.bias) * 4)
 
@@ -20,7 +20,7 @@ class LinearTest(unittest.TestCase):
         self.assertEqual(actual, target)
 
     def test_linear_with_customized_add_op(self) -> None:
-        linear = Linear(in_features=3, out_features=1, add_op=torch.sub)
+        linear = _BaseLinear(in_features=3, out_features=1, add_op=torch.sub)
         linear.weight = Parameter(torch.ones_like(linear.weight))
         linear.bias = Parameter(torch.ones_like(linear.bias) * 4)
 
@@ -34,7 +34,7 @@ class LinearTest(unittest.TestCase):
         def custom_matmul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
             return torch.matmul(a, b) * (-1)
 
-        linear = Linear(in_features=3, out_features=1, matmul_op=custom_matmul)
+        linear = _BaseLinear(in_features=3, out_features=1, matmul_op=custom_matmul)
         linear.weight = Parameter(torch.ones_like(linear.weight))
         linear.bias = Parameter(torch.ones_like(linear.bias) * 4)
 
@@ -48,7 +48,7 @@ class LinearTest(unittest.TestCase):
         def custom_matmul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
             return torch.matmul(a, b) * (-1)
 
-        linear = Linear(
+        linear = _BaseLinear(
             in_features=3, out_features=1, matmul_op=custom_matmul, add_op=torch.sub
         )
         linear.weight = Parameter(torch.ones_like(linear.weight))
@@ -64,7 +64,7 @@ class LinearTest(unittest.TestCase):
         def custom_matmul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
             return torch.matmul(a, b) * (-1)
 
-        linear = Linear(
+        linear = _BaseLinear(
             in_features=3, out_features=1, matmul_op=custom_matmul, bias=False
         )
         linear.weight = Parameter(torch.ones_like(linear.weight))

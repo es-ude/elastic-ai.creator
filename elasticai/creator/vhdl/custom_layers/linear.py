@@ -1,7 +1,6 @@
 from typing import Callable
 
 import torch
-from torch.nn.parameter import Parameter
 
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
@@ -16,7 +15,7 @@ def _default_add_op(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return torch.add(a, b)
 
 
-class Linear(torch.nn.Linear):
+class _BaseLinear(torch.nn.Linear):
     def __init__(
         self,
         in_features: int,
@@ -37,7 +36,7 @@ class Linear(torch.nn.Linear):
         return self._add_op(self._matmul_op(self.weight, x), self.bias)
 
 
-class FixedPointLinear(Linear):
+class FixedPointLinear(_BaseLinear):
     def __init__(
         self,
         in_features: int,
