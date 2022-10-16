@@ -15,7 +15,7 @@ def _default_add_op(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return torch.add(a, b)
 
 
-class _BaseLinear(torch.nn.Linear):
+class _LinearBase(torch.nn.Linear):
     def __init__(
         self,
         in_features: int,
@@ -32,11 +32,11 @@ class _BaseLinear(torch.nn.Linear):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.bias is None:
-            return self._matmul_op(self.weight, x)
-        return self._add_op(self._matmul_op(self.weight, x), self.bias)
+            return self._matmul_op(x, self.weight.T)
+        return self._add_op(self._matmul_op(x, self.weight.T), self.bias)
 
 
-class FixedPointLinear(_BaseLinear):
+class FixedPointLinear(_LinearBase):
     def __init__(
         self,
         in_features: int,
