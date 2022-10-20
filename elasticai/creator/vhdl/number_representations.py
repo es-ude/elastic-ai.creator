@@ -264,6 +264,10 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     return total_bits, frac_bits
 
 
+def fixed_point_params_from_factory(factory: FixedPointFactory) -> tuple[int, int]:
+    return factory(1).total_bits, factory(1).frac_bits
+
+
 def float_values_to_fixed_point(
     values: list[float], total_bits: int, frac_bits: int
 ) -> list[FixedPoint]:
