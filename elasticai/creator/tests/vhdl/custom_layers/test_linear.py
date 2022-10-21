@@ -82,16 +82,12 @@ class FixedPointLinearTest(unittest.TestCase):
         linear = FixedPointLinear(
             in_features=3, out_features=1, fixed_point_factory=fp_factory
         )
-        fp_one = int(fp_factory(1))
-        linear.weight = Parameter(torch.ones_like(linear.weight) * fp_one)
-        linear.bias = Parameter(torch.ones_like(linear.bias) * fp_one)
+        linear.weight = Parameter(torch.ones_like(linear.weight))
+        linear.bias = Parameter(torch.ones_like(linear.bias))
 
-        input_tensor = torch.as_tensor(
-            list(map(lambda x: fp_factory(x).to_signed_int(), [-7, 2, 3])),
-            dtype=torch.float32,
-        )
+        input_tensor = torch.as_tensor([-7, 2, 3], dtype=torch.float32)
         actual = linear(input_tensor).detach().numpy().tolist()
-        target = [fp_factory(-1).to_signed_int()]
+        target = [-1]
 
         self.assertEqual(actual, target)
 
@@ -100,15 +96,11 @@ class FixedPointLinearTest(unittest.TestCase):
         linear = FixedPointLinear(
             in_features=3, out_features=1, fixed_point_factory=fp_factory
         )
-        fp_one = int(fp_factory(1))
-        linear.weight = Parameter(torch.ones_like(linear.weight) * fp_one)
-        linear.bias = Parameter(torch.ones_like(linear.bias) * fp_one)
+        linear.weight = Parameter(torch.ones_like(linear.weight))
+        linear.bias = Parameter(torch.ones_like(linear.bias))
 
-        input_tensor = torch.as_tensor(
-            list(map(lambda x: fp_factory(x).to_signed_int(), [1, 2, 3])),
-            dtype=torch.float32,
-        )
+        input_tensor = torch.as_tensor([1, 2, 3], dtype=torch.float32)
         actual = linear(input_tensor).detach().numpy().tolist()
-        target = [7]
+        target = [3]
 
         self.assertEqual(actual, target)
