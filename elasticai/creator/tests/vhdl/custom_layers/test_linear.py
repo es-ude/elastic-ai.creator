@@ -101,6 +101,6 @@ class FixedPointLinearTest(unittest.TestCase):
 
         input_tensor = torch.as_tensor([1, 2, 3], dtype=torch.float32)
         actual = linear(input_tensor).detach().numpy().tolist()
-        target = [3]
+        target = [7]
 
         self.assertEqual(actual, target)

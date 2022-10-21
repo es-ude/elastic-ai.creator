@@ -32,8 +32,9 @@ class _LinearBase(torch.nn.Linear):
         matmul_op: OperationType = _default_matmul_op,
         add_op: OperationType = _default_add_op,
         input_quant: QuantType = _identity_quant,
-        output_quant: QuantType = _identity_quant,
-        weight_quant: QuantType = _identity_quant,
+        input_dequant: QuantType = _identity_quant,
+        param_quant: QuantType = _identity_quant,
+        param_dequant: QuantType = _identity_quant,
         device=None,
         dtype=None,
     ) -> None:
@@ -41,20 +42,19 @@ class _LinearBase(torch.nn.Linear):
         self._matmul_op = matmul_op
         self._add_op = add_op
         self.input_quant = input_quant
-        self.output_quant = output_quant
-        self.weight_quant = weight_quant
+        self.input_dequant = input_dequant
+        self.param_quant = param_quant
+        self.param_dequant = param_dequant
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        q_input = self.input_quant(x)
-        q_weight = self.weight_quant(self.weight)
+        dq_input = self.input_dequant(self.input_quant(x))
+        dq_weight = self.param_dequant(self.param_quant(self.weight))
 
         if self.bias is not None:
-            q_bias = self.weight_quant(self.bias)
-            output = self._add_op(self._matmul_op(q_input, q_weight.T), q_bias)
-        else:
-            output = self._matmul_op(q_input, q_weight.T)
+            dq_bias = self.param_dequant(self.param_quant(self.bias))
+            return self._add_op(self._matmul_op(dq_input, dq_weight.T), dq_bias)
 
-        return self.output_quant(output)
+        return self._matmul_op(dq_input, dq_weight.T)
 
 
 class _FixedPointQuantFunction(torch.autograd.Function):
@@ -99,20 +99,17 @@ class FixedPointLinear(_LinearBase):
             in_features=in_features,
             out_features=out_features,
             bias=bias,
-            matmul_op=self._fp_matmul_op,
-            add_op=_default_add_op,
             input_quant=lambda x: _FixedPointQuantFunction.apply(
                 x, fixed_point_factory
             ),
-            output_quant=lambda x: _FixedPointDequantFunction.apply(
+            input_dequant=lambda x: _FixedPointDequantFunction.apply(
                 x, fixed_point_factory
             ),
-            weight_quant=lambda x: _FixedPointQuantFunction.apply(
+            param_quant=lambda x: _FixedPointQuantFunction.apply(
+                x, fixed_point_factory
+            ),
+            param_dequant=lambda x: _FixedPointDequantFunction.apply(
                 x, fixed_point_factory
             ),
             device=device,
         )
-        _, self.frac_bits = fixed_point_params_from_factory(fixed_point_factory)
-
-    def _fp_matmul_op(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return (torch.matmul(a, b) / (1 << self.frac_bits)).floor()

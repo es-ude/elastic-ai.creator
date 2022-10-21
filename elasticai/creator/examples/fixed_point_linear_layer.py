@@ -1,11 +1,8 @@
-from copy import deepcopy
-
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from elasticai.creator.vhdl.custom_layers.linear import FixedPointLinear, _LinearBase
+from elasticai.creator.vhdl.custom_layers.linear import FixedPointLinear
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
@@ -128,15 +125,6 @@ def train(
     return losses_train, losses_val, accuracy
 
 
-def create_full_resolution_model() -> torch.nn.Module:
-    return torch.nn.Sequential(
-        _LinearBase(in_features=3, out_features=2),
-        torch.nn.ReLU(),
-        _LinearBase(in_features=2, out_features=1),
-        torch.nn.Sigmoid(),
-    )
-
-
 class FixedPointModel(torch.nn.Module):
     def __init__(self, total_bits: int, frac_bits: int) -> None:
         super().__init__()
@@ -161,20 +149,6 @@ class FixedPointModel(torch.nn.Module):
         return x
 
 
-def plot_params(init_model, final_model: torch.nn.Module) -> None:
-    def get_params(model: torch.nn.Module) -> np.ndarray:
-        return np.concatenate(
-            [param.detach().numpy().flatten() for param in model.parameters()]
-        )
-
-    init_params = get_params(init_model)
-    final_params = get_params(final_model)
-
-    plt.bar(np.arange(len(init_params)), init_params, alpha=0.7)
-    plt.bar(np.arange(len(final_params)), final_params, alpha=0.7)
-    plt.show()
-
-
 def main() -> None:
     x, y = get_dataset()
     x_train, y_train = augment_data(x, y, expand_factor=240, noise_var=0.05, seed=24)
@@ -182,9 +156,7 @@ def main() -> None:
     ds_train = TensorDataset(x_train, y_train)
     ds_test = TensorDataset(x_test, y_test)
 
-    # model = create_full_resolution_model()
-    model = FixedPointModel(total_bits=32, frac_bits=24)
-    init_model = deepcopy(model)
+    model = FixedPointModel(total_bits=4, frac_bits=2)
 
     losses_train, losses_val, accuracy_val = train(
         model=model,
@@ -200,8 +172,6 @@ def main() -> None:
     plt.plot(accuracy_val, label="val_accuracy")
     plt.legend()
     plt.show()
-
-    plot_params(init_model, model)
 
 
 if __name__ == "__main__":
