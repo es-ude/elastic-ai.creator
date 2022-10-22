@@ -1,4 +1,7 @@
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
@@ -125,6 +128,33 @@ def train(
     return losses_train, losses_val, accuracy
 
 
+def plot_params(init_model: torch.nn.Module, final_model: torch.nn.Module) -> None:
+    def get_params(model: torch.nn.Module) -> np.ndarray:
+        return np.concatenate(
+            [param.detach().numpy().flatten() for param in model.parameters()]
+        )
+
+    init_params = get_params(init_model)
+    final_params = get_params(final_model)
+    param_indices = np.arange(len(init_params))
+
+    bar_width = 0.4
+    plt.bar(param_indices - 0.2, init_params, bar_width, label="initial params")
+    plt.bar(param_indices + 0.2, final_params, bar_width, label="final params")
+    plt.legend()
+    plt.show()
+
+
+def plot_loss_curve(
+    train_losses: list[float], val_losses: list[float], val_accuracy: list[float]
+) -> None:
+    plt.plot(train_losses, label="train loss")
+    plt.plot(val_losses, label="validation loss")
+    plt.plot(val_accuracy, label="validation accuracy")
+    plt.legend()
+    plt.show()
+
+
 class FixedPointModel(torch.nn.Module):
     def __init__(self, total_bits: int, frac_bits: int) -> None:
         super().__init__()
@@ -156,10 +186,11 @@ def main() -> None:
     ds_train = TensorDataset(x_train, y_train)
     ds_test = TensorDataset(x_test, y_test)
 
-    model = FixedPointModel(total_bits=4, frac_bits=2)
+    final_model = FixedPointModel(total_bits=4, frac_bits=2)
+    init_model = deepcopy(final_model)
 
     losses_train, losses_val, accuracy_val = train(
-        model=model,
+        model=final_model,
         train_ds=ds_train,
         val_ds=ds_test,
         batch_size=16,
@@ -167,11 +198,8 @@ def main() -> None:
         num_epochs=100,
     )
 
-    plt.plot(losses_train, label="train_loss")
-    plt.plot(losses_val, label="val_loss")
-    plt.plot(accuracy_val, label="val_accuracy")
-    plt.legend()
-    plt.show()
+    plot_loss_curve(losses_train, losses_val, accuracy_val)
+    plot_params(init_model, final_model)
 
 
 if __name__ == "__main__":
