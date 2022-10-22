@@ -2,6 +2,27 @@
 
 <!--next-version-placeholder-->
 
+## v0.16.0 (2022-10-22)
+### Feature
+* **vhdl:** Implement qat for linear layer ([`d3ba49e`](https://github.com/es-ude/elastic-ai.creator/commit/d3ba49e266b2931c1b16677dd91f17a75f091501))
+* **example:** Add the ability to plot the model parameters ([`b1b0b5e`](https://github.com/es-ude/elastic-ai.creator/commit/b1b0b5e7697992c4c53825c739e2fb2dcc903dac))
+* **vhdl:** Move the input, weight and output quantization to the linear layer ([`0c8b259`](https://github.com/es-ude/elastic-ai.creator/commit/0c8b259ef688c606ebd4f8486ef7b6f48e0f8713))
+* **examples:** Commit current state of the fixed point linear example ([`9b8ecae`](https://github.com/es-ude/elastic-ai.creator/commit/9b8ecae971bc1dedabf17e79272008a3cbfb5123))
+* **vhdl:** Add feature to automatically derive fixed point parameters from a factory ([`70618d5`](https://github.com/es-ude/elastic-ai.creator/commit/70618d512718efd7e718491af52e1acbc6c86622))
+* **examples:** Start implementing an example for learning a simple logic function ([`6cff6de`](https://github.com/es-ude/elastic-ai.creator/commit/6cff6deccd5c2080e930d93f5e145e4d7ea6a41e))
+* **vhdl:** Move tracing example to example folder ([`b942155`](https://github.com/es-ude/elastic-ai.creator/commit/b942155a240a6f34f0f02361b6631b431a448443))
+* **vhdl:** Make base linear package private ([`b3cfa55`](https://github.com/es-ude/elastic-ai.creator/commit/b3cfa55daff5c401bc036ffe2bba8b0c6b2f2554))
+* **vhdl:** Add a type for fixed point factories ([`53b8499`](https://github.com/es-ude/elastic-ai.creator/commit/53b84991671832c2e7fa24e61d927b7c039832d9))
+* **vhdl:** Implement custom linear layers that allows to do fixed point calculations ([`c2364f6`](https://github.com/es-ude/elastic-ai.creator/commit/c2364f6182bb8406e90a78d632bc868537705fd2))
+* **vhdl:** Add function to get attribute names of an object matching a regex ([`acc8e29`](https://github.com/es-ude/elastic-ai.creator/commit/acc8e29e2771d5642e1371af6fb3c44f83b5ebc7))
+* **vhdl:** Working further on the fixed point configuration finder ([`beb9da0`](https://github.com/es-ude/elastic-ai.creator/commit/beb9da0ec8c3fbc6bb4ff65a97e7424e4da6dd0d))
+* **vhdl:** Start implementing fixed point evaluator ([`0f9c62a`](https://github.com/es-ude/elastic-ai.creator/commit/0f9c62a38f9df6ee4e84f1a3b5524df03511b438))
+* **vhdl:** Implement signed fixed point integer to FixedPoint object ([`0a2fc79`](https://github.com/es-ude/elastic-ai.creator/commit/0a2fc7952dc13ea48c749856bf809a5540166598))
+* **vhdl:** Implement automatic derivation of fixed point parameters in the lstm example ([`504008d`](https://github.com/es-ude/elastic-ai.creator/commit/504008d7ef3f402f8476bb77f02a4a37176d229e))
+
+### Fix
+* **vhdl:** Fix bug in the linear matix multiplication and rename _BaseLinear layer to _LinearBase ([`da11356`](https://github.com/es-ude/elastic-ai.creator/commit/da113561d69158ccc2a9266adb1eddcc79b1cb7d))
+
 ## v0.15.0 (2022-09-29)
 ### Feature
 * **vhdl:** Implement clipped fixed point representation ([`8e53506`](https://github.com/es-ude/elastic-ai.creator/commit/8e53506fce0ba5adaa124ccd61de3b340bf1c95f))
