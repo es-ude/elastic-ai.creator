@@ -4,6 +4,8 @@ from functools import partial
 from itertools import chain
 from typing import Any, Callable
 
+FixedPointFactory = Callable[[float], "FixedPoint"]
+
 
 def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
     max_value = 2 ** (total_bits - frac_bits - 1)
@@ -165,7 +167,7 @@ class FixedPoint:
         return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
-    def get_factory(total_bits: int, frac_bits: int) -> Callable[[float], "FixedPoint"]:
+    def get_factory(total_bits: int, frac_bits: int) -> FixedPointFactory:
         return partial(FixedPoint, total_bits=total_bits, frac_bits=frac_bits)
 
     @property
@@ -260,6 +262,10 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
                 "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
             )
     return total_bits, frac_bits
+
+
+def fixed_point_params_from_factory(factory: FixedPointFactory) -> tuple[int, int]:
+    return factory(1).total_bits, factory(1).frac_bits
 
 
 def float_values_to_fixed_point(

@@ -1,8 +1,7 @@
-from typing import Any, Callable
+from typing import Any
 
 import torch
 import torch.fx as fx
-from torch.nn.functional import relu
 
 from elasticai.creator.qat.layers import Binarize
 
