@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.17.0 (2022-10-22)
+### Feature
+* **examples:** Visualize model parameters ([`5e1b4fc`](https://github.com/es-ude/elastic-ai.creator/commit/5e1b4fc4c827c55d19cb9bc4206f706bcc737fba))
+
 ## v0.16.0 (2022-10-22)
 ### Feature
 * **vhdl:** Implement qat for linear layer ([`d3ba49e`](https://github.com/es-ude/elastic-ai.creator/commit/d3ba49e266b2931c1b16677dd91f17a75f091501))
