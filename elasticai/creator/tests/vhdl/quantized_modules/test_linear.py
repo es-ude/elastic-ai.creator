@@ -3,8 +3,11 @@ import unittest
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.vhdl.custom_layers.linear import FixedPointLinear, _LinearBase
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.quantized_modules.linear import (
+    FixedPointLinear,
+    _LinearBase,
+)
 
 
 class LinearBaseTest(unittest.TestCase):

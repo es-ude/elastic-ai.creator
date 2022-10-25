@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from elasticai.creator.vhdl.custom_layers.linear import FixedPointLinear
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
 
 
 def get_dataset() -> tuple[torch.Tensor, torch.Tensor]:
