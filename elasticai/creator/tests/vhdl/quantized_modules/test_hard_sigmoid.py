@@ -53,7 +53,7 @@ class HardSigmoidBaseTest(unittest.TestCase):
 
         self.assertEquals(expected, actual)
 
-    def test_hard_sigmoid_base_quantized_forward(self) -> None:
+    def test_hard_sigmoid_base_quantized_forward_raises_error(self) -> None:
         with self.assertRaises(NotImplementedError):
             _HardSigmoidBase().quantized_forward(torch.ones(10))
 

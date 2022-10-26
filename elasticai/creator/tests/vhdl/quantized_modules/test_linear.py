@@ -82,7 +82,7 @@ class LinearBaseTest(unittest.TestCase):
 
         self.assertEqual(actual, target)
 
-    def test_linear_quantized_forward(self) -> None:
+    def test_linear_quantized_forward_raises_error(self) -> None:
         with self.assertRaises(NotImplementedError):
             _LinearBase(1, 2).quantized_forward(torch.ones(1))
 
