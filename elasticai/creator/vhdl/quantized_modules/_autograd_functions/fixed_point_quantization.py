@@ -15,7 +15,9 @@ class FixedPointQuantFunction(torch.autograd.Function):
     ) -> torch.Tensor:
         total_bits, frac_bits = fixed_point_params_from_factory(fixed_point_factory)
         largest_fp_int = 2 ** (total_bits - 1) - 1
-        return (x * (1 << frac_bits)).floor().clamp(-largest_fp_int, largest_fp_int)
+        return (
+            (x * (1 << frac_bits)).int().float().clamp(-largest_fp_int, largest_fp_int)
+        )
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:

@@ -80,7 +80,7 @@ class FixedPointLinear(_LinearBase):
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
         def fp_matmul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
             _, frac_bits = fixed_point_params_from_factory(self.fixed_point_factory)
-            return (torch.matmul(a, b) / (1 << frac_bits)).floor()
+            return (torch.matmul(a, b) / (1 << frac_bits)).int().float()
 
         q_weight = self.param_quant(self.weight)
 

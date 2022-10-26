@@ -1,6 +1,5 @@
-from math import floor
-
 import torch
+import torch.nn.functional as F
 
 from elasticai.creator.vhdl.number_representations import (
     FixedPointFactory,
@@ -26,7 +25,7 @@ class _HardSigmoidBase(torch.nn.Hardsigmoid):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         q_x = self.input_dequant(self.input_quant(x))
-        return super().forward(q_x)
+        return F.hardsigmoid(q_x)
 
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError("The quantized_forward function is not implemented.")
@@ -49,7 +48,7 @@ class FixedPointHardSigmoid(_HardSigmoidBase):
         _, frac_bits = fixed_point_params_from_factory(self.fixed_point_factory)
 
         def fp(value: float) -> int:
-            return floor(value * (1 << frac_bits))
+            return int(value * (1 << frac_bits))
 
         def fp_hard_sigmoid(a: int) -> int:
             if a <= fp(-3):
@@ -57,6 +56,6 @@ class FixedPointHardSigmoid(_HardSigmoidBase):
             elif a >= fp(3):
                 return fp(1)
             else:
-                return floor(a * fp(1 / 6) / fp(1)) + fp(1 / 2)
+                return int(a * fp(1 / 6) / fp(1)) + fp(1 / 2)
 
         return x.apply_(fp_hard_sigmoid)
