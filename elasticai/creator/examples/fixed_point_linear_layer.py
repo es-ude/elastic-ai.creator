@@ -6,7 +6,9 @@ import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.quantized_modules.hard_sigmoid import FixedPointHardSigmoid
 from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
+from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU
 
 
 def get_dataset() -> tuple[torch.Tensor, torch.Tensor]:
@@ -159,17 +161,14 @@ class FixedPointModel(torch.nn.Module):
     def __init__(self, total_bits: int, frac_bits: int) -> None:
         super().__init__()
         factory = FixedPoint.get_factory(total_bits, frac_bits)
-
         self._linear1 = FixedPointLinear(
             in_features=3, out_features=2, fixed_point_factory=factory
         )
-
         self._linear2 = FixedPointLinear(
             in_features=2, out_features=1, fixed_point_factory=factory
         )
-
-        self._relu = torch.nn.ReLU()
-        self._sigmoid = torch.nn.Sigmoid()
+        self._relu = FixedPointReLU(fixed_point_factory=factory)
+        self._sigmoid = FixedPointHardSigmoid(fixed_point_factory=factory)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self._linear1(x)
@@ -186,7 +185,7 @@ def main() -> None:
     ds_train = TensorDataset(x_train, y_train)
     ds_test = TensorDataset(x_test, y_test)
 
-    final_model = FixedPointModel(total_bits=4, frac_bits=2)
+    final_model = FixedPointModel(total_bits=8, frac_bits=4)
     init_model = deepcopy(final_model)
 
     losses_train, losses_val, accuracy_val = train(
@@ -195,7 +194,7 @@ def main() -> None:
         val_ds=ds_test,
         batch_size=16,
         learning_rate=1e-3,
-        num_epochs=100,
+        num_epochs=250,
     )
 
     plot_loss_curve(losses_train, losses_val, accuracy_val)
