@@ -1,14 +1,25 @@
 from copy import deepcopy
+from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.hard_sigmoid import FixedPointHardSigmoid
-from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
-from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU
+from elasticai.creator.vhdl.evaluators.inference_evaluator import (
+    QuantizedInferenceEvaluator,
+)
+from elasticai.creator.vhdl.evaluators.metric_evaluator import MetricEvaluator
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
+from elasticai.creator.vhdl.quantized_modules import (
+    FixedPointHardSigmoid,
+    FixedPointLinear,
+    FixedPointReLU,
+)
+from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
+    FixedPointDequantFunction,
+    FixedPointQuantFunction,
+)
 
 
 def get_dataset() -> tuple[torch.Tensor, torch.Tensor]:
@@ -72,21 +83,36 @@ def binary_accuracy(
 
 def train(
     model: torch.nn.Module,
-    train_ds: Dataset,
-    val_ds: Dataset,
+    ds_train: Dataset,
+    ds_val: Dataset,
     batch_size: int,
     learning_rate: float,
     num_epochs: int,
+    fp_factory: FixedPointFactory,
 ) -> tuple[list[float], list[float], list[float]]:
-    dl_train = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    dl_val = DataLoader(val_ds, batch_size=batch_size)
+    dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+    dl_val = DataLoader(ds_val, batch_size=batch_size)
 
     loss_fn = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    accuracy_metric = partial(binary_accuracy, threshold=0.5)
 
-    losses_train = []
-    losses_val = []
-    accuracy = []
+    quantized_inference_evaluator = QuantizedInferenceEvaluator(
+        module=model,
+        data=ds_val,
+        input_quant=lambda x: FixedPointQuantFunction.apply(x, fp_factory),
+        output_dequant=lambda x: FixedPointDequantFunction.apply(x, fp_factory),
+    )
+    quantized_loss_evaluator = MetricEvaluator(
+        inference_evaluator=quantized_inference_evaluator, metric=loss_fn
+    )
+    quantized_accuracy_evaluator = MetricEvaluator(
+        inference_evaluator=quantized_inference_evaluator, metric=accuracy_metric
+    )
+
+    train_loss_per_epoch = []
+    val_loss_per_epoch = []
+    val_accuracy_per_epoch = []
 
     for epoch in range(num_epochs):
         model.train(True)
@@ -103,7 +129,7 @@ def train(
             optimizer.step()
             running_train_loss += loss.item()
 
-        losses_train.append(running_train_loss / len(dl_train))
+        train_loss_per_epoch.append(running_train_loss / len(dl_train))
 
         model.train(False)
 
@@ -115,19 +141,29 @@ def train(
             loss = loss_fn(outputs, labels)
 
             running_val_loss += loss.item()
-            running_accuracy += binary_accuracy(outputs, labels, 0.5)
+            running_accuracy += accuracy_metric(outputs, labels)
 
-        losses_val.append(running_val_loss / len(dl_val))
-        accuracy.append(running_accuracy / len(dl_val))
+        val_loss_per_epoch.append(running_val_loss / len(dl_val))
+        val_accuracy_per_epoch.append(running_accuracy / len(dl_val))
 
         print(
             f"[epoch {epoch + 1}]",
-            f"loss: {losses_train[epoch]:.04};",
-            f"val_loss: {losses_val[epoch]:.04};",
-            f"val_acc: {accuracy[epoch]:.04}",
+            f"loss: {train_loss_per_epoch[epoch]:.04};",
+            f"val_loss: {val_loss_per_epoch[epoch]:.04};",
+            f"val_acc: {val_accuracy_per_epoch[epoch]:.04}",
         )
 
-    return losses_train, losses_val, accuracy
+    print(
+        "[training summary]",
+        f"\tloss: {train_loss_per_epoch[-1]:.04};",
+        f"\tval_loss: {val_loss_per_epoch[-1]:.04};",
+        f"\tval_acc: {val_accuracy_per_epoch[-1]:.04}",
+        f"\tsimulated_quant_val_loss: {quantized_loss_evaluator.run():.04};",
+        f"\tsimulated_quant_val_acc: {quantized_accuracy_evaluator.run():.04}",
+        sep="\n",
+    )
+
+    return train_loss_per_epoch, val_loss_per_epoch, val_accuracy_per_epoch
 
 
 def plot_params(init_model: torch.nn.Module, final_model: torch.nn.Module) -> None:
@@ -158,23 +194,29 @@ def plot_loss_curve(
 
 
 class FixedPointModel(torch.nn.Module):
-    def __init__(self, total_bits: int, frac_bits: int) -> None:
+    def __init__(self, fixed_point_factory: FixedPointFactory) -> None:
         super().__init__()
-        factory = FixedPoint.get_factory(total_bits, frac_bits)
         self._linear1 = FixedPointLinear(
-            in_features=3, out_features=2, fixed_point_factory=factory
+            in_features=3, out_features=2, fixed_point_factory=fixed_point_factory
         )
         self._linear2 = FixedPointLinear(
-            in_features=2, out_features=1, fixed_point_factory=factory
+            in_features=2, out_features=1, fixed_point_factory=fixed_point_factory
         )
-        self._relu = FixedPointReLU(fixed_point_factory=factory)
-        self._sigmoid = FixedPointHardSigmoid(fixed_point_factory=factory)
+        self._relu = FixedPointReLU(fixed_point_factory=fixed_point_factory)
+        self._sigmoid = FixedPointHardSigmoid(fixed_point_factory=fixed_point_factory)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self._linear1(x)
         x = self._relu(x)
         x = self._linear2(x)
         x = self._sigmoid(x)
+        return x
+
+    def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self._linear1.quantized_forward(x)
+        x = self._relu.quantized_forward(x)
+        x = self._linear2.quantized_forward(x)
+        x = self._sigmoid.quantized_forward(x)
         return x
 
 
@@ -185,19 +227,21 @@ def main() -> None:
     ds_train = TensorDataset(x_train, y_train)
     ds_test = TensorDataset(x_test, y_test)
 
-    final_model = FixedPointModel(total_bits=8, frac_bits=4)
+    fixed_point_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+    final_model = FixedPointModel(fixed_point_factory)
     init_model = deepcopy(final_model)
 
-    losses_train, losses_val, accuracy_val = train(
+    history = train(
         model=final_model,
-        train_ds=ds_train,
-        val_ds=ds_test,
+        ds_train=ds_train,
+        ds_val=ds_test,
         batch_size=16,
         learning_rate=1e-3,
-        num_epochs=250,
+        num_epochs=200,
+        fp_factory=fixed_point_factory,
     )
 
-    plot_loss_curve(losses_train, losses_val, accuracy_val)
+    plot_loss_curve(*history)
     plot_params(init_model, final_model)
 
 
