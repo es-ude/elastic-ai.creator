@@ -153,13 +153,16 @@ def train(
             f"val_acc: {val_accuracy_per_epoch[epoch]:.04}",
         )
 
+    simulated_quant_val_loss = quantized_loss_evaluator.run()
+    simulated_quant_val_acc = quantized_accuracy_evaluator.run()
+
     print(
         "[training summary]",
         f"\tloss: {train_loss_per_epoch[-1]:.04};",
         f"\tval_loss: {val_loss_per_epoch[-1]:.04};",
         f"\tval_acc: {val_accuracy_per_epoch[-1]:.04}",
-        f"\tsimulated_quant_val_loss: {quantized_loss_evaluator.run():.04};",
-        f"\tsimulated_quant_val_acc: {quantized_accuracy_evaluator.run():.04}",
+        f"\tsimulated_quant_val_loss: {simulated_quant_val_loss:.04};",
+        f"\tsimulated_quant_val_acc: {simulated_quant_val_acc:.04}",
         sep="\n",
     )
 
