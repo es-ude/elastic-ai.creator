@@ -5,11 +5,11 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPointFactory,
     fixed_point_params_from_factory,
 )
-from elasticai.creator.vhdl.quantized_modules._typing.quant_type import QuantType
 from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
+from elasticai.creator.vhdl.quantized_modules.typing import QuantType
 
 
 class _HardSigmoidBase(torch.nn.Hardsigmoid):
@@ -58,4 +58,4 @@ class FixedPointHardSigmoid(_HardSigmoidBase):
             else:
                 return int(a * fp(1 / 6) / fp(1)) + fp(1 / 2)
 
-        return x.apply_(fp_hard_sigmoid)
+        return x.detach().apply_(fp_hard_sigmoid)

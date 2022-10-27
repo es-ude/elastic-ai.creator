@@ -2,11 +2,11 @@ import torch
 import torch.nn.functional as F
 
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
-from elasticai.creator.vhdl.quantized_modules._typing.quant_type import QuantType
 from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
+from elasticai.creator.vhdl.quantized_modules.typing import QuantType
 
 
 class _ReLUBase(torch.nn.ReLU):
