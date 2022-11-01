@@ -51,11 +51,11 @@ class FixedPointHardSigmoid(_HardSigmoidBase):
             return int(value * (1 << frac_bits))
 
         def fp_hard_sigmoid(a: int) -> int:
-            if a <= fp(-3):
+            if a <= fp(-3.0):
                 return 0
-            elif a >= fp(3):
-                return fp(1)
+            elif a >= fp(3.0):
+                return fp(1.0)
             else:
-                return int(a * fp(1 / 6) / fp(1)) + fp(1 / 2)
+                return int(a * fp(1.0 / 6.0) / fp(1.0)) + fp(0.5)
 
         return x.detach().apply_(fp_hard_sigmoid)
