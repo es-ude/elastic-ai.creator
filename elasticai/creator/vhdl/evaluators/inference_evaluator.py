@@ -1,8 +1,24 @@
+from typing import Callable
+
 import torch
 from torch.utils.data import Dataset
 
 from elasticai.creator.vhdl.evaluators.evaluator import Evaluator
 from elasticai.creator.vhdl.quantized_modules.typing import QuantType
+
+
+def _run_inference_on_dataset(
+    data: Dataset, predict_sample_fn: Callable[[torch.Tensor], torch.Tensor]
+) -> tuple[torch.Tensor, torch.Tensor]:
+    def to_tensor(x: list[torch.Tensor]) -> torch.Tensor:
+        return torch.stack(x) if len(x) > 0 else torch.tensor([])
+
+    predictions, labels = [], []
+    for sample, label in data:
+        prediction = predict_sample_fn(sample)
+        predictions.append(prediction)
+        labels.append(label)
+    return to_tensor(predictions), to_tensor(labels)
 
 
 class FullPrecisisonInferenceEvaluator(Evaluator):
@@ -11,12 +27,7 @@ class FullPrecisisonInferenceEvaluator(Evaluator):
         self.data = data
 
     def run(self) -> tuple[torch.Tensor, torch.Tensor]:
-        predictions, labels = [], []
-        for sample, label in self.data:
-            prediction = self.module(sample)
-            predictions.append(prediction)
-            labels.append(label)
-        return torch.tensor(predictions), torch.tensor(labels)
+        return _run_inference_on_dataset(self.data, self.module)
 
 
 class QuantizedInferenceEvaluator(Evaluator):
@@ -25,7 +36,7 @@ class QuantizedInferenceEvaluator(Evaluator):
         module: torch.nn.Module,
         data: Dataset,
         input_quant: QuantType = lambda x: x,
-        output_dequant: QuantType = lambda x: x,
+        output_quant: QuantType = lambda x: x,
     ) -> None:
         if not hasattr(module, "quantized_forward"):
             raise ValueError(
@@ -34,14 +45,12 @@ class QuantizedInferenceEvaluator(Evaluator):
         self.module = module
         self.data = data
         self.input_quant = input_quant
-        self.output_dequant = output_dequant
+        self.output_quant = output_quant
 
     def run(self) -> tuple[torch.Tensor, torch.Tensor]:
-        predictions, labels = [], []
-        for sample, label in self.data:
+        def predict_sample(sample: torch.Tensor) -> torch.Tensor:
             quantized_data = self.input_quant(sample)
             prediction = self.module.quantized_forward(quantized_data)  # type: ignore
-            dequantized_prediction = self.output_dequant(prediction)
-            predictions.append(dequantized_prediction)
-            labels.append(label)
-        return torch.tensor(predictions), torch.tensor(labels)
+            return self.output_quant(prediction)
+
+        return _run_inference_on_dataset(self.data, predict_sample)
