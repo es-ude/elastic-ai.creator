@@ -78,14 +78,22 @@ class FixedPointLinear(_LinearBase):
         self.fixed_point_factory = fixed_point_factory
 
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
+        total_bits, frac_bits = fixed_point_params_from_factory(
+            self.fixed_point_factory
+        )
+
         def fp_matmul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-            _, frac_bits = fixed_point_params_from_factory(self.fixed_point_factory)
             return (torch.matmul(a, b) / (1 << frac_bits)).int().float()
 
+        def clamp_overflowing_values(a: torch.Tensor) -> torch.Tensor:
+            largest_fp_int = 2 ** (total_bits - 1) - 1
+            return a.clamp(-largest_fp_int, largest_fp_int)
+
         q_weight = self.param_quant(self.weight)
+        output = fp_matmul(x, q_weight.T)
 
         if self.bias is not None:
             q_bias = self.param_quant(self.bias)
-            return self.add_op(fp_matmul(x, q_weight.T), q_bias)
+            output = self.add_op(output, q_bias)
 
-        return fp_matmul(x, q_weight.T)
+        return clamp_overflowing_values(output)
