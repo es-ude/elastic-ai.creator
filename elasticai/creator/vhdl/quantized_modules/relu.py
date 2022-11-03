@@ -39,7 +39,6 @@ class FixedPointReLU(_ReLUBase):
             ),
             inplace=inplace,
         )
-        self.fixed_point_factory = fixed_point_factory
 
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
         return F.relu(x)
