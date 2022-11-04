@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v0.18.0 (2022-11-04)
+### Feature
+* **vhdl:** Add clamp to min or max fixed point integer for overflowing values ([`ca3fc19`](https://github.com/es-ude/elastic-ai.creator/commit/ca3fc19aec062d4de34a4698c9e0a9351b41c761))
+* **examples:** Add simulated fixed point inference to the example ([`4f81d8d`](https://github.com/es-ude/elastic-ai.creator/commit/4f81d8d3d44f1c677fc1a12edf94b7b614d72efb))
+* **vhdl:** Implement evaluator that evaluates a model according to a given metric ([`a0b089a`](https://github.com/es-ude/elastic-ai.creator/commit/a0b089ad1f7c32acc0c4522bf830080442e8414d))
+* **vhdl:** Implement evaluator for simulation of a quantized inference ([`353e82e`](https://github.com/es-ude/elastic-ai.creator/commit/353e82e798359c3b15a42a02dcdc63e071b2d34e))
+* **vhdl:** Use fixed point hard sigmoid and relu in the example ([`90350b9`](https://github.com/es-ude/elastic-ai.creator/commit/90350b91b9ac917c8c1f0ab50c2744fb09671947))
+* **vhdl:** Implement a version of relu for qat and quantized inference ([`ddd9607`](https://github.com/es-ude/elastic-ai.creator/commit/ddd9607e8dbf333817112dfe24f795ac717f609e))
+* **vhdl:** Fix wrong calculation of fixed point values and add quantized forward functions ([`93046d3`](https://github.com/es-ude/elastic-ai.creator/commit/93046d3b93d1a977c4106cf56e7f98847a47aa00))
+* **vhdl:** Refactoring and start implementing hard sigmoid activation function ([`ff94c9d`](https://github.com/es-ude/elastic-ai.creator/commit/ff94c9dd1d1297f02e82a0d1f7f203f80c8d2732))
+
 ## v0.17.0 (2022-10-22)
 ### Feature
 * **examples:** Visualize model parameters ([`5e1b4fc`](https://github.com/es-ude/elastic-ai.creator/commit/5e1b4fc4c827c55d19cb9bc4206f706bcc737fba))
