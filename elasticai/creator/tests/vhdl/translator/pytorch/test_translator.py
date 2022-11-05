@@ -2,10 +2,17 @@ import unittest
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-import torch.nn
+import torch
 
 from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
+from elasticai.creator.vhdl.translator.abstract.layers.linear_1d_module import (
+    Linear1dTranslationArgs,
+)
+from elasticai.creator.vhdl.translator.abstract.layers.lstm_module import (
+    LSTMTranslationArgs,
+)
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -34,7 +41,7 @@ class VHDLComponentMock(VHDLComponent):
 class VHDLModuleMock(VHDLModule):
     vhdl_components: list[VHDLComponent]
 
-    def components(self, args: Any) -> list[VHDLComponent]:
+    def components(self, args: Any) -> Iterable[VHDLComponent]:
         yield from self.vhdl_components
 
 
@@ -67,28 +74,21 @@ class TranslatorTest(unittest.TestCase):
 
     def test_translate_model_empty_model(self) -> None:
         model = torch.nn.Sequential()
-        translated_model = translator.translate_model(model, self.build_mapping)
-        self.assertEqual(len(list(translated_model)), 0)
-
-    def test_translate_model_with_one_layer(self) -> None:
-        model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
-
-        translated_model = list(translator.translate_model(model, self.build_mapping))
-
-        self.assertEqual(len(translated_model), 1)
-        self.assertEqual(type(translated_model[0]), VHDLModuleMock)
+        generated_code = translator.translate_model(
+            model, translation_args=dict(), build_function_mapping=self.build_mapping
+        )
+        self.assertEqual(len(list(generated_code)), 0)
 
     def test_generate_code(self) -> None:
         model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
-        translated_model = translator.translate_model(model, self.build_mapping)
-        modules = translator.generate_code(
-            vhdl_modules=translated_model, translation_args=dict()
+        code_containers = translator.translate_model(
+            model, translation_args=dict(), build_function_mapping=self.build_mapping
         )
 
-        code = unpack_module_directories(modules)
+        code = unpack_module_directories(code_containers)
         expected_code = [
             (
-                "0_VHDLModuleMock",
+                "0_LSTM",
                 [
                     ("component1", ["1", "2", "3"]),
                     ("component2", ["4", "5", "6"]),
@@ -103,21 +103,29 @@ class TranslatorTest(unittest.TestCase):
         class Model(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
-                self.lstm_2 = torch.nn.LSTM(input_size=2, hidden_size=3)
-                self.lstm_1 = torch.nn.LSTM(input_size=1, hidden_size=2)
+                self.lstm = torch.nn.LSTM(input_size=1, hidden_size=2)
+                self.linear = torch.nn.Linear(in_features=2, out_features=1)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.lstm_2(self.lstm_1(x))
-
-        def extract_input_hidden_size(lstm: LSTMModule) -> tuple[int, int]:
-            hidden_size = len(lstm.weights_hh[0][0])
-            input_size = len(lstm.weights_ih[0][0])
-            return input_size, hidden_size
+                return self.lstm(self.linear(x))
 
         model = Model()
         translated = list(
-            translator.translate_model(model, DEFAULT_BUILD_FUNCTION_MAPPING)
+            translator.translate_model(
+                model,
+                translation_args=dict(
+                    Linear=Linear1dTranslationArgs(
+                        fixed_point_factory=FixedPoint.get_factory(8, 4)
+                    ),
+                    LSTM=LSTMTranslationArgs(
+                        fixed_point_factory=FixedPoint.get_factory(8, 4),
+                        sigmoid_resolution=(-2.5, 2.5, 100),
+                        tanh_resolution=(-2.5, 2.5, 100),
+                    ),
+                ),
+                build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING,
+            )
         )
 
-        self.assertEqual(extract_input_hidden_size(translated[0]), (1, 2))  # type: ignore
-        self.assertEqual(extract_input_hidden_size(translated[1]), (2, 3))  # type: ignore
+        self.assertEqual(translated[0].module_name, "0_Linear")
+        self.assertEqual(translated[1].module_name, "1_LSTM")
