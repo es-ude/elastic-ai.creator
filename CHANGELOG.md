@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.19.0 (2022-11-05)
+### Feature
+* **vhdl:** Merge translate_model and generate_code functions ([`c12562e`](https://github.com/es-ude/elastic-ai.creator/commit/c12562ee4a55c61b5ef82b5ef37568fe32e8f525))
+
 ## v0.18.0 (2022-11-04)
 ### Feature
 * **vhdl:** Add clamp to min or max fixed point integer for overflowing values ([`ca3fc19`](https://github.com/es-ude/elastic-ai.creator/commit/ca3fc19aec062d4de34a4698c9e0a9351b41c761))
