@@ -235,24 +235,22 @@ def main() -> None:
         datapoints_per_sample=6,
     )
     translation_args = dict(
-        LSTMModule=LSTMTranslationArgs(
+        LSTM=LSTMTranslationArgs(
             fixed_point_factory=fixed_point_factory,
             sigmoid_resolution=(-2.5, 2.5, 256),
             tanh_resolution=(-1, 1, 256),
             work_library_name=work_library_name,
         ),
-        Linear1dModule=Linear1dTranslationArgs(
+        Linear=Linear1dTranslationArgs(
             fixed_point_factory=fixed_point_factory,
             work_library_name=work_library_name,
         ),
     )
 
-    vhdl_modules = translator.translate_model(
-        model=model, build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING
-    )
-
-    code_repr = translator.generate_code(
-        vhdl_modules=vhdl_modules, translation_args=translation_args
+    code_repr = translator.translate_model(
+        model=model,
+        translation_args=translation_args,
+        build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING,
     )
 
     translator.save_code(code_repr=code_repr, path=args.build_dir)

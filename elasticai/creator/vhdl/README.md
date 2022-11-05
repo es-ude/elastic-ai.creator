@@ -99,17 +99,16 @@ We already provide a predefined `BuildFunctionMapping` instance that translates 
 
 ## Translation process
 In the following diagram you can see the typical process of translating a given PyTorch model into VHDL files using
-the functions `translate_model`, `generate_code` and `save_code` which can be found in the module
+the functions `translate_model` and `save_code` which can be found in the module
 `elasticai.creator.vhdl.translator.pytorch.translator`:
 
 ```mermaid
 flowchart TD
 start([Start]) ---> translate_model
-translate_model ---> |"Iterator[VHDLModule]"| generate_code
-generate_code ---> |"Iterator[CodeModule]"| save_code
+translate_model ---> |"Iterator[CodeModule]"| save_code
 save_code ---> stop([Stop])
 model[/Model/] -.- translate_model
 build_function_mapping[[BuildFunctionMapping]] <-.-> |Request BuildFunctions| translate_model
-translation_args[/Translation arguments for each VHDLModule/] -.- generate_code
+translation_args[/Translation arguments/] -.- translate_model
 save_code -.-> saved_data[/Saved VHDL files/]
 ```
