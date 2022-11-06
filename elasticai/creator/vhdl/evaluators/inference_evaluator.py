@@ -36,7 +36,7 @@ class QuantizedInferenceEvaluator(Evaluator):
         module: torch.nn.Module,
         data: Dataset,
         input_quant: QuantType = lambda x: x,
-        output_quant: QuantType = lambda x: x,
+        output_dequant: QuantType = lambda x: x,
     ) -> None:
         if not hasattr(module, "quantized_forward"):
             raise ValueError(
@@ -45,12 +45,12 @@ class QuantizedInferenceEvaluator(Evaluator):
         self.module = module
         self.data = data
         self.input_quant = input_quant
-        self.output_quant = output_quant
+        self.output_dequant = output_dequant
 
     def run(self) -> tuple[torch.Tensor, torch.Tensor]:
         def predict_sample(sample: torch.Tensor) -> torch.Tensor:
             quantized_data = self.input_quant(sample)
             prediction = self.module.quantized_forward(quantized_data)  # type: ignore
-            return self.output_quant(prediction)
+            return self.output_dequant(prediction)
 
         return _run_inference_on_dataset(self.data, predict_sample)
