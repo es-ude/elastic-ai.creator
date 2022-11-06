@@ -91,7 +91,7 @@ class QuantizedInferenceEvaluatorTest(unittest.TestCase):
             module=model,
             data=get_dataset(samples, labels),
             input_quant=lambda x: x * 2,
-            output_quant=lambda x: x / 2,
+            output_dequant=lambda x: x / 2,
         )
         predictions, passed_through_labels = evaluator.run()
         self.assertEqual(labels, to_list(passed_through_labels))

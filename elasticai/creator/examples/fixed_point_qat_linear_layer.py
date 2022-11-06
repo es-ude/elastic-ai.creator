@@ -101,7 +101,7 @@ def train(
         module=model,
         data=ds_val,
         input_quant=lambda x: FixedPointQuantFunction.apply(x, fp_factory),
-        output_quant=lambda x: FixedPointDequantFunction.apply(x, fp_factory),
+        output_dequant=lambda x: FixedPointDequantFunction.apply(x, fp_factory),
     )
     quantized_loss_evaluator = MetricEvaluator(
         inference_evaluator=quantized_inference_evaluator, metric=loss_fn
