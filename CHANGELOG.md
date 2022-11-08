@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.20.0 (2022-11-08)
+### Feature
+* **vhdl:** Integrate fixed point hard sigmoid to the translator ([`0a07cee`](https://github.com/es-ude/elastic-ai.creator/commit/0a07ceeb3d238456dad08448b543f4a075873322))
+* **examples:** Add example using quantized modules to verify the current state of the translator ([`0c55e00`](https://github.com/es-ude/elastic-ai.creator/commit/0c55e00657c0d260766155995b75f25bff642e24))
+
+### Documentation
+* **vhdl:** Add documentation for the quantized_modules package ([`9da4a0d`](https://github.com/es-ude/elastic-ai.creator/commit/9da4a0d380304a7ab8834049ad93bed547816ddb))
+
 ## v0.19.0 (2022-11-05)
 ### Feature
 * **vhdl:** Merge translate_model and generate_code functions ([`c12562e`](https://github.com/es-ude/elastic-ai.creator/commit/c12562ee4a55c61b5ef82b5ef37568fe32e8f525))
