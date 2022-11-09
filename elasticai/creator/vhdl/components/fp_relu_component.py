@@ -27,7 +27,7 @@ class FPReLUComponent:
 
         code = template.format(
             data_width=self.data_width,
-            clock_option="true",  # check if I can use boolean value directly
+            clock_option="true",
         )
 
         yield from code.splitlines()
