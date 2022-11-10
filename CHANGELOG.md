@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.20.1 (2022-11-10)
+### Fix
+* **vhdl:** Fix incompatible signature of the forward function ([`ff6c165`](https://github.com/es-ude/elastic-ai.creator/commit/ff6c165cd0bf17477051548018b791809fff33c9))
+
 ## v0.20.0 (2022-11-08)
 ### Feature
 * **vhdl:** Integrate fixed point hard sigmoid to the translator ([`0a07cee`](https://github.com/es-ude/elastic-ai.creator/commit/0a07ceeb3d238456dad08448b543f4a075873322))
