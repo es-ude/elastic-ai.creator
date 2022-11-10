@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from copy import deepcopy
 from functools import partial
 
@@ -95,7 +96,9 @@ def train(
 
     loss_fn = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    accuracy_metric = partial(binary_accuracy, threshold=0.5)
+    accuracy_metric: Callable[[torch.Tensor], torch.Tensor] = partial(
+        binary_accuracy, threshold=0.5
+    )
 
     quantized_inference_evaluator = QuantizedInferenceEvaluator(
         module=model,
