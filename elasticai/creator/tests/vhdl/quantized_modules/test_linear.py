@@ -180,4 +180,4 @@ class FixedPointLinearTest(unittest.TestCase):
         expected = [40]
         actual = to_list(linear.quantized_forward(input_tensor))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)

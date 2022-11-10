@@ -37,7 +37,7 @@ class ReLUBaseTest(unittest.TestCase):
         expected = to_list(F.relu(xs))
         actual = to_list(relu(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_relu_base_quantized_behaves_equivalent_to_relu(self) -> None:
         relu = _ReLUBase(input_quant=lambda x: x + 2, input_dequant=lambda x: x - 1)
@@ -46,7 +46,7 @@ class ReLUBaseTest(unittest.TestCase):
         expected = to_list(F.relu(xs + 1))
         actual = to_list(relu(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_relu_base_quantized_forward_raises_error(self) -> None:
         with self.assertRaises(NotImplementedError):
@@ -66,7 +66,7 @@ class FixedPointReLUTest(unittest.TestCase):
         expected = to_list(F.relu(fake_quantized_xs))
         actual = to_list(relu(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_fixed_point_quantized_forward_works_as_expected(self) -> None:
         relu = FixedPointReLU(
@@ -77,4 +77,4 @@ class FixedPointReLUTest(unittest.TestCase):
         expected = to_list(F.relu(xs))
         actual = to_list(relu.quantized_forward(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)

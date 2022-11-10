@@ -61,21 +61,19 @@ class FixedPointLinear(_LinearBase):
         bias: bool = True,
         device=None,
     ) -> None:
+        self.fixed_point_factory = fixed_point_factory
+        self.quant = lambda x: FixedPointQuantFunction.apply(x, fixed_point_factory)
+        self.dequant = lambda x: FixedPointDequantFunction.apply(x, fixed_point_factory)
         super().__init__(
             in_features=in_features,
             out_features=out_features,
             bias=bias,
-            input_quant=lambda x: FixedPointQuantFunction.apply(x, fixed_point_factory),
-            input_dequant=lambda x: FixedPointDequantFunction.apply(
-                x, fixed_point_factory
-            ),
-            param_quant=lambda x: FixedPointQuantFunction.apply(x, fixed_point_factory),
-            param_dequant=lambda x: FixedPointDequantFunction.apply(
-                x, fixed_point_factory
-            ),
+            input_quant=self.quant,
+            input_dequant=self.dequant,
+            param_quant=self.quant,
+            param_dequant=self.dequant,
             device=device,
         )
-        self.fixed_point_factory = fixed_point_factory
 
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
         total_bits, frac_bits = fixed_point_params_from_factory(
