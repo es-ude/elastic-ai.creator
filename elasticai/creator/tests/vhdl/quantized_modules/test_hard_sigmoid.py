@@ -39,7 +39,7 @@ class HardSigmoidBaseTest(unittest.TestCase):
         expected = to_list(F.hardsigmoid(xs))
         actual = to_list(hard_sigmoid(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_hard_sigmoid_base_input_qunat_dequant(self) -> None:
         hard_sigmoid = _HardSigmoidBase(
@@ -51,7 +51,7 @@ class HardSigmoidBaseTest(unittest.TestCase):
         expected = to_list(F.hardsigmoid(xs * 2))
         actual = to_list(hard_sigmoid(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_hard_sigmoid_base_quantized_forward_raises_error(self) -> None:
         with self.assertRaises(NotImplementedError):
@@ -73,7 +73,7 @@ class FixedPointHardSigmoidTest(unittest.TestCase):
         expected = to_list(F.hardsigmoid(quantized_xs))
         actual = to_list(hard_sigmoid(xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_fixed_point_hard_sigmoid_quantized_forward(self) -> None:
         fp_args = 8, 3
@@ -87,4 +87,4 @@ class FixedPointHardSigmoidTest(unittest.TestCase):
         quantized_xs = torch.tensor(to_fixed_point(xs, *fp_args), dtype=torch.float32)
         actual = to_list(hard_sigmoid.quantized_forward(quantized_xs))
 
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
