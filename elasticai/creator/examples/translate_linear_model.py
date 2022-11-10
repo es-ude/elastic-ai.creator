@@ -22,12 +22,6 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_hard_sigmoid_build_function import (
-    build_fp_hard_sigmoid,
-)
-from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_relu_build_function import (
-    build_fp_relu,
-)
 from elasticai.creator.vhdl.translator.pytorch.build_functions.linear_1d_build_function import (
     build_linear_1d,
 )
@@ -43,21 +37,19 @@ class FixedPointModel(torch.nn.Module):
         self.linear2 = FixedPointLinear(
             in_features=3, out_features=1, fixed_point_factory=fixed_point_factory
         )
-        # self.hard_sigmoid = FixedPointHardSigmoid(
-        #     fixed_point_factory=fixed_point_factory
-        # )
+        self.hard_sigmoid = FixedPointHardSigmoid(
+            fixed_point_factory=fixed_point_factory
+        )
         self.relu1 = FixedPointReLU(fixed_point_factory=fixed_point_factory)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.relu1(self.linear2(x))
+        return self.hard_sigmoid(self.relu1(self.linear2(x)))
 
 
 def get_custom_build_mapping() -> BuildFunctionMapping:
     return DEFAULT_BUILD_FUNCTION_MAPPING.join_with_dict(
         {
             "elasticai.creator.vhdl.quantized_modules.linear.FixedPointLinear": build_linear_1d,
-            "elasticai.creator.vhdl.quantized_modules.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
-            "elasticai.creator.vhdl.quantized_modules.relu.FixedPointReLU": build_fp_relu,
         }
     )
 
@@ -76,9 +68,9 @@ def main() -> None:
         FixedPointLinear=Linear1dTranslationArgs(
             fixed_point_factory=fixed_point_factory, work_library_name="work"
         ),
-        # FixedPointHardSigmoid=FPHardSigmoidTranslationArgs(
-        #     fixed_point_factory=fixed_point_factory
-        # ),
+        FixedPointHardSigmoid=FPHardSigmoidTranslationArgs(
+            fixed_point_factory=fixed_point_factory
+        ),
         FixedPointReLU=FPReLUTranslationArgs(fixed_point_factory=fixed_point_factory),
     )
 
