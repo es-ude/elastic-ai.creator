@@ -21,6 +21,9 @@ from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
 from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_hard_sigmoid_build_function import (
     build_fp_hard_sigmoid,
 )
+from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_linear_1d_build_function import (
+    build_fp_linear_1d,
+)
 from elasticai.creator.vhdl.translator.pytorch.build_functions.linear_1d_build_function import (
     build_linear_1d,
 )
@@ -34,7 +37,7 @@ class FixedPointModel(torch.nn.Module):
         #     in_features=2, out_features=3, fixed_point_factory=fixed_point_factory
         # )
         self.linear2 = FixedPointLinear(
-            in_features=3, out_features=1, fixed_point_factory=fixed_point_factory
+            in_features=3, out_features=2, fixed_point_factory=fixed_point_factory
         )
         self.hard_sigmoid = FixedPointHardSigmoid(
             fixed_point_factory=fixed_point_factory
@@ -47,7 +50,7 @@ class FixedPointModel(torch.nn.Module):
 def get_custom_build_mapping() -> BuildFunctionMapping:
     return DEFAULT_BUILD_FUNCTION_MAPPING.join_with_dict(
         {
-            "elasticai.creator.vhdl.quantized_modules.linear.FixedPointLinear": build_linear_1d,
+            "elasticai.creator.vhdl.quantized_modules.linear.FixedPointLinear": build_fp_linear_1d,
             "elasticai.creator.vhdl.quantized_modules.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
         }
     )
@@ -75,7 +78,7 @@ def main() -> None:
     code_repr = translator.translate_model(
         model=model,
         translation_args=translation_args,
-        build_function_mapping=get_custom_build_mapping(),
+        # build_function_mapping=get_custom_build_mapping(),
     )
 
     translator.save_code(code_repr=code_repr, path=build_path)
