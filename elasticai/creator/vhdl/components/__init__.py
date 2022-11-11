@@ -1,6 +1,7 @@
 from elasticai.creator.vhdl.components.dual_port_2_clock_ram_component import (
     DualPort2ClockRamComponent,
 )
+from elasticai.creator.vhdl.components.fp_linear_1d_component import FPLinear1dComponent
 from elasticai.creator.vhdl.components.linear_1d_component import Linear1dComponent
 from elasticai.creator.vhdl.components.lstm_common_component import LSTMCommonComponent
 from elasticai.creator.vhdl.components.lstm_component import LSTMComponent
