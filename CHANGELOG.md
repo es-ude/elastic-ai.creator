@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.22.0 (2022-11-13)
+### Feature
+* **vhdl:** Raise an exception if the build folder already exists ([`d09bfa1`](https://github.com/es-ude/elastic-ai.creator/commit/d09bfa105d909b58432cf8883ee55a6b11639add))
+
+### Documentation
+* **vhdl:** Add missing parameter in docstring of the translate_model function ([`458a02c`](https://github.com/es-ude/elastic-ai.creator/commit/458a02c38402a0860500d5821b68890fcc78c01a))
+
 ## v0.21.0 (2022-11-13)
 ### Feature
 * **vhdl:** Add default build mapping for fp_hard_sigmoid and fp_relu ([`c9c4d9f`](https://github.com/es-ude/elastic-ai.creator/commit/c9c4d9f329ed2c56d47f2b698dbe1d3b34c1c8a5))
