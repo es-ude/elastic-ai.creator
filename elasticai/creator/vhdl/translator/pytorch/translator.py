@@ -37,6 +37,8 @@ def translate_model(
 
     Parameters:
         model (torch.nn.Module): The PyTorch-model that should be translated.
+        translation_args (dict[str, Any]):
+            Dictionary with the translation arguments for each kind of VHDLModule included in the vhdl_modules.
         build_function_mapping (BuildFunctionMapping):
             Object that maps a given PyTorch-layer to its corresponding build function. If not given the default build
             functions will be used.
