@@ -32,6 +32,7 @@ class FPLinear1dModule(VHDLModule):
             out_features=out_features,
             fixed_point_factory=args.fixed_point_factory,
             work_library_name=args.work_library_name,
+            resource_option="auto",
         )
 
         flat_weight = chain(*self.weight)

@@ -16,7 +16,7 @@ class FPLinear1dComponent:
     out_features: int
     fixed_point_factory: Callable[[float], FixedPoint]
     work_library_name: str = field(default="work")
-    out_buf_type: str = "auto"
+    resource_option: str = "auto"
 
     def __post_init__(self) -> None:
 
@@ -41,7 +41,7 @@ class FPLinear1dComponent:
             y_addr_width=self.y_addr_width,
             in_feature_num=self.in_features,
             out_feature_num=self.out_features,
-            out_buf_type=self.out_buf_type,
+            out_buf_type=f'"{self.resource_option}"',
         )
 
         yield from code.splitlines()
