@@ -41,7 +41,7 @@ class FPLinear1dComponent:
             y_addr_width=self.y_addr_width,
             in_feature_num=self.in_features,
             out_feature_num=self.out_features,
-            out_buf_type=f'"{self.resource_option}"',
+            resource_option=f'"{self.resource_option}"',
         )
 
         yield from code.splitlines()

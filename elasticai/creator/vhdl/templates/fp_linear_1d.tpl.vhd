@@ -13,7 +13,7 @@ entity fp_linear_1d is
         Y_ADDR_WIDTH : integer := {y_addr_width};
         IN_FEATURE_NUM : integer := {in_feature_num};
         OUT_FEATURE_NUM : integer := {out_feature_num};
-        OUT_BUF_TYPE : string := {out_buf_type}; -- can be "distributed", "block", or  "auto"
+        RESOURCE_OPTION : string := {resource_option}; -- can be "distributed", "block", or  "auto"
     );
     port (
         enable : in std_logic;
@@ -95,7 +95,7 @@ architecture rtl of fp_linear_1d is
     type t_y_array is array (0 to OUT_FEATURE_NUM) of std_logic_vector(DATA_WIDTH-1 downto 0);
     signal y_ram : t_y_array;
     attribute rom_style : string;
-    attribute rom_style of y_ram : signal is OUT_BUF_TYPE;
+    attribute rom_style of y_ram : signal is RESOURCE_OPTION;
 
 begin
 
