@@ -9,11 +9,11 @@ from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU
 from elasticai.creator.vhdl.translator.abstract.layers.fp_hard_sigmoid_module import (
     FPHardSigmoidTranslationArgs,
 )
+from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
+    FPLinear1dTranslationArgs,
+)
 from elasticai.creator.vhdl.translator.abstract.layers.fp_relu_module import (
     FPReLUTranslationArgs,
-)
-from elasticai.creator.vhdl.translator.abstract.layers.linear_1d_module import (
-    Linear1dTranslationArgs,
 )
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
@@ -27,9 +27,6 @@ from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_hard_sigmoid_b
 )
 from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_linear_1d_build_function import (
     build_fp_linear_1d,
-)
-from elasticai.creator.vhdl.translator.pytorch.build_functions.linear_1d_build_function import (
-    build_linear_1d,
 )
 
 
@@ -78,7 +75,7 @@ def main() -> None:
     model = FixedPointModel(fixed_point_factory)
 
     translation_args = dict(
-        FixedPointLinear=Linear1dTranslationArgs(
+        FixedPointLinear=FPLinear1dTranslationArgs(
             fixed_point_factory=fixed_point_factory, work_library_name="work"
         ),
         FixedPointHardSigmoid=FPHardSigmoidTranslationArgs(

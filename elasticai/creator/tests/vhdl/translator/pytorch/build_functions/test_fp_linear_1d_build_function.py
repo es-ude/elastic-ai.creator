@@ -26,6 +26,6 @@ class FPLinear1dBuildFunctionTest(unittest.TestCase):
         self.linear.bias = aragnge_parameter(start=1, end=2, shape=(-1,))
 
     def test_weights_and_bias_correct_set(self) -> None:
-        linear1d = build_fp_linear_1d(self.linear)
-        self.assertEqual(linear1d.weight, [[1.0, 2.0, 3.0]])
-        self.assertEqual(linear1d.bias, [1.0])
+        fplinear1d = build_fp_linear_1d(self.linear)
+        self.assertEqual(fplinear1d.weight, [[1.0, 2.0, 3.0]])
+        self.assertEqual(fplinear1d.bias, [1.0])
