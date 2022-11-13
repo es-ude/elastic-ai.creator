@@ -55,12 +55,14 @@ class _LinearBase(torch.nn.Linear):
 class FixedPointLinear(_LinearBase):
     def __init__(
         self,
+        layer_name: str,
         in_features: int,
         out_features: int,
         fixed_point_factory: FixedPointFactory,
         bias: bool = True,
         device=None,
     ) -> None:
+        self.layer_name = layer_name
         self.fixed_point_factory = fixed_point_factory
         self.quant = lambda x: FixedPointQuantFunction.apply(x, fixed_point_factory)
         self.dequant = lambda x: FixedPointDequantFunction.apply(x, fixed_point_factory)

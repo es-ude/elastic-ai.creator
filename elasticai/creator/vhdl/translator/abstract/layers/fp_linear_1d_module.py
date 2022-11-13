@@ -18,6 +18,7 @@ class FPLinear1dTranslationArgs:
 
 @dataclass
 class FPLinear1dModule(VHDLModule):
+    layer_name: str
     weight: list[list[float]]
     bias: list[float]
 
@@ -28,6 +29,7 @@ class FPLinear1dModule(VHDLModule):
         out_features, in_features = np.shape(self.weight)
 
         yield FPLinear1dComponent(
+            layer_name=self.layer_name,
             in_features=in_features,
             out_features=out_features,
             fixed_point_factory=args.fixed_point_factory,
@@ -37,10 +39,15 @@ class FPLinear1dModule(VHDLModule):
 
         flat_weight = chain(*self.weight)
 
+        name_suffix = "_fp_linear_1d_{layer_name}".format(layer_name=self.layer_name)
         yield RomComponent(
-            rom_name="w_rom", values=to_fp(flat_weight), resource_option="auto"
+            rom_name="w_rom" + name_suffix,
+            values=to_fp(flat_weight),
+            resource_option="auto",
         )
 
         yield RomComponent(
-            rom_name="b_rom", values=to_fp(self.bias), resource_option="auto"
+            rom_name="b_rom" + name_suffix,
+            values=to_fp(self.bias),
+            resource_option="auto",
         )
