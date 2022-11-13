@@ -79,9 +79,11 @@ def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
         path (PathType):
             The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
     """
+    os.makedirs(path)
+
     for module in code_repr:
         module_path = os.path.join(path, module.module_name)
-        os.makedirs(module_path, exist_ok=True)
+        os.makedirs(module_path)
 
         for code_file in module.files:
             file_path = os.path.join(module_path, code_file.file_name)
