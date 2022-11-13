@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.21.0 (2022-11-13)
+### Feature
+* **vhdl:** Add default build mapping for fp_hard_sigmoid and fp_relu ([`c9c4d9f`](https://github.com/es-ude/elastic-ai.creator/commit/c9c4d9f329ed2c56d47f2b698dbe1d3b34c1c8a5))
+* **vhdl:** Add fixed point relu to translator ([`80935ce`](https://github.com/es-ude/elastic-ai.creator/commit/80935ce550a2e99267a55b41ad272906faf211a5))
+
 ## v0.20.1 (2022-11-10)
 ### Fix
 * **vhdl:** Fix incompatible signature of the forward function ([`ff6c165`](https://github.com/es-ude/elastic-ai.creator/commit/ff6c165cd0bf17477051548018b791809fff33c9))
