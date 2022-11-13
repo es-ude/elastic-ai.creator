@@ -37,6 +37,8 @@ def translate_model(
 
     Parameters:
         model (torch.nn.Module): The PyTorch-model that should be translated.
+        translation_args (dict[str, Any]):
+            Dictionary with the translation arguments for each kind of VHDLModule included in the vhdl_modules.
         build_function_mapping (BuildFunctionMapping):
             Object that maps a given PyTorch-layer to its corresponding build function. If not given the default build
             functions will be used.
@@ -77,9 +79,11 @@ def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
         path (PathType):
             The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
     """
+    os.makedirs(path)
+
     for module in code_repr:
         module_path = os.path.join(path, module.module_name)
-        os.makedirs(module_path, exist_ok=True)
+        os.makedirs(module_path)
 
         for code_file in module.files:
             file_path = os.path.join(module_path, code_file.file_name)
