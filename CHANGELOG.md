@@ -2,6 +2,20 @@
 
 <!--next-version-placeholder-->
 
+## v0.23.0 (2022-11-15)
+### Feature
+* **vhdl:** Remove the previous linear_1d implementation ([`0f1b9aa`](https://github.com/es-ude/elastic-ai.creator/commit/0f1b9aa2f1c12f5c0fc1fe6a3db482f40041c057))
+* **vhdl:** Enable multiple linear layers in the same model, by adding layer_name ([`3a99a30`](https://github.com/es-ude/elastic-ai.creator/commit/3a99a3059dd53b913e7d619cbce28014007bf854))
+* **vhdl:** Merge main to current working branch ([`35db3c5`](https://github.com/es-ude/elastic-ai.creator/commit/35db3c56608493c6b33d05e0c2250cedb0374c8e))
+* **vhdl:** Check the component interface ([`53791c5`](https://github.com/es-ude/elastic-ai.creator/commit/53791c5eb9a72793b16a0a41eb79ed8932b8e32d))
+* **vhdl:** Add default build function mapping and small changes ([`b1d6f2a`](https://github.com/es-ude/elastic-ai.creator/commit/b1d6f2ac1040e63781d5f4af7ee29e486d9b6d69))
+* **vhdl:** Add fp_linear build function, and test passed ([`ffcbb1d`](https://github.com/es-ude/elastic-ai.creator/commit/ffcbb1d57408ad03e91bd1228bc6d3289f1d0c66))
+* **vhdl:** Add fp_linear_module and test passed ([`241fd65`](https://github.com/es-ude/elastic-ai.creator/commit/241fd652495d6ce582873f1bcc297302f3d61764))
+* **vhdl:** Add fp_linear_component and its template unittest is passed ([`6e97316`](https://github.com/es-ude/elastic-ai.creator/commit/6e973168ca244e4cf407c48b31406d2eed73b4b0))
+
+### Documentation
+* **vhdl:** Change documentation ([`d3fb540`](https://github.com/es-ude/elastic-ai.creator/commit/d3fb5402c7acb09cee3df535671f22d5011f2f47))
+
 ## v0.22.0 (2022-11-13)
 ### Feature
 * **vhdl:** Raise an exception if the build folder already exists ([`d09bfa1`](https://github.com/es-ude/elastic-ai.creator/commit/d09bfa105d909b58432cf8883ee55a6b11639add))
