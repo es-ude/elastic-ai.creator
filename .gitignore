@@ -11,6 +11,8 @@ package.json
 .coverage
 *.onnx
 htmlcov
+elasticai/creator/examples/build
+elasticai/creator/examples/build/*
 
 
 # python build output

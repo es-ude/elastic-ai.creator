@@ -28,7 +28,7 @@ VHDLComponent <|.. VHDLStaticComponent
 VHDLComponent <|.. SigmoidComponent
 VHDLComponent <|.. TanhComponent
 VHDLComponent <|.. RomComponent
-VHDLComponent <|.. Linear1dComponent
+VHDLComponent <|.. FPLinear1dComponent
 VHDLComponent <|-- LSTMComponent
 VHDLStaticComponent <|-- LSTMCommonComponent
 VHDLStaticComponent <|-- DualPort2ClockRamComponent
@@ -46,7 +46,7 @@ translated is represented as VHDLModule. A `VHDLModule` class has a `components`
 DTO (Data Transfer Object) which contains all necessary parameters from the user to translate the layer to VHDL and
 returns a `VHDLModule` as the result of the translation.
 
-An incomplete class diagram showing this for the `LSTMModule` and `Linear1dModule` is the following:
+An incomplete class diagram showing this for the `LSTMModule` and `FPLinear1dModule` is the following:
 
 ```mermaid
 classDiagram
@@ -69,20 +69,21 @@ class LSTMTranslationArgs {
     +work_library_name
 }
 
-class Linear1dModule {
+class FPLinear1dModule {
+    +layer_name
     +weight
     +bias
-    +translate(Linear1dTranslationArgs args) VHDLModule
+    +translate(FPLinear1dTranslationArgs args) VHDLModule
 }
-class Linear1dTranslationArgs {
+class FPLinear1dTranslationArgs {
     +fixed_point_factory
     +work_library_name
 }
 
 VHDLModule <|.. LSTMModule
 LSTMModule -- LSTMTranslationArgs
-VHDLModule <|.. Linear1dModule
-Linear1dModule -- Linear1dTranslationArgs
+VHDLModule <|.. FPLinear1dModule
+FPLinear1dModule -- FPLinear1dTranslationArgs
 ```
 
 ## Build Functions

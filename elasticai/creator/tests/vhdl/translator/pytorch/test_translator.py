@@ -6,9 +6,10 @@ import torch
 
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
-from elasticai.creator.vhdl.translator.abstract.layers.linear_1d_module import (
-    Linear1dTranslationArgs,
+from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
+    FPLinear1dTranslationArgs,
 )
 from elasticai.creator.vhdl.translator.abstract.layers.lstm_module import (
     LSTMTranslationArgs,
@@ -114,8 +115,9 @@ class TranslatorTest(unittest.TestCase):
             translator.translate_model(
                 model,
                 translation_args=dict(
-                    Linear=Linear1dTranslationArgs(
-                        fixed_point_factory=FixedPoint.get_factory(8, 4)
+                    Linear=FPLinear1dTranslationArgs(
+                        fixed_point_factory=FixedPoint.get_factory(8, 4),
+                        work_library_name="work",
                     ),
                     LSTM=LSTMTranslationArgs(
                         fixed_point_factory=FixedPoint.get_factory(8, 4),

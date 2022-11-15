@@ -12,7 +12,7 @@ from elasticai.creator.examples.assets.determine_fixed_point.pems_dataset import
 from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
-    Linear1dTranslationArgs,
+    FPLinear1dTranslationArgs,
     LSTMTranslationArgs,
 )
 from elasticai.creator.vhdl.translator.pytorch import translator
@@ -241,7 +241,7 @@ def main() -> None:
             tanh_resolution=(-1, 1, 256),
             work_library_name=work_library_name,
         ),
-        Linear=Linear1dTranslationArgs(
+        Linear=FPLinear1dTranslationArgs(
             fixed_point_factory=fixed_point_factory,
             work_library_name=work_library_name,
         ),

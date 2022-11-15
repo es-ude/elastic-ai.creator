@@ -141,7 +141,10 @@ class FixedPointLinearTest(unittest.TestCase):
     def test_fixed_point_linear_in_bounds(self) -> None:
         fp_factory = FixedPoint.get_factory(total_bits=16, frac_bits=8)
         linear = FixedPointLinear(
-            in_features=3, out_features=1, fixed_point_factory=fp_factory
+            layer_name="test_layer",
+            in_features=3,
+            out_features=1,
+            fixed_point_factory=fp_factory,
         )
         linear.weight = Parameter(torch.ones_like(linear.weight))
         linear.bias = Parameter(torch.ones_like(linear.bias))
@@ -155,7 +158,10 @@ class FixedPointLinearTest(unittest.TestCase):
     def test_fixed_point_linear_out_of_bounds(self) -> None:
         fp_factory = FixedPoint.get_factory(total_bits=3, frac_bits=0)
         linear = FixedPointLinear(
-            in_features=3, out_features=1, fixed_point_factory=fp_factory
+            layer_name="test_layer",
+            in_features=3,
+            out_features=1,
+            fixed_point_factory=fp_factory,
         )
         linear.weight = Parameter(torch.ones_like(linear.weight))
         linear.bias = Parameter(torch.ones_like(linear.bias))
@@ -169,7 +175,10 @@ class FixedPointLinearTest(unittest.TestCase):
     def test_fixed_point_linear_quantized_forward(self) -> None:
         fp_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
         linear = FixedPointLinear(
-            in_features=3, out_features=1, fixed_point_factory=fp_factory
+            layer_name="test_layer",
+            in_features=3,
+            out_features=1,
+            fixed_point_factory=fp_factory,
         )
         linear.weight = Parameter(torch.ones_like(linear.weight))
         linear.bias = Parameter(torch.ones_like(linear.bias))
