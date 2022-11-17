@@ -9,7 +9,7 @@ class FPLinear1dComponentTest(unittest.TestCase):
         to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
 
         component = FPLinear1dComponent(
-            layer_name="ll1",
+            layer_id="ll1",
             in_features=3,
             out_features=2,
             fixed_point_factory=to_fp,

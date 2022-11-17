@@ -46,7 +46,7 @@ class VHDLModuleMock(VHDLModule):
         yield from self.vhdl_components
 
 
-def fake_build_function(module: torch.nn.Module) -> VHDLModuleMock:
+def fake_build_function(module: torch.nn.Module, layer_id: str) -> VHDLModuleMock:
     return VHDLModuleMock(
         vhdl_components=[
             VHDLComponentMock(name="component1", code=["1", "2", "3"]),

@@ -5,7 +5,7 @@ import torch
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
 
 
-def build_lstm(lstm: torch.nn.LSTM) -> LSTMModule:
+def build_lstm(lstm: torch.nn.LSTM, layer_id: str) -> LSTMModule:
     def to_list(tensor: torch.Tensor) -> list:
         return tensor.detach().numpy().tolist()
 

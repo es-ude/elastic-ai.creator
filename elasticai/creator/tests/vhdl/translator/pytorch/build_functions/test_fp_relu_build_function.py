@@ -15,5 +15,5 @@ class FPReluBuildFunctionTest(unittest.TestCase):
         layer = FixedPointReLU(
             fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4)
         )
-        layer_module = build_fp_relu(layer)
+        layer_module = build_fp_relu(layer, layer_id="relu1")
         self.assertEqual(type(layer_module), FPReLUModule)
