@@ -41,8 +41,8 @@ jobs:
       - name: Commit and push changes
         uses: actions-x/commit@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'style: beautify ${{ github.sha }}'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'style: beautify ${{ github.sha }}'
           name: github-actions
           email: action@github.com
 
