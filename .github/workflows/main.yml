@@ -39,7 +39,7 @@ jobs:
         run: python -m isort --profile black .
 
       - name: Commit and push changes
-        uses: github-actions-x/commit@v6
+        uses: actions-x/commit@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'style: beautify ${{ github.sha }}'
