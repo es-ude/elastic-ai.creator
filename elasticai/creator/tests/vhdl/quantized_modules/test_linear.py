@@ -3,15 +3,12 @@ import unittest
 import torch
 from torch.nn.parameter import Parameter
 
+from elasticai.creator.tests.vhdl.quantized_modules.utils import to_list
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.quantized_modules.linear import (
     FixedPointLinear,
     _LinearBase,
 )
-
-
-def to_list(x: torch.Tensor) -> list[float]:
-    return x.detach().numpy().tolist()
 
 
 class LinearBaseTest(unittest.TestCase):

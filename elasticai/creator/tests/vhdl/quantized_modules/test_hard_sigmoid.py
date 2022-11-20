@@ -1,34 +1,18 @@
 import unittest
 
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as f
 
-from elasticai.creator.vhdl.number_representations import (
-    FixedPoint,
-    float_values_to_fixed_point,
+from elasticai.creator.tests.vhdl.quantized_modules.utils import (
+    from_fixed_point,
+    to_fixed_point,
+    to_list,
 )
+from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.quantized_modules.hard_sigmoid import (
     FixedPointHardSigmoid,
     _HardSigmoidBase,
 )
-
-
-def to_list(x: torch.Tensor) -> list:
-    return x.detach().numpy().tolist()
-
-
-def to_fixed_point(values: list[float], total_bits: int, frac_bits: int) -> list[int]:
-    def to_fp(value: FixedPoint) -> int:
-        return value.to_signed_int()
-
-    return list(map(to_fp, float_values_to_fixed_point(values, total_bits, frac_bits)))
-
-
-def from_fixed_point(values: list[int], total_bits: int, frac_bits: int) -> list[float]:
-    def to_float(value: int) -> float:
-        return float(FixedPoint.from_signed_int(value, total_bits, frac_bits))
-
-    return list(map(to_float, values))
 
 
 class HardSigmoidBaseTest(unittest.TestCase):
@@ -36,7 +20,7 @@ class HardSigmoidBaseTest(unittest.TestCase):
         hard_sigmoid = _HardSigmoidBase()
 
         xs = torch.linspace(-6, 6, 100)
-        expected = to_list(F.hardsigmoid(xs))
+        expected = to_list(f.hardsigmoid(xs))
         actual = to_list(hard_sigmoid(xs))
 
         self.assertEqual(expected, actual)
@@ -48,7 +32,7 @@ class HardSigmoidBaseTest(unittest.TestCase):
         )
 
         xs = torch.tensor([-1, 0, 1], dtype=torch.float32)
-        expected = to_list(F.hardsigmoid(xs * 2))
+        expected = to_list(f.hardsigmoid(xs * 2))
         actual = to_list(hard_sigmoid(xs))
 
         self.assertEqual(expected, actual)
@@ -70,7 +54,7 @@ class FixedPointHardSigmoidTest(unittest.TestCase):
             from_fixed_point(to_fixed_point(to_list(xs), *fp_args), *fp_args),
             dtype=torch.float32,
         )
-        expected = to_list(F.hardsigmoid(quantized_xs))
+        expected = to_list(f.hardsigmoid(quantized_xs))
         actual = to_list(hard_sigmoid(xs))
 
         self.assertEqual(expected, actual)
