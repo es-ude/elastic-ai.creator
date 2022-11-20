@@ -10,7 +10,7 @@ from elasticai.creator.vhdl.number_representations import (
 
 class FixedPointQuantFunction(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, *args: Any, **kwargs: Any) -> tuple[torch.Tensor, ...]:
+    def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 2:
             raise TypeError(
                 "apply() takes exactly two arguments "
@@ -31,7 +31,7 @@ class FixedPointQuantFunction(torch.autograd.Function):
 
 class FixedPointDequantFunction(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, *args: Any, **kwargs: Any) -> tuple[torch.Tensor, ...]:
+    def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 2:
             raise TypeError(
                 "apply() takes exactly two arguments "
