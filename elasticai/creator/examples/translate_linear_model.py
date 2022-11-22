@@ -35,13 +35,11 @@ class FixedPointModel(torch.nn.Module):
         super().__init__()
 
         self.linear1 = FixedPointLinear(
-            layer_name="ll1",
             in_features=2,
             out_features=3,
             fixed_point_factory=fixed_point_factory,
         )
         self.linear2 = FixedPointLinear(
-            layer_name="ll2",
             in_features=3,
             out_features=2,
             fixed_point_factory=fixed_point_factory,
@@ -52,7 +50,7 @@ class FixedPointModel(torch.nn.Module):
         self.relu1 = FixedPointReLU(fixed_point_factory=fixed_point_factory)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.hard_sigmoid(self.relu1(self.linear2(self.linear2(x))))
+        return self.hard_sigmoid(self.linear2(self.relu1(self.linear2(x))))
 
 
 def get_custom_build_mapping() -> BuildFunctionMapping:
