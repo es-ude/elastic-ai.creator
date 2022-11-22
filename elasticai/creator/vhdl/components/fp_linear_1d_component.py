@@ -31,13 +31,12 @@ class FPLinear1dComponent:
     def file_name(self) -> str:
         return f"fp_linear_1d_{self.layer_id}.vhd"
 
-
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_linear_1d.tpl.vhd")
 
-        code = template.format(
+        code = expand_template(
+            template.splitlines(),
             layer_name=self.layer_id,
-
             work_library_name=self.work_library_name,
             data_width=self.data_width,
             frac_width=self.frac_width,
