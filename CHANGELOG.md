@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.24.0 (2022-11-22)
+### Feature
+* **vhdl:** Add layer_id parameter to build function and set it to a unique value during translation ([`cfdf949`](https://github.com/es-ude/elastic-ai.creator/commit/cfdf9492190e24230293e3b0b1b312bfc9710952))
+
+### Fix
+* **vhdl:** Remove duplicated key ([`5a4bcd6`](https://github.com/es-ude/elastic-ai.creator/commit/5a4bcd6fb6de9cff6c639866db1dd50918f3039b))
+
 ## v0.23.0 (2022-11-15)
 ### Feature
 * **vhdl:** Remove the previous linear_1d implementation ([`0f1b9aa`](https://github.com/es-ude/elastic-ai.creator/commit/0f1b9aa2f1c12f5c0fc1fe6a3db482f40041c057))
