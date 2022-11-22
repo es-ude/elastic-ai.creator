@@ -15,5 +15,5 @@ class FPHardSigmoidBuildFunctionTest(unittest.TestCase):
         layer = FixedPointHardSigmoid(
             fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4)
         )
-        layer_module = build_fp_hard_sigmoid(layer)
+        layer_module = build_fp_hard_sigmoid(layer, layer_id="hs1")
         self.assertEqual(type(layer_module), FPHardSigmoidModule)

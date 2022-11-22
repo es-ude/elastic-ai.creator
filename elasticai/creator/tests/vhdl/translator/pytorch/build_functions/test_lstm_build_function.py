@@ -22,7 +22,7 @@ class LSTMBuildFunctionTest(TestCase):
         self.lstm.bias_hh_l0 = arange_parameter(start=12, end=16, shape=(4,))
 
     def test_build_lstm_layer_weights_correct_set(self) -> None:
-        lstm_module = build_lstm(self.lstm)
+        lstm_module = build_lstm(self.lstm, layer_id="lstm1")
 
         self.assertEqual(lstm_module.weights_ih, [[[0.0], [1.0], [2.0], [3.0]]])
         self.assertEqual(lstm_module.weights_hh, [[[4.0], [5.0], [6.0], [7.0]]])
