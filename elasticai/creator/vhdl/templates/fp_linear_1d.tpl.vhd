@@ -13,7 +13,7 @@ entity fp_linear_1d_{layer_name} is -- layer_name is for distinguish same type o
         Y_ADDR_WIDTH : integer := {y_addr_width};
         IN_FEATURE_NUM : integer := {in_feature_num};
         OUT_FEATURE_NUM : integer := {out_feature_num};
-        RESOURCE_OPTION : string := {resource_option}; -- can be "distributed", "block", or  "auto"
+        RESOURCE_OPTION : string := {resource_option} -- can be "distributed", "block", or  "auto"
     );
     port (
         enable : in std_logic;
