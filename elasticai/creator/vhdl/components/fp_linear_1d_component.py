@@ -13,7 +13,7 @@ from elasticai.creator.vhdl.templates.utils import expand_template
 
 @dataclass
 class FPLinear1dComponent:
-    layer_name: str  # used to distinguish layers in the same model
+    layer_id: str  # used to distinguish layers in the same model
     in_features: int
     out_features: int
     fixed_point_factory: Callable[[float], FixedPoint]
@@ -29,14 +29,15 @@ class FPLinear1dComponent:
 
     @property
     def file_name(self) -> str:
-        return f"fp_linear_1d_{self.layer_name}.vhd"
+        return f"fp_linear_1d_{self.layer_id}.vhd"
+
 
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_linear_1d.tpl.vhd")
 
-        code = expand_template(
-            template.splitlines(),
-            layer_name=self.layer_name,
+        code = template.format(
+            layer_name=self.layer_id,
+
             work_library_name=self.work_library_name,
             data_width=self.data_width,
             frac_width=self.frac_width,
