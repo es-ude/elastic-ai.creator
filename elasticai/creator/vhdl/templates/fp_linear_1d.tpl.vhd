@@ -7,13 +7,13 @@ use ${work_library_name}.all;
 
 entity fp_linear_1d_${layer_name} is -- layer_name is for distinguish same type of layers (with various weights) in one module
     generic (
-        DATA_WIDTH   : integer := {data_width};
-        FRAC_WIDTH   : integer := {frac_width};
-        X_ADDR_WIDTH : integer := {x_addr_width};
-        Y_ADDR_WIDTH : integer := {y_addr_width};
-        IN_FEATURE_NUM : integer := {in_feature_num};
-        OUT_FEATURE_NUM : integer := {out_feature_num};
-        RESOURCE_OPTION : string := {resource_option} -- can be "distributed", "block", or  "auto"
+        DATA_WIDTH   : integer := ${data_width};
+        FRAC_WIDTH   : integer := ${frac_width};
+        X_ADDR_WIDTH : integer := ${x_addr_width};
+        Y_ADDR_WIDTH : integer := ${y_addr_width};
+        IN_FEATURE_NUM : integer := ${in_feature_num};
+        OUT_FEATURE_NUM : integer := ${out_feature_num};
+        RESOURCE_OPTION : string := ${resource_option} -- can be "distributed", "block", or  "auto"
     );
     port (
         enable : in std_logic;
@@ -84,7 +84,8 @@ architecture rtl of fp_linear_1d_${layer_name} is
     signal b_in : std_logic_vector(DATA_WIDTH-1 downto 0) := (others=>'0');
 
     signal addr_w : std_logic_vector(log2(IN_FEATURE_NUM*OUT_FEATURE_NUM)-1 downto 0) := (others=>'0');
-    signal addr_b : std_logic_vector(log2(OUT_FEATURE_NUM)-1 downto 0) := (others=>'0');
+    --signal addr_b : std_logic_vector((log2(OUT_FEATURE_NUM)-1) downto 0) := (others=>'0');
+    signal addr_b : std_logic_vector(Y_ADDR_WIDTH-1 downto 0) := (others=>'0');
 
     signal fp_x, fp_w, fp_b, fp_y, macc_sum : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 

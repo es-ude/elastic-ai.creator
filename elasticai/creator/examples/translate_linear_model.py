@@ -35,13 +35,13 @@ class FixedPointModel(torch.nn.Module):
         super().__init__()
 
         self.linear1 = FixedPointLinear(
-            in_features=2,
-            out_features=3,
+            in_features=3,
+            out_features=4,
             fixed_point_factory=fixed_point_factory,
         )
         self.linear2 = FixedPointLinear(
-            in_features=3,
-            out_features=2,
+            in_features=4,
+            out_features=1,
             fixed_point_factory=fixed_point_factory,
         )
         self.hard_sigmoid = FixedPointHardSigmoid(

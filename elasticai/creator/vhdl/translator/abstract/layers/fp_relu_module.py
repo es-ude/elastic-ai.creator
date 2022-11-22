@@ -13,7 +13,10 @@ class FPReLUTranslationArgs:
 
 @dataclass
 class FPReLUModule(VHDLModule):
+    layer_id: str
+
     def components(self, args: FPReLUTranslationArgs) -> Iterable[VHDLComponent]:
         yield FPReLUComponent(
+            layer_id=self.layer_id,
             fixed_point_factory=args.fixed_point_factory,
         )
