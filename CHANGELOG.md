@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.25.0 (2022-11-22)
+### Feature
+* **vhdl:** Apply the expand_template function to the already existing templates ([`c958f54`](https://github.com/es-ude/elastic-ai.creator/commit/c958f545f4c2cf2414a007753b416ec73c410458))
+* **vhdl:** Add expand_template function that fills string templates instead of format strings ([`eb9ee98`](https://github.com/es-ude/elastic-ai.creator/commit/eb9ee987f73ffb26e8280ec3c32b32e38896d3c1))
+
+### Fix
+* **vhdl:** Fix the error from merging braches ([`c386766`](https://github.com/es-ude/elastic-ai.creator/commit/c386766ea654852c5ad5254cefc1fab28f544c66))
+
 ## v0.24.0 (2022-11-22)
 ### Feature
 * **vhdl:** Add layer_id parameter to build function and set it to a unique value during translation ([`cfdf949`](https://github.com/es-ude/elastic-ai.creator/commit/cfdf9492190e24230293e3b0b1b312bfc9710952))
