@@ -8,6 +8,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
+from elasticai.creator.vhdl.templates.utils import expand_template
 
 
 @dataclass
@@ -31,7 +32,8 @@ class RomComponent:
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
-        code = template.format(
+        code = expand_template(
+            template.splitlines(),
             rom_name=self.rom_name,
             rom_addr_bitwidth=self.addr_width,
             rom_data_bitwidth=self.data_width,
@@ -39,4 +41,4 @@ class RomComponent:
             rom_resource_option=f'"{self.resource_option}"',
         )
 
-        yield from code.splitlines()
+        yield from code

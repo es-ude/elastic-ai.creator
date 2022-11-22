@@ -11,8 +11,8 @@ use ieee.numeric_std.all;
 
 entity fp_relu is
 generic (
-    DATA_WIDTH : integer := {data_width};
-    CLOCK_OPTION : boolean := {clock_option}
+    DATA_WIDTH : integer := ${data_width};
+    CLOCK_OPTION : boolean := ${clock_option}
 );
 port (
     enable : in std_logic;
