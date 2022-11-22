@@ -1,14 +1,22 @@
 import doctest
+from collections.abc import Iterator
 from unittest import TestCase
 
 import elasticai.creator.vhdl.templates.utils
-from elasticai.creator.vhdl.templates.utils import expand_multiline_template
+from elasticai.creator.vhdl.templates.utils import (
+    expand_multiline_template,
+    expand_template,
+)
+
+
+def newline_join(lines: Iterator[str]) -> str:
+    return "\n".join(lines)
 
 
 class ExpandTemplatesTestCase(TestCase):
     @staticmethod
     def get_result_string(template, **kwargs) -> str:
-        return "\n".join(expand_multiline_template(template, **kwargs))
+        return newline_join(expand_multiline_template(template, **kwargs))
 
     def test_expand_multiline_with_one_item(self):
         # noinspection PyShadowingNames
@@ -85,6 +93,41 @@ class ExpandTemplatesTestCase(TestCase):
         expected = "\t0 0\n\t0 1\n\t1 0\n\t1 1"
         actual = self.get_result_string(template, first=values)
         actual = self.get_result_string(actual, first=values, second=values)
+        self.assertEqual(expected, actual)
+
+
+class ExpandTemplatesTest(TestCase):
+    def test_expand_empty_string_template(self) -> None:
+        template = ""
+        actual = newline_join(expand_template(template, a=1, b="hello"))
+        expected = ""
+        self.assertEqual(expected, actual)
+
+    def test_expand_single_string_template_with_single_key(self) -> None:
+        template = "$some_key"
+        actual = newline_join(expand_template(template, some_key=42))
+        expected = "42"
+        self.assertEqual(expected, actual)
+
+    def test_raise_key_error_for_missing_key(self) -> None:
+        template = "$some_key"
+        with self.assertRaises(KeyError):
+            _ = newline_join(expand_template(template))
+
+    def test_expand_multiple_strings_template(self) -> None:
+        template = ["$val1", "$val2", "$val3"]
+        actual = newline_join(
+            expand_template(template, val1="hello", val2="world", val3=42)
+        )
+        expected = "hello\nworld\n42"
+        self.assertEqual(expected, actual)
+
+    def test_expand_multiple_strings_template_with_multiple_keys_per_line(self) -> None:
+        template = ["$val1 $val1 $val1", "$val1 $val2", ""]
+        actual = newline_join(
+            expand_template(template, val1="hello", val2="world", val3=42)
+        )
+        expected = "hello hello hello\nhello world\n"
         self.assertEqual(expected, actual)
 
 

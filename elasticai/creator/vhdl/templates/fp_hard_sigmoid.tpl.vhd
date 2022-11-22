@@ -11,13 +11,13 @@ use ieee.numeric_std.all;
 
 entity fp_hard_sigmoid is
 generic (
-    DATA_WIDTH : integer := {data_width};
-    FRAC_WIDTH : integer := {frac_width};
-    ONE : integer := {one};
-    ZERO_THRESHOLD : integer := {zero_threshold};
-    ONE_THRESHOLD : integer := {one_threshold};
-    SLOPE : integer := {slope};
-    Y_INTERCEPT: integer := {y_intercept}
+    DATA_WIDTH : integer := ${data_width};
+    FRAC_WIDTH : integer := ${frac_width};
+    ONE : integer := ${one};
+    ZERO_THRESHOLD : integer := ${zero_threshold};
+    ONE_THRESHOLD : integer := ${one_threshold};
+    SLOPE : integer := ${slope};
+    Y_INTERCEPT: integer := ${y_intercept}
 );
 
 port (
