@@ -1,6 +1,7 @@
+from collections.abc import Iterable, Iterator, Sequence
 from itertools import repeat
 from string import Template
-from typing import Iterator, Sequence
+from typing import Any
 
 
 def expand_multiline_template(template: str, **kwargs: Sequence) -> Iterator[str]:
@@ -23,3 +24,11 @@ def expand_multiline_template(template: str, **kwargs: Sequence) -> Iterator[str
                 break
         if contains_no_key:
             yield line
+
+
+def expand_template(template: str | Iterable[str], **kwargs: Any) -> Iterator[str]:
+    if isinstance(template, str):
+        yield Template(template).substitute(kwargs)
+    else:
+        for line in template:
+            yield Template(line).substitute(kwargs)

@@ -7,6 +7,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,
 )
+from elasticai.creator.vhdl.templates.utils import expand_template
 
 
 @dataclass
@@ -25,9 +26,10 @@ class FPReLUComponent:
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_relu.tpl.vhd")
 
-        code = template.format(
+        code = expand_template(
+            template.splitlines(),
             data_width=self.data_width,
             clock_option="true",
         )
 
-        yield from code.splitlines()
+        yield from code

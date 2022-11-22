@@ -8,6 +8,7 @@ from elasticai.creator.vhdl.components.utils import (
 )
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.templates.utils import expand_template
 
 
 @dataclass
@@ -33,7 +34,8 @@ class FPLinear1dComponent:
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_linear_1d.tpl.vhd")
 
-        code = template.format(
+        code = expand_template(
+            template.splitlines(),
             layer_name=self.layer_id,
             work_library_name=self.work_library_name,
             data_width=self.data_width,
@@ -45,4 +47,4 @@ class FPLinear1dComponent:
             resource_option=f'"{self.resource_option}"',
         )
 
-        yield from code.splitlines()
+        yield from code

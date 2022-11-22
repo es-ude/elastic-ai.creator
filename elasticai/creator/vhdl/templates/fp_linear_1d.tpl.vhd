@@ -2,10 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 
-library {work_library_name};
-use {work_library_name}.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 
-entity fp_linear_1d_{layer_name} is -- layer_name is for distinguish same type of layers (with various weights) in one module
+entity fp_linear_1d_${layer_name} is -- layer_name is for distinguish same type of layers (with various weights) in one module
     generic (
         DATA_WIDTH   : integer := {data_width};
         FRAC_WIDTH   : integer := {frac_width};
@@ -26,9 +26,9 @@ entity fp_linear_1d_{layer_name} is -- layer_name is for distinguish same type o
 
         done   : out std_logic
     );
-end fp_linear_1d_{layer_name};
+end fp_linear_1d_${layer_name};
 
-architecture rtl of fp_linear_1d_{layer_name} is
+architecture rtl of fp_linear_1d_${layer_name} is
     -----------------------------------------------------------
     -- Functions
     -----------------------------------------------------------
@@ -184,7 +184,7 @@ begin
     end process linear_main;
 
     -- Weights
-    rom_w : entity {work_library_name}.w_rom_fp_linear_1d_{layer_name}(rtl)
+    rom_w : entity ${work_library_name}.w_rom_fp_linear_1d_${layer_name}(rtl)
     port map  (
         clk  => n_clock,
         en   => '1',
@@ -193,7 +193,7 @@ begin
     );
 
     -- Bias
-    rom_b : entity {work_library_name}.b_rom_fp_linear_1d_{layer_name}(rtl)
+    rom_b : entity ${work_library_name}.b_rom_fp_linear_1d_${layer_name}(rtl)
     port map  (
         clk  => n_clock,
         en   => '1',
