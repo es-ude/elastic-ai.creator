@@ -31,7 +31,7 @@ class FPReLUComponent:
             template.splitlines(),
             layer_name=self.layer_id,
             data_width=self.data_width,
-            clock_option="true",
+            clock_option="false",
         )
 
         yield from code
