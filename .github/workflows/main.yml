@@ -18,10 +18,10 @@ jobs:
       new_sha: ${{ steps.sha.outputs.SHA }}
 
     steps:
-      - name: Set up Python 3.10.0
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10.0
+          python-version: 3.10
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -65,10 +65,10 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.beautify.outputs.new_sha }}
-      - name: Set up Python 3.10.0
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10.0
+          python-version: 3.10
       - name: Install dependencies
         run: |
           python3 -m pip install poetry==1.1.15 --upgrade pip
