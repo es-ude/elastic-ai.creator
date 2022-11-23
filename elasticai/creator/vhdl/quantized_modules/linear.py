@@ -1,5 +1,3 @@
-from typing import Callable
-
 import torch
 
 from elasticai.creator.vhdl.number_representations import (
@@ -10,9 +8,7 @@ from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.vhdl.quantized_modules.typing import QuantType
-
-OperationType = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
+from elasticai.creator.vhdl.quantized_modules.typing import OperationType, QuantType
 
 
 class _LinearBase(torch.nn.Linear):
