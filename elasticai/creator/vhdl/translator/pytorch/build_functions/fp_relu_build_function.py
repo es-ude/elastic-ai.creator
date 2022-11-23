@@ -5,4 +5,6 @@ from elasticai.creator.vhdl.translator.abstract.layers.fp_relu_module import (
 
 
 def build_fp_relu(fp_relu: FixedPointReLU, layer_id: str) -> FPReLUModule:
-    return FPReLUModule()
+    return FPReLUModule(
+        layer_id=layer_id,
+    )

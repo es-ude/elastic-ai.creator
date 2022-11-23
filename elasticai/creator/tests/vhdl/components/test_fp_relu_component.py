@@ -9,6 +9,7 @@ class FPReLUComponentTest(unittest.TestCase):
         to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
 
         component = FPReLUComponent(
+            layer_id="0",
             fixed_point_factory=to_fp,
         )
 

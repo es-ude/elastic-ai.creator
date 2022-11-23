@@ -35,15 +35,13 @@ class FixedPointModel(torch.nn.Module):
         super().__init__()
 
         self.linear1 = FixedPointLinear(
-            layer_name="ll1",
-            in_features=2,
-            out_features=3,
+            in_features=3,
+            out_features=4,
             fixed_point_factory=fixed_point_factory,
         )
         self.linear2 = FixedPointLinear(
-            layer_name="ll2",
-            in_features=3,
-            out_features=2,
+            in_features=4,
+            out_features=1,
             fixed_point_factory=fixed_point_factory,
         )
         self.hard_sigmoid = FixedPointHardSigmoid(
@@ -52,7 +50,11 @@ class FixedPointModel(torch.nn.Module):
         self.relu1 = FixedPointReLU(fixed_point_factory=fixed_point_factory)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.hard_sigmoid(self.relu1(self.linear2(self.linear2(x))))
+        x = self.linear1(x)
+        x = self.relu1(x)
+        x = self.linear2(x)
+        x = self.hard_sigmoid(x)
+        return x
 
 
 def get_custom_build_mapping() -> BuildFunctionMapping:
@@ -65,6 +67,9 @@ def get_custom_build_mapping() -> BuildFunctionMapping:
 
 
 def main() -> None:
+
+    torch.manual_seed(22)  # make result reproducible
+
     if len(sys.argv) < 2:
         print("Please supply a build directory path as a program argument.")
         return

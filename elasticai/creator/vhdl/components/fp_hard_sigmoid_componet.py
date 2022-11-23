@@ -12,6 +12,7 @@ from elasticai.creator.vhdl.templates.utils import expand_template
 
 @dataclass
 class FPHardSigmoidComponent:
+    layer_id: str  # used to distinguish layers in the same model
     zero_threshold: FixedPoint
     one_threshold: FixedPoint
     slope: FixedPoint
@@ -25,7 +26,7 @@ class FPHardSigmoidComponent:
 
     @property
     def file_name(self) -> str:
-        return "fp_hard_sigmoid.vhd"
+        return f"fp_hard_sigmoid_{self.layer_id}.vhd"
 
     def __call__(self) -> Code:
         template = read_text(
@@ -34,6 +35,7 @@ class FPHardSigmoidComponent:
 
         code = expand_template(
             template.splitlines(),
+            layer_name=self.layer_id,
             data_width=self.data_width,
             frac_width=self.frac_width,
             one=self.fixed_point_factory(1).to_signed_int(),
