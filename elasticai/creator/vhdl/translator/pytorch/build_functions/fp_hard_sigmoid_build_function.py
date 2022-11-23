@@ -4,5 +4,9 @@ from elasticai.creator.vhdl.translator.abstract.layers.fp_hard_sigmoid_module im
 )
 
 
-def build_fp_hard_sigmoid(hard_sigmoid: FixedPointHardSigmoid) -> FPHardSigmoidModule:
-    return FPHardSigmoidModule()
+def build_fp_hard_sigmoid(
+    hard_sigmoid: FixedPointHardSigmoid, layer_id: str
+) -> FPHardSigmoidModule:
+    return FPHardSigmoidModule(
+        layer_id=layer_id,
+    )

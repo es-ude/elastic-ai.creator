@@ -9,10 +9,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity fp_relu is
+entity fp_relu_${layer_name} is
 generic (
-    DATA_WIDTH : integer := {data_width};
-    CLOCK_OPTION : boolean := {clock_option}
+    DATA_WIDTH : integer := ${data_width};
+    CLOCK_OPTION : boolean := ${clock_option}
 );
 port (
     enable : in std_logic;
@@ -20,9 +20,9 @@ port (
 	input  : in std_logic_vector(DATA_WIDTH-1 downto 0);
 	output : out std_logic_vector(DATA_WIDTH-1 downto 0)
 );
-end entity fp_relu;
+end entity fp_relu_${layer_name};
 
-architecture rtl of fp_relu is
+architecture rtl of fp_relu_${layer_name} is
 
     signal fp_input : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal fp_output : signed(DATA_WIDTH-1 downto 0) := (others=>'0');

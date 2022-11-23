@@ -2,6 +2,32 @@
 
 <!--next-version-placeholder-->
 
+## v0.26.0 (2022-11-23)
+### Feature
+* **vhdl:** Clean the code ([`d737d02`](https://github.com/es-ude/elastic-ai.creator/commit/d737d02122207bcd24f4b7c960b71db095d34a26))
+* **vhdl:** Make linear layers better timing ([`1c6a3ae`](https://github.com/es-ude/elastic-ai.creator/commit/1c6a3aeeeaee929affbb092eb485c1cf7a323355))
+* **vhdl:** Merge from main ([`fefd3ba`](https://github.com/es-ude/elastic-ai.creator/commit/fefd3ba4ab1fa8ae9d09bfc6185f906175f7a6ff))
+
+### Fix
+* **vhdl:** Fix error during integrating to a MLP model ([`0e2b89c`](https://github.com/es-ude/elastic-ai.creator/commit/0e2b89c898497f35a2ad840bd3065429799bdf61))
+* **vhdl:** Fix small error in the template file ([`fe94518`](https://github.com/es-ude/elastic-ai.creator/commit/fe94518ff2e5e44f7c1ff8f9bf8b4ff8f0b5cf41))
+* **vhdl:** Remove the layer name in the example file ([`767b5f9`](https://github.com/es-ude/elastic-ai.creator/commit/767b5f9c62d493d35e5a294b1363c861d5438fa5))
+
+## v0.25.0 (2022-11-22)
+### Feature
+* **vhdl:** Apply the expand_template function to the already existing templates ([`c958f54`](https://github.com/es-ude/elastic-ai.creator/commit/c958f545f4c2cf2414a007753b416ec73c410458))
+* **vhdl:** Add expand_template function that fills string templates instead of format strings ([`eb9ee98`](https://github.com/es-ude/elastic-ai.creator/commit/eb9ee987f73ffb26e8280ec3c32b32e38896d3c1))
+
+### Fix
+* **vhdl:** Fix the error from merging braches ([`c386766`](https://github.com/es-ude/elastic-ai.creator/commit/c386766ea654852c5ad5254cefc1fab28f544c66))
+
+## v0.24.0 (2022-11-22)
+### Feature
+* **vhdl:** Add layer_id parameter to build function and set it to a unique value during translation ([`cfdf949`](https://github.com/es-ude/elastic-ai.creator/commit/cfdf9492190e24230293e3b0b1b312bfc9710952))
+
+### Fix
+* **vhdl:** Remove duplicated key ([`5a4bcd6`](https://github.com/es-ude/elastic-ai.creator/commit/5a4bcd6fb6de9cff6c639866db1dd50918f3039b))
+
 ## v0.23.0 (2022-11-15)
 ### Feature
 * **vhdl:** Remove the previous linear_1d implementation ([`0f1b9aa`](https://github.com/es-ude/elastic-ai.creator/commit/0f1b9aa2f1c12f5c0fc1fe6a3db482f40041c057))

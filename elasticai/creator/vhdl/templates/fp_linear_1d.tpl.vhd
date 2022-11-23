@@ -2,18 +2,18 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 
-library {work_library_name};
-use {work_library_name}.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 
-entity fp_linear_1d_{layer_name} is -- layer_name is for distinguish same type of layers (with various weights) in one module
+entity fp_linear_1d_${layer_name} is -- layer_name is for distinguish same type of layers (with various weights) in one module
     generic (
-        DATA_WIDTH   : integer := {data_width};
-        FRAC_WIDTH   : integer := {frac_width};
-        X_ADDR_WIDTH : integer := {x_addr_width};
-        Y_ADDR_WIDTH : integer := {y_addr_width};
-        IN_FEATURE_NUM : integer := {in_feature_num};
-        OUT_FEATURE_NUM : integer := {out_feature_num};
-        RESOURCE_OPTION : string := {resource_option}; -- can be "distributed", "block", or  "auto"
+        DATA_WIDTH   : integer := ${data_width};
+        FRAC_WIDTH   : integer := ${frac_width};
+        X_ADDR_WIDTH : integer := ${x_addr_width};
+        Y_ADDR_WIDTH : integer := ${y_addr_width};
+        IN_FEATURE_NUM : integer := ${in_feature_num};
+        OUT_FEATURE_NUM : integer := ${out_feature_num};
+        RESOURCE_OPTION : string := ${resource_option} -- can be "distributed", "block", or  "auto"
     );
     port (
         enable : in std_logic;
@@ -26,9 +26,9 @@ entity fp_linear_1d_{layer_name} is -- layer_name is for distinguish same type o
 
         done   : out std_logic
     );
-end fp_linear_1d_{layer_name};
+end fp_linear_1d_${layer_name};
 
-architecture rtl of fp_linear_1d_{layer_name} is
+architecture rtl of fp_linear_1d_${layer_name} is
     -----------------------------------------------------------
     -- Functions
     -----------------------------------------------------------
@@ -84,18 +84,19 @@ architecture rtl of fp_linear_1d_{layer_name} is
     signal b_in : std_logic_vector(DATA_WIDTH-1 downto 0) := (others=>'0');
 
     signal addr_w : std_logic_vector(log2(IN_FEATURE_NUM*OUT_FEATURE_NUM)-1 downto 0) := (others=>'0');
-    signal addr_b : std_logic_vector(log2(OUT_FEATURE_NUM)-1 downto 0) := (others=>'0');
+    --signal addr_b : std_logic_vector((log2(OUT_FEATURE_NUM)-1) downto 0) := (others=>'0');
+    signal addr_b : std_logic_vector(Y_ADDR_WIDTH-1 downto 0) := (others=>'0');
 
     signal fp_x, fp_w, fp_b, fp_y, macc_sum : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
     signal reset : std_logic := '0';
     signal state : t_state;
 
-    -- lazy solution for the output buffer
+    -- simple solution for the output buffer
     type t_y_array is array (0 to OUT_FEATURE_NUM) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal y_ram : t_y_array;
+    shared variable y_ram : t_y_array;
     attribute rom_style : string;
-    attribute rom_style of y_ram : signal is RESOURCE_OPTION;
+    attribute rom_style of y_ram : variable is RESOURCE_OPTION;
 
 begin
 
@@ -163,16 +164,13 @@ begin
                 end if;
             else
                 done <= '1';
-                -- After the layer in at idle mode, y_out is readable
-                -- but it only update at the rising edge of the clock
-                y_out <= y_ram(to_integer(unsigned(y_addr)));
             end if;
 
             var_sum := multiply_accumulate(var_w, var_x, var_y);
             macc_sum <= var_sum;
 
             if y_write_en='1'then
-                y_ram(var_y_write_idx) <= std_logic_vector(var_sum);
+                y_ram(var_y_write_idx) := std_logic_vector(var_sum);
                 y_write_en := '0';
             end if;
 
@@ -183,8 +181,19 @@ begin
         addr_b <= std_logic_vector(to_unsigned(current_neuron_idx, addr_b'length));
     end process linear_main;
 
+    y_reading : process (clock, state)
+    begin
+        if state=s_idle then
+            if falling_edge(clock) then
+                -- After the layer in at idle mode, y_out is readable
+                -- but it only update at the rising edge of the clock
+                y_out <= y_ram(to_integer(unsigned(y_addr)));
+            end if;
+        end if;
+    end process y_reading;
+
     -- Weights
-    rom_w : entity {work_library_name}.w_rom_fp_linear_1d_{layer_name}(rtl)
+    rom_w : entity ${work_library_name}.w_rom_fp_linear_1d_${layer_name}(rtl)
     port map  (
         clk  => n_clock,
         en   => '1',
@@ -193,7 +202,7 @@ begin
     );
 
     -- Bias
-    rom_b : entity {work_library_name}.b_rom_fp_linear_1d_{layer_name}(rtl)
+    rom_b : entity ${work_library_name}.b_rom_fp_linear_1d_${layer_name}(rtl)
     port map  (
         clk  => n_clock,
         en   => '1',

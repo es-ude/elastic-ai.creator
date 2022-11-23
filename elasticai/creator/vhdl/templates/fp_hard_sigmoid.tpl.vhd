@@ -9,15 +9,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity fp_hard_sigmoid is
+entity fp_hard_sigmoid_${layer_name} is
 generic (
-    DATA_WIDTH : integer := {data_width};
-    FRAC_WIDTH : integer := {frac_width};
-    ONE : integer := {one};
-    ZERO_THRESHOLD : integer := {zero_threshold};
-    ONE_THRESHOLD : integer := {one_threshold};
-    SLOPE : integer := {slope};
-    Y_INTERCEPT: integer := {y_intercept}
+    DATA_WIDTH : integer := ${data_width};
+    FRAC_WIDTH : integer := ${frac_width};
+    ONE : integer := ${one};
+    ZERO_THRESHOLD : integer := ${zero_threshold};
+    ONE_THRESHOLD : integer := ${one_threshold};
+    SLOPE : integer := ${slope};
+    Y_INTERCEPT: integer := ${y_intercept}
 );
 
 port (
@@ -26,9 +26,9 @@ port (
 	input  : in std_logic_vector(DATA_WIDTH-1 downto 0);
 	output : out std_logic_vector(DATA_WIDTH-1 downto 0)
 );
-end entity fp_hard_sigmoid;
+end entity fp_hard_sigmoid_${layer_name};
 
-architecture rtl of fp_hard_sigmoid is
+architecture rtl of fp_hard_sigmoid_${layer_name} is
     signal fp_input : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal fp_output : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 

@@ -15,8 +15,11 @@ class FPHardSigmoidTranslationArgs:
 
 @dataclass
 class FPHardSigmoidModule(VHDLModule):
+    layer_id: str
+
     def components(self, args: FPHardSigmoidTranslationArgs) -> Iterable[VHDLComponent]:
         yield FPHardSigmoidComponent(
+            layer_id=self.layer_id,
             zero_threshold=args.fixed_point_factory(-3),
             one_threshold=args.fixed_point_factory(3),
             slope=args.fixed_point_factory(0.125),

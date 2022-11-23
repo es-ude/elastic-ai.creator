@@ -61,7 +61,7 @@ def translate_model(
             raise NotImplementedError(
                 f"Layer '{layer_class_name}' is currently not supported."
             )
-        module = build_fn(layer)
+        module = build_fn(layer, str(layer_index))
 
         args = translation_args.get(layer_class_name)
         components = module.components(args)

@@ -11,6 +11,7 @@ class FPHardSigmoidComponentTest(unittest.TestCase):
         to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
 
         component = FPHardSigmoidComponent(
+            layer_id="0",
             zero_threshold=to_fp(-3),
             one_threshold=to_fp(3),
             slope=to_fp(0.15),

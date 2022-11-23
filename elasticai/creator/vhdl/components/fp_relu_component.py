@@ -7,10 +7,12 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,
 )
+from elasticai.creator.vhdl.templates.utils import expand_template
 
 
 @dataclass
 class FPReLUComponent:
+    layer_id: str  # used to distinguish layers in the same model
     fixed_point_factory: Callable[[float], FixedPoint]
 
     def __post_init__(self) -> None:
@@ -20,14 +22,16 @@ class FPReLUComponent:
 
     @property
     def file_name(self) -> str:
-        return "fp_relu.vhd"
+        return f"fp_relu_{self.layer_id}.vhd"
 
     def __call__(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_relu.tpl.vhd")
 
-        code = template.format(
+        code = expand_template(
+            template.splitlines(),
+            layer_name=self.layer_id,
             data_width=self.data_width,
-            clock_option="true",
+            clock_option="false",
         )
 
-        yield from code.splitlines()
+        yield from code
