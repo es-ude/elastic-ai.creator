@@ -51,11 +51,9 @@ class FixedPointModel(torch.nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear1(x)
-        print("linear1", x)
         x = self.relu1(x)
-        print("relu1", x)
         x = self.linear2(x)
-        print("linear2", x)
+        x = self.hard_sigmoid(x)
         return x
 
 
@@ -80,20 +78,6 @@ def main() -> None:
     fixed_point_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
 
     model = FixedPointModel(fixed_point_factory)
-
-    model.eval()
-
-    y = model(
-        torch.tensor(
-            [
-                [0, 0, 0],
-                [1, 1, 1],
-                [2, 2, 2],
-                [3, 3, 3],
-            ]
-        )
-    )
-    print("fixed", y * 16)
 
     translation_args = dict(
         FixedPointLinear=FPLinear1dTranslationArgs(
