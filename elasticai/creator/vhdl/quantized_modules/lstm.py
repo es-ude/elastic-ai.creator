@@ -1,10 +1,13 @@
 from collections.abc import Callable
 from functools import partial
-from typing import Any, Optional
+from typing import Optional
 
 import torch
 
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import (
+    FixedPointFactory,
+    fixed_point_params_from_factory,
+)
 from elasticai.creator.vhdl.quantized_modules import (
     FixedPointHardSigmoid,
     FixedPointLinear,
@@ -38,26 +41,33 @@ class _LSTMCellBase(torch.nn.Module):
         self.bias = bias
         self.input_quant = input_quant
         self.input_dequant = input_dequant
-        self.matmul_op = mul_op
+        self.mul_op = mul_op
         self.add_op = add_op
 
-        self.linear_ih = linear_factory(input_size, hidden_size * 4, bias)
-        self.linear_hh = linear_factory(hidden_size, hidden_size * 4, bias)
+        self.linear_ih = linear_factory(
+            in_features=input_size, out_features=hidden_size * 4, bias=bias
+        )
+        self.linear_hh = linear_factory(
+            in_features=hidden_size, out_features=hidden_size * 4, bias=bias
+        )
         self.sigmoid = sigmoid_factory()
         self.tanh = tanh_factory()
 
     def _fake_quant(self, *inputs: torch.Tensor) -> tuple[torch.Tensor, ...]:
         return tuple(self.input_dequant(self.input_quant(x)) for x in inputs)
 
-    def forward(
-        self, x: torch.Tensor, state: Optional[torch.Tensor] = None
+    def _initialize_previous_state(
+        self, x: torch.Tensor, state: tuple[torch.Tensor, torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if state is None:
             zeros = torch.zeros(*(*x.shape[:-1], self.hidden_size), dtype=x.dtype)
-            h_prev, c_prev = torch.clone(zeros), torch.clone(zeros)
-        else:
-            h_prev, c_prev = state
+            return torch.clone(zeros), torch.clone(zeros)
+        return state
 
+    def forward(
+        self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        h_prev, c_prev = self._initialize_previous_state(x, state)
         x, h_prev, c_prev = self._fake_quant(x, h_prev, c_prev)
 
         pred_ii, pred_if, pred_ig, pred_io = torch.split(
@@ -72,7 +82,7 @@ class _LSTMCellBase(torch.nn.Module):
         g = self.tanh(pred_ig + pred_hg)
         o = self.sigmoid(pred_io + pred_ho)
 
-        c = self.add_op(self.matmul_op(f, c_prev), self.matmul_op(i, g))
+        c = self.add_op(self.mul_op(f, c_prev), self.mul_op(i, g))
         h = o * self.tanh(c)
 
         return h, c
@@ -107,11 +117,42 @@ class FixedPointLSTMCell(_LSTMCellBase):
             tanh_factory=partial(
                 FixedPointHardTanh, fixed_point_factory=fixed_point_factory
             ),
-            input_quant=self.input_quant,
-            input_dequant=self.input_dequant,
+            input_quant=self.quant,
+            input_dequant=self.dequant,
         )
 
     def quantized_forward(
-        self, x: torch.Tensor, state: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        ...
+        total_bits, frac_bits = fixed_point_params_from_factory(
+            self.fixed_point_factory
+        )
+
+        def fp_mul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+            return ((a * b) / (1 << frac_bits)).int().float()
+
+        def clamp_overflowing_values(a: torch.Tensor) -> torch.Tensor:
+            largest_fp_int = 2 ** (total_bits - 1) - 1
+            return a.clamp(-largest_fp_int, largest_fp_int)
+
+        h_prev, c_prev = self._initialize_previous_state(x, state)
+
+        pred_ii, pred_if, pred_ig, pred_io = torch.split(
+            self.linear_ih.quantized_forward(x), self.hidden_size, dim=1
+        )
+        pred_hi, pred_hf, pred_hg, pred_ho = torch.split(
+            self.linear_hh.quantized_forward(h_prev), self.hidden_size, dim=1
+        )
+
+        i = self.sigmoid.quantized_forward(pred_ii + pred_hi)
+        f = self.sigmoid.quantized_forward(pred_if + pred_hf)
+        g = self.tanh.quantized_forward(pred_ig + pred_hg)
+        o = self.sigmoid.quantized_forward(pred_io + pred_ho)
+
+        c = self.add_op(fp_mul(f, c_prev), fp_mul(i, g))
+        h = fp_mul(o, self.tanh.quantized_forward(c))
+
+        h_clamped = clamp_overflowing_values(h)
+        c_clamped = clamp_overflowing_values(c)
+
+        return h_clamped, c_clamped
