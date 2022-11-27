@@ -4,7 +4,7 @@ import torch
 from torch.nn.parameter import Parameter
 
 from elasticai.creator.tests.vhdl.quantized_modules.utils import to_list
-from elasticai.creator.vhdl.quantized_modules.lstm import _LSTMCellBase
+from elasticai.creator.vhdl.quantized_modules.lstm_cell import _LSTMCellBase
 
 
 def to_tensor(x: list) -> torch.Tensor:
