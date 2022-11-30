@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.26.1 (2022-11-30)
+### Fix
+* **vhdl:** Remove layer_name parameter ([`1bb40cd`](https://github.com/es-ude/elastic-ai.creator/commit/1bb40cd0e44f7f207f60ffbb33e8c59f00b64e82))
+
 ## v0.26.0 (2022-11-23)
 ### Feature
 * **vhdl:** Clean the code ([`d737d02`](https://github.com/es-ude/elastic-ai.creator/commit/d737d02122207bcd24f4b7c960b71db095d34a26))
