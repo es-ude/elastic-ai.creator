@@ -10,8 +10,8 @@ entity fp_network is
         enable  : in std_logic;
         clock   : in std_logic;
 
-        x_addr  : out std_logic_vector(5 downto 0);
-        y_addr  : in std_logic_vector(3 downto 0);
+        input_addr  : out std_logic_vector(5 downto 0);
+        output_addr  : in std_logic_vector(3 downto 0);
 
         x_in    : in std_logic_vector(15 downto 0);
         y_out   : out std_logic_vector(15 downto 0);

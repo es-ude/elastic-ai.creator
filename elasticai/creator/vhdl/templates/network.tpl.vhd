@@ -6,20 +6,12 @@ library work;
 use work.all;
 
 entity fp_network is
-    generic (
-        X_ADDR_WIDTH : integer;
-        Y_ADDR_WIDTH : integer;
-        DATA_WIDTH : integer;
-        IN_FEATURE_NUM : integer;
-        OUT_FEATURE_NUM : integer;
-        IN_BUF_TYPE : string
-        );
     port (
         enable  : in std_logic;
         clock   : in std_logic;
 
         x_addr  : out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
-        y_addr  : in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        output_address  : in std_logic_vector($output_address_width-1 downto 0);
 
         x_in    : in std_logic_vector(DATA_WIDTH-1 downto 0);
         y_out   : out std_logic_vector(DATA_WIDTH-1 downto 0);
