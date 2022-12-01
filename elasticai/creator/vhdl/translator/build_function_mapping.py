@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Any, Callable, Iterator
 
-from elasticai.creator.vhdl.vhdl_component import VHDLModule
+from elasticai.creator.vhdl.vhdl_files import VHDLModule
 
 BuildFunction = Callable[[Any, str], VHDLModule]
 
