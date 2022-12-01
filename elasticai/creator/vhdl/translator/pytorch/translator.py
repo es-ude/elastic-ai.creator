@@ -1,31 +1,17 @@
 import os
-from dataclasses import dataclass
 from typing import Any, Iterable, Iterator
 
 import torch
 
 from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.components.network_component import NetworkVHDLFile
-from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.vhdl_files import VHDLModule
-
-
-@dataclass
-class CodeFile:
-    name: str
-    code: Code
-
-
-@dataclass
-class CodeModule:
-    name: str
-    files: Iterable[VHDLModule]
+from elasticai.creator.vhdl.vhdl_files import VHDLModule, VHDLBaseFile, VHDLBaseModule
 
 
 def translate_model(
@@ -67,12 +53,12 @@ def translate_model(
 
         args = translation_args.get(layer_class_name)
         components = module.files
-        files = map(lambda x: CodeFile(name=x.name, code=x.code), components)
+        files = map(lambda x: VHDLBaseFile(name=x.name, code=x.code), components)
 
-        yield CodeModule(name=f"{layer_index}_{layer_class_name}", files=files)
+        yield VHDLBaseModule(name=f"{layer_index}_{layer_class_name}", files=files)
     network = NetworkVHDLFile()
-    network_file = CodeFile(name=network.name, code=network.code)
-    yield CodeModule(name="network_component", files=[network_file])
+    network_file = VHDLBaseFile(name=network.name, code=network.code)
+    yield VHDLBaseModule(name="network_component", files=[network_file])
 
 
 def save_code(code_repr: Iterable[VHDLModule], path: PathType) -> None:
