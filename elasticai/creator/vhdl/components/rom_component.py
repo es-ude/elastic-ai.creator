@@ -29,7 +29,7 @@ class RomComponent:
     def file_name(self) -> str:
         return f"{self.rom_name}.vhd"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
         code = expand_template(

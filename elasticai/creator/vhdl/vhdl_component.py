@@ -9,7 +9,7 @@ class VHDLComponent(Protocol):
     def file_name(self) -> str:
         return ""
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         ...
 
 
@@ -22,7 +22,7 @@ class VHDLStaticComponent:
     def file_name(self) -> str:
         return self._file_name
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         code = read_text(self._template_package, self._file_name)
         yield from code.splitlines()
 

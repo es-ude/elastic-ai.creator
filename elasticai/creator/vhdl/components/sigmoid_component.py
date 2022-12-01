@@ -13,5 +13,5 @@ class SigmoidComponent:
     def file_name(self) -> str:
         return f"sigmoid.vhd"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield from Sigmoid(x=self.x, component_name="sigmoid")()

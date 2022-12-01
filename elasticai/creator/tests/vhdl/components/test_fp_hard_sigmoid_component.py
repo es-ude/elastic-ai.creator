@@ -19,4 +19,4 @@ class FPHardSigmoidComponentTest(unittest.TestCase):
             fixed_point_factory=to_fp,
         )
 
-        self.assertEqual(len(list(component())), 88)
+        self.assertEqual(len(list(component.code())), 88)

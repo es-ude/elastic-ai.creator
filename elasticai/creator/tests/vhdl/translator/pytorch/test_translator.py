@@ -6,8 +6,6 @@ import torch
 
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
-from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
 from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dTranslationArgs,
 )
@@ -28,14 +26,14 @@ from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 @dataclass
 class VHDLComponentMock(VHDLComponent):
     name: str
-    code: list[str]
+    code_lines: list[str]
 
     @property
     def file_name(self) -> str:
         return self.name
 
-    def __call__(self) -> Code:
-        yield from self.code
+    def code(self) -> Code:
+        yield from self.code_lines
 
 
 @dataclass
@@ -49,8 +47,8 @@ class VHDLModuleMock(VHDLModule):
 def fake_build_function(module: torch.nn.Module, layer_id: str) -> VHDLModuleMock:
     return VHDLModuleMock(
         vhdl_components=[
-            VHDLComponentMock(name="component1", code=["1", "2", "3"]),
-            VHDLComponentMock(name="component2", code=["4", "5", "6"]),
+            VHDLComponentMock(name="component1", code_lines=["1", "2", "3"]),
+            VHDLComponentMock(name="component2", code_lines=["4", "5", "6"]),
         ]
     )
 
