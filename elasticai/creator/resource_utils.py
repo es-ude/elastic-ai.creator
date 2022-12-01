@@ -30,8 +30,9 @@ def read_text(
         yield from map(lambda line: line.rstrip("\n"), file)
 
 
-def read_bytes(package: Package, file_name: str) -> bytes:
-    return get_file(package, file_name).read_bytes()
+def read_bytes(package: Package, file_name: str) -> Iterable[bytes]:
+    with get_file(package, file_name) as file:
+        yield from file
 
 
 def copy_file(package: Package, file_name: str, destination: PathType) -> None:
