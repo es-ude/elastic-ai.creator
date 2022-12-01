@@ -28,7 +28,7 @@ class FPReLUComponent:
         template = read_text("elasticai.creator.vhdl.templates", "fp_relu.tpl.vhd")
 
         code = expand_template(
-            template.splitlines(),
+            template,
             layer_name=self.layer_id,
             data_width=self.data_width,
             clock_option="false",

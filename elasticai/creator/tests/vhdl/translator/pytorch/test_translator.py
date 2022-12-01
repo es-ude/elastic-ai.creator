@@ -70,7 +70,7 @@ def unpack_module_directories(
 class TranslatorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.build_mapping = BuildFunctionMapping(
-            mapping={"torch.nn.modules.rnn.LSTM": fake_build_function}
+            mapping={"torch.nn.modules.module.Module": fake_build_function}
         )
 
     def test_translate_model_empty_model(self) -> None:
@@ -78,26 +78,23 @@ class TranslatorTest(unittest.TestCase):
         generated_code = translator.translate_model(
             model, translation_args=dict(), build_function_mapping=self.build_mapping
         )
-        self.assertEqual(len(list(generated_code)), 0)
+        self.assertEqual(len(list(generated_code)), 1)
 
-    def test_generate_code(self) -> None:
-        model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
+    def test_translation_yields_one_build_mapping_result_for_first_layer(self) -> None:
+        model = torch.nn.Sequential(torch.nn.Module())
         code_containers = translator.translate_model(
             model, translation_args=dict(), build_function_mapping=self.build_mapping
         )
 
         code = unpack_module_directories(code_containers)
-        expected_code = [
-            (
-                "0_LSTM",
+        expected_code = (
+                "0_Module",
                 [
                     ("component1", ["1", "2", "3"]),
                     ("component2", ["4", "5", "6"]),
-                ],
-            )
-        ]
+                ])
 
-        self.assertEqual(code, expected_code)
+        self.assertEqual(code[0], expected_code)
 
     @unittest.SkipTest
     def test_translate_model_correct_ordering_of_layers(self):

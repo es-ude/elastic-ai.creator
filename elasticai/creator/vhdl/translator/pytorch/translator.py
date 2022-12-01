@@ -5,6 +5,7 @@ from typing import Any, Iterable, Iterator
 import torch
 
 from elasticai.creator.resource_utils import PathType
+from elasticai.creator.vhdl.components.network_component import NetworkComponent
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
@@ -68,6 +69,9 @@ def translate_model(
         files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
 
         yield CodeModule(module_name=f"{layer_index}_{layer_class_name}", files=files)
+    network = NetworkComponent()
+    network_file = CodeFile(file_name=network.file_name, code=network())
+    yield CodeModule(module_name="network_component", files=[network_file])
 
 
 def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:

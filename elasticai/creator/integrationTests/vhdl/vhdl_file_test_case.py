@@ -14,7 +14,7 @@ class VHDLFileTestCase(unittest.TestCase):
         def line_is_empty(line):
             return len(line) == 0
 
-        vhdl_code = filterfalse(line_is_empty, map(str.strip, vhdl_code.splitlines()))
+        vhdl_code = filterfalse(line_is_empty, map(str.strip, vhdl_code))
 
         def starts_with_comment(line):
             return line.startswith("--")
