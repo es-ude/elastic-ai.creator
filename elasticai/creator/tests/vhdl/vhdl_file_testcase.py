@@ -2,6 +2,10 @@ import unittest
 
 
 class GeneratedVHDLCodeTest(unittest.TestCase):
+    """
+    Deprecated: Use elasticai.creator.integrationTests.vhdl.VHDLFileReaderWithoutComments instead
+    """
+
     @staticmethod
     def get_non_empty_lines(text):
         text = text.splitlines()

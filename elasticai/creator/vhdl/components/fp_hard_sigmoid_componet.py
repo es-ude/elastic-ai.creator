@@ -34,7 +34,7 @@ class FPHardSigmoidComponent:
         )
 
         code = expand_template(
-            template.splitlines(),
+            template,
             layer_name=self.layer_id,
             data_width=self.data_width,
             frac_width=self.frac_width,

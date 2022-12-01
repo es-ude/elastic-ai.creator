@@ -1,20 +1,26 @@
 from importlib import resources
 from importlib.abc import Traversable
+from os import PathLike
 from pathlib import PurePath
+from typing import AnyStr
 
 PathType = str | PurePath
 Package = resources.Package
 
 
-def _get_file(package: Package, file_name: str) -> Traversable:
+def _get_file(package: Package, file_name: str) -> PathLike:
     for resource in resources.files(package).iterdir():
         if resource.name == file_name:
-            return resource
+            return resources.as_file(resource)
     raise FileNotFoundError(f"The file '{file_name}' does not exist.")
 
 
-def read_text(package: Package, file_name: str, encoding: str = "utf-8") -> str:
-    return _get_file(package, file_name).read_text(encoding)
+def read_text(
+    package: Package, file_name: str, encoding: str = "utf-8"
+) -> list[AnyStr]:
+    with _get_file(package, file_name) as path:
+        with open(path, mode="r", encoding=encoding) as file:
+            return file.readlines()
 
 
 def read_bytes(package: Package, file_name: str) -> bytes:

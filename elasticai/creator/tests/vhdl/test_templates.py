@@ -18,6 +18,12 @@ class ExpandTemplatesTestCase(TestCase):
     def get_result_string(template, **kwargs) -> str:
         return newline_join(expand_multiline_template(template, **kwargs))
 
+    def test_handles_gracefully_list_of_lines(self):
+        template = ["my", "$value"]
+        expected = "my\nvalue"
+        actual = self.get_result_string(template, value=["value"])
+        self.assertEqual(expected, actual)
+
     def test_expand_multiline_with_one_item(self):
         # noinspection PyShadowingNames
         def check_single_item(value: str):
