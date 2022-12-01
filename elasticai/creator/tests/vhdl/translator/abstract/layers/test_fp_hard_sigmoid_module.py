@@ -17,12 +17,12 @@ class FPHardSigmoidModuleTest(unittest.TestCase):
         self.args = FPHardSigmoidTranslationArgs(fixed_point_factory=self.fp_factory)
 
     def test_components_return_only_one_component(self) -> None:
-        components = list(self.module.components(self.args))
+        components = list(self.module.files(self.args))
         self.assertEqual(len(components), 1)
         self.assertEqual(type(components[0]), FPHardSigmoidComponent)
 
     def test_components_component_args_are_correctly_set(self) -> None:
-        component = list(self.module.components(self.args))[0]
+        component = list(self.module.files(self.args))[0]
         self.assertEqual(component.zero_threshold, self.fp_factory(-3))  # type: ignore
         self.assertEqual(component.one_threshold, self.fp_factory(3))  # type: ignore
         self.assertEqual(component.slope, self.fp_factory(0.125))  # type: ignore

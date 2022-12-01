@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.components.fp_linear_1d_component import FPLinear1dComponent
+from elasticai.creator.vhdl.components.fp_linear_1d_component import FPLinear1dFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
@@ -8,7 +8,7 @@ class FPLinear1dComponentTest(unittest.TestCase):
     def test_linear_1d_correct_number_of_lines(self) -> None:
         to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
 
-        component = FPLinear1dComponent(
+        component = FPLinear1dFile(
             layer_id="ll1",
             in_features=3,
             out_features=2,
@@ -16,4 +16,4 @@ class FPLinear1dComponentTest(unittest.TestCase):
             work_library_name="work",
         )
 
-        self.assertEqual(len(list(component())), 213)
+        self.assertEqual(len(list(component.code)), 213)

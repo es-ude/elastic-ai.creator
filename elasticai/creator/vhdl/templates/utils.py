@@ -1,10 +1,12 @@
 from collections.abc import Iterable, Iterator, Sequence
 from itertools import repeat
 from string import Template
-from typing import Any
+from typing import Any, Union
 
 
-def expand_multiline_template(template: str, **kwargs: Sequence) -> Iterator[str]:
+def expand_multiline_template(
+    template: Union[str, list[str]], **kwargs: Sequence[str]
+) -> Iterator[str]:
     """Expand a template field to multiple lines, while keeping indentation.
     Example:
         >>> template = "\\t$my_key"
@@ -12,7 +14,7 @@ def expand_multiline_template(template: str, **kwargs: Sequence) -> Iterator[str
         >>> "\\n".join(expand_multiline_template(template, my_key=values))
         '\\thello,\\n\\tworld\\n\\t!'
     """
-    lines = template.splitlines()
+    lines = _unify_template_datatype(template)
     for line in lines:
         contains_no_key = True
         for key in kwargs:
@@ -26,7 +28,15 @@ def expand_multiline_template(template: str, **kwargs: Sequence) -> Iterator[str
             yield line
 
 
-def expand_template(template: str | Iterable[str], **kwargs: Any) -> Iterator[str]:
+def _unify_template_datatype(template: Union[str, Iterable[str]]) -> Iterable[str]:
+    if hasattr(template, "splitlines") and callable(template.splitlines):
+        lines = template.splitlines()
+    else:
+        lines = template
+    return lines
+
+
+def expand_template(template: str | Iterable[str], **kwargs: str) -> Iterable[str]:
     if isinstance(template, str):
         yield Template(template).substitute(kwargs)
     else:

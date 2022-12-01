@@ -3,7 +3,7 @@ from typing import Callable, Iterable
 
 from elasticai.creator.vhdl.components.fp_relu_component import FPReLUComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
+from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
 
 
 @dataclass
@@ -15,7 +15,11 @@ class FPReLUTranslationArgs:
 class FPReLUModule(VHDLModule):
     layer_id: str
 
-    def components(self, args: FPReLUTranslationArgs) -> Iterable[VHDLComponent]:
+    @property
+    def name(self) -> str:
+        return self.layer_id
+
+    def files(self, args: FPReLUTranslationArgs) -> Iterable[VHDLFile]:
         yield FPReLUComponent(
             layer_id=self.layer_id,
             fixed_point_factory=args.fixed_point_factory,

@@ -8,12 +8,12 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
         # biases for the input gate
         bi = [1.1, 2.2, 3.3, 4.4, 5.5, 6.6]
 
-        generate_rom = RomComponent(
+        rom = RomComponent(
             rom_name="rom_bi",
             values=float_values_to_fixed_point(bi, total_bits=12, frac_bits=4),
             resource_option="auto",
         )
-        generated_code = list(generate_rom())
+        generated_code = list(rom.code)
 
         expected_code = [
             "library ieee;",

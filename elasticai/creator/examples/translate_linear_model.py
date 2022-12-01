@@ -92,7 +92,6 @@ def main() -> None:
     code_repr = translator.translate_model(
         model=model,
         translation_args=translation_args,
-        # build_function_mapping=get_custom_build_mapping(),
     )
 
     translator.save_code(code_repr=code_repr, path=build_path)

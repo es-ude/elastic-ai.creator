@@ -9,10 +9,11 @@ from elasticai.creator.vhdl.components.utils import (
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.templates.utils import expand_template
+from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
 @dataclass
-class FPLinear1dComponent:
+class FPLinear1dFile(VHDLFile):
     layer_id: str  # used to distinguish layers in the same model
     in_features: int
     out_features: int
@@ -28,10 +29,11 @@ class FPLinear1dComponent:
         self.y_addr_width = calculate_addr_width(self.out_features)
 
     @property
-    def file_name(self) -> str:
+    def name(self) -> str:
         return f"fp_linear_1d_{self.layer_id}.vhd"
 
-    def __call__(self) -> Code:
+    @property
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_linear_1d.tpl.vhd")
 
         code = expand_template(
