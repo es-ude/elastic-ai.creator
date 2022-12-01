@@ -5,7 +5,7 @@ from elasticai.creator.vhdl.components.fp_hard_sigmoid_componet import (
     FPHardSigmoidComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
+from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
 
 
 @dataclass
@@ -17,7 +17,11 @@ class FPHardSigmoidTranslationArgs:
 class FPHardSigmoidModule(VHDLModule):
     layer_id: str
 
-    def components(self, args: FPHardSigmoidTranslationArgs) -> Iterable[VHDLComponent]:
+    @property
+    def name(self) -> str:
+        self.layer_id
+
+    def files(self, args: FPHardSigmoidTranslationArgs) -> Iterable[VHDLFile]:
         yield FPHardSigmoidComponent(
             layer_id=self.layer_id,
             zero_threshold=args.fixed_point_factory(-3),

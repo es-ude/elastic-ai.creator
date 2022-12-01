@@ -1,7 +1,7 @@
 """
 The module contains classes and functions for generating vhdl code.
 We provide code generators for the subset of vhdl that we need for implementing
-our neural network accelerators and test benches. We stick closely to the vhdl
+our neural network_component.py accelerators and test benches. We stick closely to the vhdl
 formal grammar with our class names.
 
 The core of this module is the `CodeGenerator`. Code generators are callables that return `Code`.
@@ -290,20 +290,6 @@ class InterfaceConstrained:
         yield from (
             f"{self._declaration_type}{self._identifier} :"
             f"{self._mode}{self._identifier_type.value}{self._range}{self._value}",
-        )
-
-
-class InterfaceSignal(InterfaceConstrained):
-    def __init__(
-        self,
-        identifier: str,
-        identifier_type: DataType,
-        range: Optional[str | int] = None,
-        mode: Optional[Mode] = None,
-        value: Optional[str | int] = None,
-    ):
-        super().__init__(
-            identifier, identifier_type, range, mode, value, declaration_type="signal"
         )
 
 

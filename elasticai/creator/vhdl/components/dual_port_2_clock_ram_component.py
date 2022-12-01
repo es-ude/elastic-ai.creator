@@ -1,7 +1,7 @@
-from elasticai.creator.vhdl.vhdl_component import VHDLStaticComponent
+from elasticai.creator.vhdl.vhdl_files import StaticVHDLFile
 
 
-class DualPort2ClockRamComponent(VHDLStaticComponent):
+class DualPort2ClockRamVHDLFile(StaticVHDLFile):
     def __init__(self):
         super().__init__(
             template_package="elasticai.creator.vhdl.templates",

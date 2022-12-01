@@ -9,10 +9,11 @@ from elasticai.creator.vhdl.number_representations import (
     infer_total_and_frac_bits,
 )
 from elasticai.creator.vhdl.templates.utils import expand_template
+from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
 @dataclass
-class RomComponent:
+class RomComponent(VHDLFile):
     rom_name: str
     values: Sequence[FixedPoint]
     resource_option: str
@@ -26,14 +27,15 @@ class RomComponent:
         )
 
     @property
-    def file_name(self) -> str:
+    def name(self) -> str:
         return f"{self.rom_name}.vhd"
 
-    def __call__(self) -> Code:
+    @property
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")
 
         code = expand_template(
-            template.splitlines(),
+            template,
             rom_name=self.rom_name,
             rom_addr_bitwidth=self.addr_width,
             rom_data_bitwidth=self.data_width,

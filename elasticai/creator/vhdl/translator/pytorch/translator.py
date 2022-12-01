@@ -5,7 +5,7 @@ from typing import Any, Iterable, Iterator
 import torch
 
 from elasticai.creator.resource_utils import PathType
-from elasticai.creator.vhdl.components.network_component import NetworkComponent
+from elasticai.creator.vhdl.components.network_component import NetworkVHDLFile
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
@@ -13,25 +13,26 @@ from elasticai.creator.vhdl.translator.build_function_mapping import (
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
+from elasticai.creator.vhdl.vhdl_files import VHDLModule
 
 
 @dataclass
 class CodeFile:
-    file_name: str
+    name: str
     code: Code
 
 
 @dataclass
 class CodeModule:
-    module_name: str
-    files: Iterable[CodeFile]
+    name: str
+    files: Iterable[VHDLModule]
 
 
 def translate_model(
     model: torch.nn.Module,
     translation_args: dict[str, Any],
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
-) -> Iterator[CodeModule]:
+) -> Iterator[VHDLModule]:
     """
     Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
     as an iterator of VHDLModule objects.
@@ -65,32 +66,32 @@ def translate_model(
         module = build_fn(layer, str(layer_index))
 
         args = translation_args.get(layer_class_name)
-        components = module.components(args)
-        files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
+        components = module.files
+        files = map(lambda x: CodeFile(name=x.name, code=x.code), components)
 
-        yield CodeModule(module_name=f"{layer_index}_{layer_class_name}", files=files)
-    network = NetworkComponent()
-    network_file = CodeFile(file_name=network.file_name, code=network())
-    yield CodeModule(module_name="network_component", files=[network_file])
+        yield CodeModule(name=f"{layer_index}_{layer_class_name}", files=files)
+    network = NetworkVHDLFile()
+    network_file = CodeFile(name=network.name, code=network.code)
+    yield CodeModule(name="network_component", files=[network_file])
 
 
-def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
+def save_code(code_repr: Iterable[VHDLModule], path: PathType) -> None:
     """
     Saves the generated code on the file system.
 
     Parameters:
-        code_repr (Iterable[CodeModule]): The generated code that should be saved.
+        code_repr (Iterable[VHDLModule]): The generated code that should be saved.
         path (PathType):
             The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
     """
     os.makedirs(path)
 
     for module in code_repr:
-        module_path = os.path.join(path, module.module_name)
+        module_path = os.path.join(path, module.name)
         os.makedirs(module_path)
 
         for code_file in module.files:
-            file_path = os.path.join(module_path, code_file.file_name)
+            file_path = os.path.join(module_path, code_file.name)
             code = "\n".join(code_file.code)
 
             with open(file_path, "w") as out_file:

@@ -7,36 +7,36 @@ from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
+from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
 
 
-class MockVHDLComponent(VHDLComponent):
+class MockVHDLFile(VHDLFile):
     @property
-    def file_name(self) -> str:
+    def name(self) -> str:
         return "test_component"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         return ["line1", "line2"]
 
 
 @dataclass
 class MockModule(VHDLModule):
-    vhdl_components: list[VHDLComponent]
+    vhdl_components: list[VHDLFile]
 
-    def components(self, args: Any) -> list[VHDLComponent]:
+    def files(self, args: Any) -> list[VHDLFile]:
         return self.vhdl_components
 
 
 def mock_build_function1(layer: Any) -> VHDLModule:
-    return MockModule([MockVHDLComponent()])
+    return MockModule([MockVHDLFile()])
 
 
 def mock_build_function2(layer: Any) -> VHDLModule:
-    return MockModule([MockVHDLComponent()])
+    return MockModule([MockVHDLFile()])
 
 
 def mock_build_function3(layer: Any) -> VHDLModule:
-    return MockModule([MockVHDLComponent()])
+    return MockModule([MockVHDLFile()])
 
 
 class BuildFunctionMappingTest(unittest.TestCase):

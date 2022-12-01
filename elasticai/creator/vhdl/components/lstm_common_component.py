@@ -1,7 +1,7 @@
-from elasticai.creator.vhdl.vhdl_component import VHDLStaticComponent
+from elasticai.creator.vhdl.vhdl_files import StaticVHDLFile
 
 
-class LSTMCommonComponent(VHDLStaticComponent):
+class LSTMCommonVHDLFile(StaticVHDLFile):
     def __init__(self):
         super().__init__(
             template_package="elasticai.creator.vhdl.templates",

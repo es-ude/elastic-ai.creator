@@ -1,30 +1,37 @@
+from contextlib import contextmanager
 from importlib import resources
-from importlib.abc import Traversable
-from os import PathLike
 from pathlib import PurePath
-from typing import AnyStr
+from typing import AnyStr, Iterable, TextIO
+
 
 PathType = str | PurePath
 Package = resources.Package
 
 
-def _get_file(package: Package, file_name: str) -> PathLike:
+@contextmanager
+def get_file(package: Package, file_name: str) -> TextIO:
+    file_not_found = True
     for resource in resources.files(package).iterdir():
         if resource.name == file_name:
-            return resources.as_file(resource)
-    raise FileNotFoundError(f"The file '{file_name}' does not exist.")
+            file_not_found = False
+            with resources.as_file(resource) as file:
+                with open(file, "r") as opened_file:
+                    yield opened_file
+    if file_not_found:
+        raise FileNotFoundError(
+            f"The file '{file_name}' in package '{package}' does not exist."
+        )
 
 
 def read_text(
     package: Package, file_name: str, encoding: str = "utf-8"
-) -> list[AnyStr]:
-    with _get_file(package, file_name) as path:
-        with open(path, mode="r", encoding=encoding) as file:
-            return file.readlines()
+) -> Iterable[AnyStr]:
+    with get_file(package, file_name) as file:
+        yield from map(lambda line: line.rstrip("\n"), file)
 
 
 def read_bytes(package: Package, file_name: str) -> bytes:
-    return _get_file(package, file_name).read_bytes()
+    return get_file(package, file_name).read_bytes()
 
 
 def copy_file(package: Package, file_name: str, destination: PathType) -> None:
@@ -34,7 +41,7 @@ def copy_file(package: Package, file_name: str, destination: PathType) -> None:
 
 
 def get_full_path(package: Package, file_name: str) -> str:
-    resource = _get_file(package, file_name)
+    resource = get_file(package, file_name)
     with resources.as_file(resource) as file:
         return file.as_posix()
 

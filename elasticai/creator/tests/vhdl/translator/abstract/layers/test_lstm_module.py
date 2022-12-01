@@ -1,9 +1,9 @@
 from unittest import TestCase
 
 from elasticai.creator.vhdl.components import (
-    DualPort2ClockRamComponent,
-    LSTMCommonComponent,
-    LSTMComponent,
+    DualPort2ClockRamVHDLFile,
+    LSTMCommonVHDLFile,
+    LSTMFile,
     RomComponent,
     SigmoidComponent,
     TanhComponent,
@@ -31,11 +31,11 @@ class LSTMModuleTest(TestCase):
         )
 
     def test_correct_number_of_components(self) -> None:
-        vhdl_components = list(self.lstm.components(self.translation_args))
+        vhdl_components = list(self.lstm.files(self.translation_args))
         self.assertEqual(len(vhdl_components), 13)
 
     def test_contains_all_needed_components(self) -> None:
-        vhdl_components = self.lstm.components(self.translation_args)
+        vhdl_components = self.lstm.files(self.translation_args)
 
         target_components = [
             (RomComponent, "wi_rom.vhd"),
@@ -48,10 +48,10 @@ class LSTMModuleTest(TestCase):
             (RomComponent, "bo_rom.vhd"),
             (SigmoidComponent, "sigmoid.vhd"),
             (TanhComponent, "tanh.vhd"),
-            (LSTMComponent, "lstm.vhd"),
-            (LSTMCommonComponent, "lstm_common.vhd"),
-            (DualPort2ClockRamComponent, "dual_port_2_clock_ram.vhd"),
+            (LSTMFile, "lstm.vhd"),
+            (LSTMCommonVHDLFile, "lstm_common.vhd"),
+            (DualPort2ClockRamVHDLFile, "dual_port_2_clock_ram.vhd"),
         ]
-        actual_components = [(type(x), x.file_name) for x in vhdl_components]
+        actual_components = [(type(x), x.name) for x in vhdl_components]
 
         self.assertEqual(actual_components, target_components)

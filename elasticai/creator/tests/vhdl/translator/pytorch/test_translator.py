@@ -22,48 +22,32 @@ from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 from elasticai.creator.vhdl.translator.pytorch.translator import CodeFile, CodeModule
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
+from elasticai.creator.vhdl.vhdl_files import (
+    VHDLFile,
+    VHDLModule,
+    VHDLBaseFile,
+    VHDLBaseModule,
+)
 
 
-@dataclass
-class VHDLComponentMock(VHDLComponent):
-    name: str
-    code: list[str]
-
-    @property
-    def file_name(self) -> str:
-        return self.name
-
-    def __call__(self) -> Code:
-        yield from self.code
-
-
-@dataclass
-class VHDLModuleMock(VHDLModule):
-    vhdl_components: list[VHDLComponent]
-
-    def components(self, args: Any) -> Iterable[VHDLComponent]:
-        yield from self.vhdl_components
-
-
-def fake_build_function(module: torch.nn.Module, layer_id: str) -> VHDLModuleMock:
-    return VHDLModuleMock(
-        vhdl_components=[
-            VHDLComponentMock(name="component1", code=["1", "2", "3"]),
-            VHDLComponentMock(name="component2", code=["4", "5", "6"]),
-        ]
+def fake_build_function(module: torch.nn.Module, layer_id: str) -> VHDLBaseModule:
+    return VHDLBaseModule(
+        name="module0",
+        files=[
+            VHDLBaseFile(name="component1", code=["1", "2", "3"]),
+            VHDLBaseFile(name="component2", code=["4", "5", "6"]),
+        ],
     )
 
 
 def unpack_module_directories(
-    modules: Iterable[CodeModule],
+    modules: Iterable[VHDLModule],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
-    def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
-        return code_file.file_name, list(code_file.code)
+    def unpack_code_file(code_file: VHDLFile) -> tuple[str, Code]:
+        return code_file.name, list(code_file.code)
 
     return [
-        (module.module_name, list(map(unpack_code_file, module.files)))
-        for module in modules
+        (module.name, list(map(unpack_code_file, module.files))) for module in modules
     ]
 
 
@@ -88,11 +72,12 @@ class TranslatorTest(unittest.TestCase):
 
         code = unpack_module_directories(code_containers)
         expected_code = (
-                "0_Module",
-                [
-                    ("component1", ["1", "2", "3"]),
-                    ("component2", ["4", "5", "6"]),
-                ])
+            "0_Module",
+            [
+                ("component1", ["1", "2", "3"]),
+                ("component2", ["4", "5", "6"]),
+            ],
+        )
 
         self.assertEqual(code[0], expected_code)
 
@@ -126,5 +111,5 @@ class TranslatorTest(unittest.TestCase):
             )
         )
 
-        self.assertEqual(translated[0].module_name, "0_Linear")
-        self.assertEqual(translated[1].module_name, "1_LSTM")
+        self.assertEqual(translated[0].name, "0_Linear")
+        self.assertEqual(translated[1].name, "1_LSTM")

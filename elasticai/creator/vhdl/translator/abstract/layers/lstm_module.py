@@ -4,15 +4,15 @@ from typing import Callable, Iterator
 import numpy as np
 
 from elasticai.creator.vhdl.components import (
-    DualPort2ClockRamComponent,
-    LSTMCommonComponent,
-    LSTMComponent,
+    DualPort2ClockRamVHDLFile,
+    LSTMCommonVHDLFile,
+    LSTMFile,
     RomComponent,
     SigmoidComponent,
     TanhComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
+from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
 
 
 @dataclass
@@ -44,6 +44,10 @@ class LSTMModule(VHDLModule):
             (4*hidden_size,) and the structure (b_hi | b_hf | b_hg | b_ho).
     """
 
+    @property
+    def name(self) -> str:
+        return "lstm"
+
     weights_ih: list[list[list[float]]]
     weights_hh: list[list[list[float]]]
     biases_ih: list[list[float]]
@@ -74,7 +78,7 @@ class LSTMModule(VHDLModule):
         _, hidden_size, input_size = np.shape(self.weights_ih)
         return input_size, hidden_size // 4
 
-    def components(self, args: LSTMTranslationArgs) -> Iterator[VHDLComponent]:
+    def files(self, args: LSTMTranslationArgs) -> Iterator[VHDLFile]:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 
@@ -93,12 +97,12 @@ class LSTMModule(VHDLModule):
         yield TanhComponent(x=precomputed_tanh_inputs)
 
         input_size, hidden_size = self._derive_input_and_hidden_size()
-        yield LSTMComponent(
+        yield LSTMFile(
             input_size=input_size,
             hidden_size=hidden_size,
             fixed_point_factory=args.fixed_point_factory,
             work_library_name=args.work_library_name,
         )
 
-        yield LSTMCommonComponent()
-        yield DualPort2ClockRamComponent()
+        yield LSTMCommonVHDLFile()
+        yield DualPort2ClockRamVHDLFile()

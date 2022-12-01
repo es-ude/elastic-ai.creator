@@ -5,9 +5,9 @@ from typing import Callable
 
 import numpy as np
 
-from elasticai.creator.vhdl.components import FPLinear1dComponent, RomComponent
+from elasticai.creator.vhdl.components import FPLinear1dFile, RomComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
+from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
 
 
 @dataclass
@@ -22,13 +22,17 @@ class FPLinear1dModule(VHDLModule):
     weight: list[list[float]]
     bias: list[float]
 
-    def components(self, args: FPLinear1dTranslationArgs) -> Iterator[VHDLComponent]:
+    @property
+    def name(self) -> str:
+        return self.layer_id
+
+    def files(self, args: FPLinear1dTranslationArgs) -> Iterator[VHDLFile]:
         def to_fp(values: Iterable[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 
         out_features, in_features = np.shape(self.weight)
 
-        yield FPLinear1dComponent(
+        yield FPLinear1dFile(
             layer_id=self.layer_id,
             in_features=in_features,
             out_features=out_features,
