@@ -56,29 +56,54 @@ class Mode(Enum):
     BUFFER = Keywords.BUFFER.value
 
 
+class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
+    def __init__(self, *interfaces: CodeGeneratorCompatible) -> None:
+        self.interface_generators = [
+            _unify_code_generators(interface) for interface in interfaces
+        ]
+
+    def __len__(self) -> int:
+        return len(self.interface_generators)
+
+    def __getitem__(self, item) -> CodeGenerator:
+        return self.interface_generators.__getitem__(item)
+
+    def append(self, interface: CodeGeneratorCompatible) -> None:
+        self.interface_generators.append(_unify_code_generators(interface))
+
+    def __call__(self) -> Code:
+        yield from chain.from_iterable(
+            (interface() for interface in self.interface_generators)
+        )
+
+
+class InterfaceList(CodeGeneratorConcatenation):
+    pass
+
+
 class _DesignUnitForEntityAndComponent:
     def __init__(
         self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
-    ):
+    ) -> None:
         self.identifier = identifier
         self._generic_list = InterfaceList()
         self._port_list = InterfaceList()
         self.type = design_type
 
     @property
-    def generic_list(self):
+    def generic_list(self) -> InterfaceList:
         return self._generic_list
 
     @generic_list.setter
-    def generic_list(self, value):
+    def generic_list(self, value) -> None:
         self._generic_list = InterfaceList(value)
 
     @property
-    def port_list(self):
+    def port_list(self) -> InterfaceList:
         return self._port_list
 
     @port_list.setter
-    def port_list(self, value):
+    def port_list(self, value) -> None:
         self._port_list = InterfaceList(value)
 
     def _header(self) -> Code:
@@ -94,17 +119,17 @@ class _DesignUnitForEntityAndComponent:
 
 
 class Entity(_DesignUnitForEntityAndComponent):
-    def __init__(self, identifier: str):
+    def __init__(self, identifier: str) -> None:
         super().__init__(identifier, Keywords.ENTITY)
 
 
 class ComponentDeclaration(_DesignUnitForEntityAndComponent):
-    def __init__(self, identifier: str):
+    def __init__(self, identifier: str) -> None:
         super().__init__(identifier, Keywords.COMPONENT)
 
 
 class Architecture:
-    def __init__(self, design_unit: str):
+    def __init__(self, design_unit: str) -> None:
         self.design_unit = design_unit
         self._architecture_declaration_list = InterfaceList()
         self._architecture_component_list = InterfaceList()
@@ -115,59 +140,59 @@ class Architecture:
         self._architecture_statement_part = InterfaceList()
 
     @property
-    def architecture_declaration_list(self):
+    def architecture_declaration_list(self) -> InterfaceList:
         return self._architecture_declaration_list
 
     @architecture_declaration_list.setter
-    def architecture_declaration_list(self, value):
+    def architecture_declaration_list(self, value) -> None:
         self._architecture_declaration_list = InterfaceList(value)
 
     @property
-    def architecture_statement_part(self):
+    def architecture_statement_part(self) -> InterfaceList:
         return self._architecture_statement_part
 
     @architecture_statement_part.setter
-    def architecture_statement_part(self, value):
+    def architecture_statement_part(self, value) -> None:
         self._architecture_statement_part = value
 
     @property
-    def architecture_component_list(self):
+    def architecture_component_list(self) -> InterfaceList:
         return self._architecture_component_list
 
     @architecture_component_list.setter
-    def architecture_component_list(self, value):
+    def architecture_component_list(self, value) -> None:
         self._architecture_component_list = InterfaceList(value)
 
     @property
-    def architecture_assignment_list(self):
+    def architecture_assignment_list(self) -> InterfaceList:
         return self._architecture_assignment_list
 
     @architecture_assignment_list.setter
-    def architecture_assignment_list(self, value):
+    def architecture_assignment_list(self, value) -> None:
         self._architecture_assignment_list = InterfaceList(value)
 
     @property
-    def architecture_process_list(self):
+    def architecture_process_list(self) -> InterfaceList:
         return self._architecture_process_list
 
     @architecture_process_list.setter
-    def architecture_process_list(self, value):
+    def architecture_process_list(self, value) -> None:
         self._architecture_process_list = InterfaceList(value)
 
     @property
-    def architecture_port_map_list(self):
+    def architecture_port_map_list(self) -> InterfaceList:
         return self._architecture_port_map_list
 
     @architecture_port_map_list.setter
-    def architecture_port_map_list(self, value):
+    def architecture_port_map_list(self, value) -> None:
         self._architecture_port_map_list = InterfaceList(value)
 
     @property
-    def architecture_assignment_at_end_of_declaration_list(self):
+    def architecture_assignment_at_end_of_declaration_list(self) -> InterfaceList:
         return self._architecture_assignment_at_end_of_declaration_list
 
     @architecture_assignment_at_end_of_declaration_list.setter
-    def architecture_assignment_at_end_of_declaration_list(self, value):
+    def architecture_assignment_at_end_of_declaration_list(self, value) -> None:
         self._architecture_assignment_at_end_of_declaration_list = InterfaceList(value)
 
     def __call__(self) -> Code:
@@ -208,9 +233,9 @@ class Process:
     def __init__(
         self,
         identifier: str,
-        input_name: str = None,
-        lookup_table_generator_function: CodeGenerator = None,
-    ):
+        input_name: Optional[str] = None,
+        lookup_table_generator_function: Optional[CodeGenerator] = None,
+    ) -> None:
         self.identifier = identifier
         self.process_declaration_list = []
         self.process_statements_list = []
@@ -238,21 +263,11 @@ class Process:
         yield f"{Keywords.END.value} {Keywords.PROCESS.value} {self.identifier}_{Keywords.PROCESS.value};"
 
 
-class ContextClause:
-    def __init__(self, library_clause, use_clause):
-        self._use_clause = use_clause
-        self._library_clause = library_clause
-
-    def __call__(self):
-        yield from self._library_clause()
-        yield from self._use_clause()
-
-
 class UseClause:
-    def __init__(self, selected_names: list[str]):
+    def __init__(self, selected_names: list[str]) -> None:
         self._selected_names = selected_names
 
-    def __call__(self):
+    def __call__(self) -> Code:
         def prefix_use(line: str):
             return f"use {line}"
 
@@ -260,13 +275,23 @@ class UseClause:
 
 
 class LibraryClause:
-    def __init__(self, logical_name_list: list[str]):
+    def __init__(self, logical_name_list: list[str]) -> None:
         self._logical_name_list = logical_name_list
 
-    def __call__(self):
+    def __call__(self) -> Code:
         yield from _append_semicolons_to_lines(
             ["library {}".format(", ".join(self._logical_name_list))]
         )
+
+
+class ContextClause:
+    def __init__(self, library_clause: LibraryClause, use_clause: UseClause) -> None:
+        self._use_clause = use_clause
+        self._library_clause = library_clause
+
+    def __call__(self):
+        yield from self._library_clause()
+        yield from self._use_clause()
 
 
 class InterfaceConstrained:
@@ -278,7 +303,7 @@ class InterfaceConstrained:
         mode: Optional[Mode],
         value: Optional[str | int],
         declaration_type: Optional[str],
-    ):
+    ) -> None:
         self._identifier = identifier
         self._range = f"({range})" if range else ""
         self._identifier_type = identifier_type
@@ -301,7 +326,7 @@ class InterfaceSignal(InterfaceConstrained):
         range: Optional[str | int] = None,
         mode: Optional[Mode] = None,
         value: Optional[str | int] = None,
-    ):
+    ) -> None:
         super().__init__(
             identifier, identifier_type, range, mode, value, declaration_type="signal"
         )
@@ -315,54 +340,33 @@ class InterfaceVariable(InterfaceConstrained):
         range: Optional[str | int] = None,
         mode: Optional[Mode] = None,
         value: Optional[str | int] = None,
-    ):
+    ) -> None:
         super().__init__(
             identifier, identifier_type, range, mode, value, declaration_type=None
         )
 
 
-class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
-    def __len__(self) -> int:
-        return len(self.interface_generators)
-
-    def __getitem__(self, item) -> CodeGenerator:
-        return self.interface_generators.__getitem__(item)
-
-    def __init__(self, *interfaces: CodeGeneratorCompatible):
-        self.interface_generators = [
-            _unify_code_generators(interface) for interface in interfaces
-        ]
-
-    def append(self, interface: CodeGeneratorCompatible) -> None:
-        self.interface_generators.append(_unify_code_generators(interface))
-
-    def __call__(self) -> Code:
-        yield from chain.from_iterable(
-            (interface() for interface in self.interface_generators)
-        )
-
-
 class PortMap:
-    def __init__(self, map_name, component_name):
+    def __init__(self, map_name: str, component_name: str) -> None:
         self.map_name = map_name
         self.component_name = component_name
         self._signal_list = InterfaceList()
         self._generic_map_list = InterfaceList()
 
     @property
-    def signal_list(self):
+    def signal_list(self) -> InterfaceList:
         return self._signal_list
 
     @signal_list.setter
-    def signal_list(self, value):
+    def signal_list(self, value) -> None:
         self._signal_list = InterfaceList(value)
 
     @property
-    def generic_map_list(self):
+    def generic_map_list(self) -> InterfaceList:
         return self._generic_map_list
 
     @generic_map_list.setter
-    def generic_map_list(self, value):
+    def generic_map_list(self, value) -> None:
         self._generic_map_list = InterfaceList(value)
 
     def __call__(self) -> Code:
@@ -374,10 +378,6 @@ class PortMap:
         yield f"port map ("
         yield from _filter_empty_lines(_add_comma(self._signal_list()))
         yield ");"
-
-
-class InterfaceList(CodeGeneratorConcatenation):
-    pass
 
 
 InterfaceDeclaration = Union[
@@ -398,7 +398,7 @@ ClauseType = Literal[Keywords.GENERIC, Keywords.PORT]
 
 
 def indent(line: str) -> str:
-    return "".join(["\t", line])
+    return f"\t{line}"
 
 
 def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
@@ -436,7 +436,7 @@ def _line_is_empty(line: str) -> bool:
     return len(line) == 0
 
 
-def _join_lines(lines) -> str:
+def _join_lines(lines: Code) -> str:
     return "\n".join(lines)
 
 
@@ -479,37 +479,37 @@ def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
 
 
 class Procedure:
-    def __init__(self, identifier: str):
+    def __init__(self, identifier: str) -> None:
         self.identifier = identifier
         self._declaration_list = InterfaceList()
         self._declaration_list_with_is = InterfaceList()
         self._statement_list = InterfaceList()
 
     @property
-    def declaration_list(self):
+    def declaration_list(self) -> InterfaceList:
         return self._declaration_list
 
     @declaration_list.setter
-    def declaration_list(self, value):
+    def declaration_list(self, value) -> None:
         self._declaration_list = InterfaceList(value)
 
     @property
-    def declaration_list_with_is(self):
+    def declaration_list_with_is(self) -> InterfaceList:
         return self._declaration_list_with_is
 
     @declaration_list_with_is.setter
-    def declaration_list_with_is(self, value):
+    def declaration_list_with_is(self, value) -> None:
         self._declaration_list_with_is = InterfaceList(value)
 
     @property
-    def statement_list(self):
+    def statement_list(self) -> InterfaceList:
         return self._statement_list
 
     @statement_list.setter
-    def statement_list(self, value):
+    def statement_list(self, value) -> None:
         self._statement_list = InterfaceList(value)
 
-    def __call__(self):
+    def __call__(self) -> Code:
         yield f"procedure {self.identifier} ("
         if len(self._declaration_list) > 0:
             yield from _filter_empty_lines(
