@@ -307,8 +307,8 @@ class Process:
         lookup_table_generator_function: Optional[Callable[[], Code]] = None,
     ) -> None:
         self.identifier = identifier
-        self.process_declaration_list = []
-        self.process_statements_list = []
+        self.process_declaration_list: list[str] = []
+        self.process_statements_list: list[str] = []
         self.lookup_table_generator_function = lookup_table_generator_function
         self.input = input_name
 

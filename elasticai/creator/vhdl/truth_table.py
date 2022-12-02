@@ -22,10 +22,6 @@ class IOTable(Iterable[tuple[int, int]], Protocol):
 
 
 class _EncodedIOTable(IOTable):
-    def __iter__(self) -> Iterator[tuple[int, int]]:
-        for i in range(len(self)):
-            yield self[i]
-
     def __init__(
         self,
         input_encoder: ToLogicEncoder,
@@ -38,12 +34,16 @@ class _EncodedIOTable(IOTable):
         self._inputs = inputs
         self._outputs = outputs
 
+    def __iter__(self) -> Iterator[tuple[int, int]]:
+        for i in range(len(self)):
+            yield self[i]
+
     def __getitem__(self, item) -> tuple[str, str]:
         encoded_input = self._input_encoder(self._inputs.__getitem__(item))
         encoded_output = self._output_encoder(self._outputs.__getitem__(item))
         return encoded_input, encoded_output
 
-    def __len__(self):
+    def __len__(self) -> int:
         return min(len(self._inputs), len(self._outputs))
 
     @property

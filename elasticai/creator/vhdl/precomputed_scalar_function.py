@@ -28,7 +28,7 @@ from elasticai.creator.vhdl.number_representations import (
 
 
 def _vhdl_add_assignment(
-    code: list, line_id: str, value: str, comment: str = None
+    code: list, line_id: str, value: str, comment: Optional[str] = None
 ) -> None:
     new_code_fragment = f"{line_id} <= {bin_representation(value)};"
     if comment is not None:
@@ -36,7 +36,9 @@ def _vhdl_add_assignment(
     code.append(new_code_fragment)
 
 
-def _get_lower_case_class_name_or_component_name(cls: type, component_name: str) -> str:
+def _get_lower_case_class_name_or_component_name(
+    cls: type, component_name: Optional[str]
+) -> str:
     if component_name is None:
         return cls.__name__.lower()
     return component_name
@@ -192,7 +194,9 @@ class PrecomputedScalarFunction:
 
 
 class Sigmoid(PrecomputedScalarFunction):
-    def __init__(self, x: list[FixedPoint], component_name: str = None) -> None:
+    def __init__(
+        self, x: list[FixedPoint], component_name: Optional[str] = None
+    ) -> None:
         x_tensor = torch.as_tensor(list(map(float, x)))
         # calculate y always for the previous element, therefore the last input is not needed here
         y = torch.nn.Sigmoid()(x_tensor[:-1]).tolist()
@@ -205,7 +209,9 @@ class Sigmoid(PrecomputedScalarFunction):
 
 
 class Tanh(PrecomputedScalarFunction):
-    def __init__(self, x: list[FixedPoint], component_name: str = None) -> None:
+    def __init__(
+        self, x: list[FixedPoint], component_name: Optional[str] = None
+    ) -> None:
         y_list = [-1.0]
         # calculate y always for the previous element, therefore the last input is not needed here
         for x_element in x[:-1]:
