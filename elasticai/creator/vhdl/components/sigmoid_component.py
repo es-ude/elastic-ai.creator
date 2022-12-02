@@ -14,4 +14,4 @@ class SigmoidComponent:
         return f"sigmoid.vhd"
 
     def code(self) -> Code:
-        yield from Sigmoid(x=self.x, component_name="sigmoid")()
+        yield from Sigmoid(x=self.x, component_name="sigmoid").code()

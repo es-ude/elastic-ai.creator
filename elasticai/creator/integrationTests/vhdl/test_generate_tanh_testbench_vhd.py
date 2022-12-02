@@ -113,7 +113,7 @@ class TanhTestBenchTest(GeneratedVHDLCodeTest):
             x_list_for_testing=to_fp([-1281, -1000, -500, 0, 500, 800, 1024]),
             y_list_for_testing=to_fp([-256, -255, -246, 0, 245, 254, 255]),
         )
-        tanh_code = tanh()
+        tanh_code = tanh.code()
         tanh_code_str = ""
         for line in tanh_code:
             tanh_code_str += line + "\n"

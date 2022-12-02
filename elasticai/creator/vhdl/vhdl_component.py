@@ -1,16 +1,13 @@
 from typing import Any, Iterable, Protocol
 
 from elasticai.creator.resource_utils import Package, read_text
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.language import Code, CodeGenerator
 
 
-class VHDLComponent(Protocol):
+class VHDLComponent(CodeGenerator, Protocol):
     @property
     def file_name(self) -> str:
         return ""
-
-    def code(self) -> Code:
-        ...
 
 
 class VHDLStaticComponent:

@@ -176,7 +176,7 @@ class SigmoidTest(GeneratedVHDLCodeTest):
             np.linspace(-5, 5, 66).tolist(), total_bits=16, frac_bits=8
         )
         sigmoid = Sigmoid(x=data, component_name="sigmoid")
-        sigmoid_code = sigmoid()
+        sigmoid_code = sigmoid.code()
         sigmoid_code_str = ""
         for line in sigmoid_code:
             sigmoid_code_str += line + "\n"

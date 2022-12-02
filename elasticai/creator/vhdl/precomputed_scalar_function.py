@@ -1,7 +1,7 @@
 import math
 from collections.abc import Callable
 from itertools import chain
-from typing import Iterable, Iterator
+from typing import Optional
 
 import torch.nn
 
@@ -34,6 +34,12 @@ def _vhdl_add_assignment(
     if comment is not None:
         new_code_fragment += f" -- {comment}"
     code.append(new_code_fragment)
+
+
+def _get_lower_case_class_name_or_component_name(cls: type, component_name: str) -> str:
+    if component_name is None:
+        return cls.__name__.lower()
+    return component_name
 
 
 def precomputed_scalar_function_process(
@@ -123,8 +129,8 @@ class PrecomputedScalarFunction:
         self,
         x: list[FixedPoint],
         y: list[FixedPoint],
-        component_name: str = None,
-        process_instance: Process = None,
+        component_name: Optional[str] = None,
+        process_instance: Optional[Process] = None,
     ):
         """
         We calculate the function with an algorithm equivalent to:
@@ -136,8 +142,8 @@ class PrecomputedScalarFunction:
           return outputs[-1]
         ```
         """
-        self.component_name = self._get_lower_case_class_name_or_component_name(
-            component_name=component_name
+        self.component_name = _get_lower_case_class_name_or_component_name(
+            cls=type(self), component_name=component_name
         )
 
         self.data_width, self.frac_width = infer_total_and_frac_bits(x, y)
@@ -145,17 +151,11 @@ class PrecomputedScalarFunction:
         self.y = y
         self.process_instance = process_instance
 
-    @classmethod
-    def _get_lower_case_class_name_or_component_name(cls, component_name):
-        if component_name is None:
-            return cls.__name__.lower()
-        return component_name
-
     @property
     def file_name(self) -> str:
         return f"{self.component_name}.vhd"
 
-    def __call__(self) -> Iterable[str]:
+    def code(self) -> Code:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee"]),
             use_clause=UseClause(
@@ -192,7 +192,7 @@ class PrecomputedScalarFunction:
 
 
 class Sigmoid(PrecomputedScalarFunction):
-    def __init__(self, x: list[FixedPoint], component_name: str = None):
+    def __init__(self, x: list[FixedPoint], component_name: str = None) -> None:
         x_tensor = torch.as_tensor(list(map(float, x)))
         # calculate y always for the previous element, therefore the last input is not needed here
         y = torch.nn.Sigmoid()(x_tensor[:-1]).tolist()
@@ -205,7 +205,7 @@ class Sigmoid(PrecomputedScalarFunction):
 
 
 class Tanh(PrecomputedScalarFunction):
-    def __init__(self, x: list[FixedPoint], component_name: str = None):
+    def __init__(self, x: list[FixedPoint], component_name: str = None) -> None:
         y_list = [-1.0]
         # calculate y always for the previous element, therefore the last input is not needed here
         for x_element in x[:-1]:
@@ -222,10 +222,10 @@ class PrecomputedScalarTestBench:
         self,
         x_list_for_testing: list[FixedPoint],
         y_list_for_testing: list[FixedPoint],
-        component_name: str = None,
-    ):
-        self.component_name = self._get_lower_case_class_name_or_component_name(
-            component_name=component_name
+        component_name: Optional[str] = None,
+    ) -> None:
+        self.component_name = _get_lower_case_class_name_or_component_name(
+            cls=type(self), component_name=component_name
         )
         self.data_width, self.frac_width = infer_total_and_frac_bits(
             x_list_for_testing, y_list_for_testing
@@ -233,17 +233,11 @@ class PrecomputedScalarTestBench:
         self.x_list_for_testing = x_list_for_testing
         self.y_list_for_testing = y_list_for_testing
 
-    @classmethod
-    def _get_lower_case_class_name_or_component_name(cls, component_name):
-        if component_name is None:
-            return cls.__name__.lower()
-        return component_name
-
     @property
     def file_name(self) -> str:
         return f"{self.component_name}_tb.vhd"
 
-    def __call__(self) -> Iterable[str]:
+    def code(self) -> Code:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee"]),
             use_clause=UseClause(
@@ -293,7 +287,7 @@ class PrecomputedScalarTestBench:
             y_list_for_testing=self.y_list_for_testing,
         )
         test_process = Process(identifier="test")
-        test_process.process_statements_list = [t for t in test_cases()]
+        test_process.process_statements_list = [t for t in test_cases.code()]
 
         architecture = Architecture(
             design_unit=self.component_name + "_tb",
@@ -320,7 +314,7 @@ class TestCasesPrecomputedScalarFunction(TestBenchBase):
         y_list_for_testing: list[FixedPoint],
         x_variable_name: str = "test_input",
         y_variable_name: str = "test_output",
-    ):
+    ) -> None:
         assert len(x_list_for_testing) == len(y_list_for_testing)
         self.data_width, _ = infer_total_and_frac_bits(
             x_list_for_testing, y_list_for_testing
@@ -334,10 +328,10 @@ class TestCasesPrecomputedScalarFunction(TestBenchBase):
         self.x_variable_name = x_variable_name
         self.y_variable_name = y_variable_name
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.y_list_for_testing)
 
-    def _body(self) -> Iterator[str]:
+    def _body(self) -> Code:
         for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
             yield f"{self.x_variable_name} <= to_signed({x_value},{self.data_width})"
             yield f"wait for 1*clk_period"
@@ -347,5 +341,5 @@ class TestCasesPrecomputedScalarFunction(TestBenchBase):
             else:
                 yield f'assert {self.y_variable_name}={y_value} report "The test case {x_value} fail" severity failure'
 
-    def __call__(self) -> Iterable[Code]:
-        yield from iter(self)
+    def code(self) -> Code:
+        yield from super().code()

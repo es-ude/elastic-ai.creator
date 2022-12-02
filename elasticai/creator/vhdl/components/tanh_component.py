@@ -14,4 +14,4 @@ class TanhComponent:
         return f"tanh.vhd"
 
     def code(self) -> Code:
-        yield from Tanh(x=self.x, component_name="tanh")()
+        yield from Tanh(x=self.x, component_name="tanh").code()

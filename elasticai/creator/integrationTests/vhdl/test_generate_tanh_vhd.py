@@ -562,7 +562,7 @@ class GenerateTanhVhdTest(GeneratedVHDLCodeTest):
             np.linspace(-5, 5, 259).tolist(), total_bits=16, frac_bits=8
         )
         tanh = Tanh(x=data)
-        tanh_code = tanh()
+        tanh_code = tanh.code()
         tanh_code_str = ""
         for line in tanh_code:
             tanh_code_str += line + "\n"

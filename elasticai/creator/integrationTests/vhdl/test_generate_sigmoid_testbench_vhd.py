@@ -93,7 +93,7 @@ class SigmoidTestBenchTest(GeneratedVHDLCodeTest):
             x_list_for_testing=to_fp([-1281, -1000, -500]),
             y_list_for_testing=to_fp([0, 4, 28]),
         )
-        sigmoid_code = sigmoid()
+        sigmoid_code = sigmoid.code()
         sigmoid_code_str = ""
         for line in sigmoid_code:
             sigmoid_code_str += line + "\n"
