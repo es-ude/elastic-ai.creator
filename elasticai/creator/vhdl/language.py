@@ -4,19 +4,34 @@ We provide code generators for the subset of vhdl that we need for implementing
 our neural network accelerators and test benches. We stick closely to the vhdl
 formal grammar with our class names.
 
-The core of this module is the `CodeGenerator`. Code generators are callables that return `Code`.
+The core of this module is the `CodeGenerator`.
+Code generators are classes that have a code function that return `Code`.
 `Code` is an iterable of strings. Depending on complexity we define syntactic components of the vhdl
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """
 from enum import Enum
 from itertools import chain, filterfalse
-from typing import Callable, Iterable, Literal, Optional, Sequence
+from typing import (
+    Callable,
+    Iterable,
+    Literal,
+    Optional,
+    Protocol,
+    Sequence,
+    runtime_checkable,
+)
 
-Identifier = str
 Code = Iterable[str]
-CodeGenerator = Callable[[], Code]
-CodeGeneratorCompatible = Code | CodeGenerator | str
+
+
+@runtime_checkable
+class CodeGenerator(Protocol):
+    def code(self) -> Code:
+        ...
+
+
+CodeGeneratorCompatible = CodeGenerator | Code | str
 
 
 class Keywords(Enum):
@@ -59,6 +74,60 @@ class Mode(Enum):
     BUFFER = Keywords.BUFFER.value
 
 
+def _wrap_code_into_code_generator(code: Code) -> CodeGenerator:
+    class WrappedCodeGenerator:
+        def code(self) -> Code:
+            return code
+
+    return WrappedCodeGenerator()
+
+
+def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
+    if isinstance(generator, str):
+        return _wrap_code_into_code_generator([generator])
+    elif isinstance(generator, Iterable):
+        return _wrap_code_into_code_generator(generator)
+    elif isinstance(generator, CodeGenerator):
+        return generator
+    else:
+        raise ValueError
+
+
+def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
+    temp = tuple(lines)
+    yield from (f"{line};" for line in temp[:-1])
+    yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
+
+
+def _add_is(lines: Code) -> Code:
+    yield from (f"{line} is" for line in lines)
+
+
+def _add_comma(lines: Code, comma_last: bool = False) -> Code:
+    temp = tuple(lines)
+    yield from (f"{line}," for line in temp[:-1])
+    yield f"{temp[-1]}," if comma_last else f"{temp[-1]}"
+
+
+def _append_semicolons_to_lines(lines: Code) -> Code:
+    temp = tuple(lines)
+    yield from (f"{line};" for line in temp)
+
+
+def _filter_empty_lines(lines: Code) -> Code:
+    return filterfalse(_line_is_empty, lines)
+
+
+def _line_is_empty(line: str) -> bool:
+    return len(line) == 0
+
+
+def _clause(clause_type: ClauseType, interfaces: Code) -> Code:
+    yield f"{clause_type.value} ("
+    yield from _filter_empty_lines(_add_semicolons(interfaces))
+    yield ");"
+
+
 class InterfaceList(Sequence[CodeGenerator]):
     def __init__(self, *interfaces: CodeGeneratorCompatible) -> None:
         self.interface_generators = [
@@ -74,9 +143,9 @@ class InterfaceList(Sequence[CodeGenerator]):
     def append(self, interface: CodeGeneratorCompatible) -> None:
         self.interface_generators.append(_unify_code_generators(interface))
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield from chain.from_iterable(
-            (interface() for interface in self.interface_generators)
+            (interface.code() for interface in self.interface_generators)
         )
 
 
@@ -107,11 +176,11 @@ class _DesignUnitForEntityAndComponent:
 
     def _header(self) -> Code:
         if len(self.generic_list) > 0:
-            yield from _clause(Keywords.GENERIC, self._generic_list())
+            yield from _clause(Keywords.GENERIC, self._generic_list.code())
         if len(self.port_list) > 0:
-            yield from _clause(Keywords.PORT, self._port_list())
+            yield from _clause(Keywords.PORT, self._port_list.code())
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield f"{self.type.value} {self.identifier} {Keywords.IS.value}"
         yield from _filter_empty_lines(self._header())
         yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
@@ -147,12 +216,12 @@ class Architecture:
         self._architecture_declaration_list = InterfaceList(value)
 
     @property
-    def architecture_statement_part(self) -> InterfaceList:
+    def architecture_statement_part(self) -> CodeGenerator:
         return self._architecture_statement_part
 
     @architecture_statement_part.setter
-    def architecture_statement_part(self, value) -> None:
-        self._architecture_statement_part = value
+    def architecture_statement_part(self, value: CodeGeneratorCompatible) -> None:
+        self._architecture_statement_part = _unify_code_generators(value)
 
     @property
     def architecture_component_list(self) -> InterfaceList:
@@ -196,37 +265,37 @@ class Architecture:
     ) -> None:
         self._architecture_assignment_at_end_of_declaration_list = InterfaceList(value)
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield f"{Keywords.ARCHITECTURE.value} rtl {Keywords.OF.value} {self.design_unit} {Keywords.IS.value}"
         if len(self._architecture_declaration_list) > 0:
             yield from _filter_empty_lines(
                 _add_semicolons(
-                    self._architecture_declaration_list(), semicolon_last=True
+                    self._architecture_declaration_list.code(), semicolon_last=True
                 )
             )
         if len(self._architecture_component_list) > 0:
-            yield from _filter_empty_lines(self._architecture_component_list())
+            yield from _filter_empty_lines(self._architecture_component_list.code())
         yield f"{Keywords.BEGIN.value}"
         if len(self._architecture_assignment_list) > 0:
             yield from _filter_empty_lines(
                 _add_semicolons(
-                    self._architecture_assignment_list(), semicolon_last=True
+                    self._architecture_assignment_list.code(), semicolon_last=True
                 )
             )
         if len(self._architecture_process_list) > 0:
-            yield from _filter_empty_lines(self.architecture_process_list())
+            yield from _filter_empty_lines(self.architecture_process_list.code())
         if len(self._architecture_port_map_list) > 0:
-            yield from _filter_empty_lines(self.architecture_port_map_list())
+            yield from _filter_empty_lines(self.architecture_port_map_list.code())
         if len(self._architecture_assignment_at_end_of_declaration_list) > 0:
             yield from _filter_empty_lines(
                 _add_semicolons(
-                    self._architecture_assignment_at_end_of_declaration_list(),
+                    self._architecture_assignment_at_end_of_declaration_list.code(),
                     semicolon_last=True,
                 )
             )
 
         if self._architecture_statement_part:
-            yield from _filter_empty_lines(self._architecture_statement_part())
+            yield from _filter_empty_lines(self._architecture_statement_part.code())
         yield f"{Keywords.END.value} {Keywords.ARCHITECTURE.value} rtl;"
 
 
@@ -235,7 +304,7 @@ class Process:
         self,
         identifier: str,
         input_name: Optional[str] = None,
-        lookup_table_generator_function: Optional[CodeGenerator] = None,
+        lookup_table_generator_function: Optional[Callable[[], Code]] = None,
     ) -> None:
         self.identifier = identifier
         self.process_declaration_list = []
@@ -253,7 +322,7 @@ class Process:
         if self.lookup_table_generator_function:
             yield from self.lookup_table_generator_function()
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         if self.input:
             yield f"{self.identifier}_{Keywords.PROCESS.value}: {Keywords.PROCESS.value}({self.input})"
         else:
@@ -268,7 +337,7 @@ class UseClause:
     def __init__(self, selected_names: list[str]) -> None:
         self._selected_names = selected_names
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         def prefix_use(line: str):
             return f"use {line}"
 
@@ -279,7 +348,7 @@ class LibraryClause:
     def __init__(self, logical_name_list: list[str]) -> None:
         self._logical_name_list = logical_name_list
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield from _append_semicolons_to_lines(
             ["library {}".format(", ".join(self._logical_name_list))]
         )
@@ -290,9 +359,9 @@ class ContextClause:
         self._use_clause = use_clause
         self._library_clause = library_clause
 
-    def __call__(self):
-        yield from self._library_clause()
-        yield from self._use_clause()
+    def code(self):
+        yield from self._library_clause.code()
+        yield from self._use_clause.code()
 
 
 class InterfaceConstrained:
@@ -312,7 +381,7 @@ class InterfaceConstrained:
         self._value = f" := {value}" if value else ""
         self._declaration_type = f"{declaration_type} " if declaration_type else ""
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield from (
             f"{self._declaration_type}{self._identifier} :"
             f"{self._mode}{self._identifier_type.value}{self._range}{self._value}",
@@ -370,75 +439,15 @@ class PortMap:
     def generic_map_list(self, value: CodeGeneratorCompatible) -> None:
         self._generic_map_list = InterfaceList(value)
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield f"{self.map_name}: {self.component_name}"
         if len(self._generic_map_list) > 0:
             yield f"generic map ("
-            yield from _filter_empty_lines(_add_comma(self._generic_map_list()))
+            yield from _filter_empty_lines(_add_comma(self._generic_map_list.code()))
             yield ")"
         yield f"port map ("
-        yield from _filter_empty_lines(_add_comma(self._signal_list()))
+        yield from _filter_empty_lines(_add_comma(self._signal_list.code()))
         yield ");"
-
-
-def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
-    temp = tuple(lines)
-    yield from (f"{line};" for line in temp[:-1])
-    yield f"{temp[-1]};" if semicolon_last else f"{temp[-1]}"
-
-
-def _add_is(lines: Code) -> Code:
-    yield from (f"{line} is" for line in lines)
-
-
-def _add_comma(lines: Code, comma_last: bool = False) -> Code:
-    temp = tuple(lines)
-    yield from (f"{line}," for line in temp[:-1])
-    yield f"{temp[-1]}," if comma_last else f"{temp[-1]}"
-
-
-def _append_semicolons_to_lines(lines: Code) -> Code:
-    temp = tuple(lines)
-    yield from (f"{line};" for line in temp)
-
-
-def _clause(clause_type: ClauseType, interfaces: Code) -> Code:
-    yield f"{clause_type.value} ("
-    yield from _filter_empty_lines(_add_semicolons(interfaces))
-    yield ");"
-
-
-def _filter_empty_lines(lines: Code) -> Code:
-    return filterfalse(_line_is_empty, lines)
-
-
-def _line_is_empty(line: str) -> bool:
-    return len(line) == 0
-
-
-def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
-    def wrapped():
-        return (string,)
-
-    return wrapped
-
-
-def _wrap_code_into_code_generator(code: Code) -> CodeGenerator:
-    def wrapped():
-        return code
-
-    return wrapped
-
-
-def _unify_code_generators(generator: CodeGeneratorCompatible) -> CodeGenerator:
-    if isinstance(generator, str):
-        return _wrap_string_into_code_generator(generator)
-    elif isinstance(generator, Iterable):
-        return _wrap_code_into_code_generator(generator)
-    elif isinstance(generator, Callable):
-        return generator
-    else:
-        raise ValueError
 
 
 class Procedure:
@@ -472,18 +481,20 @@ class Procedure:
     def statement_list(self, value: CodeGeneratorCompatible) -> None:
         self._statement_list = InterfaceList(value)
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         yield f"procedure {self.identifier} ("
         if len(self._declaration_list) > 0:
             yield from _filter_empty_lines(
-                _add_semicolons(self._declaration_list(), semicolon_last=True)
+                _add_semicolons(self._declaration_list.code(), semicolon_last=True)
             )
         if len(self._declaration_list_with_is) > 0:
-            yield from _filter_empty_lines(_add_is(self._declaration_list_with_is()))
+            yield from _filter_empty_lines(
+                _add_is(self._declaration_list_with_is.code())
+            )
         yield f"{Keywords.BEGIN.value}"
         if len(self._statement_list) > 0:
             yield from _filter_empty_lines(
-                _add_semicolons(self._statement_list(), semicolon_last=True)
+                _add_semicolons(self._statement_list.code(), semicolon_last=True)
             )
         yield f"{Keywords.END.value} {self.identifier};"
 

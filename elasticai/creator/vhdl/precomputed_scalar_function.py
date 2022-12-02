@@ -1,4 +1,5 @@
 import math
+from collections.abc import Callable
 from itertools import chain
 from typing import Iterable, Iterator
 
@@ -7,7 +8,6 @@ import torch.nn
 from elasticai.creator.vhdl.language import (
     Architecture,
     Code,
-    CodeGenerator,
     ComponentDeclaration,
     ContextClause,
     DataType,
@@ -38,7 +38,7 @@ def _vhdl_add_assignment(
 
 def precomputed_scalar_function_process(
     x: list[FixedPoint], y: list[FixedPoint]
-) -> CodeGenerator:
+) -> Callable[[], Code]:
     """
         returns the string of a lookup table
     Args:
@@ -187,7 +187,7 @@ class PrecomputedScalarFunction:
             design_unit=self.component_name,
         )
         architecture.architecture_statement_part = process
-        code = chain(chain(library(), entity()), architecture())
+        code = chain(chain(library.code(), entity.code()), architecture.code())
         return code
 
 
@@ -309,7 +309,7 @@ class PrecomputedScalarTestBench:
         architecture.architecture_port_map_list.append(uut_port_map)
         architecture.architecture_statement_part = test_process
 
-        code = chain(library(), entity(), architecture())
+        code = chain(library.code(), entity.code(), architecture.code())
         return code
 
 

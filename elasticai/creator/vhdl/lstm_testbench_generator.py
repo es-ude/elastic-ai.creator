@@ -246,7 +246,7 @@ class LSTMCellTestBench:
         )
         architecture.architecture_statement_part = test_process
 
-        code = chain(library(), entity(), architecture())
+        code = chain(library.code(), entity.code(), architecture.code())
         return code
 
 
