@@ -11,7 +11,7 @@ of code as strings.
 """
 from enum import Enum
 from itertools import chain, filterfalse
-from typing import Callable, Iterable, Literal, Optional, Sequence, Union
+from typing import Callable, Iterable, Literal, Optional, Sequence
 
 Identifier = str
 Code = Iterable[str]
@@ -42,6 +42,9 @@ class Keywords(Enum):
     STD_LOGIC_VECTOR = "std_logic_vector"
 
 
+ClauseType = Literal[Keywords.GENERIC, Keywords.PORT]
+
+
 class DataType(Enum):
     INTEGER = Keywords.INTEGER.value
     STD_LOGIC = Keywords.STD_LOGIC.value
@@ -56,7 +59,7 @@ class Mode(Enum):
     BUFFER = Keywords.BUFFER.value
 
 
-class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
+class InterfaceList(Sequence[CodeGenerator]):
     def __init__(self, *interfaces: CodeGeneratorCompatible) -> None:
         self.interface_generators = [
             _unify_code_generators(interface) for interface in interfaces
@@ -77,10 +80,6 @@ class CodeGeneratorConcatenation(Sequence[CodeGenerator]):
         )
 
 
-class InterfaceList(CodeGeneratorConcatenation):
-    pass
-
-
 class _DesignUnitForEntityAndComponent:
     def __init__(
         self, identifier: str, design_type: Literal[Keywords.ENTITY, Keywords.PORT]
@@ -95,7 +94,7 @@ class _DesignUnitForEntityAndComponent:
         return self._generic_list
 
     @generic_list.setter
-    def generic_list(self, value) -> None:
+    def generic_list(self, value: CodeGeneratorCompatible) -> None:
         self._generic_list = InterfaceList(value)
 
     @property
@@ -103,7 +102,7 @@ class _DesignUnitForEntityAndComponent:
         return self._port_list
 
     @port_list.setter
-    def port_list(self, value) -> None:
+    def port_list(self, value: CodeGeneratorCompatible) -> None:
         self._port_list = InterfaceList(value)
 
     def _header(self) -> Code:
@@ -144,7 +143,7 @@ class Architecture:
         return self._architecture_declaration_list
 
     @architecture_declaration_list.setter
-    def architecture_declaration_list(self, value) -> None:
+    def architecture_declaration_list(self, value: CodeGeneratorCompatible) -> None:
         self._architecture_declaration_list = InterfaceList(value)
 
     @property
@@ -160,7 +159,7 @@ class Architecture:
         return self._architecture_component_list
 
     @architecture_component_list.setter
-    def architecture_component_list(self, value) -> None:
+    def architecture_component_list(self, value: CodeGeneratorCompatible) -> None:
         self._architecture_component_list = InterfaceList(value)
 
     @property
@@ -168,7 +167,7 @@ class Architecture:
         return self._architecture_assignment_list
 
     @architecture_assignment_list.setter
-    def architecture_assignment_list(self, value) -> None:
+    def architecture_assignment_list(self, value: CodeGeneratorCompatible) -> None:
         self._architecture_assignment_list = InterfaceList(value)
 
     @property
@@ -176,7 +175,7 @@ class Architecture:
         return self._architecture_process_list
 
     @architecture_process_list.setter
-    def architecture_process_list(self, value) -> None:
+    def architecture_process_list(self, value: CodeGeneratorCompatible) -> None:
         self._architecture_process_list = InterfaceList(value)
 
     @property
@@ -184,7 +183,7 @@ class Architecture:
         return self._architecture_port_map_list
 
     @architecture_port_map_list.setter
-    def architecture_port_map_list(self, value) -> None:
+    def architecture_port_map_list(self, value: CodeGeneratorCompatible) -> None:
         self._architecture_port_map_list = InterfaceList(value)
 
     @property
@@ -192,7 +191,9 @@ class Architecture:
         return self._architecture_assignment_at_end_of_declaration_list
 
     @architecture_assignment_at_end_of_declaration_list.setter
-    def architecture_assignment_at_end_of_declaration_list(self, value) -> None:
+    def architecture_assignment_at_end_of_declaration_list(
+        self, value: CodeGeneratorCompatible
+    ) -> None:
         self._architecture_assignment_at_end_of_declaration_list = InterfaceList(value)
 
     def __call__(self) -> Code:
@@ -358,7 +359,7 @@ class PortMap:
         return self._signal_list
 
     @signal_list.setter
-    def signal_list(self, value) -> None:
+    def signal_list(self, value: CodeGeneratorCompatible) -> None:
         self._signal_list = InterfaceList(value)
 
     @property
@@ -366,7 +367,7 @@ class PortMap:
         return self._generic_map_list
 
     @generic_map_list.setter
-    def generic_map_list(self, value) -> None:
+    def generic_map_list(self, value: CodeGeneratorCompatible) -> None:
         self._generic_map_list = InterfaceList(value)
 
     def __call__(self) -> Code:
@@ -378,27 +379,6 @@ class PortMap:
         yield f"port map ("
         yield from _filter_empty_lines(_add_comma(self._signal_list()))
         yield ");"
-
-
-InterfaceDeclaration = Union[
-    "InterfaceObjectDeclaration",
-    "InterfaceTypeDeclaration",
-    "InterfaceSubprogramDeclaration",
-    "InterfacePackageDeclaration",
-]
-
-InterfaceObjectDeclaration = Union[
-    "InterfaceConstantDeclaration",
-    "InterfaceSignalDeclaration",
-    "InterfaceVariableDeclaration",
-    "InterfaceFileDeclaration",
-]
-
-ClauseType = Literal[Keywords.GENERIC, Keywords.PORT]
-
-
-def indent(line: str) -> str:
-    return f"\t{line}"
 
 
 def _add_semicolons(lines: Code, semicolon_last: bool = False) -> Code:
@@ -434,23 +414,6 @@ def _filter_empty_lines(lines: Code) -> Code:
 
 def _line_is_empty(line: str) -> bool:
     return len(line) == 0
-
-
-def _join_lines(lines: Code) -> str:
-    return "\n".join(lines)
-
-
-def _empty_code_generator() -> Code:
-    return []
-
-
-# noinspection PyPep8Naming
-def _wrap_in_IS_END_block(
-    block_type: Keywords, block_identifier: Identifier, lines: Code
-) -> Code:
-    yield f"{block_type.value} {block_identifier} {Keywords.IS.value}"
-    yield from _filter_empty_lines(lines)
-    yield f"{Keywords.END.value} {block_type.value} {block_identifier};"
 
 
 def _wrap_string_into_code_generator(string: str) -> CodeGenerator:
@@ -490,7 +453,7 @@ class Procedure:
         return self._declaration_list
 
     @declaration_list.setter
-    def declaration_list(self, value) -> None:
+    def declaration_list(self, value: CodeGeneratorCompatible) -> None:
         self._declaration_list = InterfaceList(value)
 
     @property
@@ -498,7 +461,7 @@ class Procedure:
         return self._declaration_list_with_is
 
     @declaration_list_with_is.setter
-    def declaration_list_with_is(self, value) -> None:
+    def declaration_list_with_is(self, value: CodeGeneratorCompatible) -> None:
         self._declaration_list_with_is = InterfaceList(value)
 
     @property
@@ -506,7 +469,7 @@ class Procedure:
         return self._statement_list
 
     @statement_list.setter
-    def statement_list(self, value) -> None:
+    def statement_list(self, value: CodeGeneratorCompatible) -> None:
         self._statement_list = InterfaceList(value)
 
     def __call__(self) -> Code:
