@@ -15,7 +15,7 @@ class MockVHDLComponent(VHDLComponent):
     def file_name(self) -> str:
         return "test_component"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         return ["line1", "line2"]
 
 

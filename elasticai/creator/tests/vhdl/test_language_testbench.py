@@ -74,7 +74,7 @@ class TestCasesLSTMCommonGateTest(TestCase):
             f'report "Please check the output message." severity Note',
             f"wait",
         ]
-        actual = list(test_cases_lstm_common_gate())
+        actual = list(test_cases_lstm_common_gate.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_TestCasesLSTMCommonGate_different_lengths_of_lists(self):
@@ -140,7 +140,7 @@ class TestCasesPrecomputedScalarFunctionTest(TestCase):
             f'report "Please check the output message." severity Note',
             f"wait",
         ]
-        actual = list(test_cases_precomputed_scalar_function())
+        actual = list(test_cases_precomputed_scalar_function.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_TestCasesPrecomputedScalarFunction_different_lengths_of_list(self):

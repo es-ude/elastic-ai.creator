@@ -25,13 +25,13 @@ class EntityTest(TestCase):
     def test_no_name_entity(self):
         e = Entity("")
         expected = ["entity  is", "end entity ;"]
-        actual = list(e())
+        actual = list(e.code())
         self.assertEqual(expected, actual)
 
     def test_entity_name_tanh(self):
         e = Entity("tanh")
         expected = ["entity tanh is", "end entity tanh;"]
-        actual = list(e())
+        actual = list(e.code())
         self.assertEqual(expected, actual)
 
     def test_entity_with_generic(self):
@@ -46,7 +46,7 @@ class EntityTest(TestCase):
             ");",
             "end entity identifier;",
         ]
-        actual = list(e())
+        actual = list(e.code())
         self.assertEqual(expected, actual)
 
     def test_entity_with_port(self):
@@ -59,14 +59,14 @@ class EntityTest(TestCase):
             ");",
             "end entity identifier;",
         ]
-        actual = list(e())
+        actual = list(e.code())
         self.assertEqual(expected, actual)
 
     def test_entity_with_two_variables_in_generic(self):
         e = Entity("identifier")
         e.generic_list = ["first", "second"]
         expected = ["first;", "second"]
-        actual = list(e())
+        actual = list(e.code())
         actual = actual[2:4]
         self.assertEqual(expected, actual)
 
@@ -78,7 +78,7 @@ class EntityTest(TestCase):
             )
         )
         expected = ["my_var : integer := 16"]
-        actual = list(e())
+        actual = list(e.code())
         actual = actual[2:3]
         self.assertEqual(expected, actual)
 
@@ -101,7 +101,7 @@ class LibraryTest(TestCase):
             "use ieee.numeric_std.all;",
             "use work.all;",
         ]
-        actual = list(lib())
+        actual = list(lib.code())
         self.assertEqual(expected, actual)
 
 
@@ -124,7 +124,7 @@ class ProcessTest(TestCase):
             'y <= "0000000000000000";',
             "end process some_name_process;",
         ]
-        actual = list(process())
+        actual = list(process.code())
         self.assertEqual(expected, actual)
 
     def test_process_with_variables(self):
@@ -147,7 +147,7 @@ class ProcessTest(TestCase):
             'y <= "0000000000000000";',
             "end process some_name_process;",
         ]
-        actual = list(process())
+        actual = list(process.code())
         self.assertEqual(expected, actual)
 
 
@@ -157,7 +157,7 @@ class InterfaceVariableTest(TestCase):
             identifier="some_variable", identifier_type=DataType.INTEGER
         )
         expected = ["some_variable : integer"]
-        actual = list(interface_variable())
+        actual = list(interface_variable.code())
         self.assertEqual(expected, actual)
 
     def test_InterfaceVariable_all_parameters(self):
@@ -169,7 +169,7 @@ class InterfaceVariableTest(TestCase):
             value="16",
         )
         expected = ["my_var : in signed(15 downto 0) := 16"]
-        actual = list(interface_variable())
+        actual = list(interface_variable.code())
         self.assertEqual(expected, actual)
 
 
@@ -179,7 +179,7 @@ class InterfaceSignalTest(TestCase):
             identifier="y", mode=Mode.OUT, range="x", identifier_type=DataType.SIGNED
         )
         expected = ["signal y : out signed(x)"]
-        actual = list(i())
+        actual = list(i.code())
         # actual = actual[2:3]
         self.assertEqual(expected, actual)
 
@@ -188,7 +188,7 @@ class ArchitectureTest(TestCase):
     def test_Architecture_base(self):
         a = Architecture(design_unit="z")
         expected = ["architecture rtl of z is", "begin", "end architecture rtl;"]
-        actual = list(a())
+        actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_variables(self):
@@ -204,7 +204,7 @@ class ArchitectureTest(TestCase):
             "begin",
             "end architecture rtl;",
         ]
-        actual = list(a())
+        actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_architecture_part_as_function(self):
@@ -212,14 +212,14 @@ class ArchitectureTest(TestCase):
             yield "some code"
 
         a = Architecture(design_unit="z")
-        a.architecture_statement_part = function
+        a.architecture_statement_part = function()
         expected = [
             "architecture rtl of z is",
             "begin",
             "some code",
             "end architecture rtl;",
         ]
-        actual = list(a())
+        actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_architecture_part_as_process(self):
@@ -245,7 +245,7 @@ class ArchitectureTest(TestCase):
             "end process some name_process;",
             "end architecture rtl;",
         ]
-        actual = list(a())
+        actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_assignment(self):
@@ -257,7 +257,7 @@ class ArchitectureTest(TestCase):
             "A <= B;",
             "end architecture rtl;",
         ]
-        actual = list(a())
+        actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_port_map(self):
@@ -279,7 +279,7 @@ class ArchitectureTest(TestCase):
             ");",
             "end architecture rtl;",
         ]
-        actual = list(architecture())
+        actual = list(architecture.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_process_statements_list(self):
@@ -301,7 +301,7 @@ class ArchitectureTest(TestCase):
             "end process H_OUT_process;",
             "end architecture rtl;",
         ]
-        actual = list(a())
+        actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
 
@@ -310,7 +310,7 @@ class PortMapTest(TestCase):
         port_map = PortMap(map_name="something", component_name="lstm")
         port_map.signal_list.append("x => y")
         expected = ["something: lstm", "port map (", "x => y", ");"]
-        actual = list(port_map())
+        actual = list(port_map.code())
         self.assertSequenceEqual(expected, actual)
 
 
@@ -318,7 +318,7 @@ class ProcedureTest(TestCase):
     def test_procedure(self):
         procedure = Procedure(identifier="abc")
         expected = ["procedure abc (", "begin", "end abc;"]
-        actual = list(procedure())
+        actual = list(procedure.code())
         self.assertSequenceEqual(expected, actual)
 
     def test_procedure_with_declaration_and_statement_list(self):
@@ -340,5 +340,5 @@ class ProcedureTest(TestCase):
             "xyz <= efg;",
             "end abc;",
         ]
-        actual = list(procedure())
+        actual = list(procedure.code())
         self.assertSequenceEqual(expected, actual)

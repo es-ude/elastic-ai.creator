@@ -65,7 +65,9 @@ def translate_model(
 
         args = translation_args.get(layer_class_name)
         components = module.components(args)
-        files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
+        files = map(
+            lambda x: CodeFile(file_name=x.file_name, code=x.code()), components
+        )
 
         yield CodeModule(module_name=f"{layer_index}_{layer_class_name}", files=files)
 

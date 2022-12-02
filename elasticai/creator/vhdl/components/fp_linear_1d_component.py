@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from importlib.resources import read_text
 from typing import Callable
 
-from elasticai.creator.vhdl.components.utils import (
-    calculate_addr_width,
-    derive_fixed_point_params_from_factory,
-)
+from elasticai.creator.vhdl.components.utils import calculate_addr_width
 from elasticai.creator.vhdl.language import Code
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.number_representations import (
+    FixedPoint,
+    fixed_point_params_from_factory,
+)
 from elasticai.creator.vhdl.templates.utils import expand_template
 
 
@@ -21,7 +21,7 @@ class FPLinear1dComponent:
     resource_option: str = "auto"
 
     def __post_init__(self) -> None:
-        self.data_width, self.frac_width = derive_fixed_point_params_from_factory(
+        self.data_width, self.frac_width = fixed_point_params_from_factory(
             self.fixed_point_factory
         )
         self.x_addr_width = calculate_addr_width(self.in_features)
@@ -31,7 +31,7 @@ class FPLinear1dComponent:
     def file_name(self) -> str:
         return f"fp_linear_1d_{self.layer_id}.vhd"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_linear_1d.tpl.vhd")
 
         code = expand_template(
