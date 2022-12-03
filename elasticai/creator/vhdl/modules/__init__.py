@@ -1,5 +1,7 @@
 from typing import Iterable
 
+import torch.nn
+
 from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.modules.hard_sigmoid import FixedPointHardSigmoid
 from elasticai.creator.vhdl.modules.linear import FixedPointLinear
@@ -8,8 +10,9 @@ from elasticai.creator.vhdl.templates.utils import expand_template
 from elasticai.creator.vhdl.vhdl_files import VHDLModule, VHDLBaseModule, VHDLBaseFile
 
 
-class Module:
+class Module(torch.nn.Module):
     def __init__(self):
+        super().__init__()
         self.elasticai_tags = {}
 
     def to_vhdl(self) -> Iterable[VHDLModule]:
