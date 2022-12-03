@@ -1,7 +1,7 @@
 import unittest
 
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU
+from elasticai.creator.vhdl.modules.relu import FixedPointReLU
 from elasticai.creator.vhdl.translator.abstract.layers.fp_relu_module import (
     FPReLUModule,
 )

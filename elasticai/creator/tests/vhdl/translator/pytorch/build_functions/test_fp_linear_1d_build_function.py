@@ -3,7 +3,7 @@ import unittest
 import torch
 
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
+from elasticai.creator.vhdl.modules.linear import FixedPointLinear
 from elasticai.creator.vhdl.translator.pytorch.build_functions import build_fp_linear_1d
 
 

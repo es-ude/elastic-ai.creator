@@ -59,8 +59,8 @@ class ComponentInstantiation:
             for port in (
                 "enable",
                 "clock",
-                "input",
-                "output",
+                "x",
+                "y",
             )
         ]
 

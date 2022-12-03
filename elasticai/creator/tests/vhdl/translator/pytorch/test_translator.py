@@ -6,7 +6,7 @@ import torch
 
 from elasticai.creator.vhdl.language import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
+from elasticai.creator.vhdl.modules.linear import FixedPointLinear
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
 from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dTranslationArgs,
@@ -21,7 +21,6 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.translator.pytorch.translator import CodeFile, CodeModule
 from elasticai.creator.vhdl.vhdl_files import (
     VHDLFile,
     VHDLModule,
