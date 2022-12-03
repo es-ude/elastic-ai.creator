@@ -7,16 +7,16 @@ use work.all;
 
 entity fp_network is
     port (
-        enable  : in std_logic;
-        clock   : in std_logic;
+        enable: in std_logic;
+        clock: in std_logic;
 
-        x_addr  : out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
-        output_address  : in std_logic_vector($output_address_width-1 downto 0);
+        x_address: out std_logic_vector($x_address_width-1 downto 0);
+        y_address: in std_logic_vector($y_address_width-1 downto 0);
 
-        x_in    : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y_out   : out std_logic_vector(DATA_WIDTH-1 downto 0);
+        x: in std_logic_vector($data_width-1 downto 0);
+        y: out std_logic_vector($data_width-1 downto 0);
 
-        done    : out std_logic
+        done: out std_logic
     );
 end fp_network;
 
@@ -34,7 +34,7 @@ architecture rtl of fp_network is
     -- fp_linear_1d_0
     signal i_fp_linear_1d_0_enable : std_logic := '0';
     signal i_fp_linear_1d_0_clock : std_logic := '0';
-    signal i_fp_linear_1d_0_x_addr : std_logic_vector(LINEAR_0_X_ADDR_WIDTH-1 downto 0);
+    signal i_fp_linear_1d_0_x_addr : std_logic_vector($addre-1 downto 0);
     signal i_fp_linear_1d_0_y_addr : std_logic_vector(LINEAR_0_Y_ADDR_WIDTH-1 downto 0);
     signal i_fp_linear_1d_0_x_in : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal i_fp_linear_1d_0_y_out : std_logic_vector(DATA_WIDTH-1 downto 0);

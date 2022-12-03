@@ -1,12 +1,13 @@
+import unittest
 from unittest import TestCase
 
-from elasticai.creator.vhdl.modules import Module
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
 )
-from elasticai.creator.vhdl.quantized_modules import (
+from elasticai.creator.vhdl.modules import (
     FixedPointLinear,
     FixedPointHardSigmoid,
+    Module,
 )
 
 
@@ -24,9 +25,11 @@ class FirstModel(Module):
 
 
 class GenerateLinearHardSigmoidNetwork(TestCase):
+    def setUp(self):
+        self.model = FirstModel()
+
     @staticmethod
-    def extract_portmap(model):
-        vhdl_modules = model.to_vhdl()
+    def extract_portmap(vhdl_modules):
         network_vhdl_module = next(
             filter(lambda module: module.name == "network", vhdl_modules)
         )
@@ -41,18 +44,39 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
             elif line.lstrip() == "port (":
                 lines_are_relevant = True
 
-    def check_output_address_width(self, value: int):
-        model = FirstModel()
-        model.elasticai_tags.update({"output_address_width": value})
-        expected = f"output_address  : in std_logic_vector({value}-1 downto 0);"
-        portmap = self.extract_portmap(model)
-        actual = next(filter(lambda line: line.startswith("output_address"), portmap))
-        self.assertEqual(expected, actual)
+    def get_generated_portmap_signal_line(self, signal_id, key, value) -> str:
+        self.model.elasticai_tags.update({f"{key}": value})
+        portmap = self.extract_portmap(self.model.to_vhdl())
+        actual = next(filter(lambda line: line.startswith(f"{signal_id}:"), portmap))
+        return actual
+
+    def check_y_address_width(self, value: int):
+        actual = self.get_generated_portmap_signal_line(
+            "y_address", "y_address_width", value
+        )
+        self.assertEqual(f"y_address: in std_logic_vector({value}-1 downto 0);", actual)
+
+    def check_x_data_width(self, value: int):
+        actual = self.get_generated_portmap_signal_line("x", "data_width", value)
+        self.assertEqual(f"x: in std_logic_vector({value}-1 downto 0);", actual)
 
     def test_portmap_output_addr_width_is_4(
         self,
     ):
-        self.check_output_address_width(4)
+        self.check_y_address_width(4)
 
     def test_portmap_output_addr_width_is_8(self):
-        self.check_output_address_width(8)
+        self.check_y_address_width(8)
+
+    def test_x_data_width_is_4(self):
+        self.check_x_data_width(4)
+
+    def test_y_data_width_is_8(self):
+        actual = self.get_generated_portmap_signal_line("y", "data_width", 8)
+        self.assertEqual("y: out std_logic_vector(8-1 downto 0);", actual)
+
+    def test_x_address_width_is_16(self):
+        actual = self.get_generated_portmap_signal_line(
+            "x_address", "x_address_width", 16
+        )
+        self.assertEqual("x_address: out std_logic_vector(16-1 downto 0);", actual)

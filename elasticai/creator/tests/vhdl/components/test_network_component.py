@@ -41,7 +41,7 @@ class ComponentInstantiationTest(unittest.TestCase):
 
     def test_assigns_all_ports(self):
         instantiation = ComponentInstantiation("my_comp")
-        for port in ("enable", "clock", "input", "output"):
+        for port in ("enable", "clock", "x", "y"):
             with self.subTest(port):
                 self.assertTrue(
                     any(

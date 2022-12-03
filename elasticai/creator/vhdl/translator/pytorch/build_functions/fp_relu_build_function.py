@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU
+from elasticai.creator.vhdl.modules.relu import FixedPointReLU
 from elasticai.creator.vhdl.translator.abstract.layers.fp_relu_module import (
     FPReLUModule,
 )

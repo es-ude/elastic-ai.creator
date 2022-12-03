@@ -38,7 +38,7 @@ def _unify_template_datatype(template: Union[str, Iterable[str]]) -> Iterable[st
 
 def expand_template(template: str | Iterable[str], **kwargs: str) -> Iterable[str]:
     if isinstance(template, str):
-        yield Template(template).substitute(kwargs)
+        yield Template(template).safe_substitute(kwargs)
     else:
         for line in template:
-            yield Template(line).substitute(kwargs)
+            yield Template(line).safe_substitute(kwargs)
