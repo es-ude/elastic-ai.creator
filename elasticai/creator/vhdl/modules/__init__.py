@@ -7,6 +7,8 @@ from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.components.network_component import (
     SignalsForComponentWithBuffer,
     SignalsForBufferlessComponent,
+    BufferedComponentInstantiation,
+    ComponentInstantiation,
 )
 from elasticai.creator.vhdl.modules.hard_sigmoid import FixedPointHardSigmoid
 from elasticai.creator.vhdl.modules.linear import FixedPointLinear
@@ -40,7 +42,14 @@ class RootModule(torch.nn.Module):
             name="fp_hard_sigmoid", data_width=self.elasticai_tags["data_width"]
         )
         signals = chain(signals.code(), sigmoid_signals.code())
-        code = expand_multiline_template(code, signal_definitions=signals)
+        layer_instantiations = chain(
+            BufferedComponentInstantiation("fp_linear").code(),
+            ComponentInstantiation("fp_hard_sigmoid").code(),
+        )
+        code = expand_multiline_template(
+            code, signal_definitions=signals, layer_instantiations=layer_instantiations
+        )
+
         yield from [
             VHDLBaseModule(
                 name="network",

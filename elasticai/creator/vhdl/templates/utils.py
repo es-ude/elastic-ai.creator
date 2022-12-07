@@ -5,7 +5,7 @@ from typing import Any, Union
 
 
 def expand_multiline_template(
-    template: Union[str, list[str]], **kwargs: Sequence[str]
+    template: Union[str, Iterable[str]], **kwargs: Iterable[str]
 ) -> Iterator[str]:
     """Expand a template field to multiple lines, while keeping indentation.
     Example:

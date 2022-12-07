@@ -68,12 +68,11 @@ begin
     port map(
         enable => fp_linear_enable,
         clock => fp_linear_clock,
-        x_address => fp_linear_x_address,
-        y_address => fp_linear_y_address,
 
         x => fp_linear_x,
         y => fp_linear_y,
-
+        x_address => fp_linear_x_address,
+        y_address => fp_linear_y_address,
         done => fp_linear_done
     );
 
