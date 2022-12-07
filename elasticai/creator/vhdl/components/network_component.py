@@ -30,7 +30,13 @@ class SignalsForBufferlessComponent:
         return code
 
 
+@dataclasses.dataclass
 class SignalsForComponentWithBuffer(SignalsForBufferlessComponent):
+    name: str
+    data_width: int
+    x_address_width: int
+    y_address_width: int
+
     def code(self) -> Code:
         code = list(super().code())
         code.append(self._std_logic("done"))
