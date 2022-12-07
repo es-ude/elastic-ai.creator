@@ -2,23 +2,23 @@ import unittest
 from io import StringIO
 
 from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
-    VHDFileReaderWithoutComments,
+    VHDLFileReaderWithoutComments,
 )
 
 
 class VHDFileReaderWithoutCommentsTest(unittest.TestCase):
     def check(self, input: str, expected: str):
         io_dummy = StringIO(input)
-        reader = VHDFileReaderWithoutComments(io_dummy)
+        reader = VHDLFileReaderWithoutComments(io_dummy)
         expected = tuple(expected.splitlines())
         actual = tuple(reader)
         self.assertEqual(expected, actual)
 
     def test_ignores_blank_line(self):
-        self.check(input="   \n vhdl file text", expected=" vhdl file text")
+        self.check(input="   \n vhdl file text", expected="vhdl file text")
 
     def test_ignore_line_comment(self):
-        self.check("-- my comment\n my vhdl text", expected=" my vhdl text")
+        self.check("-- my comment\n my vhdl text", expected="my vhdl text")
 
     def test_ignore_trailing_comments(self):
         self.check("some vhdl code -- comment", expected="some vhdl code")

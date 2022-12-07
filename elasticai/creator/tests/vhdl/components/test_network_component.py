@@ -21,7 +21,8 @@ class NetworkHWComponentTest(unittest.TestCase):
      - network needs to know data width
 
     Questions for Chao:
-     - how do i know what the adress width of a layer is?
+        - Answer: address_width == number of bits to count number of inputs
+            - max(1, math.ceil(math.log2(num_items)))
     """
 
 

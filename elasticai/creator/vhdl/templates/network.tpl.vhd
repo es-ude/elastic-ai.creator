@@ -21,79 +21,28 @@ entity fp_network is
 end fp_network;
 
 architecture rtl of fp_network is
-
-    -- Constants for now, should be move to generic map soon
-    constant LINEAR_0_X_ADDR_WIDTH : integer := X_ADDR_WIDTH;
-    constant LINEAR_0_Y_ADDR_WIDTH : integer := 2;
-    constant LINEAR_1_X_ADDR_WIDTH : integer := 2;
-    constant LINEAR_1_Y_ADDR_WIDTH : integer := Y_ADDR_WIDTH;
-
-    --------------------------------------------------------------------------------
-    -- signals
-    --------------------------------------------------------------------------------
-    -- fp_linear_1d_0
-    signal i_fp_linear_1d_0_enable : std_logic := '0';
-    signal i_fp_linear_1d_0_clock : std_logic := '0';
-    signal i_fp_linear_1d_0_x_addr : std_logic_vector($addre-1 downto 0);
-    signal i_fp_linear_1d_0_y_addr : std_logic_vector(LINEAR_0_Y_ADDR_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_0_x_in : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_0_y_out : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_0_done : std_logic := '0';
-
-
-    -- fp_linear_1d_1
-    signal i_fp_linear_1d_1_enable : std_logic := '0';
-    signal i_fp_linear_1d_1_clock : std_logic := '0';
-    signal i_fp_linear_1d_1_x_addr : std_logic_vector(LINEAR_1_X_ADDR_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_1_y_addr : std_logic_vector(LINEAR_1_Y_ADDR_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_1_x_in : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_1_y_out : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal i_fp_linear_1d_1_done : std_logic := '0';
-
-    -- i_fp_relu
-    signal i_fp_relu_enable : std_logic := '0';
-    signal i_fp_relu_clock : std_logic := '0';
-    signal i_fp_relu_input : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal i_fp_relu_output : std_logic_vector(DATA_WIDTH-1 downto 0);
-
-    -- i_fp_hard_sigmoid
-    signal i_fp_hard_sigmoid_enable : std_logic := '0';
-    signal i_fp_hard_sigmoid_clock : std_logic := '0';
-    signal i_fp_hard_sigmoid_input : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal i_fp_hard_sigmoid_output : std_logic_vector(DATA_WIDTH-1 downto 0);
-
+    $signal_definitions
 begin
 
-    x_addr <= i_fp_linear_1d_0_x_addr;
-    i_fp_linear_1d_0_x_in <= x_in;
+    x_address <= fp_linear_x_address;
+    fp_linear_x <= x;
 
     --------------------------------------------------------------------------------
     -- connection between layers
     --------------------------------------------------------------------------------
-    -- fp_linear_1d_0
-    i_fp_linear_1d_0_enable <= enable;
-    i_fp_linear_1d_0_clock <= clock;
-    i_fp_linear_1d_0_y_addr <= i_fp_linear_1d_1_x_addr;
+    -- fp_linear
+    fp_linear_enable <= enable;
+    fp_linear_clock <= clock;
+    fp_linear_y_address <= y_address;
 
-    -- i_fp_relu
-    i_fp_relu_enable <= i_fp_linear_1d_0_done;
-    i_fp_relu_clock <= clock;
-    i_fp_relu_input <= i_fp_linear_1d_0_y_out;
-
-    -- fp_linear_1d_1
-    i_fp_linear_1d_1_enable <= i_fp_linear_1d_0_done;
-    i_fp_linear_1d_1_clock <= clock;
-    i_fp_linear_1d_1_y_addr <= y_addr;
-    i_fp_linear_1d_1_x_in <= i_fp_relu_output;
-
-    -- i_fp_hard_sigmoid
-    i_fp_hard_sigmoid_enable <= i_fp_linear_1d_1_done; -- only enable when the last layer is finished.
-    i_fp_hard_sigmoid_clock <= clock;
-    i_fp_hard_sigmoid_input <= i_fp_linear_1d_1_y_out;
-    y_out <= i_fp_hard_sigmoid_output;
+    -- fp_hard_sigmoid
+    fp_hard_sigmoid_enable <= fp_linear_done; -- only enable when the last layer is finished.
+    fp_hard_sigmoid_clock <= clock;
+    fp_hard_sigmoid_x <= fp_linear_y;
+    y <= fp_hard_sigmoid_y;
 
     -- finally
-    done <= i_fp_linear_1d_1_done;
+    done <= fp_linear_done;
     --------------------------------------------------------------------------------
     -- connection between layers
     --------------------------------------------------------------------------------
@@ -101,47 +50,25 @@ begin
     --------------------------------------------------------------------------------
     -- Instantiate all layers
     --------------------------------------------------------------------------------
-    i_fp_linear_1d_0 : entity work.fp_linear_1d_0(rtl)
+    fp_linear : entity work.fp_linear(rtl)
     port map(
-        enable => i_fp_linear_1d_0_enable,
-        clock  => i_fp_linear_1d_0_clock,
-        x_addr => i_fp_linear_1d_0_x_addr,
-        y_addr => i_fp_linear_1d_0_y_addr,
+        enable => fp_linear_enable,
+        clock => fp_linear_clock,
+        x_address => fp_linear_x_address,
+        y_address => fp_linear_y_address,
 
-        x_in   => i_fp_linear_1d_0_x_in,
-        y_out  => i_fp_linear_1d_0_y_out,
+        x => fp_linear_x,
+        y => fp_linear_y,
 
-        done   => i_fp_linear_1d_0_done
+        done => fp_linear_done
     );
 
-
-    i_fp_linear_1d_1 : entity work.fp_linear_1d_1(rtl)
+    fp_hard_sigmoid : entity work.fp_hard_sigmoid(rtl)
     port map(
-        enable => i_fp_linear_1d_1_enable,
-        clock  => i_fp_linear_1d_1_clock,
-        x_addr => i_fp_linear_1d_1_x_addr,
-        y_addr => i_fp_linear_1d_1_y_addr,
-
-        x_in   => i_fp_linear_1d_1_x_in,
-        y_out  => i_fp_linear_1d_1_y_out,
-
-        done   => i_fp_linear_1d_1_done
-    );
-
-    i_fp_relu : entity work.fp_relu_3(rtl)
-    port map(
-        enable => i_fp_relu_enable,
-        clock  => i_fp_relu_clock,
-        input  => i_fp_relu_input,
-        output => i_fp_relu_output
-    );
-
-    i_fp_hard_sigmoid : entity work.fp_hard_sigmoid_2(rtl)
-    port map(
-        enable => i_fp_hard_sigmoid_enable,
-        clock  => i_fp_hard_sigmoid_clock,
-        input  => i_fp_hard_sigmoid_input,
-        output => i_fp_hard_sigmoid_output
+        enable => fp_hard_sigmoid_enable,
+        clock => fp_hard_sigmoid_clock,
+        x => fp_hard_sigmoid_x,
+        y => fp_hard_sigmoid_y
     );
     --------------------------------------------------------------------------------
     -- Instantiate all layers
