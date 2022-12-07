@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Iterable
 
 import torch.nn

@@ -4,10 +4,10 @@ from torch import Graph
 
 from elasticai.creator.vhdl.model_tracing import Tracer
 from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
-from elasticai.creator.vhdl.modules import FixedPointLinear, Module
+from elasticai.creator.vhdl.modules import FixedPointLinear, RootModule
 
 
-class FPLinearModel(Module):
+class FPLinearModel(RootModule):
     def __init__(self):
         super().__init__()
         fp_factory = ClippedFixedPoint.get_factory(total_bits=16, frac_bits=8)
