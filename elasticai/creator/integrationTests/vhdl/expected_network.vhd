@@ -7,56 +7,56 @@ use work.all;
 
 entity fp_network is
     port (
-        enable  : in std_logic;
-        clock   : in std_logic;
+        enable: in std_logic;
+        clock: in std_logic;
 
-        input_addr  : out std_logic_vector(5 downto 0);
-        output_addr  : in std_logic_vector(3 downto 0);
+        x_address: out std_logic_vector(1-1 downto 0);
+        y_address: in std_logic_vector(1-1 downto 0);
 
-        x_in    : in std_logic_vector(15 downto 0);
-        y_out   : out std_logic_vector(15 downto 0);
+        x: in std_logic_vector(16-1 downto 0);
+        y: out std_logic_vector(16-1 downto 0);
 
-        done    : out std_logic
+        done: out std_logic
     );
 end fp_network;
 
 architecture rtl of fp_network is
 
-    signal fp_linear_1d_0_enable : std_logic := '0';
-    signal fp_linear_1d_0_clock : std_logic := '0';
-    signal fp_linear_1d_0_x_addr : std_logic_vector(5 downto 0);
-    signal fp_linear_1d_0_y_addr : std_logic_vector(3 downto 0);
-    signal fp_linear_1d_0_x_in : std_logic_vector(15 downto 0);
-    signal fp_linear_1d_0_y_out : std_logic_vector(15 downto 0);
-    signal fp_linear_1d_0_done : std_logic := '0';
+    signal fp_linear_enable : std_logic := '0';
+    signal fp_linear_clock : std_logic := '0';
+    signal fp_linear_x : std_logic_vector(15 downto 0);
+    signal fp_linear_y : std_logic_vector(15 downto 0);
+    signal fp_linear_done : std_logic := '0';
+    signal fp_linear_x_address : std_logic_vector(0 downto 0);
+    signal fp_linear_y_address : std_logic_vector(0 downto 0);
 
     -- fp_hard_sigmoid
     signal fp_hard_sigmoid_enable : std_logic := '0';
     signal fp_hard_sigmoid_clock : std_logic := '0';
-    signal fp_hard_sigmoid_input : std_logic_vector(15 downto 0);
-    signal fp_hard_sigmoid_output : std_logic_vector(15 downto 0);
+    signal fp_hard_sigmoid_x : std_logic_vector(15 downto 0);
+    signal fp_hard_sigmoid_y : std_logic_vector(15 downto 0);
 
 begin
 
-    input_addr <= fp_linear_1d_0_input_addr;
-    fp_linear_1d_0_input <= input;
+    x_address <= fp_linear_x_address;
+    fp_linear_x <= x;
 
     --------------------------------------------------------------------------------
     -- connection between layers
     --------------------------------------------------------------------------------
 
-    i_fp_linear_1d_0_enable <= enable;
-    i_fp_linear_1d_0_clock <= clock;
-    i_fp_linear_1d_0_output_addr <= output_addr;
+    fp_linear_enable <= enable;
+    fp_linear_clock <= clock;
+    fp_linear_y_address <= y_address;
 
-    -- i_fp_hard_sigmoid
-    fp_hard_sigmoid_enable <= fp_linear_1d_1_done; -- only enable when the last layer is finished.
+    -- fp_hard_sigmoid
+    fp_hard_sigmoid_enable <= fp_linear_done; -- only enable when the last layer is finished.
     fp_hard_sigmoid_clock <= clock;
-    fp_hard_sigmoid_input <= fp_linear_1d_1_output;
-    output <= fp_hard_sigmoid_output;
+    fp_hard_sigmoid_x <= fp_linear_y;
+    y <= fp_hard_sigmoid_y;
 
     -- finally
-    done <= fp_linear_1d_1_done;
+    done <= fp_linear_done;
     --------------------------------------------------------------------------------
     -- connection between layers
     --------------------------------------------------------------------------------
@@ -64,50 +64,29 @@ begin
     --------------------------------------------------------------------------------
     -- Instantiate all layers
     --------------------------------------------------------------------------------
-    i_fp_linear_1d_0 : entity work.fp_linear_1d_0(rtl)
+    fp_linear : entity work.fp_linear(rtl)
     port map(
-        enable => i_fp_linear_1d_0_enable,
-        clock  => i_fp_linear_1d_0_clock,
-        x_addr => i_fp_linear_1d_0_x_addr,
-        y_addr => i_fp_linear_1d_0_y_addr,
+        enable => fp_linear_enable,
+        clock => fp_linear_clock,
+        x_address => fp_linear_x_address,
+        y_address => fp_linear_y_address,
 
-        x_in   => i_fp_linear_1d_0_x_in,
-        y_out  => i_fp_linear_1d_0_y_out,
+        x => fp_linear_x,
+        y => fp_linear_y,
 
-        done   => i_fp_linear_1d_0_done
+        done => fp_linear_done
     );
 
 
-    i_fp_linear_1d_1 : entity work.fp_linear_1d_1(rtl)
+    fp_hard_sigmoid : entity work.fp_hard_sigmoid(rtl)
     port map(
-        enable => i_fp_linear_1d_1_enable,
-        clock  => i_fp_linear_1d_1_clock,
-        x_addr => i_fp_linear_1d_1_x_addr,
-        y_addr => i_fp_linear_1d_1_y_addr,
-
-        x_in   => i_fp_linear_1d_1_x_in,
-        y_out  => i_fp_linear_1d_1_y_out,
-
-        done   => i_fp_linear_1d_1_done
+        enable => fp_hard_sigmoid_enable,
+        clock => fp_hard_sigmoid_clock,
+        x => fp_hard_sigmoid_x,
+        y => fp_hard_sigmoid_y
     );
-
-    i_fp_relu : entity work.fp_relu_3(rtl)
-    port map(
-        enable => i_fp_relu_enable,
-        clock  => i_fp_relu_clock,
-        input  => i_fp_relu_input,
-        output => i_fp_relu_output
-    );
-
-    i_fp_hard_sigmoid : entity work.fp_hard_sigmoid_2(rtl)
-    port map(
-        enable => i_fp_hard_sigmoid_enable,
-        clock  => i_fp_hard_sigmoid_clock,
-        input  => i_fp_hard_sigmoid_input,
-        output => i_fp_hard_sigmoid_output
-    );
-    --------------------------------------------------------------------------------
-    -- Instantiate all layers
-    --------------------------------------------------------------------------------
+       --------------------------------------------------------------------------------
+       -- Instantiate all layers
+       --------------------------------------------------------------------------------
 
 end rtl;

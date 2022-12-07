@@ -115,11 +115,6 @@ class ExpandTemplatesTest(TestCase):
         expected = "42"
         self.assertEqual(expected, actual)
 
-    def test_raise_key_error_for_missing_key(self) -> None:
-        template = "$some_key"
-        with self.assertRaises(KeyError):
-            _ = newline_join(expand_template(template))
-
     def test_expand_multiple_strings_template(self) -> None:
         template = ["$val1", "$val2", "$val3"]
         actual = newline_join(

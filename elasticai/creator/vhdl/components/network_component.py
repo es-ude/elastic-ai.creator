@@ -7,8 +7,6 @@ from elasticai.creator.vhdl.vhdl_files import StaticVHDLFile
 @dataclasses.dataclass
 class SignalsForBufferlessComponent:
     name: str
-    input_address_width: int
-    output_address_width: int
     data_width: int
 
     def _logic_vector(self, suffix, width) -> str:
@@ -23,8 +21,8 @@ class SignalsForBufferlessComponent:
             [
                 self._logic_vector(suffix, width)
                 for suffix, width in (
-                    ("input", self.data_width),
-                    ("output", self.data_width),
+                    ("x", self.data_width),
+                    ("y", self.data_width),
                 )
             ]
         )
@@ -40,8 +38,8 @@ class SignalsForComponentWithBuffer(SignalsForBufferlessComponent):
             [
                 self._logic_vector(suffix, width)
                 for suffix, width in (
-                    ("input_addr_width", self.input_address_width),
-                    ("output_addr_width", self.output_address_width),
+                    ("x_address", self.x_address_width),
+                    ("y_address", self.y_address_width),
                 )
             ]
         )
@@ -90,7 +88,7 @@ class BufferedComponentInstantiation(ComponentInstantiation):
         signals = super()._generate_port_map_signals()
         signals.extend(
             self._generate_port_to_signal_connection(port)
-            for port in ("input_addr", "output_addr", "done")
+            for port in ("x_address", "y_address", "done")
         )
         return signals
 

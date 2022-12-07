@@ -1,24 +1,29 @@
-import unittest
+from io import StringIO
 from unittest import TestCase
+
+from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
+    VHDLFileReaderWithoutComments,
+)
+from elasticai.creator.resource_utils import read_text, get_file
+from elasticai.creator.vhdl.modules import (
+    FixedPointLinear,
+    FixedPointHardSigmoid,
+    RootModule,
+)
 
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
 )
-from elasticai.creator.vhdl.modules import (
-    FixedPointLinear,
-    FixedPointHardSigmoid,
-    Module,
-)
 
 
-class FirstModel(Module):
+class FirstModel(RootModule):
     def __init__(self):
         super().__init__()
         fp_factory = ClippedFixedPoint.get_factory(total_bits=16, frac_bits=8)
         self.fp_linear = FixedPointLinear(
             in_features=1, out_features=1, fixed_point_factory=fp_factory
         )
-        self.hard_sigmoid = FixedPointHardSigmoid(fixed_point_factory=fp_factory)
+        self.fp_hard_sigmoid = FixedPointHardSigmoid(fixed_point_factory=fp_factory)
 
     def forward(self, x):
         return self.hard_sigmoid(self.fp_linear(x))
@@ -27,22 +32,33 @@ class FirstModel(Module):
 class GenerateLinearHardSigmoidNetwork(TestCase):
     def setUp(self):
         self.model = FirstModel()
+        with get_file(
+            "elasticai.creator.integrationTests.vhdl", "expected_network.vhd"
+        ) as f:
+            self.expected_code = VHDLFileReaderWithoutComments(f).as_list()
 
     @staticmethod
     def extract_portmap(vhdl_modules):
-        network_vhdl_module = next(
-            filter(lambda module: module.name == "network", vhdl_modules)
-        )
-        network_vhd_file = next(iter(network_vhdl_module.files))
         lines_are_relevant = False
-        for line in network_vhd_file.code:
+        for line in GenerateLinearHardSigmoidNetwork.get_network_vhdl_code(
+            vhdl_modules
+        ):
             if lines_are_relevant:
-                if line.lstrip() == ");":
+                if line == ");":
                     break
                 else:
-                    yield line.lstrip()
-            elif line.lstrip() == "port (":
+                    yield line
+            elif line == "port (":
                 lines_are_relevant = True
+
+    @staticmethod
+    def get_network_vhdl_code(modules):
+        module = next(filter(lambda module: module.name == "network", modules))
+        vhdl_file = next(iter(module.files))
+        code = "\n".join(vhdl_file.code)
+        io = StringIO(code)
+        code = VHDLFileReaderWithoutComments(io).as_list()
+        return code
 
     def get_generated_portmap_signal_line(self, signal_id, key, value) -> str:
         self.model.elasticai_tags.update({f"{key}": value})
@@ -80,3 +96,16 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
             "x_address", "x_address_width", 16
         )
         self.assertEqual("x_address: out std_logic_vector(16-1 downto 0);", actual)
+
+    def test_check_network_vhdl_file(self):
+        self.model.elasticai_tags.update(
+            {
+                "x_address_width": 1,
+                "y_address_width": 1,
+                "data_width": 16,
+            }
+        )
+        self.assertEqual(
+            list(self.expected_code),
+            list(self.get_network_vhdl_code(self.model.to_vhdl())),
+        )
