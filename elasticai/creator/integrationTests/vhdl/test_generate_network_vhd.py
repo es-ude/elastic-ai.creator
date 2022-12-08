@@ -5,11 +5,11 @@ from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
     VHDLFileReaderWithoutComments,
 )
 from elasticai.creator.resource_utils import read_text, get_file
-from elasticai.creator.vhdl.modules import (
+from elasticai.creator.nn.linear import (
     FixedPointLinear,
-    FixedPointHardSigmoid,
-    RootModule,
 )
+from elasticai.creator.nn.hard_sigmoid import FixedPointHardSigmoid
+from vhdl.hw_equivalent_layers import RootModule
 
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
@@ -55,7 +55,7 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
     def get_network_vhdl_code(modules):
         module = next(filter(lambda module: module.name == "network", modules))
         vhdl_file = next(iter(module.files))
-        code = "\n".join(vhdl_file.code)
+        code = "\n".join(vhdl_file.code())
         io = StringIO(code)
         code = VHDLFileReaderWithoutComments(io).as_list()
         return code

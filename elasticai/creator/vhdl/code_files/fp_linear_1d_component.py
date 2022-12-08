@@ -2,18 +2,20 @@ from dataclasses import dataclass, field
 from importlib.resources import read_text
 from typing import Callable
 
-from elasticai.creator.vhdl.components.utils import (
+from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
-from vhdl.code import Code
+from vhdl.code import Code, CodeFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.templates.utils import expand_template
-from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
 @dataclass
-class FPLinear1dFile(VHDLFile):
+class FPLinear1dFile(CodeFile):
+    def save_to(self, prefix: str):
+        raise NotImplementedError()
+
     layer_id: str  # used to distinguish layers in the same model
     in_features: int
     out_features: int

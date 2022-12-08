@@ -6,19 +6,16 @@ import torch.nn
 
 from elasticai.creator.vhdl.language import (
     Architecture,
-    ComponentDeclaration,
     ContextClause,
     DataType,
     Entity,
     InterfaceVariable,
     LibraryClause,
-    PortMap,
     Process,
     UseClause,
     bin_representation,
 )
 from vhdl.code import Code, CodeGenerator
-from elasticai.creator.vhdl.language_testbench import TestBenchBase
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
@@ -214,137 +211,3 @@ class Tanh(PrecomputedScalarFunction):
         y = float_values_to_fixed_point(y_list, *infer_total_and_frac_bits(x))
 
         super(Tanh, self).__init__(x=x, y=y, component_name=component_name)
-
-
-class PrecomputedScalarTestBench:
-    def __init__(
-        self,
-        x_list_for_testing: list[FixedPoint],
-        y_list_for_testing: list[FixedPoint],
-        component_name: str = None,
-    ):
-        self.component_name = self._get_lower_case_class_name_or_component_name(
-            component_name=component_name
-        )
-        self.data_width, self.frac_width = infer_total_and_frac_bits(
-            x_list_for_testing, y_list_for_testing
-        )
-        self.x_list_for_testing = x_list_for_testing
-        self.y_list_for_testing = y_list_for_testing
-
-    @classmethod
-    def _get_lower_case_class_name_or_component_name(cls, component_name):
-        if component_name is None:
-            return cls.__name__.lower()
-        return component_name
-
-    @property
-    def file_name(self) -> str:
-        return f"{self.component_name}_tb.vhd"
-
-    def __call__(self) -> Iterable[str]:
-        library = ContextClause(
-            library_clause=LibraryClause(logical_name_list=["ieee"]),
-            use_clause=UseClause(
-                selected_names=[
-                    "ieee.std_logic_1164.all",
-                    "ieee.numeric_std.all",
-                    "ieee.math_real.all",
-                ]
-            ),
-        )
-
-        entity = Entity(self.component_name + "_tb")
-        entity.generic_list = [
-            f"DATA_WIDTH : integer := {self.data_width}",
-            f"FRAC_WIDTH : integer := {self.frac_width}",
-        ]
-        entity.port_list = [
-            "clk : out std_logic",
-        ]
-
-        component = ComponentDeclaration(identifier=self.component_name)
-        component.generic_list = [
-            f"DATA_WIDTH : integer := {self.data_width}",
-            f"FRAC_WIDTH : integer := {self.frac_width}",
-        ]
-        component.port_list = [
-            "x : in signed(DATA_WIDTH-1 downto 0)",
-            "y : out signed(DATA_WIDTH-1 downto 0)",
-        ]
-
-        process = Process(
-            identifier="clock",
-        )
-        process.process_statements_list = [
-            "clk <= '0'",
-            "wait for clk_period/2",
-            "clk <= '1'",
-            "wait for clk_period/2",
-        ]
-
-        uut_port_map = PortMap(map_name="uut", component_name=self.component_name)
-        uut_port_map.signal_list.append("x => test_input")
-        uut_port_map.signal_list.append("y => test_output")
-
-        test_cases = TestCasesPrecomputedScalarFunction(
-            x_list_for_testing=self.x_list_for_testing,
-            y_list_for_testing=self.y_list_for_testing,
-        )
-        test_process = Process(identifier="test")
-        test_process.process_statements_list = [t for t in test_cases()]
-
-        architecture = Architecture(
-            design_unit=self.component_name + "_tb",
-        )
-        architecture.architecture_declaration_list = [
-            "signal clk_period : time := 1 ns",
-            "signal test_input : signed(16-1 downto 0):=(others=>'0')",
-            "signal test_output : signed(16-1 downto 0)",
-        ]
-
-        architecture.architecture_component_list.append(component)
-        architecture.architecture_process_list.append(process)
-        architecture.architecture_port_map_list.append(uut_port_map)
-        architecture.architecture_statement_part = test_process
-
-        code = chain(library(), entity(), architecture())
-        return code
-
-
-class TestCasesPrecomputedScalarFunction(TestBenchBase):
-    def __init__(
-        self,
-        x_list_for_testing: list[FixedPoint],
-        y_list_for_testing: list[FixedPoint],
-        x_variable_name: str = "test_input",
-        y_variable_name: str = "test_output",
-    ):
-        assert len(x_list_for_testing) == len(y_list_for_testing)
-        self.data_width, _ = infer_total_and_frac_bits(
-            x_list_for_testing, y_list_for_testing
-        )
-        self.x_list_for_testing = [
-            value.to_signed_int() for value in x_list_for_testing
-        ]
-        self.y_list_for_testing = [
-            value.to_signed_int() for value in y_list_for_testing
-        ]
-        self.x_variable_name = x_variable_name
-        self.y_variable_name = y_variable_name
-
-    def __len__(self):
-        return len(self.y_list_for_testing)
-
-    def _body(self) -> Iterator[str]:
-        for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
-            yield f"{self.x_variable_name} <= to_signed({x_value},{self.data_width})"
-            yield f"wait for 1*clk_period"
-            yield f"report \"The value of '{self.y_variable_name}' is \" & integer'image(to_integer(unsigned({self.y_variable_name})))"
-            if isinstance(y_value, str):
-                yield f'assert {self.y_variable_name}="{y_value}" report "The test case {x_value} fail" severity failure'
-            else:
-                yield f'assert {self.y_variable_name}={y_value} report "The test case {x_value} fail" severity failure'
-
-    def __call__(self) -> Iterable[Code]:
-        yield from iter(self)

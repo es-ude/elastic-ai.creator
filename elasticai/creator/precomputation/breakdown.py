@@ -4,9 +4,9 @@ a fixed width.
 import torch.nn
 from torch.nn.utils import parametrize
 
-from elasticai.creator.qat.blocks import Conv2dBlock
-from elasticai.creator.qat.layers import ChannelShuffle
-from elasticai.creator.qat.masks import FixedOffsetMask4d
+from elasticai.creator.nn.blocks import Conv2dBlock
+from elasticai.creator.nn.layers import ChannelShuffle
+from elasticai.creator.nn.masks import FixedOffsetMask4d
 
 
 def generate_conv2d_sequence_with_width(

@@ -1,9 +1,8 @@
 import math
-from abc import abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
 from functools import partial
 from itertools import chain
-from typing import Any, Callable, Protocol
+from typing import Any, Callable
 
 
 def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
@@ -167,9 +166,7 @@ class FixedPoint:
 
     @staticmethod
     def get_factory(total_bits: int, frac_bits: int) -> Callable[[float], "FixedPoint"]:
-        return _FixedPointFactoryImpl(
-            total_bits=total_bits, frac_bits=frac_bits, constructor=FixedPoint
-        )
+        return partial(FixedPoint, total_bits=total_bits, frac_bits=frac_bits)
 
     @property
     def total_bits(self) -> int:
@@ -265,47 +262,11 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     return total_bits, frac_bits
 
 
-class FixedPointFactory(Protocol):
-    @property
-    @abstractmethod
-    def total_bits(self) -> int:
-        ...
-
-    @property
-    @abstractmethod
-    def frac_bits(self) -> int:
-        ...
-
-    @abstractmethod
-    def __call__(self, f: float) -> FixedPoint:
-        ...
-
-
-class _FixedPointFactoryImpl(FixedPointFactory):
-    def __init__(
-        self,
-        total_bits: int,
-        frac_bits: int,
-        constructor: Callable[[float, int, int], FixedPoint],
-    ):
-        self._frac_bits = frac_bits
-        self._total_bits = total_bits
-        self._constructor = constructor
-
-    @property
-    def total_bits(self) -> int:
-        return self._total_bits
-
-    @property
-    def frac_bits(self) -> int:
-        return self._frac_bits
-
-    def __call__(self, f: float) -> FixedPoint:
-        return self._constructor(f, self._total_bits, self._frac_bits)
+FixedPointFactory = Callable[[float], FixedPoint]
 
 
 def fixed_point_params_from_factory(factory: FixedPointFactory) -> tuple[int, int]:
-    return factory.total_bits, factory.frac_bits
+    return factory(1).total_bits, factory(1).frac_bits
 
 
 def float_values_to_fixed_point(

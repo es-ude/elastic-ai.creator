@@ -1,5 +1,5 @@
 from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
-from elasticai.creator.vhdl.components.rom_component import RomComponent
+from elasticai.creator.vhdl.code_files.rom_component import RomComponent
 from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 
 
@@ -13,7 +13,7 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
             values=float_values_to_fixed_point(bi, total_bits=12, frac_bits=4),
             resource_option="auto",
         )
-        generated_code = list(rom.code)
+        generated_code = list(rom.code())
 
         expected_code = [
             "library ieee;",

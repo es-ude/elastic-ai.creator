@@ -6,11 +6,11 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPointFactory,
     fixed_point_params_from_factory,
 )
-from elasticai.creator.vhdl.modules.autograd_functions import (
+from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.vhdl.modules.typing import QuantType
+from elasticai.creator.nn.typing import QuantType
 
 OperationType = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
 

@@ -17,7 +17,7 @@ from elasticai.creator.vhdl.modules import (
     FixedPointLinear,
     FixedPointReLU,
 )
-from elasticai.creator.vhdl.modules.autograd_functions import (
+from qat.autograd_functions import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )

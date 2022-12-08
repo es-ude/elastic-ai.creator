@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
 )
-from elasticai.creator.vhdl.modules.hard_sigmoid import (
+from elasticai.creator.nn.hard_sigmoid import (
     FixedPointHardSigmoid,
     _HardSigmoidBase,
 )

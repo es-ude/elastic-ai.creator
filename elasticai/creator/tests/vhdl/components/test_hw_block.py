@@ -1,11 +1,13 @@
 import unittest
 
-from elasticai.creator.vhdl.components.network_component import ComponentInstantiation
-from vhdl.components.network_component import (
-    SignalsForBufferlessComponent,
-    SignalsForComponentWithBuffer,
+from vhdl.hw_blocks import (
+    HWBlock,
+    BaseHWBlock,
+    BufferedBaseHWBlock,
+    _SignalsForBufferlessComponent,
+    _SignalsForComponentWithBuffer,
+    _ComponentInstantiation,
 )
-from vhdl.hw_blocks import HWBlock, BaseHWBlock, BufferedBaseHWBlock
 
 
 class NetworkHWComponentTest(unittest.TestCase):

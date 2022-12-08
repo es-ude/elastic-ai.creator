@@ -1,30 +1,16 @@
+import dataclasses
 from abc import abstractmethod
 from collections.abc import Collection
-from typing import Iterable, Callable, Protocol
+from typing import Iterable, Callable, Protocol, Optional
 
 Code = Iterable[str]
 CodeGenerator = Callable[[], Code]
 CodeGeneratorCompatible = Code | CodeGenerator | str
 
 
-class CodeModule(Protocol):
-    @property
+class Translatable(Protocol):
     @abstractmethod
-    def name(self) -> str:
-        ...
-
-    @property
-    @abstractmethod
-    def submodules(self) -> Collection["CodeModule"]:
-        ...
-
-    @property
-    @abstractmethod
-    def files(self) -> Collection["CodeFile"]:
-        ...
-
-    @abstractmethod
-    def save_to(self, directory: str) -> None:
+    def translate(self) -> "CodeModule":
         ...
 
 
@@ -35,15 +21,71 @@ class CodeFile(Protocol):
         ...
 
     @abstractmethod
-    def save_to(self, directory: str) -> None:
-        ...
-
-    @abstractmethod
     def code(self) -> Code:
         ...
 
-
-class Translatable(Protocol):
     @abstractmethod
-    def translate(self) -> CodeModule:
+    def save_to(self, prefix: str):
         ...
+
+
+class CodeModule(Protocol):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def files(self) -> Collection[CodeFile]:
+        ...
+
+    @property
+    @abstractmethod
+    def submodules(self) -> Collection["CodeModule"]:
+        ...
+
+
+@dataclasses.dataclass
+class CodeModuleBase(CodeModule):
+    @property
+    def submodules(self) -> Collection["CodeModule"]:
+        return self._submodules
+
+    @property
+    def files(self) -> Collection[CodeFile]:
+        return self._files
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def __init__(
+        self,
+        name: str,
+        files: Collection[CodeFile],
+        submodules: Optional[Collection["CodeModule"]] = None,
+    ):
+        self._name = name
+        self._files = files
+        self._submodules = submodules
+
+
+class CodeFileBase(CodeFile):
+    def save_to(self, prefix: str):
+        with open(f"{prefix}_{self.name}.vhd", "w") as f:
+            f.writelines(self.code())
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def code(self) -> Code:
+        return self._code
+
+    def __repr__(self) -> str:
+        return f"CodeBaseFile(name={self._name}, code={self._code})"
+
+    def __init__(self, name: str, code: Code):
+        self._name = name
+        self._code = code

@@ -1,13 +1,13 @@
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Callable
+from typing import Callable, Collection
 
 import numpy as np
 
-from elasticai.creator.vhdl.components import FPLinear1dFile, RomComponent
+from elasticai.creator.vhdl.code_files import FPLinear1dFile, RomComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
+from vhdl.code import CodeFile, CodeModule
 
 
 @dataclass
@@ -17,7 +17,11 @@ class FPLinear1dTranslationArgs:
 
 
 @dataclass
-class FPLinear1dModule(VHDLModule):
+class FPLinear1dModule(CodeModule):
+    @property
+    def submodules(self) -> Collection["CodeModule"]:
+        raise NotImplementedError()
+
     layer_id: str
     weight: list[list[float]]
     bias: list[float]
@@ -26,7 +30,7 @@ class FPLinear1dModule(VHDLModule):
     def name(self) -> str:
         return self.layer_id
 
-    def files(self, args: FPLinear1dTranslationArgs) -> Iterator[VHDLFile]:
+    def files(self, args: FPLinear1dTranslationArgs) -> Iterator[CodeFile]:
         def to_fp(values: Iterable[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 

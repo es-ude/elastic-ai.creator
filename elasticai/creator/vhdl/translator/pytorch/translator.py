@@ -4,21 +4,21 @@ from typing import Any, Iterable, Iterator
 import torch
 
 from elasticai.creator.resource_utils import PathType
-from elasticai.creator.vhdl.components.network_component import NetworkVHDLFile
+from elasticai.creator.vhdl.code_files.network_component import NetworkVHDLFile
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.vhdl_files import VHDLModule, VHDLBaseFile, VHDLBaseModule
+from vhdl.code import CodeModule, CodeModuleBase, CodeFileBase
 
 
 def translate_model(
     model: torch.nn.Module,
     translation_args: dict[str, Any],
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
-) -> Iterator[VHDLModule]:
+) -> Iterator[CodeModule]:
     """
     Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
     as an iterator of VHDLModule objects.
@@ -50,23 +50,22 @@ def translate_model(
                 f"Layer '{layer_class_name}' is currently not supported."
             )
         module = build_fn(layer, str(layer_index))
+        files = module.files
 
-        args = translation_args.get(layer_class_name)
-        components = module.files
-        files = map(lambda x: VHDLBaseFile(name=x.name, code=x.code), components)
-
-        yield VHDLBaseModule(name=f"{layer_index}_{layer_class_name}", files=files)
+        yield CodeModuleBase(
+            name=f"{layer_index}_{layer_class_name}", files=list(files)
+        )
     network = NetworkVHDLFile()
-    network_file = VHDLBaseFile(name=network.name, code=network.code)
-    yield VHDLBaseModule(name="network_component", files=[network_file])
+    network_file = CodeFileBase(name=network.name, code=network.code())
+    yield CodeModuleBase(name="network_component", files=[network_file])
 
 
-def save_code(code_repr: Iterable[VHDLModule], path: PathType) -> None:
+def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
     """
     Saves the generated code on the file system.
 
     Parameters:
-        code_repr (Iterable[VHDLModule]): The generated code that should be saved.
+        code_repr (Iterable[CodeModule]): The generated code that should be saved.
         path (PathType):
             The path to a folder in which the code should be saved. All parent folders that don't exist will be created.
     """
