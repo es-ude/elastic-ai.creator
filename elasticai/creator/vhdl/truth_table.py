@@ -5,7 +5,7 @@ from typing import Iterable, Iterator, Protocol, Sequence
 import numpy as np
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
 from elasticai.creator.vhdl.templates.utils import expand_multiline_template
 

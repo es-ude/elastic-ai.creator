@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Iterable, Protocol
 
 from elasticai.creator.resource_utils import Package, read_text
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 
 
 class VHDLFile(Protocol):

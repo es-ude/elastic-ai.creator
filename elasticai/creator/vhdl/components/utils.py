@@ -19,5 +19,5 @@ def derive_fixed_point_params_from_factory(
     return dummy_value.total_bits, dummy_value.frac_bits
 
 
-def calculate_addr_width(num_items: int) -> int:
+def calculate_address_width(num_items: int) -> int:
     return max(1, math.ceil(math.log2(num_items)))

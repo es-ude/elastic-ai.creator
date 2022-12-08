@@ -4,7 +4,7 @@ from typing import Any, Iterable
 
 import torch
 
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.modules.linear import FixedPointLinear
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule

@@ -3,10 +3,10 @@ from importlib.resources import read_text
 from typing import Callable
 
 from elasticai.creator.vhdl.components.utils import (
-    calculate_addr_width,
+    calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.templates.utils import expand_template
 from elasticai.creator.vhdl.vhdl_files import VHDLFile
@@ -25,8 +25,8 @@ class FPLinear1dFile(VHDLFile):
         self.data_width, self.frac_width = derive_fixed_point_params_from_factory(
             self.fixed_point_factory
         )
-        self.x_addr_width = calculate_addr_width(self.in_features)
-        self.y_addr_width = calculate_addr_width(self.out_features)
+        self.x_addr_width = calculate_address_width(self.in_features)
+        self.y_addr_width = calculate_address_width(self.out_features)
 
     @property
     def name(self) -> str:

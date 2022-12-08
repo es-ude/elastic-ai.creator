@@ -1,6 +1,11 @@
 import unittest
 
 from elasticai.creator.vhdl.components.network_component import ComponentInstantiation
+from vhdl.components.network_component import (
+    SignalsForBufferlessComponent,
+    SignalsForComponentWithBuffer,
+)
+from vhdl.hw_blocks import HWBlock, BaseHWBlock, BufferedBaseHWBlock
 
 
 class NetworkHWComponentTest(unittest.TestCase):
@@ -26,39 +31,84 @@ class NetworkHWComponentTest(unittest.TestCase):
     """
 
 
-class ComponentInstantiationTest(unittest.TestCase):
+class HWBlockInstantiationTest(unittest.TestCase):
     def test_creates_instance(self):
-        instantiation = ComponentInstantiation("my_comp")
-
-        first_line = list(instantiation.code())[0]
+        block = BaseHWBlock(0)
+        lines = block.instantiation("my_comp")
+        first_line = list(lines)[0]
         expected = "my_comp : entity work.my_comp(rtl)"
         self.assertEqual(expected, first_line)
 
     def test_opens_portmap(self):
-        instantiation = ComponentInstantiation("my_comp")
-        second_line = list(instantiation.code())[1]
+        block = BaseHWBlock(0)
+        lines = block.instantiation("my_comp")
+        second_line = list(lines)[1]
         expected = "port map("
         self.assertEqual(expected, second_line)
 
     def test_assigns_all_ports(self):
-        instantiation = ComponentInstantiation("my_comp")
+        block = BaseHWBlock(0)
+        lines = block.instantiation("my_comp")
         for port in ("enable", "clock", "x", "y"):
             with self.subTest(port):
-                self.assertTrue(
-                    any(
-                        (
-                            line.startswith(f"{port} => ")
-                            for line in instantiation.code()
-                        )
-                    )
-                )
+                self.assertTrue(any((line.startswith(f"{port} => ") for line in lines)))
 
     def test_ports_are_connected_to_correctly_named_signals(self):
-        instantiation = ComponentInstantiation("some_other_name")
-        port_to_signal_connections = list(instantiation.code())[2:-1]
+        block = BaseHWBlock(0)
+        lines = block.instantiation("some_other_name")
+        port_to_signal_connections = list(lines)[2:-1]
         for line in port_to_signal_connections:
             with self.subTest(line):
                 line = line.strip(",")
                 port = line.split(" => ")[0]
                 signal = line.split(" => ")[1]
                 self.assertEqual(signal, f"some_other_name_{port}")
+
+
+class HWBlockSignals(unittest.TestCase):
+    def constructor(self, name, data_width, *args):
+        return BaseHWBlock(data_width).signals(name)
+
+    def test_clock_signal_is_generated(self):
+        signals = self.constructor("other_name", 2)
+        self.assertTrue("signal other_name_clock : std_logic := '0';" in list(signals))
+
+    def test_component_name_is_generated(self):
+        signals = self.constructor("other_name", 2)
+        self.assertTrue("signal other_name_enable : std_logic := '0';" in list(signals))
+
+    def check_signals_contain_logic_vector(self, prefix, signals, suffix, width):
+        expected = f"signal {prefix}_{suffix} : std_logic_vector({width - 1} downto 0);"
+        signals = list(signals)
+        self.assertTrue(
+            expected in signals,
+            msg=f"expected: {expected}\nfound: {signals}",
+        )
+
+    def test_generates_correct_number_of_lines(self):
+        signals = self.constructor("other_name", 2)
+        self.assertEqual(4, len(tuple(signals)))
+
+
+class BufferedHWBlockSignals(HWBlockSignals):
+    def constructor(self, name, data_width, *args):
+        x_address_width = 1
+        y_address_width = 1
+        if len(args) == 2:
+            x_address_width = args[0]
+            y_address_width = args[1]
+        return BufferedBaseHWBlock(
+            data_width, x_address_width, y_address_width
+        ).signals(name)
+
+    def test_5_downto_0_generated_for_x_addr_width_6(self):
+        signals = self.constructor("other_name", 4, 6, 2)
+        self.check_signals_contain_logic_vector("other_name", signals, "x_address", 6)
+
+    def test_8_downto_0_generated_for_y_addr_width_9(self):
+        signals = self.constructor("other_name", 4, 6, 9)
+        self.check_signals_contain_logic_vector("other_name", signals, "y_address", 9)
+
+    def test_generates_correct_number_of_lines(self):
+        signals = self.constructor("other_name", 2, 2, 4)
+        self.assertEqual(7, len(tuple(signals)))

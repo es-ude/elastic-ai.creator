@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,
