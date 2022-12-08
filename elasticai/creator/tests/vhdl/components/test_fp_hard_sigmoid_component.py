@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import (
     FPHardSigmoidComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
@@ -19,4 +19,4 @@ class FPHardSigmoidComponentTest(unittest.TestCase):
             fixed_point_factory=to_fp,
         )
 
-        self.assertEqual(len(list(component())), 88)
+        self.assertEqual(len(list(component.code())), 88)

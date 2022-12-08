@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Iterable, Collection
 
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import (
     FPHardSigmoidComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
