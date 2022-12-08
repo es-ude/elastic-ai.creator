@@ -1,7 +1,7 @@
 import dataclasses
 from abc import abstractmethod
 from collections.abc import Collection
-from typing import Iterable, Callable, Protocol, Optional
+from typing import Iterable, Callable, Protocol, Optional, Union
 
 Code = Iterable[str]
 CodeGenerator = Callable[[], Code]
@@ -22,6 +22,21 @@ class CodeFile(Protocol):
 
     @abstractmethod
     def code(self) -> Code:
+        ...
+
+    @property
+    @abstractmethod
+    def multi_line_parameters(self) -> dict[str, Iterable[str]]:
+        ...
+
+    @property
+    @abstractmethod
+    def single_line_parameter(self) -> dict[str, str]:
+        ...
+
+    @property
+    @abstractmethod
+    def parameters(self) -> dict[str, Union[str, Iterable[str]]]:
         ...
 
     @abstractmethod

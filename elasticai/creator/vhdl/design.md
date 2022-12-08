@@ -41,6 +41,8 @@ classDiagram
   CodeModule: Collection~CodeFile~ files
   class CodeFile {
     str name
+    dict[str, str] single_line_parameters
+    dict[str, Iterable[str]] multi_line_parameters
     code() Code
     save_to(str dir)
   }
