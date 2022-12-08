@@ -57,7 +57,7 @@ class VHDLFile(CodeFile):
         return dict(chain(self._parameters.items(), self._multiline_parameters.items()))
 
     @property
-    def multiline_parameters(self):
+    def multi_line_parameters(self):
         return dict(**self._multiline_parameters)
 
     @property
