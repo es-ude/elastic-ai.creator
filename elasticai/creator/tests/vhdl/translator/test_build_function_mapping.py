@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import elasticai.creator.qat.layers as qtorch
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )

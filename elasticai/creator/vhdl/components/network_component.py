@@ -1,6 +1,6 @@
 import dataclasses
 
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.vhdl_files import StaticVHDLFile
 
 

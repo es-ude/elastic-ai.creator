@@ -3,7 +3,6 @@ from itertools import chain
 
 from elasticai.creator.vhdl.language import (
     Architecture,
-    Code,
     ContextClause,
     Entity,
     Keywords,
@@ -14,6 +13,7 @@ from elasticai.creator.vhdl.language import (
     UseClause,
     hex_representation,
 )
+from vhdl.code import Code
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,

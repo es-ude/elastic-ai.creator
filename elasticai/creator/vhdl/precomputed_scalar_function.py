@@ -6,8 +6,6 @@ import torch.nn
 
 from elasticai.creator.vhdl.language import (
     Architecture,
-    Code,
-    CodeGenerator,
     ComponentDeclaration,
     ContextClause,
     DataType,
@@ -19,6 +17,7 @@ from elasticai.creator.vhdl.language import (
     UseClause,
     bin_representation,
 )
+from vhdl.code import Code, CodeGenerator
 from elasticai.creator.vhdl.language_testbench import TestBenchBase
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,

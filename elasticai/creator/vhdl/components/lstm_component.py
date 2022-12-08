@@ -3,10 +3,10 @@ from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.components.utils import (
-    calculate_addr_width,
+    calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
-from elasticai.creator.vhdl.language import Code
+from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.templates.utils import expand_template
 
@@ -22,9 +22,11 @@ class LSTMFile:
         self.data_width, self.frac_width = derive_fixed_point_params_from_factory(
             self.fixed_point_factory
         )
-        self.x_h_addr_width = calculate_addr_width(self.input_size + self.hidden_size)
-        self.hidden_addr_width = calculate_addr_width(self.input_size)
-        self.w_addr_width = calculate_addr_width(
+        self.x_h_addr_width = calculate_address_width(
+            self.input_size + self.hidden_size
+        )
+        self.hidden_addr_width = calculate_address_width(self.input_size)
+        self.w_addr_width = calculate_address_width(
             (self.input_size + self.hidden_size) * self.hidden_size
         )
 

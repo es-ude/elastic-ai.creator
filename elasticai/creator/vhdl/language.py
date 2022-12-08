@@ -13,10 +13,9 @@ from enum import Enum
 from itertools import chain, filterfalse
 from typing import Callable, Iterable, Literal, Optional, Sequence, Union
 
+from vhdl.code import Code, CodeGenerator, CodeGeneratorCompatible
+
 Identifier = str
-Code = Iterable[str]
-CodeGenerator = Callable[[], Code]
-CodeGeneratorCompatible = Code | CodeGenerator | str
 
 
 class Keywords(Enum):

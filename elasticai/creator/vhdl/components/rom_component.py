@@ -2,8 +2,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.components.utils import calculate_addr_width, pad_with_zeros
-from elasticai.creator.vhdl.language import Code, hex_representation
+from elasticai.creator.vhdl.components.utils import (
+    calculate_address_width,
+    pad_with_zeros,
+)
+from elasticai.creator.vhdl.language import hex_representation
+from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
@@ -20,7 +24,7 @@ class RomComponent(VHDLFile):
 
     def __post_init__(self) -> None:
         self.data_width, _ = infer_total_and_frac_bits(self.values)
-        self.addr_width = calculate_addr_width(len(self.values))
+        self.addr_width = calculate_address_width(len(self.values))
         padded_values = pad_with_zeros(list(self.values), 2**self.addr_width)
         self.hex_values = list(
             map(lambda fp: hex_representation(fp.to_hex()), padded_values)

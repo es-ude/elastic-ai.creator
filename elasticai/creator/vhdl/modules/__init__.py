@@ -18,6 +18,7 @@ from elasticai.creator.vhdl.templates.utils import (
     expand_multiline_template,
 )
 from elasticai.creator.vhdl.vhdl_files import VHDLModule, VHDLBaseModule, VHDLBaseFile
+from vhdl.code import Code
 
 
 class RootModule(torch.nn.Module):
@@ -28,6 +29,21 @@ class RootModule(torch.nn.Module):
             "y_address_width": 1,
             "data_width": 1,
         }
+
+    def signals(self, prefix: str) -> Code:
+        return ""
+
+    def instantiation(self, prefix: str) -> Code:
+        return ""
+
+    def data_width(self) -> int:
+        ...
+
+    def x_address_width(self) -> int:
+        ...
+
+    def y_address_width(self) -> int:
+        ...
 
     def to_vhdl(self) -> Iterable[VHDLModule]:
         code = read_text("elasticai.creator.vhdl.templates", "network.tpl.vhd")
