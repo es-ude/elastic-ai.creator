@@ -7,6 +7,17 @@ from vhdl.templates.utils import expand_template, expand_multiline_template
 
 
 class VHDLFile(CodeFile):
+    """
+    `VHDLFile` helps you to fill templates with values.
+    It loads a vhdl template file from the package `elasticai.creator.vhdl.template` and fills template parameters
+    with the parameters passed to the constructor.
+    Each of these parameters is expected to be either a `str` or a `Iterable[str]`.
+    Depending on the type, the parameter will be subject to multi or single line expansion.
+    Multi line expansion in the context means the template `"$myValue"` with the parameter `{"myValue": ["1", "2"]}`
+    will result in the string `"1\n2"`.
+    The **code** method returns the lines of code resulting from the parameters filled into the template.
+    """
+
     def save_to(self, prefix: str):
         pass
 
