@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Callable, Iterable, Collection
 
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import (
-    FPHardSigmoidComponent,
+    FPHardSigmoidFile,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from vhdl.code import CodeFile, CodeModule
@@ -26,7 +26,7 @@ class FPHardSigmoidModule(CodeModule):
         self.layer_id
 
     def files(self, args: FPHardSigmoidTranslationArgs) -> Iterable[CodeFile]:
-        yield FPHardSigmoidComponent(
+        yield FPHardSigmoidFile(
             layer_id=self.layer_id,
             zero_threshold=args.fixed_point_factory(-3),
             one_threshold=args.fixed_point_factory(3),
