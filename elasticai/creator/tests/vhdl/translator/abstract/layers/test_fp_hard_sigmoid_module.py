@@ -1,7 +1,7 @@
 import unittest
 
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import (
-    FPHardSigmoidComponent,
+    FPHardSigmoidFile,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers.fp_hard_sigmoid_module import (
@@ -19,7 +19,7 @@ class FPHardSigmoidModuleTest(unittest.TestCase):
     def test_components_return_only_one_component(self) -> None:
         components = list(self.module.files(self.args))
         self.assertEqual(len(components), 1)
-        self.assertEqual(type(components[0]), FPHardSigmoidComponent)
+        self.assertEqual(type(components[0]), FPHardSigmoidFile)
 
     def test_components_component_args_are_correctly_set(self) -> None:
         component = list(self.module.files(self.args))[0]
