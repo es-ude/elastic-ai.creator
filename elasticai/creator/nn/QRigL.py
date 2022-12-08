@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 
-from elasticai.creator.qat.masks import random_mask_4d
+from elasticai.creator.nn.masks import random_mask_4d
 
 
 class IndexMaskHook:

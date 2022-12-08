@@ -57,7 +57,7 @@ if __name__ == "__main__":
                         [prepare_arguments_for_new_node(arg) for arg in node.args]
                     ),
                 )
-                node_args[node.name] = new_node
+                node_args[node.prefix] = new_node
                 new_node = new_graph.call_module(
                     "lstm_container.batch_norm", args=(new_node,)
                 )
@@ -66,7 +66,7 @@ if __name__ == "__main__":
                 new_node = new_graph.node_copy(
                     node, transform_argument_for_old_node_to_new_node
                 )
-                node_args[node.name] = new_node
+                node_args[node.prefix] = new_node
     print(new_graph)
 
     gm = fx.GraphModule(model, new_graph)

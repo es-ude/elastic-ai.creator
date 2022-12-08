@@ -1,13 +1,9 @@
 import unittest
-from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Iterable
 
 import torch
 
-from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.modules.linear import FixedPointLinear
-from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
 from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dTranslationArgs,
 )
@@ -21,29 +17,24 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.vhdl_files import (
-    VHDLFile,
-    VHDLModule,
-    VHDLBaseFile,
-    VHDLBaseModule,
-)
+from vhdl.code import Code, CodeFile, CodeModule, CodeModuleBase, CodeFileBase
 
 
-def fake_build_function(module: torch.nn.Module, layer_id: str) -> VHDLBaseModule:
-    return VHDLBaseModule(
+def fake_build_function(module: torch.nn.Module, layer_id: str) -> CodeModuleBase:
+    return CodeModuleBase(
         name="module0",
         files=[
-            VHDLBaseFile(name="component1", code=["1", "2", "3"]),
-            VHDLBaseFile(name="component2", code=["4", "5", "6"]),
+            CodeFileBase(name="component1", code=["1", "2", "3"]),
+            CodeFileBase(name="component2", code=["4", "5", "6"]),
         ],
     )
 
 
 def unpack_module_directories(
-    modules: Iterable[VHDLModule],
+    modules: Iterable[CodeModule],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
-    def unpack_code_file(code_file: VHDLFile) -> tuple[str, Code]:
-        return code_file.name, list(code_file.code)
+    def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
+        return code_file.name, list(code_file.code())
 
     return [
         (module.name, list(map(unpack_code_file, module.files))) for module in modules

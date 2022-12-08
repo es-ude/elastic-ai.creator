@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Collection
 
-from elasticai.creator.vhdl.components.fp_hard_sigmoid_componet import (
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
     FPHardSigmoidComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_files import VHDLFile, VHDLModule
+from vhdl.code import CodeFile, CodeModule
 
 
 @dataclass
@@ -14,14 +14,18 @@ class FPHardSigmoidTranslationArgs:
 
 
 @dataclass
-class FPHardSigmoidModule(VHDLModule):
+class FPHardSigmoidModule(CodeModule):
+    @property
+    def submodules(self) -> Collection["CodeModule"]:
+        raise NotImplementedError()
+
     layer_id: str
 
     @property
     def name(self) -> str:
         self.layer_id
 
-    def files(self, args: FPHardSigmoidTranslationArgs) -> Iterable[VHDLFile]:
+    def files(self, args: FPHardSigmoidTranslationArgs) -> Iterable[CodeFile]:
         yield FPHardSigmoidComponent(
             layer_id=self.layer_id,
             zero_threshold=args.fixed_point_factory(-3),

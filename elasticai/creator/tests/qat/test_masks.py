@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from elasticai.creator.qat.masks import fixed_offset_mask_4d, random_mask_4d
+from elasticai.creator.nn.masks import fixed_offset_mask_4d, random_mask_4d
 
 
 class test_masks(unittest.TestCase):

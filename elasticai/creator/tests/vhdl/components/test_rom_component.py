@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.components import RomComponent
+from elasticai.creator.vhdl.code_files import RomComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 

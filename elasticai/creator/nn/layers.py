@@ -14,7 +14,7 @@ from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation.precomputation import precomputable
-from elasticai.creator.qat.functional import binarize as BinarizeFn
+from elasticai.creator.nn.functional import binarize as BinarizeFn
 from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""

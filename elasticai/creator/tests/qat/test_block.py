@@ -3,8 +3,8 @@ import unittest
 import torch
 from torch import nn
 
-from elasticai.creator.qat.blocks import Conv1dBlock, DepthwiseConv1dBlock, LinearBlock
-from elasticai.creator.qat.layers import Binarize, Ternarize
+from elasticai.creator.nn.blocks import Conv1dBlock, DepthwiseConv1dBlock, LinearBlock
+from elasticai.creator.nn.layers import Binarize, Ternarize
 
 
 class BlockTests(unittest.TestCase):

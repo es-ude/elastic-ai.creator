@@ -3,9 +3,9 @@ import sys
 import torch
 
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
-from elasticai.creator.vhdl.modules.hard_sigmoid import FixedPointHardSigmoid
+from qat.hard_sigmoid import FixedPointHardSigmoid
 from elasticai.creator.vhdl.modules.linear import FixedPointLinear
-from elasticai.creator.vhdl.modules.relu import FixedPointReLU
+from qat.relu import FixedPointReLU
 from elasticai.creator.vhdl.translator.abstract.layers.fp_hard_sigmoid_module import (
     FPHardSigmoidTranslationArgs,
 )

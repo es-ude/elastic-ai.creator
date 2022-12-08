@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.components import (
+from elasticai.creator.vhdl.code_files import (
     DualPort2ClockRamVHDLFile,
     LSTMCommonVHDLFile,
     LSTMFile,
@@ -54,4 +54,4 @@ class LSTMModuleTest(TestCase):
         ]
         actual_components = [(type(x), x.name) for x in vhdl_components]
 
-        self.assertEqual(actual_components, target_components)
+        self.assertEqual(target_components, actual_components)

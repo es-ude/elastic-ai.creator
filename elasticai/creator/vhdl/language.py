@@ -5,7 +5,7 @@ our neural network_component.py accelerators and test benches. We stick closely 
 formal grammar with our class names.
 
 The core of this module is the `CodeGenerator`. Code generators are callables that return `Code`.
-`Code` is an iterable of strings. Depending on complexity we define syntactic components of the vhdl
+`Code` is an iterable of strings. Depending on complexity we define syntactic code_files of the vhdl
 grammar as `CodeGenerator`s. The class can then be used to set up and configure a function that yields lines
 of code as strings.
 """

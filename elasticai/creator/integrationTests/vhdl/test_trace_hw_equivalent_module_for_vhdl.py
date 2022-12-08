@@ -4,7 +4,8 @@ from torch import Graph
 
 from elasticai.creator.vhdl.model_tracing import Tracer
 from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
-from elasticai.creator.vhdl.modules import FixedPointLinear, RootModule
+from elasticai.creator.vhdl.hw_equivalent_layers import FixedPointLinear
+from vhdl.hw_equivalent_layers import RootModule
 
 
 class FPLinearModel(RootModule):
@@ -40,4 +41,7 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
         model = FPLinearModel()
         tracer = Tracer()
         graph = tracer.trace(model)
-        self.assertFalse(any(n.op == "call_function" for n in graph.nodes))
+        self.assertFalse(
+            any(n.op == "call_function" for n in graph.nodes),
+            "; ".join((f"({n.name}, {n.op})" for n in graph.nodes)),
+        )
