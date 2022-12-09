@@ -38,11 +38,9 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
             self.expected_code = VHDLFileReaderWithoutComments(f).as_list()
 
     @staticmethod
-    def extract_portmap(vhdl_modules):
+    def extract_portmap(vhdl_module):
         lines_are_relevant = False
-        for line in GenerateLinearHardSigmoidNetwork.get_network_vhdl_code(
-            vhdl_modules
-        ):
+        for line in GenerateLinearHardSigmoidNetwork.get_network_vhdl_code(vhdl_module):
             if lines_are_relevant:
                 if line == ");":
                     break
@@ -52,8 +50,7 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
                 lines_are_relevant = True
 
     @staticmethod
-    def get_network_vhdl_code(modules):
-        module = next(filter(lambda module: module.name == "network", modules))
+    def get_network_vhdl_code(module):
         vhdl_file = next(iter(module.files))
         code = "\n".join(vhdl_file.code())
         io = StringIO(code)
@@ -62,7 +59,7 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
 
     def get_generated_portmap_signal_line(self, signal_id, key, value) -> str:
         self.model.elasticai_tags.update({f"{key}": value})
-        portmap = self.extract_portmap(self.model.to_vhdl())
+        portmap = self.extract_portmap(self.model.translate())
         actual = next(filter(lambda line: line.startswith(f"{signal_id}:"), portmap))
         return actual
 
@@ -107,5 +104,5 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
         )
         self.assertEqual(
             list(self.expected_code),
-            list(self.get_network_vhdl_code(self.model.to_vhdl())),
+            list(self.get_network_vhdl_code(self.model.translate())),
         )

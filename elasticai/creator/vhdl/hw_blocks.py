@@ -58,7 +58,7 @@ class BaseHWBlock(HWBlock):
 
 
 class BufferedBaseHWBlock(BufferedHWBlock):
-    def __init__(self, data_width: int, x_address_width: int, y_address_width):
+    def __init__(self, data_width: int, x_address_width: int, y_address_width: int):
         self._data_width = data_width
         self._x_address_width = x_address_width
         self._y_address_width = y_address_width
