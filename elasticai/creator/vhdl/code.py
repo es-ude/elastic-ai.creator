@@ -24,6 +24,12 @@ class CodeFile(Protocol):
     def code(self) -> Code:
         ...
 
+    @abstractmethod
+    def save_to(self, prefix: str):
+        ...
+
+
+class TemplateCodeFile(CodeFile, Protocol):
     @property
     @abstractmethod
     def multi_line_parameters(self) -> dict[str, Iterable[str]]:
@@ -31,16 +37,12 @@ class CodeFile(Protocol):
 
     @property
     @abstractmethod
-    def single_line_parameter(self) -> dict[str, str]:
+    def single_line_parameters(self) -> dict[str, str]:
         ...
 
     @property
     @abstractmethod
     def parameters(self) -> dict[str, Union[str, Iterable[str]]]:
-        ...
-
-    @abstractmethod
-    def save_to(self, prefix: str):
         ...
 
 

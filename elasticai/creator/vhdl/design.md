@@ -53,7 +53,9 @@ classDiagram
 ```
 
 User example code
+
 ```python
+# noinspection PyUnresolvedReferences
 model = MyVHDLModel()
 vhdl_module = model.translate()
 vhdl_module.save_to("my_build_directory")
