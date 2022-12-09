@@ -19,7 +19,7 @@ jobs:
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
       - run: python --version
       - run: poetry install --no-interaction --extras onnx
-      - run: poetry run python -m unittest discover --verbose elasticai/creator/integration
+      - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/integration
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
       - run: python --version
       - run: poetry install --no-interaction
       - run: cd elasticai/creator/unit
-      - run: poetry run python -m unittest discover --verbose elasticai/creator/unit
+      - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/unit
   lint-commit-messages:
     name: Lint Commit Messages
     runs-on: ubuntu-latest
