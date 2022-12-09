@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.language import Code
 class VHDLFileTestCase(unittest.TestCase):
     def compareToFile(self, vhdl_file: str, generated_code: Code):
         vhdl_code = resource_utils.read_text(
-            "elasticai.creator.integrationTests.vhdl", vhdl_file
+            "elasticai.creator.tests.integration.vhdl", vhdl_file
         )
 
         def line_is_empty(line):

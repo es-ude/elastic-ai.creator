@@ -1,6 +1,8 @@
 from functools import partial
 
-from elasticai.creator.integrationTests.vhdl.vhdl_file_test_case import VHDLFileTestCase
+from elasticai.creator.tests.integration.vhdl.vhdl_file_test_case import (
+    VHDLFileTestCase,
+)
 from elasticai.creator.vhdl.lstm_testbench_generator import LSTMCellTestBench
 from elasticai.creator.vhdl.number_representations import (
     float_values_to_fixed_point,

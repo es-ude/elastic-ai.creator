@@ -27,7 +27,7 @@ from elasticai.creator.qat.layers import (
     TernarySplitConv,
     TwoBitSplitConv,
 )
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 
 
 class MockQLSTMCell:
