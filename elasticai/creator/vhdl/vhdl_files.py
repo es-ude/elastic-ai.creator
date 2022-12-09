@@ -2,11 +2,11 @@ from itertools import chain
 from typing import Iterable, Callable, Union
 
 from elasticai.creator.resource_utils import read_text
-from vhdl.code import Code, CodeFile
+from vhdl.code import Code, TemplateCodeFile
 from vhdl.templates.utils import expand_template, expand_multiline_template
 
 
-class VHDLFile(CodeFile):
+class VHDLFile(TemplateCodeFile):
     """
     `VHDLFile` helps you to fill templates with values.
     It loads a vhdl template file from the package `elasticai.creator.vhdl.template` and fills template parameters
