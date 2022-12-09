@@ -5,7 +5,7 @@ from torch import nn
 from torch.nn import BatchNorm1d, Conv1d, Conv2d, Linear, Parameter
 from torch.nn.utils import parametrize
 
-from elasticai.creator.qat.layers import Quantize
+from elasticai.creator.mlframework import Module
 
 """
 Modules that work as a sequence of 3  or more layers. Useful for writing more compact models
@@ -77,7 +77,7 @@ class BatchNormedActivatedConv1d(torch.nn.Module):
 
     def __init__(
         self,
-        activation: Callable[[], Quantize],
+        activation: Callable[[], Module],
         kernel_size,
         in_channels,
         out_channels,

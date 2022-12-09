@@ -17,7 +17,6 @@ from elasticai.creator.qat.functional import binarize as BinarizeFn
 from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
-Quantize = Module
 
 
 class Binarize(torch.nn.Module):
@@ -251,8 +250,8 @@ class QLSTMCell(torch.nn.LSTMCell):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Quantize,
-        weight_quantizer: Quantize,
+        state_quantizer: Module,
+        weight_quantizer: Module,
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -328,8 +327,8 @@ class QLSTM(torch.nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Quantize,
-        weight_quantizer: Quantize,
+        state_quantizer: Module,
+        weight_quantizer: Module,
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
