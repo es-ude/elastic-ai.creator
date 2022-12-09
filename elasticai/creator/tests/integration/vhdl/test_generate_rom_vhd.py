@@ -1,4 +1,4 @@
-from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.tests.unit.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 from elasticai.creator.vhdl.components.rom_component import RomComponent
 from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 

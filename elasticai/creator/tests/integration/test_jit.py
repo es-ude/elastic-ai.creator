@@ -6,7 +6,7 @@ from torch import jit
 from torch.nn.functional import hardtanh
 
 from elasticai.creator.qat.layers import Binarize
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 
 
 class JitTests(TensorTestCase):

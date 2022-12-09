@@ -9,7 +9,7 @@ from elasticai.creator.precomputation.precomputation import (
     precomputable,
 )
 from elasticai.creator.tags_utils import Module, get_tags
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 
 
 class DummyModule:

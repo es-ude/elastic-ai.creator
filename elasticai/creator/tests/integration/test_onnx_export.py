@@ -6,7 +6,7 @@ import torch
 
 from elasticai.creator.onnx import ModuleWrapper
 from elasticai.creator.tags_utils import tag
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 
 ONNX_HEADER = """ir_version: 4
 producer_name: "pytorch"
