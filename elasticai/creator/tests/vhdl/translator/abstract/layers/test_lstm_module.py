@@ -1,18 +1,18 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.code_files import (
-    DualPort2ClockRamVHDLFile,
+from vhdl.code_files import (
     LSTMCommonVHDLFile,
-    LSTMFile,
-    RomComponent,
-    SigmoidComponent,
-    TanhComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
     LSTMModule,
     LSTMTranslationArgs,
 )
+from vhdl.code_files.dual_port_2_clock_ram_component import DualPort2ClockRamVHDLFile
+from vhdl.code_files.lstm_component import LSTMFile
+from vhdl.code_files.rom_component import RomFile
+from vhdl.code_files.sigmoid_component import SigmoidComponent
+from vhdl.code_files.tanh_component import TanhComponent
 
 
 class LSTMModuleTest(TestCase):
@@ -38,14 +38,14 @@ class LSTMModuleTest(TestCase):
         vhdl_components = self.lstm.files(self.translation_args)
 
         target_components = [
-            (RomComponent, "wi_rom.vhd"),
-            (RomComponent, "wf_rom.vhd"),
-            (RomComponent, "wg_rom.vhd"),
-            (RomComponent, "wo_rom.vhd"),
-            (RomComponent, "bi_rom.vhd"),
-            (RomComponent, "bf_rom.vhd"),
-            (RomComponent, "bg_rom.vhd"),
-            (RomComponent, "bo_rom.vhd"),
+            (RomFile, "wi_rom.vhd"),
+            (RomFile, "wf_rom.vhd"),
+            (RomFile, "wg_rom.vhd"),
+            (RomFile, "wo_rom.vhd"),
+            (RomFile, "bi_rom.vhd"),
+            (RomFile, "bf_rom.vhd"),
+            (RomFile, "bg_rom.vhd"),
+            (RomFile, "bo_rom.vhd"),
             (SigmoidComponent, "sigmoid.vhd"),
             (TanhComponent, "tanh.vhd"),
             (LSTMFile, "lstm.vhd"),

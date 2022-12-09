@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import (
+from vhdl.code_files.fp_hard_sigmoid_file import (
     FPHardSigmoidFile,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint

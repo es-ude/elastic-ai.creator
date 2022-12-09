@@ -1,12 +1,8 @@
 import unittest
 
-from vhdl.hw_blocks import (
-    HWBlock,
+from vhdl.hw_equivalent_layers.hw_blocks import (
     BaseHWBlock,
     BufferedBaseHWBlock,
-    _SignalsForBufferlessComponent,
-    _SignalsForComponentWithBuffer,
-    _ComponentInstantiation,
 )
 
 

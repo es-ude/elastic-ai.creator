@@ -4,7 +4,7 @@ from typing import Any, Iterable, Iterator
 import torch
 
 from elasticai.creator.resource_utils import PathType
-from elasticai.creator.vhdl.code_files.network_component import NetworkVHDLFile
+from vhdl.code_files.network_component import NetworkVHDLFile
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )

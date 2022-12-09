@@ -1,5 +1,5 @@
 from elasticai.creator.vhdl.modules.linear import FixedPointLinear as _FixedPointLinear
-from vhdl.hw_blocks import (
+from vhdl.hw_equivalent_layers.hw_blocks import (
     _SignalsForComponentWithBuffer,
     _BufferedComponentInstantiation,
 )

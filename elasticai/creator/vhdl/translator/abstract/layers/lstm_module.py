@@ -3,15 +3,16 @@ from typing import Callable, Iterator
 
 import numpy as np
 
-from elasticai.creator.vhdl.code_files import (
-    DualPort2ClockRamVHDLFile,
+from vhdl.code_files import (
     LSTMCommonVHDLFile,
-    LSTMFile,
-    RomComponent,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from vhdl.code import CodeFile, CodeModule, CodeModuleBase
-from vhdl.code_files import SigmoidComponent, TanhComponent
+from vhdl.code import CodeFile, CodeModuleBase
+from vhdl.code_files.dual_port_2_clock_ram_component import DualPort2ClockRamVHDLFile
+from vhdl.code_files.lstm_component import LSTMFile
+from vhdl.code_files.rom_component import RomFile
+from vhdl.code_files.sigmoid_component import SigmoidComponent
+from vhdl.code_files.tanh_component import TanhComponent
 
 
 @dataclass
@@ -86,9 +87,7 @@ class LSTMModule(CodeModuleBase):
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
         for rom_values, rom_name in zip(weights + bias, rom_names):
-            yield RomComponent(
-                rom_name=rom_name, values=rom_values, resource_option="auto"
-            )
+            yield RomFile(rom_name=rom_name, values=rom_values, resource_option="auto")
 
         precomputed_sigmoid_inputs = to_fp(np.linspace(*args.sigmoid_resolution).tolist())  # type: ignore
         precomputed_tanh_inputs = to_fp(np.linspace(*args.tanh_resolution).tolist())  # type: ignore

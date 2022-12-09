@@ -1,13 +1,13 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files import RomComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
+from vhdl.code_files.rom_component import RomFile
 
 
 class RomComponentTest(unittest.TestCase):
     def setUp(self) -> None:
         fp = FixedPoint.get_factory(total_bits=16, frac_bits=8)
-        self.rom = RomComponent(
+        self.rom = RomFile(
             rom_name="test_rom",
             values=[fp(i) for i in range(20)],
             resource_option="auto",
