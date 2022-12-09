@@ -11,9 +11,13 @@ from vhdl.hw_equivalent_layers import RootModule
 class FPLinearModel(RootModule):
     def __init__(self):
         super().__init__()
-        fp_factory = ClippedFixedPoint.get_factory(total_bits=16, frac_bits=8)
+        data_width = 16
+        fp_factory = ClippedFixedPoint.get_factory(total_bits=data_width, frac_bits=8)
         self.fp_linear = FixedPointLinear(
-            in_features=1, out_features=1, fixed_point_factory=fp_factory
+            in_features=1,
+            out_features=1,
+            fixed_point_factory=fp_factory,
+            data_width=data_width,
         )
 
     def forward(self, x):

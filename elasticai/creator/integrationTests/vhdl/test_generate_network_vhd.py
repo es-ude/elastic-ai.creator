@@ -4,26 +4,33 @@ from unittest import TestCase
 from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
     VHDLFileReaderWithoutComments,
 )
-from elasticai.creator.resource_utils import read_text, get_file
-from elasticai.creator.nn.linear import (
-    FixedPointLinear,
-)
-from elasticai.creator.nn.hard_sigmoid import FixedPointHardSigmoid
-from vhdl.hw_equivalent_layers import RootModule
-
+from elasticai.creator.resource_utils import get_file
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
+)
+from vhdl.hw_equivalent_layers import (
+    RootModule,
+    FixedPointLinear,
+    FixedPointHardSigmoid,
 )
 
 
 class FirstModel(RootModule):
     def __init__(self):
         super().__init__()
-        fp_factory = ClippedFixedPoint.get_factory(total_bits=16, frac_bits=8)
-        self.fp_linear = FixedPointLinear(
-            in_features=1, out_features=1, fixed_point_factory=fp_factory
+        self.data_width = 16
+        fp_factory = ClippedFixedPoint.get_factory(
+            total_bits=self.data_width, frac_bits=8
         )
-        self.fp_hard_sigmoid = FixedPointHardSigmoid(fixed_point_factory=fp_factory)
+        self.fp_linear = FixedPointLinear(
+            in_features=1,
+            out_features=1,
+            fixed_point_factory=fp_factory,
+            data_width=self.data_width,
+        )
+        self.fp_hard_sigmoid = FixedPointHardSigmoid(
+            fixed_point_factory=fp_factory, data_width=self.data_width
+        )
 
     def forward(self, x):
         return self.hard_sigmoid(self.fp_linear(x))
