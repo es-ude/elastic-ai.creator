@@ -1,11 +1,9 @@
 import types
-from abc import abstractmethod
-from itertools import product
-from typing import Any, Callable, Optional, Protocol
+from typing import Callable, Optional
 
 import torch
 from torch import Tensor
-from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
+from torch.nn import Module
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.mlframework import Module, Tensor
@@ -14,6 +12,7 @@ from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation.precomputation import precomputable
+from elasticai.creator.qat.blocks import BatchNormedActivatedConv1d
 from elasticai.creator.qat.functional import binarize as BinarizeFn
 from elasticai.creator.tags_utils import TaggedModule
 
@@ -140,7 +139,7 @@ class QConv1d(torch.nn.Conv1d):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: tuple[int],
+        kernel_size: int | tuple[int],
         quantizer: Module,
         stride: tuple[int] = (1,),
         padding: int = 0,
@@ -371,49 +370,6 @@ class QLSTM(torch.nn.Module):
         stack_dim = 1 if self.batch_first else 0
         result = torch.stack(outputs, dim=stack_dim)
         return result, state
-
-
-class BatchNormedActivatedConv1d(torch.nn.Module):
-    """Applies a convolution followed by a batchnorm and an activation function.
-    The BatchNorm is not performing an affine translation, instead we incorporate
-    a trainable scaling factor that is applied to each channel before the application
-    of the activation function.
-    """
-
-    def __init__(
-        self,
-        activation: Callable[[], Quantize],
-        kernel_size,
-        in_channels,
-        out_channels,
-        groups,
-        bias,
-        channel_multiplexing_factor,
-    ):
-        super().__init__()
-        self.conv = Conv1d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            groups=groups,
-            padding=0,
-            bias=bias,
-        )
-        self.bn = BatchNorm1d(num_features=out_channels, affine=False)
-        self.scaling_factors = Parameter(torch.ones((out_channels, 1)))
-        self.quantize = activation()
-        self.channel_multiplexing_factor = channel_multiplexing_factor
-
-    @property
-    def codomain_elements(self) -> list[float]:
-        return self.quantize.codomain
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.scaling_factors * x
-        x = self.quantize(x)
-        return x
 
 
 def define_batch_normed_convolution_1d(activation, channel_multiplexing_factor):
