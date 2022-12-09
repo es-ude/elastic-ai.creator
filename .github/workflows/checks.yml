@@ -35,7 +35,6 @@ jobs:
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
       - run: python --version
       - run: poetry install --no-interaction
-      - run: cd elasticai/creator/unit
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/unit
   lint-commit-messages:
     name: Lint Commit Messages
