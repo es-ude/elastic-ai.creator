@@ -5,9 +5,10 @@ from typing import Callable, Collection
 
 import numpy as np
 
-from elasticai.creator.vhdl.code_files import FPLinear1dFile, RomComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from vhdl.code import CodeFile, CodeModule
+from vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
+from vhdl.code_files.rom_component import RomFile
 
 
 @dataclass
@@ -48,13 +49,13 @@ class FPLinear1dModule(CodeModule):
         flat_weight = chain(*self.weight)
 
         name_suffix = f"_fp_linear_1d_{self.layer_id}"
-        yield RomComponent(
+        yield RomFile(
             rom_name="w_rom" + name_suffix,
             values=to_fp(flat_weight),
             resource_option="auto",
         )
 
-        yield RomComponent(
+        yield RomFile(
             rom_name="b_rom" + name_suffix,
             values=to_fp(self.bias),
             resource_option="auto",

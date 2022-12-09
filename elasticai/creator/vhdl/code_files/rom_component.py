@@ -2,21 +2,21 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.code_files.utils import (
+from vhdl.code_files.utils import (
     calculate_address_width,
     pad_with_zeros,
 )
 from elasticai.creator.vhdl.language import hex_representation
-from vhdl.code import Code, CodeFile, CodeFileBase
+from vhdl.code import Code, CodeFileBase
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from elasticai.creator.vhdl.templates.utils import expand_template
+from vhdl.hw_equivalent_layers.vhdl_files import expand_template
 
 
 @dataclass
-class RomComponent(CodeFileBase):
+class RomFile(CodeFileBase):
 
     rom_name: str
     values: Sequence[FixedPoint]

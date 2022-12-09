@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.code_files.utils import (
+from vhdl.code_files.utils import (
     calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
 from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.templates.utils import expand_template
+from vhdl.hw_equivalent_layers.vhdl_files import expand_template
 
 
 @dataclass

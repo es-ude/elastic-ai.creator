@@ -6,9 +6,14 @@ import torch.nn
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
 from vhdl.code import CodeModule, CodeModuleBase, Translatable, Code
 from vhdl.code_files.utils import calculate_address_width
-from vhdl.hw_blocks import BufferedBaseHWBlock, BaseHWBlock, HWBlock, BufferedHWBlock
+from vhdl.hw_equivalent_layers.hw_blocks import (
+    BufferedBaseHWBlock,
+    BaseHWBlock,
+    HWBlock,
+    BufferedHWBlock,
+)
 from vhdl.number_representations import FixedPointFactory
-from vhdl.vhdl_files import VHDLFile
+from vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
 from elasticai.creator.nn.hard_sigmoid import (
     FixedPointHardSigmoid as nnFixedPointHardSigmoid,
 )

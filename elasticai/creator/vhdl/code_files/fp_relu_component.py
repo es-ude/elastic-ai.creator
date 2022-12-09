@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,
 )
-from elasticai.creator.vhdl.templates.utils import expand_template
+from vhdl.hw_equivalent_layers.vhdl_files import expand_template
 
 
 @dataclass
