@@ -24,15 +24,9 @@ class VHDLFile(TemplateCodeFile):
     _template_package = "elasticai.creator.vhdl.templates"
 
     def __init__(
-        self,
-        name: str,
-        parameters: Union[
-            dict[str, Union[str, Iterable[str]]],
-            Callable[[], dict[str, Union[str, Iterable[str]]]],
-        ] = lambda: {},
+        self, name: str, **parameters: dict[str, Union[str, Iterable[str]]]
     ) -> None:
         self._name = name
-        parameters = parameters() if callable(parameters) else parameters
         (
             self._parameters,
             self._multiline_parameters,
