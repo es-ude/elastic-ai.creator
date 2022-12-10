@@ -5,7 +5,7 @@ from typing import Protocol
 from vhdl.code import Code, Translatable
 
 
-class HWBlock(Protocol):
+class HWBlockInterface(Protocol):
     @property
     @abstractmethod
     def data_width(self) -> int:
@@ -20,7 +20,7 @@ class HWBlock(Protocol):
         ...
 
 
-class BufferedHWBlock(HWBlock, Protocol):
+class BufferedHWBlockInterface(HWBlockInterface, Protocol):
     @property
     @abstractmethod
     def x_address_width(self) -> int:
@@ -32,15 +32,15 @@ class BufferedHWBlock(HWBlock, Protocol):
         ...
 
 
-class TranslatableHWBlock(HWBlock, Translatable, Protocol):
+class TranslatableHWBlockInterface(HWBlockInterface, Translatable, Protocol):
     ...
 
 
-class TranslatableBufferedHWBlock(BufferedHWBlock, Translatable, Protocol):
+class TranslatableBufferedHWBlock(BufferedHWBlockInterface, Translatable, Protocol):
     ...
 
 
-class BaseHWBlock(HWBlock):
+class BaseHWBlockInterfaceInterface(HWBlockInterface):
     def __init__(self, data_width: int):
         self._data_width = data_width
 
@@ -57,7 +57,7 @@ class BaseHWBlock(HWBlock):
         yield from _ComponentInstantiation(prefix=prefix).code()
 
 
-class BufferedBaseHWBlock(BufferedHWBlock):
+class BufferedBaseHWBlockInterface(BufferedHWBlockInterface):
     def __init__(self, data_width: int, x_address_width: int, y_address_width: int):
         self._data_width = data_width
         self._x_address_width = x_address_width

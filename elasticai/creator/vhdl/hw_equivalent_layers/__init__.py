@@ -4,14 +4,16 @@ from typing import Any
 import torch.nn
 
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
+from mlframework import Module
 from vhdl.code import CodeModule, CodeModuleBase, Translatable, Code
 from vhdl.code_files.utils import calculate_address_width
 from vhdl.hw_equivalent_layers.hw_blocks import (
-    BufferedBaseHWBlock,
-    BaseHWBlock,
-    HWBlock,
-    BufferedHWBlock,
+    BufferedBaseHWBlockInterface,
+    BaseHWBlockInterfaceInterface,
+    HWBlockInterface,
+    BufferedHWBlockInterface,
 )
+from vhdl.model_tracing import Tracer, HWEquivalentTracer
 from vhdl.number_representations import FixedPointFactory
 from vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
 from elasticai.creator.nn.hard_sigmoid import (
@@ -32,17 +34,15 @@ class RootModule(torch.nn.Module, Translatable):
         return dict(((k, str(v)) for k, v in self.elasticai_tags.items()))
 
     def translate(self) -> CodeModule:
-        signals = list(
-            chain(
-                self.fp_linear.signals("fp_linear"),
-                self.fp_hard_sigmoid.signals("fp_hard_sigmoid"),
-            )
+        # noinspection PyTypeChecker
+        module: Module = self
+        graph = HWEquivalentTracer().trace(module)
+        module_nodes = tuple(filter(lambda n: hasattr(n, "module"), graph.nodes))
+        signals = chain.from_iterable(
+            (node.module.signals(node.name) for node in module_nodes)
         )
-        layer_instantiations = list(
-            chain(
-                self.fp_linear.instantiation("fp_linear"),
-                self.fp_hard_sigmoid.instantiation("fp_hard_sigmoid"),
-            )
+        layer_instantiations = chain.from_iterable(
+            (node.module.instantiation(node.name) for node in module_nodes)
         )
         return CodeModuleBase(
             name="network",
@@ -57,7 +57,7 @@ class RootModule(torch.nn.Module, Translatable):
         )
 
 
-class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlock):
+class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlockInterface):
     @property
     def data_width(self) -> int:
         return self._hw_block.data_width
@@ -76,10 +76,10 @@ class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlock):
         data_width,
     ):
         super().__init__(fixed_point_factory, in_place)
-        self._hw_block = BaseHWBlock(data_width=data_width)
+        self._hw_block = BaseHWBlockInterfaceInterface(data_width=data_width)
 
 
-class FixedPointLinear(nnFixedPointLinear, BufferedHWBlock):
+class FixedPointLinear(nnFixedPointLinear, BufferedHWBlockInterface):
     @property
     def x_address_width(self) -> int:
         return self._hw_block.x_address_width
@@ -115,7 +115,7 @@ class FixedPointLinear(nnFixedPointLinear, BufferedHWBlock):
             bias=bias,
             device=device,
         )
-        self._hw_block = BufferedBaseHWBlock(
+        self._hw_block = BufferedBaseHWBlockInterface(
             data_width,
             x_address_width=calculate_address_width(in_features),
             y_address_width=calculate_address_width(out_features),

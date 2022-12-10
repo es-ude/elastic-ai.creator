@@ -90,7 +90,7 @@ class CodeModuleBase(CodeModule):
 
 class CodeFileBase(CodeFile):
     def save_to(self, prefix: str):
-        with open(f"{prefix}_{self.name}.vhd", "w") as f:
+        with open(f"{prefix}{self.name}.vhd", "w") as f:
             f.writelines(self.code())
 
     @property
