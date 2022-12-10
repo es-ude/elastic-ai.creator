@@ -1,10 +1,13 @@
 from abc import abstractmethod
-from typing import Protocol, Iterable, Any, Callable
+from itertools import chain
+from typing import Protocol, Iterable, Any, Callable, Collection, runtime_checkable
 
 import torch
 from torch.fx import Tracer as fxTracer
 from torch.fx import Graph as fxGraph
 from elasticai.creator.mlframework import Module
+from vhdl.code import Code
+from vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
 
 
 class Node(Protocol):
@@ -13,18 +16,34 @@ class Node(Protocol):
     def name(self) -> str:
         ...
 
-
-class ModuleNode(Node, Protocol):
     @property
     @abstractmethod
-    def module(self) -> Module:
+    def op(self) -> str:
         ...
 
 
-class Graph(Protocol):
+@runtime_checkable
+class HWEquivalentNode(Node, Protocol):
     @property
     @abstractmethod
-    def module_nodes(self) -> Iterable[ModuleNode]:
+    def hw_equivalent_layer(self) -> HWEquivalentLayer:
+        ...
+
+
+class HWBlockCollection(Protocol):
+    @abstractmethod
+    def signals(self, prefix: str) -> Code:
+        ...
+
+    @abstractmethod
+    def instantiations(self, prefix: str) -> Code:
+        ...
+
+
+class HWEquivalentGraph(Protocol):
+    @property
+    @abstractmethod
+    def hw_equivalent_nodes(self) -> Iterable[HWEquivalentNode]:
         ...
 
     @property
@@ -35,7 +54,7 @@ class Graph(Protocol):
 
 class Tracer(Protocol):
     @abstractmethod
-    def trace(self, model: Module) -> Graph:
+    def trace(self, model: Module) -> HWEquivalentGraph:
         ...
 
 
@@ -43,35 +62,71 @@ class HWEquivalentTracer(Tracer):
     def __init__(self):
         self._tracer = _HWEquivalentTracer()
 
-    def trace(self, model: Module) -> Graph:
+    def trace(self, model: Module) -> HWEquivalentGraph:
         return self._tracer.trace(
             model,
         )
 
 
-class _Graph(Graph):
+class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
+    """
+        The HWEquivalentGraph is the result of tracing a compatible neural network `m`
+    with the corresponding HWEquivalentTracer. It combines signal and
+    portmaps for instantiation for all nodes linked to HWEquivalent submodules of `m`
+    by making calls to these submodules.
+    """
+
+    def signals(self, prefix: str) -> Code:
+        yield from chain.from_iterable(
+            (
+                node.hw_equivalent_layer.signals(f"{prefix}{node.name}")
+                for node in self.hw_equivalent_nodes
+            )
+        )
+
+    def _call_on_layers(self, method_name, prefix: str) -> Code:
+        yield from chain.from_iterable(
+            (
+                getattr(node.hw_equivalent_layer, method_name)(f"{prefix}{node.name}")
+                for node in self.hw_equivalent_nodes
+            )
+        )
+
+    def instantiations(self, prefix: str) -> Code:
+        yield from chain.from_iterable(
+            (
+                node.hw_equivalent_layer.instantiation(f"{prefix}{node.name}")
+                for node in self.hw_equivalent_nodes
+            )
+        )
+
     def __init__(self, fx_graph: fxGraph):
         self._fx_graph = fx_graph
 
-    def __getattr__(self, item):
-        return getattr(self._fx_graph, item)
-
     @property
     def nodes(self):
-        return self._fx_graph.nodes
+        yield from self._fx_graph.nodes
 
     @property
-    def module_nodes(self) -> Iterable[ModuleNode]:
+    def hw_equivalent_nodes(self) -> Iterable[HWEquivalentNode]:
         yield from filter(lambda n: n.op == "call_module", self._fx_graph.nodes)
+
+    @property
+    def hw_equivalent_layers(self) -> Collection[HWEquivalentLayer]:
+        layers = set()
+        for node in self.hw_equivalent_nodes:
+            if isinstance(node, HWEquivalentNode):
+                layers.add(node.hw_equivalent_layer)
+        return layers
 
 
 class _HWEquivalentTracer(fxTracer):
     def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
         return m.__module__.startswith("elasticai.creator.vhdl.hw_equivalent_layers")
 
-    def trace(self, root, **kwargs) -> Graph:
+    def trace(self, root, **kwargs) -> HWEquivalentGraph:
         graph = super().trace(root, **kwargs)
-        return _Graph(graph)
+        return _HWEquivalentGraph(graph)
 
     def call_module(
         self,
@@ -81,5 +136,5 @@ class _HWEquivalentTracer(fxTracer):
         kwargs: dict[str, Any],
     ) -> Any:
         proxy = super().call_module(m, forward, args, kwargs)
-        proxy.node.module = m
+        proxy.node.hw_equivalent_layer = m
         return proxy
