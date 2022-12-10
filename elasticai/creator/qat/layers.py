@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 import torch
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.mlframework import Module, Tensor
@@ -12,7 +12,6 @@ from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation.precomputation import precomputable
-from elasticai.creator.qat.blocks import BatchNormedActivatedConv1d
 from elasticai.creator.qat.functional import binarize as BinarizeFn
 from elasticai.creator.tags_utils import TaggedModule
 
@@ -235,6 +234,14 @@ class QLinear(torch.nn.Linear):
         )
 
 
+class _Identity(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+
 class QLSTMCell(torch.nn.LSTMCell):
     """
     Implementation of quantized LSTM cell,all parameters are equivalent to the base pytorch class except for the quantizers.
@@ -250,8 +257,8 @@ class QLSTMCell(torch.nn.LSTMCell):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Module,
-        weight_quantizer: Module,
+        state_quantizer: Optional[Module] = _Identity(),
+        weight_quantizer: Optional[Module] = _Identity(),
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -269,10 +276,6 @@ class QLSTMCell(torch.nn.LSTMCell):
         self.output_gate_activation = output_gate_activation
         self.new_cell_state_activation = new_cell_state_activation
 
-    @staticmethod
-    def __identity(input_tensor: torch.Tensor) -> torch.Tensor:
-        return input_tensor
-
     def forward(
         self, x: torch.Tensor, hx: Optional[tuple[torch.Tensor, torch.Tensor]] = None
     ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -284,15 +287,14 @@ class QLSTMCell(torch.nn.LSTMCell):
             )
             hx = (zeros, zeros)
 
-        h_0, c_0 = self.state_quantizer(hx[0]), self.state_quantizer(hx[1])
-        weight_ih, weight_hh = self.weight_quantizer(
-            self.weight_ih
-        ), self.weight_quantizer(self.weight_hh)
+        h_0 = self.state_quantizer(hx[0])
+        c_0 = self.state_quantizer(hx[1])
+        weight_ih = self.weight_quantizer(self.weight_ih)
+        weight_hh = self.weight_quantizer(self.weight_hh)
 
         if self.bias:
-            bias_ih, bias_hh = self.weight_quantizer(
-                self.bias_ih
-            ), self.weight_quantizer(self.bias_hh)
+            bias_ih = self.weight_quantizer(self.bias_ih)
+            bias_hh = self.weight_quantizer(self.bias_hh)
             gates = (
                 torch.mm(x, weight_ih.t())
                 + bias_ih
@@ -327,8 +329,8 @@ class QLSTM(torch.nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Module,
-        weight_quantizer: Module,
+        state_quantizer: Optional[Module] = _Identity(),
+        weight_quantizer: Optional[Module] = _Identity(),
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -371,6 +373,45 @@ class QLSTM(torch.nn.Module):
         return result, state
 
 
+class BatchNormedActivatedConv1d(torch.nn.Module):
+    """Applies a convolution followed by a batchnorm and an activation function.
+    The BatchNorm is not performing an affine translation, instead we incorporate
+    a trainable scaling factor that is applied to each channel before the application
+    of the activation function.
+    """
+
+    def __init__(
+        self,
+        activation: Callable[[], Module],
+        kernel_size,
+        in_channels,
+        out_channels,
+        groups,
+        bias,
+        channel_multiplexing_factor,
+    ):
+        super().__init__()
+        self.conv = Conv1d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            groups=groups,
+            padding=0,
+            bias=bias,
+        )
+        self.bn = BatchNorm1d(num_features=out_channels, affine=False)
+        self.scaling_factors = Parameter(torch.ones((out_channels, 1)))
+        self.quantize = activation()
+        self.channel_multiplexing_factor = channel_multiplexing_factor
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.scaling_factors * x
+        x = self.quantize(x)
+        return x
+
+
 def define_batch_normed_convolution_1d(activation, channel_multiplexing_factor):
     """Allows to define a new `BatchNormedActivationConvolution` that uses `activation` for its activation function.
     The `channel_multiplexing_factor` will be used by calling modules to determine if the activation function will
@@ -395,18 +436,18 @@ def define_batch_normed_convolution_1d(activation, channel_multiplexing_factor):
     return wrapper
 
 
+@define_batch_normed_convolution_1d(Binarize, 1)
+class BinaryConv1d:
+    pass
+
+
 @define_batch_normed_convolution_1d(Ternarize, 1)
-class TernaryConvolution1d:
+class TernaryConv1d:
     pass
 
 
 @define_batch_normed_convolution_1d(QuantizeTwoBit, 2)
 class MultilevelResidualBinarizationConv1d:
-    pass
-
-
-@define_batch_normed_convolution_1d(Binarize, 1)
-class BinaryActivatedConv1d:
     pass
 
 
@@ -494,18 +535,18 @@ def define_split_convolution(
 
 
 @define_split_convolution(
-    BinaryActivatedConv1d, _channel_multiplexing_factor=1, input_domain_elements=[-1, 1]
+    BinaryConv1d, _channel_multiplexing_factor=1, input_domain_elements=[-1, 1]
 )
-class BinarySplitConv:
+class BinarySplitConv1d:
     pass
 
 
 @define_split_convolution(
-    TernaryConvolution1d,
+    TernaryConv1d,
     _channel_multiplexing_factor=1,
     input_domain_elements=[-1, 0, 1],
 )
-class TernarySplitConv:
+class TernarySplitConv1d:
     pass
 
 
@@ -514,5 +555,5 @@ class TernarySplitConv:
     _channel_multiplexing_factor=2,
     input_domain_elements=[-1, 1],
 )
-class TwoBitSplitConv:
+class TwoBitSplitConv1d:
     pass

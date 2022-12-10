@@ -1,11 +1,6 @@
-from typing import Callable
-
-import torch
 from torch import nn
-from torch.nn import BatchNorm1d, Conv1d, Conv2d, Linear, Parameter
+from torch.nn import Conv1d, Conv2d, Linear
 from torch.nn.utils import parametrize
-
-from elasticai.creator.mlframework import Module
 
 """
 Modules that work as a sequence of 3  or more layers. Useful for writing more compact models
@@ -65,45 +60,6 @@ class Conv1dBlock(nn.Module):
         x = self.conv1d(input)
         x = self.batch_norm(x)
         x = self.activation(x)
-        return x
-
-
-class BatchNormedActivatedConv1d(torch.nn.Module):
-    """Applies a convolution followed by a batchnorm and an activation function.
-    The BatchNorm is not performing an affine translation, instead we incorporate
-    a trainable scaling factor that is applied to each channel before the application
-    of the activation function.
-    """
-
-    def __init__(
-        self,
-        activation: Callable[[], Module],
-        kernel_size,
-        in_channels,
-        out_channels,
-        groups,
-        bias,
-        channel_multiplexing_factor,
-    ):
-        super().__init__()
-        self.conv = Conv1d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            groups=groups,
-            padding=0,
-            bias=bias,
-        )
-        self.bn = BatchNorm1d(num_features=out_channels, affine=False)
-        self.scaling_factors = Parameter(torch.ones((out_channels, 1)))
-        self.quantize = activation()
-        self.channel_multiplexing_factor = channel_multiplexing_factor
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.scaling_factors * x
-        x = self.quantize(x)
         return x
 
 

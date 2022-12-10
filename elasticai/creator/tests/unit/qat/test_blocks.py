@@ -3,31 +3,8 @@ import unittest
 import torch
 from torch import nn
 
-from elasticai.creator.qat.blocks import (
-    BatchNormedActivatedConv1d,
-    Conv1dBlock,
-    DepthwiseConv1dBlock,
-    LinearBlock,
-)
+from elasticai.creator.qat.blocks import Conv1dBlock, DepthwiseConv1dBlock, LinearBlock
 from elasticai.creator.qat.layers import Binarize, Ternarize
-
-
-class BatchNormedActivatedConv1dTest(unittest.TestCase):
-    def test_binarized_call_without_bias(self) -> None:
-        layer = BatchNormedActivatedConv1d(
-            in_channels=1,
-            out_channels=2,
-            kernel_size=2,
-            groups=1,
-            bias=False,
-            activation=Binarize,
-            channel_multiplexing_factor=1,
-        )
-        layer.conv.weight = torch.nn.Parameter(torch.ones_like(layer.conv.weight))
-        test_input = torch.ones((2, 1, 3))
-        output = layer(test_input)
-        expected = torch.ones(2, 2, 2)
-        self.assertTrue(torch.all((expected == output)))
 
 
 class BlockTests(unittest.TestCase):

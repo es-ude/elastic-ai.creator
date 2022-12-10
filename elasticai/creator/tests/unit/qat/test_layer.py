@@ -1,19 +1,18 @@
 import unittest
 from functools import partial
 from typing import Optional, Tuple
-from unittest import SkipTest
 from unittest.mock import patch
 
 import torch
 from torch import Tensor
 
-from elasticai.creator.qat.blocks import BatchNormedActivatedConv1d
 from elasticai.creator.qat.constraints import WeightClipper
 from elasticai.creator.qat.layers import (
     QLSTM,
+    BatchNormedActivatedConv1d,
     Binarize,
-    BinaryActivatedConv1d,
-    BinarySplitConv,
+    BinaryConv1d,
+    BinarySplitConv1d,
     ChannelShuffle,
     MultilevelResidualBinarizationConv1d,
     QConv1d,
@@ -24,11 +23,10 @@ from elasticai.creator.qat.layers import (
     ResidualQuantization,
     SplitConvolutionBase,
     Ternarize,
-    TernaryConvolution1d,
-    TernarySplitConv,
-    TwoBitSplitConv,
+    TernaryConv1d,
+    TernarySplitConv1d,
+    TwoBitSplitConv1d,
 )
-from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 
 
 class MockQLSTMCell:
@@ -227,29 +225,49 @@ class QConv2dTest(unittest.TestCase):
             _ = QConv2d(in_channels=1, out_channels=1, kernel_size=2, quantizer=None)
 
 
-class LayerTests(TensorTestCase):
-    def test_TernaryConvolution(self):
-        layer = TernaryConvolution1d(
+class BatchNormedActivatedConv1dTest(unittest.TestCase):
+    def test_binarized_call_without_bias(self) -> None:
+        layer = BatchNormedActivatedConv1d(
+            in_channels=1,
+            out_channels=2,
+            kernel_size=2,
+            groups=1,
+            bias=False,
+            activation=Binarize,
+            channel_multiplexing_factor=1,
+        )
+        layer.conv.weight = torch.nn.Parameter(torch.ones_like(layer.conv.weight))
+        test_input = torch.ones((2, 1, 3))
+        output = layer(test_input)
+        expected = torch.ones(2, 2, 2)
+        self.assertTrue(torch.all((expected == output)))
+
+
+class DefineBatchNormedConvolution1dTest(unittest.TestCase):
+    def test_binary_conv1d(self) -> None:
+        layer = BinaryConv1d(
+            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
+        )
+        self.assertEqual(type(layer.quantize), type(Binarize()))
+        self.assertEqual(layer.channel_multiplexing_factor, 1)
+
+    def test_ternary_conv1d(self) -> None:
+        layer = TernaryConv1d(
             in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
         )
         self.assertEqual(type(layer.quantize), type(Ternarize()))
         self.assertEqual(layer.channel_multiplexing_factor, 1)
 
-    def test_MultilevelResidualBinarizationConv(self):
+    def test_multilevel_residual_binarization_conv1d(self) -> None:
         layer = MultilevelResidualBinarizationConv1d(
             in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
         )
         self.assertEqual(type(layer.quantize), type(QuantizeTwoBit()))
         self.assertEqual(layer.channel_multiplexing_factor, 2)
 
-    def test_BinaryActivatedConv(self):
-        layer = BinaryActivatedConv1d(
-            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
-        )
-        self.assertEqual(type(layer.quantize), type(Binarize()))
-        self.assertEqual(layer.channel_multiplexing_factor, 1)
 
-    def test_SplitConvolutionBase(self):
+class SplitConvolutionBaseTest(unittest.TestCase):
+    def test_binarized_conv1d_outputs_as_expected(self) -> None:
         layer_function = partial(
             BatchNormedActivatedConv1d,
             activation=Binarize,
@@ -271,142 +289,124 @@ class LayerTests(TensorTestCase):
         test_input = torch.ones((2, 2, 3))
         output = layer(test_input)
         expected = torch.ones(2, 4, 2)
-        self.assertTrue(torch.all((expected == output)))
+        self.assertTrue(torch.all(expected == output))
         self.assertEqual(layer.depthwise.conv.groups, 2)
 
-    def test_BinarySplitConv(self):
-        layer = BinarySplitConv(in_channels=1, out_channels=2, kernel_size=2)
+
+class DefineSplitConvolutionTest(unittest.TestCase):
+    def test_binary_split_conv1d(self) -> None:
+        layer = BinarySplitConv1d(in_channels=1, out_channels=2, kernel_size=2)
         self.assertEqual(type(layer.depthwise.quantize), type(Binarize()))
         self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
         self.assertEqual(type(layer.pointwise.quantize), type(Binarize()))
 
-    def test_TernarySplitConv(self):
-        layer = TernarySplitConv(in_channels=1, out_channels=2, kernel_size=2)
+    def test_ternary_split_conv1d(self) -> None:
+        layer = TernarySplitConv1d(in_channels=1, out_channels=2, kernel_size=2)
         self.assertEqual(type(layer.depthwise.quantize), type(Ternarize()))
         self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
         self.assertEqual(type(layer.pointwise.quantize), type(Ternarize()))
 
-    def test_TwoBitSplitConv(self):
-        layer = TwoBitSplitConv(in_channels=1, out_channels=2, kernel_size=2)
+    def test_two_bit_split_conv1d(self) -> None:
+        layer = TwoBitSplitConv1d(in_channels=1, out_channels=2, kernel_size=2)
         self.assertEqual(type(layer.depthwise.quantize), type(QuantizeTwoBit()))
         self.assertEqual(layer.depthwise.channel_multiplexing_factor, 2)
         self.assertEqual(type(layer.pointwise.quantize), type(QuantizeTwoBit()))
 
-    @SkipTest
-    def test_QLSTMCell(self):
-        with self.subTest("full res QLSTM cell equal PyTorch LSTM cell (with bias)"):
-            lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=True)
 
-            def identity(x):
-                return x
-
-            qlstm_cell = QLSTMCell(
-                input_size=3,
-                hidden_size=5,
-                bias=True,
-                weight_quantizer=identity,
-                state_quantizer=lambda x: x,
-            )
-            qlstm_cell.weight_ih = lstm_cell.weight_ih
-            qlstm_cell.weight_hh = lstm_cell.weight_hh
-            qlstm_cell.bias_ih = lstm_cell.bias_ih
-            qlstm_cell.bias_hh = lstm_cell.bias_hh
-            inp = torch.rand(1, 3)
-            lstm_h1, lstm_c1 = lstm_cell(inp)
-            qlstm_h1, qlstm_c1 = qlstm_cell(inp)
-            self.assertTrue(torch.equal(lstm_h1, qlstm_h1))
-            self.assertTrue(torch.equal(lstm_c1, qlstm_c1))
-
-        with self.subTest("full res QLSTM cell equal PyTorch LSTM cell (without bias)"):
-            lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=False)
-            qlstm_cell = QLSTMCell(
-                input_size=3,
-                hidden_size=5,
-                bias=False,
-            )
-            qlstm_cell.weight_ih = lstm_cell.weight_ih
-            qlstm_cell.weight_hh = lstm_cell.weight_hh
-            qlstm_cell.bias_ih = lstm_cell.bias_ih
-            qlstm_cell.bias_hh = lstm_cell.bias_hh
-            inp = torch.rand(1, 3)
-            lstm_h1, lstm_c1 = lstm_cell(inp)
-            qlstm_h1, qlstm_c1 = qlstm_cell(inp)
-            self.assertTrue(torch.equal(lstm_h1, qlstm_h1))
-            self.assertTrue(torch.equal(lstm_c1, qlstm_c1))
-
-        with self.subTest("test binarized cell states and weights"):
-            cell = QLSTMCell(
-                input_size=1,
-                hidden_size=1,
-                bias=True,
-                state_quantizer=Binarize(),
-                weight_quantizer=Binarize(),
-            )
-            cell.weight_ih = torch.nn.Parameter(torch.ones_like(cell.weight_ih))
-            cell.weight_hh = torch.nn.Parameter(torch.ones_like(cell.weight_hh) * (-1))
-            cell.bias_ih = torch.nn.Parameter(torch.ones_like(cell.bias_ih))
-            cell.bias_hh = torch.nn.Parameter(torch.ones_like(cell.bias_hh) * (-1))
-            inp = torch.as_tensor([[1.0]])
-            actual_outputs = cell(inp)
-            actual_outputs = tuple(
-                map(
-                    lambda output: [
-                        [round(n, 4) for n in row] for row in output.tolist()
-                    ],
-                    actual_outputs,
-                )
-            )
-            target_outputs = ([[0.2311]], [[0.5]])
-            self.assertListEqual(actual_outputs[0], target_outputs[0])
-            self.assertListEqual(actual_outputs[1], target_outputs[1])
-
-    def test_QLSTM(self):
-        lstm_cell_id = "elasticai.creator.qat.layers.QLSTMCell"
-        qlstm_parameters = {
-            "input_size": 0,
-            "hidden_size": 1,
-            "state_quantizer": lambda x: x,
-            "weight_quantizer": lambda x: x,
-            "bias": False,
-        }
-        with patch(lstm_cell_id, new=MockQLSTMCell) as _:
-            with self.subTest("test QLSTM default"):
-                layer = QLSTM(**qlstm_parameters)
-                input = torch.tensor([[1.0, 1.0], [1.0, 1.0]])
-                state = [torch.tensor([1.0]), torch.tensor([1.0])]
-                outputs, cell_state = layer(input, state)
-                self.assertEqual(outputs.tolist(), [[1.0], [1.0]])
-                self.assertEqual(cell_state[0].tolist(), [1.0])
-                self.assertEqual(cell_state[1].tolist(), [1.0])
-
-        with patch(lstm_cell_id, new=MockQLSTMCell) as _:
-            with self.subTest("test QLSTM other input + state"):
-                layer = QLSTM(**qlstm_parameters)
-                input = torch.tensor([[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
-                state = [torch.tensor([5.0]), torch.tensor([-1.0])]
-                outputs, cell_state = layer(input, state)
-                self.assertEqual(outputs.tolist(), [[5.0], [5.0], [5.0]])
-                self.assertEqual(cell_state[0].tolist(), [5.0])
-                self.assertEqual(cell_state[1].tolist(), [-1.0])
-
-    def test_shuffle_block_input_and_output_same_with_1_group(self):
+class ChannelShuffleTest(unittest.TestCase):
+    def test_input_and_output_same_with_1_group(self) -> None:
         layer = ChannelShuffle(groups=1)
         input = torch.rand((2, 2, 3, 2))
         output = layer(input)
-        n = torch.eq(input, output)
-        self.assertTrue(torch.all(torch.eq(input, output)).item())
+        self.assertEqual(input.tolist(), output.tolist())
 
-    def test_shuffle_block_input_and_output_with_2_group(self):
+    def test_input_and_output_with_2_groups(self) -> None:
         layer = ChannelShuffle(groups=2)
-        input = torch.tensor(
-            [
-                [[1], [2], [3], [4]],
-            ]
-        )
+        input = torch.tensor([[[1], [2], [3], [4]]])
         output = layer(input)
-        expected = torch.tensor(
-            [
-                [[1], [3], [2], [4]],
-            ]
+        expected = torch.tensor([[[1], [3], [2], [4]]])
+        self.assertEqual(output.tolist(), expected.tolist())
+
+
+class QLSTMCellTest(unittest.TestCase):
+    def test_full_res_qlstm_cell_equal_pytorch_lstm_cell_without_bias(self) -> None:
+        lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=False)
+        qlstm_cell = QLSTMCell(input_size=3, hidden_size=5, bias=False)
+
+        qlstm_cell.weight_ih = lstm_cell.weight_ih
+        qlstm_cell.weight_hh = lstm_cell.weight_hh
+        qlstm_cell.bias_ih = lstm_cell.bias_ih
+        qlstm_cell.bias_hh = lstm_cell.bias_hh
+
+        inp = torch.rand(1, 3)
+        lstm_h1, lstm_c1 = lstm_cell(inp)
+        qlstm_h1, qlstm_c1 = qlstm_cell(inp)
+
+        self.assertEqual(lstm_h1.tolist(), qlstm_h1.tolist())
+        self.assertEqual(lstm_c1.tolist(), qlstm_c1.tolist())
+
+    def test_full_res_qlstm_cell_equal_pytorch_lstm_cell_with_bias(self) -> None:
+        lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=True)
+        qlstm_cell = QLSTMCell(input_size=3, hidden_size=5, bias=True)
+
+        qlstm_cell.weight_ih = lstm_cell.weight_ih
+        qlstm_cell.weight_hh = lstm_cell.weight_hh
+        qlstm_cell.bias_ih = lstm_cell.bias_ih
+        qlstm_cell.bias_hh = lstm_cell.bias_hh
+
+        inp = torch.rand(1, 3)
+        lstm_h1, lstm_c1 = lstm_cell(inp)
+        qlstm_h1, qlstm_c1 = qlstm_cell(inp)
+
+        self.assertEqual(lstm_h1.tolist(), qlstm_h1.tolist())
+        self.assertEqual(lstm_c1.tolist(), qlstm_c1.tolist())
+
+    def test_binarized_state_and_weight(self) -> None:
+        cell = QLSTMCell(
+            input_size=1,
+            hidden_size=1,
+            bias=True,
+            state_quantizer=Binarize(),
+            weight_quantizer=Binarize(),
         )
-        self.assertTrue(torch.all(torch.eq(output, expected)).item())
+        cell.weight_ih = torch.nn.Parameter(torch.ones_like(cell.weight_ih))
+        cell.weight_hh = torch.nn.Parameter(torch.ones_like(cell.weight_hh) * (-1))
+        cell.bias_ih = torch.nn.Parameter(torch.ones_like(cell.bias_ih))
+        cell.bias_hh = torch.nn.Parameter(torch.ones_like(cell.bias_hh) * (-1))
+        inp = torch.as_tensor([[1.0]])
+        actual_outputs = cell(inp)
+        actual_outputs = tuple(
+            map(
+                lambda output: [[round(n, 4) for n in row] for row in output.tolist()],
+                actual_outputs,
+            )
+        )
+        target_outputs = ([[0.2311]], [[0.5]])
+        self.assertEqual(actual_outputs[0], target_outputs[0])
+        self.assertEqual(actual_outputs[1], target_outputs[1])
+
+
+class QLSTMTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.lstm_cell_id = "elasticai.creator.qat.layers.QLSTMCell"
+        self.qlstm_parameters = {"input_size": 0, "hidden_size": 1, "bias": False}
+
+    def test_forward_without_explicit_given_state(self) -> None:
+        with patch(self.lstm_cell_id, new=MockQLSTMCell) as _:
+            layer = QLSTM(**self.qlstm_parameters)
+            input = torch.tensor([[1.0, 1.0], [1.0, 1.0]])
+            state = [torch.tensor([1.0]), torch.tensor([1.0])]
+            outputs, cell_state = layer(input, state)
+            self.assertEqual(outputs.tolist(), [[1.0], [1.0]])
+            self.assertEqual(cell_state[0].tolist(), [1.0])
+            self.assertEqual(cell_state[1].tolist(), [1.0])
+
+    def test_forward_with_input_and_state(self) -> None:
+        with patch(self.lstm_cell_id, new=MockQLSTMCell) as _:
+            layer = QLSTM(**self.qlstm_parameters)
+            input = torch.tensor([[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
+            state = [torch.tensor([5.0]), torch.tensor([-1.0])]
+            outputs, cell_state = layer(input, state)
+            self.assertEqual(outputs.tolist(), [[5.0], [5.0], [5.0]])
+            self.assertEqual(cell_state[0].tolist(), [5.0])
+            self.assertEqual(cell_state[1].tolist(), [-1.0])
