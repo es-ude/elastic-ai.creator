@@ -3,6 +3,9 @@ from typing import Any
 
 import torch.nn
 
+from elasticai.creator.nn.hard_sigmoid import (
+    FixedPointHardSigmoid as nnFixedPointHardSigmoid,
+)
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
 from mlframework import Module
 from vhdl.code import CodeModule, CodeModuleBase, Translatable, Code
@@ -13,12 +16,9 @@ from vhdl.hw_equivalent_layers.hw_blocks import (
     HWBlockInterface,
     BufferedHWBlockInterface,
 )
-from vhdl.model_tracing import Tracer, HWEquivalentTracer
-from vhdl.number_representations import FixedPointFactory
 from vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
-from elasticai.creator.nn.hard_sigmoid import (
-    FixedPointHardSigmoid as nnFixedPointHardSigmoid,
-)
+from vhdl.model_tracing import HWEquivalentTracer
+from vhdl.number_representations import FixedPointFactory
 
 
 class RootModule(torch.nn.Module, Translatable):
@@ -37,12 +37,17 @@ class RootModule(torch.nn.Module, Translatable):
         # noinspection PyTypeChecker
         module: Module = self
         graph = HWEquivalentTracer().trace(module)
-        module_nodes = tuple(filter(lambda n: hasattr(n, "module"), graph.nodes))
         signals = chain.from_iterable(
-            (node.module.signals(node.name) for node in module_nodes)
+            (
+                node.hw_equivalent_layer.signals(node.name)
+                for node in graph.hw_equivalent_nodes
+            )
         )
         layer_instantiations = chain.from_iterable(
-            (node.module.instantiation(node.name) for node in module_nodes)
+            (
+                node.hw_equivalent_layer.instantiation(node.name)
+                for node in graph.hw_equivalent_nodes
+            )
         )
         return CodeModuleBase(
             name="network",

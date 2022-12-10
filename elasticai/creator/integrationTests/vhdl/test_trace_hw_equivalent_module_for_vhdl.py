@@ -1,7 +1,7 @@
 import unittest
 import typing
 from elasticai.creator.vhdl.hw_equivalent_layers import FixedPointLinear
-from elasticai.creator.vhdl.model_tracing import HWEquivalentTracer
+from elasticai.creator.vhdl.model_tracing import HWEquivalentTracer, HWEquivalentNode
 from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
 from mlframework import Module
 from vhdl.hw_equivalent_layers import RootModule
@@ -32,13 +32,16 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
     def test_generated_graph_nodes_provide_corresponding_modules(self):
         model = FPLinearModel()
         tracer = HWEquivalentTracer()
-        graph = tracer.trace(typing.cast(Module, model))
-        module = None
+        graph = tracer.trace(model)
+        layer = None
         for node in graph.nodes:
-            if hasattr(node, "module"):
+            if isinstance(node, HWEquivalentNode):
                 print(node)
-                module = node.module
-        self.assertTrue(module is model.fp_linear)
+                layer = node.hw_equivalent_layer
+        self.assertTrue(
+            layer is model.fp_linear,
+            "expected: {}, actual: {}".format(layer, model.fp_linear),
+        )
 
     def test_graph_for_single_fp_linear_layer_model_contains_no_call_function_nodes(
         self,
@@ -54,6 +57,6 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
     def test_graph_provides_exactly_one_module_node(self):
         model = FPLinearModelWithGetItemFunctionNode()
         graph = HWEquivalentTracer().trace(typing.cast(Module, model))
-        nodes = tuple(graph.module_nodes)
-        self.assertEqual(model.fp_linear, nodes[0].module)
+        nodes = tuple(graph.hw_equivalent_nodes)
+        self.assertEqual(model.fp_linear, nodes[0].hw_equivalent_layer)
         self.assertEqual(1, len(nodes))
