@@ -247,10 +247,10 @@ class ClippedFixedPoint(FixedPoint):
         )
 
     @staticmethod
-    def get_factory(
-        total_bits: int, frac_bits: int
-    ) -> Callable[[float], "ClippedFixedPoint"]:
-        return partial(ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits)
+    def get_factory(total_bits: int, frac_bits: int) -> "FixedPointFactory":
+        return _FixedPointFactoryImpl(
+            constructor=ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits
+        )
 
 
 def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:

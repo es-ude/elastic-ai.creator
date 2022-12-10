@@ -1,8 +1,8 @@
 import unittest
 
 from vhdl.hw_equivalent_layers.hw_blocks import (
-    BaseHWBlock,
-    BufferedBaseHWBlock,
+    BaseHWBlockInterfaceInterface,
+    BufferedBaseHWBlockInterface,
 )
 
 
@@ -31,28 +31,28 @@ class NetworkHWComponentTest(unittest.TestCase):
 
 class HWBlockInstantiationTest(unittest.TestCase):
     def test_creates_instance(self):
-        block = BaseHWBlock(0)
+        block = BaseHWBlockInterfaceInterface(0)
         lines = block.instantiation("my_comp")
         first_line = list(lines)[0]
         expected = "my_comp : entity work.my_comp(rtl)"
         self.assertEqual(expected, first_line)
 
     def test_opens_portmap(self):
-        block = BaseHWBlock(0)
+        block = BaseHWBlockInterfaceInterface(0)
         lines = block.instantiation("my_comp")
         second_line = list(lines)[1]
         expected = "port map("
         self.assertEqual(expected, second_line)
 
     def test_assigns_all_ports(self):
-        block = BaseHWBlock(0)
+        block = BaseHWBlockInterfaceInterface(0)
         lines = block.instantiation("my_comp")
         for port in ("enable", "clock", "x", "y"):
             with self.subTest(port):
                 self.assertTrue(any((line.startswith(f"{port} => ") for line in lines)))
 
     def test_ports_are_connected_to_correctly_named_signals(self):
-        block = BaseHWBlock(0)
+        block = BaseHWBlockInterfaceInterface(0)
         lines = block.instantiation("some_other_name")
         port_to_signal_connections = list(lines)[2:-1]
         for line in port_to_signal_connections:
@@ -65,7 +65,7 @@ class HWBlockInstantiationTest(unittest.TestCase):
 
 class HWBlockSignals(unittest.TestCase):
     def constructor(self, name, data_width, *args):
-        return BaseHWBlock(data_width).signals(name)
+        return BaseHWBlockInterfaceInterface(data_width).signals(name)
 
     def test_clock_signal_is_generated(self):
         signals = self.constructor("other_name", 2)
@@ -95,7 +95,7 @@ class BufferedHWBlockSignals(HWBlockSignals):
         if len(args) == 2:
             x_address_width = args[0]
             y_address_width = args[1]
-        return BufferedBaseHWBlock(
+        return BufferedBaseHWBlockInterface(
             data_width, x_address_width, y_address_width
         ).signals(name)
 

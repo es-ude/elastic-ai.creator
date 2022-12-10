@@ -1,10 +1,9 @@
 import unittest
-
-from torch import Graph
-
-from elasticai.creator.vhdl.model_tracing import Tracer
-from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
+import typing
 from elasticai.creator.vhdl.hw_equivalent_layers import FixedPointLinear
+from elasticai.creator.vhdl.model_tracing import HWEquivalentTracer
+from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
+from mlframework import Module
 from vhdl.hw_equivalent_layers import RootModule
 
 
@@ -24,18 +23,20 @@ class FPLinearModel(RootModule):
         return self.fp_linear(x)
 
 
-class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
-    def test_treat_single_hw_equivalent_module_as_leaf(self):
-        model = FPLinearModel()
-        tracer = Tracer()
-        self.assertTrue(tracer.is_leaf_module(model.fp_linear, "fp_linear"))
+class FPLinearModelWithGetItemFunctionNode(FPLinearModel):
+    def forward(self, x):
+        return self.fp_linear(x[:2])
 
+
+class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
     def test_generated_graph_nodes_provide_corresponding_modules(self):
         model = FPLinearModel()
-        tracer = Tracer()
-        graph: Graph = tracer.trace(model)
+        tracer = HWEquivalentTracer()
+        graph = tracer.trace(typing.cast(Module, model))
+        module = None
         for node in graph.nodes:
             if hasattr(node, "module"):
+                print(node)
                 module = node.module
         self.assertTrue(module is model.fp_linear)
 
@@ -43,9 +44,16 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
         self,
     ):
         model = FPLinearModel()
-        tracer = Tracer()
+        tracer = HWEquivalentTracer()
         graph = tracer.trace(model)
         self.assertFalse(
             any(n.op == "call_function" for n in graph.nodes),
             "; ".join((f"({n.name}, {n.op})" for n in graph.nodes)),
         )
+
+    def test_graph_provides_exactly_one_module_node(self):
+        model = FPLinearModelWithGetItemFunctionNode()
+        graph = HWEquivalentTracer().trace(typing.cast(Module, model))
+        nodes = tuple(graph.module_nodes)
+        self.assertEqual(model.fp_linear, nodes[0].module)
+        self.assertEqual(1, len(nodes))

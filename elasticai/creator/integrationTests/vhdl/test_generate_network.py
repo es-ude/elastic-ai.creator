@@ -8,11 +8,19 @@ from elasticai.creator.resource_utils import get_file
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
 )
-from vhdl.hw_equivalent_layers import (
+from elasticai.creator.vhdl.hw_equivalent_layers import (
     RootModule,
     FixedPointLinear,
     FixedPointHardSigmoid,
 )
+from elasticai.creator.vhdl.model_tracing import HWEquivalentTracer
+
+"""
+Tests:
+    - Names of generated CodeModules are converted torch module_hierarchy names.
+    - For every leaf module in our torch module we generate a CodeModule
+    - For every node in our graph from tracing torch module we instantiate a CodeModule of the correct name in our network.vhd
+"""
 
 
 class FirstModel(RootModule):
@@ -23,8 +31,8 @@ class FirstModel(RootModule):
             total_bits=self.data_width, frac_bits=8
         )
         self.fp_linear = FixedPointLinear(
-            in_features=1,
-            out_features=1,
+            in_features=2,
+            out_features=2,
             fixed_point_factory=fp_factory,
             data_width=self.data_width,
         )
@@ -33,10 +41,10 @@ class FirstModel(RootModule):
         )
 
     def forward(self, x):
-        return self.hard_sigmoid(self.fp_linear(x))
+        return self.fp_hard_sigmoid(self.fp_linear(x))
 
 
-class GenerateLinearHardSigmoidNetwork(TestCase):
+class GenerateNetworkRootFile(TestCase):
     def setUp(self):
         self.model = FirstModel()
         with get_file(
@@ -47,7 +55,7 @@ class GenerateLinearHardSigmoidNetwork(TestCase):
     @staticmethod
     def extract_portmap(vhdl_module):
         lines_are_relevant = False
-        for line in GenerateLinearHardSigmoidNetwork.get_network_vhdl_code(vhdl_module):
+        for line in GenerateNetworkRootFile.get_network_vhdl_code(vhdl_module):
             if lines_are_relevant:
                 if line == ");":
                     break
