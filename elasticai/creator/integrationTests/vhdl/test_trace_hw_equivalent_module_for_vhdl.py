@@ -48,7 +48,7 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
     ):
         model = FPLinearModel()
         tracer = HWEquivalentTracer()
-        graph = tracer.trace(model)
+        graph = tracer.trace(typing.cast(Module, model))
         self.assertFalse(
             any(n.op == "call_function" for n in graph.nodes),
             "; ".join((f"({n.name}, {n.op})" for n in graph.nodes)),

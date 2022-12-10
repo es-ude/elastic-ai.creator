@@ -68,6 +68,15 @@ class HWEquivalentTracer(Tracer):
         )
 
 
+def create_hw_block_collection(graph: HWEquivalentGraph) -> HWBlockCollection:
+    if not isinstance(graph, _HWEquivalentGraph):
+        raise NotImplementedError(
+            "hw block creation unsupported for {}".format(type(graph))
+        )
+    else:
+        return graph
+
+
 class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
     """
         The HWEquivalentGraph is the result of tracing a compatible neural network `m`
