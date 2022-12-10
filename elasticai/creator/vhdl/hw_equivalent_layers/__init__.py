@@ -1,3 +1,4 @@
+import typing
 from itertools import chain
 from typing import Any
 
@@ -17,7 +18,7 @@ from vhdl.hw_equivalent_layers.hw_blocks import (
     BufferedHWBlockInterface,
 )
 from vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
-from vhdl.model_tracing import HWEquivalentTracer
+from vhdl.model_tracing import HWEquivalentTracer, create_hw_block_collection
 from vhdl.number_representations import FixedPointFactory
 
 
@@ -34,21 +35,11 @@ class RootModule(torch.nn.Module, Translatable):
         return dict(((k, str(v)) for k, v in self.elasticai_tags.items()))
 
     def translate(self) -> CodeModule:
-        # noinspection PyTypeChecker
-        module: Module = self
+        module: Module = typing.cast(Module, self)
         graph = HWEquivalentTracer().trace(module)
-        signals = chain.from_iterable(
-            (
-                node.hw_equivalent_layer.signals(node.name)
-                for node in graph.hw_equivalent_nodes
-            )
-        )
-        layer_instantiations = chain.from_iterable(
-            (
-                node.hw_equivalent_layer.instantiation(node.name)
-                for node in graph.hw_equivalent_nodes
-            )
-        )
+        blocks = create_hw_block_collection(graph)
+        signals = blocks.signals("")
+        layer_instantiations = blocks.instantiations("")
         return CodeModuleBase(
             name="network",
             files=(
