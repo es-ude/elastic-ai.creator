@@ -1,5 +1,5 @@
 import typing
-from itertools import chain
+from abc import ABC
 from typing import Any
 
 import torch.nn
@@ -8,31 +8,40 @@ from elasticai.creator.nn.hard_sigmoid import (
     FixedPointHardSigmoid as nnFixedPointHardSigmoid,
 )
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
-from mlframework import Module
-from vhdl.code import CodeModule, CodeModuleBase, Translatable, Code
-from vhdl.code_files.utils import calculate_address_width
-from vhdl.hw_equivalent_layers.hw_blocks import (
+from elasticai.creator.mlframework import Module
+from elasticai.creator.vhdl.code import CodeModule, CodeModuleBase, Translatable, Code
+from elasticai.creator.vhdl.code_files.utils import calculate_address_width
+from elasticai.creator.vhdl.hw_equivalent_layers.hw_blocks import (
     BufferedBaseHWBlockInterface,
-    BaseHWBlockInterfaceInterface,
+    BaseHWBlockInterface,
     HWBlockInterface,
     BufferedHWBlockInterface,
 )
-from vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
-from vhdl.model_tracing import HWEquivalentTracer, create_hw_block_collection
-from vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.model_tracing import (
+    HWEquivalentTracer,
+    create_hw_block_collection,
+    HWEquivalentNode,
+)
+from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
-class RootModule(torch.nn.Module, Translatable):
+class RootModule(torch.nn.Module, Translatable, ABC):
     def __init__(self):
         super().__init__()
         self.elasticai_tags = {
             "x_address_width": 1,
             "y_address_width": 1,
-            "data_width": 1,
+            "x_width": 1,
+            "y_width": 1,
         }
 
     def _stringify_tags(self) -> dict[str, str]:
         return dict(((k, str(v)) for k, v in self.elasticai_tags.items()))
+
+    @staticmethod
+    def _connect_nodes(node_a: HWEquivalentNode, node_b: HWEquivalentNode) -> Code:
+        ...
 
     def translate(self) -> CodeModule:
         module: Module = typing.cast(Module, self)
@@ -55,11 +64,15 @@ class RootModule(torch.nn.Module, Translatable):
 
 class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlockInterface):
     @property
-    def data_width(self) -> int:
-        return self._hw_block.data_width
+    def x_width(self) -> int:
+        return self._hw_block.x_width
 
-    def signals(self, prefix: str) -> Code:
-        return self._hw_block.signals(prefix)
+    @property
+    def y_width(self) -> int:
+        return self._hw_block.y_width
+
+    def signal_definitions(self, prefix: str) -> Code:
+        return self._hw_block.signal_definitions(prefix)
 
     def instantiation(self, prefix: str) -> Code:
         return self._hw_block.instantiation(prefix)
@@ -72,24 +85,28 @@ class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlockInterface):
         data_width,
     ):
         super().__init__(fixed_point_factory, in_place)
-        self._hw_block = BaseHWBlockInterfaceInterface(data_width=data_width)
+        self._hw_block = BaseHWBlockInterface(x_width=data_width, y_width=data_width)
 
 
 class FixedPointLinear(nnFixedPointLinear, BufferedHWBlockInterface):
     @property
+    def y_address_width(self) -> int:
+        return self._hw_block.y_address_width
+
+    @property
+    def x_width(self) -> int:
+        return self._hw_block.x_width
+
+    @property
+    def y_width(self) -> int:
+        return self._hw_block.y_width
+
+    @property
     def x_address_width(self) -> int:
         return self._hw_block.x_address_width
 
-    @property
-    def y_address_width(self) -> int:
-        return self._hw_block.x_address_width
-
-    @property
-    def data_width(self) -> int:
-        return self._hw_block.data_width
-
-    def signals(self, prefix: str) -> Code:
-        return self._hw_block.signals(prefix)
+    def signal_definitions(self, prefix: str) -> Code:
+        return self._hw_block.signal_definitions(prefix)
 
     def instantiation(self, prefix: str) -> Code:
         return self._hw_block.instantiation(prefix)
@@ -112,7 +129,8 @@ class FixedPointLinear(nnFixedPointLinear, BufferedHWBlockInterface):
             device=device,
         )
         self._hw_block = BufferedBaseHWBlockInterface(
-            data_width,
+            y_width=data_width,
+            x_width=data_width,
             x_address_width=calculate_address_width(in_features),
             y_address_width=calculate_address_width(out_features),
         )

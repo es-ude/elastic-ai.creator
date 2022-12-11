@@ -1,6 +1,7 @@
 import dataclasses
 from abc import abstractmethod
-from typing import Protocol
+from enum import auto, Enum
+from typing import Protocol, Iterable, Any
 
 from vhdl.code import Code, Translatable
 
@@ -8,11 +9,16 @@ from vhdl.code import Code, Translatable
 class HWBlockInterface(Protocol):
     @property
     @abstractmethod
-    def data_width(self) -> int:
+    def x_width(self) -> int:
+        ...
+
+    @property
+    @abstractmethod
+    def y_width(self) -> int:
         ...
 
     @abstractmethod
-    def signals(self, prefix: str) -> Code:
+    def signal_definitions(self, prefix: str) -> Code:
         ...
 
     @abstractmethod
@@ -40,32 +46,109 @@ class TranslatableBufferedHWBlock(BufferedHWBlockInterface, Translatable, Protoc
     ...
 
 
-class BaseHWBlockInterfaceInterface(HWBlockInterface):
-    def __init__(self, data_width: int):
-        self._data_width = data_width
+class StrEnum(str, Enum):
+    def _generate_next_value_(
+        name: str, start: int, count: int, last_values: list[Any]
+    ) -> Any:
+        return name.lower()
+
+    def __str__(self):
+        return self.value
+
+
+class StdLogicInSignals(StrEnum):
+    CLOCK = auto()
+    ENABLE = auto()
+
+
+class LogicVectorInSignals(StrEnum):
+    X = auto()
+    Y_ADDRESS = auto()
+
+
+class LogicVectorOutSignals(StrEnum):
+    Y = auto()
+    X_ADDRESS = auto()
+
+
+class StdLogicOutSignals(StrEnum):
+    DONE = auto()
+    CLOCK = auto()
+
+
+SIGNAL_MAPPING = (
+    (StdLogicOutSignals.CLOCK, StdLogicInSignals.CLOCK),
+    (StdLogicOutSignals.DONE, StdLogicInSignals.ENABLE),
+    (LogicVectorOutSignals.Y, LogicVectorInSignals.X),
+    (LogicVectorOutSignals.X_ADDRESS, LogicVectorInSignals.Y_ADDRESS),
+)
+
+
+class BaseHWBlockInterface(HWBlockInterface):
+    _vector_signal_width_mapping = (
+        LogicVectorInSignals.X,
+        LogicVectorOutSignals.Y,
+    )
+    _logic_signals = (StdLogicInSignals.ENABLE, StdLogicInSignals.CLOCK)
+
+    def __init__(self, x_width: int, y_width: int):
+        self._x_data_width = x_width
+        self._y_data_width = y_width
 
     @property
-    def data_width(self) -> int:
-        return self._data_width
+    def y_width(self) -> int:
+        return self._y_data_width
 
-    def signals(self, prefix: str) -> Code:
-        yield from _SignalsForBufferlessComponent(
-            prefix=prefix, data_width=self.data_width
-        ).code()
+    @property
+    def x_width(self) -> int:
+        return self._x_data_width
+
+    def _get_vector_signal_name_to_signal_width_mapping(
+        self,
+    ) -> Iterable[tuple[str, int]]:
+        return map(
+            lambda s: (str(s), getattr(self, f"{s}_width")),
+            self._vector_signal_width_mapping,
+        )
+
+    def _get_logic_signal_names(self) -> Iterable[str]:
+        return map(str, self._logic_signals)
+
+    def signal_definitions(self, prefix: str) -> Code:
+        yield from generate_signal_definitions(
+            prefix,
+            std_logic_signals=self._get_logic_signal_names(),
+            logic_vector_signals=self._get_vector_signal_name_to_signal_width_mapping(),
+        )
 
     def instantiation(self, prefix: str) -> Code:
         yield from _ComponentInstantiation(prefix=prefix).code()
 
 
-class BufferedBaseHWBlockInterface(BufferedHWBlockInterface):
-    def __init__(self, data_width: int, x_address_width: int, y_address_width: int):
-        self._data_width = data_width
+class BufferedBaseHWBlockInterface(BaseHWBlockInterface, BufferedHWBlockInterface):
+    _vector_signal_width_mapping = (
+        LogicVectorInSignals.X,
+        LogicVectorOutSignals.Y,
+        LogicVectorOutSignals.X_ADDRESS,
+        LogicVectorInSignals.Y_ADDRESS,
+    )
+    _logic_signals = (
+        StdLogicInSignals.ENABLE,
+        StdLogicInSignals.CLOCK,
+        StdLogicOutSignals.DONE,
+    )
+
+    def __init__(
+        self,
+        x_width: int,
+        y_width: int,
+        x_address_width: int,
+        y_address_width: int,
+    ):
+        self._y_data_width = y_width
+        self._x_data_width = x_width
         self._x_address_width = x_address_width
         self._y_address_width = y_address_width
-
-    @property
-    def data_width(self) -> int:
-        return self._data_width
 
     @property
     def x_address_width(self) -> int:
@@ -75,67 +158,27 @@ class BufferedBaseHWBlockInterface(BufferedHWBlockInterface):
     def y_address_width(self) -> int:
         return self._y_address_width
 
-    def signals(self, prefix: str) -> Code:
-        yield from _SignalsForComponentWithBuffer(
-            data_width=self.data_width,
-            prefix=prefix,
-            x_address_width=self.x_address_width,
-            y_address_width=self.y_address_width,
-        ).code()
-
     def instantiation(self, prefix: str) -> Code:
         yield from _BufferedComponentInstantiation(prefix=prefix).code()
 
 
-@dataclasses.dataclass
-class _SignalsForBufferlessComponent:
-    prefix: str
-    data_width: int
+def generate_signal_definitions(
+    prefix: str,
+    std_logic_signals: Iterable[str],
+    logic_vector_signals: Iterable[tuple[str, int]],
+) -> Code:
+    def _logic_vector(suffix, width) -> str:
+        return f"signal {prefix}_{suffix} : std_logic_vector({width - 1} downto 0);"
 
-    def _logic_vector(self, suffix, width) -> str:
-        return (
-            f"signal {self.prefix}_{suffix} : std_logic_vector({width - 1} downto 0);"
-        )
+    def _std_logic(suffix) -> str:
+        return f"signal {prefix}_{suffix} : std_logic := '0';"
 
-    def _std_logic(self, suffix) -> str:
-        return f"signal {self.prefix}_{suffix} : std_logic := '0';"
+    code = [_std_logic(suffix) for suffix in std_logic_signals]
+    code.extend(
+        [_logic_vector(suffix, width) for suffix, width in logic_vector_signals]
+    )
 
-    def code(self) -> Code:
-        code = [self._std_logic(suffix) for suffix in ("enable", "clock")]
-        code.extend(
-            [
-                self._logic_vector(suffix, width)
-                for suffix, width in (
-                    ("x", self.data_width),
-                    ("y", self.data_width),
-                )
-            ]
-        )
-
-        return code
-
-
-@dataclasses.dataclass
-class _SignalsForComponentWithBuffer(_SignalsForBufferlessComponent):
-    prefix: str
-    data_width: int
-    x_address_width: int
-    y_address_width: int
-
-    def code(self) -> Code:
-        code = list(super().code())
-        code.append(self._std_logic("done"))
-        code.extend(
-            [
-                self._logic_vector(suffix, width)
-                for suffix, width in (
-                    ("x_address", self.x_address_width),
-                    ("y_address", self.y_address_width),
-                )
-            ]
-        )
-
-        return code
+    return code
 
 
 @dataclasses.dataclass

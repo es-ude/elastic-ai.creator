@@ -18,6 +18,11 @@ class Node(Protocol):
 
     @property
     @abstractmethod
+    def next(self) -> "Node":
+        ...
+
+    @property
+    @abstractmethod
     def op(self) -> str:
         ...
 
@@ -88,7 +93,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
     def signals(self, prefix: str) -> Code:
         yield from chain.from_iterable(
             (
-                node.hw_equivalent_layer.signals(f"{prefix}{node.name}")
+                node.hw_equivalent_layer.signal_definitions(f"{prefix}{node.name}")
                 for node in self.hw_equivalent_nodes
             )
         )

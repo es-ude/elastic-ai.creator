@@ -21,6 +21,7 @@ bitarray = "^2.3.5"
 vsg = "^3.9.0"
 numpy = "^1.23.0"
 matplotlib = "^3.5.2"
+mypy = "^0.991"
 
 [tool.poetry.extras]
 onnx = ["onnx", "numpy", "protobuf", "protobuf-compiler"]

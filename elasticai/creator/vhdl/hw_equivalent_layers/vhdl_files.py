@@ -23,9 +23,7 @@ class VHDLFile(TemplateCodeFile):
 
     _template_package = "elasticai.creator.vhdl.templates"
 
-    def __init__(
-        self, name: str, **parameters: dict[str, Union[str, Iterable[str]]]
-    ) -> None:
+    def __init__(self, name: str, **parameters: Union[str, Iterable[str]]) -> None:
         self._name = name
         (
             self._parameters,
