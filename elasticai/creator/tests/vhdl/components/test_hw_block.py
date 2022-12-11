@@ -1,4 +1,5 @@
 import unittest
+from functools import partial
 
 from vhdl.hw_equivalent_layers.hw_blocks import (
     BaseHWBlockInterface,
@@ -46,10 +47,13 @@ class HWBlockInstantiationTest(unittest.TestCase):
 
     def test_assigns_all_ports(self):
         block = BaseHWBlockInterface(x_width=0, y_width=0)
-        lines = block.instantiation("my_comp")
+        lines = partial(block.instantiation, "my_comp")
         for port in ("enable", "clock", "x", "y"):
             with self.subTest(port):
-                self.assertTrue(any((line.startswith(f"{port} => ") for line in lines)))
+                self.assertTrue(
+                    any((line.startswith(f"{port} => ") for line in lines())),
+                    f"expected '{port} =>',\nfound: {list(lines())}",
+                )
 
     def test_ports_are_connected_to_correctly_named_signals(self):
         block = BaseHWBlockInterface(x_width=0, y_width=0)

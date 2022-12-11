@@ -1,3 +1,4 @@
+import unittest
 from io import StringIO
 from unittest import TestCase
 
@@ -13,7 +14,7 @@ from elasticai.creator.vhdl.hw_equivalent_layers import (
     FixedPointLinear,
     FixedPointHardSigmoid,
 )
-from elasticai.creator.vhdl.model_tracing import HWEquivalentTracer
+from vhdl.code import Code
 
 """
 Tests:
@@ -44,37 +45,55 @@ class FirstModel(RootModule):
         return self.fp_hard_sigmoid(self.fp_linear(x))
 
 
-class GenerateNetworkRootFile(TestCase):
+def extract_port_lines(lines) -> list[str]:
+    return extract_section(begin="port (", end=");", lines=lines)[0]
+
+
+def extract_section(begin: str, end: str, lines: Code) -> list[list[str]]:
+    extract = False
+    content = []
+    current_section = []
+    for line in lines:
+        if line == begin:
+            extract = True
+            continue
+        elif extract and line == end:
+            extract = False
+            content.append(current_section)
+            current_section = []
+        elif extract:
+            current_section.append(line)
+
+    if extract:
+        raise Exception(f"reached end of code before end: {end}")
+    return content
+
+
+def get_network_vhdl_code(module):
+    vhdl_file = next(iter(module.files))
+    code = "\n".join(vhdl_file.code())
+    io = StringIO(code)
+    code = VHDLFileReaderWithoutComments(io).as_list()
+    return code
+
+
+def code_from_string(s: str) -> Code:
+    return VHDLFileReaderWithoutComments(StringIO(s))
+
+
+class GenerateNetworkRootFileFromDifferentModelVersions(TestCase):
     def setUp(self):
         self.model = FirstModel()
+
         with get_file(
             "elasticai.creator.integrationTests.vhdl", "expected_network.vhd"
         ) as f:
             self.expected_code = VHDLFileReaderWithoutComments(f).as_list()
 
-    @staticmethod
-    def extract_portmap(vhdl_module):
-        lines_are_relevant = False
-        for line in GenerateNetworkRootFile.get_network_vhdl_code(vhdl_module):
-            if lines_are_relevant:
-                if line == ");":
-                    break
-                else:
-                    yield line
-            elif line == "port (":
-                lines_are_relevant = True
-
-    @staticmethod
-    def get_network_vhdl_code(module):
-        vhdl_file = next(iter(module.files))
-        code = "\n".join(vhdl_file.code())
-        io = StringIO(code)
-        code = VHDLFileReaderWithoutComments(io).as_list()
-        return code
-
     def get_generated_portmap_signal_line(self, signal_id, value) -> str:
         self.model.elasticai_tags.update({f"{signal_id}_width": value})
-        portmap = self.extract_portmap(self.model.translate())
+        code = get_network_vhdl_code(self.model.translate())
+        portmap = extract_port_lines(code)
         actual = next(filter(lambda line: line.startswith(f"{signal_id}:"), portmap))
         return actual
 
@@ -105,7 +124,10 @@ class GenerateNetworkRootFile(TestCase):
         actual = self.get_generated_portmap_signal_line("x_address", 16)
         self.assertEqual("x_address: out std_logic_vector(16-1 downto 0);", actual)
 
-    def test_check_network_vhdl_file(self):
+
+class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(unittest.TestCase):
+    def setUp(self):
+        self.model = FirstModel()
         self.model.elasticai_tags.update(
             {
                 "x_address_width": 1,
@@ -114,7 +136,66 @@ class GenerateNetworkRootFile(TestCase):
                 "x_width": 16,
             }
         )
-        self.assertEqual(
-            list(self.expected_code),
-            list(self.get_network_vhdl_code(self.model.translate())),
+        self.actual_code = get_network_vhdl_code(self.model.translate())
+
+    def test_port_def_matches_target(self):
+        self.model.elasticai_tags.update(
+            {
+                "x_address_width": 1,
+                "y_address_width": 1,
+                "y_width": 16,
+                "x_width": 16,
+            }
+        )
+        actual_code = self.actual_code
+        expected_port_def = list(
+            code_from_string(
+                """
+        enable: in std_logic;
+        clock: in std_logic;
+        x_address: out std_logic_vector(1-1 downto 0);
+        y_address: in std_logic_vector(1-1 downto 0);
+        x: in std_logic_vector(16-1 downto 0);
+        y: out std_logic_vector(16-1 downto 0);
+        done: out std_logic
+        """
+            )
+        )
+        actual_port_def = extract_port_lines(actual_code)
+        self.check_all_expected_lines_are_present(expected_port_def, actual_port_def)
+
+    def check_all_expected_lines_are_present(self, expected: Code, actual: Code):
+        expected = sorted(expected)
+        actual = sorted(actual)
+        self.assertEqual(list(expected), list(actual))
+
+    def test_signal_defs_match_target(self):
+        actual_code = self.actual_code
+        expected_signal_defs = list(
+            code_from_string(
+                """
+    -- fp_linear
+    signal fp_linear_enable : std_logic := '0';
+    signal fp_linear_clock : std_logic := '0';
+    signal fp_linear_done : std_logic := '0';
+    signal fp_linear_x : std_logic_vector(15 downto 0);
+    signal fp_linear_y : std_logic_vector(15 downto 0);
+    signal fp_linear_x_address : std_logic_vector(0 downto 0);
+    signal fp_linear_y_address : std_logic_vector(0 downto 0);
+
+    -- fp_hard_sigmoid
+    signal fp_hard_sigmoid_enable : std_logic := '0';
+    signal fp_hard_sigmoid_clock : std_logic := '0';
+    signal fp_hard_sigmoid_x : std_logic_vector(15 downto 0);
+    signal fp_hard_sigmoid_y : std_logic_vector(15 downto 0);
+            """
+            )
+        )
+        actual_sections = extract_section(
+            begin="architecture rtl of fp_network is", end="begin", lines=actual_code
+        )
+        self.assertEqual(1, len(actual_sections))
+        actual_signal_defs = actual_sections[0]
+        self.check_all_expected_lines_are_present(
+            expected_signal_defs, actual_signal_defs
         )

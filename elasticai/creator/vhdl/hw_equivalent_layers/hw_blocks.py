@@ -1,6 +1,7 @@
 import dataclasses
 from abc import abstractmethod
 from enum import auto, Enum
+from itertools import chain
 from typing import Protocol, Iterable, Any
 
 from vhdl.code import Code, Translatable
@@ -46,7 +47,7 @@ class TranslatableBufferedHWBlock(BufferedHWBlockInterface, Translatable, Protoc
     ...
 
 
-class StrEnum(str, Enum):
+class SignalEnum(str, Enum):
     def _generate_next_value_(
         name: str, start: int, count: int, last_values: list[Any]
     ) -> Any:
@@ -56,22 +57,22 @@ class StrEnum(str, Enum):
         return self.value
 
 
-class StdLogicInSignals(StrEnum):
+class StdLogicInSignals(SignalEnum):
     CLOCK = auto()
     ENABLE = auto()
 
 
-class LogicVectorInSignals(StrEnum):
+class LogicVectorInSignals(SignalEnum):
     X = auto()
     Y_ADDRESS = auto()
 
 
-class LogicVectorOutSignals(StrEnum):
+class LogicVectorOutSignals(SignalEnum):
     Y = auto()
     X_ADDRESS = auto()
 
 
-class StdLogicOutSignals(StrEnum):
+class StdLogicOutSignals(SignalEnum):
     DONE = auto()
     CLOCK = auto()
 
@@ -85,7 +86,7 @@ SIGNAL_MAPPING = (
 
 
 class BaseHWBlockInterface(HWBlockInterface):
-    _vector_signal_width_mapping = (
+    _vector_signals = (
         LogicVectorInSignals.X,
         LogicVectorOutSignals.Y,
     )
@@ -108,7 +109,7 @@ class BaseHWBlockInterface(HWBlockInterface):
     ) -> Iterable[tuple[str, int]]:
         return map(
             lambda s: (str(s), getattr(self, f"{s}_width")),
-            self._vector_signal_width_mapping,
+            self._vector_signals,
         )
 
     def _get_logic_signal_names(self) -> Iterable[str]:
@@ -122,11 +123,13 @@ class BaseHWBlockInterface(HWBlockInterface):
         )
 
     def instantiation(self, prefix: str) -> Code:
-        yield from _ComponentInstantiation(prefix=prefix).code()
+        yield from instantiate_component(
+            prefix=prefix, signals=chain(self._vector_signals, self._logic_signals)
+        )
 
 
 class BufferedBaseHWBlockInterface(BaseHWBlockInterface, BufferedHWBlockInterface):
-    _vector_signal_width_mapping = (
+    _vector_signals = (
         LogicVectorInSignals.X,
         LogicVectorOutSignals.Y,
         LogicVectorOutSignals.X_ADDRESS,
@@ -158,9 +161,6 @@ class BufferedBaseHWBlockInterface(BaseHWBlockInterface, BufferedHWBlockInterfac
     def y_address_width(self) -> int:
         return self._y_address_width
 
-    def instantiation(self, prefix: str) -> Code:
-        yield from _BufferedComponentInstantiation(prefix=prefix).code()
-
 
 def generate_signal_definitions(
     prefix: str,
@@ -181,47 +181,24 @@ def generate_signal_definitions(
     return code
 
 
-@dataclasses.dataclass
-class _ComponentInstantiation:
-    prefix: str
+def instantiate_component(prefix: str, signals: Iterable[SignalEnum]) -> Code:
+    def _generate_port_to_signal_connection(port: SignalEnum) -> str:
+        return f"{port} => {prefix}_{port},"
 
-    def _generate_port_map_signals(self) -> list[str]:
-        return [
-            self._generate_port_to_signal_connection(port)
-            for port in (
-                "enable",
-                "clock",
-                "x",
-                "y",
-            )
-        ]
-
-    def _generate_port_to_signal_connection(self, port: str) -> str:
-        return f"{port} => {self.prefix}_{port},"
-
-    @staticmethod
     def _remove_comma_from_last_signal(signals: list[str]) -> list[str]:
         signals[-1] = signals[-1][:-1]
         return signals
 
-    def code(self) -> Code:
-        name = self.prefix
-        code = [
-            f"{name} : entity work.{name}(rtl)",
-            "port map(",
-        ]
-        mapping = self._generate_port_map_signals()
-        mapping = self._remove_comma_from_last_signal(mapping)
-        code.extend(mapping)
-        code.append(");")
-        return code
+    def _generate_port_map_signals(signals) -> list[str]:
+        return [_generate_port_to_signal_connection(port) for port in signals]
 
-
-class _BufferedComponentInstantiation(_ComponentInstantiation):
-    def _generate_port_map_signals(self) -> list[str]:
-        signals = super()._generate_port_map_signals()
-        signals.extend(
-            self._generate_port_to_signal_connection(port)
-            for port in ("x_address", "y_address", "done")
-        )
-        return signals
+    name = prefix
+    code = [
+        f"{name} : entity work.{name}(rtl)",
+        "port map(",
+    ]
+    mapping = _generate_port_map_signals(signals)
+    mapping = _remove_comma_from_last_signal(mapping)
+    code.extend(mapping)
+    code.append(");")
+    return code
