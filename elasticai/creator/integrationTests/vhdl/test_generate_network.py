@@ -1,5 +1,6 @@
 import unittest
 from io import StringIO
+from typing import Union, Iterable
 from unittest import TestCase
 
 from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
@@ -49,24 +50,65 @@ def extract_port_lines(lines) -> list[str]:
     return extract_section(begin="port (", end=");", lines=lines)[0]
 
 
-def extract_section(begin: str, end: str, lines: Code) -> list[list[str]]:
+def extract_section(
+    begin: Union[str, Code], end: Union[str, Code], lines: Code
+) -> list[list[str]]:
     extract = False
     content = []
     current_section = []
-    for line in lines:
-        if line == begin:
+    begin = list(begin) if not isinstance(begin, str) else [begin]
+    end = list(end) if not isinstance(end, str) else [end]
+    look_back = len(begin)
+    look_ahead = len(end)
+    lines = list(lines)
+    i = 0
+    last_i = len(lines)
+    while i < last_i:
+        print(i)
+        look_ahead_window = lines[i : i + look_ahead]
+        look_back_window = lines[i : i + look_back]
+        print(look_back_window, begin)
+        print(look_ahead_window, end)
+        if not extract and look_back_window == begin:
             extract = True
-            continue
-        elif extract and line == end:
+            i = i + look_back - 1
+            print("start")
+        elif extract and look_ahead_window == end:
             extract = False
             content.append(current_section)
             current_section = []
+            print("finish")
         elif extract:
-            current_section.append(line)
+            print("add ", lines[i])
+            current_section.append(lines[i])
+        i += 1
 
     if extract:
         raise Exception(f"reached end of code before end: {end}")
     return content
+
+
+class ExtractSectionTest(unittest.TestCase):
+    def test_extract_CD_from_AACBAADB(self):
+        text = [f"{c}" for c in "AACBAADB"]
+        self.assertEqual(
+            [["C"], ["D"]],
+            extract_section(begin=["A", "A"], end="B", lines=text),
+        )
+
+    def test_extract_CD_from_AACBBAADBB(self):
+        text = [f"{c}" for c in "AACBBAADBB"]
+        self.assertEqual(
+            [["C"], ["D"]],
+            extract_section(begin=["A", "A"], end=["B", "B"], lines=text),
+        )
+
+    def test_extract_CD_from_ABCAABDAA(self):
+        text = [f"{c}" for c in "ABCAABDAA"]
+        self.assertEqual(
+            [["C"], ["D"]],
+            extract_section(begin=["A", "B"], end=["A", "A"], lines=text),
+        )
 
 
 def get_network_vhdl_code(module):
@@ -139,14 +181,6 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(unittest.TestCase):
         self.actual_code = get_network_vhdl_code(self.model.translate())
 
     def test_port_def_matches_target(self):
-        self.model.elasticai_tags.update(
-            {
-                "x_address_width": 1,
-                "y_address_width": 1,
-                "y_width": 16,
-                "x_width": 16,
-            }
-        )
         actual_code = self.actual_code
         expected_port_def = list(
             code_from_string(
