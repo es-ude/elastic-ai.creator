@@ -8,7 +8,7 @@ from vhdl.model_tracing import HWEquivalentNode, Node, HWEquivalentGraph
 
 
 class DummyModule(HWEquivalentLayer):
-    def signals(self, prefix: str) -> Code:
+    def signal_definitions(self, prefix: str) -> Code:
         yield from []
 
     def instantiation(self, prefix: str) -> Code:
@@ -18,7 +18,7 @@ class DummyModule(HWEquivalentLayer):
         pass
 
     @property
-    def data_width(self) -> int:
+    def y_width(self) -> int:
         return 1
 
     @property

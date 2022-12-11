@@ -72,20 +72,18 @@ class GenerateNetworkRootFile(TestCase):
         code = VHDLFileReaderWithoutComments(io).as_list()
         return code
 
-    def get_generated_portmap_signal_line(self, signal_id, key, value) -> str:
-        self.model.elasticai_tags.update({f"{key}": value})
+    def get_generated_portmap_signal_line(self, signal_id, value) -> str:
+        self.model.elasticai_tags.update({f"{signal_id}_width": value})
         portmap = self.extract_portmap(self.model.translate())
         actual = next(filter(lambda line: line.startswith(f"{signal_id}:"), portmap))
         return actual
 
     def check_y_address_width(self, value: int):
-        actual = self.get_generated_portmap_signal_line(
-            "y_address", "y_address_width", value
-        )
+        actual = self.get_generated_portmap_signal_line("y_address", value)
         self.assertEqual(f"y_address: in std_logic_vector({value}-1 downto 0);", actual)
 
     def check_x_data_width(self, value: int):
-        actual = self.get_generated_portmap_signal_line("x", "data_width", value)
+        actual = self.get_generated_portmap_signal_line("x", value)
         self.assertEqual(f"x: in std_logic_vector({value}-1 downto 0);", actual)
 
     def test_portmap_output_addr_width_is_4(
@@ -100,13 +98,11 @@ class GenerateNetworkRootFile(TestCase):
         self.check_x_data_width(4)
 
     def test_y_data_width_is_8(self):
-        actual = self.get_generated_portmap_signal_line("y", "data_width", 8)
+        actual = self.get_generated_portmap_signal_line("y", 8)
         self.assertEqual("y: out std_logic_vector(8-1 downto 0);", actual)
 
     def test_x_address_width_is_16(self):
-        actual = self.get_generated_portmap_signal_line(
-            "x_address", "x_address_width", 16
-        )
+        actual = self.get_generated_portmap_signal_line("x_address", 16)
         self.assertEqual("x_address: out std_logic_vector(16-1 downto 0);", actual)
 
     def test_check_network_vhdl_file(self):
@@ -114,7 +110,8 @@ class GenerateNetworkRootFile(TestCase):
             {
                 "x_address_width": 1,
                 "y_address_width": 1,
-                "data_width": 16,
+                "y_width": 16,
+                "x_width": 16,
             }
         )
         self.assertEqual(
