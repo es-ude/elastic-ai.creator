@@ -33,6 +33,7 @@ python-language-server = "^0.36.2"
 black = ">21.12"
 prospector = {extras = ["with_mypy"], version = "^1.7.7"}
 pre-commit = "^2.19.0"
+pydeps = "^1.11.0"
 
 
 

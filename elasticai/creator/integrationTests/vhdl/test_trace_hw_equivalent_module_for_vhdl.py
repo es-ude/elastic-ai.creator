@@ -36,7 +36,6 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
         layer = None
         for node in graph.nodes:
             if isinstance(node, HWEquivalentNode):
-                print(node)
                 layer = node.hw_equivalent_layer
         self.assertTrue(
             layer is model.fp_linear,
