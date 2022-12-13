@@ -2,8 +2,8 @@ import unittest
 from functools import partial
 
 from vhdl.hw_equivalent_layers.hw_blocks import (
-    BaseHWBlockInterface,
-    BufferedBaseHWBlockInterface,
+    BaseHWBlock,
+    BufferedBaseHWBlock,
 )
 
 
@@ -32,21 +32,21 @@ class NetworkHWComponentTest(unittest.TestCase):
 
 class HWBlockInstantiationTest(unittest.TestCase):
     def test_creates_instance(self):
-        block = BaseHWBlockInterface(x_width=0, y_width=0)
+        block = BaseHWBlock(x_width=0, y_width=0)
         lines = block.instantiation("my_comp")
         first_line = list(lines)[0]
         expected = "my_comp : entity work.my_comp(rtl)"
         self.assertEqual(expected, first_line)
 
     def test_opens_portmap(self):
-        block = BaseHWBlockInterface(x_width=0, y_width=0)
+        block = BaseHWBlock(x_width=0, y_width=0)
         lines = block.instantiation("my_comp")
         second_line = list(lines)[1]
         expected = "port map("
         self.assertEqual(expected, second_line)
 
     def test_assigns_all_ports(self):
-        block = BaseHWBlockInterface(x_width=0, y_width=0)
+        block = BaseHWBlock(x_width=0, y_width=0)
         lines = partial(block.instantiation, "my_comp")
         for port in ("enable", "clock", "x", "y"):
             with self.subTest(port):
@@ -56,7 +56,7 @@ class HWBlockInstantiationTest(unittest.TestCase):
                 )
 
     def test_ports_are_connected_to_correctly_named_signals(self):
-        block = BaseHWBlockInterface(x_width=0, y_width=0)
+        block = BaseHWBlock(x_width=0, y_width=0)
         lines = block.instantiation("some_other_name")
         port_to_signal_connections = list(lines)[2:-1]
         for line in port_to_signal_connections:
@@ -69,9 +69,9 @@ class HWBlockInstantiationTest(unittest.TestCase):
 
 class HWBlockSignals(unittest.TestCase):
     def constructor(self, name, data_width, *args):
-        return BaseHWBlockInterface(
-            x_width=data_width, y_width=data_width
-        ).signal_definitions(name)
+        return BaseHWBlock(x_width=data_width, y_width=data_width).signal_definitions(
+            name
+        )
 
     def test_clock_signal_is_generated(self):
         signals = self.constructor("other_name", 2)
@@ -103,7 +103,7 @@ class BufferedHWBlockSignals(HWBlockSignals):
         if len(args) == 2:
             x_address_width = args[0]
             y_address_width = args[1]
-        return BufferedBaseHWBlockInterface(
+        return BufferedBaseHWBlock(
             x_width=x_data_width,
             y_width=y_data_width,
             x_address_width=x_address_width,

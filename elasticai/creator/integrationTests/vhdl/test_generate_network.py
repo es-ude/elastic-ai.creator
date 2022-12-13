@@ -123,7 +123,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
         """
         )
         actual = extract_section(begin="port (", end=");", lines=self.actual_code)
-        self.check_all_expected_lines_are_present(expected_port_def, actual)
+        self.check_lines_are_equal_ignoring_order(expected_port_def, actual)
 
     def test_signal_defs_match_target(self):
         actual_code = self.actual_code
@@ -148,7 +148,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
         actual_sections = extract_section(
             begin="architecture rtl of fp_network is", end="begin", lines=actual_code
         )
-        self.check_all_expected_lines_are_present(expected_signal_defs, actual_sections)
+        self.check_lines_are_equal_ignoring_order(expected_signal_defs, actual_sections)
 
     def test_fp_linear_portmap_is_generated(self):
         self.check_portmaps(
@@ -188,7 +188,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
         )
         expected_portmap = self.strip_comma_from_portmaps(expected_portmap)
         actual = self.strip_comma_from_portmaps(actual)
-        self.check_all_expected_lines_are_present(expected_portmap, actual)
+        self.check_lines_are_equal_ignoring_order(expected_portmap, actual)
 
     def test_fp_hard_sigmoid_portmap_is_generated(self):
         self.check_portmaps(
@@ -198,4 +198,28 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
         x => fp_hard_sigmoid_x,
         y => fp_hard_sigmoid_y""",
             portmap_start="fp_hard_sigmoid : entity work.fp_hard_sigmoid(rtl)",
+        )
+
+
+class SignalConnectionsTest(CodeTestCase):
+    def setUp(self) -> None:
+        self.model = FirstModel()
+        self.model.elasticai_tags.update(
+            {
+                "x_address_width": 1,
+                "y_address_width": 1,
+                "y_width": 16,
+                "x_width": 16,
+            }
+        )
+        code = CodeTestCase.unified_vhdl_from_module(self.model.translate())
+        self.actual_connections: Code = extract_section(
+            begin="begin",
+            end="fp_linear : entity work.fp_linear(rtl)",
+            lines=code,
+        )[0]
+
+    def test_x_is_connected_to_fp_linear_x(self):
+        self.check_contains_all_expected_lines(
+            expected=["fp_linear_x <= x;"], actual=self.actual_connections
         )

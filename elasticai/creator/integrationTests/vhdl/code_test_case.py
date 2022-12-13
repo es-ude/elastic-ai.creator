@@ -23,7 +23,16 @@ class CodeTestCase(unittest.TestCase):
     def code_from_string(s: str) -> Code:
         yield from VHDLFileReaderWithoutComments(StringIO(s))
 
-    def check_all_expected_lines_are_present(
+    def check_contains_all_expected_lines(self, expected: Code, actual: Code):
+        reusable_code = list(actual)
+        for line in expected:
+            with self.subTest(line):
+                self.assertTrue(
+                    line in reusable_code,
+                    f"expected to find: {line}\nbut found: {reusable_code}",
+                )
+
+    def check_lines_are_equal_ignoring_order(
         self, expected: Iterable[Code], actual: Iterable[Code]
     ):
         def unpack(codes: Iterable[Code]) -> list[list[str]]:

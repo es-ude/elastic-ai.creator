@@ -85,7 +85,7 @@ SIGNAL_MAPPING = (
 )
 
 
-class BaseHWBlockInterface(HWBlockInterface):
+class BaseHWBlock(HWBlockInterface):
     _vector_signals = (
         LogicVectorInSignals.X,
         LogicVectorOutSignals.Y,
@@ -128,7 +128,7 @@ class BaseHWBlockInterface(HWBlockInterface):
         )
 
 
-class BufferedBaseHWBlockInterface(BaseHWBlockInterface, BufferedHWBlockInterface):
+class BufferedBaseHWBlock(BaseHWBlock, BufferedHWBlockInterface):
     _vector_signals = (
         LogicVectorInSignals.X,
         LogicVectorOutSignals.Y,
