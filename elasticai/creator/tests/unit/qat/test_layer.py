@@ -1,28 +1,19 @@
 import unittest
-from functools import partial
 
 import torch
 
 from elasticai.creator.qat.constraints import WeightClipper
 from elasticai.creator.qat.layers import (
     QLSTM,
-    BatchNormedActivatedConv1d,
     Binarize,
-    BinaryConv1d,
-    BinarySplitConv1d,
     ChannelShuffle,
-    MultilevelResidualBinarizationConv1d,
     QConv1d,
     QConv2d,
     QLinear,
     QLSTMCell,
     QuantizeTwoBit,
     ResidualQuantization,
-    SplitConvolutionBase,
     Ternarize,
-    TernaryConv1d,
-    TernarySplitConv1d,
-    TwoBitSplitConv1d,
 )
 
 
@@ -220,94 +211,6 @@ class QConv2dTest(unittest.TestCase):
     def test_throw_error_if_quantizer_is_none(self) -> None:
         with self.assertRaises(TypeError):
             _ = QConv2d(in_channels=1, out_channels=1, kernel_size=2, quantizer=None)
-
-
-class BatchNormedActivatedConv1dTest(unittest.TestCase):
-    def test_binarized_call_without_bias(self) -> None:
-        layer = BatchNormedActivatedConv1d(
-            in_channels=1,
-            out_channels=2,
-            kernel_size=2,
-            groups=1,
-            bias=False,
-            activation=Binarize,
-            channel_multiplexing_factor=1,
-        )
-        layer.conv.weight = torch.nn.Parameter(torch.ones_like(layer.conv.weight))
-        test_input = torch.ones((2, 1, 3))
-        output = layer(test_input)
-        expected = torch.ones(2, 2, 2)
-        self.assertTrue(torch.all((expected == output)))
-
-
-class DefineBatchNormedConvolution1dTest(unittest.TestCase):
-    def test_binary_conv1d(self) -> None:
-        layer = BinaryConv1d(
-            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
-        )
-        self.assertEqual(type(layer.quantize), type(Binarize()))
-        self.assertEqual(layer.channel_multiplexing_factor, 1)
-
-    def test_ternary_conv1d(self) -> None:
-        layer = TernaryConv1d(
-            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
-        )
-        self.assertEqual(type(layer.quantize), type(Ternarize()))
-        self.assertEqual(layer.channel_multiplexing_factor, 1)
-
-    def test_multilevel_residual_binarization_conv1d(self) -> None:
-        layer = MultilevelResidualBinarizationConv1d(
-            in_channels=1, out_channels=2, kernel_size=2, groups=1, bias=False
-        )
-        self.assertEqual(type(layer.quantize), type(QuantizeTwoBit()))
-        self.assertEqual(layer.channel_multiplexing_factor, 2)
-
-
-class SplitConvolutionBaseTest(unittest.TestCase):
-    def test_binarized_conv1d_outputs_as_expected(self) -> None:
-        layer_function = partial(
-            BatchNormedActivatedConv1d,
-            activation=Binarize,
-            channel_multiplexing_factor=1,
-        )
-        layer = SplitConvolutionBase(
-            in_channels=2,
-            out_channels=4,
-            kernel_size=2,
-            convolution=layer_function,
-            codomain_elements=[-1, 1],
-        )
-        layer.depthwise.conv.weight = torch.nn.Parameter(
-            torch.ones_like(layer.depthwise.conv.weight)
-        )
-        layer.pointwise.conv.weight = torch.nn.Parameter(
-            torch.ones_like(layer.pointwise.conv.weight)
-        )
-        test_input = torch.ones((2, 2, 3))
-        output = layer(test_input)
-        expected = torch.ones(2, 4, 2)
-        self.assertTrue(torch.all(expected == output))
-        self.assertEqual(layer.depthwise.conv.groups, 2)
-
-
-class DefineSplitConvolutionTest(unittest.TestCase):
-    def test_binary_split_conv1d(self) -> None:
-        layer = BinarySplitConv1d(in_channels=1, out_channels=2, kernel_size=2)
-        self.assertEqual(type(layer.depthwise.quantize), type(Binarize()))
-        self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
-        self.assertEqual(type(layer.pointwise.quantize), type(Binarize()))
-
-    def test_ternary_split_conv1d(self) -> None:
-        layer = TernarySplitConv1d(in_channels=1, out_channels=2, kernel_size=2)
-        self.assertEqual(type(layer.depthwise.quantize), type(Ternarize()))
-        self.assertEqual(layer.depthwise.channel_multiplexing_factor, 1)
-        self.assertEqual(type(layer.pointwise.quantize), type(Ternarize()))
-
-    def test_two_bit_split_conv1d(self) -> None:
-        layer = TwoBitSplitConv1d(in_channels=1, out_channels=2, kernel_size=2)
-        self.assertEqual(type(layer.depthwise.quantize), type(QuantizeTwoBit()))
-        self.assertEqual(layer.depthwise.channel_multiplexing_factor, 2)
-        self.assertEqual(type(layer.pointwise.quantize), type(QuantizeTwoBit()))
 
 
 class ChannelShuffleTest(unittest.TestCase):
