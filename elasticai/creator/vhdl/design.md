@@ -17,23 +17,23 @@ classDiagram
   class HWEquivalentModule
   HWEquivalentModule ..|> TranslatableHWBlock
   HWEquivalentModule --|> torchModule
-  BufferedHWEquivalentModule ..|> TranslatableBufferedHWBlock
+  BufferedHWEquivalentModule ..|> TranslatableHWBlock
   BufferedHWEquivalentModule --|> torchModule
-  class BufferedHWBlock {
+  class HWBlock {
     int x_address_width
     int y_address_width
   }
-  BufferedHWBlock --|> HWBlock
+  HWBlock --|> HWBlock
   TranslatableHWBlock --|> HWBlock
   TranslatableHWBlock --|> Translatable
-  TranslatableBufferedHWBlock --|> BufferedHWBlock
-  TranslatableBufferedHWBlock --|> Translatable
+  TranslatableHWBlock --|> HWBlock
+  TranslatableHWBlock --|> Translatable
   FixedPointLinear --|> BufferedHWEquivalentModule
   LUTHardSigmoid --|> HWEquivalentModule
   
   <<interface>> TranslatableHWBlock
-  <<interface>> TranslatableBufferedHWBlock
-  <<interface>> BufferedHWBlock
+  <<interface>> TranslatableHWBlock
+  <<interface>> HWBlock
   CodeModule "1" --* "1..n" CodeFile
   CodeModule: str name
   CodeModule: save_to(str dir)

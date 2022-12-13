@@ -1,23 +1,12 @@
-import dataclasses
 from abc import abstractmethod
 from enum import auto, Enum
 from itertools import chain
 from typing import Protocol, Iterable, Any
 
-from vhdl.code import Code, Translatable
+from elasticai.creator.vhdl.code import Code, Translatable
 
 
 class HWBlockInterface(Protocol):
-    @property
-    @abstractmethod
-    def x_width(self) -> int:
-        ...
-
-    @property
-    @abstractmethod
-    def y_width(self) -> int:
-        ...
-
     @abstractmethod
     def signal_definitions(self, prefix: str) -> Code:
         ...
@@ -27,23 +16,7 @@ class HWBlockInterface(Protocol):
         ...
 
 
-class BufferedHWBlockInterface(HWBlockInterface, Protocol):
-    @property
-    @abstractmethod
-    def x_address_width(self) -> int:
-        ...
-
-    @property
-    @abstractmethod
-    def y_address_width(self) -> int:
-        ...
-
-
 class TranslatableHWBlockInterface(HWBlockInterface, Translatable, Protocol):
-    ...
-
-
-class TranslatableBufferedHWBlock(BufferedHWBlockInterface, Translatable, Protocol):
     ...
 
 
@@ -86,29 +59,24 @@ SIGNAL_MAPPING = (
 
 
 class BaseHWBlock(HWBlockInterface):
-    _vector_signals = (
+    _vector_signals: tuple[SignalEnum, ...] = (
         LogicVectorInSignals.X,
         LogicVectorOutSignals.Y,
     )
-    _logic_signals = (StdLogicInSignals.ENABLE, StdLogicInSignals.CLOCK)
+    _logic_signals: tuple[SignalEnum, ...] = (
+        StdLogicInSignals.ENABLE,
+        StdLogicInSignals.CLOCK,
+    )
 
     def __init__(self, x_width: int, y_width: int):
-        self._x_data_width = x_width
-        self._y_data_width = y_width
-
-    @property
-    def y_width(self) -> int:
-        return self._y_data_width
-
-    @property
-    def x_width(self) -> int:
-        return self._x_data_width
+        self._x_width = x_width
+        self._y_width = y_width
 
     def _get_vector_signal_name_to_signal_width_mapping(
         self,
     ) -> Iterable[tuple[str, int]]:
         return map(
-            lambda s: (str(s), getattr(self, f"{s}_width")),
+            lambda s: (str(s), getattr(self, f"_{s}_width")),
             self._vector_signals,
         )
 
@@ -128,7 +96,7 @@ class BaseHWBlock(HWBlockInterface):
         )
 
 
-class BufferedBaseHWBlock(BaseHWBlock, BufferedHWBlockInterface):
+class BufferedBaseHWBlock(BaseHWBlock):
     _vector_signals = (
         LogicVectorInSignals.X,
         LogicVectorOutSignals.Y,
@@ -148,18 +116,9 @@ class BufferedBaseHWBlock(BaseHWBlock, BufferedHWBlockInterface):
         x_address_width: int,
         y_address_width: int,
     ):
-        self._y_data_width = y_width
-        self._x_data_width = x_width
+        super().__init__(y_width=y_width, x_width=x_width)
         self._x_address_width = x_address_width
         self._y_address_width = y_address_width
-
-    @property
-    def x_address_width(self) -> int:
-        return self._x_address_width
-
-    @property
-    def y_address_width(self) -> int:
-        return self._y_address_width
 
 
 def generate_signal_definitions(

@@ -1,7 +1,7 @@
 import unittest
 from functools import partial
 
-from vhdl.hw_equivalent_layers.hw_blocks import (
+from elasticai.creator.vhdl.hw_equivalent_layers.hw_blocks import (
     BaseHWBlock,
     BufferedBaseHWBlock,
 )
@@ -94,7 +94,7 @@ class HWBlockSignals(unittest.TestCase):
         self.assertEqual(4, len(tuple(signals)))
 
 
-class BufferedHWBlockSignals(HWBlockSignals):
+class HWBlockSignals(HWBlockSignals):
     def constructor(self, name, data_width, *args):
         x_address_width = 1
         y_address_width = 1

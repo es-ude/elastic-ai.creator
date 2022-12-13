@@ -2,7 +2,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     FixedPointFactory,
 )
-from vhdl.hw_equivalent_layers.vhdl_files import VHDLFile
+from vhdl.vhdl_files import VHDLFile
 
 
 class FPHardSigmoidFile(VHDLFile):

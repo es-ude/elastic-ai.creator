@@ -2,8 +2,8 @@ import doctest
 from collections.abc import Iterator
 from unittest import TestCase
 
-import elasticai.creator.vhdl.hw_equivalent_layers.vhdl_files
-from vhdl.hw_equivalent_layers.vhdl_files import (
+import vhdl.vhdl_files
+from vhdl.vhdl_files import (
     expand_multiline_template,
     expand_template,
 )
@@ -133,7 +133,5 @@ class ExpandTemplatesTest(TestCase):
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(
-        doctest.DocTestSuite(elasticai.creator.vhdl.hw_equivalent_layers.vhdl_files)
-    )
+    tests.addTests(doctest.DocTestSuite(vhdl.vhdl_files))
     return tests

@@ -8,10 +8,10 @@ from elasticai.creator.resource_utils import get_file
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
 )
-from elasticai.creator.vhdl.hw_equivalent_layers import (
+from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
     RootModule,
-    FixedPointLinear,
     FixedPointHardSigmoid,
+    FixedPointLinear,
 )
 
 from elasticai.creator.vhdl.code import Code

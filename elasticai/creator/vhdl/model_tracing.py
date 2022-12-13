@@ -6,8 +6,8 @@ import torch
 from torch.fx import Tracer as fxTracer
 from torch.fx import Graph as fxGraph
 from elasticai.creator.mlframework import Module
-from vhdl.code import Code
-from vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
+from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
 
 
 class Node(Protocol):
@@ -136,6 +136,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
 
 class _HWEquivalentTracer(fxTracer):
     def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
+        print(m.__module__)
         return m.__module__.startswith("elasticai.creator.vhdl.hw_equivalent_layers")
 
     def trace(self, root, **kwargs) -> HWEquivalentGraph:

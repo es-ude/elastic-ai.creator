@@ -24,10 +24,6 @@ class CodeFile(Protocol):
     def code(self) -> Code:
         ...
 
-    @abstractmethod
-    def save_to(self, prefix: str):
-        ...
-
 
 class TemplateCodeFile(CodeFile, Protocol):
     @property
@@ -89,10 +85,6 @@ class CodeModuleBase(CodeModule):
 
 
 class CodeFileBase(CodeFile):
-    def save_to(self, prefix: str):
-        with open(f"{prefix}{self.name}.vhd", "w") as f:
-            f.writelines(self.code())
-
     @property
     def name(self) -> str:
         return self._name

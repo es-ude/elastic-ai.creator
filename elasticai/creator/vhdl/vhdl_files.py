@@ -3,7 +3,7 @@ from string import Template
 from typing import Iterable, Callable, Union, Iterator
 
 from elasticai.creator.resource_utils import read_text
-from vhdl.code import Code, TemplateCodeFile
+from elasticai.creator.vhdl.code import Code, TemplateCodeFile
 
 
 class VHDLFile(TemplateCodeFile):

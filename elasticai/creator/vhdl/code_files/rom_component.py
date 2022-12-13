@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from vhdl.hw_equivalent_layers.vhdl_files import expand_template
+from vhdl.vhdl_files import expand_template
 
 
 @dataclass

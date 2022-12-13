@@ -8,7 +8,7 @@ from vhdl.code_files.utils import (
 )
 from vhdl.code import Code, CodeFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from vhdl.hw_equivalent_layers.vhdl_files import expand_template
+from vhdl.vhdl_files import expand_template
 
 
 @dataclass
