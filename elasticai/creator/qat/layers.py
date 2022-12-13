@@ -133,13 +133,6 @@ def _init_quantizable_convolution(
 
 
 class QConv1d(torch.nn.Conv1d):
-    """
-    Implementation of quantized Conv1d layer,all parameters are equivalent to the base pytorch class except for the quantizer, and constraints.
-    Args:
-      quantizer: An instance of a quantizer for weight and bias , currently only 1 can be used for both
-      constraints: A list of instances of constraints, applied with the apply constraint_call
-    """
-
     def __init__(
         self,
         in_channels: int,
