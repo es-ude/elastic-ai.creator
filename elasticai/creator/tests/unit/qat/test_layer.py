@@ -1,6 +1,5 @@
 import unittest
 from functools import partial
-from unittest import SkipTest
 
 import torch
 
