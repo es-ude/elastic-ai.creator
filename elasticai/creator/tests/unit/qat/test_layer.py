@@ -431,3 +431,30 @@ class QLSTMTest(unittest.TestCase):
         self.assertEqual(pt_outputs.tolist(), q_outputs.tolist())
         self.assertEqual(pt_h.tolist(), q_h.tolist())
         self.assertEqual(pt_c.tolist(), q_c.tolist())
+
+    def test_forward_flat_inputs_with_batch_first(self) -> None:
+        pt_lstm = torch.nn.LSTM(input_size=1, hidden_size=2, batch_first=True)
+        qlstm = QLSTM(
+            input_size=1,
+            hidden_size=2,
+            batch_first=True,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
+
+        qlstm.cell.weight_ih = pt_lstm.weight_ih_l0
+        qlstm.cell.weight_hh = pt_lstm.weight_hh_l0
+        qlstm.cell.bias_ih = pt_lstm.bias_ih_l0
+        qlstm.cell.bias_hh = pt_lstm.bias_hh_l0
+
+        inputs = torch.tensor([[1.0], [1.0], [1.0]])
+        state = (torch.tensor([[5.0, 5.0]]), torch.tensor([[-1.0, -1.0]]))
+        pt_outputs, (pt_h, pt_c) = pt_lstm(inputs, state)
+        q_outputs, (q_h, q_c) = qlstm(inputs, state)
+
+        pt_outputs, pt_h, pt_c = round_tensor(pt_outputs, pt_h, pt_c, decimals=4)
+        q_outputs, q_h, q_c = round_tensor(q_outputs, q_h, q_c, decimals=4)
+
+        self.assertEqual(pt_outputs.tolist(), q_outputs.tolist())
+        self.assertEqual(pt_h.tolist(), q_h.tolist())
+        self.assertEqual(pt_c.tolist(), q_c.tolist())

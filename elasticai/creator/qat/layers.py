@@ -298,7 +298,9 @@ class _QLSTMBase(torch.nn.Module):
         x: torch.Tensor,
         state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
     ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        if self.batch_first:
+        batched = x.dim() == 3
+
+        if batched and self.batch_first:
             x = torch.stack(torch.unbind(x), dim=1)
 
         if state is not None:
@@ -312,7 +314,7 @@ class _QLSTMBase(torch.nn.Module):
             state = (hidden_state, cell_state)
             outputs.append(hidden_state)
 
-        result = torch.stack(outputs, dim=1 if self.batch_first else 0)
+        result = torch.stack(outputs, dim=1 if batched and self.batch_first else 0)
         hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)
 
         return result, (hidden_state, cell_state)
