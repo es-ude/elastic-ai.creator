@@ -10,9 +10,8 @@ class TanhComponent:
     x: list[FixedPoint]
 
     @property
-    def name(self) -> str:
+    def file_name(self) -> str:
         return f"tanh.vhd"
 
-    @property
     def code(self) -> Code:
-        yield from Tanh(x=self.x, component_name="tanh")()
+        yield from Tanh(x=self.x, component_name="tanh").code()

@@ -1,4 +1,4 @@
-from elasticai.creator.tests.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
+from elasticai.creator.tests.unit.vhdl.vhdl_file_testcase import GeneratedVHDLCodeTest
 from vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import float_values_to_fixed_point
 
@@ -8,7 +8,7 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
         # biases for the input gate
         bi = [1.1, 2.2, 3.3, 4.4, 5.5, 6.6]
 
-        rom = RomFile(
+        generate_rom = RomFile(
             rom_name="rom_bi",
             values=float_values_to_fixed_point(bi, total_bits=12, frac_bits=4),
             resource_option="auto",

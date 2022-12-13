@@ -10,9 +10,8 @@ class SigmoidComponent:
     x: list[FixedPoint]
 
     @property
-    def name(self) -> str:
+    def file_name(self) -> str:
         return f"sigmoid.vhd"
 
-    @property
     def code(self) -> Code:
-        yield from Sigmoid(x=self.x, component_name="sigmoid")()
+        yield from Sigmoid(x=self.x, component_name="sigmoid").code()

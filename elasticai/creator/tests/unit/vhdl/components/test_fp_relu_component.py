@@ -13,4 +13,4 @@ class FPReLUComponentTest(unittest.TestCase):
             fixed_point_factory=to_fp,
         )
 
-        self.assertEqual(len(list(component())), 66)
+        self.assertEqual(len(list(component.code())), 66)

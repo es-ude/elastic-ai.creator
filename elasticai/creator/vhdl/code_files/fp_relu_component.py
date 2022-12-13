@@ -24,7 +24,7 @@ class FPReLUComponent:
     def file_name(self) -> str:
         return f"fp_relu_{self.layer_id}.vhd"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "fp_relu.tpl.vhd")
 
         code = expand_template(

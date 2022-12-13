@@ -203,13 +203,11 @@ class FixedPointModel(torch.nn.Module):
     def __init__(self, fixed_point_factory: FixedPointFactory) -> None:
         super().__init__()
         self._linear1 = FixedPointLinear(
-            layer_name="linear1",
             in_features=3,
             out_features=2,
             fixed_point_factory=fixed_point_factory,
         )
         self._linear2 = FixedPointLinear(
-            layer_name="linear2",
             in_features=2,
             out_features=1,
             fixed_point_factory=fixed_point_factory,
