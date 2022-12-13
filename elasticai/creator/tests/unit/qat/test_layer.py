@@ -1,10 +1,8 @@
 import unittest
 from functools import partial
-from typing import Optional, Tuple
-from unittest.mock import patch
+from unittest import SkipTest
 
 import torch
-from torch import Tensor
 
 from elasticai.creator.qat.constraints import WeightClipper
 from elasticai.creator.qat.layers import (
@@ -29,13 +27,13 @@ from elasticai.creator.qat.layers import (
 )
 
 
-class MockQLSTMCell:
-    def __init__(*args, **kwargs):
-        pass
-
-    # it is the forward function in a real LSTM cell
-    def __call__(self, input: Tensor, hx: Optional[Tuple[Tensor, Tensor]] = None):
-        return hx
+def round_tensor(
+    *input_tensor: torch.Tensor, decimals: int
+) -> tuple[torch.Tensor, ...]:
+    return tuple(
+        tensor.to(float).detach().apply_(lambda x: round(x, decimals))
+        for tensor in input_tensor
+    )
 
 
 class TernarizeTest(unittest.TestCase):
@@ -342,6 +340,9 @@ class QLSTMCellTest(unittest.TestCase):
         lstm_h1, lstm_c1 = lstm_cell(inp)
         qlstm_h1, qlstm_c1 = qlstm_cell(inp)
 
+        lstm_h1, lstm_c1 = round_tensor(lstm_h1, lstm_c1, decimals=4)
+        qlstm_h1, qlstm_c1 = round_tensor(qlstm_h1, qlstm_c1, decimals=4)
+
         self.assertEqual(lstm_h1.tolist(), qlstm_h1.tolist())
         self.assertEqual(lstm_c1.tolist(), qlstm_c1.tolist())
 
@@ -358,6 +359,9 @@ class QLSTMCellTest(unittest.TestCase):
         lstm_h1, lstm_c1 = lstm_cell(inp)
         qlstm_h1, qlstm_c1 = qlstm_cell(inp)
 
+        lstm_h1, lstm_c1 = round_tensor(lstm_h1, lstm_c1, decimals=4)
+        qlstm_h1, qlstm_c1 = round_tensor(qlstm_h1, qlstm_c1, decimals=4)
+
         self.assertEqual(lstm_h1.tolist(), qlstm_h1.tolist())
         self.assertEqual(lstm_c1.tolist(), qlstm_c1.tolist())
 
@@ -369,44 +373,112 @@ class QLSTMCellTest(unittest.TestCase):
             state_quantizer=Binarize(),
             weight_quantizer=Binarize(),
         )
+
         cell.weight_ih = torch.nn.Parameter(torch.ones_like(cell.weight_ih))
         cell.weight_hh = torch.nn.Parameter(torch.ones_like(cell.weight_hh) * (-1))
         cell.bias_ih = torch.nn.Parameter(torch.ones_like(cell.bias_ih))
         cell.bias_hh = torch.nn.Parameter(torch.ones_like(cell.bias_hh) * (-1))
+
         inp = torch.as_tensor([[1.0]])
-        actual_outputs = cell(inp)
-        actual_outputs = tuple(
-            map(
-                lambda output: [[round(n, 4) for n in row] for row in output.tolist()],
-                actual_outputs,
-            )
-        )
-        target_outputs = ([[0.2311]], [[0.5]])
-        self.assertEqual(actual_outputs[0], target_outputs[0])
-        self.assertEqual(actual_outputs[1], target_outputs[1])
+        actual_h1, actual_c1 = cell(inp)
+        actual_h1, actual_c1 = round_tensor(actual_h1, actual_c1, decimals=4)
+        target_h1, target_c1 = [[0.2311]], [[0.5]]
+
+        self.assertEqual(target_h1, actual_h1.tolist())
+        self.assertEqual(target_c1, actual_c1.tolist())
+
+    def test_output_shape_on_flat_input_data(self) -> None:
+        input_size = 2
+        hidden_size = 4
+        cell = QLSTMCell(input_size=input_size, hidden_size=hidden_size, bias=True)
+        inputs = torch.rand(input_size)
+        h1, c1 = cell(inputs)
+        self.assertEqual(h1.shape, (hidden_size,))
+        self.assertEqual(c1.shape, (hidden_size,))
+
+    def test_output_shape_on_batched_input_data(self) -> None:
+        input_size = 2
+        hidden_size = 4
+        batch_size = 3
+        cell = QLSTMCell(input_size=input_size, hidden_size=hidden_size, bias=True)
+        inputs = torch.rand(batch_size, input_size)
+        h1, c1 = cell(inputs)
+        self.assertEqual(h1.shape, (batch_size, hidden_size))
+        self.assertEqual(c1.shape, (batch_size, hidden_size))
 
 
 class QLSTMTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.lstm_cell_id = "elasticai.creator.qat.layers.QLSTMCell"
-        self.qlstm_parameters = {"input_size": 0, "hidden_size": 1, "bias": False}
+    def test_output_shape_on_flat_input_data(self) -> None:
+        input_size, hidden_size, sequence_len = 2, 4, 3
+        lstm = QLSTM(input_size, hidden_size, bias=True)
+        inputs = torch.rand(sequence_len, input_size)
+        h0, c0 = torch.rand(1, hidden_size), torch.rand(1, hidden_size)
+        output, (h1, c1) = lstm(inputs, (h0, c0))
+        self.assertEqual(output.shape, (sequence_len, hidden_size))
+        self.assertEqual(h1.shape, (1, hidden_size))
+        self.assertEqual(c1.shape, (1, hidden_size))
+
+    def test_output_shape_on_batched_input_data(self) -> None:
+        input_size, hidden_size, sequence_len = 2, 4, 3
+        batch_size = 5
+        lstm = QLSTM(input_size, hidden_size, bias=True)
+        inputs = torch.rand(sequence_len, batch_size, input_size)
+        h0 = torch.rand(1, batch_size, hidden_size)
+        c0 = torch.rand(1, batch_size, hidden_size)
+        output, (h1, c1) = lstm(inputs, (h0, c0))
+        self.assertEqual(output.shape, (sequence_len, batch_size, hidden_size))
+        self.assertEqual(h1.shape, (1, batch_size, hidden_size))
+        self.assertEqual(c1.shape, (1, batch_size, hidden_size))
+
+    def test_output_shape_on_batched_input_data_batch_first(self) -> None:
+        input_size, hidden_size, sequence_len = 2, 4, 3
+        batch_size = 5
+        lstm = QLSTM(input_size, hidden_size, bias=True, batch_first=True)
+        inputs = torch.rand(batch_size, sequence_len, input_size)
+        h0 = torch.rand(1, batch_size, hidden_size)
+        c0 = torch.rand(1, batch_size, hidden_size)
+        output, (h1, c1) = lstm(inputs, (h0, c0))
+        self.assertEqual(output.shape, (batch_size, sequence_len, hidden_size))
+        self.assertEqual(h1.shape, (1, batch_size, hidden_size))
+        self.assertEqual(c1.shape, (1, batch_size, hidden_size))
 
     def test_forward_without_explicit_given_state(self) -> None:
-        with patch(self.lstm_cell_id, new=MockQLSTMCell) as _:
-            layer = QLSTM(**self.qlstm_parameters)
-            input = torch.tensor([[1.0, 1.0], [1.0, 1.0]])
-            state = [torch.tensor([1.0]), torch.tensor([1.0])]
-            outputs, cell_state = layer(input, state)
-            self.assertEqual(outputs.tolist(), [[1.0], [1.0]])
-            self.assertEqual(cell_state[0].tolist(), [1.0])
-            self.assertEqual(cell_state[1].tolist(), [1.0])
+        pt_lstm = torch.nn.LSTM(input_size=1, hidden_size=2, bias=True)
+        qlstm = QLSTM(input_size=1, hidden_size=2, bias=True)
+
+        qlstm.cell.weight_ih = pt_lstm.weight_ih_l0
+        qlstm.cell.weight_hh = pt_lstm.weight_hh_l0
+        qlstm.cell.bias_ih = pt_lstm.bias_ih_l0
+        qlstm.cell.bias_hh = pt_lstm.bias_hh_l0
+
+        inputs = torch.tensor([[1.0], [1.0]])
+        pt_outputs, (pt_h, pt_c) = pt_lstm(inputs)
+        q_outputs, (q_h, q_c) = qlstm(inputs)
+
+        pt_outputs, pt_h, pt_c = round_tensor(pt_outputs, pt_h, pt_c, decimals=4)
+        q_outputs, q_h, q_c = round_tensor(q_outputs, q_h, q_c, decimals=4)
+
+        self.assertEqual(pt_outputs.tolist(), q_outputs.tolist())
+        self.assertEqual(pt_h.tolist(), q_h.tolist())
+        self.assertEqual(pt_c.tolist(), q_c.tolist())
 
     def test_forward_with_input_and_state(self) -> None:
-        with patch(self.lstm_cell_id, new=MockQLSTMCell) as _:
-            layer = QLSTM(**self.qlstm_parameters)
-            input = torch.tensor([[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
-            state = [torch.tensor([5.0]), torch.tensor([-1.0])]
-            outputs, cell_state = layer(input, state)
-            self.assertEqual(outputs.tolist(), [[5.0], [5.0], [5.0]])
-            self.assertEqual(cell_state[0].tolist(), [5.0])
-            self.assertEqual(cell_state[1].tolist(), [-1.0])
+        pt_lstm = torch.nn.LSTM(input_size=1, hidden_size=2, bias=True)
+        qlstm = QLSTM(input_size=1, hidden_size=2, bias=True)
+
+        qlstm.cell.weight_ih = pt_lstm.weight_ih_l0
+        qlstm.cell.weight_hh = pt_lstm.weight_hh_l0
+        qlstm.cell.bias_ih = pt_lstm.bias_ih_l0
+        qlstm.cell.bias_hh = pt_lstm.bias_hh_l0
+
+        inputs = torch.tensor([[1.0], [1.0]])
+        state = (torch.tensor([[5.0, 5.0]]), torch.tensor([[-1.0, -1.0]]))
+        pt_outputs, (pt_h, pt_c) = pt_lstm(inputs, state)
+        q_outputs, (q_h, q_c) = qlstm(inputs, state)
+
+        pt_outputs, pt_h, pt_c = round_tensor(pt_outputs, pt_h, pt_c, decimals=4)
+        q_outputs, q_h, q_c = round_tensor(q_outputs, q_h, q_c, decimals=4)
+
+        self.assertEqual(pt_outputs.tolist(), q_outputs.tolist())
+        self.assertEqual(pt_h.tolist(), q_h.tolist())
+        self.assertEqual(pt_c.tolist(), q_c.tolist())

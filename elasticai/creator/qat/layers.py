@@ -238,7 +238,8 @@ class _Identity(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def forward(x: torch.Tensor) -> torch.Tensor:
         return x
 
 
@@ -277,34 +278,33 @@ class QLSTMCell(torch.nn.LSTMCell):
         self.new_cell_state_activation = new_cell_state_activation
 
     def forward(
-        self, x: torch.Tensor, hx: Optional[tuple[torch.Tensor, torch.Tensor]] = None
+        self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
     ) -> tuple[torch.Tensor, torch.Tensor]:
         # Implementation based on
         # https://github.com/pytorch/pytorch/blob/e9ef087d2d12051341db485c8ac64ea64649823d/benchmarks/fastrnns/cells.py#L25
-        if hx is None:
-            zeros = torch.zeros(
-                x.size(0), self.hidden_size, dtype=x.dtype, device=x.device
+        batched = x.dim() == 2
+        if state is None:
+            zeros_shape = (
+                (x.size(dim=0), self.hidden_size) if batched else (self.hidden_size,)
             )
-            hx = (zeros, zeros)
+            zeros = torch.zeros(*zeros_shape, dtype=x.dtype, device=x.device)
+            state = (zeros, zeros)
 
-        h_0 = self.state_quantizer(hx[0])
-        c_0 = self.state_quantizer(hx[1])
+        h_0 = self.state_quantizer(state[0])
+        c_0 = self.state_quantizer(state[1])
         weight_ih = self.weight_quantizer(self.weight_ih)
         weight_hh = self.weight_quantizer(self.weight_hh)
+
+        gates = torch.matmul(x, weight_ih.t()) + torch.matmul(h_0, weight_hh.t())
 
         if self.bias:
             bias_ih = self.weight_quantizer(self.bias_ih)
             bias_hh = self.weight_quantizer(self.bias_hh)
-            gates = (
-                torch.mm(x, weight_ih.t())
-                + bias_ih
-                + torch.mm(h_0, weight_hh.t())
-                + bias_hh
-            )
-        else:
-            gates = torch.mm(x, weight_ih.t()) + torch.mm(h_0, weight_hh.t())
+            gates += bias_ih + bias_hh
 
-        in_gate, forget_gate, cell_gate, out_gate = gates.chunk(4, dim=1)
+        in_gate, forget_gate, cell_gate, out_gate = gates.chunk(
+            4, dim=1 if batched else 0
+        )
 
         i = self.input_gate_activation(in_gate)
         f = self.forget_gate_activation(forget_gate)
@@ -318,26 +318,19 @@ class QLSTMCell(torch.nn.LSTMCell):
 
 
 class QLSTM(torch.nn.Module):
-    """
-    Implementation of quantized LSTM
-    Args:
-     lstm_cell : an instance of a lstm_cell
-     batch_first: same as pytorch. If True, then the input and output tensors are provided as (batch, seq, feature) instead of (seq, batch, feature)
-    """
-
     def __init__(
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Optional[Module] = _Identity(),
-        weight_quantizer: Optional[Module] = _Identity(),
+        state_quantizer: Module = _Identity(),
+        weight_quantizer: Module = _Identity(),
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
         output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-        batch_first=False,
+        batch_first: bool = False,
     ):
         super().__init__()
         self.cell = QLSTMCell(
@@ -355,22 +348,31 @@ class QLSTM(torch.nn.Module):
         self.batch_first = batch_first
 
     def forward(
-        self, input: torch.Tensor, state: tuple[torch.Tensor, torch.Tensor] = None
-    ) -> tuple[torch.Tensor, Optional[tuple[torch.Tensor, torch.Tensor]]]:
-        if self.batch_first:
-            input = torch.stack(torch.unbind(input), dim=1)
-
+        self,
+        x: torch.Tensor,
+        state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         # Implementation based on
         # https://github.com/pytorch/pytorch/blob/bb7fd1fcfbd2507272fd9b3f2610ef02bfba5692/benchmarks/fastrnns/custom_lstms.py#L184
-        inputs = torch.unbind(input, dim=0)
+
+        if self.batch_first:
+            x = torch.stack(torch.unbind(x), dim=1)
+
+        if state is not None:
+            state = state[0].squeeze(0), state[1].squeeze(0)
+
+        inputs = torch.unbind(x, dim=0)
+
         outputs = []
         for i in range(len(inputs)):
-            output, cell_state = self.cell(inputs[i], state)
-            state = output, cell_state
-            outputs += [output]
-        stack_dim = 1 if self.batch_first else 0
-        result = torch.stack(outputs, dim=stack_dim)
-        return result, state
+            hidden_state, cell_state = self.cell(inputs[i], state)
+            state = (hidden_state, cell_state)
+            outputs.append(hidden_state)
+
+        result = torch.stack(outputs, dim=1 if self.batch_first else 0)
+        hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)
+
+        return result, (hidden_state, cell_state)
 
 
 class BatchNormedActivatedConv1d(torch.nn.Module):
