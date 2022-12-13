@@ -111,20 +111,25 @@ class QuantizeTwoBit(torch.nn.Module):
         return binarize(torch.cat((first_half, second_half), dim=1))
 
 
-def _init_quantizable_convolution(self, quantizer, bias, constraints):
+def _init_quantizable_convolution(
+    module: torch.nn.Module,
+    quantizer: Module,
+    bias: bool,
+    constraints: list[Constraint],
+):
     if isinstance(quantizer, Module):
-        register_parametrization(self, "weight", quantizer)
+        register_parametrization(module, "weight", quantizer)
         if bias:
-            register_parametrization(self, "bias", quantizer)
+            register_parametrization(module, "bias", quantizer)
     else:
         raise TypeError(f"Quantizer {quantizer} is not an instance of Module.")
-    self.constraints = constraints if constraints else None
+    module.constraints = constraints if constraints else None
 
     def apply_constraint(self):
         if self.constraints:
             [constraint(self) for constraint in self.constraints]
 
-    self.apply_constraint = types.MethodType(apply_constraint, self)
+    module.apply_constraint = types.MethodType(apply_constraint, module)
 
 
 class QConv1d(torch.nn.Conv1d):
@@ -167,13 +172,6 @@ class QConv1d(torch.nn.Conv1d):
 
 
 class QConv2d(torch.nn.Conv2d):
-    """
-    Implementation of quantized Conv2d layer, all parameters are equivalent to the base pytorch class except for the quantizer and consraints.
-    Args:
-     quantizer: An instance of a quantizer for weight and bias , currently only 1 can be used for both
-    constraints: A list of instances of constraints, applied with the apply constraint_call
-    """
-
     def __init__(
         self,
         in_channels,
@@ -220,13 +218,6 @@ class ChannelShuffle(torch.nn.Module):
 
 
 class QLinear(torch.nn.Linear):
-    """
-    Implementation of quantized Linear layer,all parameters are equivalent to the base pytorch class except for the quantizer and constraints.
-    Args:
-     quantizer: An instance of a quantizer for weight and bias, currently only 1 can be used for both
-     constraints: A list of instances of constraints, applied with the apply constraint_call
-    """
-
     def __init__(
         self,
         in_features: int,
@@ -242,22 +233,12 @@ class QLinear(torch.nn.Linear):
 
 
 class QLSTMCell(torch.nn.LSTMCell):
-    """
-    Implementation of quantized LSTM cell,all parameters are equivalent to the base pytorch class except for the quantizers.
-    Args:
-        input_gate_activation:  The input gate activation, expects a quantizer instance, if None will default to sigmoid
-        forget_gate_activation: The forget gate activation, expects a quantizer instance, if None will default to sigmoid
-        cell_gate_activation: The cell gate activation, expects a quantizer instance, if None will default to tanh
-        output_gate_activation: The output gate activation, expects a quantizer instance, if None will default to sigmoid
-        new_cell_gate_activation: The new cell gate activation, expects a quantizer instance, if None will default to tanh
-    """
-
     def __init__(
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Module = Identity(),
-        weight_quantizer: Module = Identity(),
+        state_quantizer: Module,
+        weight_quantizer: Module,
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -278,8 +259,6 @@ class QLSTMCell(torch.nn.LSTMCell):
     def forward(
         self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        # Implementation based on
-        # https://github.com/pytorch/pytorch/blob/e9ef087d2d12051341db485c8ac64ea64649823d/benchmarks/fastrnns/cells.py#L25
         batched = x.dim() == 2
         if state is None:
             zeros_shape = (
@@ -320,8 +299,8 @@ class QLSTM(torch.nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Module = Identity(),
-        weight_quantizer: Module = Identity(),
+        state_quantizer: Module,
+        weight_quantizer: Module,
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -350,9 +329,6 @@ class QLSTM(torch.nn.Module):
         x: torch.Tensor,
         state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
     ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        # Implementation based on
-        # https://github.com/pytorch/pytorch/blob/bb7fd1fcfbd2507272fd9b3f2610ef02bfba5692/benchmarks/fastrnns/custom_lstms.py#L184
-
         if self.batch_first:
             x = torch.stack(torch.unbind(x), dim=1)
 
