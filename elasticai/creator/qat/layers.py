@@ -2,18 +2,11 @@ import types
 from typing import Callable, Optional
 
 import torch
-from torch import Tensor
-from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.mlframework import Module, Tensor
-from elasticai.creator.precomputation.input_domains import (
-    create_codomain_for_1d_conv,
-    create_codomain_for_depthwise_1d_conv,
-)
-from elasticai.creator.precomputation.precomputation import precomputable
+from elasticai.creator.qat.constraints import Constraint
 from elasticai.creator.qat.functional import binarize as BinarizeFn
-from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
 
@@ -64,6 +57,15 @@ class Ternarize(torch.nn.Module):
 
     @staticmethod
     def right_inverse(x: Tensor) -> Tensor:
+        return x
+
+
+class Identity(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    @staticmethod
+    def forward(x: torch.Tensor) -> torch.Tensor:
         return x
 
 
@@ -226,21 +228,17 @@ class QLinear(torch.nn.Linear):
     """
 
     def __init__(
-        self, in_features, out_features, quantizer, bias=True, constraints: list = None
+        self,
+        in_features: int,
+        out_features: int,
+        quantizer: Module,
+        bias: bool = True,
+        constraints: list[Constraint] = None,
     ):
         super().__init__(in_features=in_features, out_features=out_features, bias=bias)
         _init_quantizable_convolution(
             self, quantizer=quantizer, bias=bias, constraints=constraints
         )
-
-
-class _Identity(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
-    @staticmethod
-    def forward(x: torch.Tensor) -> torch.Tensor:
-        return x
 
 
 class QLSTMCell(torch.nn.LSTMCell):
@@ -258,8 +256,8 @@ class QLSTMCell(torch.nn.LSTMCell):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Optional[Module] = _Identity(),
-        weight_quantizer: Optional[Module] = _Identity(),
+        state_quantizer: Module = Identity(),
+        weight_quantizer: Module = Identity(),
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -322,8 +320,8 @@ class QLSTM(torch.nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        state_quantizer: Module = _Identity(),
-        weight_quantizer: Module = _Identity(),
+        state_quantizer: Module = Identity(),
+        weight_quantizer: Module = Identity(),
         bias: bool = True,
         input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
         forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
@@ -373,189 +371,3 @@ class QLSTM(torch.nn.Module):
         hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)
 
         return result, (hidden_state, cell_state)
-
-
-class BatchNormedActivatedConv1d(torch.nn.Module):
-    """Applies a convolution followed by a batchnorm and an activation function.
-    The BatchNorm is not performing an affine translation, instead we incorporate
-    a trainable scaling factor that is applied to each channel before the application
-    of the activation function.
-    """
-
-    def __init__(
-        self,
-        activation: Callable[[], Module],
-        kernel_size,
-        in_channels,
-        out_channels,
-        groups,
-        bias,
-        channel_multiplexing_factor,
-    ):
-        super().__init__()
-        self.conv = Conv1d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            groups=groups,
-            padding=0,
-            bias=bias,
-        )
-        self.bn = BatchNorm1d(num_features=out_channels, affine=False)
-        self.scaling_factors = Parameter(torch.ones((out_channels, 1)))
-        self.quantize = activation()
-        self.channel_multiplexing_factor = channel_multiplexing_factor
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.scaling_factors * x
-        x = self.quantize(x)
-        return x
-
-
-def define_batch_normed_convolution_1d(activation, channel_multiplexing_factor):
-    """Allows to define a new `BatchNormedActivationConvolution` that uses `activation` for its activation function.
-    The `channel_multiplexing_factor` will be used by calling modules to determine if the activation function will
-    change the number of channels, like the `ResidualBinarization` does.
-    This way we can determine the input shape for following layers."""
-
-    def wrapper(cls):
-        class Wrapped(BatchNormedActivatedConv1d):
-            def __init__(self, kernel_size, in_channels, out_channels, groups, bias):
-                super().__init__(
-                    activation=activation,
-                    kernel_size=kernel_size,
-                    in_channels=in_channels,
-                    out_channels=out_channels,
-                    groups=groups,
-                    bias=bias,
-                    channel_multiplexing_factor=channel_multiplexing_factor,
-                )
-
-        return Wrapped
-
-    return wrapper
-
-
-@define_batch_normed_convolution_1d(Binarize, 1)
-class BinaryConv1d:
-    pass
-
-
-@define_batch_normed_convolution_1d(Ternarize, 1)
-class TernaryConv1d:
-    pass
-
-
-@define_batch_normed_convolution_1d(QuantizeTwoBit, 2)
-class MultilevelResidualBinarizationConv1d:
-    pass
-
-
-class SplitConvolutionBase(torch.nn.Module):
-    def __init__(
-        self,
-        convolution: TaggedModule,
-        kernel_size,
-        in_channels,
-        out_channels,
-        codomain_elements: list[float],
-    ):
-        """Use this as a base class if you want to incorporate your own convolution implementation (up to the quantizing activation function)
-        into a SplitConvolution.
-        """
-        super().__init__()
-        self.kernel_size = kernel_size
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.codomain_elements = codomain_elements
-        self.depthwise = convolution(
-            kernel_size=kernel_size,
-            in_channels=in_channels,
-            groups=in_channels,
-            out_channels=in_channels,
-            bias=False,
-        )  # type: ignore
-        self.pointwise = convolution(
-            kernel_size=1,
-            in_channels=in_channels * self.depthwise.channel_multiplexing_factor,
-            out_channels=out_channels,
-            groups=1,
-            bias=False,
-        )
-        depthwise_shape = (in_channels, kernel_size)
-
-        def depthwise_input() -> Tensor:
-            return create_codomain_for_depthwise_1d_conv(
-                depthwise_shape, self.codomain_elements
-            )
-
-        depthwise_precomputable_tag = precomputable(
-            input_shape=depthwise_shape, input_generator=depthwise_input
-        )
-        self.depthwise = depthwise_precomputable_tag(self.depthwise)
-
-        pointwise_shape = (
-            1,
-            in_channels * self.depthwise.channel_multiplexing_factor,
-        )
-
-        def pointwise_input():
-            return create_codomain_for_1d_conv(
-                pointwise_shape, self.depthwise.codomain_elements
-            )
-
-        pointwise_precomputable_tag = precomputable(
-            input_shape=pointwise_shape, input_generator=pointwise_input
-        )
-        self.pointwise = pointwise_precomputable_tag(self.pointwise)
-
-    def forward(self, x):
-        return self.pointwise(self.depthwise(x))
-
-
-def define_split_convolution(
-    conv_cls, _channel_multiplexing_factor, input_domain_elements
-):
-    def wrapper(cls):
-        class Wrapped(SplitConvolutionBase):
-            channel_multiplexing_factor = _channel_multiplexing_factor
-
-            def __init__(self, kernel_size, in_channels, out_channels):
-                super().__init__(
-                    convolution=conv_cls,
-                    kernel_size=kernel_size,
-                    in_channels=in_channels,
-                    out_channels=out_channels,
-                    codomain_elements=input_domain_elements,
-                )
-
-        return Wrapped
-
-    return wrapper
-
-
-@define_split_convolution(
-    BinaryConv1d, _channel_multiplexing_factor=1, input_domain_elements=[-1, 1]
-)
-class BinarySplitConv1d:
-    pass
-
-
-@define_split_convolution(
-    TernaryConv1d,
-    _channel_multiplexing_factor=1,
-    input_domain_elements=[-1, 0, 1],
-)
-class TernarySplitConv1d:
-    pass
-
-
-@define_split_convolution(
-    MultilevelResidualBinarizationConv1d,
-    _channel_multiplexing_factor=2,
-    input_domain_elements=[-1, 1],
-)
-class TwoBitSplitConv1d:
-    pass
