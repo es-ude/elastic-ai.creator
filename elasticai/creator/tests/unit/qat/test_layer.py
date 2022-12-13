@@ -7,6 +7,7 @@ from elasticai.creator.qat.layers import (
     QLSTM,
     Binarize,
     ChannelShuffle,
+    Identity,
     QConv1d,
     QConv2d,
     QLinear,
@@ -231,7 +232,13 @@ class ChannelShuffleTest(unittest.TestCase):
 class QLSTMCellTest(unittest.TestCase):
     def test_full_res_qlstm_cell_equal_pytorch_lstm_cell_without_bias(self) -> None:
         lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=False)
-        qlstm_cell = QLSTMCell(input_size=3, hidden_size=5, bias=False)
+        qlstm_cell = QLSTMCell(
+            input_size=3,
+            hidden_size=5,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+            bias=False,
+        )
 
         qlstm_cell.weight_ih = lstm_cell.weight_ih
         qlstm_cell.weight_hh = lstm_cell.weight_hh
@@ -250,7 +257,12 @@ class QLSTMCellTest(unittest.TestCase):
 
     def test_full_res_qlstm_cell_equal_pytorch_lstm_cell_with_bias(self) -> None:
         lstm_cell = torch.nn.LSTMCell(input_size=3, hidden_size=5, bias=True)
-        qlstm_cell = QLSTMCell(input_size=3, hidden_size=5, bias=True)
+        qlstm_cell = QLSTMCell(
+            input_size=3,
+            hidden_size=5,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
 
         qlstm_cell.weight_ih = lstm_cell.weight_ih
         qlstm_cell.weight_hh = lstm_cell.weight_hh
@@ -271,7 +283,6 @@ class QLSTMCellTest(unittest.TestCase):
         cell = QLSTMCell(
             input_size=1,
             hidden_size=1,
-            bias=True,
             state_quantizer=Binarize(),
             weight_quantizer=Binarize(),
         )
@@ -292,7 +303,12 @@ class QLSTMCellTest(unittest.TestCase):
     def test_output_shape_on_flat_input_data(self) -> None:
         input_size = 2
         hidden_size = 4
-        cell = QLSTMCell(input_size=input_size, hidden_size=hidden_size, bias=True)
+        cell = QLSTMCell(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
         inputs = torch.rand(input_size)
         h1, c1 = cell(inputs)
         self.assertEqual(h1.shape, (hidden_size,))
@@ -302,7 +318,12 @@ class QLSTMCellTest(unittest.TestCase):
         input_size = 2
         hidden_size = 4
         batch_size = 3
-        cell = QLSTMCell(input_size=input_size, hidden_size=hidden_size, bias=True)
+        cell = QLSTMCell(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
         inputs = torch.rand(batch_size, input_size)
         h1, c1 = cell(inputs)
         self.assertEqual(h1.shape, (batch_size, hidden_size))
@@ -312,7 +333,12 @@ class QLSTMCellTest(unittest.TestCase):
 class QLSTMTest(unittest.TestCase):
     def test_output_shape_on_flat_input_data(self) -> None:
         input_size, hidden_size, sequence_len = 2, 4, 3
-        lstm = QLSTM(input_size, hidden_size, bias=True)
+        lstm = QLSTM(
+            input_size,
+            hidden_size,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
         inputs = torch.rand(sequence_len, input_size)
         h0, c0 = torch.rand(1, hidden_size), torch.rand(1, hidden_size)
         output, (h1, c1) = lstm(inputs, (h0, c0))
@@ -323,7 +349,12 @@ class QLSTMTest(unittest.TestCase):
     def test_output_shape_on_batched_input_data(self) -> None:
         input_size, hidden_size, sequence_len = 2, 4, 3
         batch_size = 5
-        lstm = QLSTM(input_size, hidden_size, bias=True)
+        lstm = QLSTM(
+            input_size,
+            hidden_size,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
         inputs = torch.rand(sequence_len, batch_size, input_size)
         h0 = torch.rand(1, batch_size, hidden_size)
         c0 = torch.rand(1, batch_size, hidden_size)
@@ -335,7 +366,13 @@ class QLSTMTest(unittest.TestCase):
     def test_output_shape_on_batched_input_data_batch_first(self) -> None:
         input_size, hidden_size, sequence_len = 2, 4, 3
         batch_size = 5
-        lstm = QLSTM(input_size, hidden_size, bias=True, batch_first=True)
+        lstm = QLSTM(
+            input_size,
+            hidden_size,
+            batch_first=True,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
         inputs = torch.rand(batch_size, sequence_len, input_size)
         h0 = torch.rand(1, batch_size, hidden_size)
         c0 = torch.rand(1, batch_size, hidden_size)
@@ -346,7 +383,12 @@ class QLSTMTest(unittest.TestCase):
 
     def test_forward_without_explicit_given_state(self) -> None:
         pt_lstm = torch.nn.LSTM(input_size=1, hidden_size=2, bias=True)
-        qlstm = QLSTM(input_size=1, hidden_size=2, bias=True)
+        qlstm = QLSTM(
+            input_size=1,
+            hidden_size=2,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
 
         qlstm.cell.weight_ih = pt_lstm.weight_ih_l0
         qlstm.cell.weight_hh = pt_lstm.weight_hh_l0
@@ -366,7 +408,12 @@ class QLSTMTest(unittest.TestCase):
 
     def test_forward_with_input_and_state(self) -> None:
         pt_lstm = torch.nn.LSTM(input_size=1, hidden_size=2, bias=True)
-        qlstm = QLSTM(input_size=1, hidden_size=2, bias=True)
+        qlstm = QLSTM(
+            input_size=1,
+            hidden_size=2,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
+        )
 
         qlstm.cell.weight_ih = pt_lstm.weight_ih_l0
         qlstm.cell.weight_hh = pt_lstm.weight_hh_l0
