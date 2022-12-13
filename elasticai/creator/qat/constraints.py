@@ -1,3 +1,9 @@
+from collections.abc import Callable
+from typing import Any
+
+Constraint = Callable[[Any], None]
+
+
 class WeightClipper:
     """
     This is an applied constraint meant to be used  after each batch. It clips the weights of the given module to be
@@ -5,8 +11,5 @@ class WeightClipper:
     Meant to be used with binarization
     """
 
-    def __init__(self):
-        pass
-
-    def __call__(self, module):
+    def __call__(self, module: Any) -> None:
         module.weight.clip_(-1, 1)
