@@ -232,19 +232,19 @@ class QLinear(torch.nn.Linear):
         )
 
 
-class QLSTMCell(torch.nn.LSTMCell):
+class _QLSTMCellBase(torch.nn.LSTMCell):
     def __init__(
         self,
         input_size: int,
         hidden_size: int,
         state_quantizer: Module,
         weight_quantizer: Module,
-        bias: bool = True,
-        input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-        forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-        cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-        output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-        new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
+        bias: bool,
+        input_gate_activation: Callable[[torch.Tensor], torch.Tensor],
+        forget_gate_activation: Callable[[torch.Tensor], torch.Tensor],
+        cell_gate_activation: Callable[[torch.Tensor], torch.Tensor],
+        output_gate_activation: Callable[[torch.Tensor], torch.Tensor],
+        new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor],
     ):
         super().__init__(input_size, hidden_size, bias)
 
@@ -294,34 +294,10 @@ class QLSTMCell(torch.nn.LSTMCell):
         return h_1, c_1
 
 
-class QLSTM(torch.nn.Module):
-    def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        state_quantizer: Module,
-        weight_quantizer: Module,
-        bias: bool = True,
-        input_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-        forget_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-        cell_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-        output_gate_activation: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-        new_cell_state_activation: Callable[[torch.Tensor], torch.Tensor] = torch.tanh,
-        batch_first: bool = False,
-    ):
+class _QLSTMBase(torch.nn.Module):
+    def __init__(self, lstm_cell: _QLSTMCellBase, batch_first: bool):
         super().__init__()
-        self.cell = QLSTMCell(
-            hidden_size=hidden_size,
-            state_quantizer=state_quantizer,
-            weight_quantizer=weight_quantizer,
-            bias=bias,
-            input_size=input_size,
-            input_gate_activation=input_gate_activation,
-            forget_gate_activation=forget_gate_activation,
-            cell_gate_activation=cell_gate_activation,
-            output_gate_activation=output_gate_activation,
-            new_cell_state_activation=new_cell_state_activation,
-        )
+        self.cell = lstm_cell
         self.batch_first = batch_first
 
     def forward(
@@ -347,3 +323,48 @@ class QLSTM(torch.nn.Module):
         hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)
 
         return result, (hidden_state, cell_state)
+
+
+class QLSTMCell(_QLSTMCellBase):
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        state_quantizer: Module,
+        weight_quantizer: Module,
+        bias: bool = True,
+    ) -> None:
+        super().__init__(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            state_quantizer=state_quantizer,
+            weight_quantizer=weight_quantizer,
+            bias=bias,
+            input_gate_activation=torch.sigmoid,
+            forget_gate_activation=torch.sigmoid,
+            cell_gate_activation=torch.tanh,
+            output_gate_activation=torch.sigmoid,
+            new_cell_state_activation=torch.tanh,
+        )
+
+
+class QLSTM(_QLSTMBase):
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        state_quantizer: Module,
+        weight_quantizer: Module,
+        bias: bool = True,
+        batch_first: bool = False,
+    ) -> None:
+        super().__init__(
+            lstm_cell=QLSTMCell(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                state_quantizer=state_quantizer,
+                weight_quantizer=weight_quantizer,
+                bias=bias,
+            ),
+            batch_first=batch_first,
+        )
