@@ -1,6 +1,4 @@
-import unittest
-from io import StringIO
-from typing import Union, Iterable
+from typing import Iterable
 from unittest import TestCase
 
 from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
@@ -15,7 +13,10 @@ from elasticai.creator.vhdl.hw_equivalent_layers import (
     FixedPointLinear,
     FixedPointHardSigmoid,
 )
-from vhdl.code import Code
+
+from elasticai.creator.vhdl.code import Code
+from elasticai.creator.tests.text_parsing import extract_section
+from elasticai.creator.integrationTests.vhdl.code_test_case import CodeTestCase
 
 """
 Tests:
@@ -46,83 +47,6 @@ class FirstModel(RootModule):
         return self.fp_hard_sigmoid(self.fp_linear(x))
 
 
-def extract_port_lines(lines) -> list[str]:
-    return extract_section(begin="port (", end=");", lines=lines)[0]
-
-
-def extract_section(
-    begin: Union[str, Code], end: Union[str, Code], lines: Code
-) -> list[list[str]]:
-    extract = False
-    content = []
-    current_section = []
-    begin = list(begin) if not isinstance(begin, str) else [begin]
-    end = list(end) if not isinstance(end, str) else [end]
-    look_back = len(begin)
-    look_ahead = len(end)
-    lines = list(lines)
-    i = 0
-    last_i = len(lines)
-    while i < last_i:
-        print(i)
-        look_ahead_window = lines[i : i + look_ahead]
-        look_back_window = lines[i : i + look_back]
-        print(look_back_window, begin)
-        print(look_ahead_window, end)
-        if not extract and look_back_window == begin:
-            extract = True
-            i = i + look_back - 1
-            print("start")
-        elif extract and look_ahead_window == end:
-            extract = False
-            content.append(current_section)
-            current_section = []
-            print("finish")
-        elif extract:
-            print("add ", lines[i])
-            current_section.append(lines[i])
-        i += 1
-
-    if extract:
-        raise Exception(f"reached end of code before end: {end}")
-    return content
-
-
-class ExtractSectionTest(unittest.TestCase):
-    def test_extract_CD_from_AACBAADB(self):
-        text = [f"{c}" for c in "AACBAADB"]
-        self.assertEqual(
-            [["C"], ["D"]],
-            extract_section(begin=["A", "A"], end="B", lines=text),
-        )
-
-    def test_extract_CD_from_AACBBAADBB(self):
-        text = [f"{c}" for c in "AACBBAADBB"]
-        self.assertEqual(
-            [["C"], ["D"]],
-            extract_section(begin=["A", "A"], end=["B", "B"], lines=text),
-        )
-
-    def test_extract_CD_from_ABCAABDAA(self):
-        text = [f"{c}" for c in "ABCAABDAA"]
-        self.assertEqual(
-            [["C"], ["D"]],
-            extract_section(begin=["A", "B"], end=["A", "A"], lines=text),
-        )
-
-
-def get_network_vhdl_code(module):
-    vhdl_file = next(iter(module.files))
-    code = "\n".join(vhdl_file.code())
-    io = StringIO(code)
-    code = VHDLFileReaderWithoutComments(io).as_list()
-    return code
-
-
-def code_from_string(s: str) -> Code:
-    return VHDLFileReaderWithoutComments(StringIO(s))
-
-
 class GenerateNetworkRootFileFromDifferentModelVersions(TestCase):
     def setUp(self):
         self.model = FirstModel()
@@ -134,8 +58,8 @@ class GenerateNetworkRootFileFromDifferentModelVersions(TestCase):
 
     def get_generated_portmap_signal_line(self, signal_id, value) -> str:
         self.model.elasticai_tags.update({f"{signal_id}_width": value})
-        code = get_network_vhdl_code(self.model.translate())
-        portmap = extract_port_lines(code)
+        code = CodeTestCase.unified_vhdl_from_module(self.model.translate())
+        portmap = extract_section(begin="port (", end=");", lines=code)[0]
         actual = next(filter(lambda line: line.startswith(f"{signal_id}:"), portmap))
         return actual
 
@@ -167,7 +91,13 @@ class GenerateNetworkRootFileFromDifferentModelVersions(TestCase):
         self.assertEqual("x_address: out std_logic_vector(16-1 downto 0);", actual)
 
 
-class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(unittest.TestCase):
+class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
+    """
+    Tests:
+      - each of the port maps is generated correctly
+      - signals for each layer are connected correctly
+    """
+
     def setUp(self):
         self.model = FirstModel()
         self.model.elasticai_tags.update(
@@ -178,13 +108,11 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(unittest.TestCase):
                 "x_width": 16,
             }
         )
-        self.actual_code = get_network_vhdl_code(self.model.translate())
+        self.actual_code = CodeTestCase.unified_vhdl_from_module(self.model.translate())
 
     def test_port_def_matches_target(self):
-        actual_code = self.actual_code
-        expected_port_def = list(
-            code_from_string(
-                """
+        expected_port_def = CodeTestCase.code_section_from_string(
+            """
         enable: in std_logic;
         clock: in std_logic;
         x_address: out std_logic_vector(1-1 downto 0);
@@ -193,21 +121,14 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(unittest.TestCase):
         y: out std_logic_vector(16-1 downto 0);
         done: out std_logic
         """
-            )
         )
-        actual_port_def = extract_port_lines(actual_code)
-        self.check_all_expected_lines_are_present(expected_port_def, actual_port_def)
-
-    def check_all_expected_lines_are_present(self, expected: Code, actual: Code):
-        expected = sorted(expected)
-        actual = sorted(actual)
-        self.assertEqual(list(expected), list(actual))
+        actual = extract_section(begin="port (", end=");", lines=self.actual_code)
+        self.check_all_expected_lines_are_present(expected_port_def, actual)
 
     def test_signal_defs_match_target(self):
         actual_code = self.actual_code
-        expected_signal_defs = list(
-            code_from_string(
-                """
+        expected_signal_defs = CodeTestCase.code_section_from_string(
+            """
     -- fp_linear
     signal fp_linear_enable : std_logic := '0';
     signal fp_linear_clock : std_logic := '0';
@@ -223,13 +144,58 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(unittest.TestCase):
     signal fp_hard_sigmoid_x : std_logic_vector(15 downto 0);
     signal fp_hard_sigmoid_y : std_logic_vector(15 downto 0);
             """
-            )
         )
         actual_sections = extract_section(
             begin="architecture rtl of fp_network is", end="begin", lines=actual_code
         )
-        self.assertEqual(1, len(actual_sections))
-        actual_signal_defs = actual_sections[0]
-        self.check_all_expected_lines_are_present(
-            expected_signal_defs, actual_signal_defs
+        self.check_all_expected_lines_are_present(expected_signal_defs, actual_sections)
+
+    def test_fp_linear_portmap_is_generated(self):
+        self.check_portmaps(
+            expected="""
+        enable => fp_linear_enable,
+        clock => fp_linear_clock,
+
+        x => fp_linear_x,
+        y => fp_linear_y,
+        x_address => fp_linear_x_address,
+        y_address => fp_linear_y_address,
+        done => fp_linear_done
+        """,
+            portmap_start="fp_linear : entity work.fp_linear(rtl)",
+        )
+
+    @staticmethod
+    def strip_comma_from_portmaps(portmaps: Iterable[Code]) -> Iterable[Code]:
+        for portmap in portmaps:
+            yield (line.rstrip(",") for line in portmap)
+
+    def test_all_but_last_portmap_line_have_trailing_comma(self):
+        portmaps = extract_section(begin="port map(", end=");", lines=self.actual_code)
+        for counter, portmap in enumerate(portmaps):
+            with self.subTest(f"portmap number {counter}"):
+                with self.subTest("lines end with comma"):
+                    self.assertTrue(all((line.endswith(",") for line in portmap[:-1])))
+                with self.subTest("last line has no comma"):
+                    self.assertFalse(portmap[-1].endswith(","))
+
+    def check_portmaps(self, expected: str, portmap_start: str):
+        expected_portmap: Iterable[Code] = CodeTestCase.code_section_from_string(
+            expected
+        )
+        actual: Iterable[Code] = extract_section(
+            begin=[portmap_start, "port map("], end=");", lines=self.actual_code
+        )
+        expected_portmap = self.strip_comma_from_portmaps(expected_portmap)
+        actual = self.strip_comma_from_portmaps(actual)
+        self.check_all_expected_lines_are_present(expected_portmap, actual)
+
+    def test_fp_hard_sigmoid_portmap_is_generated(self):
+        self.check_portmaps(
+            expected="""
+        enable => fp_hard_sigmoid_enable,
+        clock => fp_hard_sigmoid_clock,
+        x => fp_hard_sigmoid_x,
+        y => fp_hard_sigmoid_y""",
+            portmap_start="fp_hard_sigmoid : entity work.fp_hard_sigmoid(rtl)",
         )

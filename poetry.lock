@@ -648,6 +648,17 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "pydeps"
+version = "1.11.0"
+description = "Display module dependencies"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+stdlib-list = "*"
+
+[[package]]
 name = "pydocstyle"
 version = "6.1.1"
 description = "Python docstring style checker"
@@ -898,6 +909,17 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "stdlib-list"
+version = "0.8.0"
+description = "A list of Python Standard Libraries (2.6-7, 3.2-9)."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.extras]
+develop = ["sphinx"]
+
+[[package]]
 name = "termcolor"
 version = "1.1.0"
 description = "ANSII Color formatting for output in terminal."
@@ -1062,7 +1084,7 @@ systemtests = ["torchvision"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "d38ca26e31e6fe5feb95d93e416e5c56f1c509ce8c85ee167257806a339dee5b"
+content-hash = "3efca9a213969af7a442e7e8217fe8a005e571f7eadf518ec45c306232961499"
 
 [metadata.files]
 astroid = [
@@ -1732,6 +1754,10 @@ pycodestyle = [
     {file = "pycodestyle-2.10.0-py2.py3-none-any.whl", hash = "sha256:8a4eaf0d0495c7395bdab3589ac2db602797d76207242c17d470186815706610"},
     {file = "pycodestyle-2.10.0.tar.gz", hash = "sha256:347187bdb476329d98f695c213d7295a846d1152ff4fe9bacb8a9590b8ee7053"},
 ]
+pydeps = [
+    {file = "pydeps-1.11.0-py3-none-any.whl", hash = "sha256:9d7ee72c4e8a038adeddc20783fd3d68b52a015490f1909a957e05daf1dea2a4"},
+    {file = "pydeps-1.11.0.tar.gz", hash = "sha256:cc6b2428f2628cdd1a27ab85b74b7997f04bcb1c4171f2e1a01d07780e056064"},
+]
 pydocstyle = [
     {file = "pydocstyle-6.1.1-py3-none-any.whl", hash = "sha256:6987826d6775056839940041beef5c08cc7e3d71d63149b48e36727f70144dc4"},
     {file = "pydocstyle-6.1.1.tar.gz", hash = "sha256:1d41b7c459ba0ee6c345f2eb9ae827cab14a7533a88c5c6f7e94923f72df92dc"},
@@ -1830,6 +1856,10 @@ smmap = [
 snowballstemmer = [
     {file = "snowballstemmer-2.2.0-py2.py3-none-any.whl", hash = "sha256:c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a"},
     {file = "snowballstemmer-2.2.0.tar.gz", hash = "sha256:09b16deb8547d3412ad7b590689584cd0fe25ec8db3be37788be3810cbf19cb1"},
+]
+stdlib-list = [
+    {file = "stdlib-list-0.8.0.tar.gz", hash = "sha256:a1e503719720d71e2ed70ed809b385c60cd3fb555ba7ec046b96360d30b16d9f"},
+    {file = "stdlib_list-0.8.0-py3-none-any.whl", hash = "sha256:2ae0712a55b68f3fbbc9e58d6fa1b646a062188f49745b495f94d3310a9fdd3e"},
 ]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
