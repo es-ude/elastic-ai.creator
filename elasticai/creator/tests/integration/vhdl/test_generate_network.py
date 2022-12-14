@@ -1,11 +1,7 @@
 from typing import Iterable
 
-from elasticai.creator.resource_utils import get_file
-from elasticai.creator.tests.code_utilities_for_testing import CodeTestCase
+from elasticai.creator.tests.code_utilities_for_testing import VHDLCodeTestCase
 from elasticai.creator.tests.integration.vhdl.models_for_testing import FirstModel
-from elasticai.creator.tests.integration.vhdl.vhd_file_reader import (
-    VHDLFileReaderWithoutComments,
-)
 
 from elasticai.creator.vhdl.code.code import Code
 
@@ -17,7 +13,7 @@ Tests:
 """
 
 
-class GenerateNetworkRootFileFromDifferentModelVersions(CodeTestCase):
+class GenerateNetworkRootFileFromDifferentModelVersions(VHDLCodeTestCase):
     def setUp(self):
         self.model = FirstModel()
         self.read_expected_code_from_file("expected_network.vhd")
@@ -59,7 +55,7 @@ class GenerateNetworkRootFileFromDifferentModelVersions(CodeTestCase):
         self.assertEqual("x_address: out std_logic_vector(16-1 downto 0);", actual)
 
 
-class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
+class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(VHDLCodeTestCase):
     """
     Tests:
       - each of the port maps is generated correctly
@@ -169,7 +165,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
         )
 
 
-class SignalConnectionsTest(CodeTestCase):
+class SignalConnectionsTest(VHDLCodeTestCase):
     def setUp(self) -> None:
         self.model = FirstModel()
         self.model.elasticai_tags.update(
@@ -180,7 +176,7 @@ class SignalConnectionsTest(CodeTestCase):
                 "x_width": 16,
             }
         )
-        code = CodeTestCase.unified_vhdl_from_module(self.model.translate())
+        code = self..unified_vhdl_from_module(self.model.translate())
         self.actual_connections: Code = self.extract_section(
             begin="begin",
             end="fp_linear : entity work.fp_linear(rtl)",

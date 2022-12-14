@@ -1,11 +1,11 @@
 from typing import Iterable
 
-from elasticai.creator.tests.code_utilities_for_testing import CodeTestCase
+from elasticai.creator.tests.code_utilities_for_testing import VHDLCodeTestCase
 from elasticai.creator.tests.integration.vhdl.models_for_testing import FirstModel
 from elasticai.creator.vhdl.code import Code
 
 
-class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
+class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(VHDLCodeTestCase):
     """
     Tests:
       - each of the port maps is generated correctly
@@ -43,7 +43,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
 
     def test_signal_defs_match_target(self):
         actual_code = self.actual_code
-        expected_signal_defs = CodeTestCase.code_section_from_string(
+        expected_signal_defs = VHDLCodeTestCase.code_section_from_string(
             """
     -- fp_linear
     signal fp_linear_enable : std_logic := '0';
@@ -98,7 +98,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(CodeTestCase):
                     self.assertFalse(portmap[-1].endswith(","))
 
     def check_portmaps(self, expected: str, portmap_start: str):
-        expected_portmap: Iterable[Code] = CodeTestCase.code_section_from_string(
+        expected_portmap: Iterable[Code] = VHDLCodeTestCase.code_section_from_string(
             expected
         )
         actual: Iterable[Code] = self.extract_section_from_code(

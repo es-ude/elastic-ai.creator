@@ -1,9 +1,9 @@
-from elasticai.creator.tests.code_utilities_for_testing import CodeTestCase
+from elasticai.creator.tests.code_utilities_for_testing import VHDLCodeTestCase
 from elasticai.creator.tests.integration.vhdl.models_for_testing import FirstModel
 from elasticai.creator.vhdl.code import Code
 
 
-class SignalConnectionsTest(CodeTestCase):
+class SignalConnectionsTest(VHDLCodeTestCase):
     def setUp(self) -> None:
         self.model = FirstModel()
         self.model.elasticai_tags.update(
@@ -14,7 +14,7 @@ class SignalConnectionsTest(CodeTestCase):
                 "x_width": 16,
             }
         )
-        code = CodeTestCase.unified_vhdl_from_module(self.model.translate())
+        code = VHDLCodeTestCase.unified_vhdl_from_module(self.model.translate())
         self.actual_connections: Code = self.extract_section_from_code(
             begin="begin",
             end="fp_linear : entity work.fp_linear(rtl)",

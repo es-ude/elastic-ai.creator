@@ -1,15 +1,13 @@
 import unittest
 from io import StringIO
 
-from elasticai.creator.tests.integration.vhdl.vhd_file_reader import (
-    VHDLFileReaderWithoutComments,
-)
+from elasticai.creator.tests.code_utilities_for_testing import VHDLReaderWithoutComments
 
 
 class VHDFileReaderWithoutCommentsTest(unittest.TestCase):
     def check(self, input: str, expected: str):
         io_dummy = StringIO(input)
-        reader = VHDLFileReaderWithoutComments(io_dummy)
+        reader = VHDLReaderWithoutComments(io_dummy)
         expected_code = tuple(expected.splitlines())
         actual = tuple(reader)
         self.assertEqual(expected_code, actual)
