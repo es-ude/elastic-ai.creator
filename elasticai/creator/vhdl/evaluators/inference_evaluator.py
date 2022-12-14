@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset
 
 from elasticai.creator.vhdl.evaluators.evaluator import Evaluator
-from elasticai.creator.vhdl.quantized_modules.typing import QuantType
+from elasticai.creator.nn.typing import QuantType
 
 
 def _run_inference_on_dataset(

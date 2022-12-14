@@ -1,6 +1,7 @@
 from functools import partial
 from unittest import TestCase
 
+from elasticai.creator.vhdl.code import CodeGenerator
 from elasticai.creator.vhdl.language import (
     Architecture,
     ContextClause,
@@ -114,9 +115,7 @@ class ProcessTest(TestCase):
         process = Process(
             identifier="some_name",
             input_name="some_input",
-            lookup_table_generator_function=precomputed_scalar_function_process(
-                x=[], y=self.fp_list([0])
-            ),
+            lookup_table=precomputed_scalar_function_process(x=[], y=self.fp_list([0])),
         )
         expected = [
             "some_name_process: process(some_input)",
@@ -131,9 +130,7 @@ class ProcessTest(TestCase):
         process = Process(
             identifier="some_name",
             input_name="some_input",
-            lookup_table_generator_function=precomputed_scalar_function_process(
-                x=[], y=self.fp_list([0])
-            ),
+            lookup_table=precomputed_scalar_function_process(x=[], y=self.fp_list([0])),
         )
         process.process_declaration_list = ["variable some_variable_name: integer := 0"]
         process.process_statements_list = [
@@ -165,7 +162,7 @@ class InterfaceVariableTest(TestCase):
             identifier="my_var",
             identifier_type=DataType.SIGNED,
             mode=Mode.IN,
-            range="15 downto 0",
+            width="15 downto 0",
             value="16",
         )
         expected = ["my_var : in signed(15 downto 0) := 16"]
@@ -176,18 +173,20 @@ class InterfaceVariableTest(TestCase):
 class InterfaceSignalTest(TestCase):
     def test_InterfaceSignal(self):
         i = InterfaceSignal(
-            identifier="y", mode=Mode.OUT, range="x", identifier_type=DataType.SIGNED
+            identifier="y", mode=Mode.OUT, width="x", identifier_type=DataType.SIGNED
         )
         expected = ["signal y : out signed(x)"]
         actual = list(i.code())
-        # actual = actual[2:3]
         self.assertEqual(expected, actual)
 
 
 class ArchitectureTest(TestCase):
+    ARCHITECTURE_Z_START = "architecture rtl of z is"
+    ARCHITECTURE_END = "end architecture rtl;"
+
     def test_Architecture_base(self):
         a = Architecture(design_unit="z")
-        expected = ["architecture rtl of z is", "begin", "end architecture rtl;"]
+        expected = [self.ARCHITECTURE_Z_START, "begin", self.ARCHITECTURE_END]
         actual = list(a.code())
         self.assertSequenceEqual(expected, actual)
 
@@ -195,7 +194,7 @@ class ArchitectureTest(TestCase):
         a = Architecture(design_unit="z")
         a.architecture_declaration_list.append(
             InterfaceVariable(
-                identifier="1", range="1", identifier_type=DataType.SIGNED
+                identifier="1", width="1", identifier_type=DataType.SIGNED
             )
         )
         expected = [
@@ -208,11 +207,12 @@ class ArchitectureTest(TestCase):
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_architecture_part_as_function(self):
-        def function():
-            yield "some code"
+        class DummyCodeGenerator(CodeGenerator):
+            def code(self):
+                return ["some code"]
 
         a = Architecture(design_unit="z")
-        a.architecture_statement_part = function()
+        a.architecture_statement_part = DummyCodeGenerator()
         expected = [
             "architecture rtl of z is",
             "begin",
@@ -223,15 +223,10 @@ class ArchitectureTest(TestCase):
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_architecture_part_as_process(self):
-        def function():
-            def generator():
-                yield "some code"
-
-            return generator
 
         dummy_process = Process(
             identifier="some name",
-            lookup_table_generator_function=function(),
+            lookup_table=["some code"],
             input_name="x",
         )
         a = Architecture(design_unit="z")

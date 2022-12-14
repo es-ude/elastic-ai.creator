@@ -1,8 +1,9 @@
 import math
+from abc import abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
 from functools import partial
 from itertools import chain
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
 
 
 def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
@@ -10,20 +11,17 @@ def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
     min_value = max_value * (-1)
     if not min_value <= value < max_value:
         raise ValueError(
-            (
-                f"Value {value} cannot represented as a fixed point value with {total_bits} total bits "
-                f"and {frac_bits} fraction bits (value range: [{min_value}, {max_value}))."
-            )
+            f"Value {value} cannot represented as a fixed point value with"
+            f" {total_bits} total bits and {frac_bits} fraction bits (value range:"
+            f" [{min_value}, {max_value}))."
         )
 
 
 def _assert_is_compatible(fp1: "FixedPoint", fp2: "FixedPoint") -> None:
     if not (fp1.total_bits == fp2.total_bits and fp1.frac_bits == fp2.frac_bits):
         raise ValueError(
-            (
-                f"FixedPoint objects not compatible (total_bits: {fp1.total_bits} != {fp2.total_bits}); "
-                f"frac_bits: {fp1.frac_bits} != {fp2.frac_bits})."
-            )
+            f"FixedPoint objects not compatible (total_bits: {fp1.total_bits} !="
+            f" {fp2.total_bits}); frac_bits: {fp1.frac_bits} != {fp2.frac_bits})."
         )
 
 
@@ -134,7 +132,10 @@ class FixedPoint:
         return str(int(self))
 
     def __repr__(self) -> str:
-        return f"FixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
+        return (
+            f"FixedPoint(value={self._value}, total_bits={self._total_bits},"
+            f" frac_bits={self._frac_bits})"
+        )
 
     def _identical_fixed_point(self, value: float) -> "FixedPoint":
         return FixedPoint(
@@ -150,7 +151,8 @@ class FixedPoint:
     def from_unsigned_int(value: int, total_bits: int, frac_bits: int) -> "FixedPoint":
         if value > 2**total_bits - 1:
             raise ValueError(
-                f"Value {value} cannot interpreted as a fixed point with {total_bits} total bits."
+                f"Value {value} cannot interpreted as a fixed point with"
+                f" {total_bits} total bits."
             )
         is_negative = value & (1 << total_bits - 1) > 0
         if is_negative:
@@ -165,8 +167,10 @@ class FixedPoint:
         return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
-    def get_factory(total_bits: int, frac_bits: int) -> Callable[[float], "FixedPoint"]:
-        return partial(FixedPoint, total_bits=total_bits, frac_bits=frac_bits)
+    def get_factory(total_bits: int, frac_bits: int) -> "FixedPointFactory":
+        return _FixedPointFactoryImpl(
+            total_bits=total_bits, frac_bits=frac_bits, constructor=FixedPoint
+        )
 
     @property
     def total_bits(self) -> int:
@@ -208,7 +212,10 @@ class ClippedFixedPoint(FixedPoint):
         )._value
 
     def __repr__(self) -> str:
-        return f"ClippedFixedPoint(value={self._value}, total_bits={self._total_bits}, frac_bits={self._frac_bits})"
+        return (
+            f"ClippedFixedPoint(value={self._value}, total_bits={self._total_bits},"
+            f" frac_bits={self._frac_bits})"
+        )
 
     def _identical_fixed_point(self, value: float) -> "ClippedFixedPoint":
         return ClippedFixedPoint(
@@ -244,10 +251,10 @@ class ClippedFixedPoint(FixedPoint):
         )
 
     @staticmethod
-    def get_factory(
-        total_bits: int, frac_bits: int
-    ) -> Callable[[float], "ClippedFixedPoint"]:
-        return partial(ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits)
+    def get_factory(total_bits: int, frac_bits: int) -> "FixedPointFactory":
+        return _FixedPointFactoryImpl(
+            constructor=ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits
+        )
 
 
 def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
@@ -257,16 +264,53 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     for value in chain(*values):
         if value.total_bits != total_bits or value.frac_bits != frac_bits:
             raise ValueError(
-                "Cannot infer total bits and frac bits from a list with mixed total bits or frac bits."
+                "Cannot infer total bits and frac bits from a list with mixed total"
+                " bits or frac bits."
             )
     return total_bits, frac_bits
 
 
-FixedPointFactory = Callable[[float], FixedPoint]
+class FixedPointFactory(Protocol):
+    @property
+    @abstractmethod
+    def total_bits(self) -> int:
+        ...
+
+    @property
+    @abstractmethod
+    def frac_bits(self) -> int:
+        ...
+
+    @abstractmethod
+    def __call__(self, f: float) -> FixedPoint:
+        ...
+
+
+class _FixedPointFactoryImpl(FixedPointFactory):
+    def __init__(
+        self,
+        total_bits: int,
+        frac_bits: int,
+        constructor: Callable[[float, int, int], FixedPoint],
+    ):
+        self._frac_bits = frac_bits
+        self._total_bits = total_bits
+        self._constructor = constructor
+
+    @property
+    def total_bits(self) -> int:
+        return self._total_bits
+
+    @property
+    def frac_bits(self) -> int:
+        return self._frac_bits
+
+    def __call__(self, f: float) -> FixedPoint:
+        return self._constructor(f, self._total_bits, self._frac_bits)
 
 
 def fixed_point_params_from_factory(factory: FixedPointFactory) -> tuple[int, int]:
-    return factory(1).total_bits, factory(1).frac_bits
+    return factory.total_bits, factory.frac_bits
 
 
 def float_values_to_fixed_point(

@@ -8,9 +8,9 @@ from elasticai.creator.precomputation.breakdown import (
     depthwisePointwiseBreakdownConv2dBlock,
     generate_conv2d_sequence_with_width,
 )
-from elasticai.creator.qat.blocks import Conv2dBlock
-from elasticai.creator.qat.layers import Binarize, ChannelShuffle
-from elasticai.creator.qat.masks import FixedOffsetMask4d
+from elasticai.creator.nn.blocks import Conv2dBlock
+from elasticai.creator.nn.layers import Binarize, ChannelShuffle
+from elasticai.creator.nn.masks import FixedOffsetMask4d
 
 
 class BreakdownTest(unittest.TestCase):

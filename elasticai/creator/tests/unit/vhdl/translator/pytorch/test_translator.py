@@ -1,10 +1,15 @@
 import unittest
-from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Iterable
 
 import torch
 
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.code import (
+    Code,
+    CodeFile,
+    CodeFileBase,
+    CodeModule,
+    CodeModuleBase,
+)
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dTranslationArgs,
@@ -19,37 +24,15 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.translator.pytorch.translator import CodeFile, CodeModule
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
-@dataclass
-class VHDLComponentMock(VHDLComponent):
-    name: str
-    code_lines: list[str]
-
-    @property
-    def file_name(self) -> str:
-        return self.name
-
-    def code(self) -> Code:
-        yield from self.code_lines
-
-
-@dataclass
-class VHDLModuleMock(VHDLModule):
-    vhdl_components: list[VHDLComponent]
-
-    def components(self, args: Any) -> Iterable[VHDLComponent]:
-        yield from self.vhdl_components
-
-
-def fake_build_function(module: torch.nn.Module, layer_id: str) -> VHDLModuleMock:
-    return VHDLModuleMock(
-        vhdl_components=[
-            VHDLComponentMock(name="component1", code_lines=["1", "2", "3"]),
-            VHDLComponentMock(name="component2", code_lines=["4", "5", "6"]),
-        ]
+def fake_build_function(module: torch.nn.Module, layer_id: str) -> CodeModuleBase:
+    return CodeModuleBase(
+        name="module0",
+        files=[
+            CodeFileBase(name="component1", code=["1", "2", "3"]),
+            CodeFileBase(name="component2", code=["4", "5", "6"]),
+        ],
     )
 
 
@@ -57,45 +40,42 @@ def unpack_module_directories(
     modules: Iterable[CodeModule],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
     def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
-        return code_file.file_name, list(code_file.code)
+        return code_file.name, list(code_file.code())
 
     return [
-        (module.module_name, list(map(unpack_code_file, module.files)))
-        for module in modules
+        (module.name, list(map(unpack_code_file, module.files))) for module in modules
     ]
 
 
 class TranslatorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.build_mapping = BuildFunctionMapping(
-            mapping={"torch.nn.modules.rnn.LSTM": fake_build_function}
+            mapping={"torch.nn.modules.module.Module": fake_build_function}
         )
 
     def test_translate_model_empty_model(self) -> None:
         model = torch.nn.Sequential()
         generated_code = translator.translate_model(
-            model, translation_args=dict(), build_function_mapping=self.build_mapping
+            model, build_function_mapping=self.build_mapping
         )
-        self.assertEqual(len(list(generated_code)), 0)
+        self.assertEqual(len(list(generated_code)), 1)
 
-    def test_generate_code(self) -> None:
-        model = torch.nn.Sequential(torch.nn.LSTM(input_size=1, hidden_size=2))
+    def test_translation_yields_one_build_mapping_result_for_first_layer(self) -> None:
+        model = torch.nn.Sequential(torch.nn.Module())
         code_containers = translator.translate_model(
-            model, translation_args=dict(), build_function_mapping=self.build_mapping
+            model, build_function_mapping=self.build_mapping
         )
 
         code = unpack_module_directories(code_containers)
-        expected_code = [
-            (
-                "0_LSTM",
-                [
-                    ("component1", ["1", "2", "3"]),
-                    ("component2", ["4", "5", "6"]),
-                ],
-            )
-        ]
+        expected_code = (
+            "0_Module",
+            [
+                ("component1", ["1", "2", "3"]),
+                ("component2", ["4", "5", "6"]),
+            ],
+        )
 
-        self.assertEqual(code, expected_code)
+        self.assertEqual(code[0], expected_code)
 
     @unittest.SkipTest
     def test_translate_model_correct_ordering_of_layers(self):
@@ -112,20 +92,9 @@ class TranslatorTest(unittest.TestCase):
         translated = list(
             translator.translate_model(
                 model,
-                translation_args=dict(
-                    Linear=FPLinear1dTranslationArgs(
-                        fixed_point_factory=FixedPoint.get_factory(8, 4),
-                        work_library_name="work",
-                    ),
-                    LSTM=LSTMTranslationArgs(
-                        fixed_point_factory=FixedPoint.get_factory(8, 4),
-                        sigmoid_resolution=(-2.5, 2.5, 100),
-                        tanh_resolution=(-2.5, 2.5, 100),
-                    ),
-                ),
                 build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING,
             )
         )
 
-        self.assertEqual(translated[0].module_name, "0_Linear")
-        self.assertEqual(translated[1].module_name, "1_LSTM")
+        self.assertEqual(translated[0].name, "0_Linear")
+        self.assertEqual(translated[1].name, "1_LSTM")

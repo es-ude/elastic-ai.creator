@@ -1,6 +1,6 @@
 import math
 from itertools import chain
-from typing import Optional
+from typing import Iterator, Optional
 
 from elasticai.creator.vhdl.language import (
     Architecture,
@@ -39,31 +39,41 @@ class TestCasesLSTMCell(TestBenchBase):
         self.len_of_cell_vector = hidden_size
         self.len_of_h_vector = hidden_size
 
-    def _body(self) -> Code:
-        yield f"reset <= '1'"
-        yield f"h_out_en <= '0'"
-        yield f"wait for 2*clk_period"
-        yield f"reset <= '0'"
-        yield f"for ii {Keywords.IN.value} 0 to {str(self.len_of_x_h_vector-1)} loop send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)), std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr, x_config_data)"
-        yield f"wait for 10 ns"
-        yield f"{Keywords.END.value} loop"
-        yield f"for ii {Keywords.IN.value} 0 to {str(self.len_of_cell_vector-1)} loop send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)), std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr, c_config_data)"
-        yield f"wait for 10 ns"
-        yield f"{Keywords.END.value} loop"
-        yield f"enable <= '1'"
-        yield f"wait until done = '1'"
-        yield f"wait for 1*clk_period"
-        yield f"enable <= '0'"
-        yield f"-- reference h_out: {str(self.reference_h_out)}"
-        yield f"for ii in 0 to {str(self.len_of_h_vector-1)} loop h_out_addr <= std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))"
-        yield f"h_out_en <= '1'"
-        yield f"wait for 2*clk_period"
-        yield f'report "The value of h_out(" & integer\'image(ii)& ") is " & integer\'image(to_integer(signed(h_out_data)))'
-        yield f"{Keywords.END.value} loop"
-        yield f"wait for 10*clk_period"
+    def _body(self) -> Iterator[str]:
+        yield from [
+            f"reset <= '1'",
+            f"h_out_en <= '0'",
+            f"wait for 2*clk_period",
+            f"reset <= '0'",
+            f"for ii {Keywords.IN.value} 0 to {str(self.len_of_x_h_vector-1)} loop"
+            " send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)),"
+            " std_logic_vector(test_x_h_data(ii)), clock, x_config_en, x_config_addr,"
+            " x_config_data)",
+            f"wait for 10 ns",
+            f"{Keywords.END.value} loop",
+            f"for ii {Keywords.IN.value} 0 to {str(self.len_of_cell_vector-1)} loop"
+            " send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)),"
+            " std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr,"
+            " c_config_data)",
+            f"wait for 10 ns",
+            f"{Keywords.END.value} loop",
+            f"enable <= '1'",
+            f"wait until done = '1'",
+            f"wait for 1*clk_period",
+            f"enable <= '0'",
+            f"-- reference h_out: {str(self.reference_h_out)}",
+            f"for ii in 0 to {str(self.len_of_h_vector-1)} loop h_out_addr <="
+            " std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))",
+            f"h_out_en <= '1'",
+            f"wait for 2*clk_period",
+            f'report "The value of h_out(" & integer\'image(ii)& ") is " &'
+            f" integer'image(to_integer(signed(h_out_data)))",
+            f"{Keywords.END.value} loop",
+            f"wait for 10*clk_period",
+        ]
 
     def code(self) -> Code:
-        yield from super().code()
+        return super().code()
 
 
 class LSTMCellTestBench:
@@ -144,15 +154,17 @@ class LSTMCellTestBench:
         procedure_0.declaration_list_with_is = [
             "signal data_out : out std_logic_vector(DATA_WIDTH-1 downto 0))",
         ]
+        wait_clock_0 = "wait until clock='0'"
+        wait_clock_1 = "wait until clock='1'"
         procedure_0.statement_list = [
             "addr_out <= addr_in",
             "data_out <= data_in",
-            "wait until clock='0'",
+            wait_clock_0,
             "wr <= '1'",
-            "wait until clock='1'",
-            "wait until clock='0'",
+            wait_clock_1,
+            wait_clock_0,
             "wr <= '0'",
-            "wait until clock='1'",
+            wait_clock_1,
         ]
         procedure_1 = Procedure(identifier="send_c_data")
         procedure_1.declaration_list = [
@@ -168,12 +180,12 @@ class LSTMCellTestBench:
         procedure_1.statement_list = [
             "addr_out <= addr_in",
             "data_out <= data_in",
-            "wait until clock='0'",
+            wait_clock_0,
             "wr <= '1'",
-            "wait until clock='1'",
-            "wait until clock='0'",
+            wait_clock_1,
+            wait_clock_0,
             "wr <= '0'",
-            "wait until clock='1'",
+            wait_clock_1,
         ]
 
         process = Process(
@@ -237,35 +249,42 @@ class LSTMCellTestBench:
             "signal x_config_en: std_logic:='0'"
         )
         architecture.architecture_declaration_list.append(
-            "signal x_config_data:std_logic_vector(DATA_WIDTH-1 downto 0):=(others=>'0')"
+            "signal x_config_data:std_logic_vector(DATA_WIDTH-1 downto"
+            " 0):=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
-            "signal x_config_addr:std_logic_vector(X_H_ADDR_WIDTH-1 downto 0) :=(others=>'0')"
+            "signal x_config_addr:std_logic_vector(X_H_ADDR_WIDTH-1 downto 0)"
+            " :=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
             "signal h_config_en: std_logic:='0'"
         )
         architecture.architecture_declaration_list.append(
-            "signal h_config_data:std_logic_vector(DATA_WIDTH-1 downto 0):=(others=>'0')"
+            "signal h_config_data:std_logic_vector(DATA_WIDTH-1 downto"
+            " 0):=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
-            "signal h_config_addr:std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0) :=(others=>'0')"
+            "signal h_config_addr:std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0)"
+            " :=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
             "signal c_config_en: std_logic:='0'"
         )
         architecture.architecture_declaration_list.append(
-            "signal c_config_data:std_logic_vector(DATA_WIDTH-1 downto 0):=(others=>'0')"
+            "signal c_config_data:std_logic_vector(DATA_WIDTH-1 downto"
+            " 0):=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
-            "signal c_config_addr:std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0) :=(others=>'0')"
+            "signal c_config_addr:std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0)"
+            " :=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
             "signal done :  std_logic:='0'"
         )
         architecture.architecture_declaration_list.append("signal h_out_en : std_logic")
         architecture.architecture_declaration_list.append(
-            "signal h_out_addr : std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0) :=(others=>'0')"
+            "signal h_out_addr : std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0)"
+            " :=(others=>'0')"
         )
         architecture.architecture_declaration_list.append(
             "signal h_out_data : std_logic_vector(DATA_WIDTH-1 downto 0):=(others=>'0')"
@@ -277,10 +296,12 @@ class LSTMCellTestBench:
             "type C_ARRAY is array (0 to 511) of signed(16-1 downto 0)"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_x_h_data : X_H_ARRAY := ({','.join(self.test_x_h_data)},others=>(others=>'0'))"
+            "signal test_x_h_data : X_H_ARRAY :="
+            f" ({','.join(self.test_x_h_data)},others=>(others=>'0'))"
         )
         architecture.architecture_declaration_list.append(
-            f"signal test_c_data : C_ARRAY := ({','.join(self.test_c_data)},others=>(others=>'0'))"
+            "signal test_c_data : C_ARRAY :="
+            f" ({','.join(self.test_c_data)},others=>(others=>'0'))"
         )
         architecture.architecture_component_list.append(procedure_0)
         architecture.architecture_component_list.append(procedure_1)
@@ -292,6 +313,7 @@ class LSTMCellTestBench:
         architecture.architecture_statement_part = test_process
 
         code = chain(library.code(), entity.code(), architecture.code())
+
         return code
 
 
@@ -320,7 +342,7 @@ class TestCasesLSTMCommonGate(TestBenchBase):
         self.y_list_for_testing = list(map(int, y_list_for_testing))
         self.y_variable_name = y_variable_name
 
-    def _body(self) -> Code:
+    def _body(self) -> Iterator[str]:
         counter = 0
         yield f"vector_len <= to_unsigned(10, VECTOR_LEN_WIDTH)"
         for x_mem_value, w_mem_value, b, y_value in zip(
@@ -340,11 +362,18 @@ class TestCasesLSTMCommonGate(TestBenchBase):
                 "wait until ready = '1'",
             )
 
-            yield f"report \"expected output is {y_value}, value of '{self.y_variable_name}' is \" & integer'image(to_integer(signed({self.y_variable_name})))"
-            yield f'assert {self.y_variable_name}={y_value} report "The {counter}. test case fail" severity error'
+            yield (
+                f'report "expected output is {y_value}, value of'
+                f" '{self.y_variable_name}' is \" &"
+                f" integer'image(to_integer(signed({self.y_variable_name})))"
+            )
+            yield (
+                f'assert {self.y_variable_name}={y_value} report "The {counter}. test'
+                ' case fail" severity error'
+            )
             yield "reset <= '1'"
             yield "wait for 1*clk_period"
             counter = counter + 1
 
     def code(self) -> Code:
-        yield from super().code()
+        return super().code()

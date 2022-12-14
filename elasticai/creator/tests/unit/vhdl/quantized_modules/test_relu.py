@@ -1,5 +1,4 @@
 import unittest
-from difflib import diff_bytes
 
 import torch
 import torch.nn.functional as F
@@ -8,7 +7,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
 )
-from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU, _ReLUBase
+from elasticai.creator.nn.relu import FixedPointReLU, _ReLUBase
 
 
 def to_list(x: torch.Tensor) -> list[float]:

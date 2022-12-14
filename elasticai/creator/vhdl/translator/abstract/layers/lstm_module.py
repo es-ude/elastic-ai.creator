@@ -3,16 +3,16 @@ from typing import Callable, Iterator
 
 import numpy as np
 
-from elasticai.creator.vhdl.components import (
-    DualPort2ClockRamComponent,
-    LSTMCommonComponent,
-    LSTMComponent,
-    RomComponent,
-    SigmoidComponent,
-    TanhComponent,
+from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
+from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
+    DualPort2ClockRamVHDLFile,
 )
+from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
+from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
+from elasticai.creator.vhdl.code_files.sigmoid_component import SigmoidComponent
+from elasticai.creator.vhdl.code_files.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
 @dataclass
@@ -24,7 +24,7 @@ class LSTMTranslationArgs:
 
 
 @dataclass
-class LSTMModule(VHDLModule):
+class LSTMModule(CodeModuleBase):
     """
     Abstract representation of an LSTM layer that can be directly translated to an iterable of VHDLComponent objects.
     Currently, no stacked LSTMs are supported (only single layer LSTMs are supported).
@@ -43,6 +43,10 @@ class LSTMModule(VHDLModule):
             List of hidden-hidden biases for each layer. Biases of one layer is a list[float] with the shape
             (4*hidden_size,) and the structure (b_hi | b_hf | b_hg | b_ho).
     """
+
+    @property
+    def name(self) -> str:
+        return "lstm"
 
     weights_ih: list[list[list[float]]]
     weights_hh: list[list[list[float]]]
@@ -74,7 +78,7 @@ class LSTMModule(VHDLModule):
         _, hidden_size, input_size = np.shape(self.weights_ih)
         return input_size, hidden_size // 4
 
-    def components(self, args: LSTMTranslationArgs) -> Iterator[VHDLComponent]:
+    def files(self, args: LSTMTranslationArgs) -> Iterator[CodeFile]:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(args.fixed_point_factory, values))
 
@@ -83,9 +87,7 @@ class LSTMModule(VHDLModule):
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
         for rom_values, rom_name in zip(weights + bias, rom_names):
-            yield RomComponent(
-                rom_name=rom_name, values=rom_values, resource_option="auto"
-            )
+            yield RomFile(rom_name=rom_name, values=rom_values, resource_option="auto")
 
         precomputed_sigmoid_inputs = to_fp(np.linspace(*args.sigmoid_resolution).tolist())  # type: ignore
         precomputed_tanh_inputs = to_fp(np.linspace(*args.tanh_resolution).tolist())  # type: ignore
@@ -93,12 +95,12 @@ class LSTMModule(VHDLModule):
         yield TanhComponent(x=precomputed_tanh_inputs)
 
         input_size, hidden_size = self._derive_input_and_hidden_size()
-        yield LSTMComponent(
+        yield LSTMFile(
             input_size=input_size,
             hidden_size=hidden_size,
             fixed_point_factory=args.fixed_point_factory,
             work_library_name=args.work_library_name,
         )
 
-        yield LSTMCommonComponent()
-        yield DualPort2ClockRamComponent()
+        yield LSTMCommonVHDLFile()
+        yield DualPort2ClockRamVHDLFile()

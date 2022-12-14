@@ -12,12 +12,12 @@ from elasticai.creator.vhdl.evaluators.inference_evaluator import (
 )
 from elasticai.creator.vhdl.evaluators.metric_evaluator import MetricEvaluator
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
-from elasticai.creator.vhdl.quantized_modules import (
+from elasticai.creator.vhdl.modules import (
     FixedPointHardSigmoid,
     FixedPointLinear,
     FixedPointReLU,
 )
-from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
+from qat.autograd_functions import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )

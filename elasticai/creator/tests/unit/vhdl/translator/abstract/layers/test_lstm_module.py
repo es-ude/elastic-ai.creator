@@ -1,13 +1,13 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.components import (
-    DualPort2ClockRamComponent,
-    LSTMCommonComponent,
-    LSTMComponent,
-    RomComponent,
-    SigmoidComponent,
-    TanhComponent,
+from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
+    DualPort2ClockRamVHDLFile,
 )
+from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
+from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
+from elasticai.creator.vhdl.code_files.sigmoid_component import SigmoidComponent
+from elasticai.creator.vhdl.code_files.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
     LSTMModule,
@@ -31,27 +31,27 @@ class LSTMModuleTest(TestCase):
         )
 
     def test_correct_number_of_components(self) -> None:
-        vhdl_components = list(self.lstm.components(self.translation_args))
+        vhdl_components = list(self.lstm.files(self.translation_args))
         self.assertEqual(len(vhdl_components), 13)
 
     def test_contains_all_needed_components(self) -> None:
-        vhdl_components = self.lstm.components(self.translation_args)
+        vhdl_components = self.lstm.files(self.translation_args)
 
         target_components = [
-            (RomComponent, "wi_rom.vhd"),
-            (RomComponent, "wf_rom.vhd"),
-            (RomComponent, "wg_rom.vhd"),
-            (RomComponent, "wo_rom.vhd"),
-            (RomComponent, "bi_rom.vhd"),
-            (RomComponent, "bf_rom.vhd"),
-            (RomComponent, "bg_rom.vhd"),
-            (RomComponent, "bo_rom.vhd"),
+            (RomFile, "wi_rom.vhd"),
+            (RomFile, "wf_rom.vhd"),
+            (RomFile, "wg_rom.vhd"),
+            (RomFile, "wo_rom.vhd"),
+            (RomFile, "bi_rom.vhd"),
+            (RomFile, "bf_rom.vhd"),
+            (RomFile, "bg_rom.vhd"),
+            (RomFile, "bo_rom.vhd"),
             (SigmoidComponent, "sigmoid.vhd"),
             (TanhComponent, "tanh.vhd"),
-            (LSTMComponent, "lstm.vhd"),
-            (LSTMCommonComponent, "lstm_common.vhd"),
-            (DualPort2ClockRamComponent, "dual_port_2_clock_ram.vhd"),
+            (LSTMFile, "lstm.vhd"),
+            (LSTMCommonVHDLFile, "lstm_common.vhd"),
+            (DualPort2ClockRamVHDLFile, "dual_port_2_clock_ram.vhd"),
         ]
-        actual_components = [(type(x), x.file_name) for x in vhdl_components]
+        actual_components = [(type(x), x.name) for x in vhdl_components]
 
-        self.assertEqual(actual_components, target_components)
+        self.assertEqual(target_components, actual_components)

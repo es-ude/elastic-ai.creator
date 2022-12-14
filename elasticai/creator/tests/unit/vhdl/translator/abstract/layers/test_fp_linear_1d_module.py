@@ -1,6 +1,7 @@
 import unittest
 
-from elasticai.creator.vhdl.components import FPLinear1dComponent, RomComponent
+from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
     FPLinear1dModule,
@@ -18,26 +19,26 @@ class FPLinear1dModuleTest(unittest.TestCase):
         )
 
     def test_contains_all_needed_components(self) -> None:
-        vhdl_components = self.linear.components(self.translation_args)
+        vhdl_components = self.linear.files(self.translation_args)
 
         target_components = [
             (
-                FPLinear1dComponent,
+                FPLinear1dFile,
                 "fp_linear_1d_{layer_name}.vhd".format(layer_name=self.linear.layer_id),
             ),
             (
-                RomComponent,
+                RomFile,
                 "w_rom_fp_linear_1d_{layer_name}.vhd".format(
                     layer_name=self.linear.layer_id
                 ),
             ),
             (
-                RomComponent,
+                RomFile,
                 "b_rom_fp_linear_1d_{layer_name}.vhd".format(
                     layer_name=self.linear.layer_id
                 ),
             ),
         ]
-        actual_components = [(type(x), x.file_name) for x in vhdl_components]
+        actual_components = [(type(x), x.name) for x in vhdl_components]
 
-        self.assertEqual(actual_components, target_components)
+        self.assertEqual(target_components, actual_components)

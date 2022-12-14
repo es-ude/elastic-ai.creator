@@ -1,11 +1,11 @@
 import sys
 
 import torch
+from qat.hard_sigmoid import FixedPointHardSigmoid
+from qat.relu import FixedPointReLU
 
+from elasticai.creator.vhdl.modules.linear import FixedPointLinear
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
-from elasticai.creator.vhdl.quantized_modules.hard_sigmoid import FixedPointHardSigmoid
-from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
-from elasticai.creator.vhdl.quantized_modules.relu import FixedPointReLU
 from elasticai.creator.vhdl.translator.abstract.layers.fp_hard_sigmoid_module import (
     FPHardSigmoidTranslationArgs,
 )
@@ -60,14 +60,13 @@ class FixedPointModel(torch.nn.Module):
 def get_custom_build_mapping() -> BuildFunctionMapping:
     return DEFAULT_BUILD_FUNCTION_MAPPING.join_with_dict(
         {
-            "elasticai.creator.vhdl.quantized_modules.linear.FixedPointLinear": build_fp_linear_1d,
-            "elasticai.creator.vhdl.quantized_modules.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
+            "elasticai.creator.vhdl.modules.linear.FixedPointLinear": build_fp_linear_1d,
+            "elasticai.creator.vhdl.modules.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
         }
     )
 
 
 def main() -> None:
-
     torch.manual_seed(22)  # make result reproducible
 
     if len(sys.argv) < 2:
@@ -79,20 +78,8 @@ def main() -> None:
 
     model = FixedPointModel(fixed_point_factory)
 
-    translation_args = dict(
-        FixedPointLinear=FPLinear1dTranslationArgs(
-            fixed_point_factory=fixed_point_factory, work_library_name="work"
-        ),
-        FixedPointHardSigmoid=FPHardSigmoidTranslationArgs(
-            fixed_point_factory=fixed_point_factory
-        ),
-        FixedPointReLU=FPReLUTranslationArgs(fixed_point_factory=fixed_point_factory),
-    )
-
     code_repr = translator.translate_model(
         model=model,
-        translation_args=translation_args,
-        # build_function_mapping=get_custom_build_mapping(),
     )
 
     translator.save_code(code_repr=code_repr, path=build_path)

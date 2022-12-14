@@ -6,8 +6,8 @@ from unittest.mock import patch
 import torch
 from torch import Tensor
 
-from elasticai.creator.qat.constraints import WeightClipper
-from elasticai.creator.qat.layers import (
+from elasticai.creator.nn.constraints import WeightClipper
+from elasticai.creator.nn.layers import (
     QLSTM,
     BatchNormedActivatedConv1d,
     Binarize,
@@ -402,7 +402,7 @@ class LayerTests(TensorTestCase):
             self.assertListEqual(actual_outputs[1], target_outputs[1])
 
     def test_QLSTM(self):
-        lstm_cell_id = "elasticai.creator.qat.layers.QLSTMCell"
+        lstm_cell_id = "elasticai.creator.nn.layers.QLSTMCell"
         qlstm_parameters = {
             "input_size": 0,
             "hidden_size": 1,

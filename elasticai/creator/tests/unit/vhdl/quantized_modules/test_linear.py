@@ -4,7 +4,7 @@ import torch
 from torch.nn.parameter import Parameter
 
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.linear import (
+from elasticai.creator.nn.linear import (
     FixedPointLinear,
     _LinearBase,
 )
