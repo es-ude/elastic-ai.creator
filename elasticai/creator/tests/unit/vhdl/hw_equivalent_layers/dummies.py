@@ -9,12 +9,11 @@ from elasticai.creator.vhdl.code import (
     CodeModuleBase,
     Translatable,
 )
-from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
-from elasticai.creator.vhdl.model_tracing import (
+from elasticai.creator.vhdl.hw_equivalent_layers.tracing import (
     HWEquivalentGraph,
     HWEquivalentNode,
-    Node,
 )
+from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer, Node
 
 
 class DummyModule(HWEquivalentLayer):

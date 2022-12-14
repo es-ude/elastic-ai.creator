@@ -67,7 +67,7 @@ class HWBlockInstantiationTest(unittest.TestCase):
                 self.assertEqual(signal, f"some_other_name_{port}")
 
 
-class HWBlockSignals(unittest.TestCase):
+class HWBlockSignalsTest(unittest.TestCase):
     def constructor(self, name, data_width, *args):
         return BaseHWBlock(x_width=data_width, y_width=data_width).signal_definitions(
             name
@@ -94,7 +94,7 @@ class HWBlockSignals(unittest.TestCase):
         self.assertEqual(4, len(tuple(signals)))
 
 
-class HWBlockSignals(HWBlockSignals):
+class BufferedHWBlockSignals(HWBlockSignalsTest):
     def constructor(self, name, data_width, *args):
         x_address_width = 1
         y_address_width = 1

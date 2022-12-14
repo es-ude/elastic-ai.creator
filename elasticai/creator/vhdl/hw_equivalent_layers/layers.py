@@ -14,9 +14,9 @@ from elasticai.creator.vhdl.hw_equivalent_layers.hw_blocks import (
     BufferedBaseHWBlock,
     HWBlockInterface,
 )
-from elasticai.creator.vhdl.model_tracing import (
+from elasticai.creator.vhdl.hw_equivalent_layers.tracing import (
+    HWEquivalentFXTracer,
     HWEquivalentTracer,
-    Tracer,
     create_hw_block_collection,
 )
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
@@ -28,7 +28,7 @@ class AbstractTranslatableLayer(Translatable, HWBlockInterface, ABC):
         self._hw_block = hw_block
 
     @abstractmethod
-    def _get_tracer(self) -> Tracer:
+    def _get_tracer(self) -> HWEquivalentTracer:
         ...
 
     @abstractmethod
@@ -85,8 +85,8 @@ class RootModule(torch.nn.Module, AbstractTranslatableLayer):
         self._hw_block = BufferedBaseHWBlock(**self.elasticai_tags)
         return super().translate()
 
-    def _get_tracer(self) -> Tracer:
-        return HWEquivalentTracer()
+    def _get_tracer(self) -> HWEquivalentTracer:
+        return HWEquivalentFXTracer()
 
 
 class FixedPointHardSigmoid(nnHardSigmoid, HWBlockInterface):

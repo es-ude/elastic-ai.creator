@@ -21,10 +21,10 @@ class TranslatableHWBlockInterface(HWBlockInterface, Translatable, Protocol):
 
 
 class SignalEnum(str, Enum):
-    def _generate_next_value_(
-        name: str, start: int, count: int, last_values: list[Any]
+    def _generate_next_value_(  # type: ignore
+        self, start: int, count: int, last_values: list[Any]
     ) -> Any:
-        return name.lower()
+        return self.lower()
 
     def __str__(self):
         return self.value
@@ -48,14 +48,6 @@ class LogicVectorOutSignals(SignalEnum):
 class StdLogicOutSignals(SignalEnum):
     DONE = auto()
     CLOCK = auto()
-
-
-SIGNAL_MAPPING = (
-    (StdLogicOutSignals.CLOCK, StdLogicInSignals.CLOCK),
-    (StdLogicOutSignals.DONE, StdLogicInSignals.ENABLE),
-    (LogicVectorOutSignals.Y, LogicVectorInSignals.X),
-    (LogicVectorOutSignals.X_ADDRESS, LogicVectorInSignals.Y_ADDRESS),
-)
 
 
 class BaseHWBlock(HWBlockInterface):
@@ -84,14 +76,14 @@ class BaseHWBlock(HWBlockInterface):
         return map(str, self._logic_signals)
 
     def signal_definitions(self, prefix: str) -> Code:
-        yield from generate_signal_definitions(
+        return _generate_signal_definitions(
             prefix,
             std_logic_signals=self._get_logic_signal_names(),
             logic_vector_signals=self._get_vector_signal_name_to_signal_width_mapping(),
         )
 
     def instantiation(self, prefix: str) -> Code:
-        yield from instantiate_component(
+        return _instantiate_component(
             prefix=prefix, signals=chain(self._vector_signals, self._logic_signals)
         )
 
@@ -121,7 +113,7 @@ class BufferedBaseHWBlock(BaseHWBlock):
         self._y_address_width = y_address_width
 
 
-def generate_signal_definitions(
+def _generate_signal_definitions(
     prefix: str,
     std_logic_signals: Iterable[str],
     logic_vector_signals: Iterable[tuple[str, int]],
@@ -140,15 +132,15 @@ def generate_signal_definitions(
     return code
 
 
-def instantiate_component(prefix: str, signals: Iterable[SignalEnum]) -> Code:
-    def _generate_port_to_signal_connection(port: SignalEnum) -> str:
+def _instantiate_component(prefix: str, signals: Iterable[SignalEnum]) -> Code:
+    def _generate_port_to_signal_connection(port: str) -> str:
         return f"{port} => {prefix}_{port},"
 
     def _remove_comma_from_last_signal(signals: list[str]) -> list[str]:
         signals[-1] = signals[-1][:-1]
         return signals
 
-    def _generate_port_map_signals(signals) -> list[str]:
+    def _generate_port_map_signals(signals: Iterable[str]) -> list[str]:
         return [_generate_port_to_signal_connection(port) for port in signals]
 
     name = prefix
@@ -156,7 +148,7 @@ def instantiate_component(prefix: str, signals: Iterable[SignalEnum]) -> Code:
         f"{name} : entity work.{name}(rtl)",
         "port map(",
     ]
-    mapping = _generate_port_map_signals(signals)
+    mapping = _generate_port_map_signals(map(str, signals))
     mapping = _remove_comma_from_last_signal(mapping)
     code.extend(mapping)
     code.append(");")
