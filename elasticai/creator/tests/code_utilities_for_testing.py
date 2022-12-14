@@ -2,6 +2,7 @@ import unittest
 from io import StringIO
 from typing import Iterable, Union
 
+from elasticai.creator.resource_utils import get_file
 from elasticai.creator.tests.integration.vhdl.vhd_file_reader import (
     VHDLFileReaderWithoutComments,
 )
@@ -9,6 +10,14 @@ from elasticai.creator.vhdl.code import Code, CodeModule
 
 
 class CodeTestCase(unittest.TestCase):
+    def __init__(self, method_name="runTest") -> None:
+        super().__init__(method_name)
+        self.expected_code: list[str] = []
+
+    def read_expected_code_from_file(self, file_name: str):
+        with get_file("elasticai.creator.tests.integration.vhdl", file_name) as f:
+            self.expected_code = VHDLFileReaderWithoutComments(f).as_list()
+
     @staticmethod
     def unified_vhdl_from_module(module: CodeModule):
         vhdl_file = next(iter(module.files))

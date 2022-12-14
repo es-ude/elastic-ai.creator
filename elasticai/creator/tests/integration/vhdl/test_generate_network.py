@@ -20,11 +20,7 @@ Tests:
 class GenerateNetworkRootFileFromDifferentModelVersions(CodeTestCase):
     def setUp(self):
         self.model = FirstModel()
-
-        with get_file(
-            "elasticai.creator.tests.integration.vhdl", "expected_network.vhd"
-        ) as f:
-            self.expected_code = VHDLFileReaderWithoutComments(f).as_list()
+        self.read_expected_code_from_file("expected_network.vhd")
 
     def get_generated_portmap_signal_line(self, signal_id, value) -> str:
         self.model.elasticai_tags.update({f"{signal_id}_width": value})
