@@ -1,10 +1,11 @@
 from abc import abstractmethod
 from itertools import chain
-from typing import Protocol, Iterable, Any, Callable, Collection, runtime_checkable
+from typing import Any, Callable, Collection, Iterable, Protocol, runtime_checkable
 
 import torch
-from torch.fx import Tracer as fxTracer
 from torch.fx import Graph as fxGraph
+from torch.fx import Tracer as fxTracer
+
 from elasticai.creator.mlframework import Module
 from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer

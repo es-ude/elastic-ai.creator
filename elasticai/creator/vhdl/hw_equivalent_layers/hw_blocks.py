@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from enum import auto, Enum
+from enum import Enum, auto
 from itertools import chain
-from typing import Protocol, Iterable, Any
+from typing import Any, Iterable, Protocol
 
 from elasticai.creator.vhdl.code import Code, Translatable
 

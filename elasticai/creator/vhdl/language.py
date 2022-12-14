@@ -260,8 +260,10 @@ class InterfaceConstrained(Code, CodeGenerator):
 
     def __iter__(self) -> Iterator[str]:
         yield from (
-            f"{self._declaration_type}{self._identifier} :"
-            f"{self._mode}{self._identifier_type.value}{self._range}{self._value}",
+            (
+                f"{self._declaration_type}{self._identifier} :"
+                f"{self._mode}{self._identifier_type.value}{self._range}{self._value}"
+            ),
         )
 
     def code(self) -> Code:

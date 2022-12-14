@@ -3,8 +3,8 @@ from typing import Callable
 import torch
 from torch.utils.data import Dataset
 
-from elasticai.creator.vhdl.evaluators.evaluator import Evaluator
 from elasticai.creator.nn.typing import QuantType
+from elasticai.creator.vhdl.evaluators.evaluator import Evaluator
 
 
 def _run_inference_on_dataset(

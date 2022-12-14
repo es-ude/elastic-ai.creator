@@ -68,7 +68,6 @@ def fixed_offset_mask_4d(
     )
 
     for i in range(out_channels):
-
         axis_group_index = i % (mask.size()[offset_axis] // axis_width)
         axis_indices = list(
             map(lambda x: x + axis_group_index * axis_width, list(range(axis_width)))

@@ -46,9 +46,10 @@ class IOTable:
         """
         inputs = self.inputs
         outputs = self.outputs
-        assert (
-            inputs.shape[1] % groups == 0 & outputs.shape[1] % groups == 0
-        ), "the first dimension of the arrays should be divisible by the number of groups"
+        assert inputs.shape[1] % groups == 0 & outputs.shape[1] % groups == 0, (
+            "the first dimension of the arrays should be divisible by the number of"
+            " groups"
+        )
         inputs, outputs = inputs, outputs
         input_io_dim = list(inputs.shape)
         output_io_dim = list(outputs.shape)

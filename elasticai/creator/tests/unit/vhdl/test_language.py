@@ -223,7 +223,6 @@ class ArchitectureTest(TestCase):
         self.assertSequenceEqual(expected, actual)
 
     def test_Architecture_with_architecture_part_as_process(self):
-
         dummy_process = Process(
             identifier="some name",
             lookup_table=["some code"],

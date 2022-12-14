@@ -3,7 +3,6 @@ from importlib import resources
 from pathlib import PurePath
 from typing import AnyStr, Iterable, TextIO
 
-
 PathType = str | PurePath
 Package = resources.Package
 

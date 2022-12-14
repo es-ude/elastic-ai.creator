@@ -1,12 +1,13 @@
-import unittest
 import typing
-from elasticai.creator.vhdl.model_tracing import HWEquivalentTracer, HWEquivalentNode
-from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
+import unittest
+
 from elasticai.creator.mlframework import Module
 from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
-    RootModule,
     FixedPointLinear,
+    RootModule,
 )
+from elasticai.creator.vhdl.model_tracing import HWEquivalentNode, HWEquivalentTracer
+from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
 
 
 class FPLinearModel(RootModule):

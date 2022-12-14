@@ -42,11 +42,15 @@ class TestCasesLSTMCommonGateTest(TestCase):
             f"wait until clock = '0'",
             f"reset <= '0'",
             f"wait until ready = '1'",
-            f'report "expected output is {y_list_for_testing[0]}, value of'
-            f" '{y_variable_name}' is \" &"
-            f" integer'image(to_integer(signed({y_variable_name})))",
-            f'assert {y_variable_name}={y_list_for_testing[0]} report "The 0. test case'
-            ' fail" severity error',
+            (
+                f'report "expected output is {y_list_for_testing[0]}, value of'
+                f" '{y_variable_name}' is \" &"
+                f" integer'image(to_integer(signed({y_variable_name})))"
+            ),
+            (
+                f'assert {y_variable_name}={y_list_for_testing[0]} report "The 0. test'
+                ' case fail" severity error'
+            ),
             f"reset <= '1'",
             f"wait for 1*clk_period",
             f"X_MEM <= ({to_hex(x_mem_list_for_testing[1])})",
@@ -57,11 +61,15 @@ class TestCasesLSTMCommonGateTest(TestCase):
             f"wait until clock = '0'",
             f"reset <= '0'",
             f"wait until ready = '1'",
-            f'report "expected output is {y_list_for_testing[1]}, value of'
-            f" '{y_variable_name}' is \" &"
-            f" integer'image(to_integer(signed({y_variable_name})))",
-            f'assert {y_variable_name}={y_list_for_testing[1]} report "The 1. test case'
-            ' fail" severity error',
+            (
+                f'report "expected output is {y_list_for_testing[1]}, value of'
+                f" '{y_variable_name}' is \" &"
+                f" integer'image(to_integer(signed({y_variable_name})))"
+            ),
+            (
+                f'assert {y_variable_name}={y_list_for_testing[1]} report "The 1. test'
+                ' case fail" severity error'
+            ),
             f"reset <= '1'",
             f"wait for 1*clk_period",
             f"X_MEM <= ({to_hex(x_mem_list_for_testing[2])})",
@@ -72,11 +80,15 @@ class TestCasesLSTMCommonGateTest(TestCase):
             f"wait until clock = '0'",
             f"reset <= '0'",
             f"wait until ready = '1'",
-            f'report "expected output is {y_list_for_testing[2]}, value of'
-            f" '{y_variable_name}' is \" &"
-            f" integer'image(to_integer(signed({y_variable_name})))",
-            f'assert {y_variable_name}={y_list_for_testing[2]} report "The 2. test case'
-            ' fail" severity error',
+            (
+                f'report "expected output is {y_list_for_testing[2]}, value of'
+                f" '{y_variable_name}' is \" &"
+                f" integer'image(to_integer(signed({y_variable_name})))"
+            ),
+            (
+                f'assert {y_variable_name}={y_list_for_testing[2]} report "The 2. test'
+                ' case fail" severity error'
+            ),
             f"reset <= '1'",
             f"wait for 1*clk_period",
             f'report "======Simulation Success======" severity Note',
@@ -133,27 +145,45 @@ class TestCasesPrecomputedScalarFunctionTest(TestCase):
         )
         expected = [
             f'report "======Simulation Start======" severity Note',
-            f"{x_variable_name} <="
-            f" to_signed({x_list_for_testing[0]},{self.data_width})",
+            (
+                f"{x_variable_name} <="
+                f" to_signed({x_list_for_testing[0]},{self.data_width})"
+            ),
             f"wait for 1*clk_period",
-            f"report \"The value of '{y_variable_name}' is \" &"
-            f" integer'image(to_integer(unsigned({y_variable_name})))",
-            f'assert {y_variable_name}={y_list_for_testing[0]} report "The test case'
-            f' {x_list_for_testing[0]} fail" severity failure',
-            f"{x_variable_name} <="
-            f" to_signed({x_list_for_testing[1]},{self.data_width})",
+            (
+                f"report \"The value of '{y_variable_name}' is \" &"
+                f" integer'image(to_integer(unsigned({y_variable_name})))"
+            ),
+            (
+                f'assert {y_variable_name}={y_list_for_testing[0]} report "The test'
+                f' case {x_list_for_testing[0]} fail" severity failure'
+            ),
+            (
+                f"{x_variable_name} <="
+                f" to_signed({x_list_for_testing[1]},{self.data_width})"
+            ),
             f"wait for 1*clk_period",
-            f"report \"The value of '{y_variable_name}' is \" &"
-            f" integer'image(to_integer(unsigned({y_variable_name})))",
-            f'assert {y_variable_name}={y_list_for_testing[1]} report "The test case'
-            f' {x_list_for_testing[1]} fail" severity failure',
-            f"{x_variable_name} <="
-            f" to_signed({x_list_for_testing[2]},{self.data_width})",
+            (
+                f"report \"The value of '{y_variable_name}' is \" &"
+                f" integer'image(to_integer(unsigned({y_variable_name})))"
+            ),
+            (
+                f'assert {y_variable_name}={y_list_for_testing[1]} report "The test'
+                f' case {x_list_for_testing[1]} fail" severity failure'
+            ),
+            (
+                f"{x_variable_name} <="
+                f" to_signed({x_list_for_testing[2]},{self.data_width})"
+            ),
             f"wait for 1*clk_period",
-            f"report \"The value of '{y_variable_name}' is \" &"
-            f" integer'image(to_integer(unsigned({y_variable_name})))",
-            f'assert {y_variable_name}={y_list_for_testing[2]} report "The test case'
-            f' {x_list_for_testing[2]} fail" severity failure',
+            (
+                f"report \"The value of '{y_variable_name}' is \" &"
+                f" integer'image(to_integer(unsigned({y_variable_name})))"
+            ),
+            (
+                f'assert {y_variable_name}={y_list_for_testing[2]} report "The test'
+                f' case {x_list_for_testing[2]} fail" severity failure'
+            ),
             f'report "======Simulation Success======" severity Note',
             f'report "Please check the output message." severity Note',
             f"wait",

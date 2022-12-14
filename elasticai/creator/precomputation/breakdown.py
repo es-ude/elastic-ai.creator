@@ -107,7 +107,6 @@ class BreakdownConv2dBlock(torch.nn.Module):
         bias=True,
         padding_mode="zeros",
     ):
-
         if isinstance(kernel_size, tuple):
             breakdown_multiplier = kernel_size[0] * groups
         else:

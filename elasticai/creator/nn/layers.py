@@ -9,12 +9,12 @@ from torch.nn import BatchNorm1d, Conv1d, Module, Parameter
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.mlframework import Module, Tensor
+from elasticai.creator.nn.functional import binarize as BinarizeFn
 from elasticai.creator.precomputation.input_domains import (
     create_codomain_for_1d_conv,
     create_codomain_for_depthwise_1d_conv,
 )
 from elasticai.creator.precomputation.precomputation import precomputable
-from elasticai.creator.nn.functional import binarize as BinarizeFn
 from elasticai.creator.tags_utils import TaggedModule
 
 """Implementation of quantizers and quantized variants of pytorch layers"""

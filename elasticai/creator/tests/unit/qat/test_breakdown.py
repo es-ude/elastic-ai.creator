@@ -3,14 +3,14 @@ import unittest
 import torch
 from torch.nn.utils import parametrize
 
+from elasticai.creator.nn.blocks import Conv2dBlock
+from elasticai.creator.nn.layers import Binarize, ChannelShuffle
+from elasticai.creator.nn.masks import FixedOffsetMask4d
 from elasticai.creator.precomputation.breakdown import (
     BreakdownConv2dBlock,
     depthwisePointwiseBreakdownConv2dBlock,
     generate_conv2d_sequence_with_width,
 )
-from elasticai.creator.nn.blocks import Conv2dBlock
-from elasticai.creator.nn.layers import Binarize, ChannelShuffle
-from elasticai.creator.nn.masks import FixedOffsetMask4d
 
 
 class BreakdownTest(unittest.TestCase):
@@ -22,19 +22,28 @@ class BreakdownTest(unittest.TestCase):
             ):  # parametrizations seems to create a dynamic class, impossible to compare instances
                 self.assertTrue(
                     isinstance(layer_expected, type(layer_expected)),
-                    f"layer types differ expected:{layer_expected} actual:{layer_actual}",
+                    (
+                        "layer types differ"
+                        f" expected:{layer_expected} actual:{layer_actual}"
+                    ),
                 )
             if hasattr(layer_actual, "conv2d"):
                 self.assertSequenceEqual(
                     layer_actual.conv2d.weight.shape,
                     layer_expected.conv2d.weight.shape,
-                    f"layer shapes differ expected:{layer_expected.conv2d.weight.shape} actual:{layer_actual.conv2d.weight.shape}",
+                    (
+                        "layer shapes differ"
+                        f" expected:{layer_expected.conv2d.weight.shape} actual:{layer_actual.conv2d.weight.shape}"
+                    ),
                 )
             if hasattr(layer_actual, "groups"):
                 self.assertEqual(
                     layer_actual.groups,
                     layer_expected.groups,
-                    f"groups differ expected:{layer_expected.groups} actual:{layer_actual.groups}",
+                    (
+                        "groups differ"
+                        f" expected:{layer_expected.groups} actual:{layer_actual.groups}"
+                    ),
                 )
 
     def test_generate_conv2d_sequence_with_width_base(self):

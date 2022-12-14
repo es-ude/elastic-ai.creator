@@ -79,7 +79,6 @@ class QRigLScheduler:
         grad_accumulation_n=1,
         state_dict=None,
     ):
-
         self.layers = weighted_layers
         self.optimizer = optimizer
         self.backward_masks = []
@@ -91,7 +90,6 @@ class QRigLScheduler:
             self.apply_mask_to_weights()
 
         else:
-
             # randomly sparsify model according to S
             self.random_sparsify()
 
@@ -206,25 +204,21 @@ class QRigLScheduler:
         s += "nonzero_percentages=" + S_str + ",\n"
         s += (
             "total_nonzero_params="
-            + (
-                "%i/%i (%.2f%%)"
-                % (
-                    total_nonzero,
-                    total_params,
-                    float(total_nonzero) / float(total_params) * 100,
-                )
+            + "%i/%i (%.2f%%)"
+            % (
+                total_nonzero,
+                total_params,
+                float(total_nonzero) / float(total_params) * 100,
             )
             + ",\n"
         )
         s += (
             "total_CONV_nonzero_params="
-            + (
-                "%i/%i (%.2f%%)"
-                % (
-                    total_conv_nonzero,
-                    total_conv_params,
-                    float(total_conv_nonzero) / float(total_conv_params) * 100,
-                )
+            + "%i/%i (%.2f%%)"
+            % (
+                total_conv_nonzero,
+                total_conv_params,
+                float(total_conv_nonzero) / float(total_conv_params) * 100,
             )
             + ",\n"
         )
@@ -237,7 +231,6 @@ class QRigLScheduler:
     def reset_momentum(self):
         # raise NotImplementedError("Not compatible with momentum yet")
         for layer, mask in zip(self.layers, self.backward_masks):
-
             param_state = self.optimizer.state[layer.weight]
             if "momentum_buffer" in param_state:
                 # mask the momentum matrix
