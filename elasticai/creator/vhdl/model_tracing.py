@@ -92,7 +92,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
     """
 
     def signals(self, prefix: str) -> Code:
-        yield from chain.from_iterable(
+        return chain.from_iterable(
             (
                 node.hw_equivalent_layer.signal_definitions(f"{prefix}{node.name}")
                 for node in self.hw_equivalent_nodes
@@ -100,7 +100,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
         )
 
     def _call_on_layers(self, method_name, prefix: str) -> Code:
-        yield from chain.from_iterable(
+        return chain.from_iterable(
             (
                 getattr(node.hw_equivalent_layer, method_name)(f"{prefix}{node.name}")
                 for node in self.hw_equivalent_nodes
@@ -108,7 +108,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
         )
 
     def instantiations(self, prefix: str) -> Code:
-        yield from chain.from_iterable(
+        return chain.from_iterable(
             (
                 node.hw_equivalent_layer.instantiation(f"{prefix}{node.name}")
                 for node in self.hw_equivalent_nodes
@@ -124,7 +124,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
 
     @property
     def hw_equivalent_nodes(self) -> Iterable[HWEquivalentNode]:
-        yield from filter(lambda n: n.op == "call_module", self._fx_graph.nodes)
+        return filter(lambda n: n.op == "call_module", self._fx_graph.nodes)
 
     @property
     def hw_equivalent_layers(self) -> Collection[HWEquivalentLayer]:
