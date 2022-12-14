@@ -5,7 +5,6 @@ import torch
 from torch.nn.utils.parametrize import register_parametrization
 
 from elasticai.creator.mlframework import Module, Tensor
-from elasticai.creator.qat.constraints import Constraint
 from elasticai.creator.qat.functional import binarize as BinarizeFn
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
@@ -112,10 +111,7 @@ class QuantizeTwoBit(torch.nn.Module):
 
 
 def _init_quantizable_convolution(
-    module: torch.nn.Module,
-    quantizer: Module,
-    bias: bool,
-    constraints: list[Constraint],
+    module: torch.nn.Module, quantizer: Module, bias: bool
 ):
     if isinstance(quantizer, Module):
         register_parametrization(module, "weight", quantizer)
@@ -123,13 +119,6 @@ def _init_quantizable_convolution(
             register_parametrization(module, "bias", quantizer)
     else:
         raise TypeError(f"Quantizer {quantizer} is not an instance of Module.")
-    module.constraints = constraints if constraints else None
-
-    def apply_constraint(self):
-        if self.constraints:
-            [constraint(self) for constraint in self.constraints]
-
-    module.apply_constraint = types.MethodType(apply_constraint, module)
 
 
 class QConv1d(torch.nn.Conv1d):
@@ -145,7 +134,6 @@ class QConv1d(torch.nn.Conv1d):
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        constraints: list = None,
     ):
         super().__init__(
             in_channels=in_channels,
@@ -159,9 +147,7 @@ class QConv1d(torch.nn.Conv1d):
             padding_mode=padding_mode,
         )
 
-        _init_quantizable_convolution(
-            self, quantizer=quantizer, bias=bias, constraints=constraints
-        )
+        _init_quantizable_convolution(self, quantizer=quantizer, bias=bias)
 
 
 class QConv2d(torch.nn.Conv2d):
@@ -177,7 +163,6 @@ class QConv2d(torch.nn.Conv2d):
         groups=1,
         bias=True,
         padding_mode="zeros",
-        constraints: list = None,
     ):
         super().__init__(
             in_channels=in_channels,
@@ -190,9 +175,7 @@ class QConv2d(torch.nn.Conv2d):
             bias=bias,
             padding_mode=padding_mode,
         )
-        _init_quantizable_convolution(
-            self, quantizer=quantizer, bias=bias, constraints=constraints
-        )
+        _init_quantizable_convolution(self, quantizer=quantizer, bias=bias)
 
 
 class ChannelShuffle(torch.nn.Module):
@@ -217,12 +200,9 @@ class QLinear(torch.nn.Linear):
         out_features: int,
         quantizer: Module,
         bias: bool = True,
-        constraints: list[Constraint] = None,
     ):
         super().__init__(in_features=in_features, out_features=out_features, bias=bias)
-        _init_quantizable_convolution(
-            self, quantizer=quantizer, bias=bias, constraints=constraints
-        )
+        _init_quantizable_convolution(self, quantizer=quantizer, bias=bias)
 
 
 class _QLSTMCellBase(torch.nn.LSTMCell):
