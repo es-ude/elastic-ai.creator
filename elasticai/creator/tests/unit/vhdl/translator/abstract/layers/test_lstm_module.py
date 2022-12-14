@@ -1,18 +1,18 @@
 from unittest import TestCase
 
-from vhdl.code_files import (
-    LSTMCommonVHDLFile,
+from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
+    DualPort2ClockRamVHDLFile,
 )
+from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
+from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
+from elasticai.creator.vhdl.code_files.sigmoid_component import SigmoidComponent
+from elasticai.creator.vhdl.code_files.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
     LSTMModule,
     LSTMTranslationArgs,
 )
-from vhdl.code_files.dual_port_2_clock_ram_component import DualPort2ClockRamVHDLFile
-from vhdl.code_files.lstm_component import LSTMFile
-from vhdl.code_files.rom_component import RomFile
-from vhdl.code_files.sigmoid_component import SigmoidComponent
-from vhdl.code_files.tanh_component import TanhComponent
 
 
 class LSTMModuleTest(TestCase):

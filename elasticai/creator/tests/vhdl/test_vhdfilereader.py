@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 
-from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
+from elasticai.creator.tests.integration.vhdl.vhd_file_reader import (
     VHDLFileReaderWithoutComments,
 )
 
@@ -10,9 +10,9 @@ class VHDFileReaderWithoutCommentsTest(unittest.TestCase):
     def check(self, input: str, expected: str):
         io_dummy = StringIO(input)
         reader = VHDLFileReaderWithoutComments(io_dummy)
-        expected = tuple(expected.splitlines())
+        expected_code = tuple(expected.splitlines())
         actual = tuple(reader)
-        self.assertEqual(expected, actual)
+        self.assertEqual(expected_code, actual)
 
     def test_ignores_blank_line(self):
         self.check(input="   \n vhdl file text", expected="vhdl file text")

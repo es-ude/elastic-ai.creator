@@ -3,6 +3,13 @@ from typing import Iterable
 
 import torch
 
+from elasticai.creator.vhdl.code import (
+    Code,
+    CodeFile,
+    CodeFileBase,
+    CodeModule,
+    CodeModuleBase,
+)
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dTranslationArgs,
@@ -17,7 +24,6 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.code import Code, CodeFile, CodeModule, CodeModuleBase, CodeFileBase
 
 
 def fake_build_function(module: torch.nn.Module, layer_id: str) -> CodeModuleBase:

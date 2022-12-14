@@ -1,6 +1,6 @@
 from typing import Union
 
-from vhdl.code import Code
+from elasticai.creator.vhdl.code import Code
 
 
 def extract_section(
@@ -32,5 +32,5 @@ def extract_section(
         i += 1
 
     if extract:
-        raise Exception(f"reached end of code before end: {end}")
+        raise ValueError(f"reached end of code before end: {end}")
     return content

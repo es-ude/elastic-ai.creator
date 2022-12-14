@@ -13,24 +13,24 @@ class PrecomputedScalarFunctionProcessTest(unittest.TestCase):
 
     def test_empty_x_list_y_list_one_element(self) -> None:
         self.assertEqual(
-            list(precomputed_scalar_function_process(x=[], y=self.fp_list([1]))()),
+            list(precomputed_scalar_function_process(x=[], y=self.fp_list([1]))),
             ['y <= "0000000100000000";'],
         )
 
     def test_empty_x_list_y_list_too_many_elements(self) -> None:
         with self.assertRaises(ValueError):
-            list(precomputed_scalar_function_process(x=[], y=self.fp_list([1, 2]))())
+            list(precomputed_scalar_function_process(x=[], y=self.fp_list([1, 2])))
 
     def test_empty_y_list(self) -> None:
         with self.assertRaises(ValueError):
-            list(precomputed_scalar_function_process(x=[], y=[])())
+            list(precomputed_scalar_function_process(x=[], y=[]))
 
     def test_x_list_lengths_not_suitable_for_y_list_lengths(self) -> None:
         with self.assertRaises(ValueError):
             list(
                 precomputed_scalar_function_process(
                     x=self.fp_list([1, 2]), y=self.fp_list([1])
-                )()
+                )
             )
 
     def test_x_list_with_only_one_element(self) -> None:
@@ -46,7 +46,7 @@ class PrecomputedScalarFunctionProcessTest(unittest.TestCase):
             list(
                 precomputed_scalar_function_process(
                     x=self.fp_list([1]), y=self.fp_list([1, 2])
-                )()
+                )
             ),
         )
 
@@ -67,6 +67,6 @@ class PrecomputedScalarFunctionProcessTest(unittest.TestCase):
             list(
                 precomputed_scalar_function_process(
                     x=self.fp_list([3, 1, 2]), y=self.fp_list([1, 2, 3, 4])
-                )()
+                )
             ),
         )

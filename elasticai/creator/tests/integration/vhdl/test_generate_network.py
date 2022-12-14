@@ -1,22 +1,19 @@
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.integrationTests.vhdl.vhd_file_reader import (
+from elasticai.creator.resource_utils import get_file
+from elasticai.creator.tests.integration.vhdl.code_test_case import CodeTestCase
+from elasticai.creator.tests.integration.vhdl.vhd_file_reader import (
     VHDLFileReaderWithoutComments,
 )
-from elasticai.creator.resource_utils import get_file
-from elasticai.creator.vhdl.number_representations import (
-    ClippedFixedPoint,
-)
+from elasticai.creator.tests.text_parsing import extract_section
+from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
-    RootModule,
     FixedPointHardSigmoid,
     FixedPointLinear,
+    RootModule,
 )
-
-from elasticai.creator.vhdl.code import Code
-from elasticai.creator.tests.text_parsing import extract_section
-from elasticai.creator.integrationTests.vhdl.code_test_case import CodeTestCase
+from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
 
 """
 Tests:
@@ -52,7 +49,7 @@ class GenerateNetworkRootFileFromDifferentModelVersions(TestCase):
         self.model = FirstModel()
 
         with get_file(
-            "elasticai.creator.integrationTests.vhdl", "expected_network.vhd"
+            "elasticai.creator.tests.integration.vhdl", "expected_network.vhd"
         ) as f:
             self.expected_code = VHDLFileReaderWithoutComments(f).as_list()
 

@@ -21,6 +21,9 @@ class TestBenchBase(ABC):
         ...
 
     def code(self) -> Code:
-        yield self.simulation_start_msg
-        yield from self._body()
-        yield from self.simulation_end_msgs
+        def generator():
+            yield self.simulation_start_msg
+            yield from self._body()
+            yield from self.simulation_end_msgs
+
+        return generator()

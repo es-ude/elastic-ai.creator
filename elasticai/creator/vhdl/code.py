@@ -1,11 +1,19 @@
 import dataclasses
 from abc import abstractmethod
 from collections.abc import Collection
-from typing import Iterable, Callable, Protocol, Optional, Union
+from typing import Callable, Iterable, Optional, Protocol, Union, runtime_checkable
 
 Code = Iterable[str]
-CodeGenerator = Callable[[], Code]
-CodeGeneratorCompatible = Code | CodeGenerator | str
+
+
+@runtime_checkable
+class CodeGenerator(Protocol):
+    @abstractmethod
+    def code(self) -> Code:
+        ...
+
+
+CodeGeneratorCompatible = Code | CodeGenerator | str | Callable[[], Code]
 
 
 class Translatable(Protocol):
@@ -77,7 +85,7 @@ class CodeModuleBase(CodeModule):
         self,
         name: str,
         files: Collection[CodeFile],
-        submodules: Optional[Collection["CodeModule"]] = None,
+        submodules: Collection["CodeModule"] = tuple(),
     ):
         self._name = name
         self._files = files

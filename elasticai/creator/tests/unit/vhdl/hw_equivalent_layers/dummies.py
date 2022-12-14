@@ -1,25 +1,31 @@
-from typing import Iterable, Iterator, Any, Collection
+from typing import Any, Collection, Iterable, Iterator
 
-from mlframework import Module
-from mlframework.typing import Parameter
-from vhdl.code import Code, CodeModule, CodeFile, Translatable
-from vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
-from vhdl.model_tracing import HWEquivalentNode, Node, HWEquivalentGraph
+from elasticai.creator.mlframework import Module
+from elasticai.creator.mlframework.typing import Parameter
+from elasticai.creator.vhdl.code import (
+    Code,
+    CodeFile,
+    CodeModule,
+    CodeModuleBase,
+    Translatable,
+)
+from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
+from elasticai.creator.vhdl.model_tracing import (
+    HWEquivalentGraph,
+    HWEquivalentNode,
+    Node,
+)
 
 
 class DummyModule(HWEquivalentLayer):
     def signal_definitions(self, prefix: str) -> Code:
-        yield from []
+        return []
 
     def instantiation(self, prefix: str) -> Code:
-        yield from []
+        return []
 
-    def translate(self) -> "CodeModule":
-        pass
-
-    @property
-    def y_width(self) -> int:
-        return 1
+    def translate(self) -> CodeModule:
+        return CodeModuleBase(name="", files=[])
 
     @property
     def training(self) -> bool:
@@ -38,7 +44,7 @@ class DummyModule(HWEquivalentLayer):
         return {}
 
     def __call__(self, x: Any, *args: Any, **kwargs: Any) -> Any:
-        pass
+        return x
 
 
 class DummyModuleNode(Node):

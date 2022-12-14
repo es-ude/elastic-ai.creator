@@ -40,6 +40,8 @@ pydeps = "^1.11.0"
 [tool.pylint]
 max-line-length = 88
 
+[tool.black]
+preview = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

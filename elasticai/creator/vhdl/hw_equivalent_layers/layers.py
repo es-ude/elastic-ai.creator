@@ -2,22 +2,24 @@ import typing
 from abc import ABC, abstractmethod
 from typing import Any
 
+import torch.nn
+
 from elasticai.creator.mlframework import Module
 from elasticai.creator.nn.hard_sigmoid import (
     FixedPointHardSigmoid as nnFixedPointHardSigmoid,
 )
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
-from elasticai.creator.vhdl.code import Translatable, Code, CodeModule, CodeModuleBase
+from elasticai.creator.vhdl.code import Code, CodeModule, CodeModuleBase, Translatable
 from elasticai.creator.vhdl.code_files.utils import calculate_address_width
 from elasticai.creator.vhdl.hw_equivalent_layers.hw_blocks import (
-    HWBlockInterface,
-    BufferedBaseHWBlock,
     BaseHWBlock,
+    BufferedBaseHWBlock,
+    HWBlockInterface,
 )
 from elasticai.creator.vhdl.model_tracing import (
+    HWEquivalentTracer,
     Tracer,
     create_hw_block_collection,
-    HWEquivalentTracer,
 )
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 from elasticai.creator.vhdl.vhdl_files import VHDLFile
@@ -65,7 +67,7 @@ class AbstractTranslatableLayer(Translatable, HWBlockInterface, ABC):
         )
 
 
-class RootModule(AbstractTranslatableLayer):
+class RootModule(torch.nn.Module, AbstractTranslatableLayer):
     def __init__(self):
         self.elasticai_tags = {
             "x_address_width": 1,
@@ -73,7 +75,10 @@ class RootModule(AbstractTranslatableLayer):
             "x_width": 1,
             "y_width": 1,
         }
-        super().__init__(BufferedBaseHWBlock(**self.elasticai_tags))
+        torch.nn.Module.__init__(self)
+        AbstractTranslatableLayer.__init__(
+            self, BufferedBaseHWBlock(**self.elasticai_tags)
+        )
 
     def _template_parameters(self) -> dict[str, str]:
         return dict(((key, str(value)) for key, value in self.elasticai_tags.items()))

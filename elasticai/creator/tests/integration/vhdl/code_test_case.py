@@ -2,8 +2,10 @@ import unittest
 from io import StringIO
 from typing import Iterable
 
-from integrationTests.vhdl.vhd_file_reader import VHDLFileReaderWithoutComments
-from vhdl.code import CodeModule, Code
+from elasticai.creator.tests.integration.vhdl.vhd_file_reader import (
+    VHDLFileReaderWithoutComments,
+)
+from elasticai.creator.vhdl.code import Code, CodeModule
 
 
 class CodeTestCase(unittest.TestCase):
@@ -21,7 +23,7 @@ class CodeTestCase(unittest.TestCase):
 
     @staticmethod
     def code_from_string(s: str) -> Code:
-        yield from VHDLFileReaderWithoutComments(StringIO(s))
+        return VHDLFileReaderWithoutComments(StringIO(s))
 
     def check_contains_all_expected_lines(self, expected: Code, actual: Code):
         reusable_code = list(actual)
