@@ -2,7 +2,7 @@ import unittest
 from itertools import filterfalse
 
 from elasticai.creator import resource_utils
-from vhdl.code import Code
+from elasticai.creator.vhdl.code import Code
 
 
 class VHDLFileTestCase(unittest.TestCase):

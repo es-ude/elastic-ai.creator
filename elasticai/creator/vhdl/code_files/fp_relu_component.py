@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
-from vhdl.code import Code
+from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,
 )
-from vhdl.vhdl_files import expand_template
+from elasticai.creator.vhdl.vhdl_files import expand_template
 
 
 @dataclass
@@ -30,8 +30,8 @@ class FPReLUComponent:
         code = expand_template(
             template,
             layer_name=self.layer_id,
-            data_width=self.data_width,
+            data_width=str(self.data_width),
             clock_option="false",
         )
 
-        yield from code
+        return code

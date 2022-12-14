@@ -4,19 +4,18 @@ from typing import Any, Iterable, Iterator
 import torch
 
 from elasticai.creator.resource_utils import PathType
-from vhdl.code_files.network_component import NetworkVHDLFile
+from elasticai.creator.vhdl.code import CodeFileBase, CodeModule, CodeModuleBase
+from elasticai.creator.vhdl.code_files.network_component import NetworkVHDLFile
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from vhdl.code import CodeModule, CodeModuleBase, CodeFileBase
 
 
 def translate_model(
     model: torch.nn.Module,
-    translation_args: dict[str, Any],
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
 ) -> Iterator[CodeModule]:
     """
@@ -25,8 +24,6 @@ def translate_model(
 
     Parameters:
         model (torch.nn.Module): The PyTorch-model that should be translated.
-        translation_args (dict[str, Any]):
-            Dictionary with the translation arguments for each kind of VHDLModule included in the vhdl_modules.
         build_function_mapping (BuildFunctionMapping):
             Object that maps a given PyTorch-layer to its corresponding build function. If not given the default build
             functions will be used.

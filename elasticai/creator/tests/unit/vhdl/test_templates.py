@@ -2,11 +2,8 @@ import doctest
 from collections.abc import Iterator
 from unittest import TestCase
 
-import vhdl.vhdl_files
-from vhdl.vhdl_files import (
-    expand_multiline_template,
-    expand_template,
-)
+from elasticai.creator.vhdl import vhdl_files
+from elasticai.creator.vhdl.vhdl_files import expand_multiline_template, expand_template
 
 
 def newline_join(lines: Iterator[str]) -> str:
@@ -126,12 +123,12 @@ class ExpandTemplatesTest(TestCase):
     def test_expand_multiple_strings_template_with_multiple_keys_per_line(self) -> None:
         template = ["$val1 $val1 $val1", "$val1 $val2", ""]
         actual = newline_join(
-            expand_template(template, val1="hello", val2="world", val3=42)
+            expand_template(template, val1="hello", val2="world", val3=str(42))
         )
         expected = "hello hello hello\nhello world\n"
         self.assertEqual(expected, actual)
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(vhdl.vhdl_files))
+    tests.addTests(doctest.DocTestSuite(vhdl_files))
     return tests

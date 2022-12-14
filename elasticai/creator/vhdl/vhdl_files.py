@@ -1,6 +1,6 @@
 from itertools import chain, repeat
 from string import Template
-from typing import Iterable, Callable, Union, Iterator
+from typing import Callable, Iterable, Iterator, Union
 
 from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.code import Code, TemplateCodeFile
@@ -17,9 +17,6 @@ class VHDLFile(TemplateCodeFile):
     will result in the string `"1\n2"`.
     The **code** method returns the lines of code resulting from the parameters filled into the template.
     """
-
-    def save_to(self, prefix: str):
-        pass
 
     _template_package = "elasticai.creator.vhdl.templates"
 
@@ -60,7 +57,7 @@ class VHDLFile(TemplateCodeFile):
         template = read_text(self._template_package, f"{self._name}.tpl.vhd")
         template = expand_template(template, **self._parameters)
         template = expand_multiline_template(template, **self._multiline_parameters)
-        yield from template
+        return template
 
 
 def expand_multiline_template(
@@ -95,7 +92,7 @@ def _unify_template_datatype(template: Union[str, Iterable[str]]) -> Iterable[st
     return lines
 
 
-def expand_template(template: str | Iterable[str], **kwargs: str) -> Iterable[str]:
+def expand_template(template: str | Iterable[str], **kwargs: str) -> Iterator[str]:
     if isinstance(template, str):
         yield Template(template).safe_substitute(kwargs)
     else:

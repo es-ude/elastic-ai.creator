@@ -1,7 +1,7 @@
 import unittest
 
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from vhdl.code_files.rom_component import RomFile
 
 
 class RomComponentTest(unittest.TestCase):

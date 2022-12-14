@@ -1,6 +1,6 @@
 import unittest
 
-from vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
+from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
@@ -10,10 +10,10 @@ class FPLinear1dComponentTest(unittest.TestCase):
 
         component = FPLinear1dFile(
             layer_id="ll1",
-            in_features=3,
-            out_features=2,
+            in_feature_num=3,
+            out_feature_num=2,
             fixed_point_factory=to_fp,
             work_library_name="work",
         )
 
-        self.assertEqual(len(list(component.code)), 213)
+        self.assertEqual(len(list(component.code())), 213)

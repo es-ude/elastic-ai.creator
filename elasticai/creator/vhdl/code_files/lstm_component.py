@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
-from vhdl.code_files.utils import (
+from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
-from vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from vhdl.vhdl_files import expand_template
+from elasticai.creator.vhdl.vhdl_files import expand_template
 
 
 @dataclass
@@ -48,5 +48,4 @@ class LSTMFile:
             hidden_addr_width=str(self.hidden_addr_width),
             w_addr_width=str(self.w_addr_width),
         )
-
-        yield from code
+        return code

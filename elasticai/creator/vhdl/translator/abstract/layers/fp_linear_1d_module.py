@@ -5,10 +5,10 @@ from typing import Callable, Collection
 
 import numpy as np
 
+from elasticai.creator.vhdl.code import CodeFile, CodeModule
+from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from vhdl.code import CodeFile, CodeModule
-from vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
-from vhdl.code_files.rom_component import RomFile
 
 
 @dataclass
@@ -39,8 +39,8 @@ class FPLinear1dModule(CodeModule):
 
         yield FPLinear1dFile(
             layer_id=self.layer_id,
-            in_features=in_features,
-            out_features=out_features,
+            in_feature_num=in_features,
+            out_feature_num=out_features,
             fixed_point_factory=args.fixed_point_factory,
             work_library_name=args.work_library_name,
             resource_option="auto",

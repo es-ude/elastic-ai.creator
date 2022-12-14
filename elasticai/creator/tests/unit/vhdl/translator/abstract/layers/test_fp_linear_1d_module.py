@@ -1,12 +1,12 @@
 import unittest
 
+from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
+from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import (
     FPLinear1dModule,
     FPLinear1dTranslationArgs,
 )
-from vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
-from vhdl.code_files.rom_component import RomFile
 
 
 class FPLinear1dModuleTest(unittest.TestCase):

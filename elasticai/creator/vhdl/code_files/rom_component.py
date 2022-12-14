@@ -2,22 +2,21 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from elasticai.creator.resource_utils import read_text
-from vhdl.code_files.utils import (
+from elasticai.creator.vhdl.code import Code, CodeFileBase
+from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     pad_with_zeros,
 )
 from elasticai.creator.vhdl.language import hex_representation
-from vhdl.code import Code, CodeFileBase
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from vhdl.vhdl_files import expand_template
+from elasticai.creator.vhdl.vhdl_files import expand_template
 
 
 @dataclass
 class RomFile(CodeFileBase):
-
     rom_name: str
     values: Sequence[FixedPoint]
     resource_option: str
@@ -46,4 +45,4 @@ class RomFile(CodeFileBase):
             rom_resource_option=f'"{self.resource_option}"',
         )
 
-        yield from code
+        return code

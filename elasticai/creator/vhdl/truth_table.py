@@ -5,9 +5,9 @@ from typing import Iterable, Iterator, Protocol, Sequence
 import numpy as np
 
 from elasticai.creator.resource_utils import read_text
-from vhdl.code import Code
+from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
-from vhdl.vhdl_files import expand_multiline_template
+from elasticai.creator.vhdl.vhdl_files import expand_multiline_template
 
 
 # noinspection PyPropertyDefinition
@@ -115,4 +115,4 @@ class TruthTableVHDLDesignCaseWhen(TruthTableVHDLDesign):
                 output_vector_start_bit=self._table.output_bit_width - 1,
             )
 
-        yield from map(substitution, code)
+        return map(substitution, code)

@@ -1,6 +1,6 @@
 import unittest
 
-from vhdl.hw_equivalent_layers.layers import AbstractTranslatableLayer
+from elasticai.creator.vhdl.hw_equivalent_layers.layers import AbstractTranslatableLayer
 
 
 class MyRootLayer(AbstractTranslatableLayer):

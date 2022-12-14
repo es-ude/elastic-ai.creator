@@ -1,4 +1,4 @@
-from vhdl.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
 class DualPort2ClockRamVHDLFile(VHDLFile):

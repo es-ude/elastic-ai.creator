@@ -56,14 +56,14 @@ class TranslatorTest(unittest.TestCase):
     def test_translate_model_empty_model(self) -> None:
         model = torch.nn.Sequential()
         generated_code = translator.translate_model(
-            model, translation_args=dict(), build_function_mapping=self.build_mapping
+            model, build_function_mapping=self.build_mapping
         )
         self.assertEqual(len(list(generated_code)), 1)
 
     def test_translation_yields_one_build_mapping_result_for_first_layer(self) -> None:
         model = torch.nn.Sequential(torch.nn.Module())
         code_containers = translator.translate_model(
-            model, translation_args=dict(), build_function_mapping=self.build_mapping
+            model, build_function_mapping=self.build_mapping
         )
 
         code = unpack_module_directories(code_containers)
@@ -92,17 +92,6 @@ class TranslatorTest(unittest.TestCase):
         translated = list(
             translator.translate_model(
                 model,
-                translation_args=dict(
-                    Linear=FPLinear1dTranslationArgs(
-                        fixed_point_factory=FixedPoint.get_factory(8, 4),
-                        work_library_name="work",
-                    ),
-                    LSTM=LSTMTranslationArgs(
-                        fixed_point_factory=FixedPoint.get_factory(8, 4),
-                        sigmoid_resolution=(-2.5, 2.5, 100),
-                        tanh_resolution=(-2.5, 2.5, 100),
-                    ),
-                ),
                 build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING,
             )
         )
