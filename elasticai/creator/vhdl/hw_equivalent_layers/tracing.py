@@ -8,24 +8,7 @@ from torch.fx import Tracer as fxTracer
 
 from elasticai.creator.mlframework import Module
 from elasticai.creator.vhdl.code import Code
-from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
-
-
-class Node(Protocol):
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        ...
-
-    @property
-    @abstractmethod
-    def next(self) -> "Node":
-        ...
-
-    @property
-    @abstractmethod
-    def op(self) -> str:
-        ...
+from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer, Node
 
 
 @runtime_checkable
@@ -58,20 +41,10 @@ class HWEquivalentGraph(Protocol):
         ...
 
 
-class Tracer(Protocol):
+class HWEquivalentTracer(Protocol):
     @abstractmethod
     def trace(self, model: Module) -> HWEquivalentGraph:
         ...
-
-
-class HWEquivalentTracer(Tracer):
-    def __init__(self):
-        self._tracer = _HWEquivalentTracer()
-
-    def trace(self, model: Module) -> HWEquivalentGraph:
-        return self._tracer.trace(
-            model,
-        )
 
 
 def create_hw_block_collection(graph: HWEquivalentGraph) -> HWBlockCollection:
@@ -135,7 +108,7 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
         return layers
 
 
-class _HWEquivalentTracer(fxTracer):
+class HWEquivalentFXTracer(fxTracer, HWEquivalentTracer):
     def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
         return m.__module__.startswith("elasticai.creator.vhdl.hw_equivalent_layers")
 
