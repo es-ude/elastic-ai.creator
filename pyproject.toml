@@ -55,7 +55,7 @@ repository = "pypi"
 upload_to_release = true
 build_command = "python3 -m pip install poetry && poetry build"
 branch = "main"
-parser_angular_allowed_types="chore,docs,feat,fix,refactor,wip,perf,revert"
+parser_angular_allowed_types="chore,docs,feat,style,fix,refactor,wip,perf,revert"
 parser_angular_minor_types="feat"
 parser_angular_patch_types="fix,perf"
 
