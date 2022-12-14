@@ -9,7 +9,7 @@ from elasticai.creator.vhdl.code.code import Code
 Tests:
     - Names of generated CodeModules are converted torch module_hierarchy names.
     - For every leaf module in our torch module we generate a CodeModule
-    - For every node in our data_path_connection from tracing torch module we instantiate a CodeModule of the correct name in our network.vhd
+    - For every node in our graph from tracing torch module we instantiate a CodeModule of the correct name in our network.vhd
 """
 
 
