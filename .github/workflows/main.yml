@@ -73,7 +73,7 @@ jobs:
         run: |
           python3 -m pip install poetry==1.1.15 --upgrade pip
           poetry config virtualenvs.create false
-          poetry install --no-interaction --extras onnx --extras examples
+          poetry install --no-interaction
       - name: Semantic Release
         run: |
           python3 -m pip install python-semantic-release
