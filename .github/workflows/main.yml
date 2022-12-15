@@ -1,8 +1,7 @@
 name: Test and Publish
 on:
   push:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   checks:
@@ -78,6 +77,7 @@ jobs:
       - name: Semantic Release
         uses: relekang/python-semantic-release@master
         with:
+          additional_options: --noop
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository_username: __token__
           repository_password: ${{ secrets.PYPI_TOKEN }}
