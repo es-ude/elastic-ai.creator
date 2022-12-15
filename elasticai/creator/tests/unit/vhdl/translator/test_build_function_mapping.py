@@ -2,17 +2,16 @@ import unittest
 from dataclasses import dataclass
 from typing import Any
 
-import elasticai.creator.qat.layers as qtorch
-from elasticai.creator.vhdl.language import Code
+import elasticai.creator.nn.layers as qtorch
+from elasticai.creator.vhdl.code import Code, CodeFile, CodeModule
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
-from elasticai.creator.vhdl.vhdl_component import VHDLComponent, VHDLModule
 
 
-class MockVHDLComponent(VHDLComponent):
+class MockCodeFile(CodeFile):
     @property
-    def file_name(self) -> str:
+    def name(self) -> str:
         return "test_component"
 
     def code(self) -> Code:
@@ -20,23 +19,23 @@ class MockVHDLComponent(VHDLComponent):
 
 
 @dataclass
-class MockModule(VHDLModule):
-    vhdl_components: list[VHDLComponent]
+class MockModule(CodeModule):
+    vhdl_components: list[CodeFile]
 
-    def components(self, args: Any) -> list[VHDLComponent]:
+    def files(self, args: Any) -> list[CodeFile]:
         return self.vhdl_components
 
 
-def mock_build_function1(layer: Any) -> VHDLModule:
-    return MockModule([MockVHDLComponent()])
+def mock_build_function1(layer: Any) -> CodeModule:
+    return MockModule([MockCodeFile()])
 
 
-def mock_build_function2(layer: Any) -> VHDLModule:
-    return MockModule([MockVHDLComponent()])
+def mock_build_function2(layer: Any) -> CodeModule:
+    return MockModule([MockCodeFile()])
 
 
-def mock_build_function3(layer: Any) -> VHDLModule:
-    return MockModule([MockVHDLComponent()])
+def mock_build_function3(layer: Any) -> CodeModule:
+    return MockModule([MockCodeFile()])
 
 
 class BuildFunctionMappingTest(unittest.TestCase):

@@ -1,5 +1,5 @@
 """
-We perform a simple part of speech tagging using a quantized lstm network.
+We perform a simple part of speech tagging using a quantized lstm network_component.py.
 We proceed analogue to https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html#example-an-lstm-for-part-of-speech-tagging
 """
 import torch
@@ -82,7 +82,7 @@ for epoch in range(300):  # again, normally you would NOT do 300 epochs, it is t
         # We need to clear them out before each instance
         model.zero_grad()
 
-        # Step 2. Get our inputs ready for the network, that is, turn them into
+        # Step 2. Get our inputs ready for the network_component.py, that is, turn them into
         # Tensors of word indices.
         sentence_in = prepare_sequence(sentence, word_to_ix)
         targets = prepare_sequence(tags, tag_to_ix)

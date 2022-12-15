@@ -1,7 +1,6 @@
 import math
-from collections.abc import Callable
 from itertools import chain
-from typing import Optional
+from typing import Iterator, Optional
 
 import torch.nn
 
@@ -12,6 +11,7 @@ from elasticai.creator.vhdl.language import (
     ContextClause,
     DataType,
     Entity,
+    InterfaceList,
     InterfaceVariable,
     LibraryClause,
     PortMap,
@@ -28,7 +28,7 @@ from elasticai.creator.vhdl.number_representations import (
 
 
 def _vhdl_add_assignment(
-    code: list, line_id: str, value: str, comment: Optional[str] = None
+    code: list[str], line_id: str, value: str, comment: Optional[str] = None
 ) -> None:
     new_code_fragment = f"{line_id} <= {bin_representation(value)};"
     if comment is not None:
@@ -46,7 +46,7 @@ def _get_lower_case_class_name_or_component_name(
 
 def precomputed_scalar_function_process(
     x: list[FixedPoint], y: list[FixedPoint]
-) -> Callable[[], Code]:
+) -> Code:
     """
         returns the string of a lookup table
     Args:
@@ -56,7 +56,7 @@ def precomputed_scalar_function_process(
         String of lookup table (if/elsif statements for vhdl file)
     """
     x.sort()
-    lines = []
+    lines: list[str] = []
     if len(x) == 0 and len(y) == 1:
         _vhdl_add_assignment(
             code=lines,
@@ -65,7 +65,8 @@ def precomputed_scalar_function_process(
         )
     elif len(x) != len(y) - 1:
         raise ValueError(
-            f"x has to be one element shorter than y, but x has {len(x)} elements and y {len(y)} elements"
+            f"x has to be one element shorter than y, but x has {len(x)} elements and y"
+            f" {len(y)} elements"
         )
     else:
         smallest_possible_output = y[0]
@@ -105,11 +106,11 @@ def precomputed_scalar_function_process(
 
     # build the string block
 
-    def generator() -> Code:
+    def generator() -> Iterator[str]:
         for line in lines:
             yield line
 
-    return generator
+    return generator()
 
 
 class DataWidthVariable(InterfaceVariable):
@@ -132,7 +133,6 @@ class PrecomputedScalarFunction:
         x: list[FixedPoint],
         y: list[FixedPoint],
         component_name: Optional[str] = None,
-        process_instance: Optional[Process] = None,
     ):
         """
         We calculate the function with an algorithm equivalent to:
@@ -151,7 +151,7 @@ class PrecomputedScalarFunction:
         self.data_width, self.frac_width = infer_total_and_frac_bits(x, y)
         self.x = x
         self.y = y
-        self.process_instance = process_instance
+        self.process_instance = None
 
     @property
     def file_name(self) -> str:
@@ -178,9 +178,7 @@ class PrecomputedScalarFunction:
         ]
         process = Process(
             identifier=self.component_name,
-            lookup_table_generator_function=precomputed_scalar_function_process(
-                x=self.x, y=self.y
-            ),
+            lookup_table=precomputed_scalar_function_process(x=self.x, y=self.y),
             input_name="x",
         )
         process.process_declaration_list = ["variable int_x: integer := 0"]
@@ -198,7 +196,7 @@ class Sigmoid(PrecomputedScalarFunction):
         self, x: list[FixedPoint], component_name: Optional[str] = None
     ) -> None:
         x_tensor = torch.as_tensor(list(map(float, x)))
-        # calculate y always for the previous element, therefore the last input is not needed here
+        # calculate y always for the previous element therefore, the last input is not needed here
         y = torch.nn.Sigmoid()(x_tensor[:-1]).tolist()
         y.insert(0, 0)
         # add last y value, therefore, x_tensor is one element shorter than y_tensor
@@ -213,7 +211,7 @@ class Tanh(PrecomputedScalarFunction):
         self, x: list[FixedPoint], component_name: Optional[str] = None
     ) -> None:
         y_list = [-1.0]
-        # calculate y always for the previous element, therefore the last input is not needed here
+        # calculate y always for the previous element, therefore, the last input is not needed here
         for x_element in x[:-1]:
             y_list.append(math.tanh(float(x_element)))
         # add last y value, therefore, x_list is one element shorter than y_list
@@ -298,11 +296,11 @@ class PrecomputedScalarTestBench:
         architecture = Architecture(
             design_unit=self.component_name + "_tb",
         )
-        architecture.architecture_declaration_list = [
+        architecture.architecture_declaration_list = InterfaceList(
             "signal clk_period : time := 1 ns",
             "signal test_input : signed(16-1 downto 0):=(others=>'0')",
             "signal test_output : signed(16-1 downto 0)",
-        ]
+        )
 
         architecture.architecture_component_list.append(component)
         architecture.architecture_process_list.append(process)
@@ -321,7 +319,6 @@ class TestCasesPrecomputedScalarFunction(TestBenchBase):
         x_variable_name: str = "test_input",
         y_variable_name: str = "test_output",
     ) -> None:
-        assert len(x_list_for_testing) == len(y_list_for_testing)
         self.data_width, _ = infer_total_and_frac_bits(
             x_list_for_testing, y_list_for_testing
         )
@@ -337,15 +334,24 @@ class TestCasesPrecomputedScalarFunction(TestBenchBase):
     def __len__(self) -> int:
         return len(self.y_list_for_testing)
 
-    def _body(self) -> Code:
+    def _body(self) -> Iterator[str]:
         for x_value, y_value in zip(self.x_list_for_testing, self.y_list_for_testing):
             yield f"{self.x_variable_name} <= to_signed({x_value},{self.data_width})"
             yield f"wait for 1*clk_period"
-            yield f"report \"The value of '{self.y_variable_name}' is \" & integer'image(to_integer(unsigned({self.y_variable_name})))"
+            yield (
+                f"report \"The value of '{self.y_variable_name}' is \" & "
+                f"integer'image(to_integer(unsigned({self.y_variable_name})))"
+            )
             if isinstance(y_value, str):
-                yield f'assert {self.y_variable_name}="{y_value}" report "The test case {x_value} fail" severity failure'
+                yield (
+                    f'assert {self.y_variable_name}="{y_value}" report'
+                    f' "The test case {x_value} fail" severity failure'
+                )
             else:
-                yield f'assert {self.y_variable_name}={y_value} report "The test case {x_value} fail" severity failure'
+                yield (
+                    f"assert {self.y_variable_name}={y_value} report "
+                    f'"The test case {x_value} fail" severity failure'
+                )
 
     def code(self) -> Code:
-        yield from super().code()
+        return super().code()

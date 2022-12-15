@@ -2,7 +2,7 @@ import unittest
 from itertools import filterfalse
 
 from elasticai.creator import resource_utils
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.code import Code
 
 
 class VHDLFileTestCase(unittest.TestCase):
@@ -14,7 +14,7 @@ class VHDLFileTestCase(unittest.TestCase):
         def line_is_empty(line):
             return len(line) == 0
 
-        vhdl_code = filterfalse(line_is_empty, map(str.strip, vhdl_code.splitlines()))
+        vhdl_code = filterfalse(line_is_empty, map(str.strip, vhdl_code))
 
         def starts_with_comment(line):
             return line.startswith("--")

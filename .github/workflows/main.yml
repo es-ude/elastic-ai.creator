@@ -2,7 +2,7 @@ name: Test and Publish
 on:
   push:
     branches:
-      - main
+      - 'main'
 
 jobs:
   checks:
@@ -55,7 +55,7 @@ jobs:
   semantic-release:
     name: Bump Version and Release
     runs-on: ubuntu-latest
-    concurrency: push
+    concurrency: release
     needs: [checks, beautify]
     outputs:
       new_version: ${{ steps.version.outputs.VERSION }}
@@ -65,6 +65,8 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.beautify.outputs.new_sha }}
+      - name: Fetch main
+        run: git fetch --prune --force origin refs/heads/main:refs/remotes/origin/main
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -73,14 +75,9 @@ jobs:
         run: |
           python3 -m pip install poetry==1.1.15 --upgrade pip
           poetry config virtualenvs.create false
-          poetry install --no-interaction --extras onnx --extras examples
       - name: Semantic Release
-        run: |
-          python3 -m pip install python-semantic-release
-          git config --global user.name "github-actions"
-          git config --global user.email "action@github.com"
-          semantic-release publish -D commit_author="github-actions <action@github.com>"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY_USERNAME: __token__
-          REPOSITORY_PASSWORD: ${{ secrets.PYPI_PROJECT_API_TOKEN }}
+        uses: relekang/python-semantic-release@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository_username: __token__
+          repository_password: ${{ secrets.PYPI_TOKEN }}

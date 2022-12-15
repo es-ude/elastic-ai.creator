@@ -2,11 +2,8 @@ import doctest
 from collections.abc import Iterator
 from unittest import TestCase
 
-import elasticai.creator.vhdl.templates.utils
-from elasticai.creator.vhdl.templates.utils import (
-    expand_multiline_template,
-    expand_template,
-)
+from elasticai.creator.vhdl import vhdl_files
+from elasticai.creator.vhdl.vhdl_files import expand_multiline_template, expand_template
 
 
 def newline_join(lines: Iterator[str]) -> str:
@@ -17,6 +14,12 @@ class ExpandTemplatesTestCase(TestCase):
     @staticmethod
     def get_result_string(template, **kwargs) -> str:
         return newline_join(expand_multiline_template(template, **kwargs))
+
+    def test_handles_gracefully_list_of_lines(self):
+        template = ["my", "$value"]
+        expected = "my\nvalue"
+        actual = self.get_result_string(template, value=["value"])
+        self.assertEqual(expected, actual)
 
     def test_expand_multiline_with_one_item(self):
         # noinspection PyShadowingNames
@@ -109,11 +112,6 @@ class ExpandTemplatesTest(TestCase):
         expected = "42"
         self.assertEqual(expected, actual)
 
-    def test_raise_key_error_for_missing_key(self) -> None:
-        template = "$some_key"
-        with self.assertRaises(KeyError):
-            _ = newline_join(expand_template(template))
-
     def test_expand_multiple_strings_template(self) -> None:
         template = ["$val1", "$val2", "$val3"]
         actual = newline_join(
@@ -125,12 +123,12 @@ class ExpandTemplatesTest(TestCase):
     def test_expand_multiple_strings_template_with_multiple_keys_per_line(self) -> None:
         template = ["$val1 $val1 $val1", "$val1 $val2", ""]
         actual = newline_join(
-            expand_template(template, val1="hello", val2="world", val3=42)
+            expand_template(template, val1="hello", val2="world", val3=str(42))
         )
         expected = "hello hello hello\nhello world\n"
         self.assertEqual(expected, actual)
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(elasticai.creator.vhdl.templates.utils))
+    tests.addTests(doctest.DocTestSuite(vhdl_files))
     return tests
