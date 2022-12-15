@@ -20,7 +20,7 @@ runs:
       run: python3 -m pip install poetry==1.1.15 --upgrade pip
       shell: bash
     - name: Configure Poetry
-      run: poetry config ~/poetry-cache/
+      run: poetry config cache-dir ~/poetry-cache/
       shell: bash
     - run: python --version
       shell: bash
