@@ -4,7 +4,14 @@ description: "Install poetry, use poetry to install dependencies"
 runs:
   using: "composite"
   steps:
-
+    - name: create cachedir
+      run: mkdir ~/poetry-cache/
+      shell: bash
+    - name: Setup Caching
+      uses: actions/cache@v3
+      with:
+        path: ~/pypoetry-cache/
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
@@ -15,14 +22,6 @@ runs:
     - name: Configure Poetry
       run: poetry config ~/poetry-cache/
       shell: bash
-    - name: create cachedir
-      run: mkdir ~/poetry-cache/
-      shell: bash
-    - name: Setup Caching
-      uses: actions/cache@v3
-      with:
-        path: ~/pypoetry-cache/
-        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - run: python --version
       shell: bash
     - name: Install dependencies
