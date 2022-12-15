@@ -8,13 +8,13 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/setup_test_environment
+      - uses: ./.github/actions/setup_test_environment@0d0321e44455d40c3b04929df13cccfe7056c35c
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/integration
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/setup_test_environment
+      - uses: ./.github/actions/setup_test_environment@0d0321e44455d40c3b04929df13cccfe7056c35c
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/unit
   lint-commit-messages:
     name: Lint Commit Messages
