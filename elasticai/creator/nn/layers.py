@@ -1,4 +1,3 @@
-import types
 from typing import Callable, Optional
 
 import torch
