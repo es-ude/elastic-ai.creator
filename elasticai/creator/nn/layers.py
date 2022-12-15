@@ -109,9 +109,7 @@ class QuantizeTwoBit(torch.nn.Module):
         return binarize(torch.cat((first_half, second_half), dim=1))
 
 
-def _init_quantizable_convolution(
-    module: torch.nn.Module, quantizer: Module, bias: bool
-):
+def _hook_quantizer(module: torch.nn.Module, quantizer: Module, bias: bool):
     if isinstance(quantizer, Module):
         register_parametrization(module, "weight", quantizer)
         if bias:
@@ -146,7 +144,7 @@ class QConv1d(torch.nn.Conv1d):
             padding_mode=padding_mode,
         )
 
-        _init_quantizable_convolution(self, quantizer=quantizer, bias=bias)
+        _hook_quantizer(self, quantizer=quantizer, bias=bias)
 
 
 class QConv2d(torch.nn.Conv2d):
@@ -174,7 +172,7 @@ class QConv2d(torch.nn.Conv2d):
             bias=bias,
             padding_mode=padding_mode,
         )
-        _init_quantizable_convolution(self, quantizer=quantizer, bias=bias)
+        _hook_quantizer(self, quantizer=quantizer, bias=bias)
 
 
 class ChannelShuffle(torch.nn.Module):
@@ -201,7 +199,7 @@ class QLinear(torch.nn.Linear):
         bias: bool = True,
     ):
         super().__init__(in_features=in_features, out_features=out_features, bias=bias)
-        _init_quantizable_convolution(self, quantizer=quantizer, bias=bias)
+        _hook_quantizer(self, quantizer=quantizer, bias=bias)
 
 
 class _QLSTMCellBase(torch.nn.LSTMCell):
