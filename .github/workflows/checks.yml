@@ -8,33 +8,13 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.10.x
-      - uses: Gr1N/setup-poetry@v7
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-      - run: python --version
-      - run: poetry install --no-interaction
+      - uses: ./.github/actions/setup_test_environment.yml
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/integration
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.10.x
-      - uses: Gr1N/setup-poetry@v7
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-      - run: python --version
-      - run: poetry install --no-interaction
+      - uses: ./.github/workflow/setup_test_environment.yml
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/unit
   lint-commit-messages:
     name: Lint Commit Messages
