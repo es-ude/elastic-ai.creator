@@ -8,12 +8,16 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/integration
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
       - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/unit
   lint-commit-messages:
