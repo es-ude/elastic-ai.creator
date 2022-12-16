@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v0.28.0 (2022-12-16)
+### Feature
+* **qat:** Remove constraints ([`6b7b483`](https://github.com/es-ude/elastic-ai.creator/commit/6b7b4835dc9f9f6b6fc83bc619727aa948c19161))
+* **examples:** Update qlstm sine wave example to the correctly implemented QLSTM layer ([`dc62cd2`](https://github.com/es-ude/elastic-ai.creator/commit/dc62cd2aa05067b164009301ab7c5e110797c503))
+* **qat:** Add constraint type ([`dc4c4e5`](https://github.com/es-ude/elastic-ai.creator/commit/dc4c4e57a9615a9be6941ecc750d3838458ff919))
+
+### Fix
+* **qat:** Fix error when passing flat input data to _QLSTMBase and batch_first set to True ([`29918d1`](https://github.com/es-ude/elastic-ai.creator/commit/29918d11c508e3e91fe00a0e07988be0ed198b35))
+* **qat:** Fix the problem of wrong shapes for the QLSTM layer ([`b75f478`](https://github.com/es-ude/elastic-ai.creator/commit/b75f47804016a3dfdad3f8d2dd575f4252cac5ff))
+* **qat:** Fix circular dependency ([`1d5615b`](https://github.com/es-ude/elastic-ai.creator/commit/1d5615bf81757bf16904eb75c33fead69a68dd43))
+
 ## v0.27.0 (2022-12-15)
 ### Feature
 * **vhdl:** Distinguish x/y width ([`2f52100`](https://github.com/es-ude/elastic-ai.creator/commit/2f52100d32502520ce66a240bae90dd48e070ebd))
