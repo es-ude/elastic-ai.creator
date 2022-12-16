@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.29.0 (2022-12-16)
+### Feature
+* Set pypi project api token ([`37ba8c9`](https://github.com/es-ude/elastic-ai.creator/commit/37ba8c9794acc6b4bdf64087c98c61172446fcb6))
+
 ## v0.28.0 (2022-12-16)
 ### Feature
 * **qat:** Remove constraints ([`6b7b483`](https://github.com/es-ude/elastic-ai.creator/commit/6b7b4835dc9f9f6b6fc83bc619727aa948c19161))
