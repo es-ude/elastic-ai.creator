@@ -2,6 +2,7 @@ from unittest import TestCase
 
 import torch.nn
 
+from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.pytorch.build_functions import build_lstm
 
 
@@ -14,15 +15,21 @@ def arange_parameter(
 
 
 class LSTMBuildFunctionTest(TestCase):
-    def setUp(self) -> None:
-        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=1, num_layers=1)
-        self.lstm.weight_ih_l0 = arange_parameter(start=0, end=4, shape=(4, 1))
-        self.lstm.weight_hh_l0 = arange_parameter(start=4, end=8, shape=(4, 1))
-        self.lstm.bias_ih_l0 = arange_parameter(start=8, end=12, shape=(4,))
-        self.lstm.bias_hh_l0 = arange_parameter(start=12, end=16, shape=(4,))
-
     def test_build_lstm_layer_weights_correct_set(self) -> None:
-        lstm_module = build_lstm(self.lstm, layer_id="lstm1")
+        lstm = torch.nn.LSTM(input_size=1, hidden_size=1, num_layers=1)
+        lstm.weight_ih_l0 = arange_parameter(start=0, end=4, shape=(4, 1))
+        lstm.weight_hh_l0 = arange_parameter(start=4, end=8, shape=(4, 1))
+        lstm.bias_ih_l0 = arange_parameter(start=8, end=12, shape=(4,))
+        lstm.bias_hh_l0 = arange_parameter(start=12, end=16, shape=(4,))
+
+        lstm_module = build_lstm(
+            lstm,
+            layer_id="lstm1",
+            fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4),
+            sigmoid_resolution=(-2.5, 2.5, 100),
+            tanh_resolution=(-2.5, 2.5, 100),
+            work_library_name="work",
+        )
 
         self.assertEqual(lstm_module.weights_ih, [[[0.0], [1.0], [2.0], [3.0]]])
         self.assertEqual(lstm_module.weights_hh, [[[4.0], [5.0], [6.0], [7.0]]])

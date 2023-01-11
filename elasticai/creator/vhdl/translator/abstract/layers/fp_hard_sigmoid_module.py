@@ -1,34 +1,27 @@
+from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Callable, Collection, Iterable
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModule
+from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
 @dataclass
-class FPHardSigmoidTranslationArgs:
-    fixed_point_factory: Callable[[float], FixedPoint]
-
-
-@dataclass
-class FPHardSigmoidModule(CodeModule):
-    @property
-    def submodules(self) -> Collection["CodeModule"]:
-        raise NotImplementedError()
-
+class FPHardSigmoidModule(CodeModuleBase):
     layer_id: str
+    fixed_point_factory: FixedPointFactory
 
     @property
     def name(self) -> str:
-        self.layer_id
+        return self.layer_id
 
-    def files(self, args: FPHardSigmoidTranslationArgs) -> Iterable[CodeFile]:
+    @property
+    def files(self) -> Collection[CodeFile]:
         yield FPHardSigmoidFile(
             layer_id=self.layer_id,
-            zero_threshold=args.fixed_point_factory(-3),
-            one_threshold=args.fixed_point_factory(3),
-            slope=args.fixed_point_factory(0.125),
-            y_intercept=args.fixed_point_factory(0.5),
-            fixed_point_factory=args.fixed_point_factory,
+            zero_threshold=self.fixed_point_factory(-3),
+            one_threshold=self.fixed_point_factory(3),
+            slope=self.fixed_point_factory(0.125),
+            y_intercept=self.fixed_point_factory(0.5),
+            fixed_point_factory=self.fixed_point_factory,
         )

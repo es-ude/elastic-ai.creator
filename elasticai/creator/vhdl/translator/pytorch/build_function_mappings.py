@@ -11,8 +11,8 @@ from elasticai.creator.vhdl.translator.pytorch.build_functions import (
 DEFAULT_BUILD_FUNCTION_MAPPING = BuildFunctionMapping(
     mapping={
         "torch.nn.modules.rnn.LSTM": build_lstm,
-        "elasticai.creator.vhdl.modules.linear.FixedPointLinear": build_fp_linear_1d,
-        "elasticai.creator.vhdl.modules.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
-        "elasticai.creator.vhdl.modules.relu.FixedPointReLU": build_fp_relu,
+        "elasticai.creator.nn.linear.FixedPointLinear": build_fp_linear_1d,
+        "elasticai.creator.nn.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
+        "elasticai.creator.nn.relu.FixedPointReLU": build_fp_relu,
     }
 )
