@@ -1,6 +1,7 @@
 import unittest
 
-from elasticai.creator.vhdl.signal import BaseInSignal, Identifiable
+from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.signals.base_signal import BaseInSignal, Identifiable
 
 
 class MyOutSignal(Identifiable):
@@ -9,22 +10,22 @@ class MyOutSignal(Identifiable):
 
 
 class AlwaysMatchingSignal(BaseInSignal):
-    def __init__(self):
-        super().__init__("always_matching_signal")
+    def id(self) -> str:
+        return "alwaysmatch"
 
     def definition(self) -> str:
-        return "empty def"
+        return ""
 
     def matches(self, other: Identifiable) -> bool:
         return True
 
 
 class NeverMatchingSignal(BaseInSignal):
-    def definition(self) -> str:
-        return "empty_definition"
+    def id(self) -> str:
+        return "nevermatch"
 
-    def __init__(self):
-        super().__init__("in_signal")
+    def definition(self) -> str:
+        return ""
 
     def matches(self, other: Identifiable) -> bool:
         return False
@@ -45,7 +46,7 @@ class SignalTestCase(unittest.TestCase):
         in_signal = AlwaysMatchingSignal()
         out_signal = MyOutSignal()
         in_signal.connect(out_signal)
-        self.assertEqual([f"{in_signal.id()} <= {out_signal.id()}"], in_signal.code())
+        self.assertEqual([f"{in_signal.id()} <= {out_signal.id()};"], in_signal.code())
 
 
 if __name__ == "__main__":
