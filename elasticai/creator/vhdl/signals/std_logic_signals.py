@@ -10,7 +10,6 @@ from elasticai.creator.vhdl.signals.basename_matching_signal import (
     BaseNameMixin,
 )
 from elasticai.creator.vhdl.signals.std_logic_signal_definitions import (
-    Vector,
     create_std_logic_definition,
     create_std_logic_vector_definition,
 )
@@ -65,7 +64,7 @@ class LogicOutSignal(
         )
 
 
-class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin, Vector):
+class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin):
     def __init__(
         self,
         basename: str,
@@ -73,7 +72,7 @@ class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin, Vector):
         prefix: Optional[str] = None,
         default_value: Optional[str] = None,
     ):
-        super().__init__(basename, prefix)
+        super().__init__(basename=basename, prefix=prefix)
         self._default_value = default_value
         self._width = width
 
@@ -87,6 +86,7 @@ class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin, Vector):
 class LogicInVectorSignal(
     _LogicVectorDefinitionWithDefaultMixin,
     BaseNameMatchingMixin,
+    BaseInSignal,
     Reversible["LogicOutVectorSignal"],
 ):
     def _width_matches(self, other: Any) -> bool:

@@ -4,6 +4,7 @@ from elasticai.creator.vhdl.signals import (
     LogicInSignal,
     LogicInVectorSignal,
     LogicOutSignal,
+    LogicOutVectorSignal,
 )
 
 
@@ -53,6 +54,24 @@ class LogicSignalTestCase(unittest.TestCase):
         out_signal = LogicOutSignal(basename="y", prefix="p")
         in_signal.connect(out_signal)
         self.assertEqual([], list(in_signal.code()))
+
+    def test_signals_of_different_name_dont_connect(self):
+        in_signal = LogicInSignal(basename="x")
+        out_signal = LogicOutSignal(basename="y")
+        in_signal.connect(out_signal)
+        self.assertTrue(in_signal.is_missing_inputs())
+
+    def test_connecting_matching_vector_signals_returns_code(self):
+        in_signal = LogicInVectorSignal(basename="x", width=2)
+        out_signal = LogicOutVectorSignal(basename="x", prefix="p", width=2)
+        in_signal.connect(out_signal)
+        self.assertEqual(["x <= p_x;"], list(in_signal.code()))
+
+    def test_vectors_of_different_width_dont_connect(self):
+        in_signal = LogicInVectorSignal(basename="x", width=3)
+        out_signal = LogicOutVectorSignal(basename="x", width=2)
+        in_signal.connect(out_signal)
+        self.assertTrue(in_signal.is_missing_inputs())
 
 
 if __name__ == "__main__":
