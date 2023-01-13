@@ -35,7 +35,7 @@ python3 -m pip install "elasticai.creator"
 The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
 It also includes the supported target representations, like the subfolder [vhdl](elasticai/creator/vhdl) is for the translation to vhdl.
-Additionally, we have folders for [unit tests](elasticai/creator/tests) and [integration tests](elasticai/creator/integrationTests).
+Additionally, we have folders for [unit tests](elasticai/creator/tests/unit) and [integration tests](elasticai/creator/tests/integration).
 
 
 ## General Limitations
@@ -58,19 +58,26 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
-### Commit Message Scopes
+### Commit Message Types
+The following commit message types are allowed:
+  - feat
+  - fix
+  - docs
+  - style
+  - refactor
+  - revert
+  - chore
+  - wip
+  - perf
 
-- **qat**: quantization-aware-training
-  - Examples: `QConv1D`, `QLSTM`, autograd functions, etc.
-- **readme**
-- **precomputation**: entities that deal with the precomputation of ML components
-  - Examples: the `precomputable` decorator or the `IOTable` class
-- **vhdl**: vhdl code generation
-  - Examples: `vhdl.TruthTable`, `vhdl.LSTMCell`
-- **gh-workflow**
-- **pyproject**: changes to the `pyproject.toml` file will typically either update run or dev dependencies
-- **typing**: changing type annotations and changes to code to allow consistent type annotations
-- **pre-commit**
+### Commit Message Scopes
+The following commit message scopes are allowed:
+  - template
+  - translation
+  - nn
+  - transformation
+  - unit
+  - integration
 
 ### Adding new translation targets
 New translation targets should be located in their own folder, e.g. vhdl for translating from any language to vhdl.
@@ -90,10 +97,6 @@ The command is as follows:
 ```
 ghdl -s path/to/vhdl/file
 ```
-So, for example for checking the sigmoid source vhdl files in our project we can run:
-```
-ghdl -s elasticai/creator/vhdl/source/sigmoid.vhd
-```
 For checking all vhdl files together in our project we can just run:
 ```
 ghdl -s elasticai/creator/**/*.vhd
@@ -110,10 +113,6 @@ You can run one explicit test with the following statement:
 If you want to run all tests, give the path to the tests:
 
 ```python -m unittest discover -p "test_*.py" elasticai/creator/path/to/testfolder```
-
-You can also run all tests together:
-
-```python -m unittest discover -p "test_*.py" elasticai/creator/translator/path/to/language/```
 
 If you want to add more tests please refer to the Test Guidelines in the following.
 

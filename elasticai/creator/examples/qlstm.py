@@ -1,113 +1,105 @@
 import matplotlib.pyplot as plt
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-from elasticai.creator.qat.layers import QLSTM, QLinear
+from elasticai.creator.qat.layers import QLSTM, Identity, QLinear
 
 
-class SinusDataset(Dataset):
-    def __init__(self, sinus_range=(1, 500), num_points=5000, window_size=100):
-        self.sinus_range = sinus_range
-        self.num_points = num_points
+def _x_values(value_range: tuple[float, float], sampling_rate: int) -> torch.Tensor:
+    start, end = value_range
+    return torch.linspace(
+        start=start, end=end, steps=int((end - start) * sampling_rate)
+    )
+
+
+class SineDataset(Dataset):
+    def __init__(
+        self, sine_range: tuple[float, float], sampling_rate: int, window_size: int
+    ) -> None:
+        self.sine_range = sine_range
+        self.sampling_rate = sampling_rate
         self.window_size = window_size
 
-        x = torch.linspace(*self.sinus_range, self.num_points)
-        self._full_series = (
-            torch.sin(x) * (self.sinus_range[1] - x) / self.sinus_range[1]
+        x = _x_values(self.sine_range, self.sampling_rate)
+        self._sinus = torch.sin(x)
+        self._samples, self._labels = self._rolling_samples_with_labels(
+            self._sinus, self.window_size
         )
-        self._data = self._rolling_samples_with_labels(
-            self._full_series, self.window_size
-        )
-        self._data = self._reshape_samples(self._data)
 
-    def __len__(self):
-        return len(self._data)
+    def __len__(self) -> int:
+        return len(self._labels)
 
-    def __getitem__(self, idx):
-        return self._data[idx]
+    def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
+        return self._samples[idx], self._labels[idx]
 
     @staticmethod
-    def _rolling_samples_with_labels(data, window_size):
-        result = []
+    def _rolling_samples_with_labels(
+        data: torch.Tensor, window_size: int
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        samples, labels = [], []
         for i in range(window_size, len(data)):
-            result.append((data[i - window_size : i], data[i]))
-        return result
-
-    @staticmethod
-    def _reshape_samples(data):
-        return [(sample.view(-1, 1), label) for sample, label in data]
+            samples.append(data[i - window_size : i].view(-1, 1).tolist())
+            labels.append(data[i].item())
+        return (
+            torch.tensor(samples, dtype=data.dtype),
+            torch.tensor(labels, dtype=data.dtype),
+        )
 
     @property
-    def full_series(self):
-        return self._full_series
+    def sinus_data(self):
+        return self._sinus
 
 
 class QLSTMModel(torch.nn.Module):
-    def __init__(self, window_size):
+    def __init__(self) -> None:
         super().__init__()
-        # NOTE: With quantization I get really high loss values. But I don't spend lot of time in quantizing this model
-        self.lstm1 = QLSTM(
+        self.lstm = QLSTM(
             input_size=1,
             hidden_size=64,
-            bias=True,  # bias=False
-            state_quantizer=None,  # state_quantizer=Binarize()
-            weight_quantizer=None,  # weight_quantizer=Binarize()
-            input_gate_activation=None,  # input_gate_activation=Binarize()
-            forget_gate_activation=None,  # forget_gate_activation=Binarize()
-            cell_gate_activation=None,  # cell_gate_activation=Ternarize()
-            output_gate_activation=None,  # output_gate_activation=Binarize()
-            new_cell_state_activation=None,  # new_cell_state_activation=Ternarize()
+            bias=True,
             batch_first=True,
+            state_quantizer=Identity(),
+            weight_quantizer=Identity(),
         )
-        #        self.bin = Binarize()
         self.linear = QLinear(
-            in_features=window_size * 64,
+            in_features=64,
             out_features=1,
-            bias=True,  # bias=False
-            quantizer=None,  # quantizer=Binarize
+            bias=True,
+            quantizer=Identity(),
         )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x, _ = self.lstm1(inputs)
-        #        x = self.bin(x)
-        x = self.linear(x.view(len(x), -1))
-        return x
+        _, (final_hidden_states, _) = self.lstm(inputs)
+        x = self.linear(final_hidden_states.squeeze(0))
+        return x.view(-1)
 
 
-if __name__ == "__main__":
-    ds = SinusDataset(sinus_range=(1, 500), num_points=5000, window_size=100)
+def split_dataset(dataset: Dataset, train_fraction: float) -> tuple[Dataset, Dataset]:
+    num_train_samples = int(len(dataset) * train_fraction)
+    ds_train = TensorDataset(*dataset[:num_train_samples])
+    ds_test = TensorDataset(*dataset[num_train_samples:])
+    return ds_train, ds_test
 
-    # plt.plot(ds.full_series)
-    # plt.show()
 
-    num_train_samples = int(len(ds) * 0.8)
-    ds_train = ds[:num_train_samples]
-    ds_test = ds[num_train_samples:]
+def train(
+    model: torch.nn.Module,
+    train_data: Dataset,
+    test_data: Dataset,
+    batch_size: int,
+    learning_rate: float,
+    epochs: int,
+) -> None:
+    dl_train = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    dl_test = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 
-    batch_size = 32
-    dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-    dl_test = DataLoader(ds_test, batch_size=batch_size, shuffle=True)
-
-    print("Number of train batches:", len(dl_train))
-    print("Number of test batches:", len(dl_test))
-
-    lstm_model = QLSTMModel(ds.window_size)
-
-    n_epochs = 10
     loss_fn = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(lstm_model.parameters(), lr=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    for epoch in range(n_epochs):
+    for epoch in range(epochs):
         losses = []
-
-        for X, y in dl_train:
-            y_pred = lstm_model(X)
-            loss = loss_fn(
-                y_pred.view(
-                    -1,
-                ),
-                y,
-            )
+        for samples, labels in dl_train:
+            predictions = model(samples)
+            loss = loss_fn(predictions, labels)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -115,60 +107,68 @@ if __name__ == "__main__":
         train_loss = sum(losses) / len(losses)
 
         with torch.no_grad():
-            val_loss = sum(
-                loss_fn(
-                    lstm_model(X).view(
-                        -1,
-                    ),
-                    y,
-                )
-                for X, y in dl_test
-            ) / len(dl_test)
+            val_losses = map(lambda x: loss_fn(model(x[0]), x[1]), dl_test)
+            val_loss = sum(val_losses) / len(dl_test)
 
-        print(
-            "Epoch: {}/{}; Loss: {}; Val_Loss: {}".format(
-                epoch + 1, n_epochs, train_loss, val_loss
-            )
-        )
+        print(f"[epoch: {epoch + 1}/{epochs}] loss: {train_loss}; val_loss: {val_loss}")
 
-    # Plot final result for one window
-    idx = 1
-    ws = ds.window_size
-    sample = ds_test[idx][0].tolist()
-    predicted = ds_test[idx][0].tolist()
-    target = [target_value.item() for _, target_value in ds_test[idx : idx + ws]]
+    model.eval()
 
-    for i in range(ws):
-        y_pred = lstm_model(torch.tensor([predicted]))
-        predicted = predicted[1:] + [
-            y_pred.view(
-                -1,
-            ).tolist()
-        ]
-    x_axis = torch.arange(0, ws * 2)
-    plt.plot(
-        x_axis[:ws],
-        torch.tensor(sample).view(
-            -1,
-        ),
-        "-b",
-        label="previous window",
+
+def plot_predicted_sine(
+    model: torch.nn.Module,
+    prediction_range: tuple[int, int],
+    sampling_rate: int,
+    window_size: int,
+) -> None:
+    pred_start, pred_end = prediction_range
+    x_prelude = _x_values(
+        (pred_start - window_size / sampling_rate, pred_start), sampling_rate
     )
-    plt.plot(
-        x_axis[ws:],
-        torch.tensor(target).view(
-            -1,
-        ),
-        "-g",
-        label="target prediction",
-    )
-    plt.plot(
-        x_axis[ws:],
-        torch.tensor(predicted).view(
-            -1,
-        ),
-        "-r",
-        label="actual prediction",
-    )
+    x_to_predict = _x_values(prediction_range, sampling_rate)
+    y_prelude = torch.sin(x_prelude)
+    y_target = torch.sin(x_to_predict)
+
+    predictions: list[float] = y_prelude.tolist()
+    for i in range(int((pred_end - pred_start) * sampling_rate)):
+        inputs = torch.tensor(predictions[i:]).view(-1, 1)
+        prediction = model(inputs)
+        predictions.append(prediction[0].item())
+    y_pred = torch.tensor(predictions[window_size:])
+
+    plt.plot(x_prelude, y_prelude, "b-", label="prelude")
+    plt.plot(x_to_predict, y_target, "g-", label="target")
+    plt.plot(x_to_predict, y_pred, "r--", label="prediction")
     plt.legend()
     plt.show()
+
+
+def main() -> None:
+    ds = SineDataset(sine_range=(0, 200), sampling_rate=16, window_size=32)
+    print("Number of samples:", len(ds))
+
+    plt.plot(ds.sinus_data)
+    plt.show()
+
+    model = QLSTMModel()
+    ds_train, ds_test = split_dataset(ds, train_fraction=0.8)
+
+    train(
+        model=model,
+        train_data=ds_train,
+        test_data=ds_test,
+        batch_size=32,
+        learning_rate=1e-3,
+        epochs=10,
+    )
+
+    plot_predicted_sine(
+        model=model,
+        prediction_range=(400, 410),
+        sampling_rate=16,
+        window_size=32,
+    )
+
+
+if __name__ == "__main__":
+    main()

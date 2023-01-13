@@ -2,6 +2,65 @@
 
 <!--next-version-placeholder-->
 
+## v0.29.0 (2022-12-16)
+### Feature
+* Set pypi project api token ([`37ba8c9`](https://github.com/es-ude/elastic-ai.creator/commit/37ba8c9794acc6b4bdf64087c98c61172446fcb6))
+
+## v0.28.0 (2022-12-16)
+### Feature
+* **qat:** Remove constraints ([`6b7b483`](https://github.com/es-ude/elastic-ai.creator/commit/6b7b4835dc9f9f6b6fc83bc619727aa948c19161))
+* **examples:** Update qlstm sine wave example to the correctly implemented QLSTM layer ([`dc62cd2`](https://github.com/es-ude/elastic-ai.creator/commit/dc62cd2aa05067b164009301ab7c5e110797c503))
+* **qat:** Add constraint type ([`dc4c4e5`](https://github.com/es-ude/elastic-ai.creator/commit/dc4c4e57a9615a9be6941ecc750d3838458ff919))
+
+### Fix
+* **qat:** Fix error when passing flat input data to _QLSTMBase and batch_first set to True ([`29918d1`](https://github.com/es-ude/elastic-ai.creator/commit/29918d11c508e3e91fe00a0e07988be0ed198b35))
+* **qat:** Fix the problem of wrong shapes for the QLSTM layer ([`b75f478`](https://github.com/es-ude/elastic-ai.creator/commit/b75f47804016a3dfdad3f8d2dd575f4252cac5ff))
+* **qat:** Fix circular dependency ([`1d5615b`](https://github.com/es-ude/elastic-ai.creator/commit/1d5615bf81757bf16904eb75c33fead69a68dd43))
+
+## v0.27.0 (2022-12-15)
+### Feature
+* **vhdl:** Distinguish x/y width ([`2f52100`](https://github.com/es-ude/elastic-ai.creator/commit/2f52100d32502520ce66a240bae90dd48e070ebd))
+* **vhdl:** Introduce HWBlockCollection ([`a80bda2`](https://github.com/es-ude/elastic-ai.creator/commit/a80bda2d705992030b18649ff99f3a6ce75d7ef3))
+* **vhdl:** Introduce HWEquivalentGraph ([`844bb84`](https://github.com/es-ude/elastic-ai.creator/commit/844bb84a2d36e50f3de7ae4b713d370011d3240e))
+* **vhdl:** Add module_nodes to graph decorator ([`6d0a612`](https://github.com/es-ude/elastic-ai.creator/commit/6d0a61217b36b9db8e9df19210e5f0d3aeed4ef2))
+* **vhdl:** Implement HWBlocks interface for sigmoid,linear ([`0177373`](https://github.com/es-ude/elastic-ai.creator/commit/0177373eeddfa9c32100777bbcd7a94765dc1122))
+* **vhdl:** Extend code file with parameters ([`4833f8b`](https://github.com/es-ude/elastic-ai.creator/commit/4833f8b2d5553cf02d322b8485587612cd67a9e8))
+* **vhdl:** Introduce HWBlocks ([`ab03eaf`](https://github.com/es-ude/elastic-ai.creator/commit/ab03eaf28c74483fcd9dbd78d247d39e248bdea1))
+* **vhdl:** Generate layer instantiations ([`7a75fc3`](https://github.com/es-ude/elastic-ai.creator/commit/7a75fc31780a6173424ffdcf3129bc60d5a83e59))
+* **vhdl:** Generate vhdl signal definitions ([`c593d3d`](https://github.com/es-ude/elastic-ai.creator/commit/c593d3d501082595d4918be3c3425b6d9c636332))
+* **vhdl:** Generate vhdl signal definitions ([`53408f6`](https://github.com/es-ude/elastic-ai.creator/commit/53408f6cb9daa5c44931e880fda0712c2924b822))
+* **vhdl:** Tracer records reference to module for call_module nodes ([`20ed7da`](https://github.com/es-ude/elastic-ai.creator/commit/20ed7dab9677e476925a8b1250cbbc2004d43246))
+* **vhdl:** Add hw equivalent module tracer ([`3f2c2c7`](https://github.com/es-ude/elastic-ai.creator/commit/3f2c2c7acc5046131d420d513a4bb3d3981ac0c5))
+* **vhdl:** Generate portmap output_address ([`c6a26a6`](https://github.com/es-ude/elastic-ai.creator/commit/c6a26a61d98c90fa29b02e6619116e67a4a67ac5))
+* **vhdl:** Support generation of layer connections ([`1d43c42`](https://github.com/es-ude/elastic-ai.creator/commit/1d43c4212ef54c5488df7e7dc3829df31a7e8484))
+* **vhdl:** Distinguish x/y width ([`73549f9`](https://github.com/es-ude/elastic-ai.creator/commit/73549f94a0c582170e2f43baea4afcb4c9c20124))
+* **vhdl:** Introduce HWBlockCollection ([`cdcb324`](https://github.com/es-ude/elastic-ai.creator/commit/cdcb324abe3c69893a782df075b24d734f244a6c))
+* **vhdl:** Introduce HWEquivalentGraph ([`f0bdd73`](https://github.com/es-ude/elastic-ai.creator/commit/f0bdd73d6e6e6ed9c8306a7771443e4d13e874ce))
+* **vhdl:** Add module_nodes to graph decorator ([`bee0438`](https://github.com/es-ude/elastic-ai.creator/commit/bee0438fb9b35d666998f4f516a1469c729b5829))
+* **vhdl:** Implement HWBlocks interface for sigmoid,linear ([`53e05c7`](https://github.com/es-ude/elastic-ai.creator/commit/53e05c7b772f8576b4f221e610360dc52601d852))
+* **vhdl:** Extend code file with parameters ([`2bdfca3`](https://github.com/es-ude/elastic-ai.creator/commit/2bdfca352b05756bb911eafb2b702f6536561b26))
+* **vhdl:** Introduce HWBlocks ([`141148f`](https://github.com/es-ude/elastic-ai.creator/commit/141148f13c40725755a1b02b24d8899e01ae9ced))
+* **vhdl:** Generate layer instantiations ([`925b837`](https://github.com/es-ude/elastic-ai.creator/commit/925b837d33120d4bd1abdd8cae812d89d4979a9a))
+* **vhdl:** Generate vhdl signal definitions ([`c76d03d`](https://github.com/es-ude/elastic-ai.creator/commit/c76d03db443cffd831abee60a8546aa3547c5fe6))
+* **vhdl:** Generate vhdl signal definitions ([`5da3986`](https://github.com/es-ude/elastic-ai.creator/commit/5da3986472a65e7f15cbedd3cba473ad4d67dde9))
+* **vhdl:** Tracer records reference to module for call_module nodes ([`ea1f0ee`](https://github.com/es-ude/elastic-ai.creator/commit/ea1f0ee893c11065bdf17086badd248b998d29de))
+* **vhdl:** Add hw equivalent module tracer ([`fcb2e10`](https://github.com/es-ude/elastic-ai.creator/commit/fcb2e102f5409a2e1dc358ce26e4cba6110a7e24))
+* **vhdl:** Generate portmap output_address ([`33e66d9`](https://github.com/es-ude/elastic-ai.creator/commit/33e66d99b5b8c0801c93e520463ea92c6392e2b8))
+* **vhdl:** Support generation of layer connections ([`fdd3176`](https://github.com/es-ude/elastic-ai.creator/commit/fdd3176ba5d4652718e76dfd74dc92167f86b4f4))
+
+### Fix
+* **vhdl:** Remove obsolete vhdl formatter ([`83d81e3`](https://github.com/es-ude/elastic-ai.creator/commit/83d81e348152e047482ccc45a2ccaf6173f772d9))
+* **onnx:** Remove unmaintained onnx support ([`dc773d3`](https://github.com/es-ude/elastic-ai.creator/commit/dc773d39fe2c0ea5785e3fb0bf7a43f3bf83495f))
+* **vhdl:** Remove obsolete vhdl formatter ([`128ba6b`](https://github.com/es-ude/elastic-ai.creator/commit/128ba6bdbecd8763f77cc6862373446f5418201e))
+* **onnx:** Remove unmaintained onnx support ([`c200394`](https://github.com/es-ude/elastic-ai.creator/commit/c200394239ff58ee31e5273d5999d731fbe5daca))
+
+### Documentation
+* **readme:** Move tests and remove deprecated lines ([`4a074a8`](https://github.com/es-ude/elastic-ai.creator/commit/4a074a87fb31df535d415c2ab6aede7e4d7d8949))
+
+## v0.26.1 (2022-11-30)
+### Fix
+* **vhdl:** Remove layer_name parameter ([`1bb40cd`](https://github.com/es-ude/elastic-ai.creator/commit/1bb40cd0e44f7f207f60ffbb33e8c59f00b64e82))
+
 ## v0.26.0 (2022-11-23)
 ### Feature
 * **vhdl:** Clean the code ([`d737d02`](https://github.com/es-ude/elastic-ai.creator/commit/d737d02122207bcd24f4b7c960b71db095d34a26))
@@ -212,7 +271,7 @@
 * **vhdl:** Add function to convert list of float values to a list of FixedPoint objects ([`02b26d8`](https://github.com/es-ude/elastic-ai.creator/commit/02b26d868cad2a5a5bed2350a2929cf362ccdca8))
 * **vhdl:** Change Rom that it uses the FixedPoint datatype ([`876cdb8`](https://github.com/es-ude/elastic-ai.creator/commit/876cdb821ff0ac67ae2345c8a36e4a742cce0949))
 * **vhdl:** Add a function to infer total and frac bits from a sequence of FixedPoint values ([`9cc2b72`](https://github.com/es-ude/elastic-ai.creator/commit/9cc2b721b147628b2abf524129eeaac8f68520d5))
-* **vhdl:** Separate hex/bin representation from vhdl hex/bin representation ([`eb8fe60`](https://github.com/es-ude/elastic-ai.creator/commit/eb8fe60300ee7572500f9f9d11b62a9c5abff802))
+* **vhdl:** Separate hex/bin representation from elasticai.creator.vhdl hex/bin representation ([`eb8fe60`](https://github.com/es-ude/elastic-ai.creator/commit/eb8fe60300ee7572500f9f9d11b62a9c5abff802))
 
 ### Fix
 * **vhdl:** Correct usage of the lookup_table_generator_function according to the type hints ([`9812ee8`](https://github.com/es-ude/elastic-ai.creator/commit/9812ee85cd467e261af942b30493ac0e970ea5e4))

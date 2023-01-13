@@ -1,9 +1,9 @@
 from collections.abc import Mapping
 from typing import Any, Callable, Iterator
 
-from elasticai.creator.vhdl.vhdl_component import VHDLModule
+from elasticai.creator.vhdl.code import CodeModule
 
-BuildFunction = Callable[[Any, str], VHDLModule]
+BuildFunction = Callable[[Any, str], CodeModule]
 
 
 class BuildFunctionMapping(Mapping[str, BuildFunction]):

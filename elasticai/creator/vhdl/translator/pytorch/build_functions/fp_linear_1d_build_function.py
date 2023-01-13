@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.vhdl.quantized_modules.linear import FixedPointLinear
+from elasticai.creator.nn.linear import FixedPointLinear
 from elasticai.creator.vhdl.translator.abstract.layers import FPLinear1dModule
 
 

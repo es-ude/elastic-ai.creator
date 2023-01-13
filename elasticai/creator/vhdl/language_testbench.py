@@ -5,6 +5,8 @@ This module includes CodeGenerator that are only used by the vhdl testbenches
 from abc import ABC, abstractmethod
 from typing import Iterator
 
+from elasticai.creator.vhdl.language import Code
+
 
 class TestBenchBase(ABC):
     simulation_start_msg = 'report "======Simulation Start======" severity Note'
@@ -18,7 +20,10 @@ class TestBenchBase(ABC):
     def _body(self) -> Iterator[str]:
         ...
 
-    def __iter__(self) -> Iterator[str]:
-        yield self.simulation_start_msg
-        yield from self._body()
-        yield from self.simulation_end_msgs
+    def code(self) -> Code:
+        def generator():
+            yield self.simulation_start_msg
+            yield from self._body()
+            yield from self.simulation_end_msgs
+
+        return generator()

@@ -1,16 +1,13 @@
 from typing import Any, Iterable, Protocol
 
 from elasticai.creator.resource_utils import Package, read_text
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.language import Code, CodeGenerator
 
 
-class VHDLComponent(Protocol):
+class VHDLComponent(CodeGenerator, Protocol):
     @property
     def file_name(self) -> str:
         return ""
-
-    def __call__(self) -> Code:
-        ...
 
 
 class VHDLStaticComponent:
@@ -22,7 +19,7 @@ class VHDLStaticComponent:
     def file_name(self) -> str:
         return self._file_name
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         code = read_text(self._template_package, self._file_name)
         yield from code.splitlines()
 

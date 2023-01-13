@@ -5,9 +5,9 @@ from typing import Iterable, Iterator, Protocol, Sequence
 import numpy as np
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
-from elasticai.creator.vhdl.templates.utils import expand_multiline_template
+from elasticai.creator.vhdl.vhdl_files import expand_multiline_template
 
 
 # noinspection PyPropertyDefinition
@@ -22,10 +22,6 @@ class IOTable(Iterable[tuple[int, int]], Protocol):
 
 
 class _EncodedIOTable(IOTable):
-    def __iter__(self) -> Iterator[tuple[int, int]]:
-        for i in range(len(self)):
-            yield self[i]
-
     def __init__(
         self,
         input_encoder: ToLogicEncoder,
@@ -38,12 +34,16 @@ class _EncodedIOTable(IOTable):
         self._inputs = inputs
         self._outputs = outputs
 
+    def __iter__(self) -> Iterator[tuple[int, int]]:
+        for i in range(len(self)):
+            yield self[i]
+
     def __getitem__(self, item) -> tuple[str, str]:
         encoded_input = self._input_encoder(self._inputs.__getitem__(item))
         encoded_output = self._output_encoder(self._outputs.__getitem__(item))
         return encoded_input, encoded_output
 
-    def __len__(self):
+    def __len__(self) -> int:
         return min(len(self._inputs), len(self._outputs))
 
     @property
@@ -115,4 +115,4 @@ class TruthTableVHDLDesignCaseWhen(TruthTableVHDLDesign):
                 output_vector_start_bit=self._table.output_bit_width - 1,
             )
 
-        yield from map(substitution, code)
+        return map(substitution, code)

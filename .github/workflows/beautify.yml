@@ -8,7 +8,7 @@ jobs:
     name: Beautify
     runs-on: ubuntu-latest
     concurrency: push
-    needs: [ unit-tests, integration-tests ]
+    needs: [ unit-unit, integration-unit ]
     outputs:
       new_sha: ${{ steps.sha.outputs.SHA }}
 

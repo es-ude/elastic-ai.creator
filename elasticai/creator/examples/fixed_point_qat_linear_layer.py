@@ -5,22 +5,19 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from qat.autograd_functions import FixedPointDequantFunction, FixedPointQuantFunction
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
 from elasticai.creator.vhdl.evaluators.inference_evaluator import (
     QuantizedInferenceEvaluator,
 )
 from elasticai.creator.vhdl.evaluators.metric_evaluator import MetricEvaluator
-from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
-from elasticai.creator.vhdl.quantized_modules import (
+from elasticai.creator.vhdl.modules import (
     FixedPointHardSigmoid,
     FixedPointLinear,
     FixedPointReLU,
 )
-from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
-    FixedPointDequantFunction,
-    FixedPointQuantFunction,
-)
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
 
 
 def get_dataset() -> tuple[torch.Tensor, torch.Tensor]:

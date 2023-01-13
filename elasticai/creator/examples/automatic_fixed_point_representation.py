@@ -225,31 +225,8 @@ def main() -> None:
 
     model = LSTMModel()
 
-    work_library_name = "xil_defaultlib"
-    fixed_point_factory = determine_optimal_fixed_point_factory(
-        model=model,
-        saved_model_path="elasticai/creator/examples/assets/determine_fixed_point/model_v66",
-        data_path="elasticai/creator/examples/assets/determine_fixed_point/pems-4w.csv",
-        sensor_idx=4291,
-        batch_size=1,
-        datapoints_per_sample=6,
-    )
-    translation_args = dict(
-        LSTM=LSTMTranslationArgs(
-            fixed_point_factory=fixed_point_factory,
-            sigmoid_resolution=(-2.5, 2.5, 256),
-            tanh_resolution=(-1, 1, 256),
-            work_library_name=work_library_name,
-        ),
-        Linear=FPLinear1dTranslationArgs(
-            fixed_point_factory=fixed_point_factory,
-            work_library_name=work_library_name,
-        ),
-    )
-
     code_repr = translator.translate_model(
         model=model,
-        translation_args=translation_args,
         build_function_mapping=DEFAULT_BUILD_FUNCTION_MAPPING,
     )
 

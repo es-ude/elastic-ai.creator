@@ -1,11 +1,11 @@
 import os
-from dataclasses import dataclass
 from typing import Any, Iterable, Iterator
 
 import torch
 
 from elasticai.creator.resource_utils import PathType
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.code import CodeFileBase, CodeModule, CodeModuleBase
+from elasticai.creator.vhdl.code_files.network_component import NetworkVHDLFile
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -14,21 +14,8 @@ from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
 )
 
 
-@dataclass
-class CodeFile:
-    file_name: str
-    code: Code
-
-
-@dataclass
-class CodeModule:
-    module_name: str
-    files: Iterable[CodeFile]
-
-
 def translate_model(
     model: torch.nn.Module,
-    translation_args: dict[str, Any],
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
 ) -> Iterator[CodeModule]:
     """
@@ -37,8 +24,6 @@ def translate_model(
 
     Parameters:
         model (torch.nn.Module): The PyTorch-model that should be translated.
-        translation_args (dict[str, Any]):
-            Dictionary with the translation arguments for each kind of VHDLModule included in the vhdl_modules.
         build_function_mapping (BuildFunctionMapping):
             Object that maps a given PyTorch-layer to its corresponding build function. If not given the default build
             functions will be used.
@@ -62,12 +47,14 @@ def translate_model(
                 f"Layer '{layer_class_name}' is currently not supported."
             )
         module = build_fn(layer, str(layer_index))
+        files = module.files
 
-        args = translation_args.get(layer_class_name)
-        components = module.components(args)
-        files = map(lambda x: CodeFile(file_name=x.file_name, code=x()), components)
-
-        yield CodeModule(module_name=f"{layer_index}_{layer_class_name}", files=files)
+        yield CodeModuleBase(
+            name=f"{layer_index}_{layer_class_name}", files=list(files)
+        )
+    network = NetworkVHDLFile()
+    network_file = CodeFileBase(name=network.name, code=network.code())
+    yield CodeModuleBase(name="network_component", files=[network_file])
 
 
 def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
@@ -82,11 +69,11 @@ def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
     os.makedirs(path)
 
     for module in code_repr:
-        module_path = os.path.join(path, module.module_name)
+        module_path = os.path.join(path, module.name)
         os.makedirs(module_path)
 
         for code_file in module.files:
-            file_path = os.path.join(module_path, code_file.file_name)
+            file_path = os.path.join(module_path, code_file.name)
             code = "\n".join(code_file.code)
 
             with open(file_path, "w") as out_file:
