@@ -4,20 +4,15 @@ from typing import Optional
 
 import torch
 
-from elasticai.creator.vhdl.number_representations import (
-    FixedPointFactory,
-    fixed_point_params_from_factory,
-)
-from elasticai.creator.vhdl.quantized_modules import (
-    FixedPointHardSigmoid,
-    FixedPointLinear,
-)
-from elasticai.creator.vhdl.quantized_modules.autograd_functions import (
+from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.vhdl.quantized_modules.hard_tanh import FixedPointHardTanh
-from elasticai.creator.vhdl.quantized_modules.typing import OperationType, QuantType
+from elasticai.creator.nn.hard_sigmoid import FixedPointHardSigmoid
+from elasticai.creator.nn.hard_tanh import FixedPointHardTanh
+from elasticai.creator.nn.linear import FixedPointLinear
+from elasticai.creator.nn.quant_typings import OperationType, QuantType
+from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
 class _LSTMCellBase(torch.nn.Module):
@@ -101,7 +96,7 @@ class FixedPointLSTMCell(_LSTMCellBase):
         hidden_size: int,
         bias: bool = True,
     ) -> None:
-        self.fixed_point_factory = fixed_point_factory
+        self.fp_factory = fixed_point_factory
         self.quant = lambda x: FixedPointQuantFunction.apply(x, fixed_point_factory)
         self.dequant = lambda x: FixedPointDequantFunction.apply(x, fixed_point_factory)
         super().__init__(
@@ -124,15 +119,11 @@ class FixedPointLSTMCell(_LSTMCellBase):
     def quantized_forward(
         self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        total_bits, frac_bits = fixed_point_params_from_factory(
-            self.fixed_point_factory
-        )
-
         def fp_mul(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-            return ((a * b) / (1 << frac_bits)).int().float()
+            return ((a * b) / (1 << self.fp_factory.frac_bits)).int().float()
 
         def clamp_overflowing_values(a: torch.Tensor) -> torch.Tensor:
-            largest_fp_int = 2 ** (total_bits - 1) - 1
+            largest_fp_int = 2 ** (self.fp_factory.total_bits - 1) - 1
             return a.clamp(-largest_fp_int, largest_fp_int)
 
         h_prev, c_prev = self._initialize_previous_state(x, state)

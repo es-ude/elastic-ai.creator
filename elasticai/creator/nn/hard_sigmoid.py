@@ -5,11 +5,8 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.nn.typing import QuantType
-from elasticai.creator.vhdl.number_representations import (
-    FixedPointFactory,
-    fixed_point_params_from_factory,
-)
+from elasticai.creator.nn.quant_typings import QuantType
+from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
 class _HardSigmoidBase(torch.nn.Hardsigmoid):
@@ -42,16 +39,12 @@ class FixedPointHardSigmoid(_HardSigmoidBase):
             ),
             inplace=inplace,
         )
-        self.fixed_point_factory = fixed_point_factory
+        self.fp_factory = fixed_point_factory
 
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
-        total_bits, frac_bits = fixed_point_params_from_factory(
-            self.fixed_point_factory
-        )
-
         def fp(value: float) -> int:
-            largest_fp_int = 2 ** (total_bits - 1) - 1
-            int_value = int(value * (1 << frac_bits))
+            largest_fp_int = 2 ** (self.fp_factory.total_bits - 1) - 1
+            int_value = int(value * (1 << self.fp_factory.frac_bits))
             return min(max(int_value, -largest_fp_int), largest_fp_int)
 
         def fp_hard_sigmoid(a: int) -> int:

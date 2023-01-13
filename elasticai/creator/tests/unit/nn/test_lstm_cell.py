@@ -3,8 +3,8 @@ import unittest
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.tests.vhdl.quantized_modules.utils import to_list
-from elasticai.creator.vhdl.quantized_modules.lstm_cell import _LSTMCellBase
+from elasticai.creator.nn.lstm_cell import _LSTMCellBase
+from elasticai.creator.tests.unit.nn.utils import to_list
 
 
 def to_tensor(x: list) -> torch.Tensor:

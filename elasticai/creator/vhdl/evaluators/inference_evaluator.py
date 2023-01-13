@@ -3,7 +3,7 @@ from typing import Callable
 import torch
 from torch.utils.data import Dataset
 
-from elasticai.creator.nn.typing import QuantType
+from elasticai.creator.nn.quant_typings import QuantType
 from elasticai.creator.vhdl.evaluators.evaluator import Evaluator
 
 

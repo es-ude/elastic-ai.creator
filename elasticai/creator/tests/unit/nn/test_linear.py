@@ -4,11 +4,8 @@ import torch
 from torch.nn.parameter import Parameter
 
 from elasticai.creator.nn.linear import FixedPointLinear, _LinearBase
+from elasticai.creator.tests.unit.nn.utils import to_list
 from elasticai.creator.vhdl.number_representations import FixedPoint
-
-
-def to_list(x: torch.Tensor) -> list[float]:
-    return x.detach().numpy().tolist()
 
 
 class LinearBaseTest(unittest.TestCase):

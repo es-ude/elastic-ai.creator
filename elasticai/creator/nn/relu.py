@@ -5,7 +5,7 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.nn.typing import QuantType
+from elasticai.creator.nn.quant_typings import QuantType
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 

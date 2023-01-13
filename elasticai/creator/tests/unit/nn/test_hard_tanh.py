@@ -1,18 +1,16 @@
 import unittest
+from typing import Callable
 
 import torch
 import torch.nn.functional as f
 
-from elasticai.creator.tests.vhdl.quantized_modules.utils import (
+from elasticai.creator.nn.hard_tanh import FixedPointHardTanh, _HardTanhBase
+from elasticai.creator.tests.unit.nn.utils import (
     from_fixed_point,
     to_fixed_point,
     to_list,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.quantized_modules.hard_tanh import (
-    FixedPointHardTanh,
-    _HardTanhBase,
-)
 
 
 class HardTanhBaseTest(unittest.TestCase):
