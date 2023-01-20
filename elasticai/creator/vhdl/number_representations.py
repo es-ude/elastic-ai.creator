@@ -167,8 +167,8 @@ class FixedPoint:
         return FixedPoint(float_value, total_bits=total_bits, frac_bits=frac_bits)
 
     @staticmethod
-    def get_factory(total_bits: int, frac_bits: int) -> "FixedPointFactory":
-        return _FixedPointFactoryImpl(
+    def get_builder(total_bits: int, frac_bits: int) -> "FixedPointConfig":
+        return _FixedPointConfigImpl(
             total_bits=total_bits, frac_bits=frac_bits, constructor=FixedPoint
         )
 
@@ -251,8 +251,8 @@ class ClippedFixedPoint(FixedPoint):
         )
 
     @staticmethod
-    def get_factory(total_bits: int, frac_bits: int) -> "FixedPointFactory":
-        return _FixedPointFactoryImpl(
+    def get_builder(total_bits: int, frac_bits: int) -> "FixedPointConfig":
+        return _FixedPointConfigImpl(
             constructor=ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits
         )
 
@@ -270,7 +270,7 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     return total_bits, frac_bits
 
 
-class FixedPointFactory(Protocol):
+class FixedPointConfig(Protocol):
     @property
     @abstractmethod
     def total_bits(self) -> int:
@@ -286,7 +286,7 @@ class FixedPointFactory(Protocol):
         ...
 
 
-class _FixedPointFactoryImpl(FixedPointFactory):
+class _FixedPointConfigImpl(FixedPointConfig):
     def __init__(
         self,
         total_bits: int,
@@ -309,7 +309,7 @@ class _FixedPointFactoryImpl(FixedPointFactory):
         return self._constructor(f, self._total_bits, self._frac_bits)
 
 
-def fixed_point_params_from_factory(factory: FixedPointFactory) -> tuple[int, int]:
+def fixed_point_params_from_factory(factory: FixedPointConfig) -> tuple[int, int]:
     return factory.total_bits, factory.frac_bits
 
 

@@ -88,7 +88,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(VHDLCodeTestCase):
 
     def test_all_but_last_portmap_line_have_trailing_comma(self):
         portmaps = self.extract_section_from_code(
-            begin="port map(", end=");", lines=self.actual_code
+            begin="port map (", end=");", lines=self.actual_code
         )
         for counter, portmap in enumerate(portmaps):
             with self.subTest(f"portmap number {counter}"):
@@ -102,7 +102,7 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(VHDLCodeTestCase):
             expected
         )
         actual: Iterable[Code] = self.extract_section_from_code(
-            begin=[portmap_start, "port map("], end=");", lines=self.actual_code
+            begin=[portmap_start, "port map ("], end=");", lines=self.actual_code
         )
         expected_portmap = self.strip_comma_from_portmaps(expected_portmap)
         actual = self.strip_comma_from_portmaps(actual)

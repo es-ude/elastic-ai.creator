@@ -6,7 +6,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 
 class FPHardSigmoidComponentTest(unittest.TestCase):
     def test_hard_sigmoid_correct_number_of_lines(self) -> None:
-        to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+        to_fp = FixedPoint.get_builder(total_bits=8, frac_bits=4)
 
         component = FPHardSigmoidFile(
             layer_id="0",

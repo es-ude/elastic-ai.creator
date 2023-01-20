@@ -10,7 +10,7 @@ class FirstModel(RootModule):
     def __init__(self):
         super().__init__()
         self.data_width = 16
-        fp_factory = ClippedFixedPoint.get_factory(
+        fp_factory = ClippedFixedPoint.get_builder(
             total_bits=self.data_width, frac_bits=8
         )
         self.fp_linear = FixedPointLinear(

@@ -17,7 +17,7 @@ class FPLinearModel(RootModule):
     def __init__(self):
         super().__init__()
         data_width = 16
-        fp_factory = ClippedFixedPoint.get_factory(total_bits=data_width, frac_bits=8)
+        fp_factory = ClippedFixedPoint.get_builder(total_bits=data_width, frac_bits=8)
         self.fp_linear = FixedPointLinear(
             in_features=1,
             out_features=1,

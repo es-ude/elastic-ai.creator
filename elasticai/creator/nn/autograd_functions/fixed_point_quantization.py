@@ -2,7 +2,10 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import (
+    FixedPointConfig,
+    fixed_point_params_from_factory,
+)
 
 
 class FixedPointQuantFunction(torch.autograd.Function):
@@ -14,7 +17,7 @@ class FixedPointQuantFunction(torch.autograd.Function):
                 "(x: torch.Tensor, fixed_point_factory: Callable[[float], FixedPoint])"
             )
         x: torch.Tensor = args[0]
-        fp_factory: FixedPointFactory = args[1]
+        fp_factory: FixedPointConfig = args[1]
         total_bits, frac_bits = fp_factory.total_bits, fp_factory.frac_bits
 
         fp_ints = (x * (1 << frac_bits)).int().float()
@@ -42,7 +45,7 @@ class FixedPointDequantFunction(torch.autograd.Function):
                 "(x: torch.Tensor, fixed_point_factory: Callable[[float], FixedPoint])"
             )
         x: torch.Tensor = args[0]
-        fp_factory: FixedPointFactory = args[1]
+        fp_factory: FixedPointConfig = args[1]
         total_bits, frac_bits = fp_factory.total_bits, fp_factory.frac_bits
 
         fp_values = x / (1 << frac_bits)

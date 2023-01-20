@@ -6,7 +6,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 
 class RomComponentTest(unittest.TestCase):
     def setUp(self) -> None:
-        fp = FixedPoint.get_factory(total_bits=16, frac_bits=8)
+        fp = FixedPoint.get_builder(total_bits=16, frac_bits=8)
         self.rom = RomFile(
             rom_name="test_rom",
             layer_id="0",

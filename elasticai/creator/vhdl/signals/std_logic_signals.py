@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, TypeVar
 
 from elasticai.creator.vhdl.signals.base_signal import (
     BaseInSignal,
@@ -14,6 +14,10 @@ from elasticai.creator.vhdl.signals.std_logic_signal_definitions import (
     create_std_logic_vector_definition,
 )
 
+T_StdLogicDefinitionWithDefaultMixin = TypeVar(
+    "T_StdLogicDefinitionWithDefaultMixin", bound="_StdLogicDefinitionWithDefaultMixin"
+)
+
 
 class _StdLogicDefinitionWithDefaultMixin(BaseNameMixin):
     def __init__(
@@ -27,6 +31,13 @@ class _StdLogicDefinitionWithDefaultMixin(BaseNameMixin):
 
     def definition(self) -> str:
         return create_std_logic_definition(self, self._default_value)
+
+    def with_prefix(
+        self: T_StdLogicDefinitionWithDefaultMixin, prefix: str
+    ) -> T_StdLogicDefinitionWithDefaultMixin:
+        return self.__class__(
+            basename=self._basename, prefix=prefix, default_value=self._default_value
+        )
 
 
 class LogicInSignal(
@@ -64,6 +75,12 @@ class LogicOutSignal(
         )
 
 
+T_LogicVectorDefinitionWithDefaultMixin = TypeVar(
+    "T_LogicVectorDefinitionWithDefaultMixin",
+    bound="_LogicVectorDefinitionWithDefaultMixin",
+)
+
+
 class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin):
     def __init__(
         self,
@@ -78,6 +95,16 @@ class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin):
 
     def width(self) -> int:
         return self._width
+
+    def with_prefix(
+        self: T_LogicVectorDefinitionWithDefaultMixin, prefix: str
+    ) -> T_LogicVectorDefinitionWithDefaultMixin:
+        return self.__class__(
+            basename=self._basename,
+            prefix=prefix,
+            default_value=self._default_value,
+            width=self._width,
+        )
 
     def definition(self):
         return create_std_logic_vector_definition(self, self._default_value)

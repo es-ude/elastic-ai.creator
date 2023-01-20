@@ -3,12 +3,7 @@ from typing import Any, Optional, Protocol, TypeVar
 
 from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.connectable import Connectable
-
-
-class Identifiable(Protocol):
-    @abstractmethod
-    def id(self) -> str:
-        ...
+from elasticai.creator.vhdl.typing import Identifiable
 
 
 class Signal(Identifiable, Protocol):
@@ -47,7 +42,7 @@ class BaseInSignal(InSignal, ABC):
         ...
 
     def connect(self, other: Identifiable) -> None:
-        if self.matches(other):
+        if self.matches(other) and self.is_missing_inputs():
             self._connected_signal = other
 
     def code(self) -> Code:

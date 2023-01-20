@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from elasticai.creator.vhdl.signals.base_signal import Identifiable
+from elasticai.creator.vhdl.typing import Identifiable
 
 
 class BaseNameMixin(Identifiable):

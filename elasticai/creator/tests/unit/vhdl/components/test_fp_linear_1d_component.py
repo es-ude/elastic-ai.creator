@@ -6,7 +6,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 
 class FPLinear1dComponentTest(unittest.TestCase):
     def test_linear_1d_correct_number_of_lines(self) -> None:
-        to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+        to_fp = FixedPoint.get_builder(total_bits=8, frac_bits=4)
 
         component = FPLinear1dFile(
             layer_id="ll1",

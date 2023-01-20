@@ -4,7 +4,7 @@ from unittest import TestCase
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
     FixedPoint,
-    FixedPointFactory,
+    FixedPointConfig,
     ToLogicEncoder,
     fixed_point_params_from_factory,
     float_values_to_fixed_point,
@@ -291,7 +291,7 @@ class ClippedFixedPointTest(TestCase):
         self.assertEqual(-8, float(fp))
 
     def test_get_factory(self) -> None:
-        factory = ClippedFixedPoint.get_factory(total_bits=8, frac_bits=4)
+        factory = ClippedFixedPoint.get_builder(total_bits=8, frac_bits=4)
         fp = factory(1)
         self.assertEqual(ClippedFixedPoint, type(fp))
         self.assertEqual(8, fp.total_bits)
@@ -380,21 +380,21 @@ class InferTotalAndFracBits(TestCase):
 def FixedPointParamsFromFactoryTest(TestCase):
     def test_fixed_point_params_from_factory_8total_4frac_bits(self) -> None:
         target_total_bits, taret_frac_bits = 8, 4
-        factory = FixedPoint.get_factory(taret_frac_bits, target_total_bits)
+        factory = FixedPoint.get_builder(taret_frac_bits, target_total_bits)
         total_bits, frac_bits = fixed_point_params_from_factory(factory)
         self.assertEqual(target_total_bits, total_bits)
         self.assertEqual(taret_frac_bits, frac_bits)
 
     def test_fixed_point_params_from_factory_clipped_8total_4frac_bits(self) -> None:
         target_total_bits, taret_frac_bits = 8, 4
-        factory = ClippedFixedPoint.get_factory(taret_frac_bits, target_total_bits)
+        factory = ClippedFixedPoint.get_builder(taret_frac_bits, target_total_bits)
         total_bits, frac_bits = fixed_point_params_from_factory(factory)
         self.assertEqual(target_total_bits, total_bits)
         self.assertEqual(taret_frac_bits, frac_bits)
 
     def test_fixed_point_params_from_factory_8total_0frac_bits(self) -> None:
         target_total_bits, taret_frac_bits = 8, 0
-        factory = FixedPoint.get_factory(taret_frac_bits, target_total_bits)
+        factory = FixedPoint.get_builder(taret_frac_bits, target_total_bits)
         total_bits, frac_bits = fixed_point_params_from_factory(factory)
         self.assertEqual(target_total_bits, total_bits)
         self.assertEqual(taret_frac_bits, frac_bits)

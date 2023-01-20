@@ -1,6 +1,6 @@
 from itertools import chain, repeat
 from string import Template
-from typing import Callable, Iterable, Iterator, Union
+from typing import Iterable, Iterator, Union, cast
 
 from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.code import Code, TemplateCodeFile
@@ -22,18 +22,33 @@ class VHDLFile(TemplateCodeFile):
 
     def __init__(self, name: str, **parameters: Union[str, Iterable[str]]) -> None:
         self._name = name
+        self._parameters: dict[str, str] = dict()
+        self._multiline_parameters: dict[str, Iterable[str]] = dict()
+        self.update_parameters(**parameters)
+
+    def update_parameters(self, **parameters: Union[str, Iterable[str]]) -> None:
         (
-            self._parameters,
-            self._multiline_parameters,
+            single_line_parameters,
+            multiline_parameters,
         ) = self._split_single_and_multiline_parameters(parameters)
+        self._parameters.update(**single_line_parameters)
+        self._multiline_parameters.update(**multiline_parameters)
 
     @staticmethod
-    def _split_single_and_multiline_parameters(parameters: dict):
-        single_line_parameters = dict(
-            filter(lambda i: isinstance(i[1], str), parameters.items())
+    def _split_single_and_multiline_parameters(
+        parameters: dict[str, str | Iterable[str]],
+    ) -> tuple[dict[str, str], dict[str, Iterable[str]]]:
+        single_line_parameters: dict[str, str] = dict(
+            cast(
+                Iterator[tuple[str, str]],
+                filter(lambda i: isinstance(i[1], str), parameters.items()),
+            )
         )
         multiline_parameters = dict(
-            filter(lambda i: not isinstance(i[1], str), parameters.items())
+            cast(
+                Iterator[tuple[str, Iterable[str]]],
+                filter(lambda i: not isinstance(i[1], str), parameters.items()),
+            )
         )
         return single_line_parameters, multiline_parameters
 
@@ -43,7 +58,14 @@ class VHDLFile(TemplateCodeFile):
 
     @property
     def parameters(self):
-        return dict(chain(self._parameters.items(), self._multiline_parameters.items()))
+        single_items = self._parameters.items()
+        multi_items = self._multiline_parameters.items()
+        return dict(
+            cast(
+                Iterator[tuple[str, str] | tuple[str, Iterable[str]]],
+                chain(single_items, multi_items),
+            )
+        )
 
     @property
     def multi_line_parameters(self):

@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.pytorch.build_functions import build_fp_linear_1d
 
 
-def aragnge_parameter(
+def arange_parameter(
     start: int, end: int, shape: tuple[int, ...]
 ) -> torch.nn.Parameter:
     return torch.nn.Parameter(
@@ -22,8 +22,8 @@ class FPLinear1dBuildFunctionTest(unittest.TestCase):
         linear = FixedPointLinear(
             fixed_point_factory=fp_factory, in_features=3, out_features=2, bias=True
         )
-        linear.weight = aragnge_parameter(start=1, end=4, shape=(1, -1))
-        linear.bias = aragnge_parameter(start=1, end=2, shape=(-1,))
+        linear.weight = arange_parameter(start=1, end=4, shape=(1, -1))
+        linear.bias = arange_parameter(start=1, end=2, shape=(-1,))
 
         fp_linear1d = build_fp_linear_1d(
             linear, layer_id="ll1", work_library_name="work"

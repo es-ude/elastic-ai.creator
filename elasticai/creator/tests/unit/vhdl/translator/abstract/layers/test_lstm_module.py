@@ -19,7 +19,7 @@ class LSTMModuleTest(TestCase):
             biases_ih=[[1, 2, 3, 4]],
             biases_hh=[[5, 6, 7, 8]],
             layer_id="0",
-            fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=2),
+            fixed_point_factory=FixedPoint.get_builder(total_bits=8, frac_bits=2),
             work_library_name="work",
         )
 

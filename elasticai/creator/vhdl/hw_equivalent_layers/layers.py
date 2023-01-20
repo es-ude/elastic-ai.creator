@@ -12,19 +12,18 @@ from elasticai.creator.vhdl.code_files.utils import calculate_address_width
 from elasticai.creator.vhdl.hw_equivalent_layers.hw_blocks import (
     BaseHWBlock,
     BufferedBaseHWBlock,
-    HWBlockInterface,
 )
 from elasticai.creator.vhdl.hw_equivalent_layers.tracing import (
     HWEquivalentFXTracer,
     HWEquivalentTracer,
     create_hw_block_collection,
 )
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
 from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
-class AbstractTranslatableLayer(Translatable, HWBlockInterface, ABC):
-    def __init__(self, hw_block: HWBlockInterface):
+class AbstractTranslatableLayer(Translatable, ABC):
+    def __init__(self, hw_block: BaseHWBlock):
         self._hw_block = hw_block
 
     @abstractmethod
@@ -39,17 +38,17 @@ class AbstractTranslatableLayer(Translatable, HWBlockInterface, ABC):
         }
 
     def signal_definitions(self, prefix: str) -> Code:
-        return self._hw_block.signal_definitions(prefix)
+        return self._hw_block.get_port().build_port_map(prefix).signal_definitions()
 
     def instantiation(self, prefix: str) -> Code:
-        return self._hw_block.instantiation(prefix)
+        return self._hw_block.get_port().build_port_map(prefix).code()
 
     def translate(self) -> CodeModule:
         module: Module = typing.cast(Module, self)
         graph = self._get_tracer().trace(module)
         blocks = create_hw_block_collection(graph)
         signals = blocks.signals("")
-        layer_instantiations = blocks.instantiations("")
+        layer_instantiations = list(blocks.instantiations(""))
         layer_connections = ["fp_linear_x <= x;"]
         return CodeModuleBase(
             name="network",
@@ -82,22 +81,22 @@ class RootModule(torch.nn.Module, AbstractTranslatableLayer):
         return dict(((key, str(value)) for key, value in self.elasticai_tags.items()))
 
     def translate(self):
-        self._hw_block = BufferedBaseHWBlock(**self.elasticai_tags)
         return super().translate()
 
     def _get_tracer(self) -> HWEquivalentTracer:
         return HWEquivalentFXTracer()
 
 
-class FixedPointHardSigmoid(nnHardSigmoid, HWBlockInterface):
+class FixedPointHardSigmoid(nnHardSigmoid):
     def signal_definitions(self, prefix: str) -> Code:
-        return self._hw_block.signal_definitions(prefix)
+        return self._hw_block.get_port().build_port_map(prefix).signal_definitions()
 
     def instantiation(self, prefix: str) -> Code:
-        return self._hw_block.instantiation(prefix)
+        return self._hw_block.get_port().build_port_map(prefix).code()
 
     def __init__(
         self,
+        fixed_point_factory: FixedPointConfig,
         in_place: bool = False,
         *,
         data_width,
@@ -106,18 +105,18 @@ class FixedPointHardSigmoid(nnHardSigmoid, HWBlockInterface):
         self._hw_block = BaseHWBlock(x_width=data_width, y_width=data_width)
 
 
-class FixedPointLinear(nnFixedPointLinear, HWBlockInterface):
+class FixedPointLinear(nnFixedPointLinear):
     def signal_definitions(self, prefix: str) -> Code:
-        return self._hw_block.signal_definitions(prefix)
+        return self._hw_block.get_port().build_port_map(prefix).signal_definitions()
 
     def instantiation(self, prefix: str) -> Code:
-        return self._hw_block.instantiation(prefix)
+        return self._hw_block.get_port().build_port_map(prefix).code()
 
     def __init__(
         self,
         in_features: int,
         out_features: int,
-        fixed_point_factory: FixedPointFactory,
+        fixed_point_factory: FixedPointConfig,
         bias: bool = True,
         device: Any = None,
         *,

@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
 from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
@@ -10,7 +10,7 @@ class FPHardSigmoidFile(VHDLFile):
         one_threshold: FixedPoint,
         slope: FixedPoint,
         y_intercept: FixedPoint,
-        fixed_point_factory: FixedPointFactory,
+        fixed_point_factory: FixedPointConfig,
     ):
         d = dict(
             data_width=fixed_point_factory.total_bits,
