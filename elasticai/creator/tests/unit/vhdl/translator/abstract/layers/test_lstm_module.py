@@ -18,9 +18,12 @@ class LSTMModuleTest(TestCase):
             weights_hh=[[[1], [2], [3], [4]]],
             biases_ih=[[1, 2, 3, 4]],
             biases_hh=[[5, 6, 7, 8]],
-            layer_id="0",
+        )
+
+        self.translation_args = LSTMTranslationArgs(
             fixed_point_factory=FixedPoint.get_builder(total_bits=8, frac_bits=2),
-            work_library_name="work",
+            sigmoid_resolution=(-2.5, 2.5, 256),
+            tanh_resolution=(-1, 1, 256),
         )
 
     def test_correct_number_of_components(self) -> None:

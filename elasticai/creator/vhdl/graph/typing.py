@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Iterable, Protocol, Reversible, TypeVar
 
+from elasticai.creator.vhdl.typing import Identifiable
+
 T_Node_co = TypeVar("T_Node_co", bound="Node", covariant=True)
 
 
@@ -15,7 +17,7 @@ T_Node = TypeVar("T_Node", bound="Node")
 T_co = TypeVar("T_co", covariant=True)
 
 
-class Node(Protocol[T_co]):
+class Node(Identifiable, Protocol[T_co]):
     @property
     @abstractmethod
     def children(self: "Node[T_co]") -> Iterable["Node[T_co]"]:

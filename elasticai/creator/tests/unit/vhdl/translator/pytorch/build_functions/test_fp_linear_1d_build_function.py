@@ -16,6 +16,15 @@ def arange_parameter(
 
 
 class FPLinear1dBuildFunctionTest(unittest.TestCase):
+    def setUp(self) -> None:
+        to_fp = FixedPoint.get_builder(total_bits=8, frac_bits=4)
+
+        self.linear = FixedPointLinear(
+            fixed_point_factory=to_fp, in_features=3, out_features=2
+        )
+        self.linear.weight = aragnge_parameter(start=1, end=4, shape=(1, -1))
+        self.linear.bias = aragnge_parameter(start=1, end=2, shape=(-1,))
+
     def test_weights_and_bias_correct_set(self) -> None:
         fp_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
 

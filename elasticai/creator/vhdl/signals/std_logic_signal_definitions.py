@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Optional, Protocol
 
-from elasticai.creator.vhdl.signals.base_signal import Identifiable
+from elasticai.creator.vhdl.typing import Identifiable
 
 
 def _generate_default_assignment(default: Optional[str]) -> str:

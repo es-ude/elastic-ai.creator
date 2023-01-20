@@ -41,6 +41,14 @@ class LogicSignalTestCase(unittest.TestCase):
         out_signal = SignalBuilder().accepted_names(["x"]).width(3).build()
         self.assertFalse(in_signal.accepts(out_signal))
 
+    def test_signals_do_not_reconnect(self):
+        in_signal = LogicInSignal(basename="x")
+        out_signal = LogicOutSignal(basename="x").with_prefix("out")
+        in_signal.connect(out_signal)
+        out_signal = LogicOutSignal(basename="x").with_prefix("second_out")
+        in_signal.connect(out_signal)
+        self.assertEqual(["x <= out_x;"], list(in_signal.code()))
+
 
 if __name__ == "__main__":
     unittest.main()

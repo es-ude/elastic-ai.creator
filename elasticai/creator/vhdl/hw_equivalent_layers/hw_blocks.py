@@ -1,106 +1,31 @@
-from abc import abstractmethod
-from enum import Enum, auto
-from itertools import chain
-from typing import Any, Iterable, Protocol
-
-from elasticai.creator.vhdl.code import Code, Translatable
-
-
-class HWBlockInterface(Protocol):
-    @abstractmethod
-    def signal_definitions(self, prefix: str) -> Code:
-        ...
-
-    @abstractmethod
-    def instantiation(self, prefix: str) -> Code:
-        ...
+from elasticai.creator.vhdl.port import Port
+from elasticai.creator.vhdl.signals import (
+    LogicInSignal,
+    LogicInVectorSignal,
+    LogicOutSignal,
+    LogicOutVectorSignal,
+)
+from elasticai.creator.vhdl.vhdl_design import BaseVHDLDesign
 
 
-class TranslatableHWBlockInterface(HWBlockInterface, Translatable, Protocol):
-    ...
-
-
-class SignalEnum(str, Enum):
-    def _generate_next_value_(  # type: ignore
-        self, start: int, count: int, last_values: list[Any]
-    ) -> Any:
-        return self.lower()
-
-    def __str__(self):
-        return self.value
-
-
-class StdLogicInSignals(SignalEnum):
-    CLOCK = auto()
-    ENABLE = auto()
-
-
-class LogicVectorInSignals(SignalEnum):
-    X = auto()
-    Y_ADDRESS = auto()
-
-
-class LogicVectorOutSignals(SignalEnum):
-    Y = auto()
-    X_ADDRESS = auto()
-
-
-class StdLogicOutSignals(SignalEnum):
-    DONE = auto()
-    CLOCK = auto()
-
-
-class BaseHWBlock(HWBlockInterface):
-    _vector_signals: tuple[SignalEnum, ...] = (
-        LogicVectorInSignals.X,
-        LogicVectorOutSignals.Y,
-    )
-    _logic_signals: tuple[SignalEnum, ...] = (
-        StdLogicInSignals.ENABLE,
-        StdLogicInSignals.CLOCK,
-    )
-
+class BaseHWBlock(BaseVHDLDesign):
     def __init__(self, x_width: int, y_width: int):
+        super().__init__("", template_names=tuple())
         self._x_width = x_width
         self._y_width = y_width
 
-    def _get_vector_signal_name_to_signal_width_mapping(
-        self,
-    ) -> Iterable[tuple[str, int]]:
-        return map(
-            lambda s: (str(s), getattr(self, f"_{s}_width")),
-            self._vector_signals,
-        )
-
-    def _get_logic_signal_names(self) -> Iterable[str]:
-        return map(str, self._logic_signals)
-
-    def signal_definitions(self, prefix: str) -> Code:
-        return _generate_signal_definitions(
-            prefix,
-            std_logic_signals=self._get_logic_signal_names(),
-            logic_vector_signals=self._get_vector_signal_name_to_signal_width_mapping(),
-        )
-
-    def instantiation(self, prefix: str) -> Code:
-        return _instantiate_component(
-            prefix=prefix, signals=chain(self._vector_signals, self._logic_signals)
+    def get_port(self) -> Port:
+        in_signals: list[LogicInSignal | LogicInVectorSignal] = [
+            LogicInSignal(name, default_value="'0'") for name in ("enable", "clock")
+        ]
+        in_signals.append(LogicInVectorSignal("x", width=self._x_width))
+        return Port(
+            in_signals=in_signals,
+            out_signals=[LogicOutVectorSignal("y", width=self._y_width)],
         )
 
 
 class BufferedBaseHWBlock(BaseHWBlock):
-    _vector_signals = (
-        LogicVectorInSignals.X,
-        LogicVectorOutSignals.Y,
-        LogicVectorOutSignals.X_ADDRESS,
-        LogicVectorInSignals.Y_ADDRESS,
-    )
-    _logic_signals = (
-        StdLogicInSignals.ENABLE,
-        StdLogicInSignals.CLOCK,
-        StdLogicOutSignals.DONE,
-    )
-
     def __init__(
         self,
         x_width: int,
@@ -112,44 +37,16 @@ class BufferedBaseHWBlock(BaseHWBlock):
         self._x_address_width = x_address_width
         self._y_address_width = y_address_width
 
-
-def _generate_signal_definitions(
-    prefix: str,
-    std_logic_signals: Iterable[str],
-    logic_vector_signals: Iterable[tuple[str, int]],
-) -> Code:
-    def _logic_vector(suffix, width) -> str:
-        return f"signal {prefix}_{suffix} : std_logic_vector({width - 1} downto 0);"
-
-    def _std_logic(suffix) -> str:
-        return f"signal {prefix}_{suffix} : std_logic := '0';"
-
-    code = [_std_logic(suffix) for suffix in std_logic_signals]
-    code.extend(
-        [_logic_vector(suffix, width) for suffix, width in logic_vector_signals]
-    )
-
-    return code
-
-
-def _instantiate_component(prefix: str, signals: Iterable[SignalEnum]) -> Code:
-    def _generate_port_to_signal_connection(port: str) -> str:
-        return f"{port} => {prefix}_{port},"
-
-    def _remove_comma_from_last_signal(signals: list[str]) -> list[str]:
-        signals[-1] = signals[-1][:-1]
-        return signals
-
-    def _generate_port_map_signals(signals: Iterable[str]) -> list[str]:
-        return [_generate_port_to_signal_connection(port) for port in signals]
-
-    name = prefix
-    code = [
-        f"{name} : entity work.{name}(rtl)",
-        "port map(",
-    ]
-    mapping = _generate_port_map_signals(map(str, signals))
-    mapping = _remove_comma_from_last_signal(mapping)
-    code.extend(mapping)
-    code.append(");")
-    return code
+    def get_port(self) -> Port:
+        in_signals = [
+            LogicInSignal("enable", default_value="'0'"),
+            LogicInSignal("clock", default_value="'0'"),
+            LogicInVectorSignal("y_address", self._y_address_width),
+            LogicInVectorSignal("x", self._x_width),
+        ]
+        out_signals = [
+            LogicOutSignal("done", default_value="'0'"),
+            LogicOutVectorSignal("y", self._y_width),
+            LogicOutVectorSignal("x_address", self._x_address_width),
+        ]
+        return Port(in_signals=in_signals, out_signals=out_signals)

@@ -9,7 +9,7 @@ from elasticai.creator.vhdl.translator.abstract.layers.fp_relu_module import (
 
 class FPReluModuleTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.fp_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+        self.fp_factory = FixedPoint.get_builder(total_bits=8, frac_bits=4)
         self.module = FPReLUModule(layer_id="0", fixed_point_factory=self.fp_factory)
 
     def test_components_return_only_one_component(self) -> None:

@@ -12,9 +12,7 @@ from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_relu_build_fun
 
 class FPReluBuildFunctionTest(unittest.TestCase):
     def test_build_function_returns_correct_type(self) -> None:
-        fp_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
-        layer = ReLU()
-        layer_module = build_fp_relu(
-            layer, layer_id="relu1", fixed_point_factory=fp_factory
+        layer = FixedPointReLU(
+            fixed_point_factory=FixedPoint.get_builder(total_bits=8, frac_bits=4)
         )
         self.assertEqual(type(layer_module), FPReLUModule)
