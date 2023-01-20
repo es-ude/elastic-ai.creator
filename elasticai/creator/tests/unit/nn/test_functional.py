@@ -21,17 +21,17 @@ class BinarizeFunctionTest(TensorTestCase):
         self.fail()
 
     def test_Yields1For0(self):
-        self.assertTensorEquals(
+        self.assertTensorEqual(
             expected=Tensor([1.0]), actual=binarize.apply(Tensor([0.0]))
         )
 
     def test_Yields1For2Point4(self):
-        self.assertTensorEquals(
+        self.assertTensorEqual(
             expected=Tensor([1.0]), actual=binarize.apply(Tensor([2.4]))
         )
 
     def test_YieldMinus1ForNegativeInput(self):
-        self.assertTensorEquals(
+        self.assertTensorEqual(
             expected=Tensor([-1.0]), actual=binarize.apply(Tensor([-2.8]))
         )
 
@@ -39,7 +39,7 @@ class BinarizeFunctionTest(TensorTestCase):
         x = torch.tensor([x], requires_grad=True)
         y = binarize.apply(x)
         y.backward()
-        self.assertTensorEquals(torch.tensor([expected_grad]), x.grad)
+        self.assertTensorEqual(torch.tensor([expected_grad]), x.grad)
 
     def test_gradient_is_0_for_input_greater_1(self):
         self.check_gradient(expected_grad=0.0, x=1.1)

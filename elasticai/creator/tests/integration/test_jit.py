@@ -29,43 +29,43 @@ class JitTests(TensorTestCase):
         y = torch.clamp(x, -1.0, 1.0)
         y.backward()
         expected = torch.tensor(0.0)
-        self.assertTensorEquals(expected, x.grad)
+        self.assertTensorEqual(expected, x.grad)
 
     def test_grad_of_clamp_is_one_if_in_range(self):
         x = torch.tensor(-0.5, requires_grad=True)
         y = torch.nn.functional.hardtanh(x)
         y.backward()
         expected = torch.tensor(1.0)
-        self.assertTensorEquals(expected, x.grad)
+        self.assertTensorEqual(expected, x.grad)
 
     def test_grad_of_bin_ste(self):
         x = torch.tensor(0.3, requires_grad=True)
         y = Binarize()(x)
         y.backward()
         expected = torch.tensor(1.0)
-        self.assertTensorEquals(expected, x.grad)
+        self.assertTensorEqual(expected, x.grad)
 
     def test_grad_of_bin_ste_is_zero(self):
         x = torch.tensor([1.2], requires_grad=True)
         y = Binarize()(x)
         y.backward()
         expected = torch.tensor([0.0])
-        self.assertTensorEquals(expected, x.grad)
+        self.assertTensorEqual(expected, x.grad)
 
     def test_value_of_bin_ste(self):
         x = torch.tensor([0.3])
         y = Binarize()(x)
         expected = torch.tensor([1.0])
-        self.assertTensorEquals(expected, y)
+        self.assertTensorEqual(expected, y)
 
     def test_negative_value_of_bin_ste(self):
         x = torch.tensor([-0.3])
         y = Binarize()(x)
         expected = torch.tensor([-1.0])
-        self.assertTensorEquals(expected, y)
+        self.assertTensorEqual(expected, y)
 
     def test_script_heaviside_based_ste(self):
         function = jit.trace(Binarize(), torch.tensor([0.0]))
         actual = function(torch.tensor([-1.2, -0.4, 8.9]))
         expected = torch.tensor([-1.0, -1.0, 1.0])
-        self.assertTensorEquals(expected, actual)
+        self.assertTensorEqual(expected, actual)
