@@ -63,13 +63,13 @@ class FixedPointArithmetics(Arithmetics):
         return torch.clamp(a, min=min_fp, max=max_fp)
 
     def round(self, a: torch.Tensor) -> torch.Tensor:
-        def quantize(x: torch.Tensor) -> torch.Tensor:
+        def float_to_int(x: torch.Tensor) -> torch.Tensor:
             return FixedPointQuantFunction.apply(x, self.fp_factory)
 
-        def dequantize(x: torch.Tensor) -> torch.Tensor:
+        def int_to_fixed_point(x: torch.Tensor) -> torch.Tensor:
             return FixedPointDequantFunction.apply(x, self.fp_factory)
 
-        return dequantize(quantize(self.clamp(a)))
+        return int_to_fixed_point(float_to_int(a))
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.clamp(a + b)
@@ -81,7 +81,7 @@ class FixedPointArithmetics(Arithmetics):
         return self.clamp(summed)
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self.round(a * b)
+        return self.round(self.clamp(a * b))
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return ...
+        return self.round(self.clamp(torch.matmul(a, b)))

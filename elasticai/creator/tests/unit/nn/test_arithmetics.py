@@ -93,4 +93,8 @@ class FixedPointArithmeticsTest(TensorTestCase):
         self.assertTensorEqual(expected, actual)
 
     def test_matmul(self) -> None:
-        ...
+        a = torch.tensor([[-2.0, -1.75, -1.5], [-0.25, 0.0, 0.25], [1.25, 1.5, 1.75]])
+        b = torch.tensor([[-0.25], [0.5], [0.25]])
+        actual = self.ops.matmul(a, b)
+        expected = [[-0.75], [0.0], [0.75]]
+        self.assertTensorEqual(expected, actual)
