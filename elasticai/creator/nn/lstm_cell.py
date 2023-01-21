@@ -11,7 +11,7 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
 from elasticai.creator.nn.hard_sigmoid import FixedPointHardSigmoid
 from elasticai.creator.nn.hard_tanh import FixedPointHardTanh
 from elasticai.creator.nn.linear import FixedPointLinear
-from elasticai.creator.nn.quant_typings import OperationType, QuantType
+from elasticai.creator.nn.quantization import OperationType, QuantType
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
