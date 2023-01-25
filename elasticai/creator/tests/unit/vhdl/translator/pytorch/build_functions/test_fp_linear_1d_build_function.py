@@ -16,16 +16,20 @@ def aragnge_parameter(
 
 
 class FPLinear1dBuildFunctionTest(unittest.TestCase):
-    def setUp(self) -> None:
-        to_fp = FixedPoint.get_factory(total_bits=8, frac_bits=4)
-
-        self.linear = FixedPointLinear(
-            fixed_point_factory=to_fp, in_features=3, out_features=2
-        )
-        self.linear.weight = aragnge_parameter(start=1, end=4, shape=(1, -1))
-        self.linear.bias = aragnge_parameter(start=1, end=2, shape=(-1,))
-
     def test_weights_and_bias_correct_set(self) -> None:
-        fplinear1d = build_fp_linear_1d(self.linear, layer_id="ll1")
-        self.assertEqual(fplinear1d.weight, [[1.0, 2.0, 3.0]])
-        self.assertEqual(fplinear1d.bias, [1.0])
+        fp_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+
+        linear = FixedPointLinear(
+            fixed_point_factory=fp_factory, in_features=3, out_features=2
+        )
+        linear.weight = aragnge_parameter(start=1, end=4, shape=(1, -1))
+        linear.bias = aragnge_parameter(start=1, end=2, shape=(-1,))
+
+        fp_linear1d = build_fp_linear_1d(
+            linear,
+            layer_id="ll1",
+            fixed_point_factory=fp_factory,
+            work_library_name="work",
+        )
+        self.assertEqual(fp_linear1d.weight, [[1.0, 2.0, 3.0]])
+        self.assertEqual(fp_linear1d.bias, [1.0])

@@ -5,7 +5,7 @@ from elasticai.creator.vhdl.vhdl_files import VHDLFile
 class FPHardSigmoidFile(VHDLFile):
     def __init__(
         self,
-        layer_id: int,
+        layer_id: str,
         zero_threshold: FixedPoint,
         one_threshold: FixedPoint,
         slope: FixedPoint,

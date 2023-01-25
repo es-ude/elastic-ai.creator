@@ -34,7 +34,7 @@ class LSTMFile:
     def name(self) -> str:
         return "lstm.vhd"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "lstm.tpl.vhd")
 
         code = expand_template(

@@ -10,13 +10,6 @@ from elasticai.creator.vhdl.code import (
     CodeModule,
     CodeModuleBase,
 )
-from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.fp_linear_1d_module import (
-    FPLinear1dTranslationArgs,
-)
-from elasticai.creator.vhdl.translator.abstract.layers.lstm_module import (
-    LSTMTranslationArgs,
-)
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -56,14 +49,14 @@ class TranslatorTest(unittest.TestCase):
     def test_translate_model_empty_model(self) -> None:
         model = torch.nn.Sequential()
         generated_code = translator.translate_model(
-            model, build_function_mapping=self.build_mapping
+            model, translation_args=dict(), build_function_mapping=self.build_mapping
         )
         self.assertEqual(len(list(generated_code)), 1)
 
     def test_translation_yields_one_build_mapping_result_for_first_layer(self) -> None:
         model = torch.nn.Sequential(torch.nn.Module())
         code_containers = translator.translate_model(
-            model, build_function_mapping=self.build_mapping
+            model, translation_args=dict(), build_function_mapping=self.build_mapping
         )
 
         code = unpack_module_directories(code_containers)
