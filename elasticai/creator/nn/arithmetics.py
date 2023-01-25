@@ -10,6 +10,9 @@ from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
 class Arithmetics(Protocol):
+    def quantize(self, a: torch.Tensor) -> torch.Tensor:
+        ...
+
     def clamp(self, a: torch.Tensor) -> torch.Tensor:
         ...
 
@@ -30,6 +33,9 @@ class Arithmetics(Protocol):
 
 
 class FloatArithmetics(Arithmetics):
+    def quantize(self, a: torch.Tensor) -> torch.Tensor:
+        return a
+
     def clamp(self, a: torch.Tensor) -> torch.Tensor:
         return a
 
@@ -55,6 +61,9 @@ class FloatArithmetics(Arithmetics):
 class FixedPointArithmetics(Arithmetics):
     def __init__(self, fixed_point_factory: FixedPointFactory) -> None:
         self.fp_factory = fixed_point_factory
+
+    def quantize(self, a: torch.Tensor) -> torch.Tensor:
+        return self.round(self.clamp(a))
 
     def clamp(self, a: torch.Tensor) -> torch.Tensor:
         total_bits, frac_bits = self.fp_factory.total_bits, self.fp_factory.frac_bits

@@ -9,6 +9,11 @@ class FloatArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
         self.ops = FloatArithmetics()
 
+    def test_quantize(self) -> None:
+        a = torch.tensor([0, 1.5, 2.25, 3.123456])
+        actual = self.ops.quantize(a)
+        self.assertTensorEqual(a, actual)
+
     def test_round(self) -> None:
         a = torch.tensor([0, 1.5, 2.25, 3.123456])
         actual = self.ops.round(a)
@@ -57,6 +62,18 @@ class FixedPointArithmeticsTest(TensorTestCase):
         self.min_fp = -1 * (1 << (self.total_bits - 1)) / (1 << self.frac_bits)
         self.max_fp = int("1" * (self.total_bits - 1), 2) / (1 << self.frac_bits)
         self.ops = FixedPointArithmetics(fixed_point_factory=fp_factory)
+
+    def test_quantize_clamps_minus5_to_minus2(self) -> None:
+        a = torch.tensor([-5.0])
+        actual = self.ops.quantize(a)
+        expected = [-2.0]
+        self.assertTensorEqual(expected, actual)
+
+    def test_quantize_rounds_1_1_to_1_0(self) -> None:
+        a = torch.tensor([1.1])
+        actual = self.ops.quantize(a)
+        expected = [1.0]
+        self.assertTensorEqual(expected, actual)
 
     def test_clamp(self) -> None:
         a = torch.tensor([-5, -2.1, -1.0, 0.0, 1.8, 5])
