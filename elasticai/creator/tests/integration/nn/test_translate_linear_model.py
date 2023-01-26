@@ -2,9 +2,9 @@ import unittest
 
 import torch
 
-from elasticai.creator.nn.hard_sigmoid import FixedPointHardSigmoid
+from elasticai.creator.nn.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.linear import FixedPointLinear
-from elasticai.creator.nn.relu import FixedPointReLU
+from elasticai.creator.nn.relu import ReLU
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
 from elasticai.creator.vhdl.translator.pytorch import translator
 
@@ -23,10 +23,8 @@ class FixedPointModel(torch.nn.Module):
             out_features=1,
             fixed_point_factory=fixed_point_factory,
         )
-        self.hard_sigmoid = FixedPointHardSigmoid(
-            fixed_point_factory=fixed_point_factory
-        )
-        self.relu1 = FixedPointReLU(fixed_point_factory=fixed_point_factory)
+        self.hard_sigmoid = HardSigmoid()
+        self.relu1 = ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear1(x)
@@ -82,8 +80,8 @@ class TranslateLinearModelTest(unittest.TestCase):
                     "b_rom_fp_linear_1d_1.vhd",
                 },
             ),
-            ("2_FixedPointHardSigmoid", {"fp_hard_sigmoid.vhd"}),
-            ("3_FixedPointReLU", {"fp_relu_3.vhd"}),
+            ("2_HardSigmoid", {"fp_hard_sigmoid.vhd"}),
+            ("3_ReLU", {"fp_relu_3.vhd"}),
             ("network_component", {"network.vhd"}),
         ]
 

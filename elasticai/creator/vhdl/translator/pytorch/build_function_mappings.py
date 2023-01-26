@@ -12,7 +12,7 @@ DEFAULT_BUILD_FUNCTION_MAPPING = BuildFunctionMapping(
     mapping={
         "torch.nn.modules.rnn.LSTM": build_lstm,
         "elasticai.creator.nn.linear.FixedPointLinear": build_fp_linear_1d,
-        "elasticai.creator.nn.hard_sigmoid.FixedPointHardSigmoid": build_fp_hard_sigmoid,
-        "elasticai.creator.nn.relu.FixedPointReLU": build_fp_relu,
+        "elasticai.creator.nn.hard_sigmoid.HardSigmoid": build_fp_hard_sigmoid,
+        "elasticai.creator.nn.relu.ReLU": build_fp_relu,
     }
 )

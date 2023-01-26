@@ -5,9 +5,7 @@ from typing import Any
 import torch.nn
 
 from elasticai.creator.mlframework import Module
-from elasticai.creator.nn.hard_sigmoid import (
-    FixedPointHardSigmoid as nnFixedPointHardSigmoid,
-)
+from elasticai.creator.nn.hard_sigmoid import HardSigmoid as nnHardSigmoid
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
 from elasticai.creator.vhdl.code import Code, CodeModule, CodeModuleBase, Translatable
 from elasticai.creator.vhdl.code_files.utils import calculate_address_width
@@ -91,7 +89,7 @@ class RootModule(torch.nn.Module, AbstractTranslatableLayer):
         return HWEquivalentTracer()
 
 
-class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlockInterface):
+class FixedPointHardSigmoid(nnHardSigmoid, HWBlockInterface):
     def signal_definitions(self, prefix: str) -> Code:
         return self._hw_block.signal_definitions(prefix)
 
@@ -100,12 +98,11 @@ class FixedPointHardSigmoid(nnFixedPointHardSigmoid, HWBlockInterface):
 
     def __init__(
         self,
-        fixed_point_factory: FixedPointFactory,
         in_place: bool = False,
         *,
         data_width,
     ):
-        super().__init__(fixed_point_factory, in_place)
+        super().__init__(in_place)
         self._hw_block = BaseHWBlock(x_width=data_width, y_width=data_width)
 
 
