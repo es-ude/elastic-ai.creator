@@ -12,7 +12,7 @@ class Linear(torch.nn.Linear):
         in_features: int,
         out_features: int,
         arithmetics: Arithmetics,
-        bias: bool = True,
+        bias: bool,
         device: Any = None,
         dtype: Any = None,
     ) -> None:
@@ -35,7 +35,7 @@ class FixedPointLinear(Linear):
         in_features: int,
         out_features: int,
         fixed_point_factory: FixedPointFactory,
-        bias: bool = True,
+        bias: bool,
         device: Any = None,
     ) -> None:
         super().__init__(
