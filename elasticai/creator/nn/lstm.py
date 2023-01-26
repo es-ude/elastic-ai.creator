@@ -4,7 +4,7 @@ from typing import Optional
 
 import torch.nn
 
-from elasticai.creator.nn.lstm_cell import FixedPointLSTMCell
+from elasticai.creator.nn.lstm_cell import FixedPointLSTMCell, LSTMCell
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
@@ -15,7 +15,7 @@ class LSTM(torch.nn.Module):
         hidden_size,
         bias: bool,
         batch_first: bool,
-        lstm_cell_factory: Callable,
+        lstm_cell_factory: Callable[..., LSTMCell],
     ) -> None:
         super().__init__()
         self.cell = lstm_cell_factory(
