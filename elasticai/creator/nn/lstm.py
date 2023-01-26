@@ -59,12 +59,13 @@ class FixedPointLSTM(LSTM):
         batch_first: bool,
         bias: bool = True,
     ) -> None:
+        self.fixed_point_factory = fixed_point_factory
         super().__init__(
             input_size=input_size,
             hidden_size=hidden_size,
             bias=bias,
             batch_first=batch_first,
             lstm_cell_factory=partial(
-                FixedPointLSTMCell, fixed_point_factory=fixed_point_factory
+                FixedPointLSTMCell, fixed_point_factory=self.fixed_point_factory
             ),
         )

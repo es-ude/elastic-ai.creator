@@ -38,10 +38,13 @@ class FixedPointLinear(Linear):
         bias: bool,
         device: Any = None,
     ) -> None:
+        self.fixed_point_factory = fixed_point_factory
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=FixedPointArithmetics(fixed_point_factory=fixed_point_factory),
+            arithmetics=FixedPointArithmetics(
+                fixed_point_factory=self.fixed_point_factory
+            ),
             bias=bias,
             device=device,
         )

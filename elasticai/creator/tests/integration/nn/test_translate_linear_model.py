@@ -45,14 +45,8 @@ class TranslateLinearModelTest(unittest.TestCase):
         model = FixedPointModel(fixed_point_factory)
 
         translation_args = {
-            "0": {
-                "fixed_point_factory": fixed_point_factory,
-                "work_library_name": "work",
-            },
-            "1": {
-                "fixed_point_factory": fixed_point_factory,
-                "work_library_name": "work",
-            },
+            "0": {"work_library_name": "work"},
+            "1": {"work_library_name": "work"},
             "2": {"fixed_point_factory": fixed_point_factory},
             "3": {"fixed_point_factory": fixed_point_factory},
         }

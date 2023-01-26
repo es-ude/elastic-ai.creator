@@ -26,10 +26,7 @@ class FPLinear1dBuildFunctionTest(unittest.TestCase):
         linear.bias = aragnge_parameter(start=1, end=2, shape=(-1,))
 
         fp_linear1d = build_fp_linear_1d(
-            linear,
-            layer_id="ll1",
-            fixed_point_factory=fp_factory,
-            work_library_name="work",
+            linear, layer_id="ll1", work_library_name="work"
         )
         self.assertEqual(fp_linear1d.weight, [[1.0, 2.0, 3.0]])
         self.assertEqual(fp_linear1d.bias, [1.0])
