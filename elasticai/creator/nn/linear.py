@@ -1,3 +1,5 @@
+from typing import Any
+
 import torch
 
 from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
@@ -11,8 +13,8 @@ class Linear(torch.nn.Linear):
         out_features: int,
         arithmetics: Arithmetics,
         bias: bool = True,
-        device=None,
-        dtype=None,
+        device: Any = None,
+        dtype: Any = None,
     ) -> None:
         super().__init__(in_features, out_features, bias, device, dtype)
         self.ops = arithmetics
@@ -34,7 +36,7 @@ class FixedPointLinear(Linear):
         out_features: int,
         fixed_point_factory: FixedPointFactory,
         bias: bool = True,
-        device=None,
+        device: Any = None,
     ) -> None:
         super().__init__(
             in_features=in_features,
