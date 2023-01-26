@@ -8,7 +8,7 @@ from elasticai.creator.nn.lstm_cell import FixedPointLSTMCell
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
-class _LSTMBase(torch.nn.Module):
+class LSTM(torch.nn.Module):
     def __init__(
         self,
         input_size: int,
@@ -23,14 +23,10 @@ class _LSTMBase(torch.nn.Module):
         )
         self.batch_first = batch_first
 
-    def _do_forward(
+    def forward(
         self,
-        forward_func: Callable[
-            [torch.Tensor, Optional[tuple[torch.Tensor, torch.Tensor]]],
-            tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]],
-        ],
         x: torch.Tensor,
-        state: Optional[tuple[torch.Tensor, torch.Tensor]],
+        state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
     ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         batched = x.dim() == 3
 
@@ -44,7 +40,7 @@ class _LSTMBase(torch.nn.Module):
 
         outputs = []
         for i in range(len(inputs)):
-            hidden_state, cell_state = forward_func(inputs[i], state)
+            hidden_state, cell_state = self.cell(inputs[i], state)
             state = (hidden_state, cell_state)
             outputs.append(hidden_state)
 
@@ -53,22 +49,8 @@ class _LSTMBase(torch.nn.Module):
 
         return result, (hidden_state, cell_state)
 
-    def forward(
-        self,
-        x: torch.Tensor,
-        state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        return self._do_forward(self.cell.__call__, x, state)
 
-    def quantized_forward(
-        self,
-        x: torch.Tensor,
-        state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        return self._do_forward(self.cell.quantized_forward, x, state)
-
-
-class FixedPointLSTM(_LSTMBase):
+class FixedPointLSTM(LSTM):
     def __init__(
         self,
         fixed_point_factory: FixedPointFactory,

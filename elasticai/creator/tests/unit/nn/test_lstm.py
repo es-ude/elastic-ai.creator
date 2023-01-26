@@ -1,16 +1,14 @@
-import unittest
-from functools import partial
 from typing import Optional
 
 import torch
 
-from elasticai.creator.nn.lstm import _LSTMBase
-from elasticai.creator.nn.lstm_cell import FixedPointLSTMCell
-from elasticai.creator.tests.unit.nn.utils import to_list
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.nn.arithmetics import FloatArithmetics
+from elasticai.creator.nn.lstm import LSTM
+from elasticai.creator.nn.lstm_cell import LSTMCell
+from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 
 
-def create_full_res_lstm(
+def create_lstm(
     input_size: int, hidden_size: int, bias: bool, batch_first: bool
 ) -> tuple[torch.nn.Module, torch.nn.Module]:
     lstm_args = dict(
@@ -19,7 +17,7 @@ def create_full_res_lstm(
         bias=bias,
         batch_first=batch_first,
     )
-    lstm = _LSTMBase(**lstm_args, lstm_cell_factory=torch.nn.LSTMCell)
+    lstm = LSTM(**lstm_args, lstm_cell_factory=torch.nn.LSTMCell)
     reference_lstm = torch.nn.LSTM(**lstm_args)
 
     lstm.cell.weight_ih = reference_lstm.weight_ih_l0
@@ -31,17 +29,25 @@ def create_full_res_lstm(
     return lstm, reference_lstm
 
 
-class CalledException(Exception):
-    ...
+class OutputsZeroLSTMCell(LSTMCell):
+    def __init__(self, input_size: int, hidden_size: int, bias: bool) -> None:
+        super().__init__(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            bias=bias,
+            arithmetics=FloatArithmetics(),
+            sigmoid_factory=torch.nn.Sigmoid,
+            tanh_factory=torch.nn.Tanh,
+        )
+
+    def forward(
+        self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        h, c = super().forward(x, state)
+        return torch.zeros_like(h), torch.zeros_like(c)
 
 
-def exploding_forward(
-    x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]]
-) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-    raise CalledException()
-
-
-class LSTMBaseTest(unittest.TestCase):
+class LSTMTest(TensorTestCase):
     def setUp(self) -> None:
         torch.manual_seed(42)
 
@@ -55,60 +61,53 @@ class LSTMBaseTest(unittest.TestCase):
         actual_outputs, (actual_h, actual_c) = actual_lstm(inputs, state)
         target_outputs, (target_h, target_c) = reference_lstm(inputs, state)
 
-        self.assertEqual(to_list(target_outputs), to_list(actual_outputs))
-        self.assertEqual(to_list(target_h), to_list(actual_h))
-        self.assertEqual(to_list(target_c), to_list(actual_c))
+        self.assertTensorEqual(target_outputs, actual_outputs)
+        self.assertTensorEqual(target_h, actual_h)
+        self.assertTensorEqual(target_c, actual_c)
 
-    def test_full_res_lstm_equals_pytorch_lstm(self) -> None:
-        lstm, reference_lstm = create_full_res_lstm(
+    def test_lstm_equals_pytorch_lstm_on_batched_inputs(self) -> None:
+        lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=False
         )
         inputs = torch.randn((4, 8, 2))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs)
 
-    def test_full_res_lstm_batch_first_equals_pytorch_lstm(self) -> None:
-        lstm, reference_lstm = create_full_res_lstm(
+    def test_lstm_batch_first_equals_pytorch_lstm(self) -> None:
+        lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=True
         )
         inputs = torch.randn((8, 4, 2))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs)
 
-    def test_full_res_lstm_explicit_pass_state(self) -> None:
-        lstm, reference_lstm = create_full_res_lstm(
+    def test_lstm_equals_pytorch_lstm_without_batches(self) -> None:
+        lstm, reference_lstm = create_lstm(
+            input_size=2, hidden_size=3, bias=True, batch_first=True
+        )
+        inputs = torch.randn((4, 2))
+        self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs)
+
+    def test_lstm_explicit_pass_state(self) -> None:
+        lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=True
         )
         inputs = torch.randn((8, 4, 2))
         state = (torch.randn(1, 8, 3), torch.randn(1, 8, 3))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs, state)
 
-    def test_lstm_cell_forward_function_called_for_normal_inference(self) -> None:
-        lstm = _LSTMBase(
+    def test_lstm_uses_given_lstm_cell(self) -> None:
+        lstm = LSTM(
             input_size=2,
             hidden_size=3,
             bias=True,
             batch_first=True,
-            lstm_cell_factory=partial(
-                FixedPointLSTMCell,
-                fixed_point_factory=FixedPoint.get_factory(total_bits=16, frac_bits=8),
-            ),
+            lstm_cell_factory=OutputsZeroLSTMCell,
         )
-        lstm.cell.forward = exploding_forward
-        inputs = torch.randn((4, 2))
-        with self.assertRaises(CalledException):
-            _ = lstm(inputs)
 
-    def test_lstm_cell_quant_forward_function_called_for_quant_inference(self) -> None:
-        lstm = _LSTMBase(
-            input_size=2,
-            hidden_size=3,
-            bias=True,
-            batch_first=True,
-            lstm_cell_factory=partial(
-                FixedPointLSTMCell,
-                fixed_point_factory=FixedPoint.get_factory(total_bits=16, frac_bits=8),
-            ),
-        )
-        lstm.cell.quantized_forward = exploding_forward
-        inputs = torch.randn((4, 2))
-        with self.assertRaises(CalledException):
-            _ = lstm.quantized_forward(inputs)
+        inputs = torch.randn((8, 4, 2))
+        expected_output = torch.zeros((8, 4, 3))
+        expected_h, expected_c = torch.zeros((1, 8, 3)), torch.zeros((1, 8, 3))
+        actual_output, (actual_h, actual_c) = lstm(inputs)
+
+        self.assertTensorEqual(expected_output, actual_output)
+        self.assertTensorEqual(expected_h, actual_h)
+        self.assertTensorEqual(expected_c, actual_c)
