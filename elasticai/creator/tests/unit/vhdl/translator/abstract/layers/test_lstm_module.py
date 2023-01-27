@@ -3,6 +3,7 @@ from unittest import TestCase
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
     DualPort2ClockRamVHDLFile,
 )
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
 from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
@@ -42,7 +43,7 @@ class LSTMModuleTest(TestCase):
             (RomFile, "bf_rom.vhd"),
             (RomFile, "bg_rom.vhd"),
             (RomFile, "bo_rom.vhd"),
-            (SigmoidComponent, "sigmoid.vhd"),
+            (FPHardSigmoidFile, "fp_hard_sigmoid.vhd"),
             (TanhComponent, "tanh.vhd"),
             (LSTMFile, "lstm.vhd"),
             (LSTMCommonVHDLFile, "lstm_common.vhd"),

@@ -8,6 +8,7 @@ from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
     DualPort2ClockRamVHDLFile,
 )
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
 from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
@@ -37,8 +38,6 @@ class LSTMModule(CodeModuleBase):
             (4*hidden_size,) and the structure (b_hi | b_hf | b_hg | b_ho).
         layer_id (str):
             Unique identifier of that layer.
-        sigmoid_resolution (tuple[float, float, int]):
-            Resolution (start, stop, step_size) of the sigmoid activation function.
         tanh_resolution (tuple[float, float, int]):
             Resolution (start, stop, step_size) of the tanh activation function.
         work_library_name (str):
@@ -96,9 +95,15 @@ class LSTMModule(CodeModuleBase):
         for rom_values, rom_name in zip(weights + bias, rom_names):
             yield RomFile(rom_name=rom_name, values=rom_values, resource_option="auto")
 
-        precomputed_sigmoid_inputs = to_fp(np.linspace(*self.sigmoid_resolution).tolist())  # type: ignore
         precomputed_tanh_inputs = to_fp(np.linspace(*self.tanh_resolution).tolist())  # type: ignore
-        yield SigmoidComponent(x=precomputed_sigmoid_inputs)
+        yield FPHardSigmoidFile(
+            layer_id=self.layer_id,
+            zero_threshold=self.fixed_point_factory(-3),
+            one_threshold=self.fixed_point_factory(3),
+            slope=self.fixed_point_factory(1 / 6),
+            y_intercept=self.fixed_point_factory(1 / 2),
+            fixed_point_factory=self.fixed_point_factory,
+        )
         yield TanhComponent(x=precomputed_tanh_inputs)
 
         input_size, hidden_size = self._derive_input_and_hidden_size()
