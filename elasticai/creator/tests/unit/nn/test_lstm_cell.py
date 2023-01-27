@@ -89,6 +89,17 @@ class LSTMCellTest(TensorTestCase):
         self.assertTensorEqual(expected_h, actual_h)
         self.assertTensorEqual(expected_c, actual_c)
 
+    def test_lstm_cell_without_batched_inputs_equals_pytorch_lstm_cell(self) -> None:
+        cell, reference_cell = create_lstm_cell_and_reference(
+            input_size=4, hidden_size=2, bias=True
+        )
+        inputs = tensor([1, 2, 3, 4])
+        actual_h, actual_c = cell(inputs)
+        expected_h, expected_c = reference_cell(inputs)
+
+        self.assertTensorEqual(expected_h, actual_h)
+        self.assertTensorEqual(expected_c, actual_c)
+
     def test_lstm_cell_uses_mul_from_arithmetics(self) -> None:
         cell = LSTMCell(
             input_size=1,

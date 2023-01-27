@@ -58,10 +58,10 @@ class LSTMCell(torch.nn.Module):
         h_prev, c_prev = self._initialize_previous_state(x, state)
 
         pred_ii, pred_if, pred_ig, pred_io = torch.split(
-            self.linear_ih(x), self.hidden_size, dim=1
+            self.linear_ih(x), self.hidden_size, dim=-1
         )
         pred_hi, pred_hf, pred_hg, pred_ho = torch.split(
-            self.linear_hh(h_prev), self.hidden_size, dim=1
+            self.linear_hh(h_prev), self.hidden_size, dim=-1
         )
 
         i = self.sigmoid(self.ops.add(pred_ii, pred_hi))
