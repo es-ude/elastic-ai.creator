@@ -60,23 +60,26 @@ class FloatArithmetics(Arithmetics):
 
 class FixedPointArithmetics(Arithmetics):
     def __init__(self, fixed_point_factory: FixedPointFactory) -> None:
-        self.fp_factory = fixed_point_factory
+        self.fixed_point_factory = fixed_point_factory
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return self.round(self.clamp(a))
 
     def clamp(self, a: torch.Tensor) -> torch.Tensor:
-        total_bits, frac_bits = self.fp_factory.total_bits, self.fp_factory.frac_bits
+        total_bits, frac_bits = (
+            self.fixed_point_factory.total_bits,
+            self.fixed_point_factory.frac_bits,
+        )
         min_fp = -1 * (1 << (total_bits - 1)) / (1 << frac_bits)
         max_fp = int("1" * (total_bits - 1), 2) / (1 << frac_bits)
         return torch.clamp(a, min=min_fp, max=max_fp)
 
     def round(self, a: torch.Tensor) -> torch.Tensor:
         def float_to_int(x: torch.Tensor) -> torch.Tensor:
-            return FixedPointQuantFunction.apply(x, self.fp_factory)
+            return FixedPointQuantFunction.apply(x, self.fixed_point_factory)
 
         def int_to_fixed_point(x: torch.Tensor) -> torch.Tensor:
-            return FixedPointDequantFunction.apply(x, self.fp_factory)
+            return FixedPointDequantFunction.apply(x, self.fixed_point_factory)
 
         return int_to_fixed_point(float_to_int(a))
 

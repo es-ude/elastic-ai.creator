@@ -1,11 +1,11 @@
 import torch
 
-from elasticai.creator.nn.lstm import FixedPointLSTM
+from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
 
 
 def build_fixed_point_lstm(
-    layer: FixedPointLSTM,
+    layer: FixedPointLSTMWithHardActivations,
     layer_id: str,
     sigmoid_resolution: tuple[float, float, int],
     tanh_resolution: tuple[float, float, int],

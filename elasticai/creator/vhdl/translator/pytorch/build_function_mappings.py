@@ -10,7 +10,7 @@ from elasticai.creator.vhdl.translator.pytorch.build_functions import (
 
 DEFAULT_BUILD_FUNCTION_MAPPING = BuildFunctionMapping(
     mapping={
-        "elasticai.creator.nn.lstm.FixedPointLSTM": build_fixed_point_lstm,
+        "elasticai.creator.nn.lstm.FixedPointLSTMWithHardActivations": build_fixed_point_lstm,
         "elasticai.creator.nn.linear.FixedPointLinear": build_fp_linear_1d,
         "elasticai.creator.nn.hard_sigmoid.HardSigmoid": build_fp_hard_sigmoid,
         "elasticai.creator.nn.relu.ReLU": build_fp_relu,

@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import torch
 
-from elasticai.creator.nn.lstm import FixedPointLSTM
+from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.pytorch.build_functions import (
     build_fixed_point_lstm,
@@ -19,7 +19,7 @@ def arange_parameter(
 
 class LSTMBuildFunctionTest(TestCase):
     def test_build_lstm_layer_weights_correct_set(self) -> None:
-        lstm = FixedPointLSTM(
+        lstm = FixedPointLSTMWithHardActivations(
             input_size=1,
             hidden_size=1,
             bias=True,

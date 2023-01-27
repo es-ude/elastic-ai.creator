@@ -73,21 +73,3 @@ class LSTMCell(torch.nn.Module):
         h = self.ops.mul(o, self.tanh(c))
 
         return h, c
-
-
-class FixedPointLSTMCell(LSTMCell):
-    def __init__(
-        self,
-        fixed_point_factory: FixedPointFactory,
-        input_size: int,
-        hidden_size: int,
-        bias: bool = True,
-    ) -> None:
-        super().__init__(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            bias=bias,
-            arithmetics=FixedPointArithmetics(fixed_point_factory=fixed_point_factory),
-            sigmoid_factory=HardSigmoid,
-            tanh_factory=HardTanh,
-        )

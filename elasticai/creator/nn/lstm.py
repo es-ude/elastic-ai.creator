@@ -1,10 +1,13 @@
 from collections.abc import Callable
 from functools import partial
-from typing import Optional
+from typing import Optional, cast
 
 import torch.nn
 
-from elasticai.creator.nn.lstm_cell import FixedPointLSTMCell, LSTMCell
+from elasticai.creator.nn.arithmetics import FixedPointArithmetics
+from elasticai.creator.nn.hard_sigmoid import HardSigmoid
+from elasticai.creator.nn.hard_tanh import HardTanh
+from elasticai.creator.nn.lstm_cell import LSTMCell
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
@@ -50,7 +53,7 @@ class LSTM(torch.nn.Module):
         return result, (hidden_state, cell_state)
 
 
-class FixedPointLSTM(LSTM):
+class FixedPointLSTMWithHardActivations(LSTM):
     def __init__(
         self,
         fixed_point_factory: FixedPointFactory,
@@ -59,13 +62,21 @@ class FixedPointLSTM(LSTM):
         batch_first: bool,
         bias: bool = True,
     ) -> None:
-        self.fixed_point_factory = fixed_point_factory
         super().__init__(
             input_size=input_size,
             hidden_size=hidden_size,
             bias=bias,
             batch_first=batch_first,
             lstm_cell_factory=partial(
-                FixedPointLSTMCell, fixed_point_factory=self.fixed_point_factory
+                LSTMCell,
+                arithmetics=FixedPointArithmetics(
+                    fixed_point_factory=fixed_point_factory
+                ),
+                sigmoid_factory=HardSigmoid,
+                tanh_factory=HardTanh,
             ),
         )
+
+    @property
+    def fixed_point_factory(self) -> FixedPointFactory:
+        return cast(FixedPointArithmetics, self.cell.ops).fixed_point_factory
