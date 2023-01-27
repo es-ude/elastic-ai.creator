@@ -12,7 +12,6 @@ from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoid
 from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
-from elasticai.creator.vhdl.code_files.sigmoid_component import SigmoidComponent
 from elasticai.creator.vhdl.code_files.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
 
@@ -50,7 +49,6 @@ class LSTMModule(CodeModuleBase):
     biases_hh: list[list[float]]
     layer_id: str
     fixed_point_factory: FixedPointFactory
-    sigmoid_resolution: tuple[float, float, int]
     tanh_resolution: tuple[float, float, int]
     work_library_name: str = "work"
 

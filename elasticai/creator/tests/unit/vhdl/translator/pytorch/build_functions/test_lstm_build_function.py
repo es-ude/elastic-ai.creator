@@ -34,7 +34,6 @@ class LSTMBuildFunctionTest(TestCase):
         lstm_module = build_fixed_point_lstm(
             lstm,
             layer_id="lstm1",
-            sigmoid_resolution=(-2.5, 2.5, 100),
             tanh_resolution=(-2.5, 2.5, 100),
             work_library_name="work",
         )
