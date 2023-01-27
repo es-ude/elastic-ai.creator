@@ -36,7 +36,8 @@ def translate_model(
             holds the file name of that code files and the actual code as an iterable of str (lines).
     """
     flat_model = filter(
-        lambda x: not isinstance(x, (type(model), torch.nn.Sequential)), model.modules()
+        lambda x: not isinstance(x, (type(model), torch.nn.Sequential)),
+        model.children(),
     )
 
     for layer_index, layer in enumerate(flat_model):
