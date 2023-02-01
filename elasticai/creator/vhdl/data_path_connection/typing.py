@@ -13,9 +13,6 @@ class Graph(Protocol[T_Node_co]):
         ...
 
 
-T_Node = TypeVar("T_Node", bound="Node")
-
-
 @runtime_checkable
 class Node(Identifiable, Protocol):
     @property

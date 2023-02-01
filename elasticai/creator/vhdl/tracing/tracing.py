@@ -1,26 +1,18 @@
 import typing
 from abc import abstractmethod
-from typing import (
-    Collection,
-    Iterable,
-    Optional,
-    Protocol,
-    Reversible,
-    overload,
-    runtime_checkable,
-)
+from typing import Iterable, Optional, Protocol, Reversible, overload, runtime_checkable
 
 from torch.fx import Graph as fxGraph
 
 from elasticai.creator.mlframework import Module
-from elasticai.creator.vhdl.code import Code, Translatable
+from elasticai.creator.vhdl.code import Translatable
 from elasticai.creator.vhdl.data_path_connection.typing import Graph
 from elasticai.creator.vhdl.data_path_connection.typing import Node as _Node
 from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
 
 
-@typing.runtime_checkable
-class TranslatableLayer(Translatable, Module, typing.Protocol):
+@runtime_checkable
+class TranslatableLayer(Translatable, Module, Protocol):
     ...
 
 
@@ -45,7 +37,7 @@ class HWEquivalentNode(Node, Protocol):
         ...
 
 
-T_Module = typing.TypeVar("T_Module", bound=Module)
+T_Module = typing.TypeVar("T_Module", bound=Module, covariant=True)
 
 
 class HWEquivalentGraph(Graph[Node], Protocol[T_Module]):
@@ -85,11 +77,11 @@ class HWEquivalentTracer(Protocol[T_Module]):
         ...
 
 
-class _HWEquivalentGraph(HWEquivalentGraph[T_Module]):
+class _HWEquivalentGraph(HWEquivalentGraph[TranslatableLayer]):
     """
         The HWEquivalentGraph is the result of tracing a compatible neural network `m`
     with the corresponding HWEquivalentTracer. It combines signal and
-    portmaps for instantiation for all nodes linked to HWEquivalent submodules of `m`
+    port maps for instantiation for all nodes linked to HWEquivalent submodules of `m`
     by making calls to these submodules.
     """
 
@@ -108,7 +100,7 @@ class _HWEquivalentGraph(HWEquivalentGraph[T_Module]):
             return node in self._modules_by_nodes
         return node.name in self._modules_by_nodes
 
-    def get_module_for_node(self, node: str | Node) -> T_Module:
+    def get_module_for_node(self, node: str | Node) -> Optional[TranslatableLayer]:
         if isinstance(node, str):
             return self._modules_by_nodes[node]
         return self._modules_by_nodes[node.name]
