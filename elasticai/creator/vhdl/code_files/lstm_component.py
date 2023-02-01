@@ -16,6 +16,7 @@ class LSTMFile:
     input_size: int
     hidden_size: int
     fixed_point_factory: Callable[[float], FixedPoint]
+    layer_id: str
     work_library_name: str = field(default="work")
 
     def __post_init__(self) -> None:
@@ -47,5 +48,6 @@ class LSTMFile:
             x_h_addr_width=str(self.x_h_addr_width),
             hidden_addr_width=str(self.hidden_addr_width),
             w_addr_width=str(self.w_addr_width),
+            layer_name=self.layer_id,
         )
         return code

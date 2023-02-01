@@ -18,6 +18,7 @@ from elasticai.creator.vhdl.vhdl_files import expand_template
 @dataclass
 class RomFile(CodeFileBase):
     rom_name: str
+    layer_id: str
     values: Sequence[FixedPoint]
     resource_option: str
 
@@ -39,6 +40,7 @@ class RomFile(CodeFileBase):
         code = expand_template(
             template,
             rom_name=self.rom_name,
+            layer_name=self.layer_id,
             rom_addr_bitwidth=str(self.addr_width),
             rom_data_bitwidth=str(self.data_width),
             rom_value=",".join(self.hex_values),

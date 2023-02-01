@@ -10,6 +10,7 @@ class LSTMComponentTest(unittest.TestCase):
             input_size=5,
             hidden_size=3,
             fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4),
+            layer_id="0",
             work_library_name="xil_defaultlib",
         )
 

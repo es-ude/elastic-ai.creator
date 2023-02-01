@@ -2,17 +2,17 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-package lstm_common is
+package lstm_common_${layer_name} is
     function multiply_16_8(X1 : in signed(15 downto 0); X2 : in signed(15 downto 0)) return signed;
     function multiply_16_8_without_cut(X1 : in signed(15 downto 0); X2 : in signed(15 downto 0)) return signed;
     function cut_16_to_8(X1 : in signed(31 downto 0)) return signed;
 
     function multiply_12_4(X1 : in signed(11 downto 0); X2 : in signed(11 downto 0)) return signed;
     function multiply_8_4(X1 : in signed(7 downto 0); X2 : in signed(7 downto 0)) return signed;
-end package lstm_common;
+end package lstm_common_${layer_name};
 
 
-package body lstm_common is
+package body lstm_common_${layer_name} is
 
     function multiply_16_8(X1 : in signed(15 downto 0);
                       X2 : in signed(15 downto 0)) return signed is
@@ -127,4 +127,4 @@ package body lstm_common is
                     end if;
                     return TEMP2;
                 end function;
-end lstm_common;
+end lstm_common_${layer_name};

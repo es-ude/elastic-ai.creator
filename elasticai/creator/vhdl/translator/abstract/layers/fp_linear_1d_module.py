@@ -43,12 +43,14 @@ class FPLinear1dModule(CodeModuleBase):
         name_suffix = f"_fp_linear_1d_{self.layer_id}"
         yield RomFile(
             rom_name="w_rom" + name_suffix,
+            layer_id=self.layer_id,
             values=to_fp(flat_weight),
             resource_option="auto",
         )
 
         yield RomFile(
             rom_name="b_rom" + name_suffix,
+            layer_id=self.layer_id,
             values=to_fp(self.bias),
             resource_option="auto",
         )

@@ -5,9 +5,9 @@ USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ${work_library_name};
-use ${work_library_name}.lstm_common.all;
+use ${work_library_name}.lstm_common_${layer_name}.all;
 
-entity lstm is
+entity lstm_${layer_name} is
     generic (
         DATA_WIDTH  : integer := ${data_width};                -- that fixed point data has ${data_width}bits
         FRAC_WIDTH  : integer := ${frac_width};                -- and ${frac_width}bits is for the factional part
@@ -34,9 +34,9 @@ entity lstm is
         h_out_addr : in std_logic_vector(HIDDEN_ADDR_WIDTH-1 downto 0); -- each rising_edge update h_out_data
         h_out_data : out std_logic_vector(DATA_WIDTH-1 downto 0)  --  accordingly when h_out_en is high
     );
-end lstm;
+end lstm_${layer_name};
 
-architecture rtl of lstm is
+architecture rtl of lstm_${layer_name} is
 
     constant VECTOR_LENGTH : integer := INPUT_SIZE + HIDDEN_SIZE;
     constant MATRIX_LENGHT : integer := (INPUT_SIZE + HIDDEN_SIZE) * HIDDEN_SIZE;
@@ -139,7 +139,7 @@ clk_hadamard_internal <= clock;
 --------------------------------------------------------
 
 -- Instantiation x input buffer
-buffer_h : entity ${work_library_name}.dual_port_2_clock_ram(rtl)
+buffer_h : entity ${work_library_name}.dual_port_2_clock_ram_${layer_name}(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
@@ -164,7 +164,7 @@ x_h_config_addr <= state_update_x_h_addr;
 x_h_config_data <= state_update_x_h_data;
 x_h_config_we <= state_update_we;
 
-buffer_c : entity ${work_library_name}.dual_port_2_clock_ram(rtl)
+buffer_c : entity ${work_library_name}.dual_port_2_clock_ram_${layer_name}(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => HIDDEN_ADDR_WIDTH,
@@ -192,7 +192,7 @@ c_config_data <= state_update_cell_data;
 c_config_we <= state_update_we;
 
 
-temp_h : entity ${work_library_name}.dual_port_2_clock_ram(rtl)
+temp_h : entity ${work_library_name}.dual_port_2_clock_ram_${layer_name}(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
@@ -213,7 +213,7 @@ port map  (
 );
 
 
-temp_c : entity ${work_library_name}.dual_port_2_clock_ram(rtl)
+temp_c : entity ${work_library_name}.dual_port_2_clock_ram_${layer_name}(rtl)
 generic map (
     RAM_WIDTH => DATA_WIDTH,
     RAM_DEPTH_WIDTH => X_H_ADDR_WIDTH,
@@ -355,13 +355,13 @@ begin
 
 end process;
 
-SHARED_SIGMOID : entity ${work_library_name}.sigmoid(rtl)
+SHARED_SIGMOID : entity ${work_library_name}.sigmoid_${layer_name}(rtl)
 port map (
     sigmoid_in,
     sigmoid_out
 );
 
-SHARED_TANH : entity ${work_library_name}.tanh(rtl)
+SHARED_TANH : entity ${work_library_name}.tanh_${layer_name}(rtl)
 port map (
     tanh_in,
     tanh_out
@@ -488,7 +488,7 @@ h_out_data <= std_temp_h_read_data;
 
 -- weights
 -- [Wii,Whi]
-rom_wi : entity ${work_library_name}.wi_rom(rtl)
+rom_wi : entity ${work_library_name}.wi_rom_${layer_name}(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -498,7 +498,7 @@ port map  (
 w_i_data <= signed(std_wi_out);
 
 -- [Wif,Whf]
-rom_wf : entity ${work_library_name}.wf_rom(rtl)
+rom_wf : entity ${work_library_name}.wf_rom_${layer_name}(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -508,7 +508,7 @@ port map  (
 w_f_data <= signed(std_wf_out);
 
 -- [Wig,Whg]
-rom_wg : entity ${work_library_name}.wg_rom(rtl)
+rom_wg : entity ${work_library_name}.wg_rom_${layer_name}(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -518,7 +518,7 @@ port map  (
 w_g_data <= signed(std_wg_out);
 
 -- [Wif,Whf]
-rom_wo : entity ${work_library_name}.wo_rom(rtl)
+rom_wo : entity ${work_library_name}.wo_rom_${layer_name}(rtl)
 port map  (
     clk  => n_clock,
     en   => '1', -- todo can be optimized
@@ -529,7 +529,7 @@ w_o_data <= signed(std_wo_out);
 
 -- biases
 -- [Bii+Bhi]
-rom_bi : entity ${work_library_name}.bi_rom(rtl)
+rom_bi : entity ${work_library_name}.bi_rom_${layer_name}(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized
@@ -539,7 +539,7 @@ port map  (
 b_i_data <= signed(std_bi_out);
 
 -- [Bif+Bhf]
-rom_bf : entity ${work_library_name}.bf_rom(rtl)
+rom_bf : entity ${work_library_name}.bf_rom_${layer_name}(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized
@@ -549,7 +549,7 @@ port map  (
 b_f_data <= signed(std_bf_out);
 
 -- [Big+Bhg]
-rom_bg : entity ${work_library_name}.bg_rom(rtl)
+rom_bg : entity ${work_library_name}.bg_rom_${layer_name}(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized
@@ -559,7 +559,7 @@ port map  (
 b_g_data <= signed(std_bg_out);
 
 -- [Bio+Bho]
-rom_bo : entity ${work_library_name}.bo_rom(rtl)
+rom_bo : entity ${work_library_name}.bo_rom_${layer_name}(rtl)
 port map  (
     clk  => clock,
     en   => '1', -- todo can be optimized

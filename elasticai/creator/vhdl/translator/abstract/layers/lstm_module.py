@@ -91,7 +91,12 @@ class LSTMModule(CodeModuleBase):
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
         for rom_values, rom_name in zip(weights + bias, rom_names):
-            yield RomFile(rom_name=rom_name, values=rom_values, resource_option="auto")
+            yield RomFile(
+                rom_name=rom_name,
+                layer_id=self.layer_id,
+                values=rom_values,
+                resource_option="auto",
+            )
 
         precomputed_tanh_inputs = to_fp(np.linspace(*self.tanh_resolution).tolist())  # type: ignore
         yield FPHardSigmoidFile(
@@ -109,8 +114,9 @@ class LSTMModule(CodeModuleBase):
             input_size=input_size,
             hidden_size=hidden_size,
             fixed_point_factory=self.fixed_point_factory,
+            layer_id=self.layer_id,
             work_library_name=self.work_library_name,
         )
 
-        yield LSTMCommonVHDLFile()
-        yield DualPort2ClockRamVHDLFile()
+        yield LSTMCommonVHDLFile(layer_id=self.layer_id)
+        yield DualPort2ClockRamVHDLFile(layer_id=self.layer_id)
