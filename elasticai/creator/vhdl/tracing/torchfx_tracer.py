@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.tracing.tracing import (
 )
 
 
-class HWEquivalentFXTracer(fxTracer, HWEquivalentTracer):
+class HWEquivalentFXTracer(fxTracer, HWEquivalentTracer[TranslatableLayer]):
     def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
         return m.__module__.startswith("elasticai.creator.vhdl.hw_equivalent")
 

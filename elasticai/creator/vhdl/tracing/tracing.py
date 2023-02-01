@@ -21,13 +21,7 @@ from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
 
 @typing.runtime_checkable
 class TranslatableLayer(Translatable, Module, typing.Protocol):
-    @abstractmethod
-    def signal_definitions(self, prefix: str) -> Code:
-        ...
-
-    @abstractmethod
-    def instantiation(self, prefix: str) -> Code:
-        ...
+    ...
 
 
 @runtime_checkable
@@ -51,17 +45,20 @@ class HWEquivalentNode(Node, Protocol):
         ...
 
 
-class HWEquivalentGraph(Graph[Node], Protocol):
+T_Module = typing.TypeVar("T_Module", bound=Module)
+
+
+class HWEquivalentGraph(Graph[Node], Protocol[T_Module]):
     @overload
-    def get_module_for_node(self, node: str) -> Optional[Module]:
+    def get_module_for_node(self, node: str) -> Optional[T_Module]:
         ...
 
     @overload
-    def get_module_for_node(self, node: Node) -> Optional[Module]:
+    def get_module_for_node(self, node: Node) -> Optional[T_Module]:
         ...
 
     @abstractmethod
-    def get_module_for_node(self, node: Node | str) -> Optional[Module]:
+    def get_module_for_node(self, node: Node | str) -> Optional[T_Module]:
         ...
 
     @overload
@@ -82,13 +79,13 @@ class HWEquivalentGraph(Graph[Node], Protocol):
         ...
 
 
-class HWEquivalentTracer(Protocol):
+class HWEquivalentTracer(Protocol[T_Module]):
     @abstractmethod
-    def trace(self, root: Module, **kwargs) -> HWEquivalentGraph:
+    def trace(self, root: Module, **kwargs) -> HWEquivalentGraph[T_Module]:
         ...
 
 
-class _HWEquivalentGraph(HWEquivalentGraph):
+class _HWEquivalentGraph(HWEquivalentGraph[T_Module]):
     """
         The HWEquivalentGraph is the result of tracing a compatible neural network `m`
     with the corresponding HWEquivalentTracer. It combines signal and
@@ -111,7 +108,7 @@ class _HWEquivalentGraph(HWEquivalentGraph):
             return node in self._modules_by_nodes
         return node.name in self._modules_by_nodes
 
-    def get_module_for_node(self, node: str | Node) -> Module:
+    def get_module_for_node(self, node: str | Node) -> T_Module:
         if isinstance(node, str):
             return self._modules_by_nodes[node]
         return self._modules_by_nodes[node.name]
@@ -119,11 +116,3 @@ class _HWEquivalentGraph(HWEquivalentGraph):
     @property
     def hw_equivalent_nodes(self) -> Iterable[Node]:
         return filter(lambda n: n.name in self._modules_by_nodes, self._fx_graph.nodes)
-
-    @property
-    def hw_equivalent_layers(self) -> Collection[HWEquivalentLayer]:
-        layers = set()
-        for node in self.hw_equivalent_nodes:
-            if isinstance(node, HWEquivalentNode):
-                layers.add(node.hw_equivalent_layer)
-        return layers

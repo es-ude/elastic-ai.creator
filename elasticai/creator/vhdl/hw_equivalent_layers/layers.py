@@ -16,7 +16,11 @@ from elasticai.creator.vhdl.designs.network_blocks import (
 from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
 from elasticai.creator.vhdl.tracing.torchfx_tracer import HWEquivalentFXTracer
-from elasticai.creator.vhdl.tracing.tracing import HWEquivalentGraph, HWEquivalentTracer
+from elasticai.creator.vhdl.tracing.tracing import (
+    HWEquivalentGraph,
+    HWEquivalentTracer,
+    TranslatableLayer,
+)
 
 
 class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
@@ -39,7 +43,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
         module: Module = typing.cast(Module, self)
         graph = self._get_tracer().trace(module)
 
-        def generate_port_maps(graph: HWEquivalentGraph):
+        def generate_port_maps(graph: HWEquivalentGraph[TranslatableLayer]):
             port_maps = []
             for node in graph.hw_equivalent_nodes:
                 module = graph.get_module_for_node(node)
