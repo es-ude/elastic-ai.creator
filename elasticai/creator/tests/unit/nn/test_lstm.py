@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 
@@ -11,7 +11,7 @@ from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
 def create_lstm(
     input_size: int, hidden_size: int, bias: bool, batch_first: bool
 ) -> tuple[torch.nn.Module, torch.nn.Module]:
-    lstm_args = dict(
+    lstm_args: dict[str, Any] = dict(
         input_size=input_size,
         hidden_size=hidden_size,
         bias=bias,

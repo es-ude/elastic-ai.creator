@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from typing import Optional, cast
 
-import torch.nn
+import torch
 
 from elasticai.creator.nn.arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid
@@ -18,7 +18,7 @@ class LSTM(torch.nn.Module):
         hidden_size,
         bias: bool,
         batch_first: bool,
-        lstm_cell_factory: Callable[..., LSTMCell],
+        lstm_cell_factory: Callable[..., torch.nn.Module],
     ) -> None:
         super().__init__()
         self.cell = lstm_cell_factory(
@@ -46,6 +46,9 @@ class LSTM(torch.nn.Module):
             hidden_state, cell_state = self.cell(inputs[i], state)
             state = (hidden_state, cell_state)
             outputs.append(hidden_state)
+
+        if state is None:
+            raise RuntimeError("Number of samples must be larger than 0.")
 
         result = torch.stack(outputs, dim=1 if batched and self.batch_first else 0)
         hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)

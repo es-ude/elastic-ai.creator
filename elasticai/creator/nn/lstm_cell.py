@@ -3,11 +3,8 @@ from typing import Any, Optional
 
 import torch
 
-from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
-from elasticai.creator.nn.hard_sigmoid import HardSigmoid
-from elasticai.creator.nn.hard_tanh import HardTanh
+from elasticai.creator.nn.arithmetics import Arithmetics
 from elasticai.creator.nn.linear import Linear
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
 class LSTMCell(torch.nn.Module):
@@ -45,7 +42,7 @@ class LSTMCell(torch.nn.Module):
         self.tanh = tanh_factory()
 
     def _initialize_previous_state(
-        self, x: torch.Tensor, state: tuple[torch.Tensor, torch.Tensor]
+        self, x: torch.Tensor, state: Optional[tuple[torch.Tensor, torch.Tensor]]
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if state is None:
             zeros = torch.zeros(*(*x.shape[:-1], self.hidden_size), dtype=x.dtype)
