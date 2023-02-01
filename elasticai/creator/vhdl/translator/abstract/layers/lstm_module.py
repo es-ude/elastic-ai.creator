@@ -9,10 +9,10 @@ from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
     DualPort2ClockRamVHDLFile,
 )
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
+from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
 from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
-from elasticai.creator.vhdl.code_files.tanh_component import TanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
 
 
@@ -37,8 +37,6 @@ class LSTMModule(CodeModuleBase):
             (4*hidden_size,) and the structure (b_hi | b_hf | b_hg | b_ho).
         layer_id (str):
             Unique identifier of that layer.
-        tanh_resolution (tuple[float, float, int]):
-            Resolution (start, stop, step_size) of the tanh activation function.
         work_library_name (str):
             Name of the work library.
     """
@@ -49,7 +47,6 @@ class LSTMModule(CodeModuleBase):
     biases_hh: list[list[float]]
     layer_id: str
     fixed_point_factory: FixedPointFactory
-    tanh_resolution: tuple[float, float, int]
     work_library_name: str = "work"
 
     @property
@@ -97,8 +94,6 @@ class LSTMModule(CodeModuleBase):
                 values=rom_values,
                 resource_option="auto",
             )
-
-        precomputed_tanh_inputs = to_fp(np.linspace(*self.tanh_resolution).tolist())  # type: ignore
         yield FPHardSigmoidFile(
             layer_id=self.layer_id,
             zero_threshold=self.fixed_point_factory(-3),
@@ -107,8 +102,12 @@ class LSTMModule(CodeModuleBase):
             y_intercept=self.fixed_point_factory(1 / 2),
             fixed_point_factory=self.fixed_point_factory,
         )
-        yield TanhComponent(x=precomputed_tanh_inputs)
-
+        yield FPHardTanhComponent(
+            min_val=self.fixed_point_factory(-1),
+            max_val=self.fixed_point_factory(1),
+            fixed_point_factory=self.fixed_point_factory,
+            layer_id=self.layer_id,
+        )
         input_size, hidden_size = self._derive_input_and_hidden_size()
         yield LSTMFile(
             input_size=input_size,
@@ -117,6 +116,5 @@ class LSTMModule(CodeModuleBase):
             layer_id=self.layer_id,
             work_library_name=self.work_library_name,
         )
-
         yield LSTMCommonVHDLFile(layer_id=self.layer_id)
         yield DualPort2ClockRamVHDLFile(layer_id=self.layer_id)

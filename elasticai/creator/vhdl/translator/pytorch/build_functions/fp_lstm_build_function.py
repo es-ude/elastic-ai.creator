@@ -7,7 +7,6 @@ from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
 def build_fixed_point_lstm(
     layer: FixedPointLSTMWithHardActivations,
     layer_id: str,
-    tanh_resolution: tuple[float, float, int],
     work_library_name: str,
 ) -> LSTMModule:
     def to_list(tensor: torch.Tensor) -> list:
@@ -20,6 +19,5 @@ def build_fixed_point_lstm(
         biases_hh=[to_list(layer.cell.linear_hh.bias)],
         layer_id=layer_id,
         fixed_point_factory=layer.fixed_point_factory,
-        tanh_resolution=tanh_resolution,
         work_library_name=work_library_name,
     )
