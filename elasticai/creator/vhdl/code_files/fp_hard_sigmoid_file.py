@@ -1,5 +1,5 @@
+from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
-from elasticai.creator.vhdl.vhdl_files import VHDLFile
 
 
 class FPHardSigmoidFile(VHDLFile):
@@ -24,4 +24,4 @@ class FPHardSigmoidFile(VHDLFile):
         )
         stringified_d = dict(((k, str(v)) for k, v in d.items()))
         name = "fp_hard_sigmoid"
-        super().__init__(name=name, **stringified_d)
+        super().__init__(template_name=name, **stringified_d)

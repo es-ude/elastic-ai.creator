@@ -1,155 +1,103 @@
-from typing import Any, Optional, TypeVar
-
-from elasticai.creator.vhdl.signals.base_signal import (
-    BaseInSignal,
-    OutSignal,
-    Reversible,
-)
-from elasticai.creator.vhdl.signals.basename_matching_signal import (
-    BaseNameMatchingMixin,
-    BaseNameMixin,
-)
-from elasticai.creator.vhdl.signals.std_logic_signal_definitions import (
-    create_std_logic_definition,
-    create_std_logic_vector_definition,
-)
-
-T_StdLogicDefinitionWithDefaultMixin = TypeVar(
-    "T_StdLogicDefinitionWithDefaultMixin", bound="_StdLogicDefinitionWithDefaultMixin"
-)
+import dataclasses
+import typing
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Protocol
 
 
-class _StdLogicDefinitionWithDefaultMixin(BaseNameMixin):
-    def __init__(
-        self,
-        basename: str,
-        prefix: Optional[str] = None,
-        default_value: Optional[str] = None,
-    ):
-        super().__init__(basename=basename, prefix=prefix)
-        self._default_value = default_value
+class Signal(Protocol):
+    @abstractmethod
+    def accepts(self, other: "Signal") -> bool:
+        ...
 
-    def definition(self) -> str:
-        return create_std_logic_definition(self, self._default_value)
+    @abstractmethod
+    def id(self) -> str:
+        ...
 
-    def with_prefix(
-        self: T_StdLogicDefinitionWithDefaultMixin, prefix: str
-    ) -> T_StdLogicDefinitionWithDefaultMixin:
-        return self.__class__(
-            basename=self._basename, prefix=prefix, default_value=self._default_value
-        )
+    @abstractmethod
+    def definition(self, prefix: str = "") -> str:
+        ...
 
 
-class LogicInSignal(
-    _StdLogicDefinitionWithDefaultMixin,
-    BaseNameMatchingMixin,
-    BaseInSignal,
-    Reversible["LogicOutSignal"],
-):
-    @staticmethod
-    def _direction_matches(other: Any) -> bool:
-        return isinstance(other, LogicOutSignal)
-
-    def matches(self, other: Any) -> bool:
-        return self._direction_matches(other) and super().matches(other)
-
-    def reverse(self) -> "LogicOutSignal":
-        return LogicOutSignal(
-            basename=self._basename,
-            prefix=self._prefix,
-            default_value=self._default_value,
-        )
+@dataclass(kw_only=True)
+class _SignalConfiguration:
+    id: str
+    default: str
+    accepted_names: list[str]
 
 
-class LogicOutSignal(
-    _StdLogicDefinitionWithDefaultMixin,
-    BaseNameMixin,
-    OutSignal,
-    Reversible[LogicInSignal],
-):
-    def reverse(self) -> "LogicInSignal":
-        return LogicInSignal(
-            basename=self._basename,
-            prefix=self._prefix,
-            default_value=self._default_value,
-        )
+@dataclass(kw_only=True)
+class _VectorSignalConfiguration(_SignalConfiguration):
+    width: int
 
 
-T_LogicVectorDefinitionWithDefaultMixin = TypeVar(
-    "T_LogicVectorDefinitionWithDefaultMixin",
-    bound="_LogicVectorDefinitionWithDefaultMixin",
-)
+class SignalBuilder:
+    def __init__(self):
+        self.args = {
+            "width": 0,
+            "id": "x",
+            "accepted_names": list(),
+            "default": None,
+        }
+
+    def width(self, width: int) -> "SignalBuilder":
+        self.args.update({"width": width})
+        return self
+
+    def id(self, name: str) -> "SignalBuilder":
+        self.args.update({"id": name})
+        return self
+
+    def accepted_names(self, names: list[str]) -> "SignalBuilder":
+        self.args.update({"accepted_names": names})
+        return self
+
+    def default(self, value: str) -> "SignalBuilder":
+        self.args.update({"default": value})
+        return self
+
+    def build(self) -> Signal:
+        if self.args["width"] > 0:
+            return _VectorSignalImpl(_VectorSignalConfiguration(**self.args))
+        else:
+            args_without_width = filter(
+                lambda entry: entry[0] != "width", self.args.items()
+            )
+            return _SignalImpl(_SignalConfiguration(**dict(args_without_width)))
 
 
-class _LogicVectorDefinitionWithDefaultMixin(BaseNameMixin):
-    def __init__(
-        self,
-        basename: str,
-        width: int,
-        prefix: Optional[str] = None,
-        default_value: Optional[str] = None,
-    ):
-        super().__init__(basename=basename, prefix=prefix)
-        self._default_value = default_value
-        self._width = width
+class _SignalImpl(Signal):
+    def __init__(self, base: _SignalConfiguration):
+        self._base = base
 
-    def width(self) -> int:
-        return self._width
+    def id(self) -> str:
+        return self._base.id
 
-    def with_prefix(
-        self: T_LogicVectorDefinitionWithDefaultMixin, prefix: str
-    ) -> T_LogicVectorDefinitionWithDefaultMixin:
-        return self.__class__(
-            basename=self._basename,
-            prefix=prefix,
-            default_value=self._default_value,
-            width=self._width,
-        )
+    def _default(self) -> str:
+        if self._base.default is None:
+            return ""
+        return f" := {self._base.default}"
 
-    def definition(self):
-        return create_std_logic_vector_definition(self, self._default_value)
+    def definition(self, prefix: str = "") -> str:
+        return f"signal {prefix}{self.id()} : std_logic{self._default()};"
 
-
-class LogicInVectorSignal(
-    _LogicVectorDefinitionWithDefaultMixin,
-    BaseNameMatchingMixin,
-    BaseInSignal,
-    Reversible["LogicOutVectorSignal"],
-):
-    def _width_matches(self, other: Any) -> bool:
-        if isinstance(other, _LogicVectorDefinitionWithDefaultMixin):
-            return self.width() == other.width()
+    def accepts(self, other: Signal) -> bool:
+        if isinstance(other, _SignalImpl):
+            return other._base.id in self._base.accepted_names
         return False
 
-    @staticmethod
-    def _direction_matches(other: Any) -> bool:
-        return isinstance(other, LogicOutVectorSignal)
 
-    def matches(self, other: Any) -> bool:
+class _VectorSignalImpl(_SignalImpl):
+    def __init__(self, base: _VectorSignalConfiguration) -> None:
+        super().__init__(base)
+
+    def definition(self, prefix: str = "") -> str:
         return (
-            self._direction_matches(other)
-            and self._width_matches(other)
-            and super().matches(other)
+            f"signal {prefix}{self.id()} :"
+            f" std_logic_vector({self._base.width - 1} downto 0){self._default()};"
         )
 
-    def reverse(self) -> "LogicOutVectorSignal":
-        return LogicOutVectorSignal(
-            basename=self._basename,
-            prefix=self._prefix,
-            width=self._width,
-            default_value=self._default_value,
-        )
-
-
-class LogicOutVectorSignal(
-    _LogicVectorDefinitionWithDefaultMixin,
-    BaseNameMixin,
-    Reversible["LogicInVectorSignal"],
-):
-    def reverse(self) -> "LogicInVectorSignal":
-        return LogicInVectorSignal(
-            basename=self._basename,
-            prefix=self._prefix,
-            width=self._width,
-            default_value=self._default_value,
-        )
+    def accepts(self, other: "_VectorSignalImpl") -> bool:
+        self_base = typing.cast(_VectorSignalConfiguration, self._base)
+        other_base = typing.cast(_VectorSignalConfiguration, other._base)
+        return super().accepts(other) and self_base.width == other_base.width

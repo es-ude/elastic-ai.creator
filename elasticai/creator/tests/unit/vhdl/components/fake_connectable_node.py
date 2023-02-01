@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from elasticai.creator.vhdl.graph.node_connector import ConnectableNode
+from elasticai.creator.vhdl.data_path_connection.node_connector import ConnectableNode
 
 
 class FakeNodeFactory:
@@ -44,6 +44,10 @@ class FakeConnectableNode(ConnectableNode):
 
     def id(self) -> str:
         return f"{self._id}"
+
+    @property
+    def name(self) -> str:
+        return self.id()
 
     def __repr__(self):
         return f"Node(id={self.id})"

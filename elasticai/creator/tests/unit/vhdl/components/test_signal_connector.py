@@ -4,7 +4,7 @@ from typing import Iterable, TypeVar
 from elasticai.creator.tests.unit.vhdl.components.fake_connectable_node import (
     FakeNodeFactory,
 )
-from elasticai.creator.vhdl.graph.graph import NodeGraph
+from elasticai.creator.vhdl.data_path_connection.node_iteration import NodeTraversal
 
 T = TypeVar("T")
 
@@ -34,8 +34,8 @@ class DummyNodeTest(unittest.TestCase):
         root = f.create([])
         root = f.create([root])
         counter = 0
-        graph = NodeGraph(root)
-        for _ in graph.nodes:
+        nodes = NodeTraversal(root)
+        for _ in nodes:
             counter += 1
         self.assertEqual(2, counter)
 
@@ -44,13 +44,13 @@ class SignalConnectionTest(unittest.TestCase):
 
     """
       - node connects its required inputs to provided outputs of parent nodes
-      - we transform a graph of torch nodes to a graph of vhdl component nodes (with torch.fx) and the vhdl component nodes
-        graph to a graph of portmaps/ports
+      - we transform a data_path_connection of torch nodes to a data_path_connection of vhdl component nodes (with torch.fx) and the vhdl component nodes
+        data_path_connection to a data_path_connection of portmaps/ports
       Basic Idea:
         Starting with leaf nodes, connect to higher nodes until no unconnected signals remain.
 
     Tests:
-      - inserting graph with two nodes and same signals
+      - inserting data_path_connection with two nodes and same signals
     """
 
     pass

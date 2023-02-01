@@ -3,100 +3,132 @@
 
 ```mermaid
 classDiagram
-   class TranslatableLayer
-   TranslatableLayer --|> Layer
-   TranslatableLayer ..|> Translatable
-   Translatable --> CodeModule
-   class Translatable {
-     translate() CodeModule
-   }
-   class CodeModule {
-     str name
-     Collection~CodeModule~ submodules
-     Collection~CodeFiles~ files
-   }
-   class CodeFile {
-     str name
-     code() Iterable~str~
-   }
-   CodeModule --> CodeFile
-   <<interface>> Translatable
-   class Connectable~T~ {
-     connect(Connectable~T~ other)
-   }
-   <<interface>> Connectable
+    RootModule --|> HWEquivalentModule
+    RootModule --> Connector
+    RootModule --> Port
+    RootModule --> PortMap
 
-   VHDLDesign --> Port
-
-   class SignalProvider {
-     signals() Collection~Signal~
-   }
-   <<interface>> SignalProvider
-   SignalProvider --|> Connectable
-   class Port {
-     signals() Collection~Signal~
-   }
-
-   class PortMap {
-     from_port(Port p) PortMap
-     signals() Collection~Signal~
-   }
-
-   Port ..|> SignalProvider
-   PortMap ..|> SignalProvider
-   PortMap --> Port
-   class VHDLDesign {
-     set_parameters(**kwargs)
-     get_port() Port
-     create() CodeModule
-   }
-
-   class Tracer~T~ {
-     trace(Module m) Graph~T~
-   }
-
-   class Connector~T~ {
-     connect(T a, T b)
-   }
-   <<interface>> Connector
-   class Signal {
-     direction() Enum
-     definition() str
-     with_prefix(str prefix) Signal
-     connect(Signal b) Iterable~str~
-     connected() bool
-   }
-
-   class SignalConnector {
-     connect(Signal a, Signal b)
-   }
-
-   class SignalGraphConnector {
-     connect(Graph~SignalNode~ g)
-     code() Iterable~str~
-   }
-
-   class Graph~T_Node~ {
-     nodes() Reversible~T_Node~
-   }
-
-   SignalGraphConnector --> SignalConnector
-   SignalGraphConnector --> Graph
-   class Node {
-     Iterable~Node~ children
-     Iterable~Node~ parents
-   }
-
-   <<interface>> Node
-
-   SignalNode ..|> Node
-   SignalNode --|> SignalProvider
-
-   SignalConnector --|> Connector
-   SignalConnector --> Signal
-   Port --> Signal
+    Connector --> ConnectableNode
+    ConnectableNode --|> Connectable
 
 
+
+
+
+    HWEquivalentModule --> VHDLDesign
+    HWEquivalentModule --|> torchModule
+    HWEquivalentModule --> Port
+    HWEquivalentModule --> PortMap
+    HWEquivalentModule --> VHDLTemplate
+
+    VHDLDesign ..|> CodeModule
+    VHDLDesign --> Port
+    VHDLDesign --> PortMap
+    VHDLDesign --> VHDLTemplate
+
+    Port ..|> Connectable~T~
+    Port --> SignalProvider
+    PortMap ..|> Connectable
+    PortMap --> SignalProvider
+
+    CodeModule --> CodeFile
+    VHDLTemplate ..|> CodeFile
+    SignalProvider --> Signal
+    SignalProvider --> InSignal
+
+    InSignal --|> Signal
+
+    CodeFile --> Code
+
+    Code ..|> Iterable~str~
+
+    class RootModule {
+      BreadthFirstTraversingConnector submodule_connector
+    }
+
+    class HWEquivalentModule {
+      translate() VHDLDesign
+    }
+
+    class VHDLDesign {
+      - VHDLTemplate main_template
+      get_port() Port
+      get_port_map(str id) PortMap
+      is_ready() bool
+      files() Dict~str_VHDLTemplate~
+      designs() Iterable~VHDLDesign~
+    }
+
+    class TemplateParser {
+      List~str~ template
+      parse()
+      get_port() Port
+    }
+
+    class Port {
+      connect(PortMap p)
+    }
+
+    class PortMap {
+      connect(PortMap p)
+      connect(Port p)
+      instantiation() Code
+      signal_definitions() Code
+    }
+
+    class Connectable {
+      connect(T o)
+      missing_connections() bool
+      connections() Code
+    }
+
+    class SignalProvider {
+      in_signals() Iterable~InSignal~
+      out_signals() Iterable~Signal~
+    }
+
+    class InSignal {
+      plug_in(Signal plug)
+      is_wired() bool
+    }
+
+    class Signal {
+      id() str
+      definition() Code
+    }
+
+    class VHDLTemplate {
+      get_port() Port
+      get_port_map(str prefix) PortMap
+      update_parameters(Dict~str_tuple_str~ params)
+      is_missing_parameters() bool
+      single_line_parameters() Dict~str_str~
+      multiline_parameters() Dict~str__tuple_str~
+    }
+
+    class CodeModule~T_CodeFile~ {
+      name() str
+      files() dict~str__T_CodeFile~
+      modules() dict~str__CodeModule~
+    }
+    <<interface>> CodeModule
+
+    class CodeFile {
+      name() str
+      code() Code
+    }
+    <<interface>> CodeFile
+
+    class Connector {
+      Iterable~Node~ nodes
+      run()
+    }
+
+    class ConnectableNode {
+      parents() Iterable~Node~
+      children() Iterable~Node~
+      id()  str
+    }
 
 ```
 We use the vhdl template as a source to read the port definition.
@@ -174,7 +206,7 @@ class Root("Module", Translatable):
         sub_modules = (node.translate() for node in graph.nodes)
         for node in reversed(graph.nodes):
             connector.append(node)
-        connections = connector.code()
+        connections = connector.connection()
         self._designer.update_parameters(
             connections=connections,
             signal_definitions=signal_definitions,

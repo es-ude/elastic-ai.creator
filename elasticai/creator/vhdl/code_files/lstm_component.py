@@ -7,8 +7,8 @@ from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
+from elasticai.creator.vhdl.designs.vhdl_files import expand_template
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.vhdl_files import expand_template
 
 
 @dataclass

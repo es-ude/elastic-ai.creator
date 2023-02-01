@@ -6,11 +6,8 @@ from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
     FixedPointLinear,
     RootModule,
 )
-from elasticai.creator.vhdl.hw_equivalent_layers.tracing import (
-    HWEquivalentFXTracer,
-    HWEquivalentNode,
-)
 from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
+from elasticai.creator.vhdl.tracing.torchfx_tracer import HWEquivalentFXTracer
 
 
 class FPLinearModel(RootModule):
@@ -40,12 +37,12 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
         tracer = HWEquivalentFXTracer()
         graph = tracer.trace(model)
         layer = None
-        for node in graph.nodes:
-            if isinstance(node, HWEquivalentNode):
-                layer = node.hw_equivalent_layer
+        for node in graph.hw_equivalent_nodes:
+            if graph.node_has_module(node):
+                layer = graph.get_module_for_node(node)
         self.assertTrue(
             layer is model.fp_linear,
-            "expected: {}, actual: {}".format(layer, model.fp_linear),
+            "expected: {}, actual: {}".format(model.fp_linear, layer),
         )
 
     def test_graph_for_single_fp_linear_layer_model_contains_no_call_function_nodes(
@@ -63,5 +60,5 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
         model = FPLinearModelWithGetItemFunctionNode()
         graph = HWEquivalentFXTracer().trace(typing.cast(Module, model))
         nodes = tuple(graph.hw_equivalent_nodes)
-        self.assertEqual(model.fp_linear, nodes[0].hw_equivalent_layer)
+        self.assertEqual(model.fp_linear, graph.get_module_for_node(nodes[0].name))
         self.assertEqual(1, len(nodes))

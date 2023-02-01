@@ -1,13 +1,11 @@
 import unittest
-from typing import Callable, Iterator
+from typing import Callable, Iterable, Iterator, Reversible
 
 from elasticai.creator.tests.unit.vhdl.components.test_signal_connector import first
-from elasticai.creator.vhdl.graph.graph import (
-    BasicGraph,
-    BasicNode,
+from elasticai.creator.vhdl.data_path_connection.node_iteration import (
     ancestors_breadth_first,
 )
-from elasticai.creator.vhdl.graph.typing import Node
+from elasticai.creator.vhdl.data_path_connection.typing import Graph, Node
 
 
 class AncestorsInBreadthFirstOrderTest(unittest.TestCase):
@@ -62,3 +60,41 @@ class AncestorsInBreadthFirstOrderTest(unittest.TestCase):
         self.check_graph_traversal(
             node, expected_sequence_in_correct_order, ancestors_breadth_first
         )
+
+
+class BasicNode(Node):
+    def __init__(self, id: int):
+        self._parents: list["BasicNode"] = []
+        self._children: list["BasicNode"] = []
+        self._id = id
+
+    def id(self) -> str:
+        return f"{self._id}"
+
+    @property
+    def parents(self) -> Iterable["BasicNode"]:
+        return self._parents
+
+    @property
+    def children(self) -> Iterable["BasicNode"]:
+        return self._children
+
+    def append(self, child: "BasicNode") -> None:
+        self._children.append(child)
+        child._parents.append(self)
+
+    def __repr__(self):
+        return f"Node({self.id()})"
+
+
+class BasicGraph(Graph):
+    def __init__(self, edges: Iterable[tuple[int, int]]):
+        number_of_nodes = max((node for edge in edges for node in edge)) + 1
+        self._nodes = [BasicNode(n) for n in range(number_of_nodes)]
+        node_edges = ((self._nodes[e[0]], self._nodes[e[1]]) for e in edges)
+        for _from, _to in node_edges:
+            _from.append(_to)
+
+    @property
+    def nodes(self) -> Reversible["BasicNode"]:
+        return self._nodes

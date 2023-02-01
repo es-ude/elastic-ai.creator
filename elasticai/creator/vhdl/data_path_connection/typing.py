@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Iterable, Protocol, Reversible, TypeVar
+from typing import Iterable, Protocol, Reversible, TypeVar, runtime_checkable
 
 from elasticai.creator.vhdl.typing import Identifiable
 
@@ -14,16 +14,16 @@ class Graph(Protocol[T_Node_co]):
 
 
 T_Node = TypeVar("T_Node", bound="Node")
-T_co = TypeVar("T_co", covariant=True)
 
 
-class Node(Identifiable, Protocol[T_co]):
+@runtime_checkable
+class Node(Identifiable, Protocol):
     @property
     @abstractmethod
-    def children(self: "Node[T_co]") -> Iterable["Node[T_co]"]:
+    def children(self: T_Node_co) -> Iterable[T_Node_co]:
         ...
 
     @property
     @abstractmethod
-    def parents(self: "Node[T_co]") -> Iterable["Node[T_co]"]:
+    def parents(self: T_Node_co) -> Iterable[T_Node_co]:
         ...

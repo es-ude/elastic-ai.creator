@@ -1,8 +1,10 @@
 from typing import Iterable, Protocol
 
 from elasticai.creator.vhdl.connectable import Connectable
-from elasticai.creator.vhdl.graph.graph import ancestors_breadth_first
-from elasticai.creator.vhdl.graph.typing import Node
+from elasticai.creator.vhdl.data_path_connection.node_iteration import (
+    ancestors_breadth_first,
+)
+from elasticai.creator.vhdl.data_path_connection.typing import Node
 
 
 class ConnectableNode(Node, Connectable, Protocol):

@@ -20,8 +20,10 @@ class VHDLFile(TemplateCodeFile):
 
     _template_package = "elasticai.creator.vhdl.templates"
 
-    def __init__(self, name: str, **parameters: Union[str, Iterable[str]]) -> None:
-        self._name = name
+    def __init__(
+        self, template_name: str, **parameters: Union[str, Iterable[str]]
+    ) -> None:
+        self._name = template_name
         self._parameters: dict[str, str] = dict()
         self._multiline_parameters: dict[str, Iterable[str]] = dict()
         self.update_parameters(**parameters)

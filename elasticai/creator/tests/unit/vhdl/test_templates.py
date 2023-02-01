@@ -2,8 +2,11 @@ import doctest
 from collections.abc import Iterator
 from unittest import TestCase
 
-from elasticai.creator.vhdl import vhdl_files
-from elasticai.creator.vhdl.vhdl_files import expand_multiline_template, expand_template
+from elasticai.creator.vhdl.designs import vhdl_files
+from elasticai.creator.vhdl.designs.vhdl_files import (
+    expand_multiline_template,
+    expand_template,
+)
 
 
 def newline_join(lines: Iterator[str]) -> str:

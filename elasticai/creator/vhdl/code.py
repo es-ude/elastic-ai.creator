@@ -1,7 +1,15 @@
 import dataclasses
 from abc import abstractmethod
 from collections.abc import Collection
-from typing import Callable, Iterable, Optional, Protocol, Union, runtime_checkable
+from typing import (
+    Callable,
+    Iterable,
+    Optional,
+    Protocol,
+    TypeVar,
+    Union,
+    runtime_checkable,
+)
 
 Code = Iterable[str]
 
@@ -15,10 +23,12 @@ class CodeGenerator(Protocol):
 
 CodeGeneratorCompatible = Code | CodeGenerator | str | Callable[[], Code]
 
+T = TypeVar("T", bound="CodeModule")
 
-class Translatable(Protocol):
+
+class Translatable(Protocol[T]):
     @abstractmethod
-    def translate(self) -> "CodeModule":
+    def translate(self) -> T:
         ...
 
 

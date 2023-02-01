@@ -7,12 +7,12 @@ from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     pad_with_zeros,
 )
+from elasticai.creator.vhdl.designs.vhdl_files import expand_template
 from elasticai.creator.vhdl.language import hex_representation
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from elasticai.creator.vhdl.vhdl_files import expand_template
 
 
 @dataclass

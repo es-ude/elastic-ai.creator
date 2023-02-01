@@ -1,6 +1,8 @@
-from elasticai.creator.vhdl.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
 
 
 class DualPort2ClockRamVHDLFile(VHDLFile):
-    def __init__(self, layer_id: str):
-        super().__init__(name="dual_port_2_clock_ram", layer_name=layer_id)
+    def __init__(self):
+        super().__init__(
+            template_name="dual_port_2_clock_ram",
+        )

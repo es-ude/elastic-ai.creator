@@ -6,8 +6,8 @@ import numpy as np
 
 from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.designs.vhdl_files import expand_multiline_template
 from elasticai.creator.vhdl.number_representations import ToLogicEncoder
-from elasticai.creator.vhdl.vhdl_files import expand_multiline_template
 
 
 # noinspection PyPropertyDefinition
