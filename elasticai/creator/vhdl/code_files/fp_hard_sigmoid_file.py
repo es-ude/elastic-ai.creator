@@ -20,7 +20,7 @@ class FPHardSigmoidFile(VHDLFile):
             one_threshold=one_threshold.to_signed_int(),
             y_intercept=y_intercept.to_signed_int(),
             slope=slope.to_signed_int(),
-            layer_id=layer_id,
+            layer_name=layer_id,
         )
         stringified_d = dict(((k, str(v)) for k, v in d.items()))
         name = "fp_hard_sigmoid"
