@@ -10,7 +10,6 @@ from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
 )
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
 from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
-from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
@@ -116,5 +115,4 @@ class LSTMModule(CodeModuleBase):
             layer_id=self.layer_id,
             work_library_name=self.work_library_name,
         )
-        yield LSTMCommonVHDLFile(layer_id=self.layer_id)
         yield DualPort2ClockRamVHDLFile(layer_id=self.layer_id)

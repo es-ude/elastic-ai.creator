@@ -26,7 +26,7 @@ class LSTMFile:
         self.x_h_addr_width = calculate_address_width(
             self.input_size + self.hidden_size
         )
-        self.hidden_addr_width = calculate_address_width(self.input_size)
+        self.hidden_addr_width = calculate_address_width(self.hidden_size)
         self.w_addr_width = calculate_address_width(
             (self.input_size + self.hidden_size) * self.hidden_size
         )

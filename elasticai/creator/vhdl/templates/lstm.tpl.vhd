@@ -5,7 +5,6 @@ USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ${work_library_name};
-use ${work_library_name}.lstm_common_${layer_name}.all;
 
 entity lstm_${layer_name} is
     generic (
@@ -16,7 +15,7 @@ entity lstm_${layer_name} is
         HIDDEN_SIZE : integer := ${hidden_size};               -- same as hidden_size of the lstm in PyTorch
 
         X_H_ADDR_WIDTH : integer := ${x_h_addr_width};         -- equals to ceil(log2(input_size+hidden_size))
-        HIDDEN_ADDR_WIDTH  : integer := ${hidden_addr_width};  -- equals to ceil(log2(input_size))
+        HIDDEN_ADDR_WIDTH  : integer := ${hidden_addr_width};  -- equals to ceil(log2(hidden_size))
         W_ADDR_WIDTH : integer := ${w_addr_width}              -- equals to ceil(log2((input_size+hidden_size)*hidden_size)
         );
     port (
@@ -37,6 +36,61 @@ entity lstm_${layer_name} is
 end lstm_${layer_name};
 
 architecture rtl of lstm_${layer_name} is
+
+    function multiply(X1 : in signed(DATA_WIDTH-1 downto 0);
+                  X2 : in signed(DATA_WIDTH-1 downto 0)) return signed is
+        variable TEMP : signed(DATA_WIDTH*2-1 downto 0);
+        variable TEMP2 : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+        variable TEMP3 : signed(FRAC_WIDTH-1 downto 0);
+
+    begin
+        TEMP := X1 * X2;
+
+        TEMP2 := TEMP(DATA_WIDTH+FRAC_WIDTH-1 downto FRAC_WIDTH);
+        TEMP3 := TEMP(FRAC_WIDTH-1 downto 0);
+        if TEMP2(DATA_WIDTH-1) = '1' and TEMP3 /= 0 then
+            TEMP2 := TEMP2 + 1;
+        end if;
+
+        if TEMP>0 and TEMP2<0 then
+            TEMP2 := ('0', others => '1');
+        elsif TEMP<0 and TEMP2>0 then
+            TEMP2 := ('1', others => '0');
+        end if;
+        return TEMP2;
+    end function;
+
+    function multiply_without_cut(X1 : in signed(DATA_WIDTH-1 downto 0);
+                      X2 : in signed(DATA_WIDTH-1 downto 0)) return signed is
+        variable TEMP : signed(DATA_WIDTH*2-1 downto 0);
+
+    begin
+        TEMP := X1 * X2;
+        return TEMP;
+    end function;
+
+        function cut(X1 : in signed(DATA_WIDTH*2-1 downto 0)
+                                      ) return signed is
+        variable TEMP : signed(DATA_WIDTH*2-1 downto 0);
+        variable TEMP2 : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+        variable TEMP3 : signed(FRAC_WIDTH-1 downto 0);
+
+    begin
+        TEMP := X1;
+
+        TEMP2 := TEMP(DATA_WIDTH+FRAC_WIDTH-1 downto FRAC_WIDTH);
+        TEMP3 := TEMP(FRAC_WIDTH-1 downto 0);
+        if TEMP2(DATA_WIDTH-1) = '1' and TEMP3 /= 0 then
+            TEMP2 := TEMP2 + 1;
+        end if;
+
+        if TEMP>0 and TEMP2<0 then
+            TEMP2 := ('0', others => '1');
+        elsif TEMP<0 and TEMP2>0 then
+            TEMP2 := ('1', others => '0');
+        end if;
+        return TEMP2;
+    end function;
 
     constant VECTOR_LENGTH : integer := INPUT_SIZE + HIDDEN_SIZE;
     constant MATRIX_LENGHT : integer := (INPUT_SIZE + HIDDEN_SIZE) * HIDDEN_SIZE;
@@ -117,6 +171,7 @@ architecture rtl of lstm_${layer_name} is
 
     signal temp_c_config_data, std_temp_c_read_data :std_logic_vector((DATA_WIDTH-1) downto 0):= (others => '0');
     signal temp_c_config_we:std_logic;
+    signal std_sigmoid_in, std_sigmoid_out, std_tanh_in, std_tanh_out : std_logic_vector((DATA_WIDTH-1) downto 0);
 begin
 
 n_clock <= not clock;
@@ -303,10 +358,10 @@ begin
                         gates_out_valid <= '0';
                      end if;
 
-                    mul_i := multiply_16_8_without_cut(var_x_h_data, var_w_i_data);
-                    mul_f := multiply_16_8_without_cut(var_x_h_data, var_w_f_data);
-                    mul_g := multiply_16_8_without_cut(var_x_h_data, var_w_g_data);
-                    mul_o := multiply_16_8_without_cut(var_x_h_data, var_w_o_data);
+                    mul_i := multiply_without_cut(var_x_h_data, var_w_i_data);
+                    mul_f := multiply_without_cut(var_x_h_data, var_w_f_data);
+                    mul_g := multiply_without_cut(var_x_h_data, var_w_g_data);
+                    mul_o := multiply_without_cut(var_x_h_data, var_w_o_data);
 
                     dot_sum_i := dot_sum_i + mul_i;
                     dot_sum_f := dot_sum_f + mul_f;
@@ -323,10 +378,10 @@ begin
                         dot_sum_g := dot_sum_g;
                         dot_sum_o := dot_sum_o;
 
-                        i_gate_out <= cut_16_to_8(dot_sum_i)+b_i_data;
-                        f_gate_out <= cut_16_to_8(dot_sum_f)+b_f_data;
-                        g_gate_out <= cut_16_to_8(dot_sum_g)+b_g_data;
-                        o_gate_out <= cut_16_to_8(dot_sum_o)+b_o_data;
+                        i_gate_out <= cut(dot_sum_i)+b_i_data;
+                        f_gate_out <= cut(dot_sum_f)+b_f_data;
+                        g_gate_out <= cut(dot_sum_g)+b_g_data;
+                        o_gate_out <= cut(dot_sum_o)+b_o_data;
 
                         idx_hidden_out <= var_hidden_idx;
                         var_x_h_idx := 0;
@@ -355,16 +410,25 @@ begin
 
 end process;
 
-SHARED_SIGMOID : entity ${work_library_name}.sigmoid_${layer_name}(rtl)
+std_sigmoid_in <= std_logic_vector(sigmoid_in);
+sigmoid_out <= signed(std_sigmoid_out);
+std_tanh_in <= std_logic_vector(tanh_in);
+tanh_out <= signed(std_tanh_out);
+
+SHARED_SIGMOID : entity ${work_library_name}.fp_hard_sigmoid_${layer_name}(rtl)
 port map (
-    sigmoid_in,
-    sigmoid_out
+    '1',
+    clock,
+    std_sigmoid_in,
+    std_sigmoid_out
 );
 
-SHARED_TANH : entity ${work_library_name}.tanh_${layer_name}(rtl)
+SHARED_TANH : entity ${work_library_name}.fp_hard_tanh_${layer_name}(rtl)
 port map (
-    tanh_in,
-    tanh_out
+    '1',
+    clock,
+    std_tanh_in,
+    std_tanh_out
 );
 
 vector_hadamard_product: process(reset, clk_hadamard_internal, gates_out_valid)
@@ -404,13 +468,13 @@ begin
 
                     sigmoid_in <= i_gate_out;
                 elsif fms_act =2 then
-                    mul_f_c := multiply_16_8(var_f_gate_act, var_c_read_data);
+                    mul_f_c := multiply(var_f_gate_act, var_c_read_data);
                     var_i_gate_act := sigmoid_out;
 
                     sigmoid_in <= o_gate_out;
 
                 elsif fms_act =3 then
-                    mul_i_g := multiply_16_8(var_i_gate_act,var_g_gate_act);
+                    mul_i_g := multiply(var_i_gate_act,var_g_gate_act);
                     var_running_state := 2;
                 end if;
 
@@ -432,7 +496,7 @@ begin
 
 
 
-                var_new_h := multiply_16_8(var_o_gate_act, var_new_c_act);
+                var_new_h := multiply(var_o_gate_act, var_new_c_act);
                 new_h <= var_new_h;
 --                var_buffer_h_t(new_h_idx) := var_new_h;
                 temp_h_config_addr <= std_logic_vector(to_unsigned(new_h_idx, X_H_ADDR_WIDTH));

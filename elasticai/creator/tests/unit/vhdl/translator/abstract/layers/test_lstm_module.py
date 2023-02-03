@@ -5,7 +5,6 @@ from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
 )
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
 from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
-from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
@@ -26,7 +25,7 @@ class LSTMModuleTest(TestCase):
 
     def test_correct_number_of_components(self) -> None:
         vhdl_components = list(self.lstm.files)
-        self.assertEqual(len(vhdl_components), 13)
+        self.assertEqual(len(vhdl_components), 12)
 
     def test_contains_all_needed_components(self) -> None:
         vhdl_components = self.lstm.files
@@ -43,7 +42,6 @@ class LSTMModuleTest(TestCase):
             (FPHardSigmoidFile, "fp_hard_sigmoid.vhd"),
             (FPHardTanhComponent, "fp_hard_tanh.vhd"),
             (LSTMFile, "lstm.vhd"),
-            (LSTMCommonVHDLFile, "lstm_common.vhd"),
             (DualPort2ClockRamVHDLFile, "dual_port_2_clock_ram.vhd"),
         ]
         actual_components = [(type(x), x.name) for x in vhdl_components]
