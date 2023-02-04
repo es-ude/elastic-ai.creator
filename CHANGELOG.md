@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.30.1 (2023-02-04)
+### Fix
+* **unit:** Make test more deterministic ([`97fd410`](https://github.com/es-ude/elastic-ai.creator/commit/97fd4101af93cf17d446cb0cb38a419080d5bee6))
+
 ## v0.30.0 (2023-02-04)
 ### Feature
 * Small example for translating combination of lstm and linear layer ([`12e7101`](https://github.com/es-ude/elastic-ai.creator/commit/12e7101e8c62e8424bc2ed580cfbe645e8d33510))
