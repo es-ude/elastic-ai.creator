@@ -47,6 +47,13 @@ class OutputsZeroLSTMCell(LSTMCell):
         return torch.zeros_like(h), torch.zeros_like(c)
 
 
+def input_data(shape: tuple[int, ...]) -> torch.Tensor:
+    num_samples = 1
+    for dim in shape:
+        num_samples *= dim
+    return torch.linspace(-3, 3, num_samples).reshape(shape)
+
+
 class LSTMTest(TensorTestCase):
     def setUp(self) -> None:
         torch.manual_seed(42)
@@ -69,29 +76,29 @@ class LSTMTest(TensorTestCase):
         lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=False
         )
-        inputs = torch.randn((4, 8, 2))
+        inputs = input_data((4, 8, 2))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs)
 
     def test_lstm_batch_first_equals_pytorch_lstm(self) -> None:
         lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=True
         )
-        inputs = torch.randn((8, 4, 2))
+        inputs = input_data((8, 4, 2))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs)
 
     def test_lstm_equals_pytorch_lstm_without_batches(self) -> None:
         lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=True
         )
-        inputs = torch.randn((4, 2))
+        inputs = input_data((4, 2))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs)
 
     def test_lstm_explicit_pass_state(self) -> None:
         lstm, reference_lstm = create_lstm(
             input_size=2, hidden_size=3, bias=True, batch_first=True
         )
-        inputs = torch.randn((8, 4, 2))
-        state = (torch.randn(1, 8, 3), torch.randn(1, 8, 3))
+        inputs = input_data((8, 4, 2))
+        state = (input_data((1, 8, 3)), input_data((1, 8, 3)))
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs, state)
 
     def test_lstm_uses_given_lstm_cell(self) -> None:
@@ -103,7 +110,7 @@ class LSTMTest(TensorTestCase):
             lstm_cell_factory=OutputsZeroLSTMCell,
         )
 
-        inputs = torch.randn((8, 4, 2))
+        inputs = input_data((8, 4, 2))
         expected_output = torch.zeros((8, 4, 3))
         expected_h, expected_c = torch.zeros((1, 8, 3)), torch.zeros((1, 8, 3))
         actual_output, (actual_h, actual_c) = lstm(inputs)
