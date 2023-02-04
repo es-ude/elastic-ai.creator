@@ -8,8 +8,9 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
-from elasticai.creator.qat.constraints import WeightClipper
-from elasticai.creator.qat.layers import Binarize, QConv2d, QLinear
+from elasticai.creator.nn.layers import Binarize, QConv2d, QLinear
+
+DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 xy_train = torchvision.datasets.FashionMNIST(
     root="data/",
@@ -47,33 +48,11 @@ class Lambda(nn.Module):
         return self.func(x)
 
 
-dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-
-convolutions = []
-
-
-def Conv2d(**kwargs):
-    layer = QConv2d(**kwargs)
-    convolutions.append(layer)
-    return layer
-
-
-def Linear(**kwargs):
-    layer = QLinear(**kwargs)
-    convolutions.append(layer)
-    return layer
-
-
 def get_model():
-    _Conv2d = partial(Conv2d, quantizer=Binarize(), bias=False)
-    # _Conv2d = nn.Conv2d
+    _Conv2d = partial(QConv2d, quantizer=Binarize(), bias=False)
     num_bits = 1
     activation = Binarize
-    fc = partial(
-        Linear, quantizer=Binarize(), bias=False, constraints=[WeightClipper()]
-    )
-    # fc = nn.Linear
+    fc = partial(QLinear, quantizer=Binarize(), bias=False)
     model = nn.Sequential(
         Lambda(lambda x: x.view(-1, 1, 28, 28)),
         _Conv2d(
@@ -82,7 +61,6 @@ def get_model():
             kernel_size=3,
             stride=2,
             padding=1,
-            constraints=[WeightClipper()],
         ),
         nn.BatchNorm2d(32),
         activation(),
@@ -92,7 +70,6 @@ def get_model():
             kernel_size=3,
             stride=2,
             padding=1,
-            constraints=[WeightClipper()],
         ),
         nn.BatchNorm2d(32),
         activation(),
@@ -102,7 +79,6 @@ def get_model():
             kernel_size=3,
             stride=2,
             padding=1,
-            constraints=[WeightClipper()],
         ),
         nn.BatchNorm2d(16),
         activation(),
@@ -120,13 +96,6 @@ def accuracy(out, yb):
     return (preds == yb).float().mean()
 
 
-def apply_weights_constraint():
-    with torch.no_grad():
-        for module in model.modules():
-            if hasattr(module, "constraints"):
-                module.apply_constraint()
-
-
 def fit(model, optimizer, loss_func, batch_size, epochs, train_dataset, valid_dataset):
     data_loader = DataLoader(train_dataset, batch_size=batch_size)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size * 2)
@@ -137,7 +106,6 @@ def fit(model, optimizer, loss_func, batch_size, epochs, train_dataset, valid_da
             loss = loss_func(pred, yb)
             loss.backward()
             optimizer.step()
-            apply_weights_constraint()
             optimizer.zero_grad()
         model.eval()
         with torch.no_grad():

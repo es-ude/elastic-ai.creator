@@ -1,5 +1,6 @@
-from dataclasses import dataclass, field
-from typing import Callable, Iterator
+from collections.abc import Collection
+from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 
@@ -7,20 +8,11 @@ from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
     DualPort2ClockRamVHDLFile,
 )
-from elasticai.creator.vhdl.code_files.lstm_common_component import LSTMCommonVHDLFile
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
+from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
-from elasticai.creator.vhdl.code_files.sigmoid_component import SigmoidComponent
-from elasticai.creator.vhdl.code_files.tanh_component import TanhComponent
-from elasticai.creator.vhdl.number_representations import FixedPoint
-
-
-@dataclass
-class LSTMTranslationArgs:
-    fixed_point_factory: Callable[[float], FixedPoint]
-    sigmoid_resolution: tuple[float, float, int]
-    tanh_resolution: tuple[float, float, int]
-    work_library_name: str = field(default="work")
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
 
 
 @dataclass
@@ -42,16 +34,23 @@ class LSTMModule(CodeModuleBase):
         biases_hh (list[list[float]]):
             List of hidden-hidden biases for each layer. Biases of one layer is a list[float] with the shape
             (4*hidden_size,) and the structure (b_hi | b_hf | b_hg | b_ho).
+        layer_id (str):
+            Unique identifier of that layer.
+        work_library_name (str):
+            Name of the work library.
     """
-
-    @property
-    def name(self) -> str:
-        return "lstm"
 
     weights_ih: list[list[list[float]]]
     weights_hh: list[list[list[float]]]
     biases_ih: list[list[float]]
     biases_hh: list[list[float]]
+    layer_id: str
+    fixed_point_factory: FixedPointFactory
+    work_library_name: str = "work"
+
+    @property
+    def name(self) -> str:
+        return self.layer_id
 
     def _build_weights(
         self, to_fixed_point: Callable[[list[float]], list[FixedPoint]]
@@ -78,29 +77,42 @@ class LSTMModule(CodeModuleBase):
         _, hidden_size, input_size = np.shape(self.weights_ih)
         return input_size, hidden_size // 4
 
-    def files(self, args: LSTMTranslationArgs) -> Iterator[CodeFile]:
+    @property
+    def files(self) -> Collection[CodeFile]:
         def to_fp(values: list[float]) -> list[FixedPoint]:
-            return list(map(args.fixed_point_factory, values))
+            return list(map(self.fixed_point_factory, values))
 
         weights, bias = self._build_weights(to_fixed_point=to_fp)
         rom_names = (
             f"{name}_rom" for name in ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         )
         for rom_values, rom_name in zip(weights + bias, rom_names):
-            yield RomFile(rom_name=rom_name, values=rom_values, resource_option="auto")
-
-        precomputed_sigmoid_inputs = to_fp(np.linspace(*args.sigmoid_resolution).tolist())  # type: ignore
-        precomputed_tanh_inputs = to_fp(np.linspace(*args.tanh_resolution).tolist())  # type: ignore
-        yield SigmoidComponent(x=precomputed_sigmoid_inputs)
-        yield TanhComponent(x=precomputed_tanh_inputs)
-
+            yield RomFile(
+                rom_name=rom_name,
+                layer_id=self.layer_id,
+                values=rom_values,
+                resource_option="auto",
+            )
+        yield FPHardSigmoidFile(
+            layer_id=self.layer_id,
+            zero_threshold=self.fixed_point_factory(-3),
+            one_threshold=self.fixed_point_factory(3),
+            slope=self.fixed_point_factory(1 / 6),
+            y_intercept=self.fixed_point_factory(1 / 2),
+            fixed_point_factory=self.fixed_point_factory,
+        )
+        yield FPHardTanhComponent(
+            min_val=self.fixed_point_factory(-1),
+            max_val=self.fixed_point_factory(1),
+            fixed_point_factory=self.fixed_point_factory,
+            layer_id=self.layer_id,
+        )
         input_size, hidden_size = self._derive_input_and_hidden_size()
         yield LSTMFile(
             input_size=input_size,
             hidden_size=hidden_size,
-            fixed_point_factory=args.fixed_point_factory,
-            work_library_name=args.work_library_name,
+            fixed_point_factory=self.fixed_point_factory,
+            layer_id=self.layer_id,
+            work_library_name=self.work_library_name,
         )
-
-        yield LSTMCommonVHDLFile()
-        yield DualPort2ClockRamVHDLFile()
+        yield DualPort2ClockRamVHDLFile(layer_id=self.layer_id)

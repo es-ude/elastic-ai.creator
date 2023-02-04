@@ -1,30 +1,27 @@
 from dataclasses import dataclass
-from typing import Callable, Collection, Iterable
+from typing import Collection
 
 from elasticai.creator.vhdl.code import CodeFile, CodeModule
 from elasticai.creator.vhdl.code_files.fp_relu_component import FPReLUComponent
-from elasticai.creator.vhdl.number_representations import FixedPoint
-
-
-@dataclass
-class FPReLUTranslationArgs:
-    fixed_point_factory: Callable[[float], FixedPoint]
+from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
 @dataclass
 class FPReLUModule(CodeModule):
+    layer_id: str
+    fixed_point_factory: FixedPointFactory
+
     @property
     def submodules(self) -> Collection["CodeModule"]:
         raise NotImplementedError()
-
-    layer_id: str
 
     @property
     def name(self) -> str:
         return self.layer_id
 
-    def files(self, args: FPReLUTranslationArgs) -> Iterable[CodeFile]:
+    @property
+    def files(self) -> Collection[CodeFile]:
         yield FPReLUComponent(
             layer_id=self.layer_id,
-            fixed_point_factory=args.fixed_point_factory,
+            fixed_point_factory=self.fixed_point_factory,
         )

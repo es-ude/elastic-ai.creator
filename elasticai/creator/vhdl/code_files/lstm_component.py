@@ -16,6 +16,7 @@ class LSTMFile:
     input_size: int
     hidden_size: int
     fixed_point_factory: Callable[[float], FixedPoint]
+    layer_id: str
     work_library_name: str = field(default="work")
 
     def __post_init__(self) -> None:
@@ -25,7 +26,7 @@ class LSTMFile:
         self.x_h_addr_width = calculate_address_width(
             self.input_size + self.hidden_size
         )
-        self.hidden_addr_width = calculate_address_width(self.input_size)
+        self.hidden_addr_width = calculate_address_width(self.hidden_size)
         self.w_addr_width = calculate_address_width(
             (self.input_size + self.hidden_size) * self.hidden_size
         )
@@ -34,7 +35,7 @@ class LSTMFile:
     def name(self) -> str:
         return "lstm.vhd"
 
-    def __call__(self) -> Code:
+    def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "lstm.tpl.vhd")
 
         code = expand_template(
@@ -47,5 +48,6 @@ class LSTMFile:
             x_h_addr_width=str(self.x_h_addr_width),
             hidden_addr_width=str(self.hidden_addr_width),
             w_addr_width=str(self.w_addr_width),
+            layer_name=self.layer_id,
         )
         return code

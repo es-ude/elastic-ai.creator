@@ -9,6 +9,7 @@ class RomComponentTest(unittest.TestCase):
         fp = FixedPoint.get_factory(total_bits=16, frac_bits=8)
         self.rom = RomFile(
             rom_name="test_rom",
+            layer_id="0",
             values=[fp(i) for i in range(20)],
             resource_option="auto",
         )

@@ -137,7 +137,6 @@ class _HWEquivalentGraph(HWEquivalentGraph, HWBlockCollection):
 
 class _HWEquivalentTracer(fxTracer):
     def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
-        print(m.__module__)
         return m.__module__.startswith("elasticai.creator.vhdl.hw_equivalent_layers")
 
     def trace(self, root, **kwargs) -> HWEquivalentGraph:

@@ -16,6 +16,7 @@ from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
 
 def translate_model(
     model: torch.nn.Module,
+    translation_args: dict[str, dict[str, Any]],
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
 ) -> Iterator[CodeModule]:
     """
@@ -35,7 +36,8 @@ def translate_model(
             holds the file name of that code files and the actual code as an iterable of str (lines).
     """
     flat_model = filter(
-        lambda x: not isinstance(x, (type(model), torch.nn.Sequential)), model.modules()
+        lambda x: not isinstance(x, (type(model), torch.nn.Sequential)),
+        model.children(),
     )
 
     for layer_index, layer in enumerate(flat_model):
@@ -46,7 +48,12 @@ def translate_model(
             raise NotImplementedError(
                 f"Layer '{layer_class_name}' is currently not supported."
             )
-        module = build_fn(layer, str(layer_index))
+
+        args = translation_args.get(str(layer_index))
+        if args is None:
+            args = dict()
+
+        module = build_fn(layer, str(layer_index), **args)
         files = module.files
 
         yield CodeModuleBase(
@@ -74,7 +81,7 @@ def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
 
         for code_file in module.files:
             file_path = os.path.join(module_path, code_file.name)
-            code = "\n".join(code_file.code)
+            code = "\n".join(code_file.code())
 
             with open(file_path, "w") as out_file:
                 out_file.write(code)

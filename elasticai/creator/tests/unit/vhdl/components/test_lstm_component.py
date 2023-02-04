@@ -10,6 +10,7 @@ class LSTMComponentTest(unittest.TestCase):
             input_size=5,
             hidden_size=3,
             fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4),
+            layer_id="0",
             work_library_name="xil_defaultlib",
         )
 
@@ -21,7 +22,7 @@ class LSTMComponentTest(unittest.TestCase):
         self.assertEqual(3, self.lstm.x_h_addr_width)
 
     def test_hidden_addr_width_correct_set(self):
-        self.assertEqual(3, self.lstm.hidden_addr_width)
+        self.assertEqual(2, self.lstm.hidden_addr_width)
 
     def test_w_addr_width_correct_set(self):
         self.assertEqual(5, self.lstm.w_addr_width)

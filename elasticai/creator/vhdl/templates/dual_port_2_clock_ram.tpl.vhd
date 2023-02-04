@@ -1,4 +1,4 @@
---  based on xilinx_simple_dual_port_2_clock_ram
+--  based on xilinx_simple_dual_port_2_clock_ram_${layer_name}
 --  but we did some custom modifications(chao)
 --  Xilinx Simple Dual Port 2 Clock RAM
 --  This code implements a parameterizable SDP dual clock memory.
@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 
 USE std.textio.all;
 
-entity dual_port_2_clock_ram is
+entity dual_port_2_clock_ram_${layer_name} is
 generic (
     RAM_WIDTH : integer := 64;                      -- Specify RAM data width
     RAM_DEPTH_WIDTH : integer := 8;                    -- Specify RAM depth (number of entries)
@@ -35,9 +35,9 @@ port (
         doutb : out std_logic_vector(RAM_WIDTH-1 downto 0)   			  -- RAM output data
     );
 
-end dual_port_2_clock_ram;
+end dual_port_2_clock_ram_${layer_name};
 
-architecture rtl of dual_port_2_clock_ram is
+architecture rtl of dual_port_2_clock_ram_${layer_name} is
 
 constant C_RAM_WIDTH : integer := RAM_WIDTH;
 constant C_RAM_DEPTH : integer := 2**RAM_DEPTH_WIDTH;
