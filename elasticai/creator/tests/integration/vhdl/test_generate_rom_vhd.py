@@ -29,10 +29,14 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
             "    );",
             "end entity rom_bi_0;",
             "architecture rtl of rom_bi_0 is",
-            "    type rom_bi_0_array_t is array (0 to 2**3-1) of"
-            " std_logic_vector(12-1 downto 0);",
-            "    signal ROM :"
-            ' rom_bi_0_array_t:=(x"011",x"023",x"034",x"046",x"058",x"069",x"000",x"000");',
+            (
+                "    type rom_bi_0_array_t is array (0 to 2**3-1) of"
+                " std_logic_vector(12-1 downto 0);"
+            ),
+            (
+                "    signal ROM :"
+                ' rom_bi_0_array_t:=(x"011",x"023",x"034",x"046",x"058",x"069",x"000",x"000");'
+            ),
             "    attribute rom_style : string;",
             '    attribute rom_style of ROM : signal is "auto";',
             "begin",
