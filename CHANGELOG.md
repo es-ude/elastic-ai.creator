@@ -2,6 +2,50 @@
 
 <!--next-version-placeholder-->
 
+## v0.30.0 (2023-02-04)
+### Feature
+* Small example for translating combination of lstm and linear layer ([`12e7101`](https://github.com/es-ude/elastic-ai.creator/commit/12e7101e8c62e8424bc2ed580cfbe645e8d33510))
+* **translation:** Integrate hard tanh layer ([`eb74d3a`](https://github.com/es-ude/elastic-ai.creator/commit/eb74d3a3671616db37ba8f554332ca1ddc33dffe))
+* **translation:** Lstm uses fp hard sigmoid ([`fd265ac`](https://github.com/es-ude/elastic-ai.creator/commit/fd265ac3e1ef7f11e28236705e4a38760462bddc))
+* Add example to demonstrate that the new kinds of layers are trainable ([`231e325`](https://github.com/es-ude/elastic-ai.creator/commit/231e325815c469596c63259c5f345dc9afb0f3b7))
+* **nn:** Remove quantized_forward function and adopt tests ([`c865c73`](https://github.com/es-ude/elastic-ai.creator/commit/c865c73a53e89c40ecebc9c4b49ba6d5c14256c1))
+* **nn:** Implement concept of arithmetics ([`e7ad504`](https://github.com/es-ude/elastic-ai.creator/commit/e7ad50471e2ac7300e0db781bd37cbba1364a5e6))
+* **nn:** Remove input_quant and param_quant and add quantize function to arithmetics ([`ee91e42`](https://github.com/es-ude/elastic-ai.creator/commit/ee91e42801b0d1163a0d52130fc578477da60c74))
+* **nn:** Integrate arithmetics for the linear layer ([`a961558`](https://github.com/es-ude/elastic-ai.creator/commit/a9615581159ba4b962fac8458d9b76de0a61d98f))
+* **nn:** Rename quant_typings module to quantization and implement FakeQuant ([`0e5f24a`](https://github.com/es-ude/elastic-ai.creator/commit/0e5f24aeb9f43258f9e971ffa777c585faff05f0))
+* **unit:** Improve TensorTestCase class ([`d4273a6`](https://github.com/es-ude/elastic-ai.creator/commit/d4273a60c169669ddba5f80636d1430b69c77d90))
+* **unit:** Add unit tests for the fixed point quant/dequant autograd functions ([`f82431c`](https://github.com/es-ude/elastic-ai.creator/commit/f82431c164b9536899d0cca9b391a057add8187a))
+* **unit:** Add unit tests for the LSTMBase layer ([`589f803`](https://github.com/es-ude/elastic-ai.creator/commit/589f803fd858b22985485d795f4441a9abf97742))
+* **integration:** Convert example translate_linear_model to automated integration test ([`5d92d0b`](https://github.com/es-ude/elastic-ai.creator/commit/5d92d0b15d8c0a1d76f842fd7a8bbc591bd1cf18))
+* Convert example parametrize_convolution to automated integration test ([`3dde1c2`](https://github.com/es-ude/elastic-ai.creator/commit/3dde1c250fa4ebb617bbd543c9b26cb320d430f7))
+* **vhdl:** Start implementing lstm base module ([`b154ca5`](https://github.com/es-ude/elastic-ai.creator/commit/b154ca5525c00f735150c21f64324da87328ba5e))
+* **vhdl:** Implement quantized forward function of the fixed point lstm cell ([`7818e15`](https://github.com/es-ude/elastic-ai.creator/commit/7818e15bc6c41454090b77fe5df7a8e7930ab570))
+* **vhdl:** Implement and test lstm cell base class and start implementing fp lstm cell ([`f458fb6`](https://github.com/es-ude/elastic-ai.creator/commit/f458fb6c216385a119774a3f98788941e13ed5c9))
+* **vhdl:** Start implementing lstm base layer ([`39ce891`](https://github.com/es-ude/elastic-ai.creator/commit/39ce891d56be59d5a20a36889b0e9c2f13e00bd1))
+* **vhdl:** Implement FixedPointHardTanh layer ([`ed72810`](https://github.com/es-ude/elastic-ai.creator/commit/ed728101fb596a08e1a76d936d04306a066c50b5))
+
+### Fix
+* **translation:** Fix errors in the lstm template and remove lstm_common component ([`c4a28ce`](https://github.com/es-ude/elastic-ai.creator/commit/c4a28ce2f40dc84e7a5e4470c62a40911b73901f))
+* **translation:** Add layer_name to all vhdl templates and components ([`2d9c47d`](https://github.com/es-ude/elastic-ai.creator/commit/2d9c47dc60642d94efeb58cc3014f6a7790a6f26))
+* **translation:** Change not existing layer_id field to layer_name ([`f7425c5`](https://github.com/es-ude/elastic-ai.creator/commit/f7425c515395243962db1517116b9961b1668cd7))
+* Fix some mypy errors and remove unused imports ([`08e2362`](https://github.com/es-ude/elastic-ai.creator/commit/08e2362fa32efd13e388140ad58c93b0e79229b3))
+* **translation:** Use model.children() instead of model.modules() to avoid recursion ([`a3c349b`](https://github.com/es-ude/elastic-ai.creator/commit/a3c349b13af0fef383b494850973d8ff9ac2dd68))
+* **translation:** Remove sigmoid_resolution ([`dd4f033`](https://github.com/es-ude/elastic-ai.creator/commit/dd4f03366920f1a3774772a16a49efaa8756d249))
+* **translation:** Rename to .tpl.vhd ([`fe3c85c`](https://github.com/es-ude/elastic-ai.creator/commit/fe3c85cd77d0f2fefb90f2d3ff6eadde8570d000))
+* **nn:** Fix LSTMCell raises Error for unbatched input data and add a test for this case ([`5ce3e21`](https://github.com/es-ude/elastic-ai.creator/commit/5ce3e2125b4bcd1115d77ebe5c833e52d58bad77))
+* **translation:** Infer fixed_point_factory of linear and lstm in build functions ([`81df686`](https://github.com/es-ude/elastic-ai.creator/commit/81df686fe13db5f85c91b65c73713b7da8e6c64f))
+* **translation:** Change torch LSTM layer to our FixedPointLSTM layer ([`5e7a39a`](https://github.com/es-ude/elastic-ai.creator/commit/5e7a39a78684c09a1d374476f8fb611019ae994f))
+* **unit:** Remove unused OperationType type and FakeQuant class ([`596dbd8`](https://github.com/es-ude/elastic-ai.creator/commit/596dbd8cdf3cde67eedea2779a35ff682c9ac9f7))
+* **unit:** Fix unit and integration tests to use the new layers correctly ([`0553017`](https://github.com/es-ude/elastic-ai.creator/commit/05530178cf7fb64dc88cab82b89c24b2a1406e8d))
+* **nn:** Fix imports and use new FixedPointFactory features ([`e8c74c3`](https://github.com/es-ude/elastic-ai.creator/commit/e8c74c34ec1c5a4b5189d74f2a19a993a5ae9779))
+* **translation:** Add similar concept of translation arguments to fix the translation process ([`e387ae2`](https://github.com/es-ude/elastic-ai.creator/commit/e387ae26918fbe8e4a0ee01ccc4361849746bd66))
+* Adapt basic qtorch example to recent changes of the creator ([`a17d900`](https://github.com/es-ude/elastic-ai.creator/commit/a17d9006240a67da97b8a539620aa1974e07e942))
+* **vhdl:** Remove layer_name parameter ([`7a83b1e`](https://github.com/es-ude/elastic-ai.creator/commit/7a83b1eed3095a8b7f90438c78ba24bba6e44958))
+* **vhdl:** Fix wrong return type ([`eb53ed9`](https://github.com/es-ude/elastic-ai.creator/commit/eb53ed972ec9078f6c405ecd7c92043eaf8ed419))
+
+### Documentation
+* Add commit types and scopes ([`e759fd3`](https://github.com/es-ude/elastic-ai.creator/commit/e759fd38fb41d413ccf03617f84f87f6df9aeb12))
+
 ## v0.29.0 (2022-12-16)
 ### Feature
 * Set pypi project api token ([`37ba8c9`](https://github.com/es-ude/elastic-ai.creator/commit/37ba8c9794acc6b4bdf64087c98c61172446fcb6))
