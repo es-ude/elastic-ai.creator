@@ -4,11 +4,11 @@ import torch
 from torch.fx import Tracer as fxTracer
 
 from elasticai.creator.mlframework import Module
-from elasticai.creator.vhdl.tracing.tracing import (
+from elasticai.creator.vhdl.tracing.hw_equivalent_graph_impl import _HWEquivalentGraph
+from elasticai.creator.vhdl.tracing.typing import (
     HWEquivalentGraph,
     HWEquivalentTracer,
     TranslatableLayer,
-    _HWEquivalentGraph,
 )
 
 

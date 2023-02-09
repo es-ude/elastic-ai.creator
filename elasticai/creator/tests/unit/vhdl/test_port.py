@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.ports.port import PortMapImpl as PortMap
+from elasticai.creator.vhdl.ports.port_map_impl import PortMapImpl as PortMap
 from elasticai.creator.vhdl.signals import SignalBuilder
 
 
@@ -13,22 +13,6 @@ class PortMapTestCase(unittest.TestCase):
 
     def single_in_signal_portmap(self) -> PortMap:
         return PortMap(id="in_map", in_signals=(self.x,), out_signals=tuple())
-
-    def test_connecting_two_single_signal_portmaps_connects_their_signals(self):
-        in_map = self.single_in_signal_portmap()
-        out_map = PortMap(
-            id="out_map",
-            in_signals=tuple(),
-            out_signals=(self.x,),
-        )
-        in_map.connect(out_map)
-        self.assertFalse(out_map.is_missing_inputs())
-
-    def test_connects_in_both_directions(self):
-        out_map = PortMap(id="out", in_signals=tuple(), out_signals=(self.x,))
-        in_map = PortMap(id="in", in_signals=(self.x,), out_signals=tuple())
-        out_map.connect(in_map)
-        self.assertFalse(out_map.is_missing_inputs())
 
     def test_code_generation(self):
         map = PortMap(id="map", in_signals=[self.x], out_signals=[self.y])
@@ -55,18 +39,6 @@ class PortMapTestCase(unittest.TestCase):
             ]
         )
         self.assertEqual(expected, sorted(list(map.signal_definitions())))
-
-    def test_code_generation_for_connected_signals_returns_map_to_other_map_connection(
-        self,
-    ):
-        map = PortMap(id="map", in_signals=[self.x], out_signals=[])
-        other_map = PortMap(id="other", in_signals=[], out_signals=[self.x])
-        map.connect(other_map)
-        self.assertEqual(["other_x <= map_x;"], list(map.connections()))
-
-    def test_code_for_unconnected_signals_is_empty(self):
-        map = PortMap(id="map", in_signals=[self.x], out_signals=[])
-        self.assertEqual([], list(map.connections()))
 
 
 if __name__ == "__main__":

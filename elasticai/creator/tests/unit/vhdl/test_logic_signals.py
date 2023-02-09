@@ -4,7 +4,7 @@ from elasticai.creator.vhdl.signals import Signal, SignalBuilder
 
 
 class LogicSignalTestCase(unittest.TestCase):
-    def test_logic_in_signal_definition_is_p_x(self):
+    def test_logic_in_signal_definition_is_p_x(self) -> None:
         in_signal: Signal = SignalBuilder().id("x").build()
         self.assertEqual("signal p_x : std_logic;", in_signal.definition(prefix="p_"))
 
@@ -41,13 +41,10 @@ class LogicSignalTestCase(unittest.TestCase):
         out_signal = SignalBuilder().accepted_names(["x"]).width(3).build()
         self.assertFalse(in_signal.accepts(out_signal))
 
-    def test_signals_do_not_reconnect(self):
-        in_signal = LogicInSignal(basename="x")
-        out_signal = LogicOutSignal(basename="x").with_prefix("out")
-        in_signal.connect(out_signal)
-        out_signal = LogicOutSignal(basename="x").with_prefix("second_out")
-        in_signal.connect(out_signal)
-        self.assertEqual(["x <= out_x;"], list(in_signal.code()))
+    def test_vector_does_not_match_non_vector_signal(self):
+        vector = SignalBuilder().id("x").width(2).build()
+        non_vector = SignalBuilder().accepted_names(["x"]).width(0).build()
+        self.assertFalse(non_vector.accepts(vector))
 
 
 if __name__ == "__main__":

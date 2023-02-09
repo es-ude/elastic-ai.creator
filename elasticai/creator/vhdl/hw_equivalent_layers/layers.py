@@ -15,8 +15,8 @@ from elasticai.creator.vhdl.designs.network_blocks import (
 )
 from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
-from elasticai.creator.vhdl.tracing.torchfx_tracer import HWEquivalentFXTracer
-from elasticai.creator.vhdl.tracing.tracing import (
+from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
+from elasticai.creator.vhdl.tracing.typing import (
     HWEquivalentGraph,
     HWEquivalentTracer,
     TranslatableLayer,

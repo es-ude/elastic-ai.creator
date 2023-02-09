@@ -1,6 +1,8 @@
-from typing import Iterator, Reversible
+from typing import Iterator, Reversible, TypeVar
 
-from elasticai.creator.vhdl.data_path_connection.typing import T_Node
+from elasticai.creator.vhdl.data_path_connection.typing import Node
+
+T_Node = TypeVar("T_Node", bound=Node)
 
 
 class NodeTraversal(Reversible[T_Node]):

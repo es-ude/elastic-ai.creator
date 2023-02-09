@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
     RootModule,
 )
 from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
-from elasticai.creator.vhdl.tracing.torchfx_tracer import HWEquivalentFXTracer
+from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
 
 
 class FPLinearModel(RootModule):
