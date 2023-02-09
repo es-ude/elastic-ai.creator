@@ -4,7 +4,7 @@ from typing import Iterator, Sequence
 from elasticai.creator.vhdl.code import Code
 from elasticai.creator.vhdl.signals import Signal
 
-from . import PortMap
+from .typing import PortMap
 
 
 class PortMapImpl(PortMap):

@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 
-from elasticai.creator.vhdl.signals import Signal
-from elasticai.creator.vhdl.signals.default_signal_definition import (
-    generate_default_suffix,
-)
-from elasticai.creator.vhdl.signals.signal_configuration import _SignalConfiguration
+from .default_signal_definition import generate_default_suffix
+from .signal_configuration import _SignalConfiguration
+from .typing import Signal
 
 
 @dataclass(kw_only=True)

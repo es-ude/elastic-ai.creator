@@ -1,10 +1,7 @@
-from elasticai.creator.vhdl.signals import Signal
-from elasticai.creator.vhdl.signals.signal_configuration import _SignalConfiguration
-from elasticai.creator.vhdl.signals.signal_impl import _SignalImpl
-from elasticai.creator.vhdl.signals.vector_signal_impl import (
-    _VectorSignalConfiguration,
-    _VectorSignalImpl,
-)
+from .signal_configuration import _SignalConfiguration
+from .signal_impl import _SignalImpl
+from .typing import Signal
+from .vector_signal_impl import _VectorSignalConfiguration, _VectorSignalImpl
 
 
 class SignalBuilder:
