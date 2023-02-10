@@ -3,8 +3,10 @@ from pathlib import Path
 
 import mypy.api
 
+from elasticai.creator import examples
+
 MYPY_ARGS = [
-    str(Path("elasticai") / "creator" / "examples"),
+    str(Path(examples.__file__).parent),
 ]
 
 
