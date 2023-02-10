@@ -1,7 +1,7 @@
 import torch
 
 from elasticai.creator.nn.arithmetics import FixedPointArithmetics, FloatArithmetics
-from elasticai.creator.tests.unit.tensor_test_case import TensorTestCase
+from elasticai.creator.tests.tensor_test_case import TensorTestCase
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
