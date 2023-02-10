@@ -1,7 +1,7 @@
 from math import ceil, floor
 
 import torch
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt  # type: ignore[import]
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from elasticai.creator.nn.linear import FixedPointLinear
