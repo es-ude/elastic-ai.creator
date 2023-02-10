@@ -45,20 +45,16 @@ class TestCasesLSTMCell(TestBenchBase):
             f"h_out_en <= '0'",
             f"wait for 2*clk_period",
             f"reset <= '0'",
-            (
-                f"for ii {Keywords.IN.value} 0 to {str(self.len_of_x_h_vector-1)} loop"
-                " send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)),"
-                " std_logic_vector(test_x_h_data(ii)), clock, x_config_en,"
-                " x_config_addr, x_config_data)"
-            ),
+            f"for ii {Keywords.IN.value} 0 to {str(self.len_of_x_h_vector-1)} loop"
+            " send_x_h_data(std_logic_vector(to_unsigned(ii, X_H_ADDR_WIDTH)),"
+            " std_logic_vector(test_x_h_data(ii)), clock, x_config_en,"
+            " x_config_addr, x_config_data)",
             f"wait for 10 ns",
             f"{Keywords.END.value} loop",
-            (
-                f"for ii {Keywords.IN.value} 0 to {str(self.len_of_cell_vector-1)} loop"
-                " send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)),"
-                " std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr,"
-                " c_config_data)"
-            ),
+            f"for ii {Keywords.IN.value} 0 to {str(self.len_of_cell_vector-1)} loop"
+            " send_c_data(std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH)),"
+            " std_logic_vector(test_c_data(ii)), clock, c_config_en, c_config_addr,"
+            " c_config_data)",
             f"wait for 10 ns",
             f"{Keywords.END.value} loop",
             f"enable <= '1'",
@@ -66,16 +62,12 @@ class TestCasesLSTMCell(TestBenchBase):
             f"wait for 1*clk_period",
             f"enable <= '0'",
             f"-- reference h_out: {str(self.reference_h_out)}",
-            (
-                f"for ii in 0 to {str(self.len_of_h_vector-1)} loop h_out_addr <="
-                " std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))"
-            ),
+            f"for ii in 0 to {str(self.len_of_h_vector-1)} loop h_out_addr <="
+            " std_logic_vector(to_unsigned(ii, HIDDEN_ADDR_WIDTH))",
             f"h_out_en <= '1'",
             f"wait for 2*clk_period",
-            (
-                f'report "The value of h_out(" & integer\'image(ii)& ") is " &'
-                f" integer'image(to_integer(signed(h_out_data)))"
-            ),
+            f'report "The value of h_out(" & integer\'image(ii)& ") is " &'
+            f" integer'image(to_integer(signed(h_out_data)))",
             f"{Keywords.END.value} loop",
             f"wait for 10*clk_period",
         ]
