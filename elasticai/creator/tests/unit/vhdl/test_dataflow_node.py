@@ -35,13 +35,13 @@ class DataFlowNodeTest(unittest.TestCase):
         self.assertTrue(n.is_satisfied())
 
     def test_unconnected_node_with_sink_is_unsatisfied(self):
-        child_with_sink = self.node_with_sinks(1)
-        self.assertFalse(child_with_sink.is_satisfied())
+        node = self.node_with_sinks(1)
+        self.assertFalse(node.is_satisfied())
 
     def test_connected_node_with_sink_is_satisfied(self):
         child_with_sink = self.node_with_sinks(1)
         parent_with_matching_source = self.node_with_sources(1)
-        parent_with_matching_source.append(child_with_sink)
+        child_with_sink.prepend(parent_with_matching_source)
         self.assertTrue(child_with_sink.is_satisfied())
 
     def test_node_not_satisfied_by_non_matching_source(self):
@@ -89,10 +89,11 @@ class DataFlowNodeTest(unittest.TestCase):
         self.assertTrue(child.is_satisfied())
 
     def test_can_reach_connected_sink_via_source(self) -> None:
-        child: Node[FakeSink, int] = Node(sinks={FakeSink(1, 2)}, sources=set())
+        fake_sink = FakeSink(1, 2)
+        child: Node[int] = Node(sinks={fake_sink}, sources=set())
         parent = self.node_with_sources(1)
         parent.append(child)
-        connected_sink: Optional[SinkNode[FakeSink, int]] = None
+        connected_sink: Optional[SinkNode[int]] = None
         for source in parent.sources:
             for sink in source.sinks:
                 connected_sink = sink
@@ -100,10 +101,10 @@ class DataFlowNodeTest(unittest.TestCase):
         if connected_sink is None:
             self.fail()
         else:
-            self.assertEqual({1, 2}, connected_sink.wrapped.accepted_values)
+            self.assertEqual(fake_sink, connected_sink.wrapped)
 
     def test_can_reach_connected_source_via_sink(self) -> None:
-        child: Node[FakeSink, int] = Node(sinks={FakeSink(1)}, sources=set())
+        child: Node[int] = Node(sinks={FakeSink(1)}, sources=set())
         parent = self.node_with_sources(1)
         parent.append(child)
         connected_source: Optional[SourceNode] = None

@@ -24,3 +24,12 @@ class Node(Identifiable, Protocol):
     @abstractmethod
     def parents(self: T_Node_co) -> Iterable[T_Node_co]:
         ...
+
+
+T_contra = TypeVar("T_contra", contravariant=True)
+
+
+class Sink(Protocol[T_contra]):
+    @abstractmethod
+    def accepts(self, source: T_contra) -> bool:
+        ...
