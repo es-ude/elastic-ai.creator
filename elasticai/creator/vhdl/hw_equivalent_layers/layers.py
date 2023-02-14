@@ -45,7 +45,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
 
         def generate_port_maps(graph: HWEquivalentGraph[TranslatableLayer]):
             port_maps = []
-            for node in graph.hw_equivalent_nodes:
+            for node in graph.module_nodes:
                 module = graph.get_module_for_node(node)
                 design = module.translate()
                 port_map = design.get_port_map(node.name)
@@ -55,7 +55,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
 
         port_maps = generate_port_maps(graph)
         signals = [line for m in port_maps for line in m.signal_definitions()]
-        layer_instantiations = [line for m in port_maps for line in m.code()]
+        layer_instantiations = [line for m in port_maps for line in m.instantiation()]
         layer_connections = ["fp_linear_x <= x;"]
         file = VHDLFile(
             template_name="network",

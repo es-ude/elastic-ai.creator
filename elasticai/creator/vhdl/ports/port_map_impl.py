@@ -31,7 +31,7 @@ class PortMapImpl(PortMap):
     def signal_definitions(self) -> Code:
         return [signal.definition(prefix=f"{self._id}_") for signal in self._signals]
 
-    def code(self) -> Code:
+    def instantiation(self) -> Code:
         result = [
             f"{self.id()} : entity work.{self.id()}(rtl)",
             "port map (",

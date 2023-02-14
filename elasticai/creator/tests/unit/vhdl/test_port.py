@@ -24,7 +24,7 @@ class PortMapTestCase(unittest.TestCase):
                 "y => map_y",
                 ");",
             ],
-            list(map.code()),
+            list(map.instantiation()),
         )
 
     def test_signal_definitions(self):

@@ -4,7 +4,7 @@ from elasticai.creator.vhdl.connectable import Connectable
 from elasticai.creator.vhdl.data_path_connection.node_iteration import (
     ancestors_breadth_first,
 )
-from elasticai.creator.vhdl.data_path_connection.typing import Node
+from elasticai.creator.vhdl.graph import Node
 
 
 class ConnectableNode(Node, Connectable, Protocol):

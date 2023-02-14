@@ -1,6 +1,6 @@
 from typing import Iterator, Reversible, TypeVar
 
-from elasticai.creator.vhdl.data_path_connection.typing import Node
+from elasticai.creator.vhdl.graph import Node
 
 T_Node = TypeVar("T_Node", bound=Node)
 

@@ -38,5 +38,5 @@ class _HWEquivalentGraph(HWEquivalentGraph[TranslatableLayer]):
         return self._modules_by_nodes[node.name]
 
     @property
-    def hw_equivalent_nodes(self) -> Iterable[Node]:
+    def module_nodes(self) -> Iterable[Node]:
         return filter(lambda n: n.name in self._modules_by_nodes, self._fx_graph.nodes)

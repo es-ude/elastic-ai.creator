@@ -37,7 +37,7 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
         tracer = HWEquivalentFXTracer()
         graph = tracer.trace(model)
         layer = None
-        for node in graph.hw_equivalent_nodes:
+        for node in graph.module_nodes:
             if graph.node_has_module(node):
                 layer = graph.get_module_for_node(node)
         self.assertTrue(
@@ -59,6 +59,6 @@ class TestForTracingHWEquivalentModelsToGenerateVHDL(unittest.TestCase):
     def test_graph_provides_exactly_one_module_node(self):
         model = FPLinearModelWithGetItemFunctionNode()
         graph = HWEquivalentFXTracer().trace(typing.cast(Module, model))
-        nodes = tuple(graph.hw_equivalent_nodes)
+        nodes = tuple(graph.module_nodes)
         self.assertEqual(model.fp_linear, graph.get_module_for_node(nodes[0].name))
         self.assertEqual(1, len(nodes))

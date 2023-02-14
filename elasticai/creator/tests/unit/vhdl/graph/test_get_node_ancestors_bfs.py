@@ -5,7 +5,7 @@ from elasticai.creator.tests.unit.vhdl.components.test_signal_connector import f
 from elasticai.creator.vhdl.data_path_connection.node_iteration import (
     ancestors_breadth_first,
 )
-from elasticai.creator.vhdl.data_path_connection.typing import Graph, Node
+from elasticai.creator.vhdl.graph import Graph, Node
 
 
 class AncestorsInBreadthFirstOrderTest(unittest.TestCase):
