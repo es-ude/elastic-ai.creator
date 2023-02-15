@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.30.2 (2023-02-15)
+### Fix
+* Use non-static path to example folder ([`613a152`](https://github.com/es-ude/elastic-ai.creator/commit/613a152e65fbe0f7116a1f772fea8a3836d888af))
+* Ignore single import mypy error ([`dd85159`](https://github.com/es-ude/elastic-ai.creator/commit/dd851590719ec76ab66dc9d908493991fc235e7e))
+
 ## v0.30.1 (2023-02-04)
 ### Fix
 * **unit:** Make test more deterministic ([`97fd410`](https://github.com/es-ude/elastic-ai.creator/commit/97fd4101af93cf17d446cb0cb38a419080d5bee6))
