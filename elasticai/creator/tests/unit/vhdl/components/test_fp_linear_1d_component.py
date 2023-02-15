@@ -16,4 +16,4 @@ class FPLinear1dComponentTest(unittest.TestCase):
             work_library_name="work",
         )
 
-        self.assertEqual(len(list(component.code())), 213)
+        self.assertEqual(len(list(component.code())), 224)
