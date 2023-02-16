@@ -1,48 +1,46 @@
-from contextlib import contextmanager
 from importlib import resources
-from pathlib import PurePath
-from typing import AnyStr, Iterable, TextIO
+from pathlib import Path, PurePath
+from typing import AnyStr, ContextManager, Iterator
 
 PathType = str | PurePath
 Package = resources.Package
 
 
-@contextmanager
-def get_file(package: Package, file_name: str) -> TextIO:
-    file_not_found = True
+def get_file_from_package(package: Package, file_name: str) -> ContextManager[Path]:
+    """
+    This is a context manager, because the returned file might be extracted from a zip file and the context manager
+    will take care of removing the resulting temporary files on __exit__
+    """
     for resource in resources.files(package).iterdir():
         if resource.name == file_name:
-            file_not_found = False
-            with resources.as_file(resource) as file:
-                with open(file, "r") as opened_file:
-                    yield opened_file
-    if file_not_found:
-        raise FileNotFoundError(
-            f"The file '{file_name}' in package '{package}' does not exist."
-        )
+            return resources.as_file(resource)
+    raise FileNotFoundError(
+        f"The file '{file_name}' in package '{package}' does not exist."
+    )
 
 
 def read_text(
     package: Package, file_name: str, encoding: str = "utf-8"
-) -> Iterable[AnyStr]:
-    with get_file(package, file_name) as file:
-        yield from map(lambda line: line.rstrip("\n"), file)
+) -> Iterator[AnyStr]:
+    with get_file_from_package(package, file_name) as file:
+        with open(file, "r") as opened_file:
+            yield from map(lambda line: line.rstrip("\n"), opened_file)
 
 
-def read_bytes(package: Package, file_name: str) -> Iterable[bytes]:
-    with get_file(package, file_name) as file:
-        yield from file
+def _read_bytes(package: Package, file_name: str) -> Iterator[bytes]:
+    with get_file_from_package(package, file_name) as file:
+        with open(file, "rb") as opened_file:
+            yield from opened_file
 
 
 def copy_file(package: Package, file_name: str, destination: PathType) -> None:
-    data = read_bytes(package, file_name)
     with open(destination, "wb") as out_file:
-        out_file.write(data)
+        for data in _read_bytes(package=package, file_name=file_name):
+            out_file.write(data)
 
 
 def get_full_path(package: Package, file_name: str) -> str:
-    resource = get_file(package, file_name)
-    with resources.as_file(resource) as file:
+    with get_file_from_package(package, file_name) as file:
         return file.as_posix()
 
 

@@ -2,8 +2,9 @@ import unittest
 from io import StringIO
 from typing import Iterable, Iterator, TextIO, Union, cast
 
-from elasticai.creator.resource_utils import get_file
-from elasticai.creator.vhdl.code import Code, CodeModule
+from elasticai.creator.resource_utils import get_file_from_package
+from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.code.code_module import CodeModule
 
 
 class VHDLCodeTestCase(unittest.TestCase):
@@ -12,14 +13,15 @@ class VHDLCodeTestCase(unittest.TestCase):
         self.expected_code: list[str] = []
 
     def read_expected_code_from_file(self, file_name: str):
-        with get_file(
+        with get_file_from_package(
             "elasticai.creator.tests.integration.vhdl", file_name
-        ) as open_file:
-            self.expected_code = VHDLReaderWithoutComments(
-                cast(
-                    TextIO, open_file
-                )  # for some reason mypy detects the variable as str, so we cast
-            ).as_list()
+        ) as file:
+            with open(file, "r") as opened_file:
+                self.expected_code = VHDLReaderWithoutComments(
+                    cast(
+                        TextIO, opened_file
+                    )  # for some reason mypy detects the variable as str, so we cast
+                ).as_list()
 
     @staticmethod
     def unified_vhdl_from_module(module: CodeModule):
