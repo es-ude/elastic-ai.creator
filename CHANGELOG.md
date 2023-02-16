@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.30.3 (2023-02-16)
+### Fix
+* **unit:** Add rounding to prevent tests from failing due to floating point loss ([`b7314b7`](https://github.com/es-ude/elastic-ai.creator/commit/b7314b797ef39c2f693554821ec7bb3d96689661))
+* **template:** Linear layer template ([`96bdf03`](https://github.com/es-ude/elastic-ai.creator/commit/96bdf030ca4c27d67a4978e3b8609ef57c40a01e))
+
 ## v0.30.2 (2023-02-15)
 ### Fix
 * Use non-static path to example folder ([`613a152`](https://github.com/es-ude/elastic-ai.creator/commit/613a152e65fbe0f7116a1f772fea8a3836d888af))
