@@ -40,7 +40,7 @@ class FPLinear1dModule(CodeModuleBase):
 
         flat_weight = chain(*self.weight)
 
-        name_suffix = f"_fp_linear_1d_{self.layer_id}"
+        name_suffix = "_fp_linear_1d"
         yield RomFile(
             rom_name="w_rom" + name_suffix,
             layer_id=self.layer_id,
