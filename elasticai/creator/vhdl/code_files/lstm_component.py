@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     derive_fixed_point_params_from_factory,
 )
-from elasticai.creator.vhdl.designs.vhdl_files import expand_template
+from elasticai.creator.vhdl.designs.vhdl_files import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
@@ -36,10 +36,8 @@ class LSTMFile:
         return "lstm.vhd"
 
     def code(self) -> Code:
-        template = read_text("elasticai.creator.vhdl.templates", "lstm.tpl.vhd")
-
-        code = expand_template(
-            template,
+        template = VHDLTemplate(template_name="lstm")
+        template.update_parameters(
             work_library_name=self.work_library_name,
             data_width=str(self.data_width),
             frac_width=str(self.frac_width),
@@ -50,4 +48,4 @@ class LSTMFile:
             w_addr_width=str(self.w_addr_width),
             layer_name=self.layer_id,
         )
-        return code
+        return template.lines()

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Callable
 
 from elasticai.creator.resource_utils import read_text
-from elasticai.creator.vhdl.code import Code
-from elasticai.creator.vhdl.designs.vhdl_files import expand_template
+from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.designs.vhdl_files import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,
@@ -25,13 +25,11 @@ class FPReLUComponent:
         return f"fp_relu_{self.layer_id}.vhd"
 
     def code(self) -> Code:
-        template = read_text("elasticai.creator.vhdl.templates", "fp_relu.tpl.vhd")
-
-        code = expand_template(
-            template,
+        template = VHDLTemplate(template_name="fp_relu")
+        template.update_parameters(
             layer_name=self.layer_id,
             data_width=str(self.data_width),
             clock_option="false",
         )
 
-        return code
+        return template.lines()

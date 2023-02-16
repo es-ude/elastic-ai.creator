@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Collection, Iterable, Mapping, Protocol
+from typing import Collection, Iterable, Protocol
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModule
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
-from elasticai.creator.vhdl.ports import Port, PortMap
+from elasticai.creator.vhdl.code.code_file import CodeFile
+from elasticai.creator.vhdl.code.code_module import CodeModule
+
+from .ports import Port, PortMap
+from .vhdl_files import VHDLTemplate
 
 
 class VHDLDesign(CodeModule, Protocol):
@@ -44,7 +46,7 @@ class BaseVHDLDesign(VHDLDesign, CodeModule, ABC):
         return self._name
 
     @property
-    def files(self) -> Iterable[VHDLFile]:
+    def files(self) -> Iterable[VHDLTemplate]:
         return self._templates
 
     @property
@@ -54,7 +56,7 @@ class BaseVHDLDesign(VHDLDesign, CodeModule, ABC):
     def __init__(
         self,
         name: str,
-        files: Iterable[VHDLFile],
+        files: Iterable[VHDLTemplate],
     ):
         self._name = name
         self._templates = files

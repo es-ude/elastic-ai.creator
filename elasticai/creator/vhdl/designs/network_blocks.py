@@ -1,10 +1,8 @@
-from typing import Iterable, Optional
-
-from elasticai.creator.vhdl.designs.vhdl_design import BaseVHDLDesign
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
-from elasticai.creator.vhdl.ports import Port, PortImpl
-from elasticai.creator.vhdl.signals import Signal
-from elasticai.creator.vhdl.signals import SignalBuilder as _SignalBuilder
+from .ports import Port, PortImpl
+from .signals import Signal
+from .signals import SignalBuilder as _SignalBuilder
+from .vhdl_design import BaseVHDLDesign
+from .vhdl_files import VHDLTemplate
 
 
 class _Signals:
@@ -71,7 +69,7 @@ class _Signals:
 
 class NetworkBlock(BaseVHDLDesign):
     def __init__(self, name: str, template_name: str, x_width: int, y_width: int):
-        self._main_file = VHDLFile(name=name, template_name=template_name)
+        self._main_file = VHDLTemplate(name=name, template_name=template_name)
         super().__init__(name=name, files=(self._main_file,))
         self._x_width = x_width
         self._y_width = y_width

@@ -1,5 +1,6 @@
+import dataclasses
 import typing
-from typing import Any
+from typing import Any, Collection
 
 import torch.nn
 
@@ -7,20 +8,16 @@ import elasticai.creator.mlframework
 from elasticai.creator.mlframework import Module
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid as nnHardSigmoid
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
-from elasticai.creator.vhdl.code import CodeModule, CodeModuleBase
+from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.code_files.utils import calculate_address_width
 from elasticai.creator.vhdl.designs.network_blocks import (
     BufferedNetworkBlock,
     NetworkBlock,
 )
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.designs.vhdl_files import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
 from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
-from elasticai.creator.vhdl.tracing.typing import (
-    HWEquivalentGraph,
-    HWEquivalentTracer,
-    TranslatableLayer,
-)
+from elasticai.creator.vhdl.tracing.typing import HWEquivalentGraph, TranslatableLayer
 
 
 class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
@@ -36,7 +33,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
     def _template_parameters(self) -> dict[str, str]:
         return dict(((key, str(value)) for key, value in self.elasticai_tags.items()))
 
-    def _get_tracer(self) -> HWEquivalentTracer:
+    def _get_tracer(self) -> HWEquivalentFXTracer:
         return HWEquivalentFXTracer()
 
     def translate(self) -> CodeModule:
@@ -57,7 +54,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
         signals = [line for m in port_maps for line in m.signal_definitions()]
         layer_instantiations = [line for m in port_maps for line in m.instantiation()]
         layer_connections = ["fp_linear_x <= x;"]
-        file = VHDLFile(
+        file = VHDLTemplate(
             template_name="network",
             signals=signals,
             layer_instantiations=layer_instantiations,
@@ -112,3 +109,32 @@ class FixedPointLinear(nnFixedPointLinear):
 
     def translate(self):
         return self._hw_block
+
+
+T_CodeFile = typing.TypeVar("T_CodeFile", bound="CodeFile")
+T_CodeModuleBase = typing.TypeVar("T_CodeModuleBase", bound="CodeModuleBase")
+
+
+@dataclasses.dataclass
+class CodeModuleBase(CodeModule[T_CodeFile]):
+    @property
+    def submodules(self: T_CodeModuleBase) -> Collection[T_CodeModuleBase]:
+        return self._submodules
+
+    @property
+    def files(self) -> Collection[T_CodeFile]:
+        return self._files
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def __init__(
+        self,
+        name: str,
+        files: Collection[T_CodeFile],
+        submodules: Collection[T_CodeModuleBase] = tuple(),
+    ):
+        self._name = name
+        self._files = files
+        self._submodules = submodules
