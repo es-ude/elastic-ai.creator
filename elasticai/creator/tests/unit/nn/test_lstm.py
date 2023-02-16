@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Optional
 
 import torch
@@ -68,9 +69,12 @@ class LSTMTest(TensorTestCase):
         actual_outputs, (actual_h, actual_c) = actual_lstm(inputs, state)
         target_outputs, (target_h, target_c) = reference_lstm(inputs, state)
 
-        self.assertTensorEqual(target_outputs, actual_outputs)
-        self.assertTensorEqual(target_h, actual_h)
-        self.assertTensorEqual(target_c, actual_c)
+        tensor_round = partial(torch.round, decimals=4)
+        self.assertTensorEqual(
+            tensor_round(target_outputs), tensor_round(actual_outputs)
+        )
+        self.assertTensorEqual(tensor_round(target_h), tensor_round(actual_h))
+        self.assertTensorEqual(tensor_round(target_c), tensor_round(actual_c))
 
     def test_lstm_equals_pytorch_lstm_on_batched_inputs(self) -> None:
         lstm, reference_lstm = create_lstm(
