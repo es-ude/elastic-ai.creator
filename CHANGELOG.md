@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.30.4 (2023-02-16)
+### Fix
+* **translation:** Get rid of the duplicated suffix on rom component ([`9cd0e0b`](https://github.com/es-ude/elastic-ai.creator/commit/9cd0e0be9481a286820eea5c8d5bdc9d28fcc0d8))
+
 ## v0.30.3 (2023-02-16)
 ### Fix
 * **unit:** Add rounding to prevent tests from failing due to floating point loss ([`b7314b7`](https://github.com/es-ude/elastic-ai.creator/commit/b7314b797ef39c2f693554821ec7bb3d96689661))
