@@ -32,7 +32,7 @@ class RomFile(CodeFileBase):
 
     @property
     def name(self) -> str:
-        return f"{self.rom_name}.vhd"
+        return f"{self.rom_name}_{self.layer_id}.vhd"
 
     def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "rom.tpl.vhd")

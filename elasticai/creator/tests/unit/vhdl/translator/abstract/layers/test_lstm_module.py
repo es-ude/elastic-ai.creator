@@ -31,14 +31,14 @@ class LSTMModuleTest(TestCase):
         vhdl_components = self.lstm.files
 
         target_components = [
-            (RomFile, "wi_rom.vhd"),
-            (RomFile, "wf_rom.vhd"),
-            (RomFile, "wg_rom.vhd"),
-            (RomFile, "wo_rom.vhd"),
-            (RomFile, "bi_rom.vhd"),
-            (RomFile, "bf_rom.vhd"),
-            (RomFile, "bg_rom.vhd"),
-            (RomFile, "bo_rom.vhd"),
+            (RomFile, "wi_rom_0.vhd"),
+            (RomFile, "wf_rom_0.vhd"),
+            (RomFile, "wg_rom_0.vhd"),
+            (RomFile, "wo_rom_0.vhd"),
+            (RomFile, "bi_rom_0.vhd"),
+            (RomFile, "bf_rom_0.vhd"),
+            (RomFile, "bg_rom_0.vhd"),
+            (RomFile, "bo_rom_0.vhd"),
             (FPHardSigmoidFile, "fp_hard_sigmoid.vhd"),
             (FPHardTanhComponent, "fp_hard_tanh.vhd"),
             (LSTMFile, "lstm.vhd"),
