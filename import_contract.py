@@ -95,7 +95,7 @@ class _BaseContract(Contract, ABC):
 class PackagePrivateModules(_BaseContract):
     """
     Ensure that private modules (marked by leading underscore) are only
-    imported sibling modules or modules in subpackagespoetry
+    imported by sibling modules, the owning package (__init__.py) or modules in subpackages.
     """
 
     def check(self, graph: ImportGraph, verbose: bool) -> "ContractCheck":
