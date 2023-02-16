@@ -1,10 +1,10 @@
 from itertools import chain
 from typing import Iterator, Sequence
 
-from elasticai.creator.vhdl.code import Code
-from elasticai.creator.vhdl.signals import Signal
+from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.language.signals import Signal
 
-from .typing import PortMap
+from ._typing import PortMap
 
 
 class PortMapImpl(PortMap):

@@ -1,7 +1,6 @@
-from .signal_configuration import _SignalConfiguration
-from .signal_impl import _SignalImpl
-from .typing import Signal
-from .vector_signal_impl import _VectorSignalConfiguration, _VectorSignalImpl
+from ._signal import Signal
+from ._signal_impl import _SignalConfiguration, _SignalImpl
+from ._vector_signal_impl import _VectorSignalConfiguration, _VectorSignalImpl
 
 
 class SignalBuilder:

@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Collection
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModule
+from elasticai.creator.vhdl.code.code_file import CodeFile
+from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.code_files.fp_relu_component import FPReLUComponent
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 

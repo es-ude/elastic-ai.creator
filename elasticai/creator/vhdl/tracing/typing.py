@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Iterable, Optional, Protocol, overload, runtime_checkable
 
 from elasticai.creator.mlframework import Module
-from elasticai.creator.vhdl.code import Translatable
+from elasticai.creator.vhdl.code.translatable import Translatable
 
 
 @runtime_checkable

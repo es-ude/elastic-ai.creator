@@ -1,7 +1,7 @@
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 
 
-class NetworkVHDLFile(VHDLFile):
+class NetworkVHDLFile(VHDLTemplate):
     def __init__(self):
         super().__init__(
             template_name="network",

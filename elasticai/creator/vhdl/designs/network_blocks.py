@@ -1,8 +1,9 @@
-from .ports import Port, PortImpl
-from .signals import Signal
-from .signals import SignalBuilder as _SignalBuilder
+from elasticai.creator.vhdl.language.ports import Port, PortImpl
+from elasticai.creator.vhdl.language.signals import Signal
+from elasticai.creator.vhdl.language.signals import SignalBuilder as _SignalBuilder
+from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
+
 from .vhdl_design import BaseVHDLDesign
-from .vhdl_files import VHDLTemplate
 
 
 class _Signals:

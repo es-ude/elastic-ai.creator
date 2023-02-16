@@ -1,10 +1,10 @@
 from typing import Iterator
 
-from ...resource_utils import read_text
-from .template import TemplateImpl
+from elasticai.creator.resource_utils import read_text
+from elasticai.creator.templates import AbstractBaseTemplate
 
 
-class VHDLTemplate(TemplateImpl):
+class VHDLTemplate(AbstractBaseTemplate):
     def _read_raw_template(self) -> Iterator[str]:
         return read_text(
             self._template_package, f"{self._template_name}{self._template_file_suffix}"

@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.signals import Signal, SignalBuilder
+from elasticai.creator.vhdl.language.signals import Signal, SignalBuilder
 
 
 class LogicSignalTestCase(unittest.TestCase):

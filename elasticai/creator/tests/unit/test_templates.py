@@ -4,11 +4,11 @@ from collections.abc import Iterator
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.vhdl.designs import vhdl_files
-from elasticai.creator.vhdl.designs.template import TemplateImpl
+from elasticai.creator.templates import AbstractBaseTemplate
+from elasticai.creator.vhdl.language import vhdl_template
 
 
-class SimpleTemplate(TemplateImpl, ABC):
+class SimpleTemplate(AbstractBaseTemplate, ABC):
     def __init__(
         self, raw_template: list[str], **parameters: str | tuple[str] | list[str]
     ):
@@ -147,5 +147,5 @@ class ExpandTemplatesTestCase(TestCase):
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(vhdl_files))
+    tests.addTests(doctest.DocTestSuite(vhdl_template))
     return tests

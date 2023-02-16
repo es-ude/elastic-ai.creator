@@ -2,7 +2,7 @@ from typing import Iterable
 
 from elasticai.creator.tests.code_utilities_for_testing import VHDLCodeTestCase
 from elasticai.creator.tests.integration.vhdl.models_for_testing import FirstModel
-from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.code.code import Code
 
 
 class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(VHDLCodeTestCase):

@@ -1,7 +1,8 @@
 import unittest
 
-from elasticai.creator.vhdl.ports.port_map_impl import PortMapImpl as PortMap
-from elasticai.creator.vhdl.signals import SignalBuilder
+from elasticai.creator.vhdl.language.ports import PortImpl as Port
+from elasticai.creator.vhdl.language.ports import PortMap
+from elasticai.creator.vhdl.language.signals import SignalBuilder
 
 
 class PortMapTestCase(unittest.TestCase):
@@ -12,10 +13,12 @@ class PortMapTestCase(unittest.TestCase):
         return super().setUp()
 
     def single_in_signal_portmap(self) -> PortMap:
-        return PortMap(id="in_map", in_signals=(self.x,), out_signals=tuple())
+        return Port(in_signals=(self.x,), out_signals=tuple()).build_port_map(
+            id="in_map"
+        )
 
     def test_code_generation(self):
-        map = PortMap(id="map", in_signals=[self.x], out_signals=[self.y])
+        map = Port(in_signals=[self.x], out_signals=[self.y]).build_port_map(id="map")
         self.assertEqual(
             [
                 "map : entity work.map(rtl)",
@@ -31,7 +34,9 @@ class PortMapTestCase(unittest.TestCase):
         logic = SignalBuilder().id("l").build()
         vector = SignalBuilder().id("v").width(1).build()
 
-        map = PortMap(id="my_id", in_signals=[logic, vector], out_signals=[])
+        map = Port(in_signals=[logic, vector], out_signals=[]).build_port_map(
+            id="my_id"
+        )
         expected = sorted(
             [
                 "signal my_id_l : std_logic;",
@@ -39,7 +44,3 @@ class PortMapTestCase(unittest.TestCase):
             ]
         )
         self.assertEqual(expected, sorted(list(map.signal_definitions())))
-
-
-if __name__ == "__main__":
-    unittest.main()

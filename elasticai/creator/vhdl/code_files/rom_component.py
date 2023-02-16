@@ -1,14 +1,13 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     pad_with_zeros,
 )
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLTemplate
-from elasticai.creator.vhdl.language import hex_representation
+from elasticai.creator.vhdl.code_generation import hex_representation
+from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
@@ -27,9 +26,7 @@ class RomFile(CodeFileBase):
         self.data_width, _ = infer_total_and_frac_bits(self.values)
         self.addr_width = calculate_address_width(len(self.values))
         padded_values = pad_with_zeros(list(self.values), 2**self.addr_width)
-        self.hex_values = list(
-            map(lambda fp: hex_representation(fp.to_hex()), padded_values)
-        )
+        self.hex_values = list(map(lambda fp: f'x"{fp.to_hex()}"', padded_values))
 
     @property
     def name(self) -> str:

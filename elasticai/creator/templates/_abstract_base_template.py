@@ -3,30 +3,8 @@ from itertools import chain, repeat
 from string import Template as StringTemplate
 from typing import Iterable, Iterator, cast
 
-from elasticai.creator.resource_utils import read_text
 
-
-class Template(ABC):
-    @abstractmethod
-    def update_parameters(self, **parameters: str | list[str] | tuple[str]) -> None:
-        ...
-
-    @property
-    @abstractmethod
-    def multi_line_parameters(self) -> dict[str, tuple[str]]:
-        ...
-
-    @property
-    @abstractmethod
-    def single_line_parameters(self) -> dict[str, str]:
-        ...
-
-    @abstractmethod
-    def lines(self) -> list[str]:
-        ...
-
-
-class TemplateImpl(Template, ABC):
+class AbstractBaseTemplate(ABC):
     """
     `Template` helps you to fill templates with values.
     It loads a vhdl template file from the package `elasticai.creator.vhdl.template` and fills template parameters
@@ -100,19 +78,19 @@ class TemplateImpl(Template, ABC):
         return dict(**self._multiline_parameters)
 
     def lines(self) -> list[str]:
-        lines = expand_template(self._raw_template, **self._parameters)
-        lines = expand_multiline_template(lines, **self._multiline_parameters)
+        lines = _expand_template(self._raw_template, **self._parameters)
+        lines = _expand_multiline_template(lines, **self._multiline_parameters)
         return list(lines)
 
 
-def expand_multiline_template(
+def _expand_multiline_template(
     template: str | list[str] | Iterator[str], **kwargs: Iterable[str]
 ) -> Iterator[str]:
     """Expand a template field to multiple lines, while keeping indentation.
     Example:
         >>> template = "\\t$my_key"
         >>> values = ["hello,", "world", "!"]
-        >>> "\\n".join(expand_multiline_template(template, my_key=values))
+        >>> "\\n".join(_expand_multiline_template(template, my_key=values))
         '\\thello,\\n\\tworld\\n\\t!'
     """
     lines = _unify_template_datatype(template)
@@ -139,7 +117,7 @@ def _unify_template_datatype(
     yield from lines
 
 
-def expand_template(
+def _expand_template(
     template: str | list[str] | Iterator[str], **kwargs: str
 ) -> Iterator[str]:
     for line in _unify_template_datatype(template):

@@ -5,7 +5,7 @@ This module includes CodeGenerator that are only used by the vhdl testbenches
 from abc import ABC, abstractmethod
 from typing import Iterator
 
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.code.code import Code
 
 
 class TestBenchBase(ABC):

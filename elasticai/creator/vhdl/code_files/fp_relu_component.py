@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from elasticai.creator.resource_utils import read_text
 from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLTemplate
+from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     fixed_point_params_from_factory,

@@ -1,15 +1,12 @@
+import dataclasses
 import unittest
-from typing import Iterable
+from typing import Collection, Iterable, TypeVar
 
 import torch
 
-from elasticai.creator.vhdl.code import (
-    Code,
-    CodeFile,
-    CodeFileBase,
-    CodeModule,
-    CodeModuleBase,
-)
+from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.code.code_file import CodeFile
+from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -17,6 +14,50 @@ from elasticai.creator.vhdl.translator.pytorch import translator
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
+
+T_CodeFile = TypeVar("T_CodeFile", bound=CodeFile)
+T_CodeModuleBase = TypeVar("T_CodeModuleBase", bound="CodeModuleBase")
+
+
+@dataclasses.dataclass
+class CodeModuleBase(CodeModule[T_CodeFile]):
+    @property
+    def submodules(self: T_CodeModuleBase) -> Collection[T_CodeModuleBase]:
+        return self._submodules
+
+    @property
+    def files(self) -> Collection[T_CodeFile]:
+        return self._files
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def __init__(
+        self,
+        name: str,
+        files: Collection[T_CodeFile],
+        submodules: Collection[T_CodeModuleBase] = tuple(),
+    ):
+        self._name = name
+        self._files = files
+        self._submodules = submodules
+
+
+class CodeFileBase(CodeFile):
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def code(self) -> Code:
+        return self._code
+
+    def __repr__(self) -> str:
+        return f"CodeBaseFile(name={self._name}, code={self._code})"
+
+    def __init__(self, name: str, code: Code):
+        self._name = name
+        self._code = code
 
 
 def fake_build_function(module: torch.nn.Module, layer_id: str) -> CodeModuleBase:

@@ -4,7 +4,8 @@ from itertools import chain
 
 import numpy as np
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
+from elasticai.creator.vhdl.code.code_file import CodeFile
+from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory

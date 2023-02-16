@@ -3,12 +3,11 @@ from typing import Collection, Iterable, Protocol
 
 from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.code.code_module import CodeModule
+from elasticai.creator.vhdl.language.ports import Port, PortMap
+from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 
-from .ports import Port, PortMap
-from .vhdl_files import VHDLTemplate
 
-
-class VHDLDesign(CodeModule, Protocol):
+class VHDLDesign(Protocol):
     @abstractmethod
     def get_port(self) -> Port:
         ...

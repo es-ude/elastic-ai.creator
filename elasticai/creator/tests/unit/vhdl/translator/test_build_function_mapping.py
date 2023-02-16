@@ -3,7 +3,9 @@ from dataclasses import dataclass
 from typing import Any
 
 import elasticai.creator.nn.layers as qtorch
-from elasticai.creator.vhdl.code import Code, CodeFile, CodeModule
+from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.code.code_file import CodeFile
+from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
 )

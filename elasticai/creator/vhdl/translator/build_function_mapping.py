@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Any, Callable, Iterator
 
-from elasticai.creator.vhdl.code import CodeModule
+from elasticai.creator.vhdl.code.code_module import CodeModule
 
 BuildFunction = Callable[[Any, str, ...], CodeModule]
 

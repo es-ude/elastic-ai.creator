@@ -3,12 +3,12 @@ from typing import Any, Collection, Iterable, Iterator
 from elasticai.creator.mlframework import Module
 from elasticai.creator.mlframework.typing import Parameter
 from elasticai.creator.vhdl.code import (
-    Code,
     CodeFile,
     CodeModule,
     CodeModuleBase,
     Translatable,
 )
+from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
 from elasticai.creator.vhdl.model_tracing import (
     HWEquivalentGraph,

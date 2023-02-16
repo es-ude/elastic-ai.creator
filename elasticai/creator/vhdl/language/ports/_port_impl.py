@@ -1,7 +1,7 @@
-from elasticai.creator.vhdl.signals import Signal
+from elasticai.creator.vhdl.language.signals._signal import Signal
 
-from .port_map_impl import PortMapImpl
-from .typing import Port, PortMap
+from ._port_map_impl import PortMapImpl
+from ._typing import Port, PortMap
 
 
 class PortImpl(Port):

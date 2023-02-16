@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from elasticai.creator.vhdl.code import Code
+from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.typing import Identifiable
 
 

@@ -1,8 +1,8 @@
-from elasticai.creator.vhdl.designs.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
 
 
-class FPHardSigmoidFile(VHDLFile):
+class FPHardSigmoidFile(VHDLTemplate):
     def __init__(
         self,
         layer_id: str,

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Iterator
 
-from elasticai.creator.vhdl.code import CodeFile
-from elasticai.creator.vhdl.language import Code
+from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.precomputed_scalar_function import Sigmoid
 
