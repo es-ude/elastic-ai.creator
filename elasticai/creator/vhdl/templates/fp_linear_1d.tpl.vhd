@@ -35,7 +35,7 @@ architecture rtl of fp_linear_1d_${layer_name} is
     -- macc
     function multiply_accumulate(w : in signed(DATA_WIDTH-1 downto 0);
                     x : in signed(DATA_WIDTH-1 downto 0);
-                    y_0 : in signed(DATA_WIDTH-1 downto 0)
+                    y_0 : in signed(2*DATA_WIDTH-1 downto 0)
             ) return signed is
 
         variable TEMP : signed(DATA_WIDTH*2-1 downto 0) := (others=>'0');
@@ -44,18 +44,26 @@ architecture rtl of fp_linear_1d_${layer_name} is
     begin
         TEMP := w * x;
 
-        TEMP2 := TEMP(DATA_WIDTH+FRAC_WIDTH-1 downto FRAC_WIDTH);
-        TEMP3 := TEMP(FRAC_WIDTH-1 downto 0);
+        return TEMP+y_0;
+    end function;
+    
+    function cut_down(x: in signed(2*DATA_WIDTH-1 downto 0))return signed is
+        variable TEMP2 : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+        variable TEMP3 : signed(FRAC_WIDTH-1 downto 0) := (others=>'0');
+    begin
+    
+        TEMP2 := x(DATA_WIDTH+FRAC_WIDTH-1 downto FRAC_WIDTH);
+        TEMP3 := x(FRAC_WIDTH-1 downto 0);
         if TEMP2(DATA_WIDTH-1) = '1' and TEMP3 /= 0 then
             TEMP2 := TEMP2 + 1;
         end if;
 
-        if TEMP>0 and TEMP2<0 then
+        if x>0 and TEMP2<0 then
             TEMP2 := ('0', others => '1');
-        elsif TEMP<0 and TEMP2>0 then
+        elsif x<0 and TEMP2>0 then
             TEMP2 := ('1', others => '0');
         end if;
-        return TEMP2+y_0;
+        return TEMP2;
     end function;
 
     -- Log2 funtion is for calculating the bitwidth of the address lines
@@ -76,6 +84,7 @@ architecture rtl of fp_linear_1d_${layer_name} is
     -- Signals
     -----------------------------------------------------------
     constant FP_ZERO : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    constant FP_ONE : signed(DATA_WIDTH-1 downto 0) := to_signed(2**FRAC_WIDTH,DATA_WIDTH);
 
     type t_state is (s_stop, s_forward, s_idle);
 
@@ -87,7 +96,8 @@ architecture rtl of fp_linear_1d_${layer_name} is
     --signal addr_b : std_logic_vector((log2(OUT_FEATURE_NUM)-1) downto 0) := (others=>'0');
     signal addr_b : std_logic_vector(Y_ADDR_WIDTH-1 downto 0) := (others=>'0');
 
-    signal fp_x, fp_w, fp_b, fp_y, macc_sum : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal fp_x, fp_w, fp_b, fp_y : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal macc_sum : signed(2*DATA_WIDTH-1 downto 0) := (others=>'0');
 
     signal reset : std_logic := '0';
     signal state : t_state;
@@ -114,8 +124,8 @@ begin
         variable current_neuron_idx : integer range 0 to OUT_FEATURE_NUM-1 := 0;
         variable current_input_idx : integer  range 0 to IN_FEATURE_NUM-1 := 0;
         variable var_addr_w : integer range 0 to OUT_FEATURE_NUM*IN_FEATURE_NUM-1 := 0;
-        variable var_sum : signed(DATA_WIDTH-1 downto 0);
-        variable var_w, var_x, var_y : signed(DATA_WIDTH-1 downto 0);
+        variable var_sum, var_y : signed(2*DATA_WIDTH-1 downto 0);
+        variable var_w, var_x : signed(DATA_WIDTH-1 downto 0);
         variable y_write_en : std_logic;
         variable var_y_write_idx : integer;
     begin
@@ -126,6 +136,7 @@ begin
 
             current_neuron_idx := 0;
             current_input_idx := 0;
+            var_addr_w := 0;
 
         elsif rising_edge(clock) then
 
@@ -133,9 +144,9 @@ begin
                 state <= s_forward;
 
                 -- first add b accumulated sum
-                var_y := fp_b;
-                var_x := FP_ZERO;
-                var_w := FP_ZERO;
+                var_y := (others=>'0');
+                var_x := fp_b;
+                var_w := FP_ONE;
             elsif state=s_forward then
 
                 -- remapping to x and w
@@ -170,7 +181,7 @@ begin
             macc_sum <= var_sum;
 
             if y_write_en='1'then
-                y_ram(var_y_write_idx) := std_logic_vector(var_sum);
+                y_ram(var_y_write_idx) := std_logic_vector(cut_down(var_sum));
                 y_write_en := '0';
             end if;
 
