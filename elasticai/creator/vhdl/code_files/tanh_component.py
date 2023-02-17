@@ -1,7 +1,6 @@
+import warnings
 from dataclasses import dataclass
-from typing import Iterator
 
-from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.precomputed_scalar_function import Tanh
@@ -15,8 +14,15 @@ class TanhComponent(CodeFile):
     def name(self) -> str:
         return f"tanh.vhd"
 
-    def __iter__(self) -> Iterator[str]:
-        yield from Tanh(x=self.x, component_name="tanh").code()
+    def lines(self) -> list[str]:
+        return list(Tanh(x=self.x, component_name="tanh").code())
 
-    def code(self) -> Code:
-        return self
+    def code(self) -> list[str]:
+        warnings.warn(
+            message=DeprecationWarning(
+                f"calling instance directly is deprecated, use the"
+                f" lines() method instead ",
+            ),
+            stacklevel=2,
+        )
+        return self.lines()

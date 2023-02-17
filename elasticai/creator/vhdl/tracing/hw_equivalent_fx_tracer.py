@@ -3,7 +3,6 @@ from typing import Any, Callable, cast
 import torch
 from torch.fx import Tracer as fxTracer
 
-from elasticai.creator.mlframework import Module
 from elasticai.creator.vhdl.tracing.hw_equivalent_graph_impl import _HWEquivalentGraph
 from elasticai.creator.vhdl.tracing.typing import (
     HWEquivalentGraph,
@@ -20,7 +19,7 @@ class HWEquivalentFXTracer(fxTracer, HWEquivalentTracer[TranslatableLayer]):
         super().__init__()
         self._modules_by_nodes: dict[str, TranslatableLayer] = dict()
 
-    def trace(self, root: Module, **kwargs) -> HWEquivalentGraph:
+    def trace(self, root: torch.nn.Module, **kwargs) -> HWEquivalentGraph:
         graph = super().trace(root, **kwargs)
         return _HWEquivalentGraph(graph, self._modules_by_nodes)
 

@@ -3,15 +3,16 @@ from abc import abstractmethod
 from typing import Iterable, Optional, Protocol, overload, runtime_checkable
 
 from elasticai.creator.mlframework import Module
-from elasticai.creator.vhdl.code.translatable import Translatable
+
+T_co = typing.TypeVar("T_co", covariant=True)
+T_Module = typing.TypeVar("T_Module", bound=Module, covariant=True)
 
 
 @runtime_checkable
-class TranslatableLayer(Translatable, Module, Protocol):
-    ...
-
-
-T_Module = typing.TypeVar("T_Module", bound=Module, covariant=True)
+class TranslatableLayer(Module, Protocol[T_co]):
+    @abstractmethod
+    def translate(self) -> T_co:
+        ...
 
 
 @runtime_checkable

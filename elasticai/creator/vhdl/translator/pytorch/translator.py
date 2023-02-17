@@ -5,6 +5,7 @@ import torch
 
 from elasticai.creator.resource_utils import PathType
 from elasticai.creator.vhdl.code.code_module import CodeModule
+from elasticai.creator.vhdl.code_files.code_file_base import CodeFileBase
 from elasticai.creator.vhdl.code_files.network_component import NetworkVHDLFile
 from elasticai.creator.vhdl.translator.build_function_mapping import (
     BuildFunctionMapping,
@@ -12,7 +13,6 @@ from elasticai.creator.vhdl.translator.build_function_mapping import (
 from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
-from elasticai.creator.vhdl.translator.pytorch.code_file import CodeFileBase
 from elasticai.creator.vhdl.translator.pytorch.code_module_base import CodeModuleBase
 
 

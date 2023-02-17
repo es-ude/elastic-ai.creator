@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from elasticai.creator.vhdl.designs.entity import Entity
+from elasticai.creator.vhdl.language.entity import Entity
 
 
 class Architecture(ABC):

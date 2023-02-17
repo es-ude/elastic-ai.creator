@@ -14,7 +14,7 @@ class GenerateROMVhdTest(GeneratedVHDLCodeTest):
             values=float_values_to_fixed_point(bi, total_bits=12, frac_bits=4),
             resource_option="auto",
         )
-        generated_code = list(rom.code())
+        generated_code = list(rom.lines())
 
         expected_code = [
             "library ieee;",

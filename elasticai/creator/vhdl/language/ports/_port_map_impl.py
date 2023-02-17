@@ -1,7 +1,6 @@
 from itertools import chain
 from typing import Iterator, Sequence
 
-from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.language.signals import Signal
 
 from ._typing import PortMap
@@ -28,10 +27,10 @@ class PortMapImpl(PortMap):
     def _signals(self) -> Iterator[Signal]:
         return chain(self._in_signals, self._out_signals)
 
-    def signal_definitions(self) -> Code:
+    def signal_definitions(self) -> list[str]:
         return [signal.definition(prefix=f"{self._id}_") for signal in self._signals]
 
-    def instantiation(self) -> Code:
+    def instantiation(self) -> list[str]:
         result = [
             f"{self.id()} : entity work.{self.id()}(rtl)",
             "port map (",

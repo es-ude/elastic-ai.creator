@@ -1,6 +1,5 @@
 from typing import Protocol
 
-from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.typing import Identifiable
 
 
@@ -10,8 +9,8 @@ class Port(Protocol):
 
 
 class PortMap(Identifiable, Protocol):
-    def signal_definitions(self) -> Code:
+    def signal_definitions(self) -> list[str]:
         ...
 
-    def instantiation(self) -> Code:
+    def instantiation(self) -> list[str]:
         ...

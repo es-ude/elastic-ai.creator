@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Callable
 
-from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     derive_fixed_point_params_from_factory,
@@ -12,7 +10,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
 @dataclass
-class FPLinear1dFile(CodeFile):
+class FPLinear1dFile:
     def save_to(self, prefix: str):
         raise NotImplementedError()
 
@@ -47,7 +45,7 @@ class FPLinear1dFile(CodeFile):
     def name(self) -> str:
         return f"fp_linear_1d_{self.layer_id}.vhd"
 
-    def code(self) -> Code:
+    def code(self) -> list[str]:
         template = VHDLTemplate(template_name="fp_linear_1d")
         template.update_parameters(
             layer_name=self.layer_id,

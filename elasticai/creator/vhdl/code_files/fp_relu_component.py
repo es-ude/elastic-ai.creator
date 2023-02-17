@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
+    FixedPointConfig,
     fixed_point_params_from_factory,
 )
 
@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.number_representations import (
 @dataclass
 class FPReLUComponent:
     layer_id: str  # used to distinguish layers in the same model
-    fixed_point_factory: Callable[[float], FixedPoint]
+    fixed_point_factory: FixedPointConfig
 
     def __post_init__(self) -> None:
         self.data_width, self.frac_width = fixed_point_params_from_factory(
@@ -23,7 +23,7 @@ class FPReLUComponent:
     def file_name(self) -> str:
         return f"fp_relu_{self.layer_id}.vhd"
 
-    def code(self) -> Code:
+    def code(self) -> list[str]:
         template = VHDLTemplate(template_name="fp_relu")
         template.update_parameters(
             layer_name=self.layer_id,

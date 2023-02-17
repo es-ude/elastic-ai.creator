@@ -1,18 +1,17 @@
+import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from elasticai.creator.vhdl.code.code import Code
+from elasticai.creator.vhdl.code_files.code_file_base import CodeFileBase
 from elasticai.creator.vhdl.code_files.utils import (
     calculate_address_width,
     pad_with_zeros,
 )
-from elasticai.creator.vhdl.code_generation import hex_representation
 from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from elasticai.creator.vhdl.translator.pytorch.code_file import CodeFileBase
 
 
 @dataclass
@@ -32,7 +31,17 @@ class RomFile(CodeFileBase):
     def name(self) -> str:
         return f"{self.rom_name}_{self.layer_id}.vhd"
 
-    def code(self) -> Code:
+    def code(self) -> list[str]:
+        warnings.warn(
+            message=DeprecationWarning(
+                f"calling instance directly is deprecated, use the"
+                f" lines() method instead ",
+            ),
+            stacklevel=2,
+        )
+        return self.lines()
+
+    def lines(self) -> list[str]:
         template = VHDLTemplate(template_name="rom")
         template.update_parameters(
             rom_name=self.rom_name,
