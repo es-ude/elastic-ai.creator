@@ -1,9 +1,7 @@
 from abc import abstractmethod
 from typing import Iterable, Protocol, TypeVar
 
-from elasticai.creator.vhdl.data_path_connection.node_iteration import (
-    ancestors_breadth_first,
-)
+from elasticai.creator.vhdl.dataflow.node_iteration import ancestors_breadth_first
 from elasticai.creator.vhdl.graph import Node
 
 T_Connectable_contra = TypeVar(

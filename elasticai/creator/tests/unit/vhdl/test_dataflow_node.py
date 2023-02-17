@@ -1,13 +1,8 @@
 import unittest
 from typing import Optional
 
-from elasticai.creator.vhdl.data_path_connection.data_flow_node import (
-    DataFlowNode as Node,
-)
-from elasticai.creator.vhdl.data_path_connection.data_flow_node import (
-    SinkNode,
-    SourceNode,
-)
+from elasticai.creator.vhdl.dataflow.data_flow_node import DataFlowNode as Node
+from elasticai.creator.vhdl.dataflow.data_flow_node import SinkNode, SourceNode
 
 
 class FakeSink:

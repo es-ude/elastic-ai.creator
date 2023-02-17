@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from elasticai.creator.vhdl.data_path_connection.node_connector import ConnectableNode
+from elasticai.creator.vhdl.dataflow.node_connector import ConnectableNode
 
 
 class FakeNodeFactory:

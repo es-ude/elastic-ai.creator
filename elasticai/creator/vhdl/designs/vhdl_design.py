@@ -4,7 +4,7 @@ from typing import Collection, Iterable, Protocol
 from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.language.ports import Port, PortMap
-from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 
 
 class VHDLDesign(Protocol):

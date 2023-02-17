@@ -2,9 +2,7 @@ import unittest
 from typing import Callable, Iterable, Iterator, Reversible
 
 from elasticai.creator.tests.unit.vhdl.components.test_signal_connector import first
-from elasticai.creator.vhdl.data_path_connection.node_iteration import (
-    ancestors_breadth_first,
-)
+from elasticai.creator.vhdl.dataflow.node_iteration import ancestors_breadth_first
 from elasticai.creator.vhdl.graph import Graph, Node
 
 

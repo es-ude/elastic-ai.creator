@@ -1,7 +1,6 @@
 import math
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
-from functools import partial
 from itertools import chain
 from typing import Any, Callable, Protocol
 

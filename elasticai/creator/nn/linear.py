@@ -3,7 +3,7 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
 
 
 class Linear(torch.nn.Linear):
@@ -31,6 +31,7 @@ class Linear(torch.nn.Linear):
     def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError("The quantized_forward function is not implemented.")
 
+
 class FixedPointLinear(Linear):
     def __init__(
         self,
@@ -38,7 +39,7 @@ class FixedPointLinear(Linear):
         out_features: int,
         fixed_point_factory: FixedPointConfig,
         bias: bool,
-        device: Any =None,
+        device: Any = None,
     ) -> None:
         super().__init__(
             in_features=in_features,
@@ -49,5 +50,5 @@ class FixedPointLinear(Linear):
         )
 
     @property
-    def fixed_point_factory(self) -> FixedPointFactory:
+    def fixed_point_factory(self) -> FixedPointConfig:
         return cast(FixedPointArithmetics, self.ops).fixed_point_factory

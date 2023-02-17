@@ -6,7 +6,7 @@ from typing import Iterable, Iterator, cast
 
 class AbstractBaseTemplate(ABC):
     """
-    `Template` helps you to fill templates with values.
+    `Template` helps you to fill template_resources with values.
     It loads a vhdl template file from the package `elasticai.creator.vhdl.template` and fills template parameters
     with the parameters passed to the constructor.
     Each of these parameters is expected to be either a `str` or a `Iterable[str]`.

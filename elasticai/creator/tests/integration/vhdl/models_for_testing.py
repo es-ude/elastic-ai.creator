@@ -1,9 +1,9 @@
-from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
+from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
+from elasticai.creator.vhdl.translatable_modules.layers import (
     FixedPointHardSigmoid,
     FixedPointLinear,
     RootModule,
 )
-from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
 
 
 class FirstModel(RootModule):

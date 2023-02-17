@@ -10,7 +10,7 @@ class VHDLTemplate(AbstractBaseTemplate):
             self._template_package, f"{self._template_name}{self._template_file_suffix}"
         )
 
-    _template_package = "elasticai.creator.vhdl.templates"
+    _template_package = "elasticai.creator.vhdl.template_resources"
     _template_file_suffix = ".tpl.vhd"
     _generated_file_suffix = ".vhd"
 

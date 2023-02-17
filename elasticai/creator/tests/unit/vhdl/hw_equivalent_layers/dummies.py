@@ -1,20 +1,15 @@
-from typing import Any, Collection, Iterable, Iterator
+from typing import Any, Iterable, Iterator
 
 from elasticai.creator.mlframework import Module
 from elasticai.creator.mlframework.typing import Parameter
-from elasticai.creator.vhdl.code import (
-    CodeFile,
-    CodeModule,
+from elasticai.creator.tests.unit.vhdl.translator.pytorch.test_translator import (
     CodeModuleBase,
-    Translatable,
+)
+from elasticai.creator.vhdl.code import (
+    CodeModule,
 )
 from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer
-from elasticai.creator.vhdl.model_tracing import (
-    HWEquivalentGraph,
-    HWEquivalentNode,
-    Node,
-)
+from elasticai.creator.vhdl.translatable_modules.typing import HWEquivalentLayer
 
 
 # noinspection PyMethodMayBeStatic
@@ -46,62 +41,3 @@ class DummyModule(HWEquivalentLayer):
 
     def __call__(self, x: Any, *args: Any, **kwargs: Any) -> Any:
         return x
-
-
-class DummyModuleNode(Node):
-    @property
-    def op(self) -> str:
-        return "call_module"
-
-    def __init__(self, name=""):
-        self._name = name
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-
-class DummyHWEquivalentNode(DummyModuleNode, HWEquivalentNode):
-    def __init__(self, name=""):
-        super().__init__(name)
-        self._module = DummyModule()
-
-    @property
-    def hw_equivalent_layer(self) -> HWEquivalentLayer:
-        return self._module
-
-    @hw_equivalent_layer.setter
-    def hw_equivalent_layer(self, value):
-        self._module = value
-
-
-class DummyGraph(HWEquivalentGraph):
-    @property
-    def hw_equivalent_nodes(self) -> Iterable[HWEquivalentNode]:
-        yield from []
-
-    def __init__(self, nodes):
-        self._nodes = nodes
-
-    @property
-    def nodes(self) -> Iterable[HWEquivalentNode]:
-        return self._nodes
-
-
-class DummyCodeModule(CodeModule):
-    @property
-    def files(self) -> Collection[CodeFile]:
-        return []
-
-    @property
-    def submodules(self) -> Collection["CodeModule"]:
-        return []
-
-    @property
-    def name(self) -> str:
-        return ""
-
-
-class TranslatableDummyModule(DummyModule, Translatable):
-    def translate(self) -> "CodeModule":
-        return DummyCodeModule()

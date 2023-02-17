@@ -4,6 +4,12 @@ from elasticai.creator.vhdl.language.signals import Signal, SignalBuilder
 
 
 class LogicSignalTestCase(unittest.TestCase):
+    """
+    TODO:
+    - make sure signals always have a default value
+        - "'0'" for logic and "(other => '0')"
+    """
+
     def test_logic_in_signal_definition_is_p_x(self) -> None:
         in_signal: Signal = SignalBuilder().id("x").build()
         self.assertEqual("signal p_x : std_logic;", in_signal.definition(prefix="p_"))

@@ -16,6 +16,7 @@ bitarray = "^2.3.5"
 vsg = "^3.9.0"
 numpy = "^1.23.0"
 matplotlib = "^3.5.2"
+pylint = "^2.16.2"
 
 
 [tool.poetry.dev-dependencies]

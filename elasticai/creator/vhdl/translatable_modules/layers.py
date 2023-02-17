@@ -14,8 +14,8 @@ from elasticai.creator.vhdl.designs.network_blocks import (
     BufferedNetworkBlock,
     NetworkBlock,
 )
-from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
+from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
 from elasticai.creator.vhdl.tracing.typing import HWEquivalentGraph, TranslatableLayer
 

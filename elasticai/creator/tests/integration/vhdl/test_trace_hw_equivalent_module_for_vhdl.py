@@ -2,12 +2,12 @@ import typing
 import unittest
 
 from elasticai.creator.mlframework import Module
-from elasticai.creator.vhdl.hw_equivalent_layers.layers import (
+from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
+from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
+from elasticai.creator.vhdl.translatable_modules.layers import (
     FixedPointLinear,
     RootModule,
 )
-from elasticai.creator.vhdl.number_representations import ClippedFixedPoint
-from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
 
 
 class FPLinearModel(RootModule):

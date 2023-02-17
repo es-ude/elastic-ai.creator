@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.language.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 
 
 class NetworkVHDLFile(VHDLTemplate):

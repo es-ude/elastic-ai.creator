@@ -1,7 +1,7 @@
 from itertools import chain, product
 from typing import Generic, Iterator, Optional, TypeVar, cast
 
-from elasticai.creator.vhdl.data_path_connection.typing import Sink
+from elasticai.creator.vhdl.dataflow.typing import Sink
 
 T = TypeVar("T")
 

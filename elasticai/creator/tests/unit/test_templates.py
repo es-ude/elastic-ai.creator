@@ -5,7 +5,7 @@ from typing import Iterable
 from unittest import TestCase
 
 from elasticai.creator.templates import AbstractBaseTemplate
-from elasticai.creator.vhdl.language import vhdl_template
+from elasticai.creator.vhdl.templates import vhdl_template
 
 
 class SimpleTemplate(AbstractBaseTemplate, ABC):

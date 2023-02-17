@@ -4,7 +4,7 @@ from typing import Iterable, TypeVar
 from elasticai.creator.tests.unit.vhdl.components.fake_connectable_node import (
     FakeNodeFactory,
 )
-from elasticai.creator.vhdl.data_path_connection.node_iteration import NodeTraversal
+from elasticai.creator.vhdl.dataflow.node_iteration import NodeTraversal
 
 T = TypeVar("T")
 
@@ -44,13 +44,13 @@ class SignalConnectionTest(unittest.TestCase):
 
     """
       - node connects its required inputs to provided outputs of parent nodes
-      - we transform a data_path_connection of torch nodes to a data_path_connection of vhdl component nodes (with torch.fx) and the vhdl component nodes
-        data_path_connection to a data_path_connection of portmaps/ports
+      - we transform a dataflow of torch nodes to a dataflow of vhdl component nodes (with torch.fx) and the vhdl component nodes
+        dataflow to a dataflow of portmaps/ports
       Basic Idea:
         Starting with leaf nodes, connect to higher nodes until no unconnected signals remain.
 
     Tests:
-      - inserting data_path_connection with two nodes and same signals
+      - inserting dataflow with two nodes and same signals
     """
 
     pass
