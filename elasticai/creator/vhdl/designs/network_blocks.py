@@ -1,71 +1,47 @@
 from elasticai.creator.vhdl.language.ports import Port, PortImpl
 from elasticai.creator.vhdl.language.signals import Signal
-from elasticai.creator.vhdl.language.signals import SignalBuilder as _SignalBuilder
 from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 
 from .vhdl_design import BaseVHDLDesign
 
 
 class _Signals:
-    builder_logic_signals = _SignalBuilder().default("'0'")
-    builder_vector_signals = _SignalBuilder()
+    @classmethod
+    def _logic_signal(cls, id: str, accepted_names: list[str]) -> Signal:
+        return Signal(id=id, accepted_names=[id] + accepted_names, width=0)
+
+    @classmethod
+    def _vector_signal(cls, id: str, accepted_names: list[str], width: int) -> Signal:
+        return Signal(id=id, accepted_names=[id] + accepted_names, width=width)
 
     @classmethod
     def enable(cls) -> Signal:
-        return (
-            cls.builder_logic_signals.id("enable")
-            .width(0)
-            .accepted_names(["enable", "done"])
-            .build()
-        )
+        id = "enable"
+        return cls._logic_signal(id, ["done"])
 
     @classmethod
     def clock(cls) -> Signal:
-        return cls.builder_logic_signals.id("clock").accepted_names(["clock"]).build()
+        return cls._logic_signal("clock", [])
 
     @classmethod
     def done(cls) -> Signal:
-        return (
-            cls.builder_logic_signals.id("done")
-            .accepted_names(["enable", "done"])
-            .build()
-        )
+        return cls._logic_signal("done", ["enable"])
 
     @classmethod
     def x(cls, width: int) -> Signal:
-        return (
-            cls.builder_vector_signals.id("x")
-            .accepted_names(["x", "y"])
-            .width(width)
-            .build()
-        )
+        return cls._vector_signal("x", ["y"], width)
 
     @classmethod
     def y(cls, width: int) -> Signal:
-        return (
-            cls.builder_vector_signals.id("y")
-            .accepted_names(["x", "y"])
-            .width(width)
-            .build()
-        )
+        return cls._vector_signal("y", ["x"], width)
 
     @classmethod
     def x_address(cls, width: int) -> Signal:
-        return (
-            cls.builder_vector_signals.id("x_address")
-            .accepted_names(["x_address", "y_address"])
-            .width(width)
-            .build()
-        )
+        return cls._vector_signal("x_address", ["y_address"], width)
 
     @classmethod
     def y_address(cls, width: int) -> Signal:
-        return (
-            cls.builder_vector_signals.id("y_address")
-            .accepted_names(["x_address", "y_address"])
-            .width(width)
-            .build()
-        )
+        return cls._vector_signal("y_address", ["x_address"], width)
 
 
 class NetworkBlock(BaseVHDLDesign):

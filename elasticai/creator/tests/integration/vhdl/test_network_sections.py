@@ -49,16 +49,16 @@ class GeneratedNetworkVHDMatchesTargetForSingleModelVersion(VHDLCodeTestCase):
     signal fp_linear_enable : std_logic := '0';
     signal fp_linear_clock : std_logic := '0';
     signal fp_linear_done : std_logic := '0';
-    signal fp_linear_x : std_logic_vector(15 downto 0);
-    signal fp_linear_y : std_logic_vector(15 downto 0);
-    signal fp_linear_x_address : std_logic_vector(0 downto 0);
-    signal fp_linear_y_address : std_logic_vector(0 downto 0);
+    signal fp_linear_x : std_logic_vector(15 downto 0) := (other => '0');
+    signal fp_linear_y : std_logic_vector(15 downto 0) := (other => '0');
+    signal fp_linear_x_address : std_logic_vector(0 downto 0) := (other => '0');
+    signal fp_linear_y_address : std_logic_vector(0 downto 0) := (other => '0');
 
     -- fp_hard_sigmoid
     signal fp_hard_sigmoid_enable : std_logic := '0';
     signal fp_hard_sigmoid_clock : std_logic := '0';
-    signal fp_hard_sigmoid_x : std_logic_vector(15 downto 0);
-    signal fp_hard_sigmoid_y : std_logic_vector(15 downto 0);
+    signal fp_hard_sigmoid_x : std_logic_vector(15 downto 0) := (other => '0');
+    signal fp_hard_sigmoid_y : std_logic_vector(15 downto 0) := (other => '0');
             """
         )
         actual_sections = self.extract_section_from_code(

@@ -1,21 +1,11 @@
-from abc import ABC
-from dataclasses import dataclass
-
-from ._signal import Signal
+from typing import Optional
 
 
-@dataclass(kw_only=True)
-class _SignalBaseConfiguration:
-    id: str
-    default: str
-    accepted_names: list[str]
-
-
-class _SignalBase(Signal, ABC):
-    def __init__(self, config: _SignalBaseConfiguration):
-        self._id = config.id
-        self._default = self._generate_default_suffix(config.default)
-        self._accepted_names = config.accepted_names
+class _SignalBase:
+    def __init__(self, id: str, default: Optional[str], accepted_names: list[str]):
+        self._id = id
+        self._default = self._generate_default_suffix(default)
+        self._accepted_names = accepted_names
 
     def id(self) -> str:
         return self._id
