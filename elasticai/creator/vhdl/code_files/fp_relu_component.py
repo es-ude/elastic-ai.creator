@@ -1,9 +1,6 @@
 from dataclasses import dataclass
 
-from elasticai.creator.vhdl.number_representations import (
-    FixedPointConfig,
-    fixed_point_params_from_factory,
-)
+from elasticai.creator.vhdl.number_representations import FixedPointConfig, parameters
 from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 
 
@@ -13,9 +10,7 @@ class FPReLUComponent:
     fixed_point_factory: FixedPointConfig
 
     def __post_init__(self) -> None:
-        self.data_width, self.frac_width = fixed_point_params_from_factory(
-            self.fixed_point_factory
-        )
+        self.data_width, self.frac_width = parameters(self.fixed_point_factory)
 
     @property
     def file_name(self) -> str:

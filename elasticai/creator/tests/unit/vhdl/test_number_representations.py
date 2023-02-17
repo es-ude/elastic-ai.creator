@@ -1,14 +1,14 @@
 from functools import partial
 from unittest import TestCase
 
+from elasticai.creator.vhdl.logic_encoder import ToLogicEncoder
 from elasticai.creator.vhdl.number_representations import (
     ClippedFixedPoint,
     FixedPoint,
     FixedPointConfig,
-    ToLogicEncoder,
-    fixed_point_params_from_factory,
     float_values_to_fixed_point,
     infer_total_and_frac_bits,
+    parameters,
 )
 
 
@@ -381,21 +381,21 @@ def FixedPointParamsFromFactoryTest(TestCase):
     def test_fixed_point_params_from_factory_8total_4frac_bits(self) -> None:
         target_total_bits, taret_frac_bits = 8, 4
         factory = FixedPoint.get_builder(taret_frac_bits, target_total_bits)
-        total_bits, frac_bits = fixed_point_params_from_factory(factory)
+        total_bits, frac_bits = parameters(factory)
         self.assertEqual(target_total_bits, total_bits)
         self.assertEqual(taret_frac_bits, frac_bits)
 
     def test_fixed_point_params_from_factory_clipped_8total_4frac_bits(self) -> None:
         target_total_bits, taret_frac_bits = 8, 4
         factory = ClippedFixedPoint.get_builder(taret_frac_bits, target_total_bits)
-        total_bits, frac_bits = fixed_point_params_from_factory(factory)
+        total_bits, frac_bits = parameters(factory)
         self.assertEqual(target_total_bits, total_bits)
         self.assertEqual(taret_frac_bits, frac_bits)
 
     def test_fixed_point_params_from_factory_8total_0frac_bits(self) -> None:
         target_total_bits, taret_frac_bits = 8, 0
         factory = FixedPoint.get_builder(taret_frac_bits, target_total_bits)
-        total_bits, frac_bits = fixed_point_params_from_factory(factory)
+        total_bits, frac_bits = parameters(factory)
         self.assertEqual(target_total_bits, total_bits)
         self.assertEqual(taret_frac_bits, frac_bits)
 
