@@ -25,8 +25,8 @@ flowchart TB
     designFPHardSigmoidWithLookUp["FPHardSigmoidWithLookUp"]
   end
   subgraph parsing
-    PortParser
-    PortMapParser
+    Portarser
+    PortMaparser
   end
   subgraph modules
     LSTM
@@ -71,8 +71,8 @@ flowchart TB
   - VHDLTemplate
   - ...
 - **parsing**: basic parsing of vhdl files
-  - PortParser
-  - PortMapParser
+  - Portarser
+  - PortMaparser
   - ...
 - **modules**: Trainable Machine Learning Module
   - LSTM

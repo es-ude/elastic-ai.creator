@@ -1,2 +1,2 @@
-from ._port_impl import PortImpl
-from ._typing import Port, PortMap
+from ._port_impl import Port
+from ._port_map_impl import PortMap

@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.language.ports import Port, PortImpl
+from elasticai.creator.vhdl.language.ports import Port
 from elasticai.creator.vhdl.language.signals import Signal
 from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 
@@ -52,7 +52,7 @@ class NetworkBlock(BaseVHDLDesign):
         self._y_width = y_width
 
     def get_port(self) -> Port:
-        return PortImpl(
+        return Port(
             in_signals=[
                 _Signals.enable(),
                 _Signals.clock(),
@@ -90,4 +90,4 @@ class BufferedNetworkBlock(NetworkBlock):
             _Signals.y(self._y_width),
             _Signals.x_address(self._x_address_width),
         ]
-        return PortImpl(in_signals=in_signals, out_signals=out_signals)
+        return Port(in_signals=in_signals, out_signals=out_signals)

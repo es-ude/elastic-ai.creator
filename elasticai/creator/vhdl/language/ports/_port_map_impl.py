@@ -3,10 +3,8 @@ from typing import Iterator, Sequence
 
 from elasticai.creator.vhdl.language.signals import Signal
 
-from ._typing import PortMap
 
-
-class PortMapImpl(PortMap):
+class PortMap:
     def _id_of(self, s: Signal) -> str:
         return f"{self.id()}_{s.id()}"
 
