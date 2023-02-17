@@ -37,8 +37,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
         return HWEquivalentFXTracer()
 
     def translate(self) -> CodeModule:
-        module: Module = typing.cast(Module, self)
-        graph = self._get_tracer().trace(module)
+        graph = self._get_tracer().trace(self)
 
         def generate_port_maps(graph: HWEquivalentGraph[TranslatableLayer]):
             port_maps = []

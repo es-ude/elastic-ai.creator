@@ -1,8 +1,7 @@
 import math
-from abc import abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain
-from typing import Any, Callable, Protocol
+from typing import Any, Callable
 
 
 def _assert_range(value: float, total_bits: int, frac_bits: int) -> None:
@@ -167,7 +166,7 @@ class FixedPoint:
 
     @staticmethod
     def get_builder(total_bits: int, frac_bits: int) -> "FixedPointConfig":
-        return _FixedPointConfigImpl(
+        return FixedPointConfig(
             total_bits=total_bits, frac_bits=frac_bits, constructor=FixedPoint
         )
 
@@ -251,7 +250,7 @@ class ClippedFixedPoint(FixedPoint):
 
     @staticmethod
     def get_builder(total_bits: int, frac_bits: int) -> "FixedPointConfig":
-        return _FixedPointConfigImpl(
+        return FixedPointConfig(
             constructor=ClippedFixedPoint, total_bits=total_bits, frac_bits=frac_bits
         )
 
@@ -269,43 +268,19 @@ def infer_total_and_frac_bits(*values: Sequence[FixedPoint]) -> tuple[int, int]:
     return total_bits, frac_bits
 
 
-class FixedPointConfig(Protocol):
-    @property
-    @abstractmethod
-    def total_bits(self) -> int:
-        ...
-
-    @property
-    @abstractmethod
-    def frac_bits(self) -> int:
-        ...
-
-    @abstractmethod
-    def __call__(self, f: float) -> FixedPoint:
-        ...
-
-
-class _FixedPointConfigImpl(FixedPointConfig):
+class FixedPointConfig:
     def __init__(
         self,
         total_bits: int,
         frac_bits: int,
         constructor: Callable[[float, int, int], FixedPoint],
     ):
-        self._frac_bits = frac_bits
-        self._total_bits = total_bits
+        self.frac_bits = frac_bits
+        self.total_bits = total_bits
         self._constructor = constructor
 
-    @property
-    def total_bits(self) -> int:
-        return self._total_bits
-
-    @property
-    def frac_bits(self) -> int:
-        return self._frac_bits
-
     def __call__(self, f: float) -> FixedPoint:
-        return self._constructor(f, self._total_bits, self._frac_bits)
+        return self._constructor(f, self.total_bits, self.frac_bits)
 
 
 def fixed_point_params_from_factory(factory: FixedPointConfig) -> tuple[int, int]:
@@ -366,8 +341,11 @@ class ToLogicEncoder:
     def __len__(self):
         return len(self._symbols)
 
-    def __eq__(self, other: "ToLogicEncoder") -> bool:
-        return self._symbols == other._symbols and self._mapping == other._mapping
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, self.__class__):
+            return self._symbols == other._symbols and self._mapping == other._mapping
+        else:
+            return False
 
     def __iter__(self) -> Iterator[tuple[int, int]]:
         for symbol, encoded_symbol in self._mapping.values():
