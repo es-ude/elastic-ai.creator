@@ -1,7 +1,8 @@
-from elasticai.creator.vhdl.translator.build_function_mapping import (
+from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
-from elasticai.creator.vhdl.translator.pytorch.build_functions import (
+
+from .build_functions import (
     build_fixed_point_lstm,
     build_fp_hard_sigmoid,
     build_fp_hard_tanh,

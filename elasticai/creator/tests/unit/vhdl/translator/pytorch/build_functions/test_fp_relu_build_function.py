@@ -2,10 +2,8 @@ import unittest
 
 from elasticai.creator.nn.relu import ReLU
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.fp_relu_module import (
-    FPReLUModule,
-)
-from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_relu_build_function import (
+from elasticai.creator.vhdl_for_deprecation.translator.abstract import FPReLUModule
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_functions.fp_relu_build_function import (
     build_fp_relu,
 )
 

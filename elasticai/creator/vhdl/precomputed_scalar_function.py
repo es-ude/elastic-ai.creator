@@ -1,21 +1,39 @@
 import math
+from abc import abstractmethod
 from enum import Enum
 from itertools import chain, filterfalse
-from typing import Callable, Iterable, Iterator, Literal, Optional, Sequence, overload
+from typing import (
+    Callable,
+    Iterable,
+    Iterator,
+    Literal,
+    Optional,
+    Protocol,
+    Sequence,
+    overload,
+    runtime_checkable,
+)
 
 import torch.nn
 
-from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.code.code_generator import (
-    CodeGenerator,
-    CodeGeneratorCompatible,
-)
 from elasticai.creator.vhdl.code_generation import bin_representation
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,
     infer_total_and_frac_bits,
 )
+
+Code = Iterable[str]
+
+
+@runtime_checkable
+class CodeGenerator(Protocol):
+    @abstractmethod
+    def code(self) -> Iterable[str]:
+        ...
+
+
+CodeGeneratorCompatible = Code | CodeGenerator | str | Callable[[], Code]
 
 
 def _vhdl_add_assignment(
@@ -37,7 +55,7 @@ def _get_lower_case_class_name_or_component_name(
 
 def precomputed_scalar_function_process(
     x: list[FixedPoint], y: list[FixedPoint]
-) -> Code:
+) -> list[str]:
     """
         returns the string of a lookup table
     Args:
@@ -97,11 +115,7 @@ def precomputed_scalar_function_process(
 
     # build the string block
 
-    def generator() -> Iterator[str]:
-        for line in lines:
-            yield line
-
-    return generator()
+    return lines
 
 
 class PrecomputedScalarFunction:
@@ -134,7 +148,7 @@ class PrecomputedScalarFunction:
     def file_name(self) -> str:
         return f"{self.component_name}.vhd"
 
-    def code(self) -> Code:
+    def code(self) -> list[str]:
         library = ContextClause(
             library_clause=LibraryClause(logical_name_list=["ieee"]),
             use_clause=UseClause(
@@ -164,7 +178,7 @@ class PrecomputedScalarFunction:
             design_unit=self.component_name,
         )
         architecture.architecture_statement_part = process
-        code = chain(chain(library.code(), entity.code()), architecture.code())
+        code = list(chain(chain(library.code(), entity.code()), architecture.code()))
         return code
 
 
@@ -274,7 +288,7 @@ class _DesignUnitForEntityAndComponent:
         yield from _filter_empty_lines(self._header())
         yield f"{Keywords.END.value} {self.type.value} {self.identifier};"
 
-    def code(self) -> Code:
+    def code(self) -> Iterable[str]:
         return self
 
 
@@ -428,6 +442,11 @@ def _wrap_iterator_function_into_iterable(create_iterator: Callable[[], Iterator
 
 
 class CodeGeneratorConcatenation(Sequence[CodeGenerator], CodeGenerator):
+    def __init__(self, *interfaces: CodeGeneratorCompatible):
+        self.interface_generators: list[CodeGenerator] = [
+            _unify_code_generators(interface) for interface in interfaces
+        ]
+
     @overload
     def __getitem__(self, index: int) -> CodeGenerator:
         ...
@@ -438,17 +457,12 @@ class CodeGeneratorConcatenation(Sequence[CodeGenerator], CodeGenerator):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            return CodeGeneratorConcatenation(self.interface_generators[index])
+            return CodeGeneratorConcatenation(*tuple(self.interface_generators[index]))
         else:
             return self.interface_generators[index]
 
     def __len__(self) -> int:
         return len(self.interface_generators)
-
-    def __init__(self, *interfaces: CodeGeneratorCompatible):
-        self.interface_generators: list[CodeGenerator] = [
-            _unify_code_generators(interface) for interface in interfaces
-        ]
 
     def append(self, interface: CodeGeneratorCompatible) -> None:
         self.interface_generators.append(_unify_code_generators(interface))

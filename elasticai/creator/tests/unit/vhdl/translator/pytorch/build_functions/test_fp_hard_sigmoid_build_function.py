@@ -2,10 +2,10 @@ import unittest
 
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers.fp_hard_sigmoid_module import (
+from elasticai.creator.vhdl_for_deprecation.translator.abstract import (
     FPHardSigmoidModule,
 )
-from elasticai.creator.vhdl.translator.pytorch.build_functions.fp_hard_sigmoid_build_function import (
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_functions.fp_hard_sigmoid_build_function import (
     build_fp_hard_sigmoid,
 )
 

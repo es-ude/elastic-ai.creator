@@ -7,11 +7,11 @@ import torch
 from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.code.code_module import CodeModule
-from elasticai.creator.vhdl.translator.build_function_mapping import (
+from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
-from elasticai.creator.vhdl.translator.pytorch import translator
-from elasticai.creator.vhdl.translator.pytorch.build_function_mappings import (
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch import translator
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_function_mappings import (
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 

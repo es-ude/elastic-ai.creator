@@ -6,7 +6,7 @@ import elasticai.creator.nn.layers as qtorch
 from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.code.code_file import CodeFile
 from elasticai.creator.vhdl.code.code_module import CodeModule
-from elasticai.creator.vhdl.translator.build_function_mapping import (
+from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
 

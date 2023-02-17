@@ -4,7 +4,9 @@ import torch
 
 from elasticai.creator.nn.linear import FixedPointLinear
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.pytorch.build_functions import build_fp_linear_1d
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_functions import (
+    build_fp_linear_1d,
+)
 
 
 def arange_parameter(
