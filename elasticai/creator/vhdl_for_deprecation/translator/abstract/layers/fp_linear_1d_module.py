@@ -1,22 +1,22 @@
 from collections.abc import Collection, Iterable
 from dataclasses import dataclass, field
 from itertools import chain
+from typing import Iterator
 
 import numpy as np
 
 from elasticai.creator.vhdl.code.code_file import CodeFile
-from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
-from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
 
 
 @dataclass
-class FPLinear1dModule(CodeModuleBase):
+class FPLinear1dModule:
     layer_id: str
     weight: list[list[float]]
     bias: list[float]
-    fixed_point_factory: FixedPointFactory
+    fixed_point_factory: FixedPointConfig
     work_library_name: str = field(default="work")
 
     @property
@@ -24,7 +24,7 @@ class FPLinear1dModule(CodeModuleBase):
         return self.layer_id
 
     @property
-    def files(self) -> Collection[CodeFile]:
+    def files(self) -> Iterator[CodeFile]:
         def to_fp(values: Iterable[float]) -> list[FixedPoint]:
             return list(map(self.fixed_point_factory, values))
 

@@ -2,12 +2,10 @@ from typing import Any, Iterable, Iterator
 
 from elasticai.creator.mlframework import Module
 from elasticai.creator.mlframework.typing import Parameter
-from elasticai.creator.tests.unit.vhdl.translator.pytorch.test_translator import (
+from elasticai.creator.tests.unit.vhdl_for_deprecation.translator.pytorch.test_translator import (
     CodeModuleBase,
 )
-from elasticai.creator.vhdl.code import (
-    CodeModule,
-)
+from elasticai.creator.vhdl.code import CodeModule
 from elasticai.creator.vhdl.code.code import Code
 from elasticai.creator.vhdl.translatable_modules.typing import HWEquivalentLayer
 

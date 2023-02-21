@@ -54,7 +54,7 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
         layer_instantiations = [line for m in port_maps for line in m.instantiation()]
         layer_connections = ["fp_linear_x <= x;"]
         file = VHDLTemplate(
-            template_name="network",
+            base_name="network",
             signals=signals,
             layer_instantiations=layer_instantiations,
             layer_connections=layer_connections,
@@ -73,11 +73,12 @@ class FixedPointHardSigmoid(nnHardSigmoid):
         *,
         data_width,
     ):
-        super().__init__(fixed_point_factory, in_place)
+        super().__init__(in_place)
         self._hw_block = NetworkBlock("", "", x_width=data_width, y_width=data_width)
 
     def translate(self):
         return self._hw_block
+
 
 class FixedPointLinear(nnFixedPointLinear):
     def __init__(

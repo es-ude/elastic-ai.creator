@@ -1,7 +1,7 @@
 import torch
 
 from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations
-from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
+from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers import LSTMModule
 
 
 def build_fixed_point_lstm(

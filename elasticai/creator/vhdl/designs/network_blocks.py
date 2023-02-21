@@ -46,7 +46,7 @@ class _Signals:
 
 class NetworkBlock(BaseVHDLDesign):
     def __init__(self, name: str, template_name: str, x_width: int, y_width: int):
-        self._main_file = VHDLTemplate(name=name, template_name=template_name)
+        self._main_file = VHDLTemplate(base_name=template_name)
         super().__init__(name=name, files=(self._main_file,))
         self._x_width = x_width
         self._y_width = y_width

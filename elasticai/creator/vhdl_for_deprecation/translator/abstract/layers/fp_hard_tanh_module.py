@@ -1,14 +1,18 @@
 from collections.abc import Collection
 from dataclasses import dataclass
+from typing import Iterator
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
+from elasticai.creator.vhdl.code import CodeFile
 from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch.code_module_base import (
+    CodeModuleBase,
+)
 
 
 @dataclass
 class FPHardTanhModule(CodeModuleBase):
-    fixed_point_factory: FixedPointFactory
+    fixed_point_factory: FixedPointConfig
     layer_id: str
 
     @property
@@ -16,7 +20,7 @@ class FPHardTanhModule(CodeModuleBase):
         return self.layer_id
 
     @property
-    def files(self) -> Collection[CodeFile]:
+    def files(self) -> Iterator[CodeFile]:
         yield FPHardTanhComponent(
             min_val=self.fixed_point_factory(-1),
             max_val=self.fixed_point_factory(1),

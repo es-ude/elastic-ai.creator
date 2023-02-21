@@ -115,7 +115,7 @@ class FixedPointSineModel(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self._hidden_size = 64
-        self._fp_factory = FixedPoint.get_factory(total_bits=16, frac_bits=8)
+        self._fp_factory = FixedPoint.get_builder(total_bits=16, frac_bits=8)
         self.lstm = FixedPointLSTMWithHardActivations(
             input_size=1,
             hidden_size=self._hidden_size,

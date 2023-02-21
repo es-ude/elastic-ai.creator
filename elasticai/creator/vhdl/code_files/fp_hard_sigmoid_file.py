@@ -24,4 +24,4 @@ class FPHardSigmoidFile(VHDLTemplate):
         )
         stringified_d = dict(((k, str(v)) for k, v in d.items()))
         name = "fp_hard_sigmoid"
-        super().__init__(template_name=name, **stringified_d)
+        super().__init__(base_name=name, **stringified_d)

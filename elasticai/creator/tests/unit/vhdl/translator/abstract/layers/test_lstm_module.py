@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhC
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
+from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers import LSTMModule
 
 
 class LSTMModuleTest(TestCase):
@@ -18,12 +18,9 @@ class LSTMModuleTest(TestCase):
             weights_hh=[[[1], [2], [3], [4]]],
             biases_ih=[[1, 2, 3, 4]],
             biases_hh=[[5, 6, 7, 8]],
-        )
-
-        self.translation_args = LSTMTranslationArgs(
+            work_library_name="work",
+            layer_id="0",
             fixed_point_factory=FixedPoint.get_builder(total_bits=8, frac_bits=2),
-            sigmoid_resolution=(-2.5, 2.5, 256),
-            tanh_resolution=(-1, 1, 256),
         )
 
     def test_correct_number_of_components(self) -> None:

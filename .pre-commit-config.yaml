@@ -22,7 +22,7 @@ repos:
     -   id: no-commit-to-branch
         stages: [ commit, manual ]
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.0.0
+    rev: v1.0.1
     hooks:
     -   id: mypy
         stages: [ manual ]

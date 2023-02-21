@@ -6,7 +6,7 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
 
 
 class Arithmetics(Protocol):
@@ -59,7 +59,7 @@ class FloatArithmetics(Arithmetics):
 
 
 class FixedPointArithmetics(Arithmetics):
-    def __init__(self, fixed_point_factory: FixedPointFactory) -> None:
+    def __init__(self, fixed_point_factory: FixedPointConfig) -> None:
         self.fixed_point_factory = fixed_point_factory
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:

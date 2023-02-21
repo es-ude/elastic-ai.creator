@@ -35,7 +35,7 @@ class LSTMFile:
         return "lstm.vhd"
 
     def lines(self) -> list[str]:
-        template = VHDLTemplate(template_name="lstm")
+        template = VHDLTemplate(base_name="lstm")
         template.update_parameters(
             work_library_name=self.work_library_name,
             data_width=str(self.data_width),

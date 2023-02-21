@@ -56,7 +56,7 @@ class FloatArithmeticsTest(TensorTestCase):
 
 class FixedPointArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
-        fp_factory = FixedPoint.get_factory(total_bits=4, frac_bits=2)
+        fp_factory = FixedPoint.get_builder(total_bits=4, frac_bits=2)
         self.total_bits = fp_factory.total_bits
         self.frac_bits = fp_factory.frac_bits
         self.min_fp = -1 * (1 << (self.total_bits - 1)) / (1 << self.frac_bits)

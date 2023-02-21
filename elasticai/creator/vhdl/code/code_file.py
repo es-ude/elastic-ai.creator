@@ -11,5 +11,5 @@ class CodeFile(Protocol):
         ...
 
     @abstractmethod
-    def code(self) -> Code:
+    def lines(self) -> Code:
         ...

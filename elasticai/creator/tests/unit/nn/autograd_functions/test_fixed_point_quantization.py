@@ -10,7 +10,7 @@ from elasticai.creator.vhdl.number_representations import FixedPoint
 
 class FixedPointQuantFunctionTest(TensorTestCase):
     def setUp(self) -> None:
-        self.fp_factory = FixedPoint.get_factory(total_bits=4, frac_bits=2)
+        self.fp_factory = FixedPoint.get_builder(total_bits=4, frac_bits=2)
         self.quant = lambda x: FixedPointQuantFunction.apply(x, self.fp_factory)
 
     def test_quantize_upper_bound(self) -> None:
@@ -39,7 +39,7 @@ class FixedPointQuantFunctionTest(TensorTestCase):
 
 class FixedPointDequantFunctionTest(TensorTestCase):
     def setUp(self) -> None:
-        self.fp_factory = FixedPoint.get_factory(total_bits=4, frac_bits=2)
+        self.fp_factory = FixedPoint.get_builder(total_bits=4, frac_bits=2)
         self.dequant = lambda x: FixedPointDequantFunction.apply(x, self.fp_factory)
 
     def test_dequantize_upper_bound(self) -> None:

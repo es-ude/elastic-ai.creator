@@ -1,22 +1,22 @@
-from collections.abc import Collection
 from dataclasses import dataclass
+from typing import Iterator
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
+from elasticai.creator.vhdl.code import CodeFile
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
 
 
 @dataclass
-class FPHardSigmoidModule(CodeModuleBase):
+class FPHardSigmoidModule:
     layer_id: str
-    fixed_point_factory: FixedPointFactory
+    fixed_point_factory: FixedPointConfig
 
     @property
     def name(self) -> str:
         return self.layer_id
 
     @property
-    def files(self) -> Collection[CodeFile]:
+    def files(self) -> Iterator[CodeFile]:
         yield FPHardSigmoidFile(
             layer_id=self.layer_id,
             zero_threshold=self.fixed_point_factory(-3),

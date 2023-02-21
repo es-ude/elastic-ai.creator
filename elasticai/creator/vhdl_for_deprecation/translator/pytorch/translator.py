@@ -1,5 +1,5 @@
 import os
-from typing import Iterable, Iterator
+from typing import Any, Iterable, Iterator
 
 import torch
 

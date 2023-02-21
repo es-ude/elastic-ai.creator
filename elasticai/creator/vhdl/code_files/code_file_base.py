@@ -7,7 +7,7 @@ class CodeFileBase(CodeFile):
     def name(self) -> str:
         return self._name
 
-    def code(self) -> Code:
+    def lines(self) -> Code:
         return self._code
 
     def __repr__(self) -> str:

@@ -1,13 +1,13 @@
-from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
-from elasticai.creator.vhdl.vhdl_files import VHDLFile
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
+from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
 
 
-class FPHardTanhComponent(VHDLFile):
+class FPHardTanhComponent:
     def __init__(
         self,
         min_val: FixedPoint,
         max_val: FixedPoint,
-        fixed_point_factory: FixedPointFactory,
+        fixed_point_factory: FixedPointConfig,
         layer_id: str,
     ):
         d = dict(
@@ -18,4 +18,16 @@ class FPHardTanhComponent(VHDLFile):
             layer_name=layer_id,
         )
         stringified_d = dict(((k, str(v)) for k, v in d.items()))
-        super().__init__(name="fp_hard_tanh", **stringified_d)
+        self._name = "fp_hard_tanh"
+        self.template = VHDLTemplate(base_name=self._name, **stringified_d)
+
+    @property
+    def single_line_parameters(self):
+        return self.template.single_line_parameters
+
+    @property
+    def name(self) -> str:
+        return f"{self._name}.vhd"
+
+    def lines(self) -> list[str]:
+        return self.template.lines()

@@ -5,7 +5,6 @@ from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dModule,
-    FPLinear1dTranslationArgs,
 )
 
 
@@ -15,7 +14,7 @@ class FPLinear1dModuleTest(unittest.TestCase):
             layer_id="ll1",
             weight=[[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]],
             bias=[1.0, 2.0],
-            fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4),
+            fixed_point_factory=FixedPoint.get_builder(total_bits=8, frac_bits=4),
         )
         vhdl_components = linear.files
 

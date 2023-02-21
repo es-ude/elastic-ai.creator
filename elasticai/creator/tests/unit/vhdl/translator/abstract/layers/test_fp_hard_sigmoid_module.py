@@ -2,14 +2,14 @@ import unittest
 
 from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl_for_deprecation.translator.abstract import (
+from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers import (
     FPHardSigmoidModule,
 )
 
 
 class FPHardSigmoidModuleTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.fp_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+        self.fp_factory = FixedPoint.get_builder(total_bits=8, frac_bits=4)
         self.module = FPHardSigmoidModule(
             layer_id="0", fixed_point_factory=self.fp_factory
         )

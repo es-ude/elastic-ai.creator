@@ -38,7 +38,9 @@ flowchart TB
   transmodules --> modules
   subgraph language
     Architecture --> Entity --> Port --> Signal
-    Architecture --> PortMap --> Signal
+    Instance --> Entity
+    Instance --> Architecture
+    Instance --> Signal
   end
   parsing --> language
   designs --> parsing

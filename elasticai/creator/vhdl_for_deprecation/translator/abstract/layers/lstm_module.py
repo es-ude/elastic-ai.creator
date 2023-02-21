@@ -1,10 +1,10 @@
 from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Iterator
 
 import numpy as np
 
-from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
+from elasticai.creator.vhdl.code import CodeFile
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
     DualPort2ClockRamVHDLFile,
 )
@@ -12,11 +12,11 @@ from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoid
 from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
 from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
-from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
 
 
 @dataclass
-class LSTMModule(CodeModuleBase):
+class LSTMModule:
     """
     Abstract representation of an LSTM layer that can be directly translated to an iterable of VHDLComponent objects.
     Currently, no stacked LSTMs are supported (only single layer LSTMs are supported).
@@ -45,7 +45,7 @@ class LSTMModule(CodeModuleBase):
     biases_ih: list[list[float]]
     biases_hh: list[list[float]]
     layer_id: str
-    fixed_point_factory: FixedPointFactory
+    fixed_point_factory: FixedPointConfig
     work_library_name: str = "work"
 
     @property
@@ -78,7 +78,7 @@ class LSTMModule(CodeModuleBase):
         return input_size, hidden_size // 4
 
     @property
-    def files(self) -> Collection[CodeFile]:
+    def files(self) -> Iterator[CodeFile]:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(self.fixed_point_factory, values))
 

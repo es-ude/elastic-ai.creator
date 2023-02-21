@@ -8,7 +8,7 @@ from elasticai.creator.nn.arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.hard_tanh import HardTanh
 from elasticai.creator.nn.lstm_cell import LSTMCell
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
 
 
 class LSTM(torch.nn.Module):
@@ -59,7 +59,7 @@ class LSTM(torch.nn.Module):
 class FixedPointLSTMWithHardActivations(LSTM):
     def __init__(
         self,
-        fixed_point_factory: FixedPointFactory,
+        fixed_point_factory: FixedPointConfig,
         input_size: int,
         hidden_size: int,
         batch_first: bool,
@@ -81,5 +81,5 @@ class FixedPointLSTMWithHardActivations(LSTM):
         )
 
     @property
-    def fixed_point_factory(self) -> FixedPointFactory:
+    def fixed_point_factory(self) -> FixedPointConfig:
         return cast(FixedPointArithmetics, self.cell.ops).fixed_point_factory

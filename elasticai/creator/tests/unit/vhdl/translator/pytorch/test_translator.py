@@ -49,7 +49,7 @@ class CodeFileBase(CodeFile):
     def name(self) -> str:
         return self._name
 
-    def code(self) -> Code:
+    def lines(self) -> Code:
         return self._code
 
     def __repr__(self) -> str:
@@ -74,7 +74,7 @@ def unpack_module_directories(
     modules: Iterable[CodeModule],
 ) -> list[tuple[str, list[tuple[str, Code]]]]:
     def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
-        return code_file.name, list(code_file.code())
+        return code_file.name, list(code_file.lines())
 
     return [
         (module.name, list(map(unpack_code_file, module.files))) for module in modules

@@ -2,10 +2,7 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.vhdl.number_representations import (
-    FixedPointConfig,
-    fixed_point_params_from_factory,
-)
+from elasticai.creator.vhdl.number_representations import FixedPointConfig
 
 
 class FixedPointQuantFunction(torch.autograd.Function):

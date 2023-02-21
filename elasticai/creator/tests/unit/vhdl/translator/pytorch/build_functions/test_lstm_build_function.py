@@ -4,7 +4,7 @@ import torch
 
 from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.pytorch.build_functions import (
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_functions import (
     build_fixed_point_lstm,
 )
 
@@ -24,7 +24,7 @@ class LSTMBuildFunctionTest(TestCase):
             hidden_size=1,
             bias=True,
             batch_first=True,
-            fixed_point_factory=FixedPoint.get_factory(16, 8),
+            fixed_point_factory=FixedPoint.get_builder(16, 8),
         )
         lstm.cell.linear_ih.weight = arange_parameter(start=0, end=4, shape=(4, 1))
         lstm.cell.linear_hh.weight = arange_parameter(start=4, end=8, shape=(4, 1))

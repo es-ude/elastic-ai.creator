@@ -5,12 +5,12 @@ import torch
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.linear import FixedPointLinear
 from elasticai.creator.nn.relu import ReLU
-from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointFactory
-from elasticai.creator.vhdl.translator.pytorch import translator
+from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch import translator
 
 
 class FixedPointModel(torch.nn.Module):
-    def __init__(self, fixed_point_factory: FixedPointFactory) -> None:
+    def __init__(self, fixed_point_factory: FixedPointConfig) -> None:
         super().__init__()
 
         self.linear1 = FixedPointLinear(
@@ -41,7 +41,7 @@ class TranslateLinearModelTest(unittest.TestCase):
         torch.manual_seed(22)
         torch.cuda.manual_seed_all(22)
 
-        fixed_point_factory = FixedPoint.get_factory(total_bits=8, frac_bits=4)
+        fixed_point_factory = FixedPoint.get_builder(total_bits=8, frac_bits=4)
         model = FixedPointModel(fixed_point_factory)
 
         translation_args = {

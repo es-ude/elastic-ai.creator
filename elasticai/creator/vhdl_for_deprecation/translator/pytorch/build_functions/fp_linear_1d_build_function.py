@@ -1,8 +1,9 @@
 import torch
 
 from elasticai.creator.nn.linear import FixedPointLinear
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
-from elasticai.creator.vhdl.translator.abstract.layers import FPLinear1dModule
+from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers import (
+    FPLinear1dModule,
+)
 
 
 def build_fp_linear_1d(

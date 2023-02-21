@@ -46,7 +46,7 @@ class FPLinear1dFile:
         return f"fp_linear_1d_{self.layer_id}.vhd"
 
     def code(self) -> list[str]:
-        template = VHDLTemplate(template_name="fp_linear_1d")
+        template = VHDLTemplate(base_name="fp_linear_1d")
         template.update_parameters(
             layer_name=self.layer_id,
             work_library_name=self.work_library_name,

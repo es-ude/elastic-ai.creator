@@ -31,18 +31,20 @@ class RomFile(CodeFileBase):
     def name(self) -> str:
         return f"{self.rom_name}_{self.layer_id}.vhd"
 
-    def code(self) -> list[str]:
+    def lines(self) -> list[str]:
         warnings.warn(
             message=DeprecationWarning(
-                f"calling instance directly is deprecated, use the"
-                f" lines() method instead ",
+                (
+                    f"calling instance directly is deprecated, use the"
+                    f" lines() method instead "
+                ),
             ),
             stacklevel=2,
         )
         return self.lines()
 
     def lines(self) -> list[str]:
-        template = VHDLTemplate(template_name="rom")
+        template = VHDLTemplate(base_name="rom")
         template.update_parameters(
             rom_name=self.rom_name,
             layer_name=self.layer_id,

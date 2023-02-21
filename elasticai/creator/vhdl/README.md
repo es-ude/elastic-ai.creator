@@ -1,8 +1,8 @@
 # Structure of the translator
 
 The actual translator, which can translate a model into a VHDL implementation, can be found in the package
-`elasticai.creator.vhdl.translator`. An implementation for translating PyTorch models to VHDL can be found in the module
-`elasticai.creator.vhdl.translator.pytorch.translator`.
+`elasticai.creator.vhdl_for_deprecation.translator`. An implementation for translating PyTorch models to VHDL can be found in the module
+`elasticai.creator.vhdl_for_deprecation.translator.pytorch.translator`.
 
 ## Translation with the help of templates
 
@@ -96,12 +96,12 @@ object. To translate a model of a machine learning framework, there is a `BuildF
 layers to their corresponding build function.
 
 We already provide a predefined `BuildFunctionMapping` instance that translates each layer in a typical way
-(`elasticai.creator.vhdl.translator.pytorch.build_function_mappings.DEFAULT_BUILD_FUNCTION_MAPPING`).
+(`elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_function_mappings.DEFAULT_BUILD_FUNCTION_MAPPING`).
 
 ## Translation process
 In the following diagram you can see the typical process of translating a given PyTorch model into VHDL files using
 the functions `translate_model` and `save_code` which can be found in the module
-`elasticai.creator.vhdl.translator.pytorch.translator`:
+`elasticai.creator.vhdl_for_deprecation.translator.pytorch.translator`:
 
 ```mermaid
 flowchart TD
