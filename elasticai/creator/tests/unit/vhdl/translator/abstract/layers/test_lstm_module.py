@@ -1,11 +1,13 @@
 from unittest import TestCase
 
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
-    DualPort2ClockRamVHDLFile,
+    DualPort2ClockRamComponent,
 )
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
+    FPHardSigmoidComponent,
+)
 from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
-from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
+from elasticai.creator.vhdl.code_files.lstm_component import LSTMComponent
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl.translator.abstract.layers import LSTMModule
@@ -39,10 +41,10 @@ class LSTMModuleTest(TestCase):
             (RomFile, "bf_rom_0.vhd"),
             (RomFile, "bg_rom_0.vhd"),
             (RomFile, "bo_rom_0.vhd"),
-            (FPHardSigmoidFile, "fp_hard_sigmoid.vhd"),
-            (FPHardTanhComponent, "fp_hard_tanh.vhd"),
-            (LSTMFile, "lstm.vhd"),
-            (DualPort2ClockRamVHDLFile, "dual_port_2_clock_ram.vhd"),
+            (FPHardSigmoidComponent, "fp_hard_sigmoid_0.vhd"),
+            (FPHardTanhComponent, "fp_hard_tanh_0.vhd"),
+            (LSTMComponent, "lstm_0.vhd"),
+            (DualPort2ClockRamComponent, "dual_port_2_clock_ram_0.vhd"),
         ]
         actual_components = [(type(x), x.name) for x in vhdl_components]
 

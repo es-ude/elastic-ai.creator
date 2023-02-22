@@ -2,7 +2,9 @@ from collections.abc import Collection
 from dataclasses import dataclass
 
 from elasticai.creator.vhdl.code import CodeFile, CodeModuleBase
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
+    FPHardSigmoidComponent,
+)
 from elasticai.creator.vhdl.number_representations import FixedPointFactory
 
 
@@ -17,7 +19,7 @@ class FPHardSigmoidModule(CodeModuleBase):
 
     @property
     def files(self) -> Collection[CodeFile]:
-        yield FPHardSigmoidFile(
+        yield FPHardSigmoidComponent(
             layer_id=self.layer_id,
             zero_threshold=self.fixed_point_factory(-3),
             one_threshold=self.fixed_point_factory(3),
