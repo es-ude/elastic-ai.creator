@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.31.0 (2023-02-22)
+### Feature
+* **translation:** Add missing suffixes ([`cb05d0f`](https://github.com/es-ude/elastic-ai.creator/commit/cb05d0f3f8665ac98c0cff70cbb2dbd8d2a5b2f2))
+
 ## v0.30.4 (2023-02-16)
 ### Fix
 * **translation:** Get rid of the duplicated suffix on rom component ([`9cd0e0b`](https://github.com/es-ude/elastic-ai.creator/commit/9cd0e0be9481a286820eea5c8d5bdc9d28fcc0d8))
