@@ -1,12 +1,12 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
+from elasticai.creator.vhdl.code_files.lstm_component import LSTMComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
 class LSTMComponentTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.lstm = LSTMFile(
+        self.lstm = LSTMComponent(
             input_size=5,
             hidden_size=3,
             fixed_point_factory=FixedPoint.get_factory(total_bits=8, frac_bits=4),

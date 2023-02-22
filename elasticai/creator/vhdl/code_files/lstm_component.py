@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.vhdl_files import expand_template
 
 
 @dataclass
-class LSTMFile:
+class LSTMComponent:
     input_size: int
     hidden_size: int
     fixed_point_factory: Callable[[float], FixedPoint]
@@ -33,7 +33,7 @@ class LSTMFile:
 
     @property
     def name(self) -> str:
-        return "lstm.vhd"
+        return f"lstm_{self.layer_id}.vhd"
 
     def code(self) -> Code:
         template = read_text("elasticai.creator.vhdl.templates", "lstm.tpl.vhd")
