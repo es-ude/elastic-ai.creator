@@ -66,7 +66,21 @@ flowchart TB
   SinkNode --> acceptor["AcceptorInterface"]
   Signal -.-> acceptor
 ```
+```mermaid
+classDiagram
+  class VHDLDesign {
+    +str name
+    +lines() list~str~
+    +port() Port
+    +additional_files() list~VHDLFile~
+    +subdesigns() list~VHDLDesign~
+  }
 
+  class VHDLFile {
+    +str name
+    +lines() list~str~
+  }
+```
 ## Responsibilities/Packages
 - **templates**: streamlined filling of templates
   - Template
