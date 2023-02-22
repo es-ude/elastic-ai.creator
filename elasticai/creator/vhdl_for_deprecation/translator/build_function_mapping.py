@@ -1,9 +1,14 @@
+from abc import abstractmethod
 from collections.abc import Mapping
-from typing import Any, Callable, Iterator
+from typing import Any, Callable, Iterator, Protocol
 
 from elasticai.creator.vhdl.code.code_module import CodeModule
 
-BuildFunction = Callable[[Any, str, ...], CodeModule]
+
+class BuildFunction(Protocol):
+    @abstractmethod
+    def __call__(self, a: Any, b: str, *args) -> CodeModule:
+        ...
 
 
 class BuildFunctionMapping(Mapping[str, BuildFunction]):

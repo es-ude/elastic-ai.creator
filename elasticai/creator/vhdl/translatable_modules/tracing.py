@@ -8,7 +8,7 @@ from torch.fx import Tracer as fxTracer
 
 from elasticai.creator.mlframework import Module
 from elasticai.creator.vhdl.code import Code
-from elasticai.creator.vhdl.hw_equivalent_layers.typing import HWEquivalentLayer, Node
+from elasticai.creator.vhdl.translatable_modules.typing import HWEquivalentLayer, Node
 
 
 @runtime_checkable

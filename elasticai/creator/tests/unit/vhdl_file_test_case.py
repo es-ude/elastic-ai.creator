@@ -20,6 +20,6 @@ class VHDLFileTestCase(unittest.TestCase):
             return line.startswith("--")
 
         vhdl_code = filterfalse(starts_with_comment, vhdl_code)
-        vhdl_code = list(vhdl_code)
+        vhdl_lines = list(vhdl_code)
         generated_code = list(filterfalse(starts_with_comment, generated_code))
-        self.assertEqual(vhdl_code, generated_code)
+        self.assertEqual(vhdl_lines, generated_code)
