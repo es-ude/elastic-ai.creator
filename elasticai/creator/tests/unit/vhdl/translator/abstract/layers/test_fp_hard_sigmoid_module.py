@@ -1,6 +1,8 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
+    FPHardSigmoidComponent,
+)
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers import (
     FPHardSigmoidModule,
@@ -17,11 +19,11 @@ class FPHardSigmoidModuleTest(unittest.TestCase):
     def test_components_return_only_one_component(self) -> None:
         components = list(self.module.files)
         self.assertEqual(len(components), 1)
-        self.assertEqual(type(components[0]), FPHardSigmoidFile)
+        self.assertEqual(type(components[0]), FPHardSigmoidComponent)
 
     def test_components_component_args_are_correctly_set(self) -> None:
         component = list(self.module.files)[0]
-        self.assertEqual(component.single_line_parameters["zero_threshold"], str(self.fp_factory(-3).to_signed_int()))  # type: ignore
-        self.assertEqual(component.single_line_parameters["one_threshold"], str(self.fp_factory(3).to_signed_int()))  # type: ignore
-        self.assertEqual(component.single_line_parameters["slope"], str(self.fp_factory(0.125).to_signed_int()))  # type: ignore
-        self.assertEqual(component.single_line_parameters["y_intercept"], str(self.fp_factory(0.5).to_signed_int()))  # type: ignore
+        self.assertEqual(component.zero_threshold, self.fp_factory(-3))  # type: ignore
+        self.assertEqual(component.one_threshold, self.fp_factory(3))  # type: ignore
+        self.assertEqual(component.slope, self.fp_factory(0.125))  # type: ignore
+        self.assertEqual(component.y_intercept, self.fp_factory(0.5))  # type: ignore

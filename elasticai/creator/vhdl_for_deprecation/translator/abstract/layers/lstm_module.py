@@ -6,11 +6,13 @@ import numpy as np
 
 from elasticai.creator.vhdl.code import CodeFile
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
-    DualPort2ClockRamVHDLFile,
+    DualPort2ClockRamComponent,
 )
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_file import FPHardSigmoidFile
+from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
+    FPHardSigmoidComponent,
+)
 from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
-from elasticai.creator.vhdl.code_files.lstm_component import LSTMFile
+from elasticai.creator.vhdl.code_files.lstm_component import LSTMComponent
 from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint, FixedPointConfig
 
@@ -93,7 +95,7 @@ class LSTMModule:
                 values=rom_values,
                 resource_option="auto",
             )
-        yield FPHardSigmoidFile(
+        yield FPHardSigmoidComponent(
             layer_id=self.layer_id,
             zero_threshold=self.fixed_point_factory(-3),
             one_threshold=self.fixed_point_factory(3),
@@ -108,11 +110,11 @@ class LSTMModule:
             layer_id=self.layer_id,
         )
         input_size, hidden_size = self._derive_input_and_hidden_size()
-        yield LSTMFile(
+        yield LSTMComponent(
             input_size=input_size,
             hidden_size=hidden_size,
             fixed_point_factory=self.fixed_point_factory,
             layer_id=self.layer_id,
             work_library_name=self.work_library_name,
         )
-        yield DualPort2ClockRamVHDLFile(layer_id=self.layer_id)
+        yield DualPort2ClockRamComponent(layer_id=self.layer_id)

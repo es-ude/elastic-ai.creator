@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 
 import torch
 
@@ -44,7 +45,7 @@ class TranslateLinearModelTest(unittest.TestCase):
         fixed_point_factory = FixedPoint.get_builder(total_bits=8, frac_bits=4)
         model = FixedPointModel(fixed_point_factory)
 
-        translation_args = {
+        translation_args: dict[str, dict[str, Any]] = {
             "0": {"work_library_name": "work"},
             "1": {"work_library_name": "work"},
             "2": {"fixed_point_factory": fixed_point_factory},
@@ -76,7 +77,7 @@ class TranslateLinearModelTest(unittest.TestCase):
                     "b_rom_fp_linear_1d_1.vhd",
                 },
             ),
-            ("2_HardSigmoid", {"fp_hard_sigmoid.vhd"}),
+            ("2_HardSigmoid", {"fp_hard_sigmoid_2.vhd"}),
             ("3_ReLU", {"fp_relu_3.vhd"}),
             ("network_component", {"network.vhd"}),
         ]

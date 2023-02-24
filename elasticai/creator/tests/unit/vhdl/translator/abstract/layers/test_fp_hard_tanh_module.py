@@ -21,5 +21,5 @@ class FPHardTanhModuleTest(unittest.TestCase):
 
     def test_components_component_args_are_correctly_set(self) -> None:
         component = list(self.module.files)[0]
-        self.assertEqual(component.single_line_parameters["min_val"], str(self.fp_factory(-1).to_signed_int()))  # type: ignore
-        self.assertEqual(component.single_line_parameters["max_val"], str(self.fp_factory(1).to_signed_int()))  # type: ignore
+        self.assertEqual(component.min_val, self.fp_factory(-1))  # type: ignore
+        self.assertEqual(component.max_val, self.fp_factory(1))  # type: ignore
