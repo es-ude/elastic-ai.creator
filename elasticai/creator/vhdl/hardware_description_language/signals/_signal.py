@@ -1,5 +1,7 @@
-from elasticai.creator.vhdl.language.signals._signal_impl import _SignalImpl
-from elasticai.creator.vhdl.language.signals._vector_signal_impl import (
+from elasticai.creator.vhdl.hardware_description_language.signals._signal_impl import (
+    _SignalImpl,
+)
+from elasticai.creator.vhdl.hardware_description_language.signals._vector_signal_impl import (
     _VectorSignalImpl,
 )
 

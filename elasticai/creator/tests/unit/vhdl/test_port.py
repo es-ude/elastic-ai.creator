@@ -1,8 +1,8 @@
 import unittest
 
-from elasticai.creator.vhdl.language.ports import Port as Port
-from elasticai.creator.vhdl.language.ports import PortMap
-from elasticai.creator.vhdl.language.signals import Signal
+from elasticai.creator.vhdl.hardware_description_language.ports import Port as Port
+from elasticai.creator.vhdl.hardware_description_language.ports import PortMap
+from elasticai.creator.vhdl.hardware_description_language.signals import Signal
 
 
 class PortMapTestCase(unittest.TestCase):

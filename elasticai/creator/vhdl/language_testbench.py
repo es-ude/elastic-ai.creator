@@ -1,5 +1,5 @@
 """
-The module contains classes and functions for generating vhdl code similar to the language module
+The module contains classes and functions for generating vhdl code similar to the hardware_description_language module
 This module includes CodeGenerator that are only used by the vhdl testbenches
 """
 from abc import ABC, abstractmethod

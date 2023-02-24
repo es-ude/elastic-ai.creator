@@ -6,7 +6,7 @@ from elasticai.creator.vhdl.code_files.utils import (
     derive_fixed_point_params_from_factory,
 )
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.templates import VHDLTemplate
 
 
 @dataclass

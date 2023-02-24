@@ -18,7 +18,7 @@ class FPLinearModel(RootModule):
         self.fp_linear = FixedPointLinear(
             in_features=1,
             out_features=1,
-            fixed_point_factory=fp_factory,
+            fixed_point_config=fp_factory,
             data_width=data_width,
         )
 

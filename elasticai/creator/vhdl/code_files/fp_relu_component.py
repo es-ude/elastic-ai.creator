@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 
-from elasticai.creator.vhdl.code_files.code_file_base import CodeFileBase
 from elasticai.creator.vhdl.number_representations import FixedPointConfig, parameters
-from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.templates import VHDLTemplate
 
 
 @dataclass

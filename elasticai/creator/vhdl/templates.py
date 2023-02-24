@@ -12,7 +12,6 @@ class VHDLTemplate(AbstractBaseTemplate):
 
     _template_package = "elasticai.creator.vhdl.template_resources"
     _template_file_suffix = ".tpl.vhd"
-    _generated_file_suffix = ".vhd"
 
     def __init__(self, base_name: str, **parameters: str | tuple[str] | list[str]):
         super().__init__(**parameters)
@@ -21,7 +20,4 @@ class VHDLTemplate(AbstractBaseTemplate):
 
     @property
     def name(self) -> str:
-        return f"{self._template_name}{self._generated_file_suffix}"
-
-    def code(self):
-        yield from self.lines()
+        return f"{self._template_name}{self._template_file_suffix}"

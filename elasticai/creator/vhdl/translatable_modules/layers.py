@@ -5,17 +5,16 @@ from typing import Any, Collection
 import torch.nn
 
 import elasticai.creator.mlframework
-from elasticai.creator.mlframework import Module
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid as nnHardSigmoid
 from elasticai.creator.nn.linear import FixedPointLinear as nnFixedPointLinear
-from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.code_files.utils import calculate_address_width
-from elasticai.creator.vhdl.designs.network_blocks import (
+from elasticai.creator.vhdl.designs._network_blocks import (
     BufferedNetworkBlock,
     NetworkBlock,
 )
+from elasticai.creator.vhdl.hardware_description_language.design import Design
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
-from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.templates import VHDLTemplate
 from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
 from elasticai.creator.vhdl.tracing.typing import HWEquivalentGraph, TranslatableLayer
 
@@ -76,8 +75,11 @@ class FixedPointHardSigmoid(nnHardSigmoid):
         super().__init__(in_place)
         self._hw_block = NetworkBlock("", "", x_width=data_width, y_width=data_width)
 
-    def translate(self):
+    def translate(self) -> Design:
         return self._hw_block
+
+
+T = typing.TypeVar("T")
 
 
 class FixedPointLinear(nnFixedPointLinear):
@@ -85,7 +87,7 @@ class FixedPointLinear(nnFixedPointLinear):
         self,
         in_features: int,
         out_features: int,
-        fixed_point_factory: FixedPointConfig,
+        fixed_point_config: FixedPointConfig,
         bias: bool = True,
         device: Any = None,
         *,
@@ -94,7 +96,7 @@ class FixedPointLinear(nnFixedPointLinear):
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            fixed_point_factory=fixed_point_factory,
+            fixed_point_factory=fixed_point_config,
             bias=bias,
             device=device,
         )

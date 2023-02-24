@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.language.signals import Signal
+from elasticai.creator.vhdl.hardware_description_language.signals import Signal
 
 from ._port_map_impl import PortMap
 

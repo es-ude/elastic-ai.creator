@@ -68,17 +68,15 @@ flowchart TB
 ```
 ```mermaid
 classDiagram
-  class VHDLDesign {
+  class Design {
     +str name
-    +lines() list~str~
     +port() Port
-    +additional_files() list~VHDLFile~
-    +subdesigns() list~VHDLDesign~
+    +instantiate() Instance
   }
 
-  class VHDLFile {
+  class Instance {
+    +Design origin
     +str name
-    +lines() list~str~
   }
 ```
 ## Responsibilities/Packages

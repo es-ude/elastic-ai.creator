@@ -1,8 +1,7 @@
-from elasticai.creator.vhdl.language.ports import Port
-from elasticai.creator.vhdl.language.signals import Signal
-from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.hardware_description_language.ports import Port
+from elasticai.creator.vhdl.hardware_description_language.signals import Signal
 
-from .vhdl_design import BaseVHDLDesign
+from .design import Design
 
 
 class _Signals:
@@ -44,14 +43,13 @@ class _Signals:
         return cls._vector_signal("y_address", ["x_address"], width)
 
 
-class NetworkBlock(BaseVHDLDesign):
-    def __init__(self, name: str, template_name: str, x_width: int, y_width: int):
-        self._main_file = VHDLTemplate(base_name=template_name)
-        super().__init__(name=name, files=(self._main_file,))
+class NetworkBlock(Design):
+    def __init__(self, name: str, x_width: int, y_width: int):
+        super().__init__(name=name)
         self._x_width = x_width
         self._y_width = y_width
 
-    def get_port(self) -> Port:
+    def port(self) -> Port:
         return Port(
             in_signals=[
                 _Signals.enable(),
@@ -66,19 +64,16 @@ class BufferedNetworkBlock(NetworkBlock):
     def __init__(
         self,
         name: str,
-        template_name: str,
         x_width: int,
         y_width: int,
         x_address_width: int,
         y_address_width: int,
     ):
-        super().__init__(
-            name=name, template_name=template_name, x_width=x_width, y_width=y_width
-        )
+        super().__init__(name=name, x_width=x_width, y_width=y_width)
         self._x_address_width = x_address_width
         self._y_address_width = y_address_width
 
-    def get_port(self) -> Port:
+    def port(self) -> Port:
         in_signals: list[Signal] = [
             _Signals.enable(),
             _Signals.clock(),

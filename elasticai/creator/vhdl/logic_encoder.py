@@ -6,11 +6,11 @@ class ToLogicEncoder:
     """
     Throughout our implementations we have to deal with two different levels of representations for numbers:
     During training we typically need to apply mathematical operations and we do not care too much about how our numbers are encoded.
-    E.g. in a scenario where we want to use two bit on hardware to represent our numbers, in our machine learning framework we
+    E.g. in a scenario where we want to use two bit on hardware_description_language to represent our numbers, in our machine learning framework we
     might decide it is beneficial to use the numbers -3 and 4 for some reason. However, especially in the context of precomputed
-    results, the hardware implementation does not need to know the numeric values, but instead just needs to be able to keep a
+    results, the hardware_description_language implementation does not need to know the numeric values, but instead just needs to be able to keep a
     consistent and correct mapping. The NumericToLogicEncoder takes care of performing the translations from numeric representation
-    to the bit vector used in the hardware implementation. We encode bit vectors just as unsigned integers.
+    to the bit vector used in the hardware_description_language implementation. We encode bit vectors just as unsigned integers.
     """
 
     def __init__(self):

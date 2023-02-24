@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -11,7 +10,7 @@ from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     infer_total_and_frac_bits,
 )
-from elasticai.creator.vhdl.templates.vhdl_template import VHDLTemplate
+from elasticai.creator.vhdl.templates import VHDLTemplate
 
 
 @dataclass

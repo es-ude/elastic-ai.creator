@@ -16,7 +16,7 @@ class FirstModel(RootModule):
         self.fp_linear = FixedPointLinear(
             in_features=2,
             out_features=2,
-            fixed_point_factory=fp_factory,
+            fixed_point_config=fp_factory,
             data_width=self.data_width,
         )
         self.fp_hard_sigmoid = FixedPointHardSigmoid(
