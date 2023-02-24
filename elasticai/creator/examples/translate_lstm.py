@@ -3,21 +3,21 @@ import torch
 from elasticai.creator.nn.linear import FixedPointLinear
 from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations
 from elasticai.creator.vhdl.number_representations import FixedPoint
-from elasticai.creator.vhdl.translator.pytorch import translator
+from elasticai.creator.vhdl_for_deprecation.translator.pytorch import translator
 
 
 class Model(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-        fp_factory = FixedPoint.get_factory(8, 4)
+        fp_factory = FixedPoint.get_builder(8, 4)
 
         self.lstm = FixedPointLSTMWithHardActivations(
             input_size=3,
             hidden_size=5,
             bias=True,
             batch_first=True,
-            fixed_point_factory=FixedPoint.get_factory(8, 4),
+            fixed_point_factory=FixedPoint.get_builder(8, 4),
         )
 
         self.linear = FixedPointLinear(

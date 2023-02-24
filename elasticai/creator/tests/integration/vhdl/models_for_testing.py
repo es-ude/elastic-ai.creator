@@ -19,9 +19,7 @@ class FirstModel(RootModule):
             fixed_point_config=fp_factory,
             data_width=self.data_width,
         )
-        self.fp_hard_sigmoid = FixedPointHardSigmoid(
-            fixed_point_factory=fp_factory, data_width=self.data_width
-        )
+        self.fp_hard_sigmoid = FixedPointHardSigmoid(data_width=self.data_width)
 
     def forward(self, x):
         return self.fp_hard_sigmoid(self.fp_linear(x))

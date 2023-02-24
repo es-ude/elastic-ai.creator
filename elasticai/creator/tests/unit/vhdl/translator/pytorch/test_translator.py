@@ -1,12 +1,9 @@
 import dataclasses
 import unittest
-from typing import Collection, Iterable, TypeVar
+from typing import Any, Collection, Iterable, TypeVar
 
 import torch
 
-from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.code.code_file import CodeFile
-from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -15,18 +12,17 @@ from elasticai.creator.vhdl_for_deprecation.translator.pytorch.build_function_ma
     DEFAULT_BUILD_FUNCTION_MAPPING,
 )
 
-T_CodeFile = TypeVar("T_CodeFile", bound=CodeFile)
 T_CodeModuleBase = TypeVar("T_CodeModuleBase", bound="CodeModuleBase")
 
 
 @dataclasses.dataclass
-class CodeModuleBase(CodeModule[T_CodeFile]):
+class CodeModuleBase:
     @property
     def submodules(self: T_CodeModuleBase) -> Collection[T_CodeModuleBase]:
         return self._submodules
 
     @property
-    def files(self) -> Collection[T_CodeFile]:
+    def files(self) -> Collection:
         return self._files
 
     @property
@@ -36,7 +32,7 @@ class CodeModuleBase(CodeModule[T_CodeFile]):
     def __init__(
         self,
         name: str,
-        files: Collection[T_CodeFile],
+        files: Collection,
         submodules: Collection[T_CodeModuleBase] = tuple(),
     ):
         self._name = name
@@ -44,18 +40,18 @@ class CodeModuleBase(CodeModule[T_CodeFile]):
         self._submodules = submodules
 
 
-class CodeFileBase(CodeFile):
+class CodeFileBase:
     @property
     def name(self) -> str:
         return self._name
 
-    def lines(self) -> Code:
+    def lines(self) -> list[str]:
         return self._code
 
     def __repr__(self) -> str:
         return f"CodeBaseFile(name={self._name}, code={self._code})"
 
-    def __init__(self, name: str, code: Code):
+    def __init__(self, name: str, code: list[str]):
         self._name = name
         self._code = code
 
@@ -71,9 +67,9 @@ def fake_build_function(module: torch.nn.Module, layer_id: str) -> CodeModuleBas
 
 
 def unpack_module_directories(
-    modules: Iterable[CodeModule],
-) -> list[tuple[str, list[tuple[str, Code]]]]:
-    def unpack_code_file(code_file: CodeFile) -> tuple[str, Code]:
+    modules: Iterable,
+) -> list[tuple[str, list[tuple[str, list[str]]]]]:
+    def unpack_code_file(code_file) -> tuple[str, Any]:
         return code_file.name, list(code_file.lines())
 
     return [

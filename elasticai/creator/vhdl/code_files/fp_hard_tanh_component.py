@@ -18,8 +18,8 @@ class FPHardTanhComponent:
             layer_name=layer_id,
         )
         stringified_d = dict(((k, str(v)) for k, v in d.items()))
-        self._name = "fp_hard_tanh"
-        self.template = VHDLTemplate(base_name=self._name, **stringified_d)
+        self._name = f"fp_hard_tanh_{layer_id}"
+        self.template = VHDLTemplate(base_name="fp_hard_tanh", **stringified_d)
 
     @property
     def single_line_parameters(self):

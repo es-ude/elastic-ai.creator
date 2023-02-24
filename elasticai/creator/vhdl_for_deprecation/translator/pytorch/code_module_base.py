@@ -1,21 +1,17 @@
 import dataclasses
 import typing
 
-from elasticai.creator.vhdl.code.code_file import CodeFile
-from elasticai.creator.vhdl.code.code_module import CodeModule
-
-T_CodeFile = typing.TypeVar("T_CodeFile", bound=CodeFile)
 T_CodeModuleBase = typing.TypeVar("T_CodeModuleBase", bound="CodeModuleBase")
 
 
 @dataclasses.dataclass
-class CodeModuleBase(CodeModule[T_CodeFile]):
+class CodeModuleBase:
     @property
     def submodules(self: T_CodeModuleBase) -> typing.Collection[T_CodeModuleBase]:
         return self._submodules
 
     @property
-    def files(self) -> typing.Collection[T_CodeFile]:
+    def files(self) -> typing.Collection:
         return self._files
 
     @property
@@ -25,7 +21,7 @@ class CodeModuleBase(CodeModule[T_CodeFile]):
     def __init__(
         self,
         name: str,
-        files: typing.Collection[T_CodeFile],
+        files: typing.Collection,
         submodules: typing.Collection[T_CodeModuleBase] = tuple(),
     ):
         self._name = name

@@ -23,6 +23,13 @@ class Signal:
     def accepts(self, other: "Signal") -> bool:
         return self._wrapped.accepts(other._wrapped)
 
+    @property
+    def width(self) -> int:
+        if hasattr(self._wrapped, "width"):
+            return self._wrapped.width
+        else:
+            return 0
+
     def id(self) -> str:
         return self._wrapped.id()
 

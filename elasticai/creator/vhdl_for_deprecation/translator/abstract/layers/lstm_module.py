@@ -1,10 +1,8 @@
-from collections.abc import Collection
 from dataclasses import dataclass
 from typing import Callable, Iterator
 
 import numpy as np
 
-from elasticai.creator.vhdl.code import CodeFile
 from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
     DualPort2ClockRamComponent,
 )
@@ -80,7 +78,7 @@ class LSTMModule:
         return input_size, hidden_size // 4
 
     @property
-    def files(self) -> Iterator[CodeFile]:
+    def files(self) -> Iterator:
         def to_fp(values: list[float]) -> list[FixedPoint]:
             return list(map(self.fixed_point_factory, values))
 

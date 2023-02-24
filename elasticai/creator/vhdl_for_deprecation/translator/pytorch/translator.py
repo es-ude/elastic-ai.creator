@@ -4,9 +4,8 @@ from typing import Any, Iterable, Iterator
 import torch
 
 from elasticai.creator.resource_utils import PathType
-from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl.code_files.code_file_base import CodeFileBase
-from elasticai.creator.vhdl.code_files.network_component import NetworkVHDLFile
+from elasticai.creator.vhdl.code_files.network_component import NetworkComponent
 from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
@@ -21,7 +20,7 @@ def translate_model(
     model: torch.nn.Module,
     translation_args: dict[str, dict[str, Any]],
     build_function_mapping: BuildFunctionMapping = DEFAULT_BUILD_FUNCTION_MAPPING,
-) -> Iterator[CodeModule]:
+) -> Iterator:
     """
     Translates a given PyTorch-model to an intermediate representation. The intermediate representation is represented
     as an iterator of VHDLModule objects.
@@ -62,12 +61,12 @@ def translate_model(
         yield CodeModuleBase(
             name=f"{layer_index}_{layer_class_name}", files=list(files)
         )
-    network = NetworkVHDLFile()
-    network_file = CodeFileBase(name=network.name, code=network.code())
+    network = NetworkComponent()
+    network_file = CodeFileBase(name=network.name, code=network.lines())
     yield CodeModuleBase(name="network_component", files=[network_file])
 
 
-def save_code(code_repr: Iterable[CodeModule], path: PathType) -> None:
+def save_code(code_repr: Iterable, path: PathType) -> None:
     """
     Saves the generated code on the file system.
 

@@ -1,6 +1,8 @@
-from elasticai.creator.vhdl.hardware_description_language.ports import Port
+from abc import ABC
+
 from elasticai.creator.vhdl.hardware_description_language.signals import Signal
 
+from ..hardware_description_language.design import Port
 from .design import Design
 
 
@@ -43,24 +45,25 @@ class _Signals:
         return cls._vector_signal("y_address", ["x_address"], width)
 
 
-class NetworkBlock(Design):
+class NetworkBlock(Design, ABC):
     def __init__(self, name: str, x_width: int, y_width: int):
         super().__init__(name=name)
         self._x_width = x_width
         self._y_width = y_width
 
+    @property
     def port(self) -> Port:
         return Port(
-            in_signals=[
+            in_signals={
                 _Signals.enable(),
                 _Signals.clock(),
                 _Signals.x(self._x_width),
-            ],
-            out_signals=[_Signals.y(self._y_width)],
+            },
+            out_signals={_Signals.y(self._y_width)},
         )
 
 
-class BufferedNetworkBlock(NetworkBlock):
+class BufferedNetworkBlock(NetworkBlock, ABC):
     def __init__(
         self,
         name: str,
@@ -73,16 +76,17 @@ class BufferedNetworkBlock(NetworkBlock):
         self._x_address_width = x_address_width
         self._y_address_width = y_address_width
 
+    @property
     def port(self) -> Port:
-        in_signals: list[Signal] = [
+        in_signals: set[Signal] = {
             _Signals.enable(),
             _Signals.clock(),
             _Signals.x(self._x_width),
             _Signals.y_address(self._y_address_width),
-        ]
-        out_signals: list[Signal] = [
+        }
+        out_signals: set[Signal] = {
             _Signals.done(),
             _Signals.y(self._y_width),
             _Signals.x_address(self._x_address_width),
-        ]
+        }
         return Port(in_signals=in_signals, out_signals=out_signals)

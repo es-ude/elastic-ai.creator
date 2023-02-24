@@ -5,7 +5,6 @@ from typing import Iterable
 from unittest import TestCase
 
 from elasticai.creator.templates import AbstractBaseTemplate
-from elasticai.creator.vhdl import templates
 
 
 class SimpleTemplate(AbstractBaseTemplate, ABC):
@@ -144,8 +143,3 @@ class ExpandTemplatesTestCase(TestCase):
         )
         expected = "hello hello hello\nhello world\n"
         self.assertEqual(expected, actual)
-
-
-def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(vhdl_template))
-    return tests

@@ -12,6 +12,10 @@ class Port:
     in_signals: set[Signal]
     out_signals: set[Signal]
 
+    @property
+    def signals(self) -> set[Signal]:
+        return self.in_signals | self.out_signals
+
 
 class Design(Generic[T_Design], ABC):
     """

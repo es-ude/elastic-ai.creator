@@ -3,8 +3,6 @@ from io import StringIO
 from typing import Iterable, Iterator, TextIO, Union, cast
 
 from elasticai.creator.resource_utils import get_file_from_package
-from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.code.code_module import CodeModule
 
 
 class VHDLCodeTestCase(unittest.TestCase):
@@ -24,22 +22,22 @@ class VHDLCodeTestCase(unittest.TestCase):
                 ).as_list()
 
     @staticmethod
-    def unified_vhdl_from_module(module: CodeModule):
+    def unified_vhdl_from_module(module):
         vhdl_file = next(iter(module.files))
-        code = "\n".join(vhdl_file.code())
+        code = "\n".join(vhdl_file.lines())
         io = StringIO(code)
         codes = VHDLReaderWithoutComments(io).as_list()
         return codes
 
     @staticmethod
-    def code_section_from_string(s: str) -> list[Code]:
+    def code_section_from_string(s: str) -> list[list[str]]:
         return [VHDLCodeTestCase.code_from_string(s)]
 
     @staticmethod
-    def code_from_string(s: str) -> Code:
+    def code_from_string(s: str) -> list[str]:
         return VHDLReaderWithoutComments(StringIO(s))
 
-    def check_contains_all_expected_lines(self, expected: Code, actual: Code):
+    def check_contains_all_expected_lines(self, expected: list[str], actual: list[str]):
         reusable_code = list(actual)
         for line in expected:
             with self.subTest(line):
@@ -49,12 +47,12 @@ class VHDLCodeTestCase(unittest.TestCase):
                 )
 
     def check_lines_are_equal_ignoring_order(
-        self, expected: Iterable[Code], actual: Iterable[Code]
+        self, expected: Iterable[list[str]], actual: Iterable[list[str]]
     ):
-        def unpack(codes: Iterable[Code]) -> list[list[str]]:
+        def unpack(codes: Iterable[list[str]]) -> list[list[str]]:
             return list(map(lambda x: list(x), codes))
 
-        def sort(codes: Iterable[Code]) -> Iterable[Code]:
+        def sort(codes: Iterable[list[str]]) -> Iterable[list[str]]:
             return sorted(map(lambda x: sorted(x), codes))
 
         actual = unpack(sort(actual))
@@ -63,7 +61,7 @@ class VHDLCodeTestCase(unittest.TestCase):
 
     @staticmethod
     def extract_section_from_code(
-        begin: Union[str, Code], end: Union[str, Code], lines: Code
+        begin: Union[str, list[str]], end: Union[str, list[str]], lines: list[str]
     ) -> list[list[str]]:
         extract = False
         content: list[list[str]] = []

@@ -3,40 +3,37 @@ from dataclasses import dataclass
 from typing import Any
 
 import elasticai.creator.nn.layers as qtorch
-from elasticai.creator.vhdl.code.code import Code
-from elasticai.creator.vhdl.code.code_file import CodeFile
-from elasticai.creator.vhdl.code.code_module import CodeModule
 from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )
 
 
-class MockCodeFile(CodeFile):
+class MockCodeFile:
     @property
     def name(self) -> str:
         return "test_component"
 
-    def code(self) -> Code:
+    def code(self) -> list[str]:
         return ["line1", "line2"]
 
 
 @dataclass
-class MockModule(CodeModule):
-    vhdl_components: list[CodeFile]
+class MockModule:
+    vhdl_components: list
 
-    def files(self, args: Any) -> list[CodeFile]:
+    def files(self, args: Any) -> list:
         return self.vhdl_components
 
 
-def mock_build_function1(layer: Any) -> CodeModule:
+def mock_build_function1(layer: Any):
     return MockModule([MockCodeFile()])
 
 
-def mock_build_function2(layer: Any) -> CodeModule:
+def mock_build_function2(layer: Any):
     return MockModule([MockCodeFile()])
 
 
-def mock_build_function3(layer: Any) -> CodeModule:
+def mock_build_function3(layer: Any):
     return MockModule([MockCodeFile()])
 
 

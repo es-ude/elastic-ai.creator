@@ -2,12 +2,10 @@ from abc import abstractmethod
 from collections.abc import Mapping
 from typing import Any, Callable, Iterator, Protocol
 
-from elasticai.creator.vhdl.code.code_module import CodeModule
-
 
 class BuildFunction(Protocol):
     @abstractmethod
-    def __call__(self, a: Any, b: str, *args) -> CodeModule:
+    def __call__(self, a: Any, b: str, *args):
         ...
 
 

@@ -12,7 +12,12 @@ from elasticai.creator.vhdl.designs._network_blocks import (
     BufferedNetworkBlock,
     NetworkBlock,
 )
-from elasticai.creator.vhdl.hardware_description_language.design import Design
+from elasticai.creator.vhdl.designs.folder import Folder
+from elasticai.creator.vhdl.designs.vhdl_code_generation import (
+    create_instance,
+    signal_definition,
+)
+from elasticai.creator.vhdl.hardware_description_language.design import Design, Instance
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
 from elasticai.creator.vhdl.templates import VHDLTemplate
 from elasticai.creator.vhdl.tracing.hw_equivalent_fx_tracer import HWEquivalentFXTracer
@@ -35,51 +40,77 @@ class RootModule(torch.nn.Module, elasticai.creator.mlframework.Module):
     def _get_tracer(self) -> HWEquivalentFXTracer:
         return HWEquivalentFXTracer()
 
-    def translate(self) -> CodeModule:
+    def translate(self):
         graph = self._get_tracer().trace(self)
 
-        def generate_port_maps(graph: HWEquivalentGraph[TranslatableLayer]):
-            port_maps = []
+        def collect_instances():
+            instances = []
             for node in graph.module_nodes:
                 module = graph.get_module_for_node(node)
                 design = module.translate()
-                port_map = design.get_port_map(node.name)
-                port_maps.append(port_map)
+                instance = design.instantiate(node.name)
+                instances.append(instance)
 
-            return port_maps
+            return instances
 
-        port_maps = generate_port_maps(graph)
-        signals = [line for m in port_maps for line in m.signal_definitions()]
-        layer_instantiations = [line for m in port_maps for line in m.instantiation()]
-        layer_connections = ["fp_linear_x <= x;"]
+        instances = collect_instances()
+        nested_signals = (instance.design.port.signals for instance in instances)
+        flattened_signals = [signal for signals in nested_signals for signal in signals]
+        signal_definitions = [
+            signal_definition(name=s.id, width=s.width) for s in flattened_signals
+        ]
+
+        def instance_to_code(instance: Instance) -> str:
+            signal_names = (s.id() for s in instance.design.port.signals)
+            signal_map = dict((s, f"{instance.name}_{s}") for s in signal_names)
+            return create_instance(
+                entity=instance.design.name,
+                name=instance.name,
+                signal_mapping=signal_map,
+                library="work",
+            )
+
+        layer_instantiations = [instance_to_code(i) for i in instances]
+        layer_connections = []
         file = VHDLTemplate(
             base_name="network",
-            signals=signals,
+            signals=signal_definitions,
             layer_instantiations=layer_instantiations,
             layer_connections=layer_connections,
         )
         file.update_parameters(**self._template_parameters())
-        file.update_parameters(signal_definitions=signals)
         design = CodeModuleBase(name="network", files=(file,))
         return design
+
+
+class FPHardSigmoidBlock(NetworkBlock):
+    def __init__(self, data_width):
+        super().__init__("", x_width=data_width, y_width=data_width)
+
+    def save_to(self, destination: Folder):
+        ...
 
 
 class FixedPointHardSigmoid(nnHardSigmoid):
     def __init__(
         self,
-        fixed_point_factory: FixedPointConfig,
         in_place: bool = False,
         *,
         data_width,
     ):
         super().__init__(in_place)
-        self._hw_block = NetworkBlock("", "", x_width=data_width, y_width=data_width)
+        self._hw_block = FPHardSigmoidBlock(data_width)
 
     def translate(self) -> Design:
         return self._hw_block
 
 
 T = typing.TypeVar("T")
+
+
+class FixedPointLinearBlock(BufferedNetworkBlock):
+    def save_to(self, destination: Folder):
+        ...
 
 
 class FixedPointLinear(nnFixedPointLinear):
@@ -100,9 +131,8 @@ class FixedPointLinear(nnFixedPointLinear):
             bias=bias,
             device=device,
         )
-        self._hw_block = BufferedNetworkBlock(
+        self._hw_block = FixedPointLinearBlock(
             name="fp_linear",
-            template_name="",
             y_width=data_width,
             x_width=data_width,
             x_address_width=calculate_address_width(in_features),
@@ -113,18 +143,14 @@ class FixedPointLinear(nnFixedPointLinear):
         return self._hw_block
 
 
-T_CodeFile = typing.TypeVar("T_CodeFile", bound="CodeFile")
-T_CodeModuleBase = typing.TypeVar("T_CodeModuleBase", bound="CodeModuleBase")
-
-
 @dataclasses.dataclass
-class CodeModuleBase(CodeModule[T_CodeFile]):
+class CodeModuleBase:
     @property
-    def submodules(self: T_CodeModuleBase) -> Collection[T_CodeModuleBase]:
+    def submodules(self) -> Collection:
         return self._submodules
 
     @property
-    def files(self) -> Collection[T_CodeFile]:
+    def files(self) -> Collection:
         return self._files
 
     @property
@@ -134,8 +160,8 @@ class CodeModuleBase(CodeModule[T_CodeFile]):
     def __init__(
         self,
         name: str,
-        files: Collection[T_CodeFile],
-        submodules: Collection[T_CodeModuleBase] = tuple(),
+        files: Collection,
+        submodules: Collection = tuple(),
     ):
         self._name = name
         self._files = files

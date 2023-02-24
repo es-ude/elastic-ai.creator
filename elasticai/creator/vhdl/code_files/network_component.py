@@ -1,8 +1,10 @@
 from elasticai.creator.vhdl.templates import VHDLTemplate
 
 
-class NetworkVHDLFile(VHDLTemplate):
+class NetworkComponent:
     def __init__(self):
-        super().__init__(
-            base_name="network",
-        )
+        self.name = "network.vhd"
+        self.template = VHDLTemplate(base_name="network")
+
+    def lines(self) -> list[str]:
+        return self.template.lines()
