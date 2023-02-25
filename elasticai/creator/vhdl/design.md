@@ -66,18 +66,138 @@ flowchart TB
   SinkNode --> acceptor["AcceptorInterface"]
   Signal -.-> acceptor
 ```
-```mermaid
-classDiagram
-  class Design {
-    +str name
-    +port() Port
-    +instantiate() Instance
+```plantuml
+@startuml
+
+
+
+package hdl {
+
+  class CodeGenerator {
+    +{static}int_to_bitstring(number :int, total_bits: int): str
+    +{static}float_to_fixed_point_bit_string(number: float, total_bits: int, frac_bits: int): str
+    +{static}int_to_hex_string_little_endian(number: int, bits: int): str
   }
 
-  class Instance {
-    +Design origin
-    +str name
+
+
+
+
+  package vhdl {
+
+    package language_structure {
+    +class Design<T> {
+     +instantiate(): Instance<T>
+     +port: Port<T>
+     +name: str
+    }
+    note left: structural representation of\na hw design for the purpose\nof automatic connection and\ninstantiation of hw designs
+
+
+    +class Port<T> {
+      +in_signals: set<T>
+      +out_signals: set<T>
+      +signals(): set<T>
+    }
+
+    +class Instance<T> {
+      +name: str
+      +design: Design<T>
+    }
+
+    Design --* Port
+    Design --> Instance
+    Instance --o Design
   }
+
+    package designs {
+    }
+
+    ~abstract class BaseDesign {
+    }
+    note bottom: be sure to not let\nport/signal/instance\nleak out of BaseDesign\n or designs package
+
+    ~class VHDLCodeGenerator as "CodeGenerator" {
+    }
+
+    +interface Acceptor<T> {
+      +accepts(T): bool
+    }
+
+    class VHDLSignal as "Signal" {
+      +name: str
+      +width: int
+    }
+    VHDLCodeGenerator --> CodeGenerator
+    BaseDesign --> Design
+    VHDLSignal --|> Acceptor
+    designs --|> BaseDesign
+    designs --> VHDLSignal
+    designs --> VHDLCodeGenerator
+
+  }
+
+
+
+  package dataflow {
+
+    +interface Node<T extends Node> {
+      +parents(): list<T>
+      +children(): list<T>
+    }
+
+    +class DataFlowNode<T extends Acceptor> {
+        +sinks(): list<Sink<Source<T>>>
+        +sources(): list<Source<T>>
+        +children(): list<DataFlowNode<T>>
+        +parents(): list<DataFlowNode<T>>
+        +append(Node<T> child)
+        +prepend(Node<T> parent)
+        +is_satisfied(): bool
+    }
+
+
+    +class Sink<T extends Acceptor> {
+        +source: Optional<Source<T>>
+        +data: T
+        +owner: DataFlowNode<T>
+        +is_satisfied(): bool
+        +accepts(Source<T>): bool
+    }
+
+    +class Source<T> {
+        +data: T
+        +sinks: list<Sink<T>>
+        +owner: DataFlowNode<T>
+    }
+
+
+    DataFlowNode <-* Sink
+    DataFlowNode <-* Source
+    Source <--> Sink
+    DataFlowNode --|> Node
+    Sink --> Acceptor
+
+
+  }
+
+
+
+
+  package templates {
+    abstract class BaseTemplate
+  }
+
+
+}
+
+
+class mlframework.torch.nn.Linear1D
+
+
+
+
+@enduml
 ```
 ## Responsibilities/Packages
 - **templates**: streamlined filling of templates
