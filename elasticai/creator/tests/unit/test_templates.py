@@ -1,10 +1,9 @@
-import doctest
 from abc import ABC
 from collections.abc import Iterator
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.templates import AbstractBaseTemplate
+from elasticai.creator.hdl.code_generation import AbstractBaseTemplate
 
 
 class SimpleTemplate(AbstractBaseTemplate, ABC):

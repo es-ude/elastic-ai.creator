@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.lstm_component import LSTMComponent
+from elasticai.creator.hdl.vhdl.code_files import LSTMComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 

@@ -1,14 +1,12 @@
 from unittest import TestCase
 
-from elasticai.creator.vhdl.code_files.dual_port_2_clock_ram_component import (
+from elasticai.creator.hdl.vhdl.code_files import (
     DualPort2ClockRamComponent,
-)
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
     FPHardSigmoidComponent,
+    FPHardTanhComponent,
+    LSTMComponent,
+    RomFile,
 )
-from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
-from elasticai.creator.vhdl.code_files.lstm_component import LSTMComponent
-from elasticai.creator.vhdl.code_files.rom_component import RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers import LSTMModule
 

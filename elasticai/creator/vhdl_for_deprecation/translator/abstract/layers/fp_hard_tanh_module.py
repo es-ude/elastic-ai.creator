@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterator
 
-from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
+from elasticai.creator.hdl.vhdl.code_files import FPHardTanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
 from elasticai.creator.vhdl_for_deprecation.translator.pytorch.code_module_base import (
     CodeModuleBase,

@@ -3,9 +3,8 @@ from typing import Any, Iterable, Iterator
 
 import torch
 
+from elasticai.creator.hdl.vhdl.code_files import CodeFileBase, NetworkComponent
 from elasticai.creator.resource_utils import PathType
-from elasticai.creator.vhdl.code_files.code_file_base import CodeFileBase
-from elasticai.creator.vhdl.code_files.network_component import NetworkComponent
 from elasticai.creator.vhdl_for_deprecation.translator.build_function_mapping import (
     BuildFunctionMapping,
 )

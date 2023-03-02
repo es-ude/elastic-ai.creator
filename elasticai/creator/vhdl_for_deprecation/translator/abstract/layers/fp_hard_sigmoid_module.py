@@ -1,9 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterator, Protocol
 
-from elasticai.creator.vhdl.code_files.fp_hard_sigmoid_component import (
-    FPHardSigmoidComponent,
-)
+from elasticai.creator.hdl.vhdl.code_files import FPHardSigmoidComponent
 from elasticai.creator.vhdl.number_representations import FixedPointConfig
 
 

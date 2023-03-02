@@ -1,7 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.fp_linear_1d_component import FPLinear1dFile
-from elasticai.creator.vhdl.code_files.rom_component import RomFile
+from elasticai.creator.hdl.vhdl.code_files import FPLinear1dFile, RomFile
 from elasticai.creator.vhdl.number_representations import FixedPoint
 from elasticai.creator.vhdl_for_deprecation.translator.abstract.layers.fp_linear_1d_module import (
     FPLinear1dModule,

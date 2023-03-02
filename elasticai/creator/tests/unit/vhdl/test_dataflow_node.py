@@ -96,7 +96,7 @@ class DataFlowNodeTest(unittest.TestCase):
         if connected_sink is None:
             self.fail()
         else:
-            self.assertEqual(fake_sink, connected_sink.wrapped)
+            self.assertEqual(fake_sink, connected_sink.data)
 
     def test_can_reach_connected_source_via_sink(self) -> None:
         child: Node[int] = Node(sinks={FakeSink(1)}, sources=set())
@@ -110,4 +110,4 @@ class DataFlowNodeTest(unittest.TestCase):
         if connected_source is None:
             self.fail("found no connected source")
         else:
-            self.assertEqual(1, connected_source.wrapped)
+            self.assertEqual(1, connected_source.data)

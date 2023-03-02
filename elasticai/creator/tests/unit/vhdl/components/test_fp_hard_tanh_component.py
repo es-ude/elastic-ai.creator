@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.vhdl.code_files.fp_hard_tanh_component import FPHardTanhComponent
+from elasticai.creator.hdl.vhdl.code_files import FPHardTanhComponent
 from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
