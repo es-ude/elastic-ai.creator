@@ -3,11 +3,11 @@ from typing import cast
 from torch.nn import Module as _torchModule
 from torch.nn import Sequential as torchSequential
 
+from elasticai.creator.hdl.vhdl.designs.design import Design
 from elasticai.creator.hdl.vhdl.designs.sequential import (
     Sequential as _SequentialDesign,
 )
 
-from ..designs.design import Design
 from .module import Module
 
 

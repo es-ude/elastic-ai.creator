@@ -1,7 +1,6 @@
 from typing import Iterable, Optional
 
-from elasticai.creator.hdl.vhdl.file import File
-from elasticai.creator.hdl.vhdl.saveable import Path
+from elasticai.creator.hdl.vhdl.saveable import File, Path
 
 
 class InMemoryFile(File):

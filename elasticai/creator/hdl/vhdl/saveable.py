@@ -1,13 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Protocol
+from typing import Iterable, Protocol
 
-from elasticai.creator.hdl.vhdl.file import File
-from elasticai.creator.hdl.vhdl.folder import Folder
+
+class Saveable(ABC):
+    @abstractmethod
+    def save_to(self, destination: "Path"):
+        ...
 
 
 class Path(Protocol):
     @abstractmethod
-    def as_file(self, suffix: str) -> File:
+    def as_file(self, suffix: str) -> "File":
         ...
 
     @abstractmethod
@@ -15,7 +18,7 @@ class Path(Protocol):
         ...
 
 
-class Saveable(ABC):
+class File(Protocol):
     @abstractmethod
-    def save_to(self, destination: Path):
+    def write_text(self, text: Iterable[str]) -> None:
         ...

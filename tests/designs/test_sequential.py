@@ -7,12 +7,11 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     signal_definition,
 )
 from elasticai.creator.hdl.vhdl.designs import std_signals
-from elasticai.creator.hdl.vhdl.file import File
-from elasticai.creator.hdl.vhdl.saveable import Path
+from elasticai.creator.hdl.vhdl.saveable import File, Path
 from elasticai.creator.hdl.vhdl.template import Template
-from elasticai.creator.hdl.vhdl.translatable_layers.fp_hard_sigmoid import FPHardSigmoid
-from elasticai.creator.hdl.vhdl.translatable_layers.sequential import Sequential
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.translatable_modules.vhdl.fp_hard_sigmoid import FPHardSigmoid
+from elasticai.creator.translatable_modules.vhdl.sequential import Sequential
 
 
 class SequentialTestCase(unittest.TestCase):
@@ -42,12 +41,15 @@ class SequentialTestCase(unittest.TestCase):
         design.save_to(destination)
         self.assertEqual(expected, destination.text)
 
-    def test_use_data_width_from_sub_design_activation(self):
+    def test_autowire_instantiate_and_define_signals_for_hard_sigmoid_activation(self):
         bit_width = 16
-        template = _prepare_sequential_template_for_hard_sigmoid(bit_width)
+
+        template = _prepare_sequential_template_with_hard_sigmoid(bit_width)
+        expected = template.lines()
+
         module = Sequential((FPHardSigmoid(FixedPointConfiguration()),))
         design = module.translate()
-        expected = template.lines()
+
         destination = InMemoryPathForTesting("sequential")
         design.save_to(destination)
         self.assertEqual(expected, destination.text)
@@ -100,7 +102,9 @@ class InMemoryPathForTesting(Path):
         return child.text
 
 
-def _prepare_sequential_template_for_hard_sigmoid(bit_width: int) -> SequentialTemplate:
+def _prepare_sequential_template_with_hard_sigmoid(
+    bit_width: int,
+) -> SequentialTemplate:
     instance = "i_fp_hard_sigmoid_0"
     connections = create_connections(
         {

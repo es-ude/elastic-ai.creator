@@ -1,11 +1,11 @@
 from abc import abstractmethod
 from typing import Optional
 
-from elasticai.creator.hdl.vhdl.folder import Folder
 from elasticai.creator.hdl.vhdl.number_representations import FixedPointConfig
 from elasticai.creator.hdl.vhdl.template import Template
 
 from ..code_generation.code_generation import calculate_address_width
+from ..saveable import Folder
 from ._network_blocks import BufferedNetworkBlock
 
 

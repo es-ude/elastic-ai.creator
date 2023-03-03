@@ -2,22 +2,14 @@ from abc import abstractmethod
 from typing import Protocol
 
 from elasticai.creator.hdl.vhdl.designs.design import Design
+from elasticai.creator.translatable_modules.module import Module as _BaseModule
 
 
 class Tensor(Protocol):
     ...
 
 
-class Module(Protocol):
-    def __call__(self, x) -> Tensor:
-        ...
-
-    def eval(self) -> None:
-        ...
-
-    def train(self) -> None:
-        ...
-
+class Module(_BaseModule[Design], Protocol):
     @abstractmethod
     def translate(self) -> Design:
         ...
