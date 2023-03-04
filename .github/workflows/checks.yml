@@ -11,7 +11,7 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
-      - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/integration
+      - run: poetry run python -m unittest discover --verbose tests/integration
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -19,7 +19,7 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
-      - run: poetry run python -m unittest discover --verbose elasticai/creator/tests/unit
+      - run: poetry run python -m unittest discover --verbose tests
   lint-commit-messages:
     name: Lint Commit Messages
     runs-on: ubuntu-latest
