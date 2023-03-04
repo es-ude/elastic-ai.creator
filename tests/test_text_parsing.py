@@ -1,6 +1,6 @@
 import unittest
 
-from elasticai.creator.tests.code_utilities_for_testing import VHDLCodeTestCase
+from tests.code_utilities_for_testing import VHDLCodeTestCase
 
 
 class ExtractSectionTest(unittest.TestCase):

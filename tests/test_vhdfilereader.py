@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 
-from elasticai.creator.tests.code_utilities_for_testing import VHDLReaderWithoutComments
+from tests.code_utilities_for_testing import VHDLReaderWithoutComments
 
 
 class VHDFileReaderWithoutCommentsTest(unittest.TestCase):

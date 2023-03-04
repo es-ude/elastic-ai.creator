@@ -6,7 +6,7 @@ import torch
 from elasticai.creator.nn.arithmetics import FloatArithmetics
 from elasticai.creator.nn.lstm import LSTM
 from elasticai.creator.nn.lstm_cell import LSTMCell
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 
 def create_lstm(

@@ -5,7 +5,7 @@ from torch.nn.parameter import Parameter
 
 from elasticai.creator.nn.arithmetics import Arithmetics, FloatArithmetics
 from elasticai.creator.nn.linear import Linear
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 
 def tensor(data: list) -> torch.Tensor:

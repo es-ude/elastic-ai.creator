@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 from elasticai.creator.nn.functional import binarize
-from elasticai.creator.tests.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 
 class BinarizeFunctionTest(TensorTestCase):
