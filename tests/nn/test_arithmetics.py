@@ -2,7 +2,9 @@ import torch
 
 from elasticai.creator.nn.arithmetics import FixedPointArithmetics, FloatArithmetics
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.two_complement_fixed_point_config import (
+    TwoComplementFixedPointConfig,
+)
 
 
 class FloatArithmeticsTest(TensorTestCase):
@@ -56,12 +58,10 @@ class FloatArithmeticsTest(TensorTestCase):
 
 class FixedPointArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
-        fp_factory = FixedPoint.get_builder(total_bits=4, frac_bits=2)
-        self.total_bits = fp_factory.total_bits
-        self.frac_bits = fp_factory.frac_bits
-        self.min_fp = -1 * (1 << (self.total_bits - 1)) / (1 << self.frac_bits)
-        self.max_fp = int("1" * (self.total_bits - 1), 2) / (1 << self.frac_bits)
-        self.ops = FixedPointArithmetics(fixed_point_factory=fp_factory)
+        self.config: TwoComplementFixedPointConfig = TwoComplementFixedPointConfig(
+            total_bits=4, frac_bits=2
+        )
+        self.ops = FixedPointArithmetics(config=self.config)
 
     def test_quantize_clamps_minus5_to_minus2(self) -> None:
         a = torch.tensor([-5.0])
@@ -78,7 +78,14 @@ class FixedPointArithmeticsTest(TensorTestCase):
     def test_clamp(self) -> None:
         a = torch.tensor([-5, -2.1, -1.0, 0.0, 1.8, 5])
         actual = self.ops.clamp(a)
-        expected = [self.min_fp, self.min_fp, -1.0, 0.0, self.max_fp, self.max_fp]
+        expected = [
+            self.config.minimum_as_rational,
+            self.config.minimum_as_rational,
+            -1.0,
+            0.0,
+            self.config.maximum_as_rational,
+            self.config.maximum_as_rational,
+        ]
         self.assertTensorEqual(expected, actual)
 
     def test_round(self) -> None:

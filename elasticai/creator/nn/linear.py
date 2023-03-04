@@ -3,7 +3,9 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
-from elasticai.creator.vhdl.number_representations import FixedPointConfig
+from elasticai.creator.two_complement_fixed_point_config import (
+    TwoComplementFixedPointConfig,
+)
 
 
 class Linear(torch.nn.Linear):
@@ -37,18 +39,18 @@ class FixedPointLinear(Linear):
         self,
         in_features: int,
         out_features: int,
-        fixed_point_factory: FixedPointConfig,
+        config: TwoComplementFixedPointConfig,
         bias: bool,
         device: Any = None,
     ) -> None:
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=FixedPointArithmetics(fixed_point_factory=fixed_point_factory),
+            arithmetics=FixedPointArithmetics(config=config),
             bias=bias,
             device=device,
         )
 
     @property
-    def fixed_point_factory(self) -> FixedPointConfig:
-        return cast(FixedPointArithmetics, self.ops).fixed_point_factory
+    def fixed_point_factory(self) -> TwoComplementFixedPointConfig:
+        return cast(FixedPointArithmetics, self.ops).config

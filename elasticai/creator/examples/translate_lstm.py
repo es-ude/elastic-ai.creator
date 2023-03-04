@@ -21,7 +21,7 @@ class Model(torch.nn.Module):
         )
 
         self.linear = FixedPointLinear(
-            in_features=5, out_features=1, bias=True, fixed_point_factory=fp_factory
+            in_features=5, out_features=1, bias=True, config=fp_factory
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

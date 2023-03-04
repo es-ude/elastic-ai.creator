@@ -2,10 +2,16 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.vhdl.number_representations import FixedPointConfig
+from elasticai.creator.two_complement_fixed_point_config import (
+    TwoComplementFixedPointConfig,
+)
 
 
 class FixedPointQuantFunction(torch.autograd.Function):
+    @staticmethod
+    def jvp(ctx: Any, *grad_inputs: Any) -> Any:
+        raise NotImplementedError()
+
     @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 2:
@@ -14,15 +20,10 @@ class FixedPointQuantFunction(torch.autograd.Function):
                 "(x: torch.Tensor, fixed_point_factory: Callable[[float], FixedPoint])"
             )
         x: torch.Tensor = args[0]
-        fp_factory: FixedPointConfig = args[1]
-        total_bits, frac_bits = fp_factory.total_bits, fp_factory.frac_bits
+        config: TwoComplementFixedPointConfig = args[1]
 
-        fp_ints = (x * (1 << frac_bits)).int().float()
-
-        min_fp_int = 2 ** (total_bits - 1) * (-1)
-        max_fp_int = 2 ** (total_bits - 1) - 1
-        out_of_bounds = fp_ints[(fp_ints < min_fp_int) | (fp_ints > max_fp_int)]
-
+        fp_ints = config.as_integer(x)
+        out_of_bounds = fp_ints[config.integer_out_of_bounds(fp_ints)]
         if torch.any(out_of_bounds):
             raise ValueError("Cannot quantize tensor. Values out of bounds.")
 
@@ -35,6 +36,10 @@ class FixedPointQuantFunction(torch.autograd.Function):
 
 class FixedPointDequantFunction(torch.autograd.Function):
     @staticmethod
+    def jvp(ctx: Any, *grad_inputs: Any) -> Any:
+        raise NotImplementedError()
+
+    @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 2:
             raise TypeError(
@@ -42,16 +47,10 @@ class FixedPointDequantFunction(torch.autograd.Function):
                 "(x: torch.Tensor, fixed_point_factory: Callable[[float], FixedPoint])"
             )
         x: torch.Tensor = args[0]
-        fp_factory: FixedPointConfig = args[1]
-        total_bits, frac_bits = fp_factory.total_bits, fp_factory.frac_bits
-
-        fp_values = x / (1 << frac_bits)
-
-        min_fp = -1 * (1 << (total_bits - 1)) / (1 << frac_bits)
-        max_fp = int("1" * (total_bits - 1), 2) / (1 << frac_bits)
-        out_of_bounds = fp_values[(fp_values < min_fp) | (fp_values > max_fp)]
-
-        if torch.any(out_of_bounds):
+        config: TwoComplementFixedPointConfig = args[1]
+        fp_values = config.as_rational(x)
+        out_of_bound_coefficients = fp_values[config.rational_out_of_bounds(fp_values)]
+        if torch.any(out_of_bound_coefficients):
             raise ValueError("Cannot dequantize tensor. Values out of bounds.")
 
         return fp_values

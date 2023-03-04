@@ -5,12 +5,14 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointQuantFunction,
 )
 from elasticai.creator.tests.tensor_test_case import TensorTestCase
-from elasticai.creator.vhdl.number_representations import FixedPoint
+from elasticai.creator.two_complement_fixed_point_config import (
+    TwoComplementFixedPointConfig,
+)
 
 
 class FixedPointQuantFunctionTest(TensorTestCase):
     def setUp(self) -> None:
-        self.fp_factory = FixedPoint.get_builder(total_bits=4, frac_bits=2)
+        self.fp_factory = TwoComplementFixedPointConfig(total_bits=4, frac_bits=2)
         self.quant = lambda x: FixedPointQuantFunction.apply(x, self.fp_factory)
 
     def test_quantize_upper_bound(self) -> None:
@@ -39,7 +41,9 @@ class FixedPointQuantFunctionTest(TensorTestCase):
 
 class FixedPointDequantFunctionTest(TensorTestCase):
     def setUp(self) -> None:
-        self.fp_factory = FixedPoint.get_builder(total_bits=4, frac_bits=2)
+        self.fp_factory: TwoComplementFixedPointConfig = TwoComplementFixedPointConfig(
+            total_bits=4, frac_bits=2
+        )
         self.dequant = lambda x: FixedPointDequantFunction.apply(x, self.fp_factory)
 
     def test_dequantize_upper_bound(self) -> None:
@@ -55,9 +59,14 @@ class FixedPointDequantFunctionTest(TensorTestCase):
         self.assertTensorEqual(target, actual)
 
     def test_dequantize_out_of_bounds(self) -> None:
+        def dequant(x):
+            return FixedPointDequantFunction.apply(
+                x, TwoComplementFixedPointConfig(total_bits=4, frac_bits=2)
+            )
+
         x = torch.tensor([9])
         with self.assertRaises(ValueError):
-            _ = self.dequant(x)
+            _ = dequant(x)
 
     def test_dequantize_typical_values(self) -> None:
         x = torch.tensor([-5, 0, 6])

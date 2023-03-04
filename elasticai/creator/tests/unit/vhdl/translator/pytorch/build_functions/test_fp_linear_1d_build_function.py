@@ -22,7 +22,7 @@ class FPLinear1dBuildFunctionTest(unittest.TestCase):
         to_fp = FixedPoint.get_builder(total_bits=8, frac_bits=4)
 
         self.linear = FixedPointLinear(
-            fixed_point_factory=to_fp, in_features=3, out_features=2, bias=False
+            config=to_fp, in_features=3, out_features=2, bias=False
         )
         self.linear.weight = arange_parameter(start=1, end=4, shape=(1, -1))
         self.linear.bias = arange_parameter(start=1, end=2, shape=(-1,))
@@ -31,7 +31,7 @@ class FPLinear1dBuildFunctionTest(unittest.TestCase):
         fp_factory = FixedPoint.get_builder(total_bits=8, frac_bits=4)
 
         linear = FixedPointLinear(
-            fixed_point_factory=fp_factory, in_features=3, out_features=2, bias=True
+            config=fp_factory, in_features=3, out_features=2, bias=True
         )
         linear.weight = arange_parameter(start=1, end=4, shape=(1, -1))
         linear.bias = arange_parameter(start=1, end=2, shape=(-1,))

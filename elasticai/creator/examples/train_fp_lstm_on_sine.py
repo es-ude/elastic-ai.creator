@@ -127,7 +127,7 @@ class FixedPointSineModel(torch.nn.Module):
             in_features=self._hidden_size,
             out_features=1,
             bias=True,
-            fixed_point_factory=self._fp_factory,
+            config=self._fp_factory,
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
