@@ -1,9 +1,11 @@
 import unittest
 
+from elasticai.creator.hdl.code_generation.code_generation import (
+    calculate_address_width,
+)
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.translatable import File, Path
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    calculate_address_width,
     create_connections,
     create_instance,
     signal_definition,

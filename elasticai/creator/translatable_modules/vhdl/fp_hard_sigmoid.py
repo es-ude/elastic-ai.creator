@@ -5,10 +5,7 @@ from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.vhdl.designs.fp_hard_sigmoid import (
     FPHardSigmoid as _FPHardSigmoidDesign,
 )
-from elasticai.creator.hdl.vhdl.number_representations import (
-    FixedPoint,
-    FixedPointConfig,
-)
+from elasticai.creator.hdl.vhdl.number_representations import FixedPoint
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid as _HardSigmoidLayer
 
 
@@ -30,11 +27,13 @@ class FPHardSigmoid(_HardSigmoidLayer):
         self.ops = ops
 
     def translate(self) -> Design:
-        def fp(value: float) -> FixedPoint:
-            return FixedPoint(
-                value=value,
-                total_bits=self.ops.total_bits,
-                frac_bits=self.ops.frac_bits,
+        def fp(value: float) -> int:
+            return int(
+                FixedPoint(
+                    value=value,
+                    total_bits=self.ops.total_bits,
+                    frac_bits=self.ops.frac_bits,
+                )
             )
 
         return _FPHardSigmoidDesign(
@@ -42,9 +41,7 @@ class FPHardSigmoid(_HardSigmoidLayer):
             one_threshold=fp(3),
             slope=fp(0.66),
             y_intercept=fp(0.5),
-            fixed_point_factory=FixedPointConfig(
-                frac_bits=self.ops.frac_bits,
-                total_bits=self.ops.total_bits,
-                constructor=FixedPoint,
-            ),
+            frac_bits=self.ops.frac_bits,
+            total_bits=self.ops.total_bits,
+            one=fp(1),
         )

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from elasticai.creator.hdl.design_base._network_blocks import BufferedNetworkBlock
+from elasticai.creator.hdl.design_base.network_blocks import BufferedNetworkBlock
 from elasticai.creator.hdl.translatable import Folder
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.hdl.vhdl.number_representations import FixedPointConfig

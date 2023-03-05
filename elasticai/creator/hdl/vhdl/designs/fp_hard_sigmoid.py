@@ -1,33 +1,34 @@
-from elasticai.creator.hdl.design_base._network_blocks import NetworkBlock
+from elasticai.creator.hdl.design_base.network_blocks import NetworkBlock
 from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
-
-from ..number_representations import FixedPoint, FixedPointConfig
 
 
 class FPHardSigmoid(NetworkBlock):
     def __init__(
         self,
-        zero_threshold: FixedPoint,
-        one_threshold: FixedPoint,
-        slope: FixedPoint,
-        y_intercept: FixedPoint,
-        fixed_point_factory: FixedPointConfig,
+        *,
+        zero_threshold: int,
+        one_threshold: int,
+        slope: int,
+        one: int,
+        y_intercept: int,
+        total_bits: int,
+        frac_bits: int,
         name="fp_hard_sigmoid",
     ):
         super().__init__(
             name=name,
-            x_width=fixed_point_factory.total_bits,
-            y_width=fixed_point_factory.total_bits,
+            x_width=total_bits,
+            y_width=total_bits,
         )
         d = dict(
-            data_width=fixed_point_factory.total_bits,
-            frac_width=fixed_point_factory.frac_bits,
-            one=fixed_point_factory(1).to_signed_int(),
-            zero_threshold=zero_threshold.to_signed_int(),
-            one_threshold=one_threshold.to_signed_int(),
-            y_intercept=y_intercept.to_signed_int(),
-            slope=slope.to_signed_int(),
+            data_width=total_bits,
+            frac_width=frac_bits,
+            one=one,
+            zero_threshold=zero_threshold,
+            one_threshold=one_threshold,
+            y_intercept=y_intercept,
+            slope=slope,
             layer_name=self.name,
         )
         stringified_d = dict(((k, str(v)) for k, v in d.items()))

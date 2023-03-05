@@ -1,5 +1,8 @@
 from typing import Iterator
 
+from elasticai.creator.hdl.code_generation.code_generation import (
+    calculate_address_width,
+)
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.std_signals import (
     clock,
@@ -16,7 +19,6 @@ from elasticai.creator.hdl.vhdl.code_generation import (
     signal_definition,
 )
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    calculate_address_width,
     create_connections,
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template

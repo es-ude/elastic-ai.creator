@@ -1,6 +1,3 @@
-import math
-
-
 def _sorted_dict(items: dict[str, str]) -> dict[str, str]:
     return dict((key, items[key]) for key in sorted(items))
 
@@ -59,7 +56,3 @@ def hex_representation(hex_value: str) -> str:
 
 def bin_representation(bin_value: str) -> str:
     return f'"{bin_value}"'
-
-
-def calculate_address_width(num_items: int) -> int:
-    return max(1, math.ceil(math.log2(num_items)))

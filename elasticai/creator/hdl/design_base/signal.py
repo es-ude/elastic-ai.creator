@@ -1,4 +1,4 @@
-from elasticai.creator.hdl.vhdl.dataflow.acceptor import Acceptor
+from elasticai.creator.hdl.design_base.acceptor import Acceptor
 
 
 class Signal(Acceptor):

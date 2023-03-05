@@ -1,7 +1,7 @@
 from itertools import chain, product
 from typing import Generic, Iterator, Optional, TypeVar, cast
 
-from .acceptor import Acceptor
+from elasticai.creator.hdl.design_base.acceptor import Acceptor
 
 T = TypeVar("T")
 
