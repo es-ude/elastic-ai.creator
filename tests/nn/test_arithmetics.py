@@ -1,9 +1,10 @@
 import torch
 
-from elasticai.creator.nn.arithmetics import FixedPointArithmetics, FloatArithmetics
-from elasticai.creator.nn.two_complement_fixed_point_config import (
+from elasticai.creator.nn._two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
+from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
+from elasticai.creator.nn.float_arithmetics import FloatArithmetics
 from tests.tensor_test_case import TensorTestCase
 
 

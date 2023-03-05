@@ -1,11 +1,13 @@
+from dataclasses import dataclass
 from typing import Any, cast
 
 import torch
 
-from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
-from elasticai.creator.nn.two_complement_fixed_point_config import (
+from elasticai.creator.nn._two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
+from elasticai.creator.nn.arithmetics import Arithmetics
+from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 
 
 class Linear(torch.nn.Linear):
@@ -34,22 +36,40 @@ class Linear(torch.nn.Linear):
         raise NotImplementedError("The quantized_forward function is not implemented.")
 
 
+@dataclass
+class FixedPointConfig:
+    frac_bits: int
+    total_bits: int
+
+
 class FixedPointLinear(Linear):
     def __init__(
         self,
         in_features: int,
         out_features: int,
-        config: TwoComplementFixedPointConfig,
+        config: FixedPointConfig,
         bias: bool,
         device: Any = None,
     ) -> None:
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=FixedPointArithmetics(config=config),
+            arithmetics=FixedPointArithmetics(
+                config=TwoComplementFixedPointConfig(
+                    total_bits=config.total_bits, frac_bits=config.total_bits
+                )
+            ),
             bias=bias,
             device=device,
         )
+
+    @property
+    def total_bits(self) -> int:
+        return cast(FixedPointArithmetics, self.ops).config.total_bits
+
+    @property
+    def frac_bits(self) -> int:
+        return cast(FixedPointArithmetics, self.ops).config.frac_bits
 
     @property
     def fixed_point_factory(self) -> TwoComplementFixedPointConfig:

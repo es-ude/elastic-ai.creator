@@ -4,13 +4,13 @@ from typing import Optional, cast
 
 import torch
 
-from elasticai.creator.nn.arithmetics import FixedPointArithmetics
+from elasticai.creator.nn._two_complement_fixed_point_config import (
+    TwoComplementFixedPointConfig,
+)
+from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.hard_tanh import HardTanh
 from elasticai.creator.nn.lstm_cell import LSTMCell
-from elasticai.creator.nn.two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
 
 
 class LSTM(torch.nn.Module):

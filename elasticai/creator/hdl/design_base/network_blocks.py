@@ -44,3 +44,7 @@ class BufferedNetworkBlock(Design, ABC):
             _signals.x_address(calculate_address_width(x_width)),
         ]
         self._port = Port(incoming=in_signals, outgoing=out_signals)
+
+    @property
+    def port(self) -> Port:
+        return self._port

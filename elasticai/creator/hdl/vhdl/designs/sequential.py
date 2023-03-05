@@ -126,6 +126,13 @@ class Sequential(Design):
             connections[self._qualified_signal_name(instance, "clock")] = "clock"
             connections[self._qualified_signal_name(instance, "enable")] = last_done
             last_y = self._qualified_signal_name(instance, "y")
+            if "y_address" in self.instances[instance].port:
+                connections[self._qualified_signal_name(instance, "y_address")] = (
+                    last_x_address
+                )
+            if "done" in self.instances[instance].port:
+                last_done = self._qualified_signal_name(instance, "done")
+                last_x_address = self._qualified_signal_name(instance, "x_address")
         connections["y"] = last_y
         connections["x_address"] = last_x_address
         connections["done"] = last_done
