@@ -4,7 +4,7 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.two_complement_fixed_point_config import (
+from elasticai.creator.nn.two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
 from tests.tensor_test_case import TensorTestCase

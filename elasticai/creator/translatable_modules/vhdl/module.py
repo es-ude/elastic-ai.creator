@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from elasticai.creator.hdl.vhdl.designs.design import Design
+from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.translatable_modules.module import Module as _BaseModule
 
 

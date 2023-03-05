@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.two_complement_fixed_point_config import (
+from elasticai.creator.nn.two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
 

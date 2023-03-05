@@ -1,8 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Iterable, Protocol
 
 
-class Saveable(ABC):
+class Translatable(Protocol):
+    @abstractmethod
+    def translate(self) -> "Saveable":
+        ...
+
+
+class Saveable(Protocol):
     @abstractmethod
     def save_to(self, destination: "Path"):
         ...

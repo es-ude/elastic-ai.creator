@@ -1,12 +1,9 @@
-from abc import abstractmethod
 from typing import Optional
 
+from elasticai.creator.hdl.design_base._network_blocks import BufferedNetworkBlock
+from elasticai.creator.hdl.translatable import Folder
+from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.hdl.vhdl.number_representations import FixedPointConfig
-from elasticai.creator.hdl.vhdl.template import Template
-
-from ..code_generation.code_generation import calculate_address_width
-from ..saveable import Folder
-from ._network_blocks import BufferedNetworkBlock
 
 
 class FPLinear1d(BufferedNetworkBlock):
@@ -21,8 +18,6 @@ class FPLinear1d(BufferedNetworkBlock):
     ):
         super().__init__(
             name="fp_linear1d" if name is None else name,
-            x_address_width=calculate_address_width(in_feature_num),
-            y_address_width=calculate_address_width(out_feature_num),
             x_width=fixed_point_config.total_bits,
             y_width=fixed_point_config.total_bits,
         )
@@ -53,4 +48,4 @@ class FPLinear1d(BufferedNetworkBlock):
             resource_option=f'"{self.resource_option}"',
             **self._template_parameters(),
         )
-        destination.new_file(f"{self.name}", template.lines())
+        destination.as_file(f"{self.name}").write_text(template.lines())

@@ -53,5 +53,13 @@ def signal_definition(
         return logic_signal(name)
 
 
+def hex_representation(hex_value: str) -> str:
+    return f'x"{hex_value}"'
+
+
+def bin_representation(bin_value: str) -> str:
+    return f'"{bin_value}"'
+
+
 def calculate_address_width(num_items: int) -> int:
     return max(1, math.ceil(math.log2(num_items)))

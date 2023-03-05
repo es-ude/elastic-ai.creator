@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol, TypeVar
 
-from elasticai.creator.hdl.vhdl.saveable import Saveable
+from elasticai.creator.hdl.translatable import Saveable
 
 T = TypeVar("T", bound=Saveable, covariant=True)
 

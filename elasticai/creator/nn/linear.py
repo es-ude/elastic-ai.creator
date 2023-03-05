@@ -3,7 +3,7 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
-from elasticai.creator.two_complement_fixed_point_config import (
+from elasticai.creator.nn.two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
 

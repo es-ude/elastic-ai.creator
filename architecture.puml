@@ -1,0 +1,143 @@
+@startuml
+package nn {
+  class Sequential
+  class HardSigmoid
+}
+
+package resource_utils {
+    class PackageUtils {
+        +{static}read_text(package: str, filename: str): list<str>
+    }
+}
+package hdl {
+  package translatable {
+    interface Translatable {
+      translate(): Saveable
+    }
+    interface Saveable {
+        save_to(destination: Path)
+    }
+    interface Path {
+        as_file(suffix: str): File
+        create_subpath(name: str): Path
+    }
+    interface File {
+        write_text(Iterable<str> text)
+    }
+  }
+    package code_generation {
+        abstract class AbstractBaseTemplate {
+            #{abstract}read_raw_template() list<str>
+            #raw_template: list<str>
+            +update_parameters(**parameters: str | Iterable<str>)
+            +single_line_parameters: dict<str, str>
+            +multi_line_parameters: dict<str, Iterable<str>>
+        }
+        class CodeGeneration {
+            +unsigned_int_to_hex(number: int): str
+            +unsigned_int_to_bin(number: int): str
+        }
+    }
+
+         package design_base {
+                class BufferedNetworkBlock
+                class NetworkBlock
+                class STDSignals {
+                  +x(int: data_width): Signal
+                  +y(int: data_width): Signal
+                  +y_address(int: address_width): Signal
+                  +x_address(int: address_width): Signal
+                  +done(): Signal
+                  +enable(): Signal
+                  +clock(): Signal
+                }
+                class Port {
+                  +incoming: list<Signal>
+                  +outgoing: list<Signal>
+                  +__iter__(): Iterator<Signal>
+                }
+                abstract class Design {
+                  +name: str
+                  +port(): Port
+                  +{abstract}save_to(destination: Path)
+                }
+
+                class Signal {
+                  +accepts(Signal: other): bool
+                  +width: int
+                  +name: str
+                }
+
+            }
+
+
+
+    package vhdl {
+
+        package template_resources {}
+        package vhdl_code_generation {
+            class VHDLCodeGen {
+                +calculate_address_width(int: data_width): int
+            }
+            class VHDLTemplate as "Template"
+        }
+
+        package designs {
+
+
+            class SequentialContainerModule {
+                -subdesigns: list<Design>
+                -x_width: int
+                -y_width: int
+            }
+
+            class FPHardSigmoid {
+                -total_bits: int
+                -frac_bits: int
+                -x_width: int
+                -y_width: int
+            }
+
+            BufferedNetworkBlock --|> NetworkBlock
+            NetworkBlock --> STDSignals
+            BufferedNetworkBlock --> STDSignals
+            STDSignals --> Signal
+            Design --> Port
+            NetworkBlock --|> Design
+            Design ..|> Saveable
+            Saveable --> Path
+            Path --> File
+            Port --> Signal
+            VHDLTemplate --> resource_utils
+            VHDLTemplate --> template_resources
+        }
+        designs --> design_base
+
+
+    }
+
+
+}
+package translatable_modules {
+package vhdl_modules {
+        class TranslatableSequentialContainerModule as "SequentialContainerModule"  {
+        }
+        class TranslatableFPHardSigmoid
+    }
+}
+vhdl_modules --> nn
+vhdl_modules --> designs
+designs --> vhdl_code_generation
+vhdl_code_generation --> code_generation
+class InMemoryFile implements File
+class InMemoryPath implements Path
+InMemoryPath --> InMemoryFile
+
+
+Translatable --> Saveable
+
+vhdl_modules ..|> Translatable
+
+
+
+@enduml

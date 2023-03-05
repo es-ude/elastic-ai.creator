@@ -1,4 +1,4 @@
-from elasticai.creator.hdl.vhdl.signal import Signal
+from elasticai.creator.hdl.design_base.signal import Signal
 
 
 def x(width: int) -> Signal:

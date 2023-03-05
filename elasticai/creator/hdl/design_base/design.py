@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from itertools import chain
 from typing import Iterator
 
-from elasticai.creator.hdl.vhdl.saveable import Saveable
-from elasticai.creator.hdl.vhdl.signal import Signal
+from elasticai.creator.hdl.design_base.signal import Signal
+from elasticai.creator.hdl.translatable import Saveable
 
 
 class Port:

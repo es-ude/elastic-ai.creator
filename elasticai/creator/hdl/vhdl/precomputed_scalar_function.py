@@ -16,7 +16,9 @@ from typing import (
 
 import torch.nn
 
-from elasticai.creator.hdl.code_generation._code_generation import bin_representation
+from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
+    bin_representation,
+)
 from elasticai.creator.vhdl.number_representations import (
     FixedPoint,
     float_values_to_fixed_point,

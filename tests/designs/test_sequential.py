@@ -1,14 +1,14 @@
 import unittest
 
+from elasticai.creator.hdl.design_base import std_signals
+from elasticai.creator.hdl.translatable import File, Path
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     calculate_address_width,
     create_connections,
     create_instance,
     signal_definition,
 )
-from elasticai.creator.hdl.vhdl.designs import std_signals
-from elasticai.creator.hdl.vhdl.saveable import File, Path
-from elasticai.creator.hdl.vhdl.template import Template
+from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.translatable_modules.vhdl.fp_hard_sigmoid import FPHardSigmoid
 from elasticai.creator.translatable_modules.vhdl.sequential import Sequential

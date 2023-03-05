@@ -1,8 +1,8 @@
-from elasticai.creator.hdl.vhdl.saveable import Path
+from elasticai.creator.hdl.design_base._network_blocks import NetworkBlock
+from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
 from ..number_representations import FixedPoint, FixedPointConfig
-from ..template import Template
-from ._network_blocks import NetworkBlock
 
 
 class FPHardSigmoid(NetworkBlock):

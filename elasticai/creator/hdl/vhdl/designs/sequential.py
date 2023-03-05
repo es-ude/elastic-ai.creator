@@ -1,5 +1,16 @@
 from typing import Iterator
 
+from elasticai.creator.hdl.design_base.design import Design, Port
+from elasticai.creator.hdl.design_base.std_signals import (
+    clock,
+    done,
+    enable,
+    x,
+    x_address,
+    y,
+    y_address,
+)
+from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation import (
     create_instance,
     signal_definition,
@@ -8,11 +19,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     calculate_address_width,
     create_connections,
 )
-from elasticai.creator.hdl.vhdl.saveable import Path
-from elasticai.creator.hdl.vhdl.template import Template
-
-from .design import Design, Port
-from .std_signals import clock, done, enable, x, x_address, y, y_address
+from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
 
 class Sequential(Design):
