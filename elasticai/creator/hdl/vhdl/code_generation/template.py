@@ -1,23 +1,25 @@
-from typing import Iterator
+from elasticai.creator.hdl.code_generation.abstract_base_template import (
+    TemplateConfig,
+    TemplateExpander,
+)
 
-from elasticai.creator.hdl.code_generation import AbstractBaseTemplate
-from elasticai.creator.resource_utils import read_text
 
-
-class Template(AbstractBaseTemplate):
-    def _read_raw_template(self) -> Iterator[str]:
-        return read_text(
-            self._template_package, f"{self._template_name}{self._template_file_suffix}"
+class Template:
+    def __init__(
+        self,
+        base_name: str,
+        package: str = "elasticai.creator.hdl.vhdl.template_resources",
+        suffix: str = ".tpl.vhd",
+    ):
+        self._template_name = base_name
+        self._internal_template = TemplateExpander(
+            TemplateConfig(
+                file_name=f"{base_name}{suffix}", package=package, parameters=dict()
+            )
         )
 
-    _template_package = "elasticai.creator.hdl.vhdl.template_resources"
-    _template_file_suffix = ".tpl.vhd"
+    def update_parameters(self, **parameters: str | list[str]):
+        self._internal_template.config.parameters.update(parameters)
 
-    def __init__(self, base_name: str, **parameters: str | tuple[str] | list[str]):
-        super().__init__(**parameters)
-        self._template_name = base_name
-        self._saved_raw_template: list[str] = []
-
-    @property
-    def name(self) -> str:
-        return f"{self._template_name}{self._template_file_suffix}"
+    def lines(self) -> list[str]:
+        return self._internal_template.lines()

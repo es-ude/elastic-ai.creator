@@ -19,10 +19,6 @@ class NetworkBlock(Design, ABC):
             outgoing=[_signals.y(y_width)],
         )
 
-    @property
-    def port(self) -> Port:
-        return self._port
-
 
 class BufferedNetworkBlock(Design, ABC):
     def __init__(
@@ -30,18 +26,20 @@ class BufferedNetworkBlock(Design, ABC):
         name: str,
         x_width: int,
         y_width: int,
+        x_count: int,
+        y_count: int,
     ):
         super().__init__(name)
         in_signals = [
             _signals.enable(),
             _signals.clock(),
             _signals.x(x_width),
-            _signals.y_address(calculate_address_width(y_width)),
+            _signals.y_address(calculate_address_width(y_count)),
         ]
         out_signals = [
             _signals.done(),
             _signals.y(y_width),
-            _signals.x_address(calculate_address_width(x_width)),
+            _signals.x_address(calculate_address_width(x_count)),
         ]
         self._port = Port(incoming=in_signals, outgoing=out_signals)
 

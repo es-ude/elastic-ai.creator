@@ -1,11 +1,22 @@
 from typing import Optional
 
-from elasticai.creator.hdl.design_base.network_blocks import BufferedNetworkBlock
+from elasticai.creator.hdl.code_generation.abstract_base_template import (
+    module_to_package,
+)
+from elasticai.creator.hdl.design_base.design import Design, Port
+from elasticai.creator.hdl.design_base.ports import create_port_for_buffered_design
+from elasticai.creator.hdl.design_base.ports import (
+    create_port_for_buffered_design as create_port,
+)
 from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
 
-class FPLinear1d(BufferedNetworkBlock):
+class FPLinear1d(Design):
+    @property
+    def port(self) -> Port:
+        return self._port
+
     def __init__(
         self,
         *,
@@ -19,8 +30,12 @@ class FPLinear1d(BufferedNetworkBlock):
     ):
         super().__init__(
             name="fp_linear1d" if name is None else name,
+        )
+        self._port = create_port(
             x_width=total_bits,
             y_width=total_bits,
+            x_count=in_feature_num,
+            y_count=out_feature_num,
         )
         self.in_feature_num = in_feature_num
         self.out_feature_num = out_feature_num
@@ -45,7 +60,9 @@ class FPLinear1d(BufferedNetworkBlock):
         )
 
     def save_to(self, destination: Path):
-        template = Template(base_name="fp_linear_1d")
+        template = Template(
+            base_name="fp_linear_1d", package=module_to_package(self.__module__)
+        )
         template.update_parameters(
             layer_name=self.name,
             work_library_name=self.work_library_name,

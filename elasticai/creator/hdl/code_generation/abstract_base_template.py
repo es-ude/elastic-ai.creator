@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from itertools import chain, repeat
 from string import Template as StringTemplate
-from typing import Iterable, Iterator, cast
+from typing import Iterable, Iterator, Mapping, cast
+
+from elasticai.creator.resource_utils import read_text
 
 
 class AbstractBaseTemplate(ABC):
@@ -36,27 +39,9 @@ class AbstractBaseTemplate(ABC):
         (
             single_line_parameters,
             multiline_parameters,
-        ) = self._split_single_and_multiline_parameters(parameters)
+        ) = _split_single_and_multiline_parameters(parameters)
         self._parameters.update(**single_line_parameters)
         self._multiline_parameters.update(**multiline_parameters)
-
-    @staticmethod
-    def _split_single_and_multiline_parameters(
-        parameters: dict[str, str | Iterable[str]],
-    ) -> tuple[dict[str, str], dict[str, Iterable[str]]]:
-        single_line_parameters: dict[str, str] = dict(
-            cast(
-                Iterator[tuple[str, str]],
-                filter(lambda i: isinstance(i[1], str), parameters.items()),
-            )
-        )
-        multiline_parameters = dict(
-            cast(
-                Iterator[tuple[str, Iterable[str]]],
-                filter(lambda i: not isinstance(i[1], str), parameters.items()),
-            )
-        )
-        return single_line_parameters, multiline_parameters
 
     @property
     def single_line_parameters(self) -> dict[str, str]:
@@ -81,6 +66,69 @@ class AbstractBaseTemplate(ABC):
         lines = _expand_template(self._raw_template, **self._parameters)
         lines = _expand_multiline_template(lines, **self._multiline_parameters)
         return list(lines)
+
+
+def module_to_package(module: str) -> str:
+    return ".".join(module.split(".")[:-1])
+
+
+@dataclass
+class TemplateConfig:
+    """
+    Used in design definition, by the hw designer.
+    HW designer just provides template configs and port definitions as a design.
+
+    Contributor of a new translatable module provides design and ml module as well as how to map parameters
+
+    Creator takes these and uses the template expander to generate the correct file
+    """
+
+    package: str
+    file_name: str
+    parameters: dict[str, str | list[str]]
+
+
+class TemplateExpander:
+    """
+    Used during translation by the creator tool. HW designer does not need to touch this or inherit from it.
+    """
+
+    def _read_raw_template(self) -> Iterator[str]:
+        return read_text(
+            self.config.package,
+            self.config.file_name,
+        )
+
+    def __init__(self, config: TemplateConfig):
+        super().__init__()
+        self.config = config
+
+    def lines(self) -> list[str]:
+        single_line_params, multi_line_params = _split_single_and_multiline_parameters(
+            self.config.parameters
+        )
+        template = self._read_raw_template()
+        _lines = _expand_template(template, **single_line_params)
+        _lines = _expand_multiline_template(_lines, **multi_line_params)
+        return list(_lines)
+
+
+def _split_single_and_multiline_parameters(
+    parameters: Mapping[str, str | Iterable[str]],
+) -> tuple[dict[str, str], dict[str, Iterable[str]]]:
+    single_line_parameters: dict[str, str] = dict(
+        cast(
+            Iterator[tuple[str, str]],
+            filter(lambda i: isinstance(i[1], str), parameters.items()),
+        )
+    )
+    multiline_parameters = dict(
+        cast(
+            Iterator[tuple[str, Iterable[str]]],
+            filter(lambda i: not isinstance(i[1], str), parameters.items()),
+        )
+    )
+    return single_line_parameters, multiline_parameters
 
 
 def _expand_multiline_template(

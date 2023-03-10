@@ -12,9 +12,6 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
 from elasticai.creator.nn.linear import FixedPointConfig
 from elasticai.creator.translatable_modules.vhdl.fp_hard_sigmoid import FPHardSigmoid
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
@@ -46,7 +43,7 @@ class SequentialTestCase(unittest.TestCase):
         destination = InMemoryPathForTesting("sequential")
         design = module.translate()
         design.save_to(destination)
-        self.assertEqual(expected, destination.text)
+        self.assertEqual(destination.text, expected)
 
     def test_autowire_instantiate_and_define_signals_for_hard_sigmoid_activation(self):
         bit_width = 16
@@ -63,14 +60,18 @@ class SequentialTestCase(unittest.TestCase):
 
     def test_with_single_linear_layer(self):
         bit_width = 16
-        template = _prepare_sequential_template_with_linear(bit_width)
+        in_features = 6
+        out_features = 3
+        template = _prepare_sequential_template_with_linear(
+            bit_width, in_features, out_features
+        )
         expected = template.lines()
         module = Sequential(
             (
                 (
                     FPLinear1d(
-                        in_features=4,
-                        out_features=2,
+                        in_features=6,
+                        out_features=3,
                         config=FixedPointConfig(total_bits=16, frac_bits=4),
                         bias=False,
                     ),
@@ -96,6 +97,9 @@ class SequentialTemplate:
     ):
         self._template = Template(
             "network",
+            package="elasticai.creator.hdl.vhdl.designs",
+        )
+        self._template.update_parameters(
             layer_connections=connections,
             layer_instantiations=instantiations,
             signal_definitions=signal_definitions,
@@ -130,7 +134,9 @@ class InMemoryPathForTesting(Path):
         return child.text
 
 
-def _prepare_sequential_template_with_linear(bit_width) -> SequentialTemplate:
+def _prepare_sequential_template_with_linear(
+    bit_width, in_features, out_features
+) -> SequentialTemplate:
     entity = "fp_linear1d"
     instance = f"i_{entity}_0"
     connections = create_connections(
@@ -155,7 +161,6 @@ def _prepare_sequential_template_with_linear(bit_width) -> SequentialTemplate:
             for s in ("x", "y", "clock", "enable", "x_address", "y_address", "done")
         },
     )
-    address_width = calculate_address_width(bit_width)
 
     signal_definitions = sorted(
         [
@@ -166,8 +171,8 @@ def _prepare_sequential_template_with_linear(bit_width) -> SequentialTemplate:
                 std_signals.clock(),
                 std_signals.enable(),
                 std_signals.done(),
-                std_signals.x_address(address_width),
-                std_signals.y_address(address_width),
+                std_signals.x_address(calculate_address_width(in_features)),
+                std_signals.y_address(calculate_address_width(out_features)),
             )
         ]
     )
@@ -187,24 +192,23 @@ def _prepare_sequential_template_with_linear(bit_width) -> SequentialTemplate:
 def _prepare_sequential_template_with_hard_sigmoid(
     bit_width: int,
 ) -> SequentialTemplate:
-    instance = "i_fp_hard_sigmoid_0"
+    entity = "hard_sigmoid"
+    instance = f"i_{entity}_0"
     connections = create_connections(
         {
             f"{instance}_x": "x",
             "y": f"{instance}_y",
             "done": "enable",
-            f"{instance}_clock": "clock",
-            f"{instance}_enable": "enable",
             "x_address": "y_address",
         }
     )
 
     instantiations = create_instance(
         name=instance,
-        entity="fp_hard_sigmoid",
+        entity=entity,
         architecture="rtl",
         library="work",
-        signal_mapping={s: f"{instance}_{s}" for s in ("x", "y", "clock", "enable")},
+        signal_mapping={s: f"{instance}_{s}" for s in ("x", "y")},
     )
 
     signal_definitions = sorted(
@@ -213,8 +217,6 @@ def _prepare_sequential_template_with_hard_sigmoid(
             for signal in (
                 std_signals.x(bit_width),
                 std_signals.y(bit_width),
-                std_signals.clock(),
-                std_signals.enable(),
             )
         ]
     )

@@ -1,3 +1,9 @@
+from abc import abstractmethod
+from typing import Protocol, Sequence
+
+from elasticai.creator.hdl.code_generation.code_generation import to_hex
+
+
 def _sorted_dict(items: dict[str, str]) -> dict[str, str]:
     return dict((key, items[key]) for key in sorted(items))
 
@@ -30,6 +36,27 @@ def create_connections(mapping: dict[str, str]) -> list[str]:
     return connections
 
 
+class Signal(Protocol):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def width(self) -> int:
+        ...
+
+
+def create_signal_definitions(prefix: str, signals: Sequence[Signal]):
+    return sorted(
+        [
+            signal_definition(name=f"{prefix}{signal.name}", width=signal.width)
+            for signal in signals
+        ]
+    )
+
+
 def signal_definition(
     *,
     name: str,
@@ -56,3 +83,7 @@ def hex_representation(hex_value: str) -> str:
 
 def bin_representation(bin_value: str) -> str:
     return f'"{bin_value}"'
+
+
+def to_vhdl_hex_string(number: int, bit_width: int) -> str:
+    return f"'x{to_hex(number, bit_width)}'"

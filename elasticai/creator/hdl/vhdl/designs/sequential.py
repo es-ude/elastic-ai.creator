@@ -1,5 +1,14 @@
+from abc import ABC, abstractmethod
+from copy import copy
+from dataclasses import dataclass
+from enum import Enum
+from functools import partial
+from itertools import chain
 from typing import Iterator
 
+from elasticai.creator.hdl.code_generation.abstract_base_template import (
+    module_to_package,
+)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
@@ -20,6 +29,7 @@ from elasticai.creator.hdl.vhdl.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections,
+    create_signal_definitions,
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
@@ -116,27 +126,20 @@ class Sequential(Design):
     def _connection(a: str, b: str) -> str:
         return f"{a} <= {b};"
 
+    def _create_dataflow_nodes(self) -> list["_BaseNode"]:
+        nodes: list[_BaseNode] = [_StartNode()]
+        for instance, design in self.instances.items():
+            node: _BaseNode = _DataFlowNode(instance=instance)
+            node.add_sinks([signal.name for signal in design.port.incoming])
+            node.add_sources([signal.name for signal in design.port.outgoing])
+            nodes.append(node)
+        nodes.append(_EndNode())
+        return nodes
+
     def _generate_connections(self) -> list[str]:
-        last_y = "x"
-        last_x_address = "y_address"
-        last_done = "enable"
-        connections: dict[str, str] = {}
-        for instance in self.instances:
-            connections[self._qualified_signal_name(instance, "x")] = last_y
-            connections[self._qualified_signal_name(instance, "clock")] = "clock"
-            connections[self._qualified_signal_name(instance, "enable")] = last_done
-            last_y = self._qualified_signal_name(instance, "y")
-            if "y_address" in self.instances[instance].port:
-                connections[self._qualified_signal_name(instance, "y_address")] = (
-                    last_x_address
-                )
-            if "done" in self.instances[instance].port:
-                last_done = self._qualified_signal_name(instance, "done")
-                last_x_address = self._qualified_signal_name(instance, "x_address")
-        connections["y"] = last_y
-        connections["x_address"] = last_x_address
-        connections["done"] = last_done
-        return create_connections(connections)
+        nodes = self._create_dataflow_nodes()
+        wirer = _AutoWirer(nodes=nodes)
+        return create_connections(wirer.connect())
 
     def _generate_instantiations(self) -> list[str]:
         instantiations: list[str] = list()
@@ -158,23 +161,16 @@ class Sequential(Design):
 
     def _generate_signal_definitions(self) -> list[str]:
         return sorted(
-            [
-                signal_definition(
-                    name=self._qualified_signal_name(
-                        instance=instance, signal=signal.name
-                    ),
-                    width=signal.width,
-                )
-                for instance, signal in [
-                    (instance, signal)
-                    for instance in self.instances
-                    for signal in self.instances[instance].port.signals
-                ]
-            ]
+            chain.from_iterable(
+                create_signal_definitions(f"{instance_id}_", instance.port.signals)
+                for instance_id, instance in self.instances.items()
+            )
         )
 
     def save_to(self, destination: Path):
-        network_implementation = Template("network")
+        network_implementation = Template(
+            "network", package=module_to_package(self.__module__)
+        )
         self._save_subdesigns(destination)
         network_implementation.update_parameters(
             layer_connections=self._generate_connections(),
@@ -187,3 +183,109 @@ class Sequential(Design):
         )
         target_file = destination.as_file(".vhd")
         target_file.write_text(network_implementation.lines())
+
+
+class _AutoWirer:
+    def __init__(self, nodes: list["_BaseNode"]):
+        self.nodes = nodes
+        self.mapping = {
+            "x": ["x", "y"],
+            "y": ["y", "x"],
+            "x_address": ["x_address", "y_address"],
+            "y_address": ["y_address", "x_address"],
+            "enable": ["enable", "done"],
+            "done": ["done", "enable"],
+            "clock": ["clock"],
+        }
+        self.available_sources: dict[str, "_Source"] = {}
+
+    def _pick_best_matching_source(self, sink: "_Sink") -> "_Source":
+        for source_name in self.mapping[sink.name]:
+            if source_name in self.available_sources:
+                source = self.available_sources[source_name]
+                return source
+        return _TopNode().sources[0]
+
+    def _update_available_sources(self, node: "_BaseNode") -> None:
+        self.available_sources.update({s.name: s for s in node.sources})
+
+    def connect(self) -> dict[str, str]:
+        connections: dict[str, str] = {}
+        for node in self.nodes:
+            for sink in node.sinks:
+                source = self._pick_best_matching_source(sink)
+                connections[sink.get_qualified_name()] = source.get_qualified_name()
+            self._update_available_sources(node)
+
+        return connections
+
+
+class _BaseNode(ABC):
+    def __init__(self) -> None:
+        self.sinks: list[_Sink] = []
+        self.sources: list[_Source] = []
+
+    def add_sinks(self, sinks: list[str]):
+        create_sink = partial(_Sink, owner=self)
+        self.sinks.extend(map(create_sink, sinks))
+
+    def add_sources(self, sources: list[str]):
+        create_source = partial(_Source, owner=self)
+        self.sources.extend(map(create_source, sources))
+
+    @property
+    @abstractmethod
+    def prefix(self) -> str:
+        ...
+
+
+class _TopNode(_BaseNode):
+    @property
+    def prefix(self) -> str:
+        return ""
+
+
+class _StartNode(_TopNode):
+    def __init__(self):
+        super().__init__()
+        self.add_sources(["x", "y_address", "enable", "clock"])
+
+    @property
+    def prefix(self) -> str:
+        return ""
+
+
+class _EndNode(_TopNode):
+    def __init__(self):
+        super().__init__()
+        self.add_sinks(["y", "x_address", "done"])
+
+
+class _DataFlowNode(_BaseNode):
+    def __init__(self, instance: str):
+        self.instance = instance
+        super().__init__()
+
+    @property
+    def prefix(self) -> str:
+        return f"{self.instance}_"
+
+
+class _Sink:
+    def __init__(self, name: str, owner: _DataFlowNode):
+        self.name = name
+        self.owner = owner
+        self.source: _DataFlowNode | None = None
+
+    def get_qualified_name(self) -> str:
+        return f"{self.owner.prefix}{self.name}"
+
+
+class _Source:
+    def __init__(self, name: str, owner: _DataFlowNode):
+        self.name = name
+        self.owner = owner
+        self.sinks: list[_DataFlowNode] = []
+
+    def get_qualified_name(self) -> str:
+        return f"{self.owner.prefix}{self.name}"
