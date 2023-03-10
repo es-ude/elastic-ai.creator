@@ -183,8 +183,8 @@ def _prepare_sequential_template_with_linear(
         signal_definitions=signal_definitions,
         x_width=f"{bit_width}",
         y_width=f"{bit_width}",
-        x_address_width=str(calculate_address_width(bit_width)),
-        y_address_width=str(calculate_address_width(bit_width)),
+        x_address_width=str(calculate_address_width(in_features)),
+        y_address_width=str(calculate_address_width(out_features)),
     )
     return template
 
@@ -227,8 +227,8 @@ def _prepare_sequential_template_with_hard_sigmoid(
         signal_definitions=signal_definitions,
         x_width=f"{bit_width}",
         y_width=f"{bit_width}",
-        x_address_width=str(calculate_address_width(bit_width)),
-        y_address_width=str(calculate_address_width(bit_width)),
+        x_address_width="1",
+        y_address_width="1",
     )
     return template
 

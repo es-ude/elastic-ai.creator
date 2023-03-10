@@ -45,7 +45,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
 
     @property
     def port(self) -> Port:
-        signal = partial(Signal, width=self._width, accepted_names=[])
+        signal = partial(Signal, width=self._width)
         return Port(
             incoming=[signal(name="x")],
             outgoing=[signal(name="y")],

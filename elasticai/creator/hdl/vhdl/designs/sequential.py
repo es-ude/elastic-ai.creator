@@ -1,10 +1,6 @@
 from abc import ABC, abstractmethod
-from copy import copy
-from dataclasses import dataclass
-from enum import Enum
 from functools import partial
 from itertools import chain
-from typing import Iterator
 
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
     module_to_package,
@@ -12,7 +8,9 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
+from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
+from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.design_base.std_signals import (
     clock,
     done,
@@ -23,10 +21,7 @@ from elasticai.creator.hdl.design_base.std_signals import (
     y_address,
 )
 from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.hdl.vhdl.code_generation import (
-    create_instance,
-    signal_definition,
-)
+from elasticai.creator.hdl.vhdl.code_generation import create_instance
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections,
     create_signal_definitions,
@@ -41,22 +36,21 @@ class Sequential(Design):
         *,
         x_width: int,
         y_width: int,
+        x_address_width: int,
+        y_address_width: int,
     ):
         super().__init__("Sequential")
         self._x_width = x_width
         self._y_width = y_width
+        self._y_address_width = y_address_width
+        self._x_address_width = x_address_width
         self.instances: dict[str, Design] = {}
         self._names: dict[str, int] = {}
+        self._library_name_for_instances = "work"
+        self._architecture_name_for_instances = "rtl"
+        self._autowirer = _AutoWirer
         for design in sub_designs:
             self._register_subdesign(design)
-
-    @property
-    def _y_address_width(self) -> int:
-        return calculate_address_width(self._y_width)
-
-    @property
-    def _x_address_width(self) -> int:
-        return calculate_address_width(self._x_width)
 
     def _make_name_unique(self, name: str) -> str:
         return f"i_{name}_{self._get_counter_for_name(name)}"
@@ -78,30 +72,6 @@ class Sequential(Design):
     def _qualified_signal_name(self, instance: str, signal: str) -> str:
         return f"{instance}_{signal}"
 
-    def _default_port(self) -> Port:
-        return Port(incoming=[x(1), y_address(1)], outgoing=[y(1), x_address(1)])
-
-    def _get_width_of_signal_or_default(self, signal_name: str, default: int) -> int:
-        return self._get_width_for_signal_from_designs_or_default(
-            signal_name, designs=iter(self.instances.values()), default=default
-        )
-
-    @staticmethod
-    def _get_width_for_signal_from_designs_or_default(
-        selected_signal: str, default: int, designs: Iterator[Design]
-    ) -> int:
-        for sub_design in designs:
-            if selected_signal in sub_design.port.signal_names:
-                return sub_design.port[selected_signal].width
-        return default
-
-    def _reversed_get_width_of_signal_or_default(
-        self, signal_name: str, default: int
-    ) -> int:
-        return self._get_width_for_signal_from_designs_or_default(
-            signal_name, default, reversed(self.instances.values())
-        )
-
     @property
     def port(self) -> Port:
         return Port(
@@ -122,23 +92,27 @@ class Sequential(Design):
         for name, design in self.instances.items():
             design.save_to(destination.create_subpath(name))
 
-    @staticmethod
-    def _connection(a: str, b: str) -> str:
-        return f"{a} <= {b};"
-
-    def _create_dataflow_nodes(self) -> list["_BaseNode"]:
-        nodes: list[_BaseNode] = [_StartNode()]
+    def _create_dataflow_nodes(self) -> list["_DataFlowNode"]:
+        nodes: list[_DataFlowNode] = [
+            _StartNode(x_width=self._x_width, y_address_width=self._y_address_width)
+        ]
         for instance, design in self.instances.items():
-            node: _BaseNode = _DataFlowNode(instance=instance)
-            node.add_sinks([signal.name for signal in design.port.incoming])
-            node.add_sources([signal.name for signal in design.port.outgoing])
-            nodes.append(node)
-        nodes.append(_EndNode())
+            nodes.append(self._create_data_flow_node(instance, design))
+        nodes.append(
+            _EndNode(y_width=self._y_width, x_address_width=self._x_address_width)
+        )
         return nodes
+
+    @staticmethod
+    def _create_data_flow_node(instance: str, design: Design) -> "_DataFlowNode":
+        node = _InstanceNode(instance=instance)
+        node.add_sinks(design.port.incoming)
+        node.add_sources(design.port.outgoing)
+        return node
 
     def _generate_connections(self) -> list[str]:
         nodes = self._create_dataflow_nodes()
-        wirer = _AutoWirer(nodes=nodes)
+        wirer = self._autowirer(nodes=nodes)
         return create_connections(wirer.connect())
 
     def _generate_instantiations(self) -> list[str]:
@@ -152,8 +126,8 @@ class Sequential(Design):
                 create_instance(
                     name=instance,
                     entity=design.name,
-                    library="work",
-                    architecture="rtl",
+                    library=self._library_name_for_instances,
+                    architecture=self._architecture_name_for_instances,
                     signal_mapping=signal_map,
                 )
             )
@@ -186,7 +160,7 @@ class Sequential(Design):
 
 
 class _AutoWirer:
-    def __init__(self, nodes: list["_BaseNode"]):
+    def __init__(self, nodes: list["_DataFlowNode"]):
         self.nodes = nodes
         self.mapping = {
             "x": ["x", "y"],
@@ -197,16 +171,16 @@ class _AutoWirer:
             "done": ["done", "enable"],
             "clock": ["clock"],
         }
-        self.available_sources: dict[str, "_Source"] = {}
+        self.available_sources: dict[str, "_OwnedSignal"] = {}
 
-    def _pick_best_matching_source(self, sink: "_Sink") -> "_Source":
+    def _pick_best_matching_source(self, sink: "_OwnedSignal") -> "_OwnedSignal":
         for source_name in self.mapping[sink.name]:
             if source_name in self.available_sources:
                 source = self.available_sources[source_name]
                 return source
         return _TopNode().sources[0]
 
-    def _update_available_sources(self, node: "_BaseNode") -> None:
+    def _update_available_sources(self, node: "_DataFlowNode") -> None:
         self.available_sources.update({s.name: s for s in node.sources})
 
     def connect(self) -> dict[str, str]:
@@ -214,23 +188,23 @@ class _AutoWirer:
         for node in self.nodes:
             for sink in node.sinks:
                 source = self._pick_best_matching_source(sink)
-                connections[sink.get_qualified_name()] = source.get_qualified_name()
+                connections[sink.qualified_name] = source.qualified_name
             self._update_available_sources(node)
 
         return connections
 
 
-class _BaseNode(ABC):
+class _DataFlowNode(ABC):
     def __init__(self) -> None:
-        self.sinks: list[_Sink] = []
-        self.sources: list[_Source] = []
+        self.sinks: list[_OwnedSignal] = []
+        self.sources: list[_OwnedSignal] = []
 
-    def add_sinks(self, sinks: list[str]):
-        create_sink = partial(_Sink, owner=self)
+    def add_sinks(self, sinks: list[Signal]):
+        create_sink = partial(_OwnedSignal, owner=self)
         self.sinks.extend(map(create_sink, sinks))
 
-    def add_sources(self, sources: list[str]):
-        create_source = partial(_Source, owner=self)
+    def add_sources(self, sources: list[Signal]):
+        create_source = partial(_OwnedSignal, owner=self)
         self.sources.extend(map(create_source, sources))
 
     @property
@@ -239,16 +213,23 @@ class _BaseNode(ABC):
         ...
 
 
-class _TopNode(_BaseNode):
+class _TopNode(_DataFlowNode):
     @property
     def prefix(self) -> str:
         return ""
 
 
 class _StartNode(_TopNode):
-    def __init__(self):
+    def __init__(self, x_width: int, y_address_width: int):
         super().__init__()
-        self.add_sources(["x", "y_address", "enable", "clock"])
+        self.add_sources(
+            [
+                std_signals.x(x_width),
+                std_signals.y_address(y_address_width),
+                std_signals.enable(),
+                std_signals.clock(),
+            ]
+        )
 
     @property
     def prefix(self) -> str:
@@ -256,12 +237,18 @@ class _StartNode(_TopNode):
 
 
 class _EndNode(_TopNode):
-    def __init__(self):
+    def __init__(self, y_width: int, x_address_width: int):
         super().__init__()
-        self.add_sinks(["y", "x_address", "done"])
+        self.add_sinks(
+            [
+                std_signals.y(y_width),
+                std_signals.x_address(x_address_width),
+                std_signals.done(),
+            ]
+        )
 
 
-class _DataFlowNode(_BaseNode):
+class _InstanceNode(_DataFlowNode):
     def __init__(self, instance: str):
         self.instance = instance
         super().__init__()
@@ -271,21 +258,19 @@ class _DataFlowNode(_BaseNode):
         return f"{self.instance}_"
 
 
-class _Sink:
-    def __init__(self, name: str, owner: _DataFlowNode):
-        self.name = name
+class _OwnedSignal:
+    def __init__(self, signal: Signal, owner: _DataFlowNode):
         self.owner = owner
-        self.source: _DataFlowNode | None = None
+        self._signal = signal
 
-    def get_qualified_name(self) -> str:
-        return f"{self.owner.prefix}{self.name}"
+    @property
+    def name(self) -> str:
+        return self._signal.name
 
+    @property
+    def width(self) -> int:
+        return self._signal.width
 
-class _Source:
-    def __init__(self, name: str, owner: _DataFlowNode):
-        self.name = name
-        self.owner = owner
-        self.sinks: list[_DataFlowNode] = []
-
-    def get_qualified_name(self) -> str:
+    @property
+    def qualified_name(self) -> str:
         return f"{self.owner.prefix}{self.name}"
