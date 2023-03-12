@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import torch
 
@@ -18,14 +18,21 @@ def create_lstm(
         bias=bias,
         batch_first=batch_first,
     )
-    lstm = LSTM(**lstm_args, lstm_cell_factory=torch.nn.LSTMCell)
-    reference_lstm = torch.nn.LSTM(**lstm_args)
 
-    lstm.cell.weight_ih = reference_lstm.weight_ih_l0
-    lstm.cell.weight_hh = reference_lstm.weight_hh_l0
+    class Layers:
+        def lstm(self, input_size: int, hidden_size: int, bias: bool):
+            return torch.nn.LSTMCell(
+                input_size=input_size, hidden_size=hidden_size, bias=bias
+            )
+
+    lstm = LSTM(**lstm_args, layers=Layers())
+    reference_lstm = torch.nn.LSTM(**lstm_args)
+    cell = cast(torch.nn.LSTMCell, lstm.cell)
+    cell.weight_ih = reference_lstm.weight_ih_l0
+    cell.weight_hh = reference_lstm.weight_hh_l0
     if bias:
-        lstm.cell.bias_ih = reference_lstm.bias_ih_l0
-        lstm.cell.bias_hh = reference_lstm.bias_hh_l0
+        cell.bias_ih = reference_lstm.bias_ih_l0
+        cell.bias_hh = reference_lstm.bias_hh_l0
 
     return lstm, reference_lstm
 
@@ -106,12 +113,18 @@ class LSTMTest(TensorTestCase):
         self.assertLSTMOutputsEqual(lstm, reference_lstm, inputs, state)
 
     def test_lstm_uses_given_lstm_cell(self) -> None:
+        class Layers:
+            def lstm(self, input_size: int, hidden_size: int, bias: bool):
+                return OutputsZeroLSTMCell(
+                    input_size=input_size, hidden_size=hidden_size, bias=bias
+                )
+
         lstm = LSTM(
             input_size=2,
             hidden_size=3,
             bias=True,
             batch_first=True,
-            lstm_cell_factory=OutputsZeroLSTMCell,
+            layers=Layers(),
         )
 
         inputs = input_data((8, 4, 2))

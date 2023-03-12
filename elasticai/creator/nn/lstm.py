@@ -1,6 +1,5 @@
-from collections.abc import Callable
-from functools import partial
-from typing import Optional, cast
+from abc import abstractmethod
+from typing import Optional, Protocol
 
 import torch
 
@@ -13,6 +12,12 @@ from elasticai.creator.nn.hard_tanh import HardTanh
 from elasticai.creator.nn.lstm_cell import LSTMCell
 
 
+class LayerFactory(Protocol):
+    @abstractmethod
+    def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
+        ...
+
+
 class LSTM(torch.nn.Module):
     def __init__(
         self,
@@ -20,13 +25,21 @@ class LSTM(torch.nn.Module):
         hidden_size,
         bias: bool,
         batch_first: bool,
-        lstm_cell_factory: Callable[..., torch.nn.Module],
+        layers: LayerFactory,
     ) -> None:
         super().__init__()
-        self.cell = lstm_cell_factory(
+        self.cell = layers.lstm(
             input_size=input_size, hidden_size=hidden_size, bias=bias
         )
         self.batch_first = batch_first
+
+    @property
+    def hidden_size(self) -> int:
+        return self.cell.hidden_size
+
+    @property
+    def input_size(self) -> int:
+        return self.cell.input_size
 
     def forward(
         self,
@@ -53,33 +66,45 @@ class LSTM(torch.nn.Module):
             raise RuntimeError("Number of samples must be larger than 0.")
 
         result = torch.stack(outputs, dim=1 if batched and self.batch_first else 0)
+        # TODO: check whether unsqueeze dimension is actually consistent with self.batch_first being true or false
         hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)
-
         return result, (hidden_state, cell_state)
 
 
 class FixedPointLSTMWithHardActivations(LSTM):
     def __init__(
         self,
-        fixed_point_factory: TwoComplementFixedPointConfig,
+        total_bits: int,
+        frac_bits: int,
         input_size: int,
         hidden_size: int,
         batch_first: bool,
         bias: bool = True,
     ) -> None:
+        fp_config = TwoComplementFixedPointConfig(
+            total_bits=total_bits, frac_bits=frac_bits
+        )
+
+        class Layers:
+            def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
+                return LSTMCell(
+                    arithmetics=FixedPointArithmetics(config=fp_config),
+                    sigmoid_factory=HardSigmoid,
+                    tanh_factory=HardTanh,
+                    input_size=input_size,
+                    hidden_size=hidden_size,
+                    bias=bias,
+                )
+
         super().__init__(
             input_size=input_size,
             hidden_size=hidden_size,
             bias=bias,
             batch_first=batch_first,
-            lstm_cell_factory=partial(
-                LSTMCell,
-                arithmetics=FixedPointArithmetics(config=fixed_point_factory),
-                sigmoid_factory=HardSigmoid,
-                tanh_factory=HardTanh,
-            ),
+            layers=Layers(),
         )
+        self._fp_config = fp_config
 
     @property
-    def fixed_point_factory(self) -> TwoComplementFixedPointConfig:
-        return cast(FixedPointArithmetics, self.cell.ops).fixed_point_factory
+    def fixed_point_config(self) -> TwoComplementFixedPointConfig:
+        return self._fp_config

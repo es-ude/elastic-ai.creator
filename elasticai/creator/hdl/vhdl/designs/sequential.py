@@ -44,7 +44,7 @@ class Sequential(Design):
         self._y_width = y_width
         self._y_address_width = y_address_width
         self._x_address_width = x_address_width
-        self.instances: dict[str, Design] = {}
+        self._instances: dict[str, Design] = {}
         self._names: dict[str, int] = {}
         self._library_name_for_instances = "work"
         self._architecture_name_for_instances = "rtl"
@@ -66,7 +66,7 @@ class Sequential(Design):
 
     def _register_subdesign(self, d: Design):
         unique_name = self._make_name_unique(d.name)
-        self.instances[unique_name] = d
+        self._instances[unique_name] = d
         self._increment_name_counter(d.name)
 
     def _qualified_signal_name(self, instance: str, signal: str) -> str:
@@ -89,14 +89,14 @@ class Sequential(Design):
         )
 
     def _save_subdesigns(self, destination: Path) -> None:
-        for name, design in self.instances.items():
+        for name, design in self._instances.items():
             design.save_to(destination.create_subpath(name))
 
     def _create_dataflow_nodes(self) -> list["_DataFlowNode"]:
         nodes: list[_DataFlowNode] = [
             _StartNode(x_width=self._x_width, y_address_width=self._y_address_width)
         ]
-        for instance, design in self.instances.items():
+        for instance, design in self._instances.items():
             nodes.append(self._create_data_flow_node(instance, design))
         nodes.append(
             _EndNode(y_width=self._y_width, x_address_width=self._x_address_width)
@@ -117,7 +117,7 @@ class Sequential(Design):
 
     def _generate_instantiations(self) -> list[str]:
         instantiations: list[str] = list()
-        for instance, design in self.instances.items():
+        for instance, design in self._instances.items():
             signal_map = {
                 signal.name: self._qualified_signal_name(instance, signal.name)
                 for signal in design.port
@@ -137,7 +137,7 @@ class Sequential(Design):
         return sorted(
             chain.from_iterable(
                 create_signal_definitions(f"{instance_id}_", instance.port.signals)
-                for instance_id, instance in self.instances.items()
+                for instance_id, instance in self._instances.items()
             )
         )
 

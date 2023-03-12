@@ -121,7 +121,7 @@ class FixedPointSineModel(torch.nn.Module):
             hidden_size=self._hidden_size,
             bias=True,
             batch_first=True,
-            fixed_point_factory=self._fp_factory,
+            fp_config=self._fp_factory,
         )
         self.linear = FixedPointLinear(
             in_features=self._hidden_size,

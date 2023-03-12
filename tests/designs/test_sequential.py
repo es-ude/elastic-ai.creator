@@ -4,14 +4,13 @@ from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
 from elasticai.creator.hdl.design_base import std_signals
-from elasticai.creator.hdl.translatable import File, Path
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections,
     create_instance,
     signal_definition,
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
-from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.in_memory_path import InMemoryPathForTesting
 from elasticai.creator.nn.linear import FixedPointConfig
 from elasticai.creator.translatable_modules.vhdl.fp_hard_sigmoid import FPHardSigmoid
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
@@ -111,27 +110,6 @@ class SequentialTemplate:
 
     def lines(self) -> list[str]:
         return self._template.lines()
-
-
-class InMemoryPathForTesting(Path):
-    def __init__(self, subpath_name: str):
-        self._root = InMemoryPath("root", parent=None)
-        self._subpath_name = subpath_name
-        self._suffix = ""
-        self._subpath = self._root.create_subpath(self._subpath_name)
-
-    def create_subpath(self, subpath_name: str) -> "Path":
-        return self._subpath.create_subpath(subpath_name)
-
-    def as_file(self, suffix: str) -> File:
-        self._suffix = suffix
-        return self._subpath.as_file(suffix)
-
-    @property
-    def text(self) -> list[str]:
-        child = self._root.children[f"{self._subpath_name}{self._suffix}"]
-        assert isinstance(child, InMemoryFile)
-        return child.text
 
 
 def _prepare_sequential_template_with_linear(

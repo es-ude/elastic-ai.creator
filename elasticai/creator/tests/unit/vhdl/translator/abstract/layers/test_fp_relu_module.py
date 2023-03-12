@@ -19,4 +19,4 @@ class FPReluModuleTest(unittest.TestCase):
 
     def test_components_component_args_are_correctly_set(self) -> None:
         component = list(self.module.files)[0]
-        self.assertEqual(component.fixed_point_factory, self.fp_factory)  # type: ignore
+        self.assertEqual(component.fixed_point_config, self.fp_factory)  # type: ignore

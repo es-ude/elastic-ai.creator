@@ -18,6 +18,6 @@ def build_fixed_point_lstm(
         biases_ih=[to_list(layer.cell.linear_ih.bias)],
         biases_hh=[to_list(layer.cell.linear_hh.bias)],
         layer_id=layer_id,
-        fixed_point_factory=layer.fixed_point_factory,
+        fixed_point_factory=layer.fixed_point_config,
         work_library_name=work_library_name,
     )

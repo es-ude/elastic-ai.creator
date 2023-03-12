@@ -17,7 +17,7 @@ class Model(torch.nn.Module):
             hidden_size=5,
             bias=True,
             batch_first=True,
-            fixed_point_factory=FixedPoint.get_builder(8, 4),
+            fp_config=FixedPoint.get_builder(8, 4),
         )
 
         self.linear = FixedPointLinear(

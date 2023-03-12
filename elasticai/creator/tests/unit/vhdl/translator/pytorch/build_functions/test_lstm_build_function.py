@@ -24,7 +24,7 @@ class LSTMBuildFunctionTest(TestCase):
             hidden_size=1,
             bias=True,
             batch_first=True,
-            fixed_point_factory=FixedPoint.get_builder(16, 8),
+            fp_config=FixedPoint.get_builder(16, 8),
         )
         lstm.cell.linear_ih.weight = arange_parameter(start=0, end=4, shape=(4, 1))
         lstm.cell.linear_hh.weight = arange_parameter(start=4, end=8, shape=(4, 1))
