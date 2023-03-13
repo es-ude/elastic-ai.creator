@@ -42,6 +42,7 @@ class FixedPointLSTMWithHardActivations(_nnLSTM, Module):
             return tensor.detach().numpy().tolist()
 
         return FPLSTMCell(
+            name="lstm_cell",
             total_bits=self.fixed_point_config.total_bits,
             frac_bits=self.fixed_point_config.frac_bits,
             w_ih=to_list(self.cell.linear_ih.weight),

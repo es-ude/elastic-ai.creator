@@ -1,14 +1,6 @@
 from typing import Callable
 
-from elasticai.creator.vhdl.number_representations import (
-    FixedPoint,
-    infer_total_and_frac_bits,
-)
-
-
-def pad_with_zeros(numbers: list[FixedPoint], target_length: int) -> list[FixedPoint]:
-    zero = FixedPoint(0, *infer_total_and_frac_bits(numbers))
-    return numbers + [zero] * (target_length - len(numbers))
+from elasticai.creator.vhdl.number_representations import FixedPoint
 
 
 def derive_fixed_point_params_from_factory(

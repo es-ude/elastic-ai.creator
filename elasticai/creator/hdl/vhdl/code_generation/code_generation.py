@@ -87,3 +87,7 @@ def bin_representation(bin_value: str) -> str:
 
 def to_vhdl_hex_string(number: int, bit_width: int) -> str:
     return f"'x{to_hex(number, bit_width)}'"
+
+
+def generate_hex_for_rom(value: str):
+    return f'x"{value}"'

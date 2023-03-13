@@ -1,6 +1,7 @@
 from typing import cast
 
 import pytest
+import torch
 
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
     TemplateConfig,
@@ -9,6 +10,9 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 )
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
+)
+from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
+    generate_hex_for_rom,
 )
 from elasticai.creator.in_memory_path import (
     InMemoryFile,
@@ -130,10 +134,48 @@ def test_lstm_cell_creates_lstm_cell_file():
     assert actual[0:60] == expected.lines()[0:60]
 
 
-def test_lstm_cell_stores_weights():
+def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4():
     build_folder = InMemoryPath(name="build", parent=None)
     destination = build_folder.create_subpath("lstm_cell")
-    model = LSTM(total_bits=8, frac_bits=4, input_size=5, hidden_size=10)
+    total_bits = 8
+    input_size = 1
+    hidden_size = 4
+
+    model = LSTM(
+        total_bits=total_bits,
+        frac_bits=4,
+        input_size=input_size,
+        hidden_size=hidden_size,
+    )
+    model.eval()
+    with torch.no_grad():
+        for parameter in model.parameters():
+            parameter *= 0
     design = model.translate()
     design.save_to(destination)
-    actual = cast(InMemoryFile, destination.children["bf_rom"]).text
+    rom_address_width = calculate_address_width(
+        (input_size + hidden_size) * hidden_size
+    )
+    actual = cast(InMemoryFile, destination.children["wi_rom"]).text
+    expected = prepare_rom_file(
+        ["00"] * 2**rom_address_width, rom_address_width, total_bits
+    )
+    assert actual == expected
+
+
+def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[str]:
+    rom_value = ",".join(map(generate_hex_for_rom, values))
+    params = dict(
+        rom_value=rom_value,
+        rom_addr_bitwidth=str(rom_address_width),
+        rom_data_bitwidth=str(total_bits),
+        name="rom_wi_lstm_cell",
+    )
+    template = TemplateExpander(
+        TemplateConfig(
+            module_to_package(LSTM.__module__),
+            file_name="rom.tpl.vhd",
+            parameters=params,
+        ),
+    )
+    return template.lines()

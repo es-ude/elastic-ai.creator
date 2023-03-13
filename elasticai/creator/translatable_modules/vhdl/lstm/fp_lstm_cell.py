@@ -17,6 +17,9 @@ from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation import to_vhdl_hex_string
+from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
+    generate_hex_for_rom,
+)
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.nn._two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
@@ -27,6 +30,7 @@ class FPLSTMCell(Design):
     def __init__(
         self,
         *,
+        name: str,
         total_bits: int,
         frac_bits: int,
         w_ih: list[list[list[float]]],
@@ -35,7 +39,7 @@ class FPLSTMCell(Design):
         b_hh: list[list[float]],
     ):
         super().__init__(
-            name="lstm_cell",
+            name=name,
         )
         base_config = TemplateConfig(
             package=module_to_package(self.__module__), file_name="", parameters={}
@@ -82,6 +86,10 @@ class FPLSTMCell(Design):
         return int(cast(str, self._config.parameters["hidden_addr_width"]))
 
     @property
+    def _weight_address_width(self) -> int:
+        return int(cast(str, self._config.parameters["w_addr_width"]))
+
+    @property
     def port(self) -> Port:
         ctrl_signal = partial(Signal, width=0)
         return Port(
@@ -122,9 +130,18 @@ class FPLSTMCell(Design):
         weights = zip(weights, ("wi", "wf", "wg", "wo"))
         biases = zip(biases, ("bi", "bf", "bg", "bo"))
         rom_template = TemplateExpander(self._rom_base_config)
+        rom_values: list[str] | str = ["00"] * 2**self._weight_address_width
+        rom_values = ",".join(map(generate_hex_for_rom, rom_values))
         for values, name in chain(weights, biases):
             self._rom_base_config.parameters.update(
-                resource_option="auto", values=values, name=f"rom_{name}_{self.name}"
+                dict(
+                    resource_option="auto",
+                    values=values,
+                    name=f"rom_{name}_{self.name}",
+                    rom_addr_bitwidth=str(self._weight_address_width),
+                    rom_data_bitwidth=str(self.total_bits),
+                    rom_value=rom_values,
+                )
             )
             rom_file = destination.create_subpath(f"{name}_rom").as_file(".vhd")
             rom_file.write_text(rom_template.lines())
