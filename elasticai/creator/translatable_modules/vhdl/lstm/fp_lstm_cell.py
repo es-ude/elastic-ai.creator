@@ -1,7 +1,7 @@
 from copy import copy
 from functools import partial
 from itertools import chain, repeat
-from typing import Iterator, cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -12,6 +12,7 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 )
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
+    to_hex,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
@@ -127,26 +128,59 @@ class FPLSTMCell(Design):
 
     def save_to(self, destination: "Path"):
         weights, biases = self._build_weights()
-        weights = zip(weights, ("wi", "wf", "wg", "wo"))
-        biases = zip(biases, ("bi", "bf", "bg", "bo"))
+
         rom_template = TemplateExpander(self._rom_base_config)
-        rom_values: list[str] | str = ["00"] * 2**self._weight_address_width
-        rom_values = ",".join(map(generate_hex_for_rom, rom_values))
-        for values, name in chain(weights, biases):
-            self._rom_base_config.parameters.update(
-                dict(
-                    resource_option="auto",
-                    values=values,
-                    name=f"rom_{name}_{self.name}",
-                    rom_addr_bitwidth=str(self._weight_address_width),
-                    rom_data_bitwidth=str(self.total_bits),
-                    rom_value=rom_values,
-                )
+        write_files = partial(
+            self._write_files, destination=destination, rom_template=rom_template
+        )
+        write_files(
+            names=("wi", "wf", "wg", "wo"),
+            parameters=weights,
+            address_width=self._weight_address_width,
+        )
+        write_files(
+            names=("bi", "bf", "bg", "bo"),
+            parameters=biases,
+            address_width=self._hidden_addr_width,
+        )
+        expander = TemplateExpander(self._config)
+        destination.as_file(".vhd").write_text(expander.lines())
+
+    def _write_files(
+        self,
+        destination: Path,
+        rom_template: TemplateExpander,
+        names: tuple[str, ...],
+        parameters: Any,
+        address_width: int,
+    ):
+        for values, name in zip(parameters, names):
+            self._update_rom_base_config(
+                name=name, values=values, address_width=address_width
             )
             rom_file = destination.create_subpath(f"{name}_rom").as_file(".vhd")
             rom_file.write_text(rom_template.lines())
-        expander = TemplateExpander(self._config)
-        destination.as_file(".vhd").write_text(expander.lines())
+
+    def _update_rom_base_config(self, values: list[int], name: str, address_width: int):
+        values = self._pad_with_zeros(values, address_width)
+        self._rom_base_config.parameters.update(
+            dict(
+                resource_option="auto",
+                name=f"rom_{name}_{self.name}",
+                rom_addr_bitwidth=str(address_width),
+                rom_data_bitwidth=str(self.total_bits),
+                rom_value=",".join(map(self._to_hex, values)),
+            )
+        )
+
+    @staticmethod
+    def _to_hex(value):
+        return generate_hex_for_rom(to_hex(value, bit_width=8))
+
+    @staticmethod
+    def _pad_with_zeros(values, address_width):
+        suffix = list(repeat(0, 2**address_width - len(values)))
+        return values + suffix
 
 
 class _DualPortDoubleClockRom:

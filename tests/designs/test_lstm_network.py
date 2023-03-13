@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import cast
 
 import pytest
@@ -10,6 +11,7 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 )
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
+    to_hex,
 )
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     generate_hex_for_rom,
@@ -134,13 +136,23 @@ def test_lstm_cell_creates_lstm_cell_file():
     assert actual[0:60] == expected.lines()[0:60]
 
 
-def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4():
-    build_folder = InMemoryPath(name="build", parent=None)
-    destination = build_folder.create_subpath("lstm_cell")
+@pytest.fixture
+def build_folder():
+    return InMemoryPath(name="build", parent=None)
+
+
+@pytest.fixture
+def lstm_cell_destination(build_folder):
+    return build_folder.create_subpath("lstm_cell")
+
+
+def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
+    lstm_cell_destination,
+):
     total_bits = 8
     input_size = 1
     hidden_size = 4
-
+    destination = lstm_cell_destination
     model = LSTM(
         total_bits=total_bits,
         frac_bits=4,
@@ -163,9 +175,44 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4():
     assert actual == expected
 
 
+def test_wi_rom_file_contains_20_ones_and_12_zeros_for_input_size_1_and_hidden_size_4(
+    lstm_cell_destination,
+):
+    destination = lstm_cell_destination
+    total_bits = 8
+    input_size = 1
+    hidden_size = 4
+    frac_bits = 4
+    model = LSTM(
+        total_bits=total_bits,
+        frac_bits=frac_bits,
+        input_size=input_size,
+        hidden_size=hidden_size,
+    )
+    model.eval()
+    with torch.no_grad():
+        for parameter in model.parameters():
+            parameter *= 0
+            parameter += torch.ones_like(parameter)
+    design = model.translate()
+    design.save_to(destination)
+    rom_address_width = calculate_address_width(
+        (input_size + hidden_size) * hidden_size
+    )
+    actual = cast(InMemoryFile, destination.children["wi_rom"]).text
+    values = []
+    for _ in range((input_size + hidden_size) * hidden_size):
+        value_of_one_with_n_bits_for_fraction = 1 << frac_bits
+        values.append(to_hex(value_of_one_with_n_bits_for_fraction, bit_width=8))
+    for _ in range(2**rom_address_width - len(values)):
+        values.append("00")
+    expected = prepare_rom_file(values, rom_address_width, total_bits)
+    assert actual == expected
+
+
 def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[str]:
     rom_value = ",".join(map(generate_hex_for_rom, values))
-    params = dict(
+    params: dict[str, str | list[str]] = dict(
         rom_value=rom_value,
         rom_addr_bitwidth=str(rom_address_width),
         rom_data_bitwidth=str(total_bits),
