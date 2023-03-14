@@ -4,7 +4,11 @@ from typing import cast
 import torch.nn
 
 from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.vhdl.designs.fp_linear_1d import (
+    FPLinear1d as _FPLinear1dDesign,
+)
 from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations as _nnLSTM
+from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.translatable_modules.vhdl.lstm.design import LSTMNetworkDesign
 from elasticai.creator.translatable_modules.vhdl.lstm.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.translatable_modules.vhdl.module import Module
@@ -24,8 +28,13 @@ class LSTMNetwork(torch.nn.Module):
         frac_bits = first_lstm.fixed_point_config.frac_bits
         hidden_size = first_lstm.hidden_size
         input_size = first_lstm.input_size
+        follow_up_linear_layers = cast(
+            list[_FPLinear1dDesign],
+            [cast(FPLinear1d, layer).translate() for layer in children[1:]],
+        )
         return LSTMNetworkDesign(
-            first_lstm.translate(),
+            lstm=first_lstm.translate(),
+            linear_layers=follow_up_linear_layers,
             total_bits=total_bits,
             frac_bits=frac_bits,
             hidden_size=hidden_size,

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Protocol, Sequence
+from typing import Protocol, Sequence, overload
 
 from elasticai.creator.hdl.code_generation.code_generation import to_hex
 

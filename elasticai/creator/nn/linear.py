@@ -47,7 +47,8 @@ class FixedPointLinear(Linear):
         self,
         in_features: int,
         out_features: int,
-        config: FixedPointConfig,
+        total_bits: int,
+        frac_bits: int,
         bias: bool,
         device: Any = None,
     ) -> None:
@@ -56,7 +57,7 @@ class FixedPointLinear(Linear):
             out_features=out_features,
             arithmetics=FixedPointArithmetics(
                 config=TwoComplementFixedPointConfig(
-                    total_bits=config.total_bits, frac_bits=config.total_bits
+                    total_bits=total_bits, frac_bits=frac_bits
                 )
             ),
             bias=bias,

@@ -10,8 +10,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     signal_definition,
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
-from elasticai.creator.in_memory_path import InMemoryPathForTesting
-from elasticai.creator.nn.linear import FixedPointConfig
+from elasticai.creator.in_memory_path import InMemoryPath
 from elasticai.creator.translatable_modules.vhdl.fp_hard_sigmoid import FPHardSigmoid
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.translatable_modules.vhdl.sequential import Sequential
@@ -39,10 +38,10 @@ class SequentialTestCase(unittest.TestCase):
             y_address_width="1",
         )
         expected = template.lines()
-        destination = InMemoryPathForTesting("sequential")
+        destination = InMemoryPath("sequential", parent=None)
         design = module.translate()
         design.save_to(destination)
-        self.assertEqual(destination.text, expected)
+        self.assertEqual(destination["sequential"].text, expected)
 
     def test_autowire_instantiate_and_define_signals_for_hard_sigmoid_activation(self):
         bit_width = 16
@@ -53,9 +52,9 @@ class SequentialTestCase(unittest.TestCase):
         module = Sequential((FPHardSigmoid(FixedPointConfiguration()),))
         design = module.translate()
 
-        destination = InMemoryPathForTesting("sequential")
+        destination = InMemoryPath("sequential", parent=None)
         design.save_to(destination)
-        self.assertEqual(expected, destination.text)
+        self.assertEqual(expected, destination["sequential"].text)
 
     def test_with_single_linear_layer(self):
         bit_width = 16
@@ -71,16 +70,17 @@ class SequentialTestCase(unittest.TestCase):
                     FPLinear1d(
                         in_features=6,
                         out_features=3,
-                        config=FixedPointConfig(total_bits=16, frac_bits=4),
+                        total_bits=16,
+                        frac_bits=8,
                         bias=False,
                     ),
                 )
             )
         )
         design = module.translate()
-        destination = InMemoryPathForTesting("sequential")
+        destination = InMemoryPath("sequential", parent=None)
         design.save_to(destination)
-        self.assertEqual(expected, destination.text)
+        self.assertEqual(expected, destination["sequential"].text)
 
 
 class SequentialTemplate:

@@ -1,4 +1,5 @@
 from functools import reduce
+from itertools import chain
 from typing import cast
 
 import pytest
@@ -16,11 +17,8 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     generate_hex_for_rom,
 )
-from elasticai.creator.in_memory_path import (
-    InMemoryFile,
-    InMemoryPath,
-    InMemoryPathForTesting,
-)
+from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.translatable_modules.vhdl.lstm.lstm import (
     FixedPointLSTMWithHardActivations as LSTM,
 )
@@ -71,10 +69,17 @@ def generate_lstm_network_and_expected_code(
                 frac_bits=frac_bits,
                 input_size=input_size,
                 hidden_size=hidden_size,
-            )
+            ),
+            FPLinear1d(
+                in_features=hidden_size,
+                out_features=1,
+                total_bits=total_bits,
+                frac_bits=frac_bits,
+                bias=True,
+            ),
         ]
     )
-    destination = InMemoryPathForTesting("lstm_network")
+    destination = InMemoryPath("lstm_network", parent=None)
     model.translate().save_to(destination)
     expected = ExpectedLSTMNetworkCode()
     expected.config.parameters.update(
@@ -91,12 +96,12 @@ def generate_lstm_network_and_expected_code(
         linear_in_features="20",
         linear_out_features="1",
     )
-    destination = InMemoryPathForTesting("lstm_network")
+    destination = InMemoryPath("lstm_network", parent=None)
     model.translate().save_to(destination)
-    return destination.text, expected.lines()
+    return destination["lstm_network"].text, expected.lines()
 
 
-def test_lstm_cell_creates_lstm_cell_file():
+def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
     expected = ExpectedCode("lstm_cell.tpl.vhd")
     total_bits = 16
     frac_bits = 8
@@ -117,8 +122,6 @@ def test_lstm_cell_creates_lstm_cell_file():
         name="lstm_cell",
         in_addr_width="4",
     )
-    build_folder = InMemoryPath(name="build", parent=None)
-    destination = InMemoryPath(name="lstm_network", parent=build_folder)
     model = LSTMNetwork(
         [
             LSTM(
@@ -126,13 +129,21 @@ def test_lstm_cell_creates_lstm_cell_file():
                 frac_bits=frac_bits,
                 input_size=input_size,
                 hidden_size=hidden_size,
-            )
+            ),
+            FPLinear1d(
+                in_features=hidden_size,
+                out_features=1,
+                total_bits=total_bits,
+                frac_bits=frac_bits,
+                bias=True,
+            ),
         ]
     )
     design = model.translate()
-    design.save_to(destination)
-
-    actual = cast(InMemoryFile, destination.children["lstm_cell"]).text
+    design.save_to(lstm_destination)
+    lstm_cell_folder = cast(InMemoryPath, lstm_destination["lstm_cell"])
+    lstm_cell_file = cast(InMemoryFile, lstm_cell_folder["lstm_cell"])
+    actual = lstm_cell_file.text
     assert actual[0:60] == expected.lines()[0:60]
 
 
@@ -142,17 +153,17 @@ def build_folder():
 
 
 @pytest.fixture
-def lstm_cell_destination(build_folder):
-    return build_folder.create_subpath("lstm_cell")
+def lstm_destination(build_folder):
+    return build_folder.create_subpath("lstm")
 
 
 def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
-    lstm_cell_destination,
+    lstm_destination,
 ):
     total_bits = 8
     input_size = 1
     hidden_size = 4
-    destination = lstm_cell_destination
+    destination = lstm_destination
     model = LSTM(
         total_bits=total_bits,
         frac_bits=4,
@@ -168,7 +179,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
     rom_address_width = calculate_address_width(
         (input_size + hidden_size) * hidden_size
     )
-    actual = cast(InMemoryFile, destination.children["wi_rom"]).text
+    actual = cast(InMemoryFile, destination["wi_rom"]).text
     expected = prepare_rom_file(
         ["00"] * 2**rom_address_width, rom_address_width, total_bits
     )
@@ -176,9 +187,9 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
 
 
 def test_wi_rom_file_contains_20_ones_and_12_zeros_for_input_size_1_and_hidden_size_4(
-    lstm_cell_destination,
+    lstm_destination,
 ):
-    destination = lstm_cell_destination
+    destination = lstm_destination
     total_bits = 8
     input_size = 1
     hidden_size = 4
@@ -208,6 +219,76 @@ def test_wi_rom_file_contains_20_ones_and_12_zeros_for_input_size_1_and_hidden_s
         values.append("00")
     expected = prepare_rom_file(values, rom_address_width, total_bits)
     assert actual == expected
+
+
+def test_saves_all_necessary_subdesign_files(lstm_destination):
+    total_bits = 8
+    input_size = 1
+    hidden_size = 4
+    frac_bits = 4
+    model = LSTM(
+        total_bits=total_bits,
+        frac_bits=frac_bits,
+        input_size=input_size,
+        hidden_size=hidden_size,
+    )
+    model.translate().save_to(lstm_destination)
+    rom_suffixes = ("f", "i", "g", "o")
+    weight_names = (f"w{suffix}" for suffix in rom_suffixes)
+    biases_names = (f"b{suffix}" for suffix in rom_suffixes)
+    rom_parameter_names = (f"{name}_rom" for name in chain(weight_names, biases_names))
+    expected_file_names = [
+        f"{name}.vhd"
+        for name in chain(
+            rom_parameter_names,
+            (
+                "hard_sigmoid",
+                "hard_tanh",
+                "lstm_cell_dual_port_2_clock_ram",
+                "lstm_cell",
+            ),
+        )
+    ]
+    expected_file_names = sorted(expected_file_names)
+    actual_file_names = []
+    for child in lstm_destination.children.values():
+        assert isinstance(child, InMemoryFile)
+        actual_file_names.append(child.name)
+    actual_file_names = sorted(actual_file_names)
+    assert actual_file_names == expected_file_names
+
+
+@pytest.fixture
+def lstm_network_with_single_linear_layer():
+    model = LSTMNetwork(
+        [
+            LSTM(
+                total_bits=16,
+                frac_bits=8,
+                input_size=1,
+                hidden_size=4,
+            ),
+            FPLinear1d(
+                in_features=4, out_features=1, total_bits=16, frac_bits=8, bias=True
+            ),
+        ]
+    )
+    return model
+
+
+def test_saves_linear_layer_files(
+    lstm_destination, lstm_network_with_single_linear_layer
+):
+    model = lstm_network_with_single_linear_layer
+    design = model.translate()
+    design.save_to(lstm_destination)
+    assert "fp_linear_1d_0" in lstm_destination.children
+
+
+def test_connects_linear_layer(lstm_destination, lstm_network_with_single_linear_layer):
+    model = lstm_network_with_single_linear_layer
+    design = model.translate()
+    design.save_to(lstm_destination)
 
 
 def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[str]:

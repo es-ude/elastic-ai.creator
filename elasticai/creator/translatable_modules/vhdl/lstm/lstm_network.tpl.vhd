@@ -153,7 +153,7 @@ begin
 
 --    linear_x_data <= std_logic_vector(to_signed(test_x_ram(to_integer(unsigned(linear_read_addr))),d_out'length));
 
-    i_linear_layer : entity xil_defaultlib.fp_linear_1d_1(rtl)
+    i_linear_layer : entity xil_defaultlib.fp_linear_1d_0(rtl)
     port map (
         clock => clock,
         enable => linear_enable,

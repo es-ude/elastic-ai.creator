@@ -4,7 +4,6 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.ports import create_port_for_buffered_design
 from elasticai.creator.hdl.design_base.ports import (
     create_port_for_buffered_design as create_port,
 )
@@ -69,4 +68,4 @@ class FPLinear1d(Design):
             resource_option=f'"{self.resource_option}"',
             **self._template_parameters(),
         )
-        destination.as_file(f"{self.name}").write_text(template.lines())
+        destination.as_file(f".vhd").write_text(template.lines())

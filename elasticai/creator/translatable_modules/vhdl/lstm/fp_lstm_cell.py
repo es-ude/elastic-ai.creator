@@ -1,6 +1,6 @@
 from copy import copy
 from functools import partial
-from itertools import chain, repeat
+from itertools import repeat
 from typing import Any, cast
 
 import numpy as np
@@ -17,14 +17,14 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.hdl.vhdl.code_generation import to_vhdl_hex_string
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     generate_hex_for_rom,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import Template
+from elasticai.creator.hdl.vhdl.designs import HardSigmoid
 from elasticai.creator.nn._two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
+from elasticai.creator.translatable_modules.vhdl.lstm.fp_hard_tanh import FPHardTanh
 
 
 class FPLSTMCell(Design):
@@ -143,8 +143,29 @@ class FPLSTMCell(Design):
             parameters=biases,
             address_width=self._hidden_addr_width,
         )
+        self._save_dual_port_double_clock_ram(destination)
+        self._save_hardtanh(destination)
+        self._save_sigmoid(destination)
         expander = TemplateExpander(self._config)
-        destination.as_file(".vhd").write_text(expander.lines())
+        destination.create_subpath("lstm_cell").as_file(".vhd").write_text(
+            expander.lines()
+        )
+
+    def _save_sigmoid(self, destination: Path):
+        sigmoid_destination = destination.create_subpath("hard_sigmoid")
+        sigmoid = HardSigmoid(
+            width=self.total_bits,
+            lower_bound_for_zero=self._fp_config.as_integer(-3),
+            upper_bound_for_one=self._fp_config.as_integer(3),
+        )
+        sigmoid.save_to(sigmoid_destination)
+
+    def _save_hardtanh(self, destination: Path):
+        hardtanh_destination = destination.create_subpath("hard_tanh")
+        hardtanh = FPHardTanh(
+            total_bits=self.total_bits, frac_bits=self._fp_config.frac_bits
+        )
+        hardtanh.save_to(hardtanh_destination)
 
     def _write_files(
         self,
@@ -182,34 +203,16 @@ class FPLSTMCell(Design):
         suffix = list(repeat(0, 2**address_width - len(values)))
         return values + suffix
 
-
-class _DualPortDoubleClockRom:
-    def __init__(
-        self,
-        data_width: int,
-        values: list[int],
-        name: str,
-        resource_option: str,
-    ) -> None:
-        self.name = name
-        self.resource_option = resource_option
-        self.data_width = data_width
-        self.addr_width = calculate_address_width(len(values))
-        padded_values = chain(values, repeat(0, 2**self.addr_width))
-
-        def to_hex(number: int) -> str:
-            return to_vhdl_hex_string(number=number, bit_width=self.data_width)
-
-        self.hex_values = list(map(to_hex, padded_values))
-
-    def lines(self) -> list[str]:
-        template = Template(base_name="rom")
-        template.update_parameters(
-            name=self.name,
-            rom_addr_bitwidth=str(self.addr_width),
-            rom_data_bitwidth=str(self.data_width),
-            rom_value=",".join(self.hex_values),
-            rom_resource_option=f'"{self.resource_option}"',
+    def _save_dual_port_double_clock_ram(self, destination: Path):
+        template_configuration = TemplateConfig(
+            file_name="dual_port_2_clock_ram.tpl.vhd",
+            package=module_to_package(self.__module__),
+            parameters=dict(
+                name=f"{self.name}_dual_port_2_clock_ram",
+            ),
         )
+        template_expansion = TemplateExpander(template_configuration)
 
-        return template.lines()
+        destination.create_subpath(f"{self.name}_dual_port_2_clock_ram").as_file(
+            ".vhd"
+        ).write_text(template_expansion.lines())

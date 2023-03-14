@@ -21,32 +21,20 @@ class InMemoryPath(Path):
 
     def as_file(self, suffix: str) -> InMemoryFile:
         file = InMemoryFile(f"{self.name}{suffix}")
+        if len(self.children) > 0:
+            raise ValueError(
+                "non empty path {}, present children: {}".format(
+                    self.name, ", ".join(self.children)
+                )
+            )
         if self.parent is not None:
             self.parent.children[self.name] = file
         return file
 
+    def __getitem__(self, item):
+        return self.children[item]
+
     def create_subpath(self, subpath_name: str) -> "InMemoryPath":
-        subpath = InMemoryPath(subpath_name, self)
+        subpath = InMemoryPath(name=subpath_name, parent=self)
         self.children[subpath_name] = subpath
         return subpath
-
-
-class InMemoryPathForTesting(Path):
-    def __init__(self, subpath_name: str):
-        self.root = InMemoryPath("root", parent=None)
-        self._subpath_name = subpath_name
-        self._suffix = ""
-        self._subpath = self.root.create_subpath(self._subpath_name)
-
-    def create_subpath(self, subpath_name: str) -> "Path":
-        return self._subpath.create_subpath(subpath_name)
-
-    def as_file(self, suffix: str) -> File:
-        self._suffix = suffix
-        return self._subpath.as_file(suffix)
-
-    @property
-    def text(self) -> list[str]:
-        child = self.root.children[f"{self._subpath_name}"]
-        assert isinstance(child, InMemoryFile)
-        return child.text

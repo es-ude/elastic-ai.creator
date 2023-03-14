@@ -155,7 +155,7 @@ class Sequential(Design):
             x_width=str(self._x_width),
             y_width=str(self._y_width),
         )
-        target_file = destination.as_file(".vhd")
+        target_file = destination.create_subpath("sequential").as_file(".vhd")
         target_file.write_text(network_implementation.lines())
 
 
