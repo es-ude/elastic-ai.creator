@@ -17,20 +17,23 @@ from elasticai.creator.translatable_modules.vhdl.module import Module
 class LSTMNetwork(torch.nn.Module):
     def __init__(self, layers: list[torch.nn.Module]):
         super().__init__()
+        self.lstm = layers[0]
         self.layers = torch.nn.Sequential(
-            OrderedDict({f"{i}": layer for i, layer in enumerate(layers)})
+            OrderedDict(
+                {f"fp_linear_1d_{i}": layer for i, layer in enumerate(layers[1:])}
+            )
         )
 
     def translate(self) -> LSTMNetworkDesign:
         children = list(self.layers.children())
-        first_lstm = cast(FixedPointLSTMWithHardActivations, children[0])
+        first_lstm = cast(FixedPointLSTMWithHardActivations, self.lstm)
         total_bits = first_lstm.fixed_point_config.total_bits
         frac_bits = first_lstm.fixed_point_config.frac_bits
         hidden_size = first_lstm.hidden_size
         input_size = first_lstm.input_size
         follow_up_linear_layers = cast(
             list[_FPLinear1dDesign],
-            [cast(FPLinear1d, layer).translate() for layer in children[1:]],
+            [cast(FPLinear1d, layer).translate() for layer in self.layers],
         )
         return LSTMNetworkDesign(
             lstm=first_lstm.translate(),
@@ -42,6 +45,7 @@ class LSTMNetwork(torch.nn.Module):
         )
 
     def forward(self, x):
+        _, (x, _) = self.lstm(x)
         return self.layers(x)
 
 

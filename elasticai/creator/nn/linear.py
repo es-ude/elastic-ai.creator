@@ -32,9 +32,6 @@ class Linear(torch.nn.Linear):
 
         return self.ops.matmul(x, weight.T)
 
-    def quantized_forward(self, x: torch.Tensor) -> torch.Tensor:
-        raise NotImplementedError("The quantized_forward function is not implemented.")
-
 
 @dataclass
 class FixedPointConfig:
