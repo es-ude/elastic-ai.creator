@@ -109,7 +109,7 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
     input_size = 6
 
     expected.config.parameters.update(
-        libary="work",
+        library="work",
         data_width=f"{total_bits}",
         frac_width=f"{frac_bits}",
         input_size=f"{input_size}",
