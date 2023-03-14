@@ -63,7 +63,7 @@ class FPLSTMCell(Design):
             k: str(v)
             for k, v in dict(
                 name=self.name,
-                libary="work",
+                library="work",
                 data_width=total_bits,
                 input_size=self.input_size,
                 hidden_size=self.hidden_size,
