@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.32.1 (2023-03-14)
+### Fix
+* Typo in test for lstm cell designs ([`2ffeaec`](https://github.com/es-ude/elastic-ai.creator/commit/2ffeaecf3ba7c3c0946c57ab3bee92af55746887))
+* Set library for lstm_cell ([`2b3a565`](https://github.com/es-ude/elastic-ai.creator/commit/2b3a565039672ca89a1c5f593db5a5f32742f771))
+
 ## v0.32.0 (2023-03-14)
 ### Feature
 * Add linear layer to lstm network ([`bccb50c`](https://github.com/es-ude/elastic-ai.creator/commit/bccb50cd6e3bc4e3e3115a41e051a1b962f6be52))
