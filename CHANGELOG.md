@@ -2,6 +2,29 @@
 
 <!--next-version-placeholder-->
 
+## v0.32.0 (2023-03-14)
+### Feature
+* Add linear layer to lstm network ([`bccb50c`](https://github.com/es-ude/elastic-ai.creator/commit/bccb50cd6e3bc4e3e3115a41e051a1b962f6be52))
+* Add linear layer to lstm network ([`48982f0`](https://github.com/es-ude/elastic-ai.creator/commit/48982f0aca675098b77edb2c8419b09ebc388835))
+* **translation:** Add support for single buffered module to sequential ([`5402782`](https://github.com/es-ude/elastic-ai.creator/commit/5402782c0c37a6838b77b19d8040d256217d72ba))
+* **translation:** Sequential layer with bufferless layers ([`d7cea69`](https://github.com/es-ude/elastic-ai.creator/commit/d7cea69ad0696f63e00762991e7407ad09d8a94c))
+* Add data flow node, sink node and source node ([`9a511de`](https://github.com/es-ude/elastic-ai.creator/commit/9a511de4d2618c3131abcd3c481b918ffa96545e))
+* Introduce vhdl_design class ([`2431ba4`](https://github.com/es-ude/elastic-ai.creator/commit/2431ba40b71c19dff161ea9b78d7b5277970a6f9))
+* Add logic and logic vector signals ([`551f241`](https://github.com/es-ude/elastic-ai.creator/commit/551f24113be03b45ab1811cb734e521671620d89))
+* Add connectable base in/out signals ([`fea05ed`](https://github.com/es-ude/elastic-ai.creator/commit/fea05ed0507550c23701bf6f5e3a562b68af73d4))
+* Introduce vhdl_design class ([`20566f6`](https://github.com/es-ude/elastic-ai.creator/commit/20566f600383ccb68fed60483bede9db5436913f))
+* Add logic and logic vector signals ([`1947baa`](https://github.com/es-ude/elastic-ai.creator/commit/1947baac032e1b3958344779a00b84615b5581a1))
+* Add connectable base in/out signals ([`7ad67f9`](https://github.com/es-ude/elastic-ai.creator/commit/7ad67f916815b692daddae98d4c93b9a5eb21641))
+
+### Fix
+* **translation:** Correct values for x/y_address_width ([`c7af1af`](https://github.com/es-ude/elastic-ai.creator/commit/c7af1af71ef9319ed2ee7fffd7afcbaa5ffda580))
+* Tests and remove type annotations leading to deps ([`75ed6cc`](https://github.com/es-ude/elastic-ai.creator/commit/75ed6cc4f3a92b80656433b8209c0c932595900e))
+* Typing ([`b0bfa39`](https://github.com/es-ude/elastic-ai.creator/commit/b0bfa39b98555b37f0d2626a235ac74987e2c9ad))
+* Fix unit tests after major rebase ([`3b596e9`](https://github.com/es-ude/elastic-ai.creator/commit/3b596e9c20e302bbf42efda7577e01498c05bc6c))
+* Type annotations for tracing module ([`da598a9`](https://github.com/es-ude/elastic-ai.creator/commit/da598a92fc8f76b3c19d0b960d77122b82d171ac))
+* Fix incorrect vector signal initialization ([`3b23f7a`](https://github.com/es-ude/elastic-ai.creator/commit/3b23f7a64afda8cd2ee320f6af7dc372f9daf5e2))
+* Fix incorrect vector signal initialization ([`3c68255`](https://github.com/es-ude/elastic-ai.creator/commit/3c68255057dad325ab4ba89601f6f1e2384f0d95))
+
 ## v0.31.0 (2023-02-22)
 ### Feature
 * **translation:** Add missing suffixes ([`cb05d0f`](https://github.com/es-ude/elastic-ai.creator/commit/cb05d0f3f8665ac98c0cff70cbb2dbd8d2a5b2f2))
