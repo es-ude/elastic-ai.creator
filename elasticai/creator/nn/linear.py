@@ -1,9 +1,13 @@
+from dataclasses import dataclass
 from typing import Any, cast
 
 import torch
 
-from elasticai.creator.nn.arithmetics import Arithmetics, FixedPointArithmetics
-from elasticai.creator.vhdl.number_representations import FixedPointFactory
+from elasticai.creator.nn._two_complement_fixed_point_config import (
+    TwoComplementFixedPointConfig,
+)
+from elasticai.creator.nn.arithmetics import Arithmetics
+from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 
 
 class Linear(torch.nn.Linear):
@@ -29,23 +33,42 @@ class Linear(torch.nn.Linear):
         return self.ops.matmul(x, weight.T)
 
 
+@dataclass
+class FixedPointConfig:
+    frac_bits: int
+    total_bits: int
+
+
 class FixedPointLinear(Linear):
     def __init__(
         self,
         in_features: int,
         out_features: int,
-        fixed_point_factory: FixedPointFactory,
+        total_bits: int,
+        frac_bits: int,
         bias: bool,
         device: Any = None,
     ) -> None:
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=FixedPointArithmetics(fixed_point_factory=fixed_point_factory),
+            arithmetics=FixedPointArithmetics(
+                config=TwoComplementFixedPointConfig(
+                    total_bits=total_bits, frac_bits=frac_bits
+                )
+            ),
             bias=bias,
             device=device,
         )
 
     @property
-    def fixed_point_factory(self) -> FixedPointFactory:
-        return cast(FixedPointArithmetics, self.ops).fixed_point_factory
+    def total_bits(self) -> int:
+        return cast(FixedPointArithmetics, self.ops).config.total_bits
+
+    @property
+    def frac_bits(self) -> int:
+        return cast(FixedPointArithmetics, self.ops).config.frac_bits
+
+    @property
+    def fixed_point_factory(self) -> TwoComplementFixedPointConfig:
+        return cast(FixedPointArithmetics, self.ops).config

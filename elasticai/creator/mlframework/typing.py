@@ -1,6 +1,14 @@
 """Interfaces/Adapters to the used machine learning framework"""
 from abc import abstractmethod
-from typing import Any, Callable, Iterable, Iterator, Protocol, runtime_checkable
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    Protocol,
+    TypeVar,
+    runtime_checkable,
+)
 
 from numpy.typing import ArrayLike
 
@@ -26,11 +34,13 @@ class Parameter(Tensor, Protocol):
     ...
 
 
+T_Module = TypeVar("T_Module", bound="Module")
+
+
 @runtime_checkable
 class Module(Protocol):
-    @property
     @abstractmethod
-    def training(self) -> bool:
+    def train(self: T_Module, mode: bool = True) -> T_Module:
         ...
 
     @abstractmethod

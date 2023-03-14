@@ -34,7 +34,7 @@ python3 -m pip install "elasticai.creator"
 
 The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
-It also includes the supported target representations, like the subfolder [vhdl](elasticai/creator/vhdl) is for the translation to vhdl.
+It also includes the supported target representations, like the subfolder [vhdl](elasticai/creator/hdl/vhdl) is for the translation to vhdl.
 Additionally, we have folders for [unit tests](elasticai/creator/tests/unit) and [integration tests](elasticai/creator/tests/integration).
 
 

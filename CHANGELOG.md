@@ -59,7 +59,7 @@
 * **translation:** Change torch LSTM layer to our FixedPointLSTM layer ([`5e7a39a`](https://github.com/es-ude/elastic-ai.creator/commit/5e7a39a78684c09a1d374476f8fb611019ae994f))
 * **unit:** Remove unused OperationType type and FakeQuant class ([`596dbd8`](https://github.com/es-ude/elastic-ai.creator/commit/596dbd8cdf3cde67eedea2779a35ff682c9ac9f7))
 * **unit:** Fix unit and integration tests to use the new layers correctly ([`0553017`](https://github.com/es-ude/elastic-ai.creator/commit/05530178cf7fb64dc88cab82b89c24b2a1406e8d))
-* **nn:** Fix imports and use new FixedPointFactory features ([`e8c74c3`](https://github.com/es-ude/elastic-ai.creator/commit/e8c74c34ec1c5a4b5189d74f2a19a993a5ae9779))
+* **nn:** Fix imports and use new FixedPointConfig features ([`e8c74c3`](https://github.com/es-ude/elastic-ai.creator/commit/e8c74c34ec1c5a4b5189d74f2a19a993a5ae9779))
 * **translation:** Add similar concept of translation arguments to fix the translation process ([`e387ae2`](https://github.com/es-ude/elastic-ai.creator/commit/e387ae26918fbe8e4a0ee01ccc4361849746bd66))
 * Adapt basic qtorch example to recent changes of the creator ([`a17d900`](https://github.com/es-ude/elastic-ai.creator/commit/a17d9006240a67da97b8a539620aa1974e07e942))
 * **vhdl:** Remove layer_name parameter ([`7a83b1e`](https://github.com/es-ude/elastic-ai.creator/commit/7a83b1eed3095a8b7f90438c78ba24bba6e44958))

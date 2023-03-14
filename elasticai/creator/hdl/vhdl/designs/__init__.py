@@ -1,0 +1,1 @@
+from .monotonously_increasing_precomputed_scalar_function import HardSigmoid
