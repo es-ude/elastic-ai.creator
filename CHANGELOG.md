@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v0.33.1 (2023-03-15)
+### Fix
+* Usage of lstm output in lstm_network impl ([`2e16141`](https://github.com/es-ude/elastic-ai.creator/commit/2e1614184cdaa073fdcc686b891748861fe5c7cc))
+* Wrong fixed point config object used for linear layers ([`3626113`](https://github.com/es-ude/elastic-ai.creator/commit/36261136add4b4d378598dc8c9e858240f6557c5))
+
 ## v0.33.0 (2023-03-15)
 ### Feature
 * Add rom design for saving weights ([`75862b7`](https://github.com/es-ude/elastic-ai.creator/commit/75862b7db4e64173daf7e6cdcb8413b0f510d396))
