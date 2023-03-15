@@ -119,7 +119,20 @@ class FPLSTMCell(Design):
         b_i, b_f, b_g, b_o = bias.tolist()
 
         def convert_floats_to_ints(floats: list[float]) -> list[int]:
-            return list(map(self._fp_config.as_integer, floats))
+            def _invert_int(value: int, num_bits: int) -> int:
+                return value ^ int("1" * num_bits, 2)
+
+            def _calculate_two_complement(value: int, num_bits: int) -> int:
+                return _invert_int(abs(value), num_bits) + 1
+
+            def _convert(value: float):
+                signed_int = self._fp_config.as_integer(value)
+                if signed_int < 0:
+                    return _calculate_two_complement(signed_int, self.total_bits)
+                else:
+                    return signed_int
+
+            return list(map(_convert, floats))
 
         final_weights = tuple(map(convert_floats_to_ints, (w_i, w_f, w_g, w_o)))
         final_biases = tuple(map(convert_floats_to_ints, (b_i, b_f, b_g, b_o)))

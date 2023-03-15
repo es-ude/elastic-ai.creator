@@ -5,7 +5,7 @@ from elasticai.creator.hdl.translatable import File, Path
 
 class InMemoryFile(File):
     def __init__(self, name):
-        self.text = []
+        self.text: list[str] = []
         self.name = name
 
     def write_text(self, text: Iterable[str]) -> None:
