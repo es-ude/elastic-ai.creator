@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any, cast
 
 import torch
@@ -29,12 +28,6 @@ class Linear(torch.nn.Linear):
             return self.ops.add(self.ops.matmul(x, weight.T), bias)
 
         return self.ops.matmul(x, weight.T)
-
-
-@dataclass
-class FixedPointConfig:
-    frac_bits: int
-    total_bits: int
 
 
 class FixedPointLinear(Linear):
