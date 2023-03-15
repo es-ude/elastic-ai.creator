@@ -54,10 +54,10 @@ def test_generate_af_bb(rom_destination, rom_name, built_rom_file):
 
 
 def test_generate_0000(rom_destination, rom_name, built_rom_file):
-    rom = Rom(rom_name, data_width=16, values_as_unsigned_integers=[0])
+    rom = Rom(rom_name, data_width=16, values_as_unsigned_integers=[0, 0])
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
-    assert actual == ("0000",)
+    assert actual == ("0000", "0000")
 
 
 @pytest.fixture
@@ -89,10 +89,19 @@ def test_address_width_is_3(rom_destination, rom_name, get_address_width):
     assert get_address_width() == 3
 
 
-def test_rom_values_are_filled_up_to_next_power_of_two(
+def test_rom_values_are_filled_up_from_3_to_4(
     rom_destination, rom_name, built_rom_file
 ):
     rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[1] * 3)
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
     assert actual == ("01", "01", "01", "00")
+
+
+def test_rom_values_are_filled_up_from_18_to_32(
+    rom_destination, rom_name, built_rom_file
+):
+    rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[1] * 18)
+    rom.save_to(rom_destination)
+    actual = extract_rom_values(built_rom_file.text)
+    assert actual == tuple(["01"] * 18 + ["00"] * 14)
