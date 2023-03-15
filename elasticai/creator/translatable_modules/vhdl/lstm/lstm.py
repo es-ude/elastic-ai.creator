@@ -25,7 +25,6 @@ class LSTMNetwork(torch.nn.Module):
         )
 
     def translate(self) -> LSTMNetworkDesign:
-        children = list(self.layers.children())
         first_lstm = cast(FixedPointLSTMWithHardActivations, self.lstm)
         total_bits = first_lstm.fixed_point_config.total_bits
         frac_bits = first_lstm.fixed_point_config.frac_bits
@@ -51,17 +50,29 @@ class LSTMNetwork(torch.nn.Module):
 
 class FixedPointLSTMWithHardActivations(_nnLSTM, Module):
     def translate(self) -> Design:
-        def to_list(tensor: torch.Tensor) -> list:
+        def to_list(tensor: torch.Tensor) -> list[float]:
             return tensor.detach().numpy().tolist()
+
+        def convert_float_to_signed_integer(
+            value: float | list[float] | list[list[float]] | list[list[list[float]]],
+        ) -> int:
+            if isinstance(value, list):
+                return list(map(convert_float_to_signed_integer, value))
+            return self.fixed_point_config.as_integer(value)
+
+        def convert_tensor(values: torch.Tensor) -> list[int]:
+            return list(map(convert_float_to_signed_integer, to_list(values)))
 
         return FPLSTMCell(
             name="lstm_cell",
             total_bits=self.fixed_point_config.total_bits,
             frac_bits=self.fixed_point_config.frac_bits,
-            w_ih=to_list(self.cell.linear_ih.weight),
-            w_hh=to_list(self.cell.linear_hh.weight),
-            b_ih=to_list(self.cell.linear_ih.bias),
-            b_hh=to_list(self.cell.linear_hh.bias),
+            w_ih=convert_tensor(self.cell.linear_ih.weight),
+            w_hh=convert_tensor(self.cell.linear_hh.weight),
+            b_ih=convert_tensor(self.cell.linear_ih.bias),
+            b_hh=convert_tensor(self.cell.linear_hh.bias),
+            lower_bound_for_hard_sigmoid=convert_float_to_signed_integer(-3),
+            upper_bound_for_hard_sigmoid=convert_float_to_signed_integer(3),
         )
 
     def __init__(

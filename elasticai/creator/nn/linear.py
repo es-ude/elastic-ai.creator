@@ -3,9 +3,7 @@ from typing import Any, cast
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.arithmetics import Arithmetics
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 
@@ -53,9 +51,7 @@ class FixedPointLinear(Linear):
             in_features=in_features,
             out_features=out_features,
             arithmetics=FixedPointArithmetics(
-                config=TwoComplementFixedPointConfig(
-                    total_bits=total_bits, frac_bits=frac_bits
-                )
+                config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
             ),
             bias=bias,
             device=device,
@@ -70,5 +66,5 @@ class FixedPointLinear(Linear):
         return cast(FixedPointArithmetics, self.ops).config.frac_bits
 
     @property
-    def fixed_point_factory(self) -> TwoComplementFixedPointConfig:
+    def fixed_point_factory(self) -> FixedPointConfig:
         return cast(FixedPointArithmetics, self.ops).config

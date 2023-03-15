@@ -1,8 +1,6 @@
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.float_arithmetics import FloatArithmetics
 from tests.tensor_test_case import TensorTestCase
@@ -59,9 +57,7 @@ class FloatArithmeticsTest(TensorTestCase):
 
 class FixedPointArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
-        self.config: TwoComplementFixedPointConfig = TwoComplementFixedPointConfig(
-            total_bits=4, frac_bits=2
-        )
+        self.config: FixedPointConfig = FixedPointConfig(total_bits=4, frac_bits=2)
         self.ops = FixedPointArithmetics(config=self.config)
 
     def test_quantize_clamps_minus5_to_minus2(self) -> None:

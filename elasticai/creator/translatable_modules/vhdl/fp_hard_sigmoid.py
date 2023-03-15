@@ -5,9 +5,7 @@ from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.hard_sigmoid import (
     HardSigmoid,
 )
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid as _HardSigmoidLayer
 
 
@@ -29,7 +27,7 @@ class FPHardSigmoid(_HardSigmoidLayer):
         self.ops = ops
 
     def translate(self) -> Design:
-        conf = TwoComplementFixedPointConfig(
+        conf = FixedPointConfig(
             total_bits=self.ops.total_bits, frac_bits=self.ops.frac_bits
         )
 

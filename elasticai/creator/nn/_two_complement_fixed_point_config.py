@@ -32,7 +32,7 @@ class ConvertableToFixedPointValues(Protocol[T]):
 
 
 @dataclass
-class TwoComplementFixedPointConfig:
+class FixedPointConfig:
     total_bits: int
     frac_bits: int
 

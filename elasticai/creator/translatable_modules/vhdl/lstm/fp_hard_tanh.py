@@ -6,18 +6,14 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 
 
 class FPHardTanh(Design):
     def __init__(self, total_bits: int, frac_bits: int):
         super().__init__(name="hardtanh")
         self._data_width = total_bits
-        fp_config = TwoComplementFixedPointConfig(
-            frac_bits=frac_bits, total_bits=total_bits
-        )
+        fp_config = FixedPointConfig(frac_bits=frac_bits, total_bits=total_bits)
         self._template = TemplateConfig(
             package=module_to_package(self.__module__),
             file_name="fp_hard_tanh.tpl.vhd",
