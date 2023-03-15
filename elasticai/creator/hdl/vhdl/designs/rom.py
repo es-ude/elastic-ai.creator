@@ -13,32 +13,19 @@ class Rom:
         self, name: str, data_width: int, values_as_unsigned_integers: list[int]
     ):
         self._name = name
-        self._address_width = self._compute_bits_required_to_address_n_values(
-            len(values_as_unsigned_integers)
-        )
+        number_of_values = len(values_as_unsigned_integers)
+        self._address_width = self._bits_required_to_address_n_values(number_of_values)
         self._values = self._append_zeros_to_fill_addressable_memory(
             values_as_unsigned_integers
         )
         self._data_width = data_width
 
-    def _append_zeros_to_fill_addressable_memory(self, values: list[int]) -> list[int]:
-        return values + [0] * (self._address_width**2 - len(values))
-
-    def _compute_bits_required_to_address_n_values(self, n: int) -> int:
-        return ceil(log2(n))
-
     def save_to(self, destination: Path):
-        nibble_length = 4
-        format_string = 'x"{{:0>{num_of_hex_values}x}}"'.format(
-            num_of_hex_values=self._data_width // nibble_length
-        )
-        print(format_string)
-        values = [format_string.format(x) for x in self._values]
         config = TemplateConfig(
             file_name="rom.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(
-                rom_value=", ".join(values),
+                rom_value=self._rom_values(),
                 rom_addr_bitwidth=str(self._address_width),
                 rom_data_width=str(self._data_width),
                 name=self._name,
@@ -46,3 +33,27 @@ class Rom:
         )
         expander = TemplateExpander(config)
         destination.as_file(".vhd").write_text(expander.lines())
+
+    def _rom_values(self) -> str:
+        values = [self._format_string_for_rom_values().format(x) for x in self._values]
+        return ", ".join(values)
+
+    def _format_string_for_rom_values(self) -> str:
+        return 'x"{{:0>{num_of_nibbles}x}}"'.format(
+            num_of_nibbles=self._number_of_nibbles()
+        )
+
+    def _append_zeros_to_fill_addressable_memory(self, values: list[int]) -> list[int]:
+        missing_number_of_zeros = self._address_width**2 - len(values)
+        return values + self._zeros(missing_number_of_zeros)
+
+    def _bits_required_to_address_n_values(self, n: int) -> int:
+        return ceil(log2(n))
+
+    @staticmethod
+    def _zeros(n: int) -> list[int]:
+        return [0] * n
+
+    def _number_of_nibbles(self) -> int:
+        nibble_length = 4
+        return self._data_width // nibble_length
