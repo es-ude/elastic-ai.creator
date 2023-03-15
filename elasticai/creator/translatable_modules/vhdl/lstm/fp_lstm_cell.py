@@ -21,6 +21,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     generate_hex_for_rom,
 )
 from elasticai.creator.hdl.vhdl.designs import HardSigmoid
+from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.nn._two_complement_fixed_point_config import (
     TwoComplementFixedPointConfig,
 )
@@ -189,23 +190,12 @@ class FPLSTMCell(Design):
         address_width: int,
     ):
         for values, name in zip(parameters, names):
-            self._update_rom_base_config(
-                name=name, values=values, address_width=address_width
+            rom = Rom(
+                name=f"rom_{name}_lstm_cell",
+                values_as_unsigned_integers=values,
+                data_width=self.total_bits,
             )
-            rom_file = destination.create_subpath(f"{name}_rom").as_file(".vhd")
-            rom_file.write_text(rom_template.lines())
-
-    def _update_rom_base_config(self, values: list[int], name: str, address_width: int):
-        values = self._pad_with_zeros(values, address_width)
-        self._rom_base_config.parameters.update(
-            dict(
-                resource_option="auto",
-                name=f"rom_{name}_{self.name}",
-                rom_addr_bitwidth=str(address_width),
-                rom_data_bitwidth=str(self.total_bits),
-                rom_value=",".join(map(self._to_hex, values)),
-            )
-        )
+            rom.save_to(destination.create_subpath(f"{name}_rom"))
 
     @staticmethod
     def _to_hex(value):
