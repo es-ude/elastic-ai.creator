@@ -44,7 +44,8 @@ class LSTMNetwork(torch.nn.Module):
         )
 
     def forward(self, x):
-        _, (x, _) = self.lstm(x)
+        x, (_, _) = self.lstm(x)
+        x = x[:, -1]
         return self.layers(x)
 
 
@@ -55,7 +56,7 @@ class FixedPointLSTMWithHardActivations(_nnLSTM, Module):
 
         def convert_float_to_signed_integer(
             value: float | list[float] | list[list[float]] | list[list[list[float]]],
-        ) -> int:
+        ):
             if isinstance(value, list):
                 return list(map(convert_float_to_signed_integer, value))
             return self.fixed_point_config.as_integer(value)
