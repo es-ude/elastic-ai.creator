@@ -1,4 +1,3 @@
-from functools import reduce
 from itertools import chain
 from typing import cast
 
@@ -17,6 +16,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     generate_hex_for_rom,
 )
+from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.translatable_modules.vhdl.lstm.lstm import (
@@ -164,6 +164,17 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
     input_size = 1
     hidden_size = 4
     destination = lstm_destination
+
+    rom_address_width = calculate_address_width(
+        (input_size + hidden_size) * hidden_size
+    )
+    expected_rom = Rom(
+        name="rom_wi_lstm_cell",
+        data_width=total_bits,
+        values_as_unsigned_integers=[0] * 2**rom_address_width,
+    )
+    destination_for_expected_rom = InMemoryPath("build", parent=None)
+    expected_rom.save_to(destination_for_expected_rom.create_subpath("rom"))
     model = LSTM(
         total_bits=total_bits,
         frac_bits=4,
@@ -176,13 +187,9 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
             parameter *= 0
     design = model.translate()
     design.save_to(destination)
-    rom_address_width = calculate_address_width(
-        (input_size + hidden_size) * hidden_size
-    )
-    actual = cast(InMemoryFile, destination["wi_rom"]).text
-    expected = prepare_rom_file(
-        ["00"] * 2**rom_address_width, rom_address_width, total_bits
-    )
+
+    actual = destination["wi_rom"].text
+    expected = destination_for_expected_rom["rom"].text
     assert actual == expected
 
 

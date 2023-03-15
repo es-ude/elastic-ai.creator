@@ -1,6 +1,5 @@
 from copy import copy
 from functools import partial
-from itertools import repeat
 from typing import Any, cast
 
 import numpy as np
@@ -12,18 +11,12 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 )
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
-    to_hex,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    generate_hex_for_rom,
-)
 from elasticai.creator.hdl.vhdl.designs import HardSigmoid
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.translatable_modules.vhdl.lstm.fp_hard_tanh import FPHardTanh
 
 
@@ -34,6 +27,8 @@ class FPLSTMCell(Design):
         name: str,
         total_bits: int,
         frac_bits: int,
+        lower_bound_for_hard_sigmoid: int,
+        upper_bound_for_hard_sigmoid: int,
         w_ih: list[list[list[float]]],
         w_hh: list[list[list[float]]],
         b_ih: list[list[float]],
@@ -51,9 +46,8 @@ class FPLSTMCell(Design):
         self.weights_hh = w_hh
         self.biases_ih = b_ih
         self.biases_hh = b_hh
-        self._fp_config = TwoComplementFixedPointConfig(
-            total_bits=total_bits, frac_bits=frac_bits
-        )
+        self._upper_bound_for_hard_sigmoid = upper_bound_for_hard_sigmoid
+        self._lower_bound_for_hard_sigmoid = lower_bound_for_hard_sigmoid
         self._rom_base_config = copy(base_config)
         self._rom_base_config.file_name = "rom.tpl.vhd"
 
@@ -83,6 +77,10 @@ class FPLSTMCell(Design):
         return int(cast(str, self._config.parameters["data_width"]))
 
     @property
+    def frac_bits(self) -> int:
+        return int(cast(str, self._config.parameters["frac_width"]))
+
+    @property
     def _hidden_addr_width(self) -> int:
         return int(cast(str, self._config.parameters["hidden_addr_width"]))
 
@@ -109,6 +107,12 @@ class FPLSTMCell(Design):
             ],
         )
 
+    def _to_unsigned(self, value: int):
+        if value < 0:
+            bits = self.total_bits
+            value = (~abs(value) + 1) & int("1" * bits)
+        return value
+
     def _build_weights(self):
         weights = np.concatenate((self.weights_ih, self.weights_hh), axis=1)
         weights = np.reshape(weights, (4, -1))
@@ -118,30 +122,37 @@ class FPLSTMCell(Design):
         bias = np.reshape(bias, (4, -1))
         b_i, b_f, b_g, b_o = bias.tolist()
 
-        def convert_floats_to_ints(floats: list[float]) -> list[int]:
-            return list(map(self._fp_config.as_integer, floats))
+        def convert_signed_int_to_twos_complement_unsigned_ints(
+            signed: list[int],
+        ) -> list[int]:
+            return [self._to_unsigned(s) for s in signed]
 
-        final_weights = tuple(map(convert_floats_to_ints, (w_i, w_f, w_g, w_o)))
-        final_biases = tuple(map(convert_floats_to_ints, (b_i, b_f, b_g, b_o)))
+        final_weights = tuple(
+            map(
+                convert_signed_int_to_twos_complement_unsigned_ints,
+                (w_i, w_f, w_g, w_o),
+            )
+        )
+        final_biases = tuple(
+            map(
+                convert_signed_int_to_twos_complement_unsigned_ints,
+                (b_i, b_f, b_g, b_o),
+            )
+        )
 
         return final_weights, final_biases
 
     def save_to(self, destination: "Path"):
         weights, biases = self._build_weights()
 
-        rom_template = TemplateExpander(self._rom_base_config)
-        write_files = partial(
-            self._write_files, destination=destination, rom_template=rom_template
-        )
+        write_files = partial(self._write_files, destination=destination)
         write_files(
             names=("wi", "wf", "wg", "wo"),
             parameters=weights,
-            address_width=self._weight_address_width,
         )
         write_files(
             names=("bi", "bf", "bg", "bo"),
             parameters=biases,
-            address_width=self._hidden_addr_width,
         )
         self._save_dual_port_double_clock_ram(destination)
         self._save_hardtanh(destination)
@@ -155,53 +166,29 @@ class FPLSTMCell(Design):
         sigmoid_destination = destination.create_subpath("hard_sigmoid")
         sigmoid = HardSigmoid(
             width=self.total_bits,
-            lower_bound_for_zero=self._fp_config.as_integer(-3),
-            upper_bound_for_one=self._fp_config.as_integer(3),
+            lower_bound_for_zero=self._to_unsigned(self._lower_bound_for_hard_sigmoid),
+            upper_bound_for_one=self._to_unsigned(self._upper_bound_for_hard_sigmoid),
         )
         sigmoid.save_to(sigmoid_destination)
 
     def _save_hardtanh(self, destination: Path):
         hardtanh_destination = destination.create_subpath("hard_tanh")
-        hardtanh = FPHardTanh(
-            total_bits=self.total_bits, frac_bits=self._fp_config.frac_bits
-        )
+        hardtanh = FPHardTanh(total_bits=self.total_bits, frac_bits=self.frac_bits)
         hardtanh.save_to(hardtanh_destination)
 
     def _write_files(
         self,
         destination: Path,
-        rom_template: TemplateExpander,
         names: tuple[str, ...],
         parameters: Any,
-        address_width: int,
     ):
         for values, name in zip(parameters, names):
-            self._update_rom_base_config(
-                name=name, values=values, address_width=address_width
+            rom = Rom(
+                name=f"rom_{name}_lstm_cell",
+                values_as_unsigned_integers=values,
+                data_width=self.total_bits,
             )
-            rom_file = destination.create_subpath(f"{name}_rom").as_file(".vhd")
-            rom_file.write_text(rom_template.lines())
-
-    def _update_rom_base_config(self, values: list[int], name: str, address_width: int):
-        values = self._pad_with_zeros(values, address_width)
-        self._rom_base_config.parameters.update(
-            dict(
-                resource_option="auto",
-                name=f"rom_{name}_{self.name}",
-                rom_addr_bitwidth=str(address_width),
-                rom_data_bitwidth=str(self.total_bits),
-                rom_value=",".join(map(self._to_hex, values)),
-            )
-        )
-
-    @staticmethod
-    def _to_hex(value):
-        return generate_hex_for_rom(to_hex(value, bit_width=8))
-
-    @staticmethod
-    def _pad_with_zeros(values, address_width):
-        suffix = list(repeat(0, 2**address_width - len(values)))
-        return values + suffix
+            rom.save_to(destination.create_subpath(f"{name}_rom"))
 
     def _save_dual_port_double_clock_ram(self, destination: Path):
         template_configuration = TemplateConfig(

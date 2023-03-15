@@ -5,7 +5,7 @@ from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.hard_sigmoid import (
     HardSigmoid,
 )
-from elasticai.creator.hdl.vhdl.number_representations import FixedPoint
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid as _HardSigmoidLayer
 
 
@@ -27,17 +27,12 @@ class FPHardSigmoid(_HardSigmoidLayer):
         self.ops = ops
 
     def translate(self) -> Design:
-        def fp(value: float) -> int:
-            return int(
-                FixedPoint(
-                    value=value,
-                    total_bits=self.ops.total_bits,
-                    frac_bits=self.ops.frac_bits,
-                )
-            )
+        conf = FixedPointConfig(
+            total_bits=self.ops.total_bits, frac_bits=self.ops.frac_bits
+        )
 
         return HardSigmoid(
-            lower_bound_for_zero=fp(-3),
-            upper_bound_for_one=fp(3),
+            lower_bound_for_zero=conf.as_integer(-3),
+            upper_bound_for_one=conf.as_integer(3),
             width=self.ops.total_bits,
         )

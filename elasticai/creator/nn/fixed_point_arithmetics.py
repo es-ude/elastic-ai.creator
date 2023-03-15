@@ -1,8 +1,6 @@
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.arithmetics import Arithmetics
 from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
@@ -11,7 +9,7 @@ from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
 
 
 class FixedPointArithmetics(Arithmetics):
-    def __init__(self, config: TwoComplementFixedPointConfig) -> None:
+    def __init__(self, config: FixedPointConfig) -> None:
         self.config = config
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:

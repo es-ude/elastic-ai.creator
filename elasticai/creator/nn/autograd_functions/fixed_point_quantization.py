@@ -2,9 +2,7 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 
 
 class FixedPointQuantFunction(torch.autograd.Function):
@@ -20,7 +18,7 @@ class FixedPointQuantFunction(torch.autograd.Function):
                 "(x: torch.Tensor, fixed_point_factory: Callable[[float], FixedPoint])"
             )
         x: torch.Tensor = args[0]
-        config: TwoComplementFixedPointConfig = args[1]
+        config: FixedPointConfig = args[1]
 
         fp_ints = config.as_integer(x)
         out_of_bounds = fp_ints[config.integer_out_of_bounds(fp_ints)]
@@ -47,7 +45,7 @@ class FixedPointDequantFunction(torch.autograd.Function):
                 "(x: torch.Tensor, fixed_point_factory: Callable[[float], FixedPoint])"
             )
         x: torch.Tensor = args[0]
-        config: TwoComplementFixedPointConfig = args[1]
+        config: FixedPointConfig = args[1]
         fp_values = config.as_rational(x)
         out_of_bound_coefficients = fp_values[config.rational_out_of_bounds(fp_values)]
         if torch.any(out_of_bound_coefficients):

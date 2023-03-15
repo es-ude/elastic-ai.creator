@@ -3,9 +3,7 @@ from typing import Optional, Protocol
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import (
-    TwoComplementFixedPointConfig,
-)
+from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.hard_tanh import HardTanh
@@ -81,9 +79,7 @@ class FixedPointLSTMWithHardActivations(LSTM):
         batch_first: bool,
         bias: bool = True,
     ) -> None:
-        fp_config = TwoComplementFixedPointConfig(
-            total_bits=total_bits, frac_bits=frac_bits
-        )
+        fp_config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
 
         class Layers:
             def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
@@ -106,5 +102,5 @@ class FixedPointLSTMWithHardActivations(LSTM):
         self._fp_config = fp_config
 
     @property
-    def fixed_point_config(self) -> TwoComplementFixedPointConfig:
+    def fixed_point_config(self) -> FixedPointConfig:
         return self._fp_config
