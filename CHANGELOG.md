@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.33.0 (2023-03-15)
+### Feature
+* Add rom design for saving weights ([`75862b7`](https://github.com/es-ude/elastic-ai.creator/commit/75862b7db4e64173daf7e6cdcb8413b0f510d396))
+
+### Fix
+* Correctly pad rom memory ([`fe768d5`](https://github.com/es-ude/elastic-ai.creator/commit/fe768d5f93c34ade65c24479c70f3528c66b0408))
+
 ## v0.32.1 (2023-03-14)
 ### Fix
 * Typo in test for lstm cell designs ([`2ffeaec`](https://github.com/es-ude/elastic-ai.creator/commit/2ffeaecf3ba7c3c0946c57ab3bee92af55746887))
