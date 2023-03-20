@@ -1,8 +1,7 @@
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.nn.linear import FixedPointLinear
-from elasticai.creator.translatable_modules.vhdl.fp_linear_1d.fp_linear_1d_hw_design import (
-    FPLinear1d as FPLinearDesign,
-)
+
+from .design import FPLinear1d as FPLinearDesign
 
 
 class FPLinear1d(FixedPointLinear):

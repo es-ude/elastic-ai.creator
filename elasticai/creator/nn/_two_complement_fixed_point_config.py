@@ -15,19 +15,19 @@ class ConvertableToFixedPointValues(Protocol[T]):
     def float(self: T) -> T:
         ...
 
-    def __gt__(self: T, other: Union["int", "float", T]) -> T:
+    def __gt__(self: T, other: Union[int, float, T]) -> T:  # type: ignore
         ...
 
-    def __lt__(self: T, other: Union["int", "float", T]) -> T:
+    def __lt__(self: T, other: Union[int, float, T]) -> T:  # type: ignore
         ...
 
     def __or__(self: T, other: T) -> T:
         ...
 
-    def __mul__(self: T, other: Union["int", T, "float"]) -> T:
+    def __mul__(self: T, other: Union[int, T, float]) -> T:  # type: ignore
         ...
 
-    def __truediv__(self: T, other: Union["int", "float"]) -> T:
+    def __truediv__(self: T, other: Union[int, float]) -> T:  # type: ignore
         ...
 
 
