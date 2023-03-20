@@ -12,7 +12,9 @@ from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.hdl.vhdl.designs.fp_linear_1d import FPLinear1d
+from elasticai.creator.translatable_modules.vhdl.fp_linear_1d.fp_linear_1d_hw_design import (
+    FPLinear1d,
+)
 
 
 class LSTMNetworkDesign(Design):

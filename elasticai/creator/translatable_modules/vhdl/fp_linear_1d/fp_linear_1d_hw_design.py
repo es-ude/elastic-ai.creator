@@ -7,8 +7,9 @@ from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.ports import (
     create_port_for_buffered_design as create_port,
 )
-from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.translatable import Path, Saveable
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
+from elasticai.creator.hdl.vhdl.designs.rom import Rom
 
 
 class FPLinear1d(Design):
@@ -23,6 +24,7 @@ class FPLinear1d(Design):
         out_feature_num: int,
         total_bits: int,
         frac_bits: int,
+        weights: list[list[int]],
         work_library_name: str = "work",
         resource_option: str = "auto",
         name: Optional[str] = None,
@@ -36,6 +38,7 @@ class FPLinear1d(Design):
             x_count=in_feature_num,
             y_count=out_feature_num,
         )
+        self.weights = weights
         self.in_feature_num = in_feature_num
         self.out_feature_num = out_feature_num
         self.work_library_name = work_library_name
@@ -64,8 +67,17 @@ class FPLinear1d(Design):
         )
         template.update_parameters(
             layer_name=self.name,
+            rom_name=f"{self.name}_rom",
             work_library_name=self.work_library_name,
             resource_option=f'"{self.resource_option}"',
             **self._template_parameters(),
         )
-        destination.as_file(f".vhd").write_text(template.lines())
+        destination.create_subpath("linear").as_file(f".vhd").write_text(
+            template.lines()
+        )
+        rom: Saveable = Rom(
+            f"{self.name}_rom",
+            data_width=self.data_width,
+            values_as_unsigned_integers=self.weights,
+        )
+        rom.save_to(destination.create_subpath(f"{self.name}_rom"))

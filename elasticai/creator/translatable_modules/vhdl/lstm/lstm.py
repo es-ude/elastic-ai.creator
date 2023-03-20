@@ -4,11 +4,11 @@ from typing import cast
 import torch.nn
 
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.hdl.vhdl.designs.fp_linear_1d import (
-    FPLinear1d as _FPLinear1dDesign,
-)
 from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations as _nnLSTM
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.translatable_modules.vhdl.fp_linear_1d.fp_linear_1d_hw_design import (
+    FPLinear1d as _FPLinear1dDesign,
+)
 from elasticai.creator.translatable_modules.vhdl.lstm.design import LSTMNetworkDesign
 from elasticai.creator.translatable_modules.vhdl.lstm.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.translatable_modules.vhdl.module import Module

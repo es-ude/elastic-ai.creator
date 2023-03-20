@@ -1,6 +1,8 @@
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.hdl.vhdl.designs.fp_linear_1d import FPLinear1d as FPLinearDesign
 from elasticai.creator.nn.linear import FixedPointLinear
+from elasticai.creator.translatable_modules.vhdl.fp_linear_1d.fp_linear_1d_hw_design import (
+    FPLinear1d as FPLinearDesign,
+)
 
 
 class FPLinear1d(FixedPointLinear):
@@ -10,4 +12,5 @@ class FPLinear1d(FixedPointLinear):
             total_bits=self.total_bits,
             in_feature_num=self.in_features,
             out_feature_num=self.out_features,
+            weights=self.ops.quantize(self.weight).tolist(),
         )
