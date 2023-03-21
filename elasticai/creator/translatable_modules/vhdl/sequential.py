@@ -12,7 +12,7 @@ from .module import Module
 
 
 class Sequential(torchSequential):
-    def __init__(self, submodules: tuple[Module]):
+    def __init__(self, submodules: tuple[Module, ...]):
         super().__init__(*cast(tuple[_torchModule], submodules))
 
     def translate(self) -> Design:
