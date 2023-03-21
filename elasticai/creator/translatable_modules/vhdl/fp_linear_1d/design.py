@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Optional
 
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
@@ -67,7 +68,7 @@ class FPLinear1d(Design):
         )
         template.update_parameters(
             layer_name=self.name,
-            rom_name=f"{self.name}_rom",
+            # rom_name=f"{self.name}_rom",
             work_library_name=self.work_library_name,
             resource_option=f'"{self.resource_option}"',
             **self._template_parameters(),
@@ -75,9 +76,9 @@ class FPLinear1d(Design):
         destination.create_subpath("linear").as_file(f".vhd").write_text(
             template.lines()
         )
-        rom: Saveable = Rom(
+        w_rom = Rom(
             f"{self.name}_rom",
             data_width=self.data_width,
-            values_as_unsigned_integers=self.weights,
+            values_as_unsigned_integers=list(chain(*self.weights)),
         )
-        rom.save_to(destination.create_subpath(f"{self.name}_rom"))
+        w_rom.save_to(destination.create_subpath(f"{self.name}_rom"))

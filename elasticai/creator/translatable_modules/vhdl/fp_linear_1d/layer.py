@@ -11,5 +11,5 @@ class FPLinear1d(FixedPointLinear):
             total_bits=self.total_bits,
             in_feature_num=self.in_features,
             out_feature_num=self.out_features,
-            weights=self.ops.quantize(self.weight).tolist(),
+            weights=self.ops.quantize(self.weight).int().tolist(),
         )
