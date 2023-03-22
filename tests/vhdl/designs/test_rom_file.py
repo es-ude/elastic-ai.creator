@@ -36,7 +36,7 @@ def built_rom_file(build_root, rom_name, rom_destination):
 
 
 def test_generating_00_00(rom_destination, rom_name, built_rom_file):
-    rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[0, 0])
+    rom = Rom(rom_name, data_width=8, values_as_integers=[0, 0])
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
     assert actual == ("00", "00")
@@ -46,7 +46,7 @@ def test_generate_af_bb(rom_destination, rom_name, built_rom_file):
     rom = Rom(
         rom_name,
         data_width=8,
-        values_as_unsigned_integers=[2**4 * 10 + 15, 2**4 * 11 + 11],
+        values_as_integers=[2**4 * 10 + 15, 2**4 * 11 + 11],
     )
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
@@ -54,7 +54,7 @@ def test_generate_af_bb(rom_destination, rom_name, built_rom_file):
 
 
 def test_generate_0000(rom_destination, rom_name, built_rom_file):
-    rom = Rom(rom_name, data_width=16, values_as_unsigned_integers=[0, 0])
+    rom = Rom(rom_name, data_width=16, values_as_integers=[0, 0])
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
     assert actual == ("0000", "0000")
@@ -78,13 +78,13 @@ def get_address_width(built_rom_file) -> Callable[[], int]:
 
 
 def test_address_width_is_1(rom_destination, rom_name, get_address_width):
-    rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[0, 0])
+    rom = Rom(rom_name, data_width=8, values_as_integers=[0, 0])
     rom.save_to(rom_destination)
     assert get_address_width() == 1
 
 
 def test_address_width_is_3(rom_destination, rom_name, get_address_width):
-    rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[0, 0, 0, 0, 0])
+    rom = Rom(rom_name, data_width=8, values_as_integers=[0, 0, 0, 0, 0])
     rom.save_to(rom_destination)
     assert get_address_width() == 3
 
@@ -92,7 +92,7 @@ def test_address_width_is_3(rom_destination, rom_name, get_address_width):
 def test_rom_values_are_filled_up_from_3_to_4(
     rom_destination, rom_name, built_rom_file
 ):
-    rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[1] * 3)
+    rom = Rom(rom_name, data_width=8, values_as_integers=[1] * 3)
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
     assert actual == ("01", "01", "01", "00")
@@ -101,7 +101,7 @@ def test_rom_values_are_filled_up_from_3_to_4(
 def test_rom_values_are_filled_up_from_18_to_32(
     rom_destination, rom_name, built_rom_file
 ):
-    rom = Rom(rom_name, data_width=8, values_as_unsigned_integers=[1] * 18)
+    rom = Rom(rom_name, data_width=8, values_as_integers=[1] * 18)
     rom.save_to(rom_destination)
     actual = extract_rom_values(built_rom_file.text)
     assert actual == tuple(["01"] * 18 + ["00"] * 14)

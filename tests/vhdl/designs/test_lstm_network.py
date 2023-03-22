@@ -171,7 +171,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
     expected_rom = Rom(
         name="rom_wi_lstm_cell",
         data_width=total_bits,
-        values_as_unsigned_integers=[0] * 2**rom_address_width,
+        values_as_integers=[0] * 2**rom_address_width,
     )
     destination_for_expected_rom = InMemoryPath("build", parent=None)
     expected_rom.save_to(destination_for_expected_rom.create_subpath("rom"))

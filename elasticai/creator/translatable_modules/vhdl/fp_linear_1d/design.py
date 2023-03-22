@@ -89,13 +89,13 @@ class FPLinear1d(Design):
         weights_rom = Rom(
             name=rom_name["weights"],
             data_width=self.data_width,
-            values_as_unsigned_integers=self._flatten_params(self.weights),
+            values_as_integers=self._flatten_params(self.weights),
         )
         weights_rom.save_to(destination.create_subpath(rom_name["weights"]))
 
         bias_rom = Rom(
             name=rom_name["bias"],
             data_width=self.data_width,
-            values_as_unsigned_integers=self.bias,
+            values_as_integers=self.bias,
         )
         bias_rom.save_to(destination.create_subpath(rom_name["bias"]))
