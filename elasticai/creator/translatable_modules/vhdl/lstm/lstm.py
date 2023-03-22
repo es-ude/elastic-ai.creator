@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from typing import cast
 
-import torch.nn
+import torch
 
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations as _nnLSTM
