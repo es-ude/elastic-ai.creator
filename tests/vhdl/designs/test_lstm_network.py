@@ -18,11 +18,11 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
-from elasticai.creator.translatable_modules.vhdl.lstm.lstm import (
+from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.nn.vhdl.lstm.lstm import (
     FixedPointLSTMWithHardActivations as LSTM,
 )
-from elasticai.creator.translatable_modules.vhdl.lstm.lstm import LSTMNetwork
+from elasticai.creator.nn.vhdl.lstm.lstm import LSTMNetwork
 
 
 class ExpectedCode:

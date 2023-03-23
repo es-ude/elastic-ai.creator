@@ -18,7 +18,7 @@ from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 from elasticai.creator.hdl.vhdl.designs import HardSigmoid
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
-from elasticai.creator.translatable_modules.vhdl.lstm.fp_hard_tanh import FPHardTanh
+from elasticai.creator.nn.vhdl.lstm.fp_hard_tanh import FPHardTanh
 
 
 class FPLSTMCell(Design):
