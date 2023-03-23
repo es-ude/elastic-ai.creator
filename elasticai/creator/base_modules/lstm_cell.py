@@ -3,8 +3,8 @@ from typing import Any, Optional
 
 import torch
 
-from elasticai.creator.nn.arithmetics import Arithmetics
-from elasticai.creator.nn.linear import Linear
+from elasticai.creator.base_modules.arithmetics import Arithmetics
+from elasticai.creator.base_modules.linear import Linear
 
 
 class LSTMCell(torch.nn.Module):

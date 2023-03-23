@@ -2,9 +2,11 @@ from typing import Any, cast
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
-from elasticai.creator.nn.arithmetics import Arithmetics
-from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
+from elasticai.creator.base_modules._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
+from elasticai.creator.base_modules.arithmetics import Arithmetics
+from elasticai.creator.base_modules.fixed_point_arithmetics import FixedPointArithmetics
 
 
 class Linear(torch.nn.Linear):

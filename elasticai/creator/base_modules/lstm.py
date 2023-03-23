@@ -3,11 +3,13 @@ from typing import Optional, Protocol
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
-from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
-from elasticai.creator.nn.hard_sigmoid import HardSigmoid
-from elasticai.creator.nn.hard_tanh import HardTanh
-from elasticai.creator.nn.lstm_cell import LSTMCell
+from elasticai.creator.base_modules._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
+from elasticai.creator.base_modules.fixed_point_arithmetics import FixedPointArithmetics
+from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid
+from elasticai.creator.base_modules.hard_tanh import HardTanh
+from elasticai.creator.base_modules.lstm_cell import LSTMCell
 
 
 class LayerFactory(Protocol):

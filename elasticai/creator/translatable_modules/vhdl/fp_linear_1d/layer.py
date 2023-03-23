@@ -2,8 +2,8 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.base_modules.linear import FixedPointLinear
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.nn.linear import FixedPointLinear
 
 from .design import FPLinear1d as FPLinearDesign
 

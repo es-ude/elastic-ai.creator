@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from elasticai.creator.nn.layers import (
+from elasticai.creator.base_modules.layers import (
     QLSTM,
     Binarize,
     ChannelShuffle,

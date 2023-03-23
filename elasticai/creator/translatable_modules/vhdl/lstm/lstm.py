@@ -3,8 +3,10 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.base_modules.lstm import (
+    FixedPointLSTMWithHardActivations as _nnLSTM,
+)
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.nn.lstm import FixedPointLSTMWithHardActivations as _nnLSTM
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.translatable_modules.vhdl.fp_linear_1d.design import (
     FPLinear1d as _FPLinear1dDesign,

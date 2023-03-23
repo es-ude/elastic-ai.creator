@@ -2,7 +2,9 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
+from elasticai.creator.base_modules._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 
 
 class FixedPointQuantFunction(torch.autograd.Function):

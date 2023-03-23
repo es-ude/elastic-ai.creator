@@ -1,7 +1,9 @@
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
-from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
+from elasticai.creator.base_modules._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
+from elasticai.creator.base_modules.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )

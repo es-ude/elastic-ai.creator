@@ -3,9 +3,9 @@ from typing import Any, Optional, cast
 
 import torch
 
-from elasticai.creator.nn.float_arithmetics import FloatArithmetics
-from elasticai.creator.nn.lstm import LSTM
-from elasticai.creator.nn.lstm_cell import LSTMCell
+from elasticai.creator.base_modules.float_arithmetics import FloatArithmetics
+from elasticai.creator.base_modules.lstm import LSTM
+from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from tests.tensor_test_case import TensorTestCase
 
 
