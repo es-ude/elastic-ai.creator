@@ -11,7 +11,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "~3.10"
-torch = "~1.11.0"
+torch = "^1.11"
 numpy = "^1.23.0"
 setuptools = "^67.5.1"
 
