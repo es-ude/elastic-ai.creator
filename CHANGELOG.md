@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.33.2 (2023-03-23)
+### Fix
+* Small import fix ([`07d2e29`](https://github.com/es-ude/elastic-ai.creator/commit/07d2e29c36e60d35066d2145782223aa42d64519))
+* **translation:** Add missing rom files and calculate correct twos complement ([`f700409`](https://github.com/es-ude/elastic-ai.creator/commit/f70040956b7637844a471a5eff171d9cc6ba4c72))
+* **translation:** Add missing ROMs and set correct names in fp_linear1d template ([`ad4c6f0`](https://github.com/es-ude/elastic-ai.creator/commit/ad4c6f095102965ff1dffa83dab4f2cb9749ce49))
+* Fix type annotation ([`8da1107`](https://github.com/es-ude/elastic-ai.creator/commit/8da1107b2640d695816c71dd3980c0783b522122))
+* **unit:** Fix failing unittests that are using the linear1d layer and design ([`ff582e1`](https://github.com/es-ude/elastic-ai.creator/commit/ff582e185ea01cc6282cb4553e14701e88a9d8f8))
+
 ## v0.33.1 (2023-03-15)
 ### Fix
 * Usage of lstm output in lstm_network impl ([`2e16141`](https://github.com/es-ude/elastic-ai.creator/commit/2e1614184cdaa073fdcc686b891748861fe5c7cc))
