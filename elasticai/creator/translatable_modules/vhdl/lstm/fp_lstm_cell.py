@@ -15,6 +15,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 from elasticai.creator.hdl.vhdl.designs import HardSigmoid
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.translatable_modules.vhdl.lstm.fp_hard_tanh import FPHardTanh
@@ -107,12 +108,6 @@ class FPLSTMCell(Design):
             ],
         )
 
-    def _to_unsigned(self, value: int):
-        if value < 0:
-            bits = self.total_bits
-            value = (~abs(value) + 1) & int("1" * bits)
-        return value
-
     def _build_weights(self):
         weights = np.concatenate((self.weights_ih, self.weights_hh), axis=1)
         weights = np.reshape(weights, (4, -1))
@@ -122,23 +117,8 @@ class FPLSTMCell(Design):
         bias = np.reshape(bias, (4, -1))
         b_i, b_f, b_g, b_o = bias.tolist()
 
-        def convert_signed_int_to_twos_complement_unsigned_ints(
-            signed: list[int],
-        ) -> list[int]:
-            return [self._to_unsigned(s) for s in signed]
-
-        final_weights = tuple(
-            map(
-                convert_signed_int_to_twos_complement_unsigned_ints,
-                (w_i, w_f, w_g, w_o),
-            )
-        )
-        final_biases = tuple(
-            map(
-                convert_signed_int_to_twos_complement_unsigned_ints,
-                (b_i, b_f, b_g, b_o),
-            )
-        )
+        final_weights = (w_i, w_f, w_g, w_o)
+        final_biases = (b_i, b_f, b_g, b_o)
 
         return final_weights, final_biases
 
@@ -166,8 +146,12 @@ class FPLSTMCell(Design):
         sigmoid_destination = destination.create_subpath("hard_sigmoid")
         sigmoid = HardSigmoid(
             width=self.total_bits,
-            lower_bound_for_zero=self._to_unsigned(self._lower_bound_for_hard_sigmoid),
-            upper_bound_for_one=self._to_unsigned(self._upper_bound_for_hard_sigmoid),
+            lower_bound_for_zero=to_unsigned(
+                self._lower_bound_for_hard_sigmoid, total_bits=self.total_bits
+            ),
+            upper_bound_for_one=to_unsigned(
+                self._upper_bound_for_hard_sigmoid, total_bits=self.total_bits
+            ),
         )
         sigmoid.save_to(sigmoid_destination)
 
@@ -185,7 +169,7 @@ class FPLSTMCell(Design):
         for values, name in zip(parameters, names):
             rom = Rom(
                 name=f"rom_{name}_lstm_cell",
-                values_as_unsigned_integers=values,
+                values_as_integers=values,
                 data_width=self.total_bits,
             )
             rom.save_to(destination.create_subpath(f"{name}_rom"))

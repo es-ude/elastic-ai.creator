@@ -1,4 +1,4 @@
-from math import ceil, log2
+from functools import partial
 
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
     TemplateConfig,
@@ -9,19 +9,18 @@ from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
 from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 
 
 class Rom:
-    def __init__(
-        self, name: str, data_width: int, values_as_unsigned_integers: list[int]
-    ):
+    def __init__(self, name: str, data_width: int, values_as_integers: list[int]):
         self._name = name
-        number_of_values = len(values_as_unsigned_integers)
+        self._data_width = data_width
+        number_of_values = len(values_as_integers)
         self._address_width = self._bits_required_to_address_n_values(number_of_values)
         self._values = self._append_zeros_to_fill_addressable_memory(
-            values_as_unsigned_integers
+            self._values_to_unsigned_integers(values_as_integers)
         )
-        self._data_width = data_width
 
     def save_to(self, destination: Path):
         config = TemplateConfig(
@@ -37,6 +36,10 @@ class Rom:
         )
         expander = TemplateExpander(config)
         destination.as_file(".vhd").write_text(expander.lines())
+
+    def _values_to_unsigned_integers(self, values: list[int]) -> list[int]:
+        to_uint = partial(to_unsigned, total_bits=self._data_width)
+        return list(map(to_uint, values))
 
     def _rom_values(self) -> str:
         values = [self._format_string_for_rom_values().format(x) for x in self._values]

@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Optional
 
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
@@ -9,6 +10,7 @@ from elasticai.creator.hdl.design_base.ports import (
 )
 from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
+from elasticai.creator.hdl.vhdl.designs.rom import Rom
 
 
 class FPLinear1d(Design):
@@ -23,6 +25,8 @@ class FPLinear1d(Design):
         out_feature_num: int,
         total_bits: int,
         frac_bits: int,
+        weights: list[list[int]],
+        bias: list[int],
         work_library_name: str = "work",
         resource_option: str = "auto",
         name: Optional[str] = None,
@@ -36,6 +40,8 @@ class FPLinear1d(Design):
             x_count=in_feature_num,
             y_count=out_feature_num,
         )
+        self.weights = weights
+        self.bias = bias
         self.in_feature_num = in_feature_num
         self.out_feature_num = out_feature_num
         self.work_library_name = work_library_name
@@ -58,14 +64,38 @@ class FPLinear1d(Design):
             )
         )
 
+    @staticmethod
+    def _flatten_params(params: list[list[int]]) -> list[int]:
+        return list(chain(*params))
+
     def save_to(self, destination: Path):
+        rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
+
         template = Template(
             base_name="fp_linear_1d", package=module_to_package(self.__module__)
         )
         template.update_parameters(
             layer_name=self.name,
+            weights_rom_name=rom_name["weights"],
+            bias_rom_name=rom_name["bias"],
             work_library_name=self.work_library_name,
             resource_option=f'"{self.resource_option}"',
             **self._template_parameters(),
         )
-        destination.as_file(f".vhd").write_text(template.lines())
+        destination.create_subpath(self.name).as_file(f".vhd").write_text(
+            template.lines()
+        )
+
+        weights_rom = Rom(
+            name=rom_name["weights"],
+            data_width=self.data_width,
+            values_as_integers=self._flatten_params(self.weights),
+        )
+        weights_rom.save_to(destination.create_subpath(rom_name["weights"]))
+
+        bias_rom = Rom(
+            name=rom_name["bias"],
+            data_width=self.data_width,
+            values_as_integers=self.bias,
+        )
+        bias_rom.save_to(destination.create_subpath(rom_name["bias"]))
