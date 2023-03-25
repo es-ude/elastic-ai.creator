@@ -30,10 +30,10 @@ class FPLSTMCell(Design):
         frac_bits: int,
         lower_bound_for_hard_sigmoid: int,
         upper_bound_for_hard_sigmoid: int,
-        w_ih: list[list[list[float]]],
-        w_hh: list[list[list[float]]],
-        b_ih: list[list[float]],
-        b_hh: list[list[float]],
+        w_ih: list[list[list[int]]],
+        w_hh: list[list[list[int]]],
+        b_ih: list[list[int]],
+        b_hh: list[list[int]],
     ):
         super().__init__(
             name=name,
