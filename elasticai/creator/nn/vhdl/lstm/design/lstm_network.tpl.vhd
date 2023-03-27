@@ -6,7 +6,7 @@ library xil_defaultlib;
 
 entity lstm_network is
     generic (
-        DATA_WIDTH  : integer := $data_width;    -- that fixed point data has 16bits
+        DATA_WIDTH  : integer := ${data_width};    -- that fixed point data has 16bits
         FRAC_WIDTH  : integer := ${frac_width};     -- and 8bits is for the factional part
         IN_ADDR_WIDTH  : integer := ${in_addr_width};     -- supports up to 16 inputs
 

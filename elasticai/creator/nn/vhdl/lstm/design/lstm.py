@@ -16,15 +16,6 @@ from elasticai.creator.nn.vhdl.fp_linear_1d.design import FPLinear1d
 
 
 class LSTMNetworkDesign(Design):
-    def save_to(self, destination: "Path"):
-        self._lstm.save_to(destination.create_subpath("lstm_cell"))
-        for index, layer in enumerate(self._linear_layers):
-            layer.save_to(destination.create_subpath(f"fp_linear_1d_{index}"))
-        expander = TemplateExpander(self.config)
-        destination.create_subpath("lstm_network").as_file(".vhd").write_text(
-            expander.lines()
-        )
-
     def __init__(
         self,
         lstm: Design,
@@ -33,12 +24,10 @@ class LSTMNetworkDesign(Design):
         frac_bits: int,
         hidden_size: int,
         input_size: int,
-    ):
+    ) -> None:
         super().__init__(name="lstm_network")
         self._linear_layers = linear_layers
-        signal = partial(Signal)
         self._lstm = lstm
-        ctrl_signal = partial(Signal, width=0)
         self.config = TemplateConfig(
             module_to_package(self.__module__),
             file_name="lstm_network.tpl.vhd",
@@ -59,20 +48,31 @@ class LSTMNetworkDesign(Design):
                 in_addr_width="4",
             ),
         )
+
+        ctrl_signal = partial(Signal, width=0)
         self._port = Port(
             incoming=[
                 std_signals.clock(),
                 std_signals.enable(),
                 ctrl_signal("x_we"),
-                signal("x_in", lstm.port["x_data"].width),
-                signal("addr_in", lstm.port["h_out_addr"].width),
+                Signal("x_in", width=lstm.port["x_data"].width),
+                Signal("addr_in", width=lstm.port["h_out_addr"].width),
             ],
             outgoing=[
-                ctrl_signal("done"),
-                signal("d_out", lstm.port["h_out_data"].width),
+                std_signals.done(),
+                Signal("d_out", width=lstm.port["h_out_data"].width),
             ],
         )
 
     @property
     def port(self) -> Port:
         return self._port
+
+    def save_to(self, destination: Path) -> None:
+        self._lstm.save_to(destination.create_subpath("lstm_cell"))
+        for index, layer in enumerate(self._linear_layers):
+            layer.save_to(destination.create_subpath(f"fp_linear_1d_{index}"))
+        expander = TemplateExpander(self.config)
+        destination.create_subpath("lstm_network").as_file(".vhd").write_text(
+            expander.lines()
+        )

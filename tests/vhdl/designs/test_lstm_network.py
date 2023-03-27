@@ -257,7 +257,7 @@ def test_saves_all_necessary_subdesign_files(lstm_destination):
             (
                 "hard_sigmoid",
                 "hard_tanh",
-                "lstm_cell_dual_port_2_clock_ram",
+                "dual_port_2_clock_ram_lstm_cell",
                 "lstm_cell",
             ),
         )
