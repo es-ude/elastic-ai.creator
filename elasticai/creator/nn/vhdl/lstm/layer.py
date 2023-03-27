@@ -14,8 +14,8 @@ from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.nn.vhdl.fp_linear_1d.design import (
     FPLinear1d as _FPLinear1dDesign,
 )
-from elasticai.creator.nn.vhdl.lstm.design import LSTMNetworkDesign
-from elasticai.creator.nn.vhdl.lstm.fp_lstm_cell import FPLSTMCell
+from elasticai.creator.nn.vhdl.lstm.design.fp_lstm_cell import FPLSTMCell
+from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
 from elasticai.creator.nn.vhdl.module import Module
 
 

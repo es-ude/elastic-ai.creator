@@ -19,6 +19,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
 from elasticai.creator.nn.vhdl.lstm.layer import (
     FixedPointLSTMWithHardActivations as LSTM,
 )
@@ -28,7 +29,7 @@ from elasticai.creator.nn.vhdl.lstm.layer import LSTMNetwork
 class ExpectedCode:
     def __init__(self, name: str):
         self.config = TemplateConfig(
-            package=module_to_package(LSTM.__module__),
+            package=module_to_package(LSTMNetworkDesign.__module__),
             file_name=name,
             parameters={},
         )
@@ -314,7 +315,7 @@ def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[s
     )
     template = TemplateExpander(
         TemplateConfig(
-            module_to_package(LSTM.__module__),
+            module_to_package(Rom.__module__),
             file_name="rom.tpl.vhd",
             parameters=params,
         ),
