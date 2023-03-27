@@ -2,21 +2,15 @@ from abc import abstractmethod
 from typing import Iterable, Protocol
 
 
-class Translatable(Protocol):
+class File(Protocol):
     @abstractmethod
-    def translate(self) -> "Saveable":
-        ...
-
-
-class Saveable(Protocol):
-    @abstractmethod
-    def save_to(self, destination: "Path"):
+    def write_text(self, text: Iterable[str]) -> None:
         ...
 
 
 class Path(Protocol):
     @abstractmethod
-    def as_file(self, suffix: str) -> "File":
+    def as_file(self, suffix: str) -> File:
         ...
 
     @abstractmethod
@@ -24,7 +18,13 @@ class Path(Protocol):
         ...
 
 
-class File(Protocol):
+class Saveable(Protocol):
     @abstractmethod
-    def write_text(self, text: Iterable[str]) -> None:
+    def save_to(self, destination: Path) -> None:
+        ...
+
+
+class Translatable(Protocol):
+    @abstractmethod
+    def translate(self) -> Saveable:
         ...
