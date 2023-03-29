@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from copy import copy
 from functools import partial
 from typing import Any, cast
@@ -112,26 +113,14 @@ class FPLSTMCell(Design):
             ],
         )
 
-    def _build_weights(self) -> tuple[tuple[list, ...], tuple[list, ...]]:
-        weights = np.concatenate((self.weights_ih, self.weights_hh), axis=1)
-        weights = np.reshape(weights, (4, -1))
-        w_i, w_f, w_g, w_o = weights.reshape(4, -1).tolist()
-
-        bias = np.add(self.biases_ih, self.biases_hh)
-        bias = np.reshape(bias, (4, -1))
-        b_i, b_f, b_g, b_o = bias.tolist()
-
-        final_weights = (w_i, w_f, w_g, w_o)
-        final_biases = (b_i, b_f, b_g, b_o)
-
-        return final_weights, final_biases
-
     def save_to(self, destination: Path) -> None:
         weights, biases = self._build_weights()
-        write_files = partial(self._write_files, destination=destination)
-        write_files(names=("wi", "wf", "wg", "wo"), parameters=weights)
-        write_files(names=("bi", "bf", "bg", "bo"), parameters=biases)
 
+        self._save_roms(
+            destination=destination,
+            names=("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo"),
+            parameters=[*weights, *biases],
+        )
         self._save_dual_port_double_clock_ram(destination)
         self._save_hardtanh(destination)
         self._save_sigmoid(destination)
@@ -141,16 +130,26 @@ class FPLSTMCell(Design):
             expander.lines()
         )
 
-    def _write_files(
-        self, destination: Path, names: tuple[str, ...], parameters: Any
+    def _build_weights(self) -> tuple[list[list], list[list]]:
+        weights = np.concatenate((self.weights_ih, self.weights_hh), axis=1)
+        w_i, w_f, w_g, w_o = weights.reshape(4, -1).tolist()
+
+        bias = np.add(self.biases_ih, self.biases_hh)
+        b_i, b_f, b_g, b_o = bias.reshape(4, -1).tolist()
+
+        return [w_i, w_f, w_g, w_o], [b_i, b_f, b_g, b_o]
+
+    def _save_roms(
+        self, destination: Path, names: Iterable[str], parameters: Iterable[Any]
     ) -> None:
-        for values, name in zip(parameters, names):
+        suffix = f"_rom_{self.name}"
+        for name, values in zip(names, parameters):
             rom = Rom(
-                name=f"rom_{name}_lstm_cell",
-                values_as_integers=values,
+                name=name + suffix,
                 data_width=self.total_bits,
+                values_as_integers=values,
             )
-            rom.save_to(destination.create_subpath(f"{name}_rom"))
+            rom.save_to(destination.create_subpath(name + suffix))
 
     def _save_sigmoid(self, destination: Path) -> None:
         sigmoid_destination = destination.create_subpath("hard_sigmoid")

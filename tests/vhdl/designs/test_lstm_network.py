@@ -172,7 +172,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
         (input_size + hidden_size) * hidden_size
     )
     expected_rom = Rom(
-        name="rom_wi_lstm_cell",
+        name="wi_rom_lstm_cell",
         data_width=total_bits,
         values_as_integers=[0] * 2**rom_address_width,
     )
@@ -192,7 +192,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
     design = model.translate()
     design.save_to(destination)
 
-    actual = destination["wi_rom"].text
+    actual = destination["wi_rom_lstm_cell"].text
     expected = destination_for_expected_rom["rom"].text
     assert actual == expected
 
@@ -222,7 +222,7 @@ def test_wi_rom_file_contains_20_ones_and_12_zeros_for_input_size_1_and_hidden_s
     rom_address_width = calculate_address_width(
         (input_size + hidden_size) * hidden_size
     )
-    actual = cast(InMemoryFile, destination.children["wi_rom"]).text
+    actual = cast(InMemoryFile, destination.children["wi_rom_lstm_cell"]).text
     values = []
     for _ in range((input_size + hidden_size) * hidden_size):
         value_of_one_with_n_bits_for_fraction = 1 << frac_bits
@@ -249,7 +249,9 @@ def test_saves_all_necessary_subdesign_files(lstm_destination):
     rom_suffixes = ("f", "i", "g", "o")
     weight_names = (f"w{suffix}" for suffix in rom_suffixes)
     biases_names = (f"b{suffix}" for suffix in rom_suffixes)
-    rom_parameter_names = (f"{name}_rom" for name in chain(weight_names, biases_names))
+    rom_parameter_names = (
+        f"{name}_rom_lstm_cell" for name in chain(weight_names, biases_names)
+    )
     expected_file_names = [
         f"{name}.vhd"
         for name in chain(
@@ -311,7 +313,7 @@ def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[s
         rom_value=rom_value,
         rom_addr_bitwidth=str(rom_address_width),
         rom_data_bitwidth=str(total_bits),
-        name="rom_wi_lstm_cell",
+        name="wi_rom_lstm_cell",
     )
     template = TemplateExpander(
         TemplateConfig(
