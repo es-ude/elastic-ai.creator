@@ -1,6 +1,6 @@
 import os
 from pathlib import Path as _PyPath
-from typing import Iterable, Optional
+from typing import Iterable
 
 from elasticai.creator.hdl.translatable import File, Path
 
