@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.33.3 (2023-04-06)
+### Fix
+* Remove DualPort2ClockRam design ([`f9224c6`](https://github.com/es-ude/elastic-ai.creator/commit/f9224c6809b3a6f72bfe0405419de494b099b17c))
+* Set correct rom names ([`9570826`](https://github.com/es-ude/elastic-ai.creator/commit/95708269900ca99b79da9ba37078f593724e5d17))
+
+### Documentation
+* Remove deprecated documentation ([`11b9945`](https://github.com/es-ude/elastic-ai.creator/commit/11b9945bf3b6bf96899a09751963a93eb98d846d))
+
 ## v0.33.2 (2023-03-23)
 ### Fix
 * Small import fix ([`07d2e29`](https://github.com/es-ude/elastic-ai.creator/commit/07d2e29c36e60d35066d2145782223aa42d64519))
