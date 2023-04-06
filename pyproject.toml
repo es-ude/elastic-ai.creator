@@ -14,6 +14,7 @@ python = "~3.10"
 torch = "^1.11"
 numpy = "^1.23.0"
 setuptools = "^67.5.1"
+mypy = "^1.1.1"
 
 
 [tool.poetry.dev-dependencies]
