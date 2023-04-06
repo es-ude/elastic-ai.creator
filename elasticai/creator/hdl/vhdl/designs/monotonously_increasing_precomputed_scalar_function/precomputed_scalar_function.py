@@ -9,7 +9,6 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
 
 class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
@@ -56,14 +55,18 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         pairs = list(self._io_pairs.items())
         for input, output in pairs[0:1]:
             process_content.append(
-                f"if x <= {input} then y <= to_signed({output}, y'length);"
+                f"if signed_x <= {input} then signed_y <= to_signed({output},"
+                f" {self._width});"
             )
         for input, output in pairs[1:-1]:
             process_content.append(
-                f"if x <= {input} then y <= to_signed({output}, y'length);"
+                f"if signed_x <= {input} then signed_y <= to_signed({output},"
+                f" {self._width});"
             )
         for _, output in pairs[-2:-1]:
-            process_content.append("else y <= to_signed({output}, y'length);\nend if;")
+            process_content.append(
+                f"else signed_y <= to_signed({output}, {self._width});\nend if;"
+            )
         self._template_config.parameters.update(
             process_content=process_content, name=self.name, data_width=str(self._width)
         )
