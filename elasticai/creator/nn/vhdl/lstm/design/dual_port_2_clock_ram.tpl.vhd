@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 
 USE std.textio.all;
 
-entity ${name} is
+entity dual_port_2_clock_ram_${name} is
 generic (
     RAM_WIDTH : integer := 64;                      -- Specify RAM data width
     RAM_DEPTH_WIDTH : integer := 8;                    -- Specify RAM depth (number of entries)
@@ -35,9 +35,9 @@ port (
         doutb : out std_logic_vector(RAM_WIDTH-1 downto 0)   			  -- RAM output data
     );
 
-end ${name};
+end dual_port_2_clock_ram_${name};
 
-architecture rtl of ${name} is
+architecture rtl of dual_port_2_clock_ram_${name} is
 
 constant C_RAM_WIDTH : integer := RAM_WIDTH;
 constant C_RAM_DEPTH : integer := 2**RAM_DEPTH_WIDTH;

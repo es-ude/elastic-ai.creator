@@ -20,9 +20,6 @@ from elasticai.creator.hdl.translatable import Path
 from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 from elasticai.creator.hdl.vhdl.designs import HardSigmoid
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
-from elasticai.creator.nn.vhdl.lstm.design.dual_port_2_clock_ram import (
-    DualPort2ClockRam,
-)
 from elasticai.creator.nn.vhdl.lstm.design.fp_hard_tanh import FPHardTanh
 
 
@@ -170,7 +167,13 @@ class FPLSTMCell(Design):
         hardtanh.save_to(hardtanh_destination)
 
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
-        name = f"dual_port_2_clock_ram_{self.name}"
-        ram_destination = destination.create_subpath(name)
-        ram = DualPort2ClockRam(name=name)
-        ram.save_to(ram_destination)
+        template_configuration = TemplateConfig(
+            file_name="dual_port_2_clock_ram.tpl.vhd",
+            package=module_to_package(self.__module__),
+            parameters=dict(name=self.name),
+        )
+        template_expansion = TemplateExpander(template_configuration)
+
+        destination.create_subpath(f"dual_port_2_clock_ram_{self.name}").as_file(
+            ".vhd"
+        ).write_text(template_expansion.lines())
