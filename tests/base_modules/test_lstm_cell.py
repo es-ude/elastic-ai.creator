@@ -3,9 +3,9 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.nn.arithmetics import Arithmetics
-from elasticai.creator.nn.float_arithmetics import FloatArithmetics
-from elasticai.creator.nn.lstm_cell import LSTMCell
+from elasticai.creator.base_modules.arithmetics import Arithmetics
+from elasticai.creator.base_modules.float_arithmetics import FloatArithmetics
+from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from tests.tensor_test_case import TensorTestCase
 
 

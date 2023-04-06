@@ -11,9 +11,9 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.in_memory_path import InMemoryPath
-from elasticai.creator.translatable_modules.vhdl.fp_hard_sigmoid import FPHardSigmoid
-from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
-from elasticai.creator.translatable_modules.vhdl.sequential import Sequential
+from elasticai.creator.nn.vhdl.fp_hard_sigmoid import FPHardSigmoid
+from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.nn.vhdl.sequential import Sequential
 
 
 class SequentialTestCase(unittest.TestCase):

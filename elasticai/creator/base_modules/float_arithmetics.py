@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.nn.arithmetics import Arithmetics
+from elasticai.creator.base_modules.arithmetics import Arithmetics
 
 
 class FloatArithmetics(Arithmetics):

@@ -1,17 +1,15 @@
-from abc import abstractmethod
 from typing import Optional, Protocol
 
 import torch
 
-from elasticai.creator.nn._two_complement_fixed_point_config import FixedPointConfig
+from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid
+from elasticai.creator.base_modules.hard_tanh import HardTanh
+from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
-from elasticai.creator.nn.hard_sigmoid import HardSigmoid
-from elasticai.creator.nn.hard_tanh import HardTanh
-from elasticai.creator.nn.lstm_cell import LSTMCell
+from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 
 class LayerFactory(Protocol):
-    @abstractmethod
     def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
         ...
 
@@ -67,40 +65,3 @@ class LSTM(torch.nn.Module):
         # TODO: check whether unsqueeze dimension is actually consistent with self.batch_first being true or false
         hidden_state, cell_state = state[0].unsqueeze(0), state[1].unsqueeze(0)
         return result, (hidden_state, cell_state)
-
-
-class FixedPointLSTMWithHardActivations(LSTM):
-    def __init__(
-        self,
-        total_bits: int,
-        frac_bits: int,
-        input_size: int,
-        hidden_size: int,
-        batch_first: bool,
-        bias: bool = True,
-    ) -> None:
-        fp_config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-
-        class Layers:
-            def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
-                return LSTMCell(
-                    arithmetics=FixedPointArithmetics(config=fp_config),
-                    sigmoid_factory=HardSigmoid,
-                    tanh_factory=HardTanh,
-                    input_size=input_size,
-                    hidden_size=hidden_size,
-                    bias=bias,
-                )
-
-        super().__init__(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            bias=bias,
-            batch_first=batch_first,
-            layers=Layers(),
-        )
-        self._fp_config = fp_config
-
-    @property
-    def fixed_point_config(self) -> FixedPointConfig:
-        return self._fp_config

@@ -18,17 +18,18 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.translatable_modules.vhdl.fp_linear_1d import FPLinear1d
-from elasticai.creator.translatable_modules.vhdl.lstm.lstm import (
+from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
+from elasticai.creator.nn.vhdl.lstm.layer import (
     FixedPointLSTMWithHardActivations as LSTM,
 )
-from elasticai.creator.translatable_modules.vhdl.lstm.lstm import LSTMNetwork
+from elasticai.creator.nn.vhdl.lstm.layer import LSTMNetwork
 
 
 class ExpectedCode:
     def __init__(self, name: str):
         self.config = TemplateConfig(
-            package=module_to_package(LSTM.__module__),
+            package=module_to_package(LSTMNetworkDesign.__module__),
             file_name=name,
             parameters={},
         )
@@ -69,6 +70,7 @@ def generate_lstm_network_and_expected_code(
                 frac_bits=frac_bits,
                 input_size=input_size,
                 hidden_size=hidden_size,
+                bias=True,
             ),
             FPLinear1d(
                 in_features=hidden_size,
@@ -129,6 +131,7 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
                 frac_bits=frac_bits,
                 input_size=input_size,
                 hidden_size=hidden_size,
+                bias=True,
             ),
             FPLinear1d(
                 in_features=hidden_size,
@@ -169,7 +172,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
         (input_size + hidden_size) * hidden_size
     )
     expected_rom = Rom(
-        name="rom_wi_lstm_cell",
+        name="wi_rom_lstm_cell",
         data_width=total_bits,
         values_as_integers=[0] * 2**rom_address_width,
     )
@@ -180,6 +183,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
         frac_bits=4,
         input_size=input_size,
         hidden_size=hidden_size,
+        bias=True,
     )
     model.eval()
     with torch.no_grad():
@@ -188,7 +192,7 @@ def test_wi_rom_file_contains_32_zeros_for_input_size_1_and_hidden_size_4(
     design = model.translate()
     design.save_to(destination)
 
-    actual = destination["wi_rom"].text
+    actual = destination["wi_rom_lstm_cell"].text
     expected = destination_for_expected_rom["rom"].text
     assert actual == expected
 
@@ -206,6 +210,7 @@ def test_wi_rom_file_contains_20_ones_and_12_zeros_for_input_size_1_and_hidden_s
         frac_bits=frac_bits,
         input_size=input_size,
         hidden_size=hidden_size,
+        bias=True,
     )
     model.eval()
     with torch.no_grad():
@@ -217,7 +222,7 @@ def test_wi_rom_file_contains_20_ones_and_12_zeros_for_input_size_1_and_hidden_s
     rom_address_width = calculate_address_width(
         (input_size + hidden_size) * hidden_size
     )
-    actual = cast(InMemoryFile, destination.children["wi_rom"]).text
+    actual = cast(InMemoryFile, destination.children["wi_rom_lstm_cell"]).text
     values = []
     for _ in range((input_size + hidden_size) * hidden_size):
         value_of_one_with_n_bits_for_fraction = 1 << frac_bits
@@ -238,12 +243,15 @@ def test_saves_all_necessary_subdesign_files(lstm_destination):
         frac_bits=frac_bits,
         input_size=input_size,
         hidden_size=hidden_size,
+        bias=True,
     )
     model.translate().save_to(lstm_destination)
     rom_suffixes = ("f", "i", "g", "o")
     weight_names = (f"w{suffix}" for suffix in rom_suffixes)
     biases_names = (f"b{suffix}" for suffix in rom_suffixes)
-    rom_parameter_names = (f"{name}_rom" for name in chain(weight_names, biases_names))
+    rom_parameter_names = (
+        f"{name}_rom_lstm_cell" for name in chain(weight_names, biases_names)
+    )
     expected_file_names = [
         f"{name}.vhd"
         for name in chain(
@@ -251,7 +259,7 @@ def test_saves_all_necessary_subdesign_files(lstm_destination):
             (
                 "hard_sigmoid",
                 "hard_tanh",
-                "lstm_cell_dual_port_2_clock_ram",
+                "dual_port_2_clock_ram_lstm_cell",
                 "lstm_cell",
             ),
         )
@@ -274,6 +282,7 @@ def lstm_network_with_single_linear_layer():
                 frac_bits=8,
                 input_size=1,
                 hidden_size=4,
+                bias=True,
             ),
             FPLinear1d(
                 in_features=4, out_features=1, total_bits=16, frac_bits=8, bias=True
@@ -304,11 +313,11 @@ def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[s
         rom_value=rom_value,
         rom_addr_bitwidth=str(rom_address_width),
         rom_data_bitwidth=str(total_bits),
-        name="rom_wi_lstm_cell",
+        name="wi_rom_lstm_cell",
     )
     template = TemplateExpander(
         TemplateConfig(
-            module_to_package(LSTM.__module__),
+            module_to_package(Rom.__module__),
             file_name="rom.tpl.vhd",
             parameters=params,
         ),
