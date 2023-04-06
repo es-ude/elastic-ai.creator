@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.34.0 (2023-04-06)
+### Feature
+* Make precomputed scalar functions use unified interface ([`6b59da5`](https://github.com/es-ude/elastic-ai.creator/commit/6b59da53a896db7676119de2f74129bcc47287ed))
+* Binary_arithmetics ([`54e38d5`](https://github.com/es-ude/elastic-ai.creator/commit/54e38d57f27db2d8d0baff5fee3c35a91e26ecd9))
+
+### Fix
+* Correct import paths ([`169f868`](https://github.com/es-ude/elastic-ai.creator/commit/169f8686108845702f01482170df53e3fabbfe8b))
+
 ## v0.33.3 (2023-04-06)
 ### Fix
 * Remove DualPort2ClockRam design ([`f9224c6`](https://github.com/es-ude/elastic-ai.creator/commit/f9224c6809b3a6f72bfe0405419de494b099b17c))
