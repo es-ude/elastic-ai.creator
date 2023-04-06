@@ -1,7 +1,7 @@
 import torch
 
-from elasticai.creator.nn.arithmetics import Arithmetics
-from elasticai.creator.nn.functional import binarize
+from elasticai.creator.base_modules.arithmetics import Arithmetics
+from elasticai.creator.base_modules.functional import binarize
 
 
 class BinaryArithmetics(Arithmetics):
