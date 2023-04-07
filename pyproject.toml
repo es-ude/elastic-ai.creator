@@ -10,7 +10,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 torch = "^1.11"
 numpy = "^1.23.0"
 setuptools = "^67.5.1"
