@@ -65,8 +65,8 @@ def signal_definition(
 ):
     def vector_signal(name: str, width) -> str:
         return (
-            f"signal {name} : std_logic_vector({width - 1} downto 0) := ('other' =>"
-            " '0');"
+            f"signal {name} : std_logic_vector({width - 1} downto 0)"
+            " := (others => '0');"
         )
 
     def logic_signal(name: str) -> str:
