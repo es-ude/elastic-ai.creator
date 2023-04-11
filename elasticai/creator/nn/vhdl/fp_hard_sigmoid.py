@@ -3,6 +3,7 @@ from typing import Protocol
 
 from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid as _HardSigmoidLayer
 from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.translatable import Saveable
 from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.hard_sigmoid import (
     HardSigmoid,
 )
@@ -26,7 +27,10 @@ class FPHardSigmoid(_HardSigmoidLayer):
         super().__init__()
         self.ops = ops
 
-    def translate(self) -> Design:
+    def translate(self) -> Saveable:
+        return self.translate_to_vhdl(self.__class__.__name__.lower())
+
+    def translate_to_vhdl(self, name: str) -> Design:
         conf = FixedPointConfig(
             total_bits=self.ops.total_bits, frac_bits=self.ops.frac_bits
         )
