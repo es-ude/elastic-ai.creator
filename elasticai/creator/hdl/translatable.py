@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Iterable, Protocol
+from typing import Iterable, Optional, Protocol
 
 
 class File(Protocol):
@@ -26,5 +26,5 @@ class Saveable(Protocol):
 
 class Translatable(Protocol):
     @abstractmethod
-    def translate(self) -> Saveable:
+    def translate(self, name: Optional[str]) -> Saveable:
         ...

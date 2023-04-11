@@ -19,9 +19,12 @@ from elasticai.creator.nn.vhdl.sequential import Sequential
 class SequentialTestCase(unittest.TestCase):
     """
     Tests:
-      - add a layer with buffer
+      - replace fplinear1d with minimal layer that implements identity
+      - remove hardsigmoid cases from tests
+      - check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
+      - check that each of the above names corresponds to an existing generated subdesign
       - test each section (connections, instantiations, etc.) in isolation
-
+      - add a second layer with buffer
     """
 
     def test_empty_sequential(self):

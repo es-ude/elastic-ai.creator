@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from functools import partial
 from itertools import chain
 
@@ -44,30 +45,10 @@ class Sequential(Design):
         self._y_width = y_width
         self._y_address_width = y_address_width
         self._x_address_width = x_address_width
-        self._instances: dict[str, Design] = {}
-        self._names: dict[str, int] = {}
         self._library_name_for_instances = "work"
         self._architecture_name_for_instances = "rtl"
         self._autowirer = _AutoWirer
-        for design in sub_designs:
-            self._register_subdesign(design)
-
-    def _make_name_unique(self, name: str) -> str:
-        return f"i_{name}_{self._get_counter_for_name(name)}"
-
-    def _get_counter_for_name(self, name: str) -> int:
-        if name in self._names:
-            return self._names[name]
-        else:
-            return 0
-
-    def _increment_name_counter(self, name: str):
-        self._names[name] = 1 + self._get_counter_for_name(name)
-
-    def _register_subdesign(self, d: Design):
-        unique_name = self._make_name_unique(d.name)
-        self._instances[unique_name] = d
-        self._increment_name_counter(d.name)
+        self._subdesigns = sub_designs
 
     def _qualified_signal_name(self, instance: str, signal: str) -> str:
         return f"{instance}_{signal}"
@@ -89,19 +70,23 @@ class Sequential(Design):
         )
 
     def _save_subdesigns(self, destination: Path) -> None:
-        for name, design in self._instances.items():
-            design.save_to(destination.create_subpath(name))
+        for design in self._subdesigns:
+            design.save_to(destination.create_subpath(design.name))
 
     def _create_dataflow_nodes(self) -> list["_DataFlowNode"]:
         nodes: list[_DataFlowNode] = [
             _StartNode(x_width=self._x_width, y_address_width=self._y_address_width)
         ]
-        for instance, design in self._instances.items():
-            nodes.append(self._create_data_flow_node(instance, design))
+        for instance_name, design in self._instance_name_and_design_pairs():
+            nodes.append(self._create_data_flow_node(instance_name, design))
         nodes.append(
             _EndNode(y_width=self._y_width, x_address_width=self._x_address_width)
         )
         return nodes
+
+    def _instance_name_and_design_pairs(self) -> Iterator[tuple[str, Design]]:
+        for design in self._subdesigns:
+            yield f"i_{design.name}", design
 
     @staticmethod
     def _create_data_flow_node(instance: str, design: Design) -> "_DataFlowNode":
@@ -117,7 +102,7 @@ class Sequential(Design):
 
     def _generate_instantiations(self) -> list[str]:
         instantiations: list[str] = list()
-        for instance, design in self._instances.items():
+        for instance, design in self._instance_name_and_design_pairs():
             signal_map = {
                 signal.name: self._qualified_signal_name(instance, signal.name)
                 for signal in design.port
@@ -137,7 +122,7 @@ class Sequential(Design):
         return sorted(
             chain.from_iterable(
                 create_signal_definitions(f"{instance_id}_", instance.port.signals)
-                for instance_id, instance in self._instances.items()
+                for instance_id, instance in self._instance_name_and_design_pairs()
             )
         )
 

@@ -55,7 +55,7 @@ class LSTMNetworkDesign(Design):
                 std_signals.clock(),
                 std_signals.enable(),
                 ctrl_signal("x_we"),
-                Signal("x_in", width=lstm.port["x_data"].width),
+                Signal("x", width=lstm.port["x_data"].width),
                 Signal("addr_in", width=lstm.port["h_out_addr"].width),
             ],
             outgoing=[
