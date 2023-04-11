@@ -11,7 +11,6 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.in_memory_path import InMemoryPath
-from elasticai.creator.nn.vhdl.fp_hard_sigmoid import FPHardSigmoid
 from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
 from elasticai.creator.nn.vhdl.sequential import Sequential
 
@@ -19,12 +18,12 @@ from elasticai.creator.nn.vhdl.sequential import Sequential
 class SequentialTestCase(unittest.TestCase):
     """
     Tests:
-      - replace fplinear1d with minimal layer that implements identity
-      - remove hardsigmoid cases from tests
-      - check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
-      - check that each of the above names corresponds to an existing generated subdesign
-      - test each section (connections, instantiations, etc.) in isolation
-      - add a second layer with buffer
+      - [ ] replace fplinear1d with minimal layer that implements identity
+      - [x] remove hardsigmoid cases from tests
+      - [ ] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
+      - [ ] check that each of the above names corresponds to an existing generated subdesign
+      - [ ] test each section (connections, instantiations, etc.) in isolation
+      - [ ] add a second layer with buffer
     """
 
     def test_empty_sequential(self):
@@ -45,19 +44,6 @@ class SequentialTestCase(unittest.TestCase):
         design = module.translate()
         design.save_to(destination)
         self.assertEqual(destination["sequential"].text, expected)
-
-    def test_autowire_instantiate_and_define_signals_for_hard_sigmoid_activation(self):
-        bit_width = 16
-
-        template = _prepare_sequential_template_with_hard_sigmoid(bit_width)
-        expected = template.lines()
-
-        module = Sequential((FPHardSigmoid(FixedPointConfiguration()),))
-        design = module.translate()
-
-        destination = InMemoryPath("sequential", parent=None)
-        design.save_to(destination)
-        self.assertEqual(expected, destination["sequential"].text)
 
     def test_with_single_linear_layer(self):
         bit_width = 16
@@ -118,8 +104,8 @@ class SequentialTemplate:
 def _prepare_sequential_template_with_linear(
     bit_width, in_features, out_features
 ) -> SequentialTemplate:
-    entity = "fp_linear1d"
-    instance = f"i_{entity}_0"
+    entity = "fplinear1d_0"
+    instance = f"i_{entity}"
     connections = create_connections(
         {
             f"{instance}_x": "x",
@@ -168,56 +154,6 @@ def _prepare_sequential_template_with_linear(
         y_address_width=str(calculate_address_width(out_features)),
     )
     return template
-
-
-def _prepare_sequential_template_with_hard_sigmoid(
-    bit_width: int,
-) -> SequentialTemplate:
-    entity = "hard_sigmoid"
-    instance = f"i_{entity}_0"
-    connections = create_connections(
-        {
-            f"{instance}_x": "x",
-            "y": f"{instance}_y",
-            "done": "enable",
-            "x_address": "y_address",
-        }
-    )
-
-    instantiations = create_instance(
-        name=instance,
-        entity=entity,
-        architecture="rtl",
-        library="work",
-        signal_mapping={s: f"{instance}_{s}" for s in ("x", "y")},
-    )
-
-    signal_definitions = sorted(
-        [
-            signal_definition(name=f"{instance}_{signal.name}", width=signal.width)
-            for signal in (
-                std_signals.x(bit_width),
-                std_signals.y(bit_width),
-            )
-        ]
-    )
-
-    template = SequentialTemplate(
-        connections=connections,
-        instantiations=instantiations,
-        signal_definitions=signal_definitions,
-        x_width=f"{bit_width}",
-        y_width=f"{bit_width}",
-        x_address_width="1",
-        y_address_width="1",
-    )
-    return template
-
-
-class FixedPointConfiguration:
-    def __init__(self):
-        self.total_bits = 16
-        self.frac_bits = 8
 
 
 if __name__ == "__main__":

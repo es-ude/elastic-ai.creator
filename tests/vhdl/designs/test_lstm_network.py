@@ -314,6 +314,7 @@ def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[s
         rom_addr_bitwidth=str(rom_address_width),
         rom_data_bitwidth=str(total_bits),
         name="wi_rom_lstm_cell",
+        resource_option="auto",
     )
     template = TemplateExpander(
         TemplateConfig(
