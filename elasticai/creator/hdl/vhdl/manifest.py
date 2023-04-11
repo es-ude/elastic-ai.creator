@@ -1,7 +1,7 @@
 """
-This module provides a parser for design_meta.toml files.
+This module provides a parser for layer.toml manifest files.
 
-this is an example of such a meta file:
+this is an example of such a manifest file:
 
 ```toml
 [elasticai.creator]
@@ -21,24 +21,37 @@ Eg.
 pass_through = ["x_address", "y_address", "done"]
 ```
 to specify that the generated base template should implement passing through the signals `x_address`, `y_address` and `done`.
-TODO: how would we allow designers to specify more than one protocol?
-TODO: rename design_meta.toml to layer_meta.toml?
-TODO: how about we only require a folder containing a `layer.toml`. That file specifies the entry point for loading/using a layer.
 """
 
 from pathlib import Path
 import tomllib
 from dataclasses import dataclass
+from typing import Any
+
+from elasticai.creator.hdl.vhdl.base_template_generator import BaseTemplateGenerator
 
 
 @dataclass
-class DesignMeta:
+class Manifest:
     version: str
-    protocol: str
+    layers: dict
 
     @staticmethod
-    def load(path: Path) -> "DesignMeta":
+    def parse(text: str) -> "Manifest":
+        data = tomllib.loads(text)
+        return Manifest._create_manifest(data)
+
+    @staticmethod
+    def _create_manifest(data) -> "Manifest":
+        data = Manifest._get_creator_data(data)
+        return Manifest(version=data["version"], layers=data["layers"])
+
+    @staticmethod
+    def _get_creator_data(data):
+        return data["elasticai"]["creator"]
+
+    @staticmethod
+    def load(path: Path) -> "Manifest":
         with open(path, "rb") as f:
             data = tomllib.load(f)
-        data = data["elasticai"]["creator"]
-        return DesignMeta(version=data["version"], protocol=data["design"]["protocol"])
+        return Manifest._create_manifest(data)

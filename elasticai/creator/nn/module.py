@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol, TypeVar
 
-from elasticai.creator.hdl.translatable import Saveable
+from elasticai.creator.hdl.translatable import Savable
 
-T = TypeVar("T", bound=Saveable, covariant=True)
+T = TypeVar("T", bound=Savable, covariant=True)
 
 
 class Tensor(Protocol):
