@@ -1,33 +1,64 @@
-import re
+import pytest
+from pytest_bdd import given, parsers, scenario, then, when
 
 from elasticai.creator.hdl.vhdl.base_template_generator import BaseTemplateGenerator
-from elasticai.creator.hdl.vhdl.manifest import Manifest
+from elasticai.creator.hdl.vhdl.manifest import InvalidManifestConfig, Manifest
 
 
-def test_generated_template_passes_through_x_signal():
-    manifest_content = """[elasticai.creator]
+@given("a manifest content", target_fixture="manifest_lines")
+def manifest_lines():
+    return """[elasticai.creator]
 version = "==0.34"
 
-[[elasticai.creator.layers]]
-name = "MyLayer"
+[elasticai.creator.layer]
+""".splitlines()
 
-[elasticai.creator.layers.flavor]
-name = "hw_block"
-pass_through = ["x"]
-"""
-    parsed_manifest = Manifest.parse(manifest_content)
-    my_layer_manifest = parsed_manifest.layers[0]
+
+@given(parsers.parse("it specifies {line}"))
+def add_line(manifest_lines, line):
+    return manifest_lines.append(line)
+
+
+@given("i parse the manifest content", target_fixture="parsed_manifest")
+def parsed_manifest(manifest_lines):
+    return Manifest.parse("\n".join(manifest_lines))
+
+
+@when("i generate the template", target_fixture="template")
+def template(parsed_manifest):
     generator = BaseTemplateGenerator(
-        name=my_layer_manifest["name"],
-        pass_through=my_layer_manifest["flavor"]["pass_through"]
+        pass_through=parsed_manifest.layer["pass_through"],
     )
-    required_pass_through_line = r"^\s*y <- x;$"
-    occurrences = 0
-    for line in generator.generate().splitlines():
-        if re.match(required_pass_through_line, line):
-            occurrences += 1
-    assert occurrences == 1
+    return generator.generate().splitlines()
 
 
+@then(parsers.parse("it contains the line {line}"))
+def contains_lines(template, line):
+    lines = line.split(" and ")
+    assert template[22 : 22 + len(lines)] == lines
 
 
+@scenario("features/generate_template.feature", "Pass through x input signal")
+def test_pass_through_x():
+    pass
+
+
+@scenario("features/generate_template.feature", "Pass through y_address signal")
+def test_pass_through_y_address():
+    pass
+
+
+@scenario("features/generate_template.feature", "Pass through y_address and enable")
+def test_pass_through_y_address_and_enable():
+    pass
+
+
+@scenario("features/generate_template.feature", "Parsing incorrect pass_through values")
+def test_parsing_incorrect_pass_through_values():
+    pass
+
+
+@then("parsing the manifest throws an error")
+def parsing_manifest_throws_error(manifest_lines):
+    with pytest.raises(InvalidManifestConfig):
+        Manifest.parse("\n".join(manifest_lines))

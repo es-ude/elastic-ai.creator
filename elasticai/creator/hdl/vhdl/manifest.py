@@ -23,9 +23,9 @@ pass_through = ["x_address", "y_address", "done"]
 to specify that the generated base template should implement passing through the signals `x_address`, `y_address` and `done`.
 """
 
-from pathlib import Path
 import tomllib
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from elasticai.creator.hdl.vhdl.base_template_generator import BaseTemplateGenerator
@@ -34,7 +34,7 @@ from elasticai.creator.hdl.vhdl.base_template_generator import BaseTemplateGener
 @dataclass
 class Manifest:
     version: str
-    layers: dict
+    layer: dict
 
     @staticmethod
     def parse(text: str) -> "Manifest":
@@ -44,7 +44,16 @@ class Manifest:
     @staticmethod
     def _create_manifest(data) -> "Manifest":
         data = Manifest._get_creator_data(data)
-        return Manifest(version=data["version"], layers=data["layers"])
+        permitted_pass_through_values = {"x", "y_address", "enable"}
+        actual_pass_through_values = set(data["layer"]["pass_through"])
+        print(actual_pass_through_values)
+        print(permitted_pass_through_values.intersection(actual_pass_through_values))
+        if (
+            permitted_pass_through_values.intersection(actual_pass_through_values) == {}
+            and actual_pass_through_values != {}
+        ):
+            raise InvalidManifestConfig
+        return Manifest(version=data["version"], layer=data["layer"])
 
     @staticmethod
     def _get_creator_data(data):
@@ -55,3 +64,7 @@ class Manifest:
         with open(path, "rb") as f:
             data = tomllib.load(f)
         return Manifest._create_manifest(data)
+
+
+class InvalidManifestConfig(Exception):
+    pass

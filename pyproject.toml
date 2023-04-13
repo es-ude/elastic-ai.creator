@@ -34,6 +34,9 @@ setuptools = "^67.5.1"
 
 
 
+[tool.poetry.group.dev.dependencies]
+pytest-bdd = "^6.1.1"
+
 [tool.pylint]
 max-line-length = 88
 accept-no-raise-doc = "False"

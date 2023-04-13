@@ -20,4 +20,6 @@ architecture rtl of $name is
 
 begin
 
+$pass_through
+
 end rtl;
