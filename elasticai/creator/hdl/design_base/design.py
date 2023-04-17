@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Iterator
 
 from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.translatable import Saveable
+from elasticai.creator.hdl.translatable import Savable
 
 
 class Port:
@@ -43,7 +43,7 @@ class Port:
         yield from chain(self._incoming, self._outgoing)
 
 
-class Design(Saveable, ABC):
+class Design(Savable, ABC):
     def __init__(self, name: str):
         self.name = name
 

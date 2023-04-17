@@ -1,4 +1,5 @@
-from typing import cast
+from abc import abstractmethod
+from typing import Protocol, cast
 
 from torch.nn import Module as _torchModule
 from torch.nn import Sequential as torchSequential
@@ -8,7 +9,11 @@ from elasticai.creator.hdl.vhdl.designs.sequential import (
     Sequential as _SequentialDesign,
 )
 
-from .module import Module
+
+class Module(Protocol):
+    @abstractmethod
+    def translate(self) -> Design:
+        ...
 
 
 class Sequential(torchSequential):

@@ -10,8 +10,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.10"
-torch = "^1.11"
+python = "~3.11"
+torch = ">=1.11"
 numpy = "^1.23.0"
 setuptools = "^67.5.1"
 mypy = "^1.1.1"
@@ -33,6 +33,9 @@ setuptools = "^67.5.1"
 
 
 
+
+[tool.poetry.group.dev.dependencies]
+pytest-bdd = "^6.1.1"
 
 [tool.pylint]
 max-line-length = 88
