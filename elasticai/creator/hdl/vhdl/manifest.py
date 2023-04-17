@@ -11,12 +11,6 @@ version = "==0.34"
 
 With the `version` you need to specify which versions of the elastic-ai creator your
 `layer.py` is compatible with.
-Eg.
-```toml
-[elasticai.creator.layer]
-pass_through = ["x_address", "y_address", "enable"]
-```
-to specify that the generated base template should implement passing through the signals `x_address`, `y_address` and `enable`.
 """
 
 import tomllib
