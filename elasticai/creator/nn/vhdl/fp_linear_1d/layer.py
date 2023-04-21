@@ -2,7 +2,6 @@ from typing import Any, cast
 
 from elasticai.creator.base_modules.linear import Linear
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.hdl.savable import Savable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
@@ -28,10 +27,7 @@ class FPLinear1d(Linear):
             device=device,
         )
 
-    def translate(self) -> Savable:
-        return self.translate_to_vhdl(self.__class__.__name__.lower())
-
-    def translate_to_vhdl(self, name: str) -> Design:
+    def translate(self, name: str) -> Design:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))

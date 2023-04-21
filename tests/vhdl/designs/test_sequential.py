@@ -41,7 +41,7 @@ class SequentialTestCase(unittest.TestCase):
         )
         expected = template.lines()
         destination = InMemoryPath("sequential", parent=None)
-        design = module.translate()
+        design = module.translate("sequential")
         design.save_to(destination)
         self.assertEqual(destination["sequential"].text, expected)
 
@@ -66,7 +66,7 @@ class SequentialTestCase(unittest.TestCase):
                 )
             )
         )
-        design = module.translate()
+        design = module.translate("sequential")
         destination = InMemoryPath("sequential", parent=None)
         design.save_to(destination)
         self.assertEqual(expected, destination["sequential"].text)

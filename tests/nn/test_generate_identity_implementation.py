@@ -27,7 +27,7 @@ def identity_layer(input_features: int, bit_width: int) -> FPIdentity:
 
 @when("translating and saving hw implementation", target_fixture="generated_code")
 def generated_code(build_root: InMemoryPath, identity_layer: FPIdentity) -> list[str]:
-    savable = identity_layer.translate()
+    savable = identity_layer.translate("fpidentity")
     savable.save_to(build_root)
     identity_file = cast(InMemoryFile, build_root["fpidentity"])
     return identity_file.text

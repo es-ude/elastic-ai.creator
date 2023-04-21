@@ -82,7 +82,7 @@ def generate_lstm_network_and_expected_code(
         ]
     )
     destination = InMemoryPath("lstm_network", parent=None)
-    model.translate().save_to(destination)
+    model.translate("lstm_network").save_to(destination)
     expected = ExpectedLSTMNetworkCode()
     expected.config.parameters.update(
         data_width=f"{total_bits}",
@@ -99,7 +99,7 @@ def generate_lstm_network_and_expected_code(
         linear_out_features="1",
     )
     destination = InMemoryPath("lstm_network", parent=None)
-    model.translate().save_to(destination)
+    model.translate("lstm_network").save_to(destination)
     return destination["lstm_network"].text, expected.lines()
 
 
@@ -142,7 +142,7 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
             ),
         ]
     )
-    design = model.translate()
+    design = model.translate("lstm_cell")
     design.save_to(lstm_destination)
     lstm_cell_folder = cast(InMemoryPath, lstm_destination["lstm_cell"])
     lstm_cell_file = cast(InMemoryFile, lstm_cell_folder["lstm_cell"])
@@ -296,14 +296,14 @@ def test_saves_linear_layer_files(
     lstm_destination, lstm_network_with_single_linear_layer
 ):
     model = lstm_network_with_single_linear_layer
-    design = model.translate()
+    design = model.translate("fp_linear_1d_0")
     design.save_to(lstm_destination)
     assert "fp_linear_1d_0" in lstm_destination.children
 
 
 def test_connects_linear_layer(lstm_destination, lstm_network_with_single_linear_layer):
     model = lstm_network_with_single_linear_layer
-    design = model.translate()
+    design = model.translate("fp_linear_1d_0")
     design.save_to(lstm_destination)
 
 

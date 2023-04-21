@@ -1,38 +1,25 @@
-from abc import abstractmethod
 from collections.abc import Iterator
-from typing import Protocol, cast
+from typing import cast
 
-from torch.nn import Module as _torchModule
-from torch.nn import Sequential as torchSequential
+import torch
 
 from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.hdl.vhdl.designs.sequential import (
     Sequential as _SequentialDesign,
 )
 
-
-class Module(Protocol):
-    @abstractmethod
-    def translate(self) -> Design:
-        ...
-
-
-class TranslatableModule(Module, Protocol):
-    def translate_to_vhdl(self, name: str) -> Design:
-        ...
-
-
 # TODO: Implement abstract Translatable
 
 
-class Sequential(torchSequential):
-    def __init__(self, submodules: tuple[TranslatableModule, ...]):
-        super().__init__(*cast(tuple[_torchModule], submodules))
+class Sequential(Translatable, torch.nn.Sequential):
+    def __init__(self, submodules: tuple[Translatable, ...]):
+        super().__init__(*cast(tuple[torch.nn.Module, ...], submodules))
 
-    def translate(self) -> Design:
+    def translate(self, name: str) -> Design:
         registry = _Registry()
-        submodules: list[TranslatableModule] = [
-            cast(TranslatableModule, m) for m in self.children()
+        submodules: list[Translatable] = [
+            cast(Translatable, m) for m in self.children()
         ]
         for module in submodules:
             registry.register(module.__class__.__name__.lower(), module)
@@ -63,17 +50,13 @@ class Sequential(torchSequential):
             y_width=y_width,
             x_address_width=x_address_width,
             y_address_width=y_address_width,
+            # TODO: Add name
         )
-
-
-class TranslatableToDesign(Protocol):
-    def translate(self) -> Design:
-        ...
 
 
 class _Registry:
     def __init__(self) -> None:
-        self._nodes: dict[str, TranslatableModule] = {}
+        self._nodes: dict[str, Translatable] = {}
         self._name_counters: dict[str, int] = {}
 
     def _make_name_unique(self, name: str) -> str:
@@ -88,11 +71,11 @@ class _Registry:
     def _increment_name_counter(self, name: str):
         self._name_counters[name] = 1 + self._get_counter_for_name(name)
 
-    def register(self, name: str, d: TranslatableModule):
+    def register(self, name: str, d: Translatable):
         unique_name = self._make_name_unique(name)
         self._nodes[unique_name] = d
         self._increment_name_counter(name)
 
     def build_designs(self) -> Iterator[Design]:
         for name, module in self._nodes.items():
-            yield module.translate_to_vhdl(name)
+            yield module.translate(name)
