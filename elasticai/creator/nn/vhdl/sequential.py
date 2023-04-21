@@ -1,11 +1,10 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from typing import Protocol, cast
 
 from torch.nn import Module as _torchModule
 from torch.nn import Sequential as torchSequential
 
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.hdl.vhdl.designs.sequential import (
     Sequential as _SequentialDesign,
 )
@@ -16,6 +15,9 @@ from .module import Module
 class TranslatableModule(Module, Protocol):
     def translate_to_vhdl(self, name: str) -> Design:
         ...
+
+
+# TODO: Implement abstract Translatable
 
 
 class Sequential(torchSequential):
