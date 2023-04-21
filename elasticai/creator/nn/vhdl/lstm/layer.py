@@ -16,10 +16,9 @@ from elasticai.creator.nn.vhdl.fp_linear_1d.design import (
 )
 from elasticai.creator.nn.vhdl.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
-from elasticai.creator.nn.vhdl.module import Module
 
 
-class LSTMNetwork(torch.nn.Module, Module):
+class LSTMNetwork(torch.nn.Module):
     def __init__(self, layers: list[torch.nn.Module]):
         super().__init__()
         self.lstm = layers[0]
@@ -54,7 +53,7 @@ class LSTMNetwork(torch.nn.Module, Module):
         return self.layers(x)
 
 
-class FixedPointLSTMWithHardActivations(LSTM, Module):
+class FixedPointLSTMWithHardActivations(LSTM):
     def __init__(
         self,
         total_bits: int,

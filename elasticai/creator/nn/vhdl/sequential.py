@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from collections.abc import Iterator
 from typing import Protocol, cast
 
@@ -9,7 +10,11 @@ from elasticai.creator.hdl.vhdl.designs.sequential import (
     Sequential as _SequentialDesign,
 )
 
-from .module import Module
+
+class Module(Protocol):
+    @abstractmethod
+    def translate(self) -> Design:
+        ...
 
 
 class TranslatableModule(Module, Protocol):

@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.35.0 (2023-04-17)
+### Feature
+* Use fixed base template ([`432dfd9`](https://github.com/es-ude/elastic-ai.creator/commit/432dfd9518a0a33a7ba08cf95436f9472b274b52))
+* Generate template from manifest.toml ([`51276a0`](https://github.com/es-ude/elastic-ai.creator/commit/51276a01de5ff37bedc598f5c758e3dc681aa49c))
+* Generate first base template ([`a65d72e`](https://github.com/es-ude/elastic-ai.creator/commit/a65d72ea1ad2dd87a0443b56711d11ce321d14b6))
+
 ## v0.34.0 (2023-04-06)
 ### Feature
 * Make precomputed scalar functions use unified interface ([`6b59da5`](https://github.com/es-ude/elastic-ai.creator/commit/6b59da53a896db7676119de2f74129bcc47287ed))
