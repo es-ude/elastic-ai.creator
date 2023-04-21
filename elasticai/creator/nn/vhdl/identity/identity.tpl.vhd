@@ -17,11 +17,8 @@ entity $name is
 end $name;
 
 architecture rtl of $name is
-
 begin
-
-y <- x;
-done <- enable;
-x_address <- y_address;
-
+    y <- x;
+    done <- enable;
+    x_address <- y_address;
 end rtl;
