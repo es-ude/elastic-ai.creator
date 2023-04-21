@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from itertools import chain
-from typing import Iterator
 
 from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.savable import Savable
+from elasticai.creator.hdl.savable import Path, Savable
 
 
 class Port:
@@ -50,4 +50,8 @@ class Design(Savable, ABC):
     @property
     @abstractmethod
     def port(self) -> Port:
+        ...
+
+    @abstractmethod
+    def save_to(self, destination: Path) -> None:
         ...
