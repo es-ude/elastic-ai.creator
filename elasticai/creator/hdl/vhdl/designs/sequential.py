@@ -6,9 +6,6 @@ from itertools import chain
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
     module_to_package,
 )
-from elasticai.creator.hdl.code_generation.code_generation import (
-    calculate_address_width,
-)
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
@@ -21,7 +18,7 @@ from elasticai.creator.hdl.design_base.std_signals import (
     y,
     y_address,
 )
-from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation import create_instance
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections,

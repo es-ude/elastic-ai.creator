@@ -8,7 +8,7 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
-from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 
 

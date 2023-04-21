@@ -1,7 +1,7 @@
 import torch
 
 from elasticai.creator.hdl.design_base.design import Design
-from elasticai.creator.hdl.translatable import Savable
+from elasticai.creator.hdl.savable import Savable
 from elasticai.creator.nn.vhdl.identity.design import Identity as IdentityDesign
 
 

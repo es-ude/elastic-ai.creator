@@ -6,7 +6,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.ports import create_port_for_buffered_design
-from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
 

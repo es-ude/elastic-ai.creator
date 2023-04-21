@@ -22,9 +22,3 @@ class Savable(Protocol):
     @abstractmethod
     def save_to(self, destination: Path) -> None:
         ...
-
-
-class Translatable(Protocol):
-    @abstractmethod
-    def translate(self) -> Savable:
-        ...

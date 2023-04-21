@@ -2,7 +2,7 @@ import os
 from pathlib import Path as _PyPath
 from typing import Iterable
 
-from elasticai.creator.hdl.translatable import File, Path
+from elasticai.creator.hdl.savable import File, Path
 
 
 class OnDiskFile(File):

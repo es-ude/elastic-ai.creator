@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Iterator
 
 from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.translatable import Savable
+from elasticai.creator.hdl.savable import Savable
 
 
 class Port:

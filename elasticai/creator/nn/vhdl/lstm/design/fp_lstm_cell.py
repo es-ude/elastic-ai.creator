@@ -16,7 +16,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 from elasticai.creator.hdl.vhdl.designs import HardSigmoid
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
