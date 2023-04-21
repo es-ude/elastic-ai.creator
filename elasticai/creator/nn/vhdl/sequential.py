@@ -9,8 +9,6 @@ from elasticai.creator.hdl.vhdl.designs.sequential import (
     Sequential as _SequentialDesign,
 )
 
-# TODO: Implement abstract Translatable
-
 
 class Sequential(Translatable, torch.nn.Sequential):
     def __init__(self, submodules: tuple[Translatable, ...]):
@@ -50,7 +48,7 @@ class Sequential(Translatable, torch.nn.Sequential):
             y_width=y_width,
             x_address_width=x_address_width,
             y_address_width=y_address_width,
-            # TODO: Add name
+            name=name,
         )
 
 

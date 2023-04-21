@@ -36,12 +36,13 @@ class Sequential(Design):
         y_width: int,
         x_address_width: int,
         y_address_width: int,
-    ):
-        super().__init__("Sequential")
+        name: str,
+    ) -> None:
+        super().__init__(name)
         self._x_width = x_width
         self._y_width = y_width
-        self._y_address_width = y_address_width
         self._x_address_width = x_address_width
+        self._y_address_width = y_address_width
         self._library_name_for_instances = "work"
         self._architecture_name_for_instances = "rtl"
         self._autowirer = _AutoWirer
@@ -136,8 +137,9 @@ class Sequential(Design):
             y_address_width=str(self._y_address_width),
             x_width=str(self._x_width),
             y_width=str(self._y_width),
+            layer_name=self.name,
         )
-        target_file = destination.create_subpath("sequential").as_file(".vhd")
+        target_file = destination.create_subpath(self.name).as_file(".vhd")
         target_file.write_text(network_implementation.lines())
 
 

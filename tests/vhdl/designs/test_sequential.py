@@ -38,6 +38,7 @@ class SequentialTestCase(unittest.TestCase):
             y_width="1",
             x_address_width="1",
             y_address_width="1",
+            name="sequential",
         )
         expected = template.lines()
         destination = InMemoryPath("sequential", parent=None)
@@ -82,6 +83,7 @@ class SequentialTemplate:
         y_width: str,
         x_address_width: str,
         y_address_width: str,
+        name: str,
     ):
         self._template = Template(
             "network",
@@ -95,6 +97,7 @@ class SequentialTemplate:
             y_width=y_width,
             x_address_width=x_address_width,
             y_address_width=y_address_width,
+            layer_name=name,
         )
 
     def lines(self) -> list[str]:
@@ -152,6 +155,7 @@ def _prepare_sequential_template_with_linear(
         y_width=f"{bit_width}",
         x_address_width=str(calculate_address_width(in_features)),
         y_address_width=str(calculate_address_width(out_features)),
+        name="sequential",
     )
     return template
 
