@@ -2,13 +2,14 @@ from typing import Any, cast
 
 from elasticai.creator.base_modules.linear import Linear
 from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 from .design import FPLinear1d as FPLinearDesign
 
 
-class FPLinear1d(Linear):
+class FPLinear(Translatable, Linear):
     def __init__(
         self,
         in_features: int,

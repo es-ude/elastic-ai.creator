@@ -11,10 +11,8 @@ from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
-from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
-from elasticai.creator.nn.vhdl.fp_linear_1d.design import (
-    FPLinear1d as _FPLinear1dDesign,
-)
+from elasticai.creator.nn.vhdl.linear import FPLinear
+from elasticai.creator.nn.vhdl.linear.design import FPLinear1d as _FPLinear1dDesign
 from elasticai.creator.nn.vhdl.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
 
@@ -39,7 +37,7 @@ class LSTMNetwork(Translatable, torch.nn.Module):
         follow_up_linear_layers = cast(
             list[_FPLinear1dDesign],
             [
-                cast(FPLinear1d, layer).translate(self.layer_names[i])
+                cast(FPLinear, layer).translate(self.layer_names[i])
                 for i, layer in enumerate(self.layers)
             ],
         )

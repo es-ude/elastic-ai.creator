@@ -32,7 +32,7 @@ class FPLinear1d(Design):
         name: Optional[str] = None,
     ):
         super().__init__(
-            name="fp_linear1d" if name is None else name,
+            name="fp_linear" if name is None else name,
         )
         self._port = create_port(
             x_width=total_bits,
@@ -72,7 +72,7 @@ class FPLinear1d(Design):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
         template = Template(
-            base_name="fp_linear_1d", package=module_to_package(self.__module__)
+            base_name="fp_linear", package=module_to_package(self.__module__)
         )
         template.update_parameters(
             layer_name=self.name,
