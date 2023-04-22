@@ -1,3 +1,5 @@
+import re
+from collections.abc import Iterable
 from typing import cast
 
 from elasticai.creator.hdl.code_generation.code_generation import (
@@ -18,8 +20,8 @@ from elasticai.creator.nn.vhdl.sequential import Sequential
 Tests:
   - [x] replace fplinear1d with minimal layer that implements identity
   - [x] remove hardsigmoid cases from tests
-  - [ ] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
-  - [ ] check that each of the above names corresponds to an existing generated subdesign
+  - [x] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
+  - [?] check that each of the above names corresponds to an existing generated subdesign
   - [ ] test each section (connections, instantiations, etc.) in isolation
   - [ ] add a second layer with buffer
 """
@@ -58,6 +60,29 @@ def test_with_single_layer() -> None:
     assert expected == _extract_code(destination, "sequential")
 
 
+def test_unique_name_for_each_subdesign() -> None:
+    model = Sequential(
+        (
+            FPIdentity(num_input_features=6, total_bits=16),
+            FPIdentity(num_input_features=6, total_bits=16),
+            FPIdentity(num_input_features=6, total_bits=16),
+        )
+    )
+
+    design = model.translate("sequential")
+    destination = InMemoryPath("sequential", parent=None)
+    design.save_to(destination)
+    subdesign_files = set(destination.children.keys()) - {"sequential"}
+
+    def layer_name(file_name: str) -> str:
+        path = cast(InMemoryPath, destination[file_name])
+        code = _extract_code(path, file_name)
+        return _extract_layer_name(code)
+
+    unique_layer_names = set(layer_name(file_name) for file_name in subdesign_files)
+    assert len(unique_layer_names) == 3
+
+
 class SequentialTemplate:
     def __init__(
         self,
@@ -71,8 +96,7 @@ class SequentialTemplate:
         name: str,
     ) -> None:
         self._template = Template(
-            "network",
-            package="elasticai.creator.hdl.vhdl.designs",
+            "network", package="elasticai.creator.hdl.vhdl.designs"
         )
         self._template.update_parameters(
             layer_connections=connections,
@@ -147,3 +171,12 @@ def _prepare_sequential_template_with_identity(
 
 def _extract_code(destination: InMemoryPath, name: str) -> list[str]:
     return cast(InMemoryFile, destination[name]).text
+
+
+def _extract_layer_name(code: Iterable[str]) -> str:
+    pattern = r"entity\s*(\S*)\s*is"
+    for line in code:
+        matches = re.search(pattern, line)
+        if matches is not None:
+            return matches.group(1)
+    raise ValueError("Code does not contain a layer name.")
