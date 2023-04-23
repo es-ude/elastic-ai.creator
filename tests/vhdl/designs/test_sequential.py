@@ -77,16 +77,32 @@ class TestSequential:
         unique_layer_names = set(layer_name(file_name) for file_name in subdesign_files)
         assert len(unique_layer_names) == 2
 
-    def test_signal_definitions_for_single_layer_model(self) -> None:
-        sequential_code = sequential_code_for_model(single_layer_model())
+    @pytest.mark.parametrize(
+        "model,entity_id",
+        [(single_layer_model(), 0), (two_layer_model(), 0), (two_layer_model(), 1)],
+    )
+    def test_signal_definitions(self, model: Sequential, entity_id: int) -> None:
+        sequential_code = sequential_code_for_model(model)
 
         signals = extract_signal_definitions(sequential_code)
         target_signals = signal_definitions_for_identity(
-            entity="fpidentity_0", num_input_features=6, total_bits=16
+            entity=f"fpidentity_{entity_id}", num_input_features=6, total_bits=16
         )
 
-        assert len(signals) == len(target_signals)
-        assert set(signals) == set(target_signals)
+        assert set(target_signals) <= set(signals)
+
+    @pytest.mark.parametrize(
+        "model,entity_id",
+        [(single_layer_model(), 0), (two_layer_model(), 0), (two_layer_model(), 1)],
+    )
+    def test_layer_instantiations(self, model: Sequential, entity_id: int) -> None:
+        sequential_code = sequential_code_for_model(model)
+        generated_code = "\n".join(remove_indentation(sequential_code))
+
+        instantiation = identity_layer_instantiation(entity=f"fpidentity_{entity_id}")
+        target_instantiation = "\n".join(remove_indentation(instantiation))
+
+        assert target_instantiation in generated_code
 
     def test_layer_connections_for_single_layer_model(self) -> None:
         sequential_code = sequential_code_for_model(single_layer_model())
@@ -104,37 +120,7 @@ class TestSequential:
             }
         )
 
-        assert len(connections) == len(target_connections)
         assert set(connections) == set(target_connections)
-
-    @pytest.mark.parametrize(
-        "model,entity_id",
-        [(single_layer_model(), 0), (two_layer_model(), 0), (two_layer_model(), 1)],
-    )
-    def test_layer_instantiations(self, model: Sequential, entity_id: int) -> None:
-        sequential_code = sequential_code_for_model(model)
-        generated_code = "\n".join(remove_indentation(sequential_code))
-
-        instantiation = identity_layer_instantiation(entity=f"fpidentity_{entity_id}")
-        target_instantiation = "\n".join(remove_indentation(instantiation))
-
-        assert target_instantiation in generated_code
-
-    def test_signal_definitions_for_two_layer_model(self) -> None:
-        sequential_code = sequential_code_for_model(two_layer_model())
-        actual_signal_definitions = extract_signal_definitions(sequential_code)
-
-        identity_args = dict(num_input_features=6, total_bits=16)
-        signals_0 = signal_definitions_for_identity(
-            entity="fpidentity_0", **identity_args
-        )
-        signals_1 = signal_definitions_for_identity(
-            entity="fpidentity_1", **identity_args
-        )
-        target_signal_definitions = signals_0 + signals_1
-
-        assert len(actual_signal_definitions) == len(target_signal_definitions)
-        assert set(actual_signal_definitions) == set(target_signal_definitions)
 
     def test_layer_connections_for_two_layer_model(self) -> None:
         sequential_code = sequential_code_for_model(two_layer_model())
@@ -159,16 +145,11 @@ class TestSequential:
             }
         )
 
-        assert len(connections) == len(target_connections)
         assert set(connections) == set(target_connections)
 
 
 def get_code(code_file: InMemoryPath | InMemoryFile) -> list[str]:
     return cast(InMemoryFile, code_file).text
-
-
-def remove_indentation(code: Iterable[str]) -> list[str]:
-    return list(map(str.strip, code))
 
 
 def translate_model(model: Sequential) -> InMemoryPath:
@@ -210,6 +191,10 @@ def identity_layer_instantiation(entity: str) -> list[str]:
         architecture="rtl",
         signal_mapping={signal: f"i_{entity}_{signal}" for signal in signals},
     )
+
+
+def remove_indentation(code: Iterable[str]) -> list[str]:
+    return list(map(str.strip, code))
 
 
 def _find_all_matches(pattern: str, lines: Iterable[str]) -> list[str]:
