@@ -112,7 +112,7 @@ class TestSequential:
         [(single_layer_model(), 0), (two_layer_model(), 0), (two_layer_model(), 1)],
     )
     def test_layer_instantiations(self, model: Sequential, entity_id: int) -> None:
-        sequential_code = sequential_code_for_model(two_layer_model())
+        sequential_code = sequential_code_for_model(model)
         generated_code = "\n".join(remove_indentation(sequential_code))
 
         instantiation = identity_layer_instantiation(entity=f"fpidentity_{entity_id}")
