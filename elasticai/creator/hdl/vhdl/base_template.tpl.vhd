@@ -19,7 +19,7 @@ end $name;
 architecture rtl of $name is
 
 begin
-    x_address <- y_address;
-    done <- enable;
-    y <- x;
+    x_address <= y_address;
+    done <= enable;
+    y <= x;
 end rtl;
