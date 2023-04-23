@@ -22,161 +22,162 @@ Tests:
   - [x] remove hardsigmoid cases from tests
   - [x] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
   - [?] check that each of the above names corresponds to an existing generated subdesign
-  - [ ] test each section (connections, instantiations, etc.) in isolation
-  - [ ] add a second layer with buffer
+  - [x] test each section (connections, instantiations, etc.) in isolation
+  - [?] add a second layer with buffer
 """
 
 
 def test_empty_sequential() -> None:
-    module = Sequential(tuple())
-    template = SequentialTemplate(
-        connections=sorted(["y <= x;", "x_address <= y_address;", "done <= enable;"]),
-        instantiations=[],
+    model = Sequential(tuple())
+    actual_code = sequential_code_for_model(model)
+
+    template = Template("network", package="elasticai.creator.hdl.vhdl.designs")
+    template.update_parameters(
+        layer_connections=sorted(
+            ["y <= x;", "x_address <= y_address;", "done <= enable;"]
+        ),
+        layer_instantiations=[],
         signal_definitions=[],
         x_width="1",
         y_width="1",
         x_address_width="1",
         y_address_width="1",
-        name="sequential",
+        layer_name="sequential",
     )
-    expected = template.lines()
-    destination = InMemoryPath("sequential", parent=None)
-    design = module.translate("sequential")
-    design.save_to(destination)
-    assert expected == _extract_code(destination, "sequential")
+    expected_code = template.lines()
+
+    assert expected_code == actual_code
 
 
-def test_with_single_layer() -> None:
-    num_input_features = 6
-    total_bits = 16
-    template = _prepare_sequential_template_with_identity(
-        num_input_features, total_bits
+def test_signal_definitions_for_single_layer_model() -> None:
+    sequential_code = sequential_code_for_model(single_layer_model())
+
+    signals = extract_signal_definitions(sequential_code)
+    target_signals = signal_definitions_for_identity(
+        entity="fpidentity_0", num_input_features=6, total_bits=16
     )
-    expected = template.lines()
-    module = Sequential((FPIdentity(num_input_features, total_bits),))
-    design = module.translate("sequential")
-    destination = InMemoryPath("sequential", parent=None)
-    design.save_to(destination)
-    assert expected == _extract_code(destination, "sequential")
+
+    assert len(signals) == len(target_signals)
+    assert set(signals) == set(target_signals)
+
+
+def test_layer_connections_for_single_layer_model() -> None:
+    sequential_code = sequential_code_for_model(single_layer_model())
+
+    connections = extract_layer_connections(sequential_code)
+    target_connections = create_connections(
+        {
+            "i_fpidentity_0_x": "x",
+            "y": "i_fpidentity_0_y",
+            "i_fpidentity_0_enable": "enable",
+            "i_fpidentity_0_clock": "clock",
+            "done": "i_fpidentity_0_done",
+            "i_fpidentity_0_y_address": "y_address",
+            "x_address": "i_fpidentity_0_x_address",
+        }
+    )
+
+    assert len(connections) == len(target_connections)
+    assert set(connections) == set(target_connections)
+
+
+def test_layer_instantiations_for_single_layer_model() -> None:
+    remove_indentation = lambda x: list(map(str.strip, x))
+
+    sequential_code = sequential_code_for_model(single_layer_model())
+    generated_code = "\n".join(remove_indentation(sequential_code))
+
+    instantiation = identity_layer_instantiation(entity="fpidentity_0")
+    target_instantiation = "\n".join(remove_indentation(instantiation))
+
+    assert target_instantiation in generated_code
 
 
 def test_unique_name_for_each_subdesign() -> None:
-    model = Sequential(
-        (
-            FPIdentity(num_input_features=6, total_bits=16),
-            FPIdentity(num_input_features=6, total_bits=16),
-            FPIdentity(num_input_features=6, total_bits=16),
-        )
-    )
-
-    design = model.translate("sequential")
-    destination = InMemoryPath("sequential", parent=None)
-    design.save_to(destination)
+    destination = translate_model(two_layer_model())
     subdesign_files = set(destination.children.keys()) - {"sequential"}
 
     def layer_name(file_name: str) -> str:
         path = cast(InMemoryPath, destination[file_name])
-        code = _extract_code(path, file_name)
-        return _extract_layer_name(code)
+        code = get_code(path[file_name])
+        return extract_layer_name(code)
 
     unique_layer_names = set(layer_name(file_name) for file_name in subdesign_files)
-    assert len(unique_layer_names) == 3
+    assert len(unique_layer_names) == 2
 
 
-class SequentialTemplate:
-    def __init__(
-        self,
-        connections: list[str],
-        instantiations: list[str],
-        signal_definitions: list[str],
-        x_width: str,
-        y_width: str,
-        x_address_width: str,
-        y_address_width: str,
-        name: str,
-    ) -> None:
-        self._template = Template(
-            "network", package="elasticai.creator.hdl.vhdl.designs"
+def single_layer_model() -> Sequential:
+    return Sequential((FPIdentity(num_input_features=6, total_bits=16),))
+
+
+def two_layer_model() -> Sequential:
+    return Sequential(
+        (
+            FPIdentity(num_input_features=6, total_bits=16),
+            FPIdentity(num_input_features=6, total_bits=16),
         )
-        self._template.update_parameters(
-            layer_connections=connections,
-            layer_instantiations=instantiations,
-            signal_definitions=signal_definitions,
-            x_width=x_width,
-            y_width=y_width,
-            x_address_width=x_address_width,
-            y_address_width=y_address_width,
-            layer_name=name,
-        )
-
-    def lines(self) -> list[str]:
-        return self._template.lines()
-
-
-def _prepare_sequential_template_with_identity(
-    num_input_features: int, total_bits: int
-) -> SequentialTemplate:
-    entity = "fpidentity_0"
-    instance = f"i_{entity}"
-    connections = create_connections(
-        {
-            f"{instance}_x": "x",
-            "y": f"{instance}_y",
-            f"{instance}_enable": "enable",
-            f"{instance}_clock": "clock",
-            "done": f"{instance}_done",
-            f"{instance}_y_address": "y_address",
-            "x_address": f"{instance}_x_address",
-        }
     )
 
-    instantiations = create_instance(
-        name=instance,
+
+def get_code(code_file: InMemoryPath | InMemoryFile) -> list[str]:
+    return cast(InMemoryFile, code_file).text
+
+
+def translate_model(model: Sequential) -> InMemoryPath:
+    design = model.translate("sequential")
+    destination = InMemoryPath("sequential", parent=None)
+    design.save_to(destination)
+    return destination
+
+
+def sequential_code_for_model(model) -> list[str]:
+    destination = translate_model(model)
+    return get_code(destination["sequential"])
+
+
+def signal_definitions_for_identity(
+    entity: str, num_input_features: int, total_bits: int
+) -> list[str]:
+    return [
+        signal_definition(name=f"i_{entity}_{signal.name}", width=signal.width)
+        for signal in (
+            std_signals.x(total_bits),
+            std_signals.y(total_bits),
+            std_signals.clock(),
+            std_signals.enable(),
+            std_signals.done(),
+            std_signals.x_address(calculate_address_width(num_input_features)),
+            std_signals.y_address(calculate_address_width(num_input_features)),
+        )
+    ]
+
+
+def identity_layer_instantiation(entity: str) -> list[str]:
+    signals = ["clock", "done", "enable", "x", "x_address", "y", "y_address"]
+
+    return create_instance(
+        name=f"i_{entity}",
         entity=entity,
-        architecture="rtl",
         library="work",
-        signal_mapping={
-            s: f"{instance}_{s}"
-            for s in ("x", "y", "clock", "enable", "x_address", "y_address", "done")
-        },
+        architecture="rtl",
+        signal_mapping={signal: f"i_{entity}_{signal}" for signal in signals},
     )
 
-    signal_definitions = sorted(
-        [
-            signal_definition(name=f"{instance}_{signal.name}", width=signal.width)
-            for signal in (
-                std_signals.x(total_bits),
-                std_signals.y(total_bits),
-                std_signals.clock(),
-                std_signals.enable(),
-                std_signals.done(),
-                std_signals.x_address(calculate_address_width(num_input_features)),
-                std_signals.y_address(calculate_address_width(num_input_features)),
-            )
-        ]
-    )
 
-    template = SequentialTemplate(
-        connections=connections,
-        instantiations=instantiations,
-        signal_definitions=signal_definitions,
-        x_width=f"{total_bits}",
-        y_width=f"{total_bits}",
-        x_address_width=str(calculate_address_width(num_input_features)),
-        y_address_width=str(calculate_address_width(num_input_features)),
-        name="sequential",
-    )
-    return template
+def _find_all_matches(pattern: str, lines: Iterable[str]) -> list[str]:
+    return [match for line in lines for match in re.findall(pattern, line)]
 
 
-def _extract_code(destination: InMemoryPath, name: str) -> list[str]:
-    return cast(InMemoryFile, destination[name]).text
+def extract_layer_name(code: Iterable[str]) -> str:
+    matches = _find_all_matches(pattern=r"entity\s*(\S*)\s*is", lines=code)
+    if len(matches) == 0:
+        raise ValueError("Code does not contain a layer name.")
+    return matches[0]
 
 
-def _extract_layer_name(code: Iterable[str]) -> str:
-    pattern = r"entity\s*(\S*)\s*is"
-    for line in code:
-        matches = re.search(pattern, line)
-        if matches is not None:
-            return matches.group(1)
-    raise ValueError("Code does not contain a layer name.")
+def extract_signal_definitions(code: list[str]) -> list[str]:
+    return _find_all_matches(pattern=r"\s*(signal .*;)", lines=code)
+
+
+def extract_layer_connections(code: list[str]) -> list[str]:
+    return _find_all_matches(pattern=r"\s*(.*<=.*;)", lines=code)
