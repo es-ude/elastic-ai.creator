@@ -67,14 +67,10 @@ jobs:
           ref: ${{ needs.beautify.outputs.new_sha }}
       - name: Fetch main
         run: git fetch --prune --force origin refs/heads/main:refs/remotes/origin/main
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11.x
-      - name: Install dependencies
-        run: |
-          python3 -m pip install poetry==1.1.15 --upgrade pip
-          poetry config virtualenvs.create false
       - name: Semantic Release
         uses: relekang/python-semantic-release@master
         with:
