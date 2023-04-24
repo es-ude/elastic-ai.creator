@@ -61,8 +61,7 @@ class TestSequential:
             layer_name="sequential",
         )
         expected_code = template.lines()
-
-        assert expected_code == actual_code
+        assert actual_code == expected_code
 
     def test_unique_name_for_each_subdesign(self) -> None:
         destination = translate_model(two_layer_model())
@@ -123,21 +122,22 @@ class TestSequential:
 
     def test_layer_connections_for_two_layer_model(self) -> None:
         sequential_code = sequential_code_for_model(two_layer_model())
-
+        layer_0 = "i_fpidentity_0"
+        layer_1 = "i_fpidentity_1"
         connections = extract_layer_connections(sequential_code)
         target_connections = create_connections_using_to_from_pairs(
             {
-                "i_fpidentity_0_clock": "clock",
-                "i_fpidentity_0_enable": "enable",
-                "i_fpidentity_0_x": "x",
-                "x_address": "i_fpidentity_0_x_address",
-                "i_fpidentity_0_y_address": "i_fpidentity_1_x_address",
-                "i_fpidentity_1_x": "i_fpidentity_0_y",
-                "i_fpidentity_1_enable": "i_fpidentity_0_done",
-                "i_fpidentity_1_clock": "clock",
-                "i_fpidentity_1_y_address": "y_address",
-                "y": "i_fpidentity_1_y",
-                "done": "i_fpidentity_1_done",
+                f"{layer_0}_clock": "clock",
+                f"{layer_0}_enable": "enable",
+                f"{layer_0}_x": "x",
+                "x_address": f"{layer_0}_x_address",
+                f"{layer_0}_y_address": f"{layer_1}_x_address",
+                f"{layer_1}_x": f"{layer_0}_y",
+                f"{layer_1}_enable": f"{layer_0}_done",
+                f"{layer_1}_clock": "clock",
+                f"{layer_1}_y_address": "y_address",
+                "y": f"{layer_1}_y",
+                "done": f"{layer_1}_done",
             }
         )
 
