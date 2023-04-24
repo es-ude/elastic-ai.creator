@@ -21,7 +21,7 @@ from elasticai.creator.hdl.design_base.std_signals import (
 from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation import create_instance
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    create_connections,
+    create_connections_using_to_from_pairs,
     create_signal_definitions,
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
@@ -96,7 +96,7 @@ class Sequential(Design):
     def _generate_connections(self) -> list[str]:
         nodes = self._create_dataflow_nodes()
         wirer = self._autowirer(nodes=nodes)
-        return create_connections(wirer.connect())
+        return create_connections_using_to_from_pairs(wirer.connect())
 
     def _generate_instantiations(self) -> list[str]:
         instantiations: list[str] = list()

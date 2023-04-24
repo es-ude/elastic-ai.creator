@@ -9,7 +9,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    create_connections,
+    create_connections_using_to_from_pairs,
     create_instance,
     signal_definition,
 )
@@ -39,7 +39,6 @@ Tests:
   - [x] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
   - [?] check that each of the above names corresponds to an existing generated subdesign
   - [x] test each section (connections, instantiations, etc.) in isolation
-  - [?] add a second layer with buffer
 """
 
 
@@ -108,7 +107,7 @@ class TestSequential:
         sequential_code = sequential_code_for_model(single_layer_model())
 
         connections = extract_layer_connections(sequential_code)
-        target_connections = create_connections(
+        target_connections = create_connections_using_to_from_pairs(
             {
                 "i_fpidentity_0_x": "x",
                 "y": "i_fpidentity_0_y",
@@ -126,22 +125,19 @@ class TestSequential:
         sequential_code = sequential_code_for_model(two_layer_model())
 
         connections = extract_layer_connections(sequential_code)
-        target_connections = create_connections(
+        target_connections = create_connections_using_to_from_pairs(
             {
-                "i_fpidentity_0_x": "x",
-                "i_fpidentity_1_y": "i_fpidentity_0_y",  # MISSING!!!
-                "i_fpidentity_0_enable": "enable",
                 "i_fpidentity_0_clock": "clock",
-                "i_fpidentity_1_done": "i_fpidentity_0_done",  # MISSING!!!
-                "i_fpidentity_0_y_address": "y_address",
-                "i_fpidentity_1_x_address": "i_fpidentity_0_x_address",  # MISSING!!!
-                "i_fpidentity_1_x": "i_fpidentity_0_x",  # WRONG!!!
+                "i_fpidentity_0_enable": "enable",
+                "i_fpidentity_0_x": "x",
+                "x_address": "i_fpidentity_0_x_address",
+                "i_fpidentity_0_y_address": "i_fpidentity_1_x_address",
+                "i_fpidentity_1_x": "i_fpidentity_0_y",
+                "i_fpidentity_1_enable": "i_fpidentity_0_done",
+                "i_fpidentity_1_clock": "clock",
+                "i_fpidentity_1_y_address": "y_address",
                 "y": "i_fpidentity_1_y",
-                "i_fpidentity_1_enable": "i_fpidentity_0_enable",  # WRONG!!!
-                "i_fpidentity_1_clock": "i_fpidentity_0_clock",  # WRONG!!!
                 "done": "i_fpidentity_1_done",
-                "i_fpidentity_1_y_address": "i_fpidentity_0_y_address",  # WRONG!!!
-                "x_address": "i_fpidentity_1_x_address",
             }
         )
 
