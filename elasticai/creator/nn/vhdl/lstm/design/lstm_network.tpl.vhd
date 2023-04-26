@@ -22,7 +22,7 @@ entity lstm_network is
     port (
         clock     : in std_logic;
         enable    : in std_logic;    -- start computing when it is '1'
-        x_in     : in std_logic_vector(DATA_WIDTH-1 downto 0);
+        x     : in std_logic_vector(DATA_WIDTH-1 downto 0);
         addr_in   : in std_logic_vector(IN_ADDR_WIDTH-1 downto 0);
         x_we     : in std_logic;
         done : out std_logic;
@@ -63,7 +63,7 @@ begin
     begin
         if rising_edge(clock) then
             if x_we = '1' then
-                input_buffer(to_integer(unsigned(addr_in))) := signed(x_in);
+                input_buffer(to_integer(unsigned(addr_in))) := signed(x);
             end if;
         end if;
     end process; -- INPUT_CONFIG
@@ -158,9 +158,9 @@ begin
         clock => clock,
         enable => linear_enable,
         x_addr => linear_read_addr,
-        x_in => linear_x_data,
+        x => linear_x_data,
         y_addr => (others=>'0'),
-        y_out => linear_out_data,
+        y => linear_out_data,
 
         done => linear_done
     );

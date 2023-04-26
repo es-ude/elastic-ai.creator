@@ -29,7 +29,7 @@ def create_instance(
     return result
 
 
-def create_connections(mapping: dict[str, str]) -> list[str]:
+def create_connections_using_to_from_pairs(mapping: dict[str, str]) -> list[str]:
     mapping = _sorted_dict(mapping)
     connections: list[str] = []
     for _to, _from in mapping.items():
@@ -65,8 +65,8 @@ def signal_definition(
 ):
     def vector_signal(name: str, width) -> str:
         return (
-            f"signal {name} : std_logic_vector({width - 1} downto 0) := ('other' =>"
-            " '0');"
+            f"signal {name} : std_logic_vector({width - 1} downto 0)"
+            " := (others => '0');"
         )
 
     def logic_signal(name: str) -> str:

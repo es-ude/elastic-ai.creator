@@ -18,7 +18,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.nn.vhdl.linear import FPLinear
 from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
 from elasticai.creator.nn.vhdl.lstm.layer import (
     FixedPointLSTMWithHardActivations as LSTM,
@@ -72,7 +72,7 @@ def generate_lstm_network_and_expected_code(
                 hidden_size=hidden_size,
                 bias=True,
             ),
-            FPLinear1d(
+            FPLinear(
                 in_features=hidden_size,
                 out_features=1,
                 total_bits=total_bits,
@@ -82,7 +82,7 @@ def generate_lstm_network_and_expected_code(
         ]
     )
     destination = InMemoryPath("lstm_network", parent=None)
-    model.translate().save_to(destination)
+    model.translate("lstm_network").save_to(destination)
     expected = ExpectedLSTMNetworkCode()
     expected.config.parameters.update(
         data_width=f"{total_bits}",
@@ -99,7 +99,7 @@ def generate_lstm_network_and_expected_code(
         linear_out_features="1",
     )
     destination = InMemoryPath("lstm_network", parent=None)
-    model.translate().save_to(destination)
+    model.translate("lstm_network").save_to(destination)
     return destination["lstm_network"].text, expected.lines()
 
 
@@ -133,7 +133,7 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
                 hidden_size=hidden_size,
                 bias=True,
             ),
-            FPLinear1d(
+            FPLinear(
                 in_features=hidden_size,
                 out_features=1,
                 total_bits=total_bits,
@@ -142,7 +142,7 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
             ),
         ]
     )
-    design = model.translate()
+    design = model.translate("lstm_cell")
     design.save_to(lstm_destination)
     lstm_cell_folder = cast(InMemoryPath, lstm_destination["lstm_cell"])
     lstm_cell_file = cast(InMemoryFile, lstm_cell_folder["lstm_cell"])
@@ -284,7 +284,7 @@ def lstm_network_with_single_linear_layer():
                 hidden_size=4,
                 bias=True,
             ),
-            FPLinear1d(
+            FPLinear(
                 in_features=4, out_features=1, total_bits=16, frac_bits=8, bias=True
             ),
         ]
@@ -296,14 +296,14 @@ def test_saves_linear_layer_files(
     lstm_destination, lstm_network_with_single_linear_layer
 ):
     model = lstm_network_with_single_linear_layer
-    design = model.translate()
+    design = model.translate("fp_linear_1d_0")
     design.save_to(lstm_destination)
     assert "fp_linear_1d_0" in lstm_destination.children
 
 
 def test_connects_linear_layer(lstm_destination, lstm_network_with_single_linear_layer):
     model = lstm_network_with_single_linear_layer
-    design = model.translate()
+    design = model.translate("fp_linear_1d_0")
     design.save_to(lstm_destination)
 
 
@@ -314,6 +314,7 @@ def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[s
         rom_addr_bitwidth=str(rom_address_width),
         rom_data_bitwidth=str(total_bits),
         name="wi_rom_lstm_cell",
+        resource_option="auto",
     )
     template = TemplateExpander(
         TemplateConfig(

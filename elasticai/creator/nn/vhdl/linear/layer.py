@@ -2,13 +2,14 @@ from typing import Any, cast
 
 from elasticai.creator.base_modules.linear import Linear
 from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 from .design import FPLinear1d as FPLinearDesign
 
 
-class FPLinear1d(Linear):
+class FPLinear(Translatable, Linear):
     def __init__(
         self,
         in_features: int,
@@ -27,7 +28,7 @@ class FPLinear1d(Linear):
             device=device,
         )
 
-    def translate(self) -> Design:
+    def translate(self, name: str) -> Design:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
@@ -46,4 +47,5 @@ class FPLinear1d(Linear):
             out_feature_num=self.out_features,
             weights=signed_int_weights,
             bias=signed_int_bias,
+            name=name,
         )

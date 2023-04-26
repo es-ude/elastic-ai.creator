@@ -1,5 +1,3 @@
-from typing import Literal
-
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
     TemplateConfig,
     TemplateExpander,

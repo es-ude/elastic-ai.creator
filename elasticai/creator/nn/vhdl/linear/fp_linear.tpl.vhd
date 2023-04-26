@@ -18,11 +18,11 @@ entity ${layer_name} is -- layer_name is for distinguish same type of layers (wi
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x_addr : out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
-        y_addr : in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        x_address : out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+        y_address : in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
 
-        x_in   : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y_out  : out std_logic_vector(DATA_WIDTH-1 downto 0);
+        x   : in std_logic_vector(DATA_WIDTH-1 downto 0);
+        y  : out std_logic_vector(DATA_WIDTH-1 downto 0);
 
         done   : out std_logic
     );
@@ -114,7 +114,7 @@ begin
     n_clock <= not clock;
 
     fp_w <= signed(w_in);
-    fp_x <= signed(x_in);
+    fp_x <= signed(x);
     fp_b <= signed(b_in);
 
     -- connects ports
@@ -187,7 +187,7 @@ begin
 
         end if;
 
-        x_addr <= std_logic_vector(to_unsigned(current_input_idx, x_addr'length));
+        x_address <= std_logic_vector(to_unsigned(current_input_idx, x_address'length));
         addr_w <= std_logic_vector(to_unsigned(var_addr_w, addr_w'length));
         addr_b <= std_logic_vector(to_unsigned(current_neuron_idx, addr_b'length));
     end process linear_main;
@@ -196,9 +196,9 @@ begin
     begin
         if state=s_idle then
             if falling_edge(clock) then
-                -- After the layer in at idle mode, y_out is readable
+                -- After the layer in at idle mode, y is readable
                 -- but it only update at the rising edge of the clock
-                y_out <= y_ram(to_integer(unsigned(y_addr)));
+                y <= y_ram(to_integer(unsigned(y_address)));
             end if;
         end if;
     end process y_reading;

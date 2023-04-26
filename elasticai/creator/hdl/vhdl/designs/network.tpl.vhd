@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.all;
 
-entity fp_network is
+entity $layer_name is
     port (
         enable: in std_logic;
         clock: in std_logic;
@@ -18,9 +18,9 @@ entity fp_network is
 
         done: out std_logic
     );
-end fp_network;
+end $layer_name;
 
-architecture rtl of fp_network is
+architecture rtl of $layer_name is
     $signal_definitions
 begin
     $layer_connections
@@ -31,5 +31,4 @@ begin
     --------------------------------------------------------------------------------
     -- Instantiate all layers
     --------------------------------------------------------------------------------
-
 end rtl;

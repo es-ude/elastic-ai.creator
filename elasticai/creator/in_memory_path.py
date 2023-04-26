@@ -1,10 +1,11 @@
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
-from elasticai.creator.hdl.translatable import File, Path
+from elasticai.creator.hdl.savable import File, Path
 
 
 class InMemoryFile(File):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.text: list[str] = []
         self.name = name
 
@@ -14,9 +15,9 @@ class InMemoryFile(File):
 
 
 class InMemoryPath(Path):
-    def __init__(self, name: str, parent: Optional["InMemoryPath"]):
+    def __init__(self, name: str, parent: Optional["InMemoryPath"]) -> None:
         self.name = name
-        self.children: dict[str, Path | File] = dict()
+        self.children: dict[str, InMemoryPath | InMemoryFile] = dict()
         self.parent = parent
 
     def as_file(self, suffix: str) -> InMemoryFile:
@@ -31,7 +32,7 @@ class InMemoryPath(Path):
             self.parent.children[self.name] = file
         return file
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> "InMemoryPath | InMemoryFile":
         return self.children[item]
 
     def create_subpath(self, subpath_name: str) -> "InMemoryPath":

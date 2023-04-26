@@ -1,30 +1,9 @@
-from abc import abstractmethod
-from typing import Iterable, Protocol
+from abc import ABC, abstractmethod
+
+from elasticai.creator.hdl.design_base.design import Design
 
 
-class File(Protocol):
+class Translatable(ABC):
     @abstractmethod
-    def write_text(self, text: Iterable[str]) -> None:
-        ...
-
-
-class Path(Protocol):
-    @abstractmethod
-    def as_file(self, suffix: str) -> File:
-        ...
-
-    @abstractmethod
-    def create_subpath(self, subpath_name: str) -> "Path":
-        ...
-
-
-class Savable(Protocol):
-    @abstractmethod
-    def save_to(self, destination: Path) -> None:
-        ...
-
-
-class Translatable(Protocol):
-    @abstractmethod
-    def translate(self) -> Savable:
+    def translate(self, name: str) -> Design:
         ...

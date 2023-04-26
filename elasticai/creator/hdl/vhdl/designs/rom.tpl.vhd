@@ -13,7 +13,7 @@ architecture rtl of ${name} is
     type ${name}_array_t is array (0 to 2**${rom_addr_bitwidth}-1) of std_logic_vector(${rom_data_bitwidth}-1 downto 0);
     signal ROM : ${name}_array_t:=(${rom_value});
     attribute rom_style : string;
-    attribute rom_style of ROM : signal is ${rom_resource_option};
+    attribute rom_style of ROM : signal is "${resource_option}";
 begin
     ROM_process: process(clk)
     begin

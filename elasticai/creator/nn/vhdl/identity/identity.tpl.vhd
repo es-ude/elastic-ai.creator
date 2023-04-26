@@ -17,9 +17,8 @@ entity $name is
 end $name;
 
 architecture rtl of $name is
-
 begin
-    x_address <= y_address;
-    done <= enable;
     y <= x;
+    done <= enable;
+    x_address <= y_address;
 end rtl;

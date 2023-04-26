@@ -11,8 +11,8 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.translatable import Path
-from elasticai.creator.nn.vhdl.fp_linear_1d.design import FPLinear1d
+from elasticai.creator.hdl.savable import Path
+from elasticai.creator.nn.vhdl.linear.design import FPLinear1d
 
 
 class LSTMNetworkDesign(Design):
@@ -55,7 +55,7 @@ class LSTMNetworkDesign(Design):
                 std_signals.clock(),
                 std_signals.enable(),
                 ctrl_signal("x_we"),
-                Signal("x_in", width=lstm.port["x_data"].width),
+                Signal("x", width=lstm.port["x_data"].width),
                 Signal("addr_in", width=lstm.port["h_out_addr"].width),
             ],
             outgoing=[

@@ -8,7 +8,7 @@ from elasticai.creator.hdl.code_generation.abstract_base_template import (
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.translatable import Path
+from elasticai.creator.hdl.savable import Path
 
 
 class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):

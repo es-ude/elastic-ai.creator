@@ -1,221 +1,212 @@
-import unittest
+import re
+from collections.abc import Iterable
+from typing import cast
+
+import pytest
 
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    create_connections,
+    create_connections_using_to_from_pairs,
     create_instance,
     signal_definition,
 )
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
-from elasticai.creator.in_memory_path import InMemoryPath
-from elasticai.creator.nn.vhdl.fp_hard_sigmoid import FPHardSigmoid
-from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
+from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.vhdl.identity.layer import FPIdentity
 from elasticai.creator.nn.vhdl.sequential import Sequential
 
 
-class SequentialTestCase(unittest.TestCase):
-    """
-    Tests:
-      - add a layer with buffer
-      - test each section (connections, instantiations, etc.) in isolation
+def single_layer_model() -> Sequential:
+    return Sequential((FPIdentity(num_input_features=6, total_bits=16),))
 
-    """
 
-    def test_empty_sequential(self):
-        module = Sequential(tuple())
-        template = SequentialTemplate(
-            connections=sorted(
+def two_layer_model() -> Sequential:
+    return Sequential(
+        (
+            FPIdentity(num_input_features=6, total_bits=16),
+            FPIdentity(num_input_features=6, total_bits=16),
+        )
+    )
+
+
+"""
+Tests:
+  - [x] replace fplinear1d with minimal layer that implements identity
+  - [x] remove hardsigmoid cases from tests
+  - [x] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
+  - [?] check that each of the above names corresponds to an existing generated subdesign
+  - [x] test each section (connections, instantiations, etc.) in isolation
+"""
+
+
+class TestSequential:
+    def test_empty_sequential(self) -> None:
+        model = Sequential(tuple())
+        actual_code = sequential_code_for_model(model)
+
+        template = Template("network", package="elasticai.creator.hdl.vhdl.designs")
+        template.update_parameters(
+            layer_connections=sorted(
                 ["y <= x;", "x_address <= y_address;", "done <= enable;"]
             ),
-            instantiations=[],
+            layer_instantiations=[],
             signal_definitions=[],
             x_width="1",
             y_width="1",
             x_address_width="1",
             y_address_width="1",
+            layer_name="sequential",
         )
-        expected = template.lines()
-        destination = InMemoryPath("sequential", parent=None)
-        design = module.translate()
-        design.save_to(destination)
-        self.assertEqual(destination["sequential"].text, expected)
+        expected_code = template.lines()
+        assert actual_code == expected_code
 
-    def test_autowire_instantiate_and_define_signals_for_hard_sigmoid_activation(self):
-        bit_width = 16
+    def test_unique_name_for_each_subdesign(self) -> None:
+        destination = translate_model(two_layer_model())
+        subdesign_files = set(destination.children.keys()) - {"sequential"}
 
-        template = _prepare_sequential_template_with_hard_sigmoid(bit_width)
-        expected = template.lines()
+        def layer_name(file_name: str) -> str:
+            path = cast(InMemoryPath, destination[file_name])
+            code = get_code(path[file_name])
+            return extract_layer_name(code)
 
-        module = Sequential((FPHardSigmoid(FixedPointConfiguration()),))
-        design = module.translate()
+        unique_layer_names = set(layer_name(file_name) for file_name in subdesign_files)
+        assert len(unique_layer_names) == 2
 
-        destination = InMemoryPath("sequential", parent=None)
-        design.save_to(destination)
-        self.assertEqual(expected, destination["sequential"].text)
-
-    def test_with_single_linear_layer(self):
-        bit_width = 16
-        in_features = 6
-        out_features = 3
-        template = _prepare_sequential_template_with_linear(
-            bit_width, in_features, out_features
-        )
-        expected = template.lines()
-        module = Sequential(
-            (
-                (
-                    FPLinear1d(
-                        in_features=6,
-                        out_features=3,
-                        total_bits=16,
-                        frac_bits=8,
-                        bias=False,
-                    ),
-                )
-            )
-        )
-        design = module.translate()
-        destination = InMemoryPath("sequential", parent=None)
-        design.save_to(destination)
-        self.assertEqual(expected, destination["sequential"].text)
-
-
-class SequentialTemplate:
-    def __init__(
-        self,
-        connections: list[str],
-        instantiations: list[str],
-        signal_definitions: list[str],
-        x_width: str,
-        y_width: str,
-        x_address_width: str,
-        y_address_width: str,
-    ):
-        self._template = Template(
-            "network",
-            package="elasticai.creator.hdl.vhdl.designs",
-        )
-        self._template.update_parameters(
-            layer_connections=connections,
-            layer_instantiations=instantiations,
-            signal_definitions=signal_definitions,
-            x_width=x_width,
-            y_width=y_width,
-            x_address_width=x_address_width,
-            y_address_width=y_address_width,
-        )
-
-    def lines(self) -> list[str]:
-        return self._template.lines()
-
-
-def _prepare_sequential_template_with_linear(
-    bit_width, in_features, out_features
-) -> SequentialTemplate:
-    entity = "fp_linear1d"
-    instance = f"i_{entity}_0"
-    connections = create_connections(
-        {
-            f"{instance}_x": "x",
-            "y": f"{instance}_y",
-            f"{instance}_enable": "enable",
-            f"{instance}_clock": "clock",
-            "done": f"{instance}_done",
-            f"{instance}_y_address": "y_address",
-            "x_address": f"{instance}_x_address",
-        }
+    @pytest.mark.parametrize(
+        "model,entity_id",
+        [(single_layer_model(), 0), (two_layer_model(), 0), (two_layer_model(), 1)],
     )
+    def test_signal_definitions(self, model: Sequential, entity_id: int) -> None:
+        sequential_code = sequential_code_for_model(model)
 
-    instantiations = create_instance(
-        name=instance,
+        signals = extract_signal_definitions(sequential_code)
+        target_signals = signal_definitions_for_identity(
+            entity=f"fpidentity_{entity_id}", num_input_features=6, total_bits=16
+        )
+
+        assert set(target_signals) <= set(signals)
+
+    @pytest.mark.parametrize(
+        "model,entity_id",
+        [(single_layer_model(), 0), (two_layer_model(), 0), (two_layer_model(), 1)],
+    )
+    def test_layer_instantiations(self, model: Sequential, entity_id: int) -> None:
+        sequential_code = sequential_code_for_model(model)
+        generated_code = "\n".join(remove_indentation(sequential_code))
+
+        instantiation = identity_layer_instantiation(entity=f"fpidentity_{entity_id}")
+        target_instantiation = "\n".join(remove_indentation(instantiation))
+
+        assert target_instantiation in generated_code
+
+    def test_layer_connections_for_single_layer_model(self) -> None:
+        sequential_code = sequential_code_for_model(single_layer_model())
+
+        connections = extract_layer_connections(sequential_code)
+        target_connections = create_connections_using_to_from_pairs(
+            {
+                "i_fpidentity_0_x": "x",
+                "y": "i_fpidentity_0_y",
+                "i_fpidentity_0_enable": "enable",
+                "i_fpidentity_0_clock": "clock",
+                "done": "i_fpidentity_0_done",
+                "i_fpidentity_0_y_address": "y_address",
+                "x_address": "i_fpidentity_0_x_address",
+            }
+        )
+
+        assert set(connections) == set(target_connections)
+
+    def test_layer_connections_for_two_layer_model(self) -> None:
+        sequential_code = sequential_code_for_model(two_layer_model())
+        layer_0 = "i_fpidentity_0"
+        layer_1 = "i_fpidentity_1"
+        connections = extract_layer_connections(sequential_code)
+        target_connections = create_connections_using_to_from_pairs(
+            {
+                f"{layer_0}_clock": "clock",
+                f"{layer_0}_enable": "enable",
+                f"{layer_0}_x": "x",
+                "x_address": f"{layer_0}_x_address",
+                f"{layer_0}_y_address": f"{layer_1}_x_address",
+                f"{layer_1}_x": f"{layer_0}_y",
+                f"{layer_1}_enable": f"{layer_0}_done",
+                f"{layer_1}_clock": "clock",
+                f"{layer_1}_y_address": "y_address",
+                "y": f"{layer_1}_y",
+                "done": f"{layer_1}_done",
+            }
+        )
+
+        assert set(connections) == set(target_connections)
+
+
+def get_code(code_file: InMemoryPath | InMemoryFile) -> list[str]:
+    return cast(InMemoryFile, code_file).text
+
+
+def translate_model(model: Sequential) -> InMemoryPath:
+    design = model.translate("sequential")
+    destination = InMemoryPath("sequential", parent=None)
+    design.save_to(destination)
+    return destination
+
+
+def sequential_code_for_model(model: Sequential) -> list[str]:
+    destination = translate_model(model)
+    return get_code(destination["sequential"])
+
+
+def signal_definitions_for_identity(
+    entity: str, num_input_features: int, total_bits: int
+) -> list[str]:
+    return [
+        signal_definition(name=f"i_{entity}_{signal.name}", width=signal.width)
+        for signal in (
+            std_signals.x(total_bits),
+            std_signals.y(total_bits),
+            std_signals.clock(),
+            std_signals.enable(),
+            std_signals.done(),
+            std_signals.x_address(calculate_address_width(num_input_features)),
+            std_signals.y_address(calculate_address_width(num_input_features)),
+        )
+    ]
+
+
+def identity_layer_instantiation(entity: str) -> list[str]:
+    signals = ["clock", "done", "enable", "x", "x_address", "y", "y_address"]
+
+    return create_instance(
+        name=f"i_{entity}",
         entity=entity,
-        architecture="rtl",
         library="work",
-        signal_mapping={
-            s: f"{instance}_{s}"
-            for s in ("x", "y", "clock", "enable", "x_address", "y_address", "done")
-        },
-    )
-
-    signal_definitions = sorted(
-        [
-            signal_definition(name=f"{instance}_{signal.name}", width=signal.width)
-            for signal in (
-                std_signals.x(bit_width),
-                std_signals.y(bit_width),
-                std_signals.clock(),
-                std_signals.enable(),
-                std_signals.done(),
-                std_signals.x_address(calculate_address_width(in_features)),
-                std_signals.y_address(calculate_address_width(out_features)),
-            )
-        ]
-    )
-
-    template = SequentialTemplate(
-        connections=connections,
-        instantiations=instantiations,
-        signal_definitions=signal_definitions,
-        x_width=f"{bit_width}",
-        y_width=f"{bit_width}",
-        x_address_width=str(calculate_address_width(in_features)),
-        y_address_width=str(calculate_address_width(out_features)),
-    )
-    return template
-
-
-def _prepare_sequential_template_with_hard_sigmoid(
-    bit_width: int,
-) -> SequentialTemplate:
-    entity = "hard_sigmoid"
-    instance = f"i_{entity}_0"
-    connections = create_connections(
-        {
-            f"{instance}_x": "x",
-            "y": f"{instance}_y",
-            "done": "enable",
-            "x_address": "y_address",
-        }
-    )
-
-    instantiations = create_instance(
-        name=instance,
-        entity=entity,
         architecture="rtl",
-        library="work",
-        signal_mapping={s: f"{instance}_{s}" for s in ("x", "y")},
+        signal_mapping={signal: f"i_{entity}_{signal}" for signal in signals},
     )
 
-    signal_definitions = sorted(
-        [
-            signal_definition(name=f"{instance}_{signal.name}", width=signal.width)
-            for signal in (
-                std_signals.x(bit_width),
-                std_signals.y(bit_width),
-            )
-        ]
-    )
 
-    template = SequentialTemplate(
-        connections=connections,
-        instantiations=instantiations,
-        signal_definitions=signal_definitions,
-        x_width=f"{bit_width}",
-        y_width=f"{bit_width}",
-        x_address_width="1",
-        y_address_width="1",
-    )
-    return template
+def remove_indentation(code: Iterable[str]) -> list[str]:
+    return list(map(str.strip, code))
 
 
-class FixedPointConfiguration:
-    def __init__(self):
-        self.total_bits = 16
-        self.frac_bits = 8
+def _find_all_matches(pattern: str, lines: Iterable[str]) -> list[str]:
+    return [match for line in lines for match in re.findall(pattern, line)]
 
 
-if __name__ == "__main__":
-    unittest.main()
+def extract_layer_name(code: Iterable[str]) -> str:
+    matches = _find_all_matches(pattern=r"entity\s*(\S*)\s*is", lines=code)
+    if len(matches) == 0:
+        raise ValueError("Code does not contain a layer name.")
+    return matches[0]
+
+
+def extract_signal_definitions(code: Iterable[str]) -> list[str]:
+    return _find_all_matches(pattern=r"\s*(signal .*;)", lines=code)
+
+
+def extract_layer_connections(code: Iterable[str]) -> list[str]:
+    return _find_all_matches(pattern=r"\s*(.*<=.*;)", lines=code)

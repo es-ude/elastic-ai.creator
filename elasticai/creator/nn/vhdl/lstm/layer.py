@@ -8,27 +8,27 @@ from elasticai.creator.base_modules.hard_tanh import HardTanh
 from elasticai.creator.base_modules.lstm import LSTM
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
-from elasticai.creator.nn.vhdl.fp_linear_1d import FPLinear1d
-from elasticai.creator.nn.vhdl.fp_linear_1d.design import (
-    FPLinear1d as _FPLinear1dDesign,
-)
+from elasticai.creator.nn.vhdl.linear import FPLinear
+from elasticai.creator.nn.vhdl.linear.design import FPLinear1d as _FPLinear1dDesign
 from elasticai.creator.nn.vhdl.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
 
 
-class LSTMNetwork(torch.nn.Module):
+class LSTMNetwork(Translatable, torch.nn.Module):
     def __init__(self, layers: list[torch.nn.Module]):
         super().__init__()
         self.lstm = layers[0]
+        self.layer_names = [f"fp_linear_1d_{i}" for i in range(len(layers[1:]))]
         self.layers = torch.nn.Sequential(
             OrderedDict(
-                {f"fp_linear_1d_{i}": layer for i, layer in enumerate(layers[1:])}
+                {name: layer for name, layer in zip(self.layer_names, layers[1:])}
             )
         )
 
-    def translate(self) -> LSTMNetworkDesign:
+    def translate(self, name: str) -> LSTMNetworkDesign:
         first_lstm = cast(FixedPointLSTMWithHardActivations, self.lstm)
         total_bits = first_lstm.fixed_point_config.total_bits
         frac_bits = first_lstm.fixed_point_config.frac_bits
@@ -36,7 +36,10 @@ class LSTMNetwork(torch.nn.Module):
         input_size = first_lstm.input_size
         follow_up_linear_layers = cast(
             list[_FPLinear1dDesign],
-            [cast(FPLinear1d, layer).translate() for layer in self.layers],
+            [
+                cast(FPLinear, layer).translate(self.layer_names[i])
+                for i, layer in enumerate(self.layers)
+            ],
         )
         return LSTMNetworkDesign(
             lstm=first_lstm.translate(),
