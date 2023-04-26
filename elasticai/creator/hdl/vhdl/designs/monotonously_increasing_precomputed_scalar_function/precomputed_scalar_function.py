@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable
+from typing import Callable, Iterable
 
 from elasticai.creator.hdl.code_generation.abstract_base_template import (
     TemplateConfig,
@@ -19,7 +19,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         name: str,
         width: int,
         function: Callable[[int], int],
-        inputs: list[int],
+        inputs: Iterable[int],
     ):
         super().__init__(name)
         self._width = width
