@@ -4,6 +4,9 @@ from typing import cast
 
 import pytest
 
+from elasticai.creator.hdl.code_generation.abstract_base_template import (
+    module_to_package,
+)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
@@ -16,7 +19,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
 from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.vhdl.identity.layer import FPIdentity
-from elasticai.creator.nn.vhdl.sequential import Sequential
+from elasticai.creator.nn.vhdl.sequential.sequential import Sequential
 
 
 def single_layer_model() -> Sequential:
@@ -32,22 +35,12 @@ def two_layer_model() -> Sequential:
     )
 
 
-"""
-Tests:
-  - [x] replace fplinear1d with minimal layer that implements identity
-  - [x] remove hardsigmoid cases from tests
-  - [x] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
-  - [?] check that each of the above names corresponds to an existing generated subdesign
-  - [x] test each section (connections, instantiations, etc.) in isolation
-"""
-
-
 class TestSequential:
     def test_empty_sequential(self) -> None:
         model = Sequential(tuple())
         actual_code = sequential_code_for_model(model)
 
-        template = Template("network", package="elasticai.creator.hdl.vhdl.designs")
+        template = Template("network", package=module_to_package(Sequential.__module__))
         template.update_parameters(
             layer_connections=sorted(
                 ["y <= x;", "x_address <= y_address;", "done <= enable;"]

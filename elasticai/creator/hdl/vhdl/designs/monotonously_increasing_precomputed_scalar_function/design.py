@@ -11,7 +11,7 @@ from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.savable import Path
 
 
-class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
+class PrecomputedMonotonouslyIncreasingScalarFunction(Design):
     _template_package = module_to_package(__name__)
 
     def __init__(
@@ -27,7 +27,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         self._inputs = inputs
         self._io_pairs: dict[int, int] = dict()
         self._template_config = TemplateConfig(
-            file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
+            file_name="design.tpl.vhd",
             package=self._template_package,
             parameters={},
         )

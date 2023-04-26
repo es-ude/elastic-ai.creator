@@ -18,8 +18,8 @@ from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
-from elasticai.creator.hdl.vhdl.designs import HardSigmoid
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
+from elasticai.creator.nn.vhdl.fp_hard_sigmoid.design import HardSigmoid
 from elasticai.creator.nn.vhdl.lstm.design.fp_hard_tanh import FPHardTanh
 
 
