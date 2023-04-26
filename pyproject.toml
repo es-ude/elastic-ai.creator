@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elasticai.creator"
-version = "0.35.0"
+version = "0.36.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 repository = "https://github.com/es-ude/elastic-ai.creator"
