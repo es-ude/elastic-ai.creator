@@ -1,0 +1,15 @@
+name: Force Publish
+on:
+  workflow_call:
+
+jobs:
+  build-and-publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v3
+      - uses: ./.github/actions/setup_test_environment
+      - run: python --version
+      - run: python -m pip install build twine
+      - run: python -m build .
