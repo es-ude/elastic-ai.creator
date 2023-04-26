@@ -1,6 +1,6 @@
 name: Force Publish
 on:
-  workflow_call:
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
