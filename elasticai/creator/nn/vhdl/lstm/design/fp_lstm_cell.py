@@ -5,13 +5,13 @@ from typing import Any, cast
 
 import numpy as np
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    TemplateConfig,
-    TemplateExpander,
-    module_to_package,
-)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
+)
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplateConfig,
+    TemplateExpander,
+    module_to_package,
 )
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -39,7 +39,7 @@ class FPLSTMCell(Design):
         work_library_name: str = "work",
     ) -> None:
         super().__init__(name=name)
-        base_config = TemplateConfig(
+        base_config = InProjectTemplateConfig(
             package=module_to_package(self.__module__), file_name="", parameters={}
         )
         self.input_size = len(w_ih[0])
@@ -167,7 +167,7 @@ class FPLSTMCell(Design):
         hardtanh.save_to(hardtanh_destination)
 
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
-        template_configuration = TemplateConfig(
+        template_configuration = InProjectTemplateConfig(
             file_name="dual_port_2_clock_ram.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(name=self.name),

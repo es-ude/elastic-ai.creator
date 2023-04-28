@@ -1,12 +1,12 @@
 from functools import partial
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    TemplateConfig,
-    TemplateExpander,
-    module_to_package,
-)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
+)
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplateConfig,
+    TemplateExpander,
+    module_to_package,
 )
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -28,7 +28,7 @@ class LSTMNetworkDesign(Design):
         super().__init__(name="lstm_network")
         self._linear_layers = linear_layers
         self._lstm = lstm
-        self.config = TemplateConfig(
+        self.config = InProjectTemplateConfig(
             module_to_package(self.__module__),
             file_name="lstm_network.tpl.vhd",
             parameters=dict(

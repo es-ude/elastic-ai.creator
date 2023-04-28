@@ -4,14 +4,14 @@ from typing import cast
 import pytest
 import torch
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    TemplateConfig,
-    TemplateExpander,
-    module_to_package,
-)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
     to_hex,
+)
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplateConfig,
+    TemplateExpander,
+    module_to_package,
 )
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     generate_hex_for_rom,
@@ -28,7 +28,7 @@ from elasticai.creator.nn.vhdl.lstm.layer import LSTMNetwork
 
 class ExpectedCode:
     def __init__(self, name: str):
-        self.config = TemplateConfig(
+        self.config = InProjectTemplateConfig(
             package=module_to_package(LSTMNetworkDesign.__module__),
             file_name=name,
             parameters={},
@@ -122,7 +122,6 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
             f"{calculate_address_width((input_size + hidden_size) * hidden_size)}"
         ),
         name="lstm_cell",
-        in_addr_width="4",
     )
     model = LSTMNetwork(
         [
@@ -309,18 +308,17 @@ def test_connects_linear_layer(lstm_destination, lstm_network_with_single_linear
 
 def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[str]:
     rom_value = ",".join(map(generate_hex_for_rom, values))
-    params: dict[str, str | list[str]] = dict(
-        rom_value=rom_value,
-        rom_addr_bitwidth=str(rom_address_width),
-        rom_data_bitwidth=str(total_bits),
-        name="wi_rom_lstm_cell",
-        resource_option="auto",
-    )
     template = TemplateExpander(
-        TemplateConfig(
-            module_to_package(Rom.__module__),
+        InProjectTemplateConfig(
+            package=module_to_package(Rom.__module__),
             file_name="rom.tpl.vhd",
-            parameters=params,
+            parameters=dict(
+                rom_value=rom_value,
+                rom_addr_bitwidth=str(rom_address_width),
+                rom_data_bitwidth=str(total_bits),
+                name="wi_rom_lstm_cell",
+                resource_option="auto",
+            ),
         ),
     )
     return template.lines()
