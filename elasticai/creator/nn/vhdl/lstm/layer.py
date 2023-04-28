@@ -12,7 +12,7 @@ from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 from elasticai.creator.nn.vhdl.linear import FPLinear
-from elasticai.creator.nn.vhdl.linear.design import FPLinear1d as _FPLinear1dDesign
+from elasticai.creator.nn.vhdl.linear.design import FPLinear as _FPLinear1dDesign
 from elasticai.creator.nn.vhdl.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.vhdl.lstm.design.lstm import LSTMNetworkDesign
 

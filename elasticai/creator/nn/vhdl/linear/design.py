@@ -13,7 +13,7 @@ from elasticai.creator.hdl.vhdl.code_generation.template import Template
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 
 
-class FPLinear1d(Design):
+class FPLinear(Design):
     @property
     def port(self) -> Port:
         return self._port

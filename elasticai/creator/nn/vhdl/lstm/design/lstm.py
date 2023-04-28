@@ -12,14 +12,14 @@ from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.savable import Path
-from elasticai.creator.nn.vhdl.linear.design import FPLinear1d
+from elasticai.creator.nn.vhdl.linear.design import FPLinear
 
 
 class LSTMNetworkDesign(Design):
     def __init__(
         self,
         lstm: Design,
-        linear_layers: list[FPLinear1d],
+        linear_layers: list[FPLinear],
         total_bits: int,
         frac_bits: int,
         hidden_size: int,
