@@ -17,12 +17,12 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         self,
         in_features: int,
         out_features: int,
+        bias: bool,
         total_bits: int,
         frac_bits: int,
-        bias: bool,
-        bn_eps: float,
-        bn_momentum: float,
-        bn_affine: bool,
+        bn_eps: float = 1e-5,
+        bn_momentum: float = 0.1,
+        bn_affine: bool = True,
         device: Any = None,
     ) -> None:
         super().__init__()
@@ -60,12 +60,28 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         return x
 
     def translate(self, name: str) -> FPLinear:
+        def float_to_signed_int(value: float | list) -> int | list:
+            if isinstance(value, list):
+                return list(map(float_to_signed_int, value))
+            return self._arithmetics.config.as_integer(value)
+
+        bn_weight = self._batch_norm.weight
+        bn_bias = self._batch_norm.bias
+        bn_mean = cast(torch.Tensor, self._batch_norm.running_mean)
+        bn_variance = cast(torch.Tensor, self._batch_norm.running_var)
+        bn_epsilon = self._batch_norm.eps
+
+        factor = bn_weight / torch.sqrt(bn_variance + bn_epsilon)
+
+        new_weights = (factor * self._linear.weight.t()).t()
+        new_bias = factor * (self._linear.bias - bn_mean) + bn_bias
+
         return FPLinear(
             in_feature_num=self._linear.in_features,
             out_feature_num=self._linear.out_features,
             total_bits=self._arithmetics.config.total_bits,
             frac_bits=self._arithmetics.config.frac_bits,
-            weights=...,
-            bias=...,
+            weights=cast(list[list[int]], float_to_signed_int(new_weights.tolist())),
+            bias=cast(list[int], float_to_signed_int(new_bias.tolist())),
             name=name,
         )
