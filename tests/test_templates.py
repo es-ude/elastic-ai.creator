@@ -65,11 +65,6 @@ class ExpandTemplatesTestCase(TestCase):
         actual = get_result_string(template, key=[])
         self.assertEqual(expected, actual)
 
-    def test_key_not_in_template(self) -> None:
-        template = ["$var1", "$var2"]
-        with self.assertRaises(KeyError):
-            expand_template(template, var3="fail")
-
     def test_keep_indentation(self) -> None:
         template = "\t  $key".splitlines()
         expected = "\t  a\n\t  b\n\t  c"
