@@ -1,7 +1,7 @@
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.hdl.vhdl.code_generation.template import InMemoryTemplate
+from elasticai.creator.hdl.vhdl.code_generation.template import InMemoryVHDLTemplate
 
 
 def newline_join(lines: Iterable[str]) -> str:
@@ -11,7 +11,7 @@ def newline_join(lines: Iterable[str]) -> str:
 def expand_template(
     template: list[str], **parameters: str | tuple[str] | list[str]
 ) -> list[str]:
-    template_obj = InMemoryTemplate(template)
+    template_obj = InMemoryVHDLTemplate(template)
     template_obj.update_parameters(**parameters)
     return template_obj.lines()
 

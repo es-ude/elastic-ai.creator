@@ -13,7 +13,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_instance,
     signal_definition,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import InProjectTemplate
+from elasticai.creator.hdl.vhdl.code_generation.template import InProjectVHDLTemplate
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.vhdl.identity.layer import FPIdentity
 from elasticai.creator.nn.vhdl.sequential import Sequential
@@ -47,7 +47,7 @@ class TestSequential:
         model = Sequential(tuple())
         actual_code = sequential_code_for_model(model)
 
-        template = InProjectTemplate(
+        template = InProjectVHDLTemplate(
             "network", package="elasticai.creator.hdl.vhdl.designs"
         )
         template.update_parameters(

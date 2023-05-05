@@ -17,7 +17,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections_using_to_from_pairs,
     create_signal_definitions,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import InProjectTemplate
+from elasticai.creator.hdl.vhdl.code_generation.template import InProjectVHDLTemplate
 
 
 class Sequential(Design):
@@ -131,7 +131,7 @@ class Sequential(Design):
         )
 
     def save_to(self, destination: Path):
-        network_implementation = InProjectTemplate(
+        network_implementation = InProjectVHDLTemplate(
             "network", package=module_to_package(self.__module__)
         )
         self._save_subdesigns(destination)

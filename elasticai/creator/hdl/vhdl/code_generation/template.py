@@ -8,7 +8,7 @@ from elasticai.creator.hdl.code_generation.template import (
 )
 
 
-class _TemplateBase:
+class _VHDLTemplateBase:
     def __init__(self, config: TemplateConfig) -> None:
         self._internal_template = TemplateExpander(config=config)
 
@@ -19,7 +19,7 @@ class _TemplateBase:
         return self._internal_template.lines()
 
 
-class InProjectTemplate(_TemplateBase):
+class InProjectVHDLTemplate(_VHDLTemplateBase):
     def __init__(
         self,
         base_name: str,
@@ -33,7 +33,7 @@ class InProjectTemplate(_TemplateBase):
         )
 
 
-class InMemoryTemplate(_TemplateBase):
+class InMemoryVHDLTemplate(_VHDLTemplateBase):
     def __init__(self, template: Iterable[str]) -> None:
         super().__init__(
             config=InMemoryTemplateConfig(template=template, parameters=dict())

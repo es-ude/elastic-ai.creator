@@ -7,7 +7,7 @@ from elasticai.creator.hdl.design_base.ports import (
     create_port_for_buffered_design as create_port,
 )
 from elasticai.creator.hdl.savable import Path
-from elasticai.creator.hdl.vhdl.code_generation.template import InProjectTemplate
+from elasticai.creator.hdl.vhdl.code_generation.template import InProjectVHDLTemplate
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 
 
@@ -69,7 +69,7 @@ class FPLinear1d(Design):
     def save_to(self, destination: Path):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
-        template = InProjectTemplate(
+        template = InProjectVHDLTemplate(
             base_name="fp_linear", package=module_to_package(self.__module__)
         )
         template.update_parameters(
