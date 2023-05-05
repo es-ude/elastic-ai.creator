@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.37.0 (2023-05-05)
+### Feature
+* Assert that all inserted variables exists in template and remove AbstractBaseTemplate ([`51f1a08`](https://github.com/es-ude/elastic-ai.creator/commit/51f1a0883a8d0a54caee66080ef85f84049ad806))
+
 ## v0.36.0 (2023-04-26)
 ### Feature
 * Autogenerate sequential signal connections ([`6dfca07`](https://github.com/es-ude/elastic-ai.creator/commit/6dfca078b735a3387b65c20de601426ea27371c6))
