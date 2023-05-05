@@ -1,14 +1,7 @@
-from abc import ABC, abstractmethod
-from collections.abc import Iterator
-from functools import partial
 from itertools import chain
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    module_to_package,
-)
-from elasticai.creator.hdl.design_base import std_signals
+from elasticai.creator.hdl.code_generation.template import module_to_package
 from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.design_base.std_signals import (
     clock,
     done,
@@ -24,7 +17,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections_using_to_from_pairs,
     create_signal_definitions,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import Template
+from elasticai.creator.hdl.vhdl.code_generation.template import InProjectTemplate
 
 
 class Sequential(Design):
@@ -138,7 +131,7 @@ class Sequential(Design):
         )
 
     def save_to(self, destination: Path):
-        network_implementation = Template(
+        network_implementation = InProjectTemplate(
             "network", package=module_to_package(self.__module__)
         )
         self._save_subdesigns(destination)

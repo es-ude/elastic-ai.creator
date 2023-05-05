@@ -1,19 +1,21 @@
 from functools import partial
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    TemplateConfig,
-    TemplateExpander,
-    module_to_package,
-)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
+)
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplateConfig,
+    TemplateExpander,
+    module_to_package,
 )
 from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
 
 
 class Rom:
-    def __init__(self, name: str, data_width: int, values_as_integers: list[int]):
+    def __init__(
+        self, name: str, data_width: int, values_as_integers: list[int]
+    ) -> None:
         self._name = name
         self._data_width = data_width
         number_of_values = len(values_as_integers)
@@ -23,7 +25,7 @@ class Rom:
         )
 
     def save_to(self, destination: Path):
-        config = TemplateConfig(
+        config = InProjectTemplateConfig(
             file_name="rom.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(

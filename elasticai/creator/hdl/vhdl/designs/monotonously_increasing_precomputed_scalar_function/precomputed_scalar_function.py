@@ -1,8 +1,8 @@
 from functools import partial
 from typing import Callable
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    TemplateConfig,
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplateConfig,
     TemplateExpander,
     module_to_package,
 )
@@ -20,13 +20,13 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         width: int,
         function: Callable[[int], int],
         inputs: list[int],
-    ):
+    ) -> None:
         super().__init__(name)
         self._width = width
         self._function = function
         self._inputs = inputs
         self._io_pairs: dict[int, int] = dict()
-        self._template_config = TemplateConfig(
+        self._template_config = InProjectTemplateConfig(
             file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
             package=self._template_package,
             parameters={},

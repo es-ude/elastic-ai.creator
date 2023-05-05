@@ -1,15 +1,13 @@
 from itertools import chain
 from typing import Optional
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    module_to_package,
-)
+from elasticai.creator.hdl.code_generation.template import module_to_package
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.ports import (
     create_port_for_buffered_design as create_port,
 )
 from elasticai.creator.hdl.savable import Path
-from elasticai.creator.hdl.vhdl.code_generation.template import Template
+from elasticai.creator.hdl.vhdl.code_generation.template import InProjectTemplate
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 
 
@@ -71,7 +69,7 @@ class FPLinear1d(Design):
     def save_to(self, destination: Path):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
-        template = Template(
+        template = InProjectTemplate(
             base_name="fp_linear", package=module_to_package(self.__module__)
         )
         template.update_parameters(
