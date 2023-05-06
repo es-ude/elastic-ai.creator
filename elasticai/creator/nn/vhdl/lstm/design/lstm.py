@@ -4,7 +4,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -28,7 +28,7 @@ class LSTMNetworkDesign(Design):
         super().__init__(name="lstm_network")
         self._linear_layers = linear_layers
         self._lstm = lstm
-        self.config = InProjectTemplateConfig(
+        self.config = InProjectTemplate(
             module_to_package(self.__module__),
             file_name="lstm_network.tpl.vhd",
             parameters=dict(

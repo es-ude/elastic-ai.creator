@@ -1,5 +1,5 @@
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -18,7 +18,7 @@ can use as a starting point to develop your design.
 
 class BaseTemplateGenerator:
     def __init__(self) -> None:
-        self._base_config = InProjectTemplateConfig(
+        self._base_config = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="base_template.tpl.vhd",
             parameters={},

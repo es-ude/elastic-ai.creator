@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import repeat
 from string import Template as StringTemplate
 from typing import Protocol, cast
@@ -11,39 +11,25 @@ def module_to_package(module: str) -> str:
     return ".".join(module.split(".")[:-1])
 
 
-class TemplateConfig(Protocol):
-    parameters: dict[str, str | Iterable[str]]
-
-    def read_template(self) -> Iterable[str]:
-        ...
+class Template(Protocol):
+    parameters: dict[str, str | list[str]]
+    content: list[str]
 
 
 @dataclass
-class InProjectTemplateConfig:
-    """
-    Used in design definition, by the hw designer.
-    HW designer just provides template configs and port definitions as a design.
+class InMemoryTemplate(Template):
+    content: list[str]
+    parameters: dict[str, str | list[str]]
 
-    Contributor of a new translatable module provides design and ml module as well as how to map parameters
 
-    Creator takes these and uses the template expander to generate the correct file
-    """
-
+@dataclass
+class InProjectTemplate(Template):
     package: str
     file_name: str
-    parameters: dict[str, str | Iterable[str]]
+    parameters: dict[str, str | list[str]]
 
-    def read_template(self) -> Iterator[str]:
-        return read_text(self.package, self.file_name)
-
-
-@dataclass
-class InMemoryTemplateConfig:
-    template: Iterable[str]
-    parameters: dict[str, str | Iterable[str]]
-
-    def read_template(self) -> Iterator[str]:
-        yield from self.template
+    def __post_init__(self) -> None:
+        self.content = list(read_text(self.package, self.file_name))
 
 
 class TemplateExpander:
@@ -51,25 +37,24 @@ class TemplateExpander:
     Used during translation by the creator tool. HW designer does not need to touch this or inherit from it.
     """
 
-    def __init__(self, config: TemplateConfig):
+    def __init__(self, template: Template):
         super().__init__()
-        self.config = config
+        self._template = template
 
     def lines(self) -> list[str]:
-        template = list(self.config.read_template())
-        self._assert_all_variables_to_fill_exists(template)
+        self._assert_all_variables_to_fill_exists()
 
         single_line_params, multi_line_params = _split_single_and_multiline_parameters(
-            self.config.parameters
+            self._template.parameters
         )
-        lines = _expand_template(template, **single_line_params)
+        lines = _expand_template(self._template.content, **single_line_params)
         lines = _expand_multiline_template(lines, **multi_line_params)
         return list(lines)
 
-    def _assert_all_variables_to_fill_exists(self, template: Iterable[str]) -> None:
-        template_variables = set(StringTemplate("\n".join(template)).get_identifiers())
-        config_variables = set(self.config.parameters.keys())
-        not_existing_variables = config_variables - template_variables
+    def _assert_all_variables_to_fill_exists(self) -> None:
+        template_variables = _extract_template_variables(self._template.content)
+        variables_to_fill = set(self._template.parameters.keys())
+        not_existing_variables = variables_to_fill - template_variables
         if len(not_existing_variables) > 0:
             raise KeyError(
                 f"The template has no variables named {not_existing_variables} to fill."
@@ -129,3 +114,7 @@ def _unify_template_datatype(template: str | Iterable[str]) -> Iterator[str]:
 def _expand_template(template: str | Iterable[str], **kwargs: str) -> Iterator[str]:
     for line in _unify_template_datatype(template):
         yield StringTemplate(line).safe_substitute(kwargs)
+
+
+def _extract_template_variables(template: list[str]) -> set[str]:
+    return set(StringTemplate("\n".join(template)).get_identifiers())

@@ -1,5 +1,5 @@
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -14,7 +14,7 @@ class FPHardTanh(Design):
         super().__init__(name="hardtanh")
         self._data_width = total_bits
         fp_config = FixedPointConfig(frac_bits=frac_bits, total_bits=total_bits)
-        self._template = InProjectTemplateConfig(
+        self._template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="fp_hard_tanh.tpl.vhd",
             parameters=dict(

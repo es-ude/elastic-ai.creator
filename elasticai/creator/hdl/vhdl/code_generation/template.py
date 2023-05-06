@@ -1,22 +1,22 @@
 from collections.abc import Iterable
 
 from elasticai.creator.hdl.code_generation.template import (
-    InMemoryTemplateConfig,
-    InProjectTemplateConfig,
-    TemplateConfig,
+    InMemoryTemplate,
+    InProjectTemplate,
+    Template,
     TemplateExpander,
 )
 
 
 class _VHDLTemplateBase:
-    def __init__(self, config: TemplateConfig) -> None:
-        self._internal_template = TemplateExpander(config=config)
+    def __init__(self, template: Template) -> None:
+        self._internal_template = template
 
-    def update_parameters(self, **parameters: str | Iterable[str]):
-        self._internal_template.config.parameters.update(parameters)
+    def update_parameters(self, **parameters: str | list[str]):
+        self._internal_template.parameters.update(parameters)
 
     def lines(self) -> list[str]:
-        return self._internal_template.lines()
+        return TemplateExpander(self._internal_template).lines()
 
 
 class InProjectVHDLTemplate(_VHDLTemplateBase):
@@ -27,14 +27,12 @@ class InProjectVHDLTemplate(_VHDLTemplateBase):
         suffix: str = ".tpl.vhd",
     ) -> None:
         super().__init__(
-            config=InProjectTemplateConfig(
+            template=InProjectTemplate(
                 file_name=f"{base_name}{suffix}", package=package, parameters=dict()
             )
         )
 
 
 class InMemoryVHDLTemplate(_VHDLTemplateBase):
-    def __init__(self, template: Iterable[str]) -> None:
-        super().__init__(
-            config=InMemoryTemplateConfig(template=template, parameters=dict())
-        )
+    def __init__(self, content: list[str]) -> None:
+        super().__init__(template=InMemoryTemplate(content=content, parameters=dict()))

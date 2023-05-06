@@ -2,7 +2,7 @@ from functools import partial
 from typing import Callable
 
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -26,7 +26,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         self._function = function
         self._inputs = inputs
         self._io_pairs: dict[int, int] = dict()
-        self._template_config = InProjectTemplateConfig(
+        self._template_config = InProjectTemplate(
             file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
             package=self._template_package,
             parameters={},

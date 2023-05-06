@@ -1,24 +1,22 @@
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.hdl.vhdl.code_generation.template import InMemoryVHDLTemplate
+from elasticai.creator.hdl.code_generation.template import (
+    InMemoryTemplate,
+    TemplateExpander,
+)
 
 
 def newline_join(lines: Iterable[str]) -> str:
     return "\n".join(lines)
 
 
-def expand_template(
-    template: list[str], **parameters: str | tuple[str] | list[str]
-) -> list[str]:
-    template_obj = InMemoryVHDLTemplate(template)
-    template_obj.update_parameters(**parameters)
-    return template_obj.lines()
+def expand_template(content: list[str], **parameters: str | list[str]) -> list[str]:
+    template = InMemoryTemplate(content, parameters)
+    return TemplateExpander(template).lines()
 
 
-def get_result_string(
-    template: list[str], **kwargs: str | tuple[str] | list[str]
-) -> str:
+def get_result_string(template: list[str], **kwargs: str | list[str]) -> str:
     return newline_join(expand_template(template, **kwargs))
 
 
@@ -50,7 +48,7 @@ class ExpandTemplatesTestCase(TestCase):
     def test_expand_two_keys(self) -> None:
         template = "$first\n$second".splitlines()
         expected = "ab\ncd"
-        actual = get_result_string(template, first=("ab",), second=("cd",))
+        actual = get_result_string(template, first=["ab"], second=["cd"])
         self.assertEqual(expected, actual)
 
     def test_two_values(self) -> None:

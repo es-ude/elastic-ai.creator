@@ -9,7 +9,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
     to_hex,
 )
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -28,20 +28,14 @@ from elasticai.creator.nn.vhdl.lstm.layer import LSTMNetwork
 
 class ExpectedCode:
     def __init__(self, name: str):
-        self.config = InProjectTemplateConfig(
+        self.template = InProjectTemplate(
             package=module_to_package(LSTMNetworkDesign.__module__),
             file_name=name,
             parameters={},
         )
 
     def lines(self) -> list[str]:
-        expander = TemplateExpander(config=self.config)
-        return expander.lines()
-
-
-class ExpectedLSTMNetworkCode(ExpectedCode):
-    def __init__(self):
-        super().__init__("lstm_network.tpl.vhd")
+        return TemplateExpander(self.template).lines()
 
 
 @pytest.mark.parametrize("total_bits", (8, 9, 10, 6))
@@ -83,8 +77,8 @@ def generate_lstm_network_and_expected_code(
     )
     destination = InMemoryPath("lstm_network", parent=None)
     model.translate("lstm_network").save_to(destination)
-    expected = ExpectedLSTMNetworkCode()
-    expected.config.parameters.update(
+    expected = ExpectedCode("lstm_network.tpl.vhd")
+    expected.template.parameters.update(
         data_width=f"{total_bits}",
         frac_width=f"{frac_bits}",
         in_addr_width="4",
@@ -110,7 +104,7 @@ def test_lstm_cell_creates_lstm_cell_file(lstm_destination):
     hidden_size = 20
     input_size = 6
 
-    expected.config.parameters.update(
+    expected.template.parameters.update(
         library="work",
         data_width=f"{total_bits}",
         frac_width=f"{frac_bits}",
@@ -309,7 +303,7 @@ def test_connects_linear_layer(lstm_destination, lstm_network_with_single_linear
 def prepare_rom_file(values: list[str], rom_address_width, total_bits) -> list[str]:
     rom_value = ",".join(map(generate_hex_for_rom, values))
     template = TemplateExpander(
-        InProjectTemplateConfig(
+        InProjectTemplate(
             package=module_to_package(Rom.__module__),
             file_name="rom.tpl.vhd",
             parameters=dict(

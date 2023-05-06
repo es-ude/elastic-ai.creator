@@ -4,7 +4,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -25,7 +25,7 @@ class Rom:
         )
 
     def save_to(self, destination: Path):
-        config = InProjectTemplateConfig(
+        config = InProjectTemplate(
             file_name="rom.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(

@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from copy import copy
 from functools import partial
 from typing import Any, cast
 
@@ -9,7 +8,7 @@ from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -39,9 +38,7 @@ class FPLSTMCell(Design):
         work_library_name: str = "work",
     ) -> None:
         super().__init__(name=name)
-        base_config = InProjectTemplateConfig(
-            package=module_to_package(self.__module__), file_name="", parameters={}
-        )
+
         self.input_size = len(w_ih[0])
         self.hidden_size = len(w_ih) // 4
         self.weights_ih = w_ih
@@ -50,45 +47,44 @@ class FPLSTMCell(Design):
         self.biases_hh = b_hh
         self._upper_bound_for_hard_sigmoid = upper_bound_for_hard_sigmoid
         self._lower_bound_for_hard_sigmoid = lower_bound_for_hard_sigmoid
-        self._rom_base_config = copy(base_config)
-        self._rom_base_config.file_name = "rom.tpl.vhd"
 
-        self._config = copy(base_config)
-        self._config.file_name = f"{self.name}.tpl.vhd"
-        self._config.parameters = {
-            k: str(v)
-            for k, v in dict(
+        self._template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name=f"{self.name}.tpl.vhd",
+            parameters=dict(
                 name=self.name,
                 library=work_library_name,
-                data_width=total_bits,
-                frac_width=frac_bits,
-                input_size=self.input_size,
-                hidden_size=self.hidden_size,
-                x_h_addr_width=calculate_address_width(
-                    self.input_size + self.hidden_size
+                data_width=str(total_bits),
+                frac_width=str(frac_bits),
+                input_size=str(self.input_size),
+                hidden_size=str(self.hidden_size),
+                x_h_addr_width=str(
+                    calculate_address_width(self.input_size + self.hidden_size)
                 ),
-                hidden_addr_width=calculate_address_width(self.hidden_size),
-                w_addr_width=calculate_address_width(
-                    (self.input_size + self.hidden_size) * self.hidden_size
+                hidden_addr_width=str(calculate_address_width(self.hidden_size)),
+                w_addr_width=str(
+                    calculate_address_width(
+                        (self.input_size + self.hidden_size) * self.hidden_size
+                    )
                 ),
-            ).items()
-        }
+            ),
+        )
 
     @property
     def total_bits(self) -> int:
-        return int(cast(str, self._config.parameters["data_width"]))
+        return int(cast(str, self._template.parameters["data_width"]))
 
     @property
     def frac_bits(self) -> int:
-        return int(cast(str, self._config.parameters["frac_width"]))
+        return int(cast(str, self._template.parameters["frac_width"]))
 
     @property
     def _hidden_addr_width(self) -> int:
-        return int(cast(str, self._config.parameters["hidden_addr_width"]))
+        return int(cast(str, self._template.parameters["hidden_addr_width"]))
 
     @property
     def _weight_address_width(self) -> int:
-        return int(cast(str, self._config.parameters["w_addr_width"]))
+        return int(cast(str, self._template.parameters["w_addr_width"]))
 
     @property
     def port(self) -> Port:
@@ -122,7 +118,7 @@ class FPLSTMCell(Design):
         self._save_hardtanh(destination)
         self._save_sigmoid(destination)
 
-        expander = TemplateExpander(self._config)
+        expander = TemplateExpander(self._template)
         destination.create_subpath("lstm_cell").as_file(".vhd").write_text(
             expander.lines()
         )
@@ -167,7 +163,7 @@ class FPLSTMCell(Design):
         hardtanh.save_to(hardtanh_destination)
 
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
-        template_configuration = InProjectTemplateConfig(
+        template_configuration = InProjectTemplate(
             file_name="dual_port_2_clock_ram.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(name=self.name),
