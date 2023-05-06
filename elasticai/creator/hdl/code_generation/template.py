@@ -17,12 +17,6 @@ class Template(Protocol):
 
 
 @dataclass
-class RawTemplate(Template):
-    content: list[str]
-    parameters: dict[str, str | list[str]]
-
-
-@dataclass
 class InProjectTemplate(Template):
     package: str
     file_name: str

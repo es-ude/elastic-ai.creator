@@ -1,7 +1,14 @@
+from dataclasses import dataclass
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.hdl.code_generation.template import RawTemplate, TemplateExpander
+from elasticai.creator.hdl.code_generation.template import TemplateExpander
+
+
+@dataclass
+class Template:
+    content: list[str]
+    parameters: dict[str, str | list[str]]
 
 
 def newline_join(lines: Iterable[str]) -> str:
@@ -9,7 +16,7 @@ def newline_join(lines: Iterable[str]) -> str:
 
 
 def expand_template(content: list[str], **parameters: str | list[str]) -> list[str]:
-    template = RawTemplate(content, parameters)
+    template = Template(content, parameters)
     return TemplateExpander(template).lines()
 
 
