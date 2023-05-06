@@ -1,6 +1,10 @@
 from itertools import chain
 
-from elasticai.creator.hdl.code_generation.template import module_to_package
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplate,
+    TemplateExpander,
+    module_to_package,
+)
 from elasticai.creator.hdl.design_base.design import Design, Port
 from elasticai.creator.hdl.design_base.std_signals import (
     clock,
@@ -17,7 +21,6 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections_using_to_from_pairs,
     create_signal_definitions,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import InProjectVHDLTemplate
 
 
 class Sequential(Design):
@@ -131,19 +134,20 @@ class Sequential(Design):
         )
 
     def save_to(self, destination: Path):
-        network_implementation = InProjectVHDLTemplate(
-            "network", package=module_to_package(self.__module__)
-        )
         self._save_subdesigns(destination)
-        network_implementation.update_parameters(
-            layer_connections=self._generate_connections(),
-            layer_instantiations=self._generate_instantiations(),
-            signal_definitions=self._generate_signal_definitions(),
-            x_address_width=str(self._x_address_width),
-            y_address_width=str(self._y_address_width),
-            x_width=str(self._x_width),
-            y_width=str(self._y_width),
-            layer_name=self.name,
+        network_template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="network.tpl.vhd",
+            parameters=dict(
+                layer_connections=self._generate_connections(),
+                layer_instantiations=self._generate_instantiations(),
+                signal_definitions=self._generate_signal_definitions(),
+                x_address_width=str(self._x_address_width),
+                y_address_width=str(self._y_address_width),
+                x_width=str(self._x_width),
+                y_width=str(self._y_width),
+                layer_name=self.name,
+            ),
         )
         target_file = destination.create_subpath(self.name).as_file(".vhd")
-        target_file.write_text(network_implementation.lines())
+        target_file.write_text(TemplateExpander(network_template).lines())
