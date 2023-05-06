@@ -3,7 +3,6 @@ from typing import Optional
 
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -84,8 +83,7 @@ class FPLinear1d(Design):
                 **self._template_parameters(),
             ),
         )
-        code = TemplateExpander(template).lines()
-        destination.create_subpath(self.name).as_file(f".vhd").write_text(code)
+        destination.create_subpath(self.name).as_file(f".vhd").write(template)
 
         weights_rom = Rom(
             name=rom_name["weights"],

@@ -3,7 +3,6 @@ from typing import Callable
 
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -26,7 +25,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         self._function = function
         self._inputs = inputs
         self._io_pairs: dict[int, int] = dict()
-        self._template_config = InProjectTemplate(
+        self._template = InProjectTemplate(
             file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
             package=self._template_package,
             parameters={},
@@ -50,7 +49,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
             outgoing=[signal(name="y")],
         )
 
-    def save_to(self, destination: "Path"):
+    def save_to(self, destination: Path):
         process_content = []
         pairs = list(self._io_pairs.items())
         for input, output in pairs[0:1]:
@@ -67,8 +66,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
             process_content.append(
                 f"else signed_y <= to_signed({output}, {self._width});\nend if;"
             )
-        self._template_config.parameters.update(
+        self._template.parameters.update(
             process_content=process_content, name=self.name, data_width=str(self._width)
         )
-        expander = TemplateExpander(self._template_config)
-        destination.as_file(".vhd").write_text(expander.lines())
+        destination.as_file(".vhd").write(self._template)

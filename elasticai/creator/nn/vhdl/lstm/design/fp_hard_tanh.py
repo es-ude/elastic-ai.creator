@@ -1,6 +1,5 @@
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -10,7 +9,7 @@ from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointCon
 
 
 class FPHardTanh(Design):
-    def __init__(self, total_bits: int, frac_bits: int):
+    def __init__(self, total_bits: int, frac_bits: int) -> None:
         super().__init__(name="hardtanh")
         self._data_width = total_bits
         fp_config = FixedPointConfig(frac_bits=frac_bits, total_bits=total_bits)
@@ -24,8 +23,8 @@ class FPHardTanh(Design):
             ),
         )
 
-    def save_to(self, destination: "Path"):
-        destination.as_file(".vhd").write_text(TemplateExpander(self._template).lines())
+    def save_to(self, destination: Path):
+        destination.as_file(".vhd").write(self._template)
 
     @property
     def port(self) -> Port:

@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from itertools import repeat
 from string import Template as StringTemplate
 from typing import Protocol, cast
@@ -17,7 +17,7 @@ class Template(Protocol):
 
 
 @dataclass
-class InMemoryTemplate(Template):
+class RawTemplate(Template):
     content: list[str]
     parameters: dict[str, str | list[str]]
 
@@ -33,11 +33,7 @@ class InProjectTemplate(Template):
 
 
 class TemplateExpander:
-    """
-    Used during translation by the creator tool. HW designer does not need to touch this or inherit from it.
-    """
-
-    def __init__(self, template: Template):
+    def __init__(self, template: Template) -> None:
         super().__init__()
         self._template = template
 

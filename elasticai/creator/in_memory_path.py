@@ -1,6 +1,6 @@
-from collections.abc import Iterable
 from typing import Optional
 
+from elasticai.creator.hdl.code_generation.template import Template, TemplateExpander
 from elasticai.creator.hdl.savable import File, Path
 
 
@@ -9,7 +9,8 @@ class InMemoryFile(File):
         self.text: list[str] = []
         self.name = name
 
-    def write_text(self, text: Iterable[str]) -> None:
+    def write(self, template: Template) -> None:
+        text = TemplateExpander(template).lines()
         for line in text:
             self.text.append(line)
 

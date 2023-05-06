@@ -1,10 +1,7 @@
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.hdl.code_generation.template import (
-    InMemoryTemplate,
-    TemplateExpander,
-)
+from elasticai.creator.hdl.code_generation.template import RawTemplate, TemplateExpander
 
 
 def newline_join(lines: Iterable[str]) -> str:
@@ -12,7 +9,7 @@ def newline_join(lines: Iterable[str]) -> str:
 
 
 def expand_template(content: list[str], **parameters: str | list[str]) -> list[str]:
-    template = InMemoryTemplate(content, parameters)
+    template = RawTemplate(content, parameters)
     return TemplateExpander(template).lines()
 
 

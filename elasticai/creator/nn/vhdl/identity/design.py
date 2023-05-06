@@ -3,7 +3,6 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -39,5 +38,4 @@ class Identity(Design):
                 y_width=str(self._num_input_bits),
             ),
         )
-        code = TemplateExpander(template).lines()
-        destination.create_subpath(self.name).as_file(".vhd").write_text(code)
+        destination.create_subpath(self.name).as_file(".vhd").write(template)

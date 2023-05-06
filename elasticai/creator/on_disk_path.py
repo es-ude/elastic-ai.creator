@@ -1,7 +1,7 @@
 import os
-from collections.abc import Iterable
 from pathlib import Path as _PyPath
 
+from elasticai.creator.hdl.code_generation.template import Template, TemplateExpander
 from elasticai.creator.hdl.savable import File, Path
 
 
@@ -9,7 +9,8 @@ class OnDiskFile(File):
     def __init__(self, full_path: str) -> None:
         self._full_path = full_path
 
-    def write_text(self, text: Iterable[str]) -> None:
+    def write(self, template: Template) -> None:
+        text = TemplateExpander(template).lines()
         full_path = _PyPath(self._full_path)
         folder = full_path.parent
         if not folder.exists():

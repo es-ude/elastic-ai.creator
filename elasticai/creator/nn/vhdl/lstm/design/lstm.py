@@ -5,7 +5,6 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base import std_signals
@@ -28,7 +27,7 @@ class LSTMNetworkDesign(Design):
         super().__init__(name="lstm_network")
         self._linear_layers = linear_layers
         self._lstm = lstm
-        self.config = InProjectTemplate(
+        self.template = InProjectTemplate(
             module_to_package(self.__module__),
             file_name="lstm_network.tpl.vhd",
             parameters=dict(
@@ -72,7 +71,4 @@ class LSTMNetworkDesign(Design):
         self._lstm.save_to(destination.create_subpath("lstm_cell"))
         for index, layer in enumerate(self._linear_layers):
             layer.save_to(destination.create_subpath(f"fp_linear_1d_{index}"))
-        expander = TemplateExpander(self.config)
-        destination.create_subpath("lstm_network").as_file(".vhd").write_text(
-            expander.lines()
-        )
+        destination.create_subpath("lstm_network").as_file(".vhd").write(self.template)

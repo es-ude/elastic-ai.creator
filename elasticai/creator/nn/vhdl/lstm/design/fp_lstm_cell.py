@@ -9,7 +9,6 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base import std_signals
@@ -118,10 +117,7 @@ class FPLSTMCell(Design):
         self._save_hardtanh(destination)
         self._save_sigmoid(destination)
 
-        expander = TemplateExpander(self._template)
-        destination.create_subpath("lstm_cell").as_file(".vhd").write_text(
-            expander.lines()
-        )
+        destination.create_subpath("lstm_cell").as_file(".vhd").write(self._template)
 
     def _build_weights(self) -> tuple[list[list], list[list]]:
         weights = np.concatenate((self.weights_ih, self.weights_hh), axis=1)
@@ -163,13 +159,10 @@ class FPLSTMCell(Design):
         hardtanh.save_to(hardtanh_destination)
 
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
-        template_configuration = InProjectTemplate(
+        template = InProjectTemplate(
             file_name="dual_port_2_clock_ram.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(name=self.name),
         )
-        template_expansion = TemplateExpander(template_configuration)
-
-        destination.create_subpath(f"dual_port_2_clock_ram_{self.name}").as_file(
-            ".vhd"
-        ).write_text(template_expansion.lines())
+        name = f"dual_port_2_clock_ram_{self.name}"
+        destination.create_subpath(name).as_file(".vhd").write(template)

@@ -5,7 +5,6 @@ from elasticai.creator.hdl.code_generation.code_generation import (
 )
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.savable import Path
@@ -25,7 +24,7 @@ class Rom:
         )
 
     def save_to(self, destination: Path):
-        config = InProjectTemplate(
+        template = InProjectTemplate(
             file_name="rom.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(
@@ -36,8 +35,7 @@ class Rom:
                 resource_option="auto",
             ),
         )
-        expander = TemplateExpander(config)
-        destination.as_file(".vhd").write_text(expander.lines())
+        destination.as_file(".vhd").write(template)
 
     def _values_to_unsigned_integers(self, values: list[int]) -> list[int]:
         to_uint = partial(to_unsigned, total_bits=self._data_width)

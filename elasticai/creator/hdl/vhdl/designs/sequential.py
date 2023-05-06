@@ -2,7 +2,6 @@ from itertools import chain
 
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
-    TemplateExpander,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -149,5 +148,4 @@ class Sequential(Design):
                 layer_name=self.name,
             ),
         )
-        target_file = destination.create_subpath(self.name).as_file(".vhd")
-        target_file.write_text(TemplateExpander(network_template).lines())
+        destination.create_subpath(self.name).as_file(".vhd").write(network_template)
