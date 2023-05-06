@@ -41,6 +41,11 @@ class TemplateExpander:
         lines = _expand_multiline_template(lines, **multi_line_params)
         return list(lines)
 
+    def unfilled_variables(self) -> set[str]:
+        template_variables = _extract_template_variables(self._template.content)
+        variables_to_fill = set(self._template.parameters.keys())
+        return template_variables - variables_to_fill
+
     def _assert_all_variables_to_fill_exists(self) -> None:
         template_variables = _extract_template_variables(self._template.content)
         variables_to_fill = set(self._template.parameters.keys())

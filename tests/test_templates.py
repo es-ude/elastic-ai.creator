@@ -116,3 +116,13 @@ class ExpandTemplatesTestCase(TestCase):
         template = ["$var1", "$var2"]
         with self.assertRaises(KeyError):
             expand_template(template, var3="fail")
+
+    def test_variables_not_filled_returns_empty_set(self) -> None:
+        template = Template(["$a", "$b", "$c"], parameters=dict(a="1", b="2", c="3"))
+        expander = TemplateExpander(template)
+        self.assertEqual(set(), expander.unfilled_variables())
+
+    def test_variables_not_filled_returns_non_empty_set(self) -> None:
+        template = Template(["$a", "$b", "$c"], parameters=dict(a="1", c="3"))
+        expander = TemplateExpander(template)
+        self.assertEqual({"b"}, expander.unfilled_variables())
