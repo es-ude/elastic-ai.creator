@@ -10,8 +10,14 @@ class InMemoryFile(File):
         self.name = name
 
     def write(self, template: Template) -> None:
-        text = TemplateExpander(template).lines()
-        for line in text:
+        expander = TemplateExpander(template)
+        unfilled_variables = expander.unfilled_variables()
+        if len(unfilled_variables) > 0:
+            raise KeyError(
+                "Template is not filled completly. The following variables are"
+                f" unfilled: {', '.join(unfilled_variables)}."
+            )
+        for line in expander.lines():
             self.text.append(line)
 
 
@@ -25,9 +31,8 @@ class InMemoryPath(Path):
         file = InMemoryFile(f"{self.name}{suffix}")
         if len(self.children) > 0:
             raise ValueError(
-                "non empty path {}, present children: {}".format(
-                    self.name, ", ".join(self.children)
-                )
+                f"non empty path {self.name}, "
+                f"present children: {', '.join(self.children)}"
             )
         if self.parent is not None:
             self.parent.children[self.name] = file

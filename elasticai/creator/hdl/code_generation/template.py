@@ -52,7 +52,8 @@ class TemplateExpander:
         not_existing_variables = variables_to_fill - template_variables
         if len(not_existing_variables) > 0:
             raise KeyError(
-                f"The template has no variables named {not_existing_variables} to fill."
+                "The template has no variables named"
+                f" {', '.join(not_existing_variables)} to fill."
             )
 
 

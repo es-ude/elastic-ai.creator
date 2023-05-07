@@ -10,13 +10,19 @@ class OnDiskFile(File):
         self._full_path = full_path
 
     def write(self, template: Template) -> None:
-        text = TemplateExpander(template).lines()
+        expander = TemplateExpander(template)
+        unfilled_variables = expander.unfilled_variables()
+        if len(unfilled_variables) > 0:
+            raise KeyError(
+                "Template is not filled completly. The following variables are"
+                f" unfilled: {', '.join(unfilled_variables)}."
+            )
         full_path = _PyPath(self._full_path)
         folder = full_path.parent
         if not folder.exists():
             os.makedirs(folder)
         with open(full_path, "w") as f:
-            f.writelines((f"{line}\n" for line in text))
+            f.writelines((f"{line}\n" for line in expander.lines()))
 
 
 class OnDiskPath(Path):
