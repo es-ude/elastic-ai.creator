@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.37.1 (2023-05-07)
+### Fix
+* Try to fix semantic release ([`2625e89`](https://github.com/es-ude/elastic-ai.creator/commit/2625e8982c021cbf5b778e95194cc53170ab0afb))
+
 ## v0.37.0 (2023-05-05)
 ### Feature
 * Assert that all inserted variables exists in template and remove AbstractBaseTemplate ([`51f1a08`](https://github.com/es-ude/elastic-ai.creator/commit/51f1a0883a8d0a54caee66080ef85f84049ad806))
