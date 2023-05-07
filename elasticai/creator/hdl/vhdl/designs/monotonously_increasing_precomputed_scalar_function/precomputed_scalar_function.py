@@ -28,7 +28,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         self._template = InProjectTemplate(
             file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
             package=self._template_package,
-            parameters={},
+            parameters=dict(name=self.name, data_width=str(width)),
         )
 
     def _compute_io_pairs(self) -> None:
@@ -66,7 +66,5 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
             process_content.append(
                 f"else signed_y <= to_signed({output}, {self._width});\nend if;"
             )
-        self._template.parameters.update(
-            process_content=process_content, name=self.name, data_width=str(self._width)
-        )
+        self._template.parameters.update(process_content=process_content)
         destination.as_file(".vhd").write(self._template)
