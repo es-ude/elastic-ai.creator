@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11.x
+          python-version: '3.11'
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -58,20 +58,24 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: release
     needs: [checks, beautify]
+
     outputs:
       new_version: ${{ steps.version.outputs.VERSION }}
       new_sha: ${{ steps.sha.outputs.SHA }}
+
     steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - run: python --version
+
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ needs.beautify.outputs.new_sha }}
-      - name: Fetch main
-        run: git fetch --prune --force origin refs/heads/main:refs/remotes/origin/main
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11.x
+
       - name: Semantic Release
         uses: relekang/python-semantic-release@master
         with:
