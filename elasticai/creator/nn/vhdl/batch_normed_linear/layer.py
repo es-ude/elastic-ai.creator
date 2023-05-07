@@ -2,9 +2,6 @@ from typing import Any, cast
 
 import torch
 
-from elasticai.creator.base_modules.autograd_functions.fixed_point_quantization import (
-    FixedPointDequantFunction,
-)
 from elasticai.creator.base_modules.linear import Linear
 from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
@@ -47,14 +44,8 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
     def _quantize(self, x: torch.Tensor) -> torch.Tensor:
         return self._arithmetics.quantize(x)
 
-    def _dequantize(self, x: torch.Tensor) -> torch.Tensor:
-        return cast(
-            torch.Tensor, FixedPointDequantFunction.apply(x, self._arithmetics.config)
-        )
-
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = self._linear(inputs)
-        x = self._dequantize(x)
         x = self._batch_norm(x)
         x = self._quantize(x)
         return x
