@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.37.2 (2023-05-07)
+### Fix
+* Try manual publishing ([`c8b6c35`](https://github.com/es-ude/elastic-ai.creator/commit/c8b6c355896c1f3b0630c227af8414f281b5d3ff))
+
 ## v0.37.1 (2023-05-07)
 ### Fix
 * Try to fix semantic release ([`2625e89`](https://github.com/es-ude/elastic-ai.creator/commit/2625e8982c021cbf5b778e95194cc53170ab0afb))
