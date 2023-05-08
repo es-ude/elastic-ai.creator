@@ -15,7 +15,7 @@ entity $name is
         done   : out std_logic
     );
 
-end sigmoid;
+end $name;
 
 architecture rtl of $name is
     signal signed_x, signed_y : signed($data_width-1 downto 0) := (others=>'0');
