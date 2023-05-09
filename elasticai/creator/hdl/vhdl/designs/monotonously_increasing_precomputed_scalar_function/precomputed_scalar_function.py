@@ -2,8 +2,7 @@ from functools import partial
 from typing import Callable
 
 from elasticai.creator.hdl.code_generation.template import (
-    InProjectTemplateConfig,
-    TemplateExpander,
+    InProjectTemplate,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
@@ -26,10 +25,10 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         self._function = function
         self._inputs = inputs
         self._io_pairs: dict[int, int] = dict()
-        self._template_config = InProjectTemplateConfig(
+        self._template = InProjectTemplate(
             file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
             package=self._template_package,
-            parameters={},
+            parameters=dict(name=self.name, data_width=str(width)),
         )
 
     def _compute_io_pairs(self) -> None:
@@ -50,7 +49,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
             outgoing=[signal(name="y")],
         )
 
-    def save_to(self, destination: "Path"):
+    def save_to(self, destination: Path):
         process_content = []
         pairs = list(self._io_pairs.items())
         for input, output in pairs[0:1]:
@@ -67,8 +66,5 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
             process_content.append(
                 f"else signed_y <= to_signed({output}, {self._width});\nend if;"
             )
-        self._template_config.parameters.update(
-            process_content=process_content, name=self.name, data_width=str(self._width)
-        )
-        expander = TemplateExpander(self._template_config)
-        destination.as_file(".vhd").write_text(expander.lines())
+        self._template.parameters.update(process_content=process_content)
+        destination.as_file(".vhd").write(self._template)

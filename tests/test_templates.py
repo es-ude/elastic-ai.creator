@@ -1,24 +1,26 @@
+from dataclasses import dataclass
 from typing import Iterable
 from unittest import TestCase
 
-from elasticai.creator.hdl.vhdl.code_generation.template import InMemoryTemplate
+from elasticai.creator.hdl.code_generation.template import TemplateExpander
+
+
+@dataclass
+class Template:
+    content: list[str]
+    parameters: dict[str, str | list[str]]
 
 
 def newline_join(lines: Iterable[str]) -> str:
     return "\n".join(lines)
 
 
-def expand_template(
-    template: list[str], **parameters: str | tuple[str] | list[str]
-) -> list[str]:
-    template_obj = InMemoryTemplate(template)
-    template_obj.update_parameters(**parameters)
-    return template_obj.lines()
+def expand_template(content: list[str], **parameters: str | list[str]) -> list[str]:
+    template = Template(content, parameters)
+    return TemplateExpander(template).lines()
 
 
-def get_result_string(
-    template: list[str], **kwargs: str | tuple[str] | list[str]
-) -> str:
+def get_result_string(template: list[str], **kwargs: str | list[str]) -> str:
     return newline_join(expand_template(template, **kwargs))
 
 
@@ -50,7 +52,7 @@ class ExpandTemplatesTestCase(TestCase):
     def test_expand_two_keys(self) -> None:
         template = "$first\n$second".splitlines()
         expected = "ab\ncd"
-        actual = get_result_string(template, first=("ab",), second=("cd",))
+        actual = get_result_string(template, first=["ab"], second=["cd"])
         self.assertEqual(expected, actual)
 
     def test_two_values(self) -> None:
@@ -114,3 +116,13 @@ class ExpandTemplatesTestCase(TestCase):
         template = ["$var1", "$var2"]
         with self.assertRaises(KeyError):
             expand_template(template, var3="fail")
+
+    def test_variables_not_filled_returns_empty_set(self) -> None:
+        template = Template(["$a", "$b", "$c"], parameters=dict(a="1", b="2", c="3"))
+        expander = TemplateExpander(template)
+        self.assertEqual(set(), expander.unfilled_variables())
+
+    def test_variables_not_filled_returns_non_empty_set(self) -> None:
+        template = Template(["$a", "$b", "$c"], parameters=dict(a="1", c="3"))
+        expander = TemplateExpander(template)
+        self.assertEqual({"b"}, expander.unfilled_variables())

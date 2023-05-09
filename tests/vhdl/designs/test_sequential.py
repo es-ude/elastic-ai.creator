@@ -7,13 +7,16 @@ import pytest
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplate,
+    TemplateExpander,
+)
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections_using_to_from_pairs,
     create_instance,
     signal_definition,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import InProjectTemplate
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.vhdl.identity.layer import FPIdentity
 from elasticai.creator.nn.vhdl.sequential import Sequential
@@ -48,21 +51,22 @@ class TestSequential:
         actual_code = sequential_code_for_model(model)
 
         template = InProjectTemplate(
-            "network", package="elasticai.creator.hdl.vhdl.designs"
-        )
-        template.update_parameters(
-            layer_connections=sorted(
-                ["y <= x;", "x_address <= y_address;", "done <= enable;"]
+            package="elasticai.creator.hdl.vhdl.designs",
+            file_name="network.tpl.vhd",
+            parameters=dict(
+                layer_connections=sorted(
+                    ["y <= x;", "x_address <= y_address;", "done <= enable;"]
+                ),
+                layer_instantiations=[],
+                signal_definitions=[],
+                x_width="1",
+                y_width="1",
+                x_address_width="1",
+                y_address_width="1",
+                layer_name="sequential",
             ),
-            layer_instantiations=[],
-            signal_definitions=[],
-            x_width="1",
-            y_width="1",
-            x_address_width="1",
-            y_address_width="1",
-            layer_name="sequential",
         )
-        expected_code = template.lines()
+        expected_code = TemplateExpander(template).lines()
         assert actual_code == expected_code
 
     def test_unique_name_for_each_subdesign(self) -> None:
