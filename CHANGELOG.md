@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v0.38.0 (2023-05-09)
+### Feature
+* Add check that all variables are filled when saving a template ([`c988d2b`](https://github.com/es-ude/elastic-ai.creator/commit/c988d2bc203790ba8ab900e8a2de6996b22d6fcb))
+* Add function to get all unfilled variables of a template ([`d635cb6`](https://github.com/es-ude/elastic-ai.creator/commit/d635cb6098735b451aea259a8a6f15619bfcd64f))
+* Write function of InMemoryFile and OnDiskFile now takes Template object ([`a867ea1`](https://github.com/es-ude/elastic-ai.creator/commit/a867ea15980b8ca1390327f2999c4d7b91ef3041))
+
+### Fix
+* Remove broken lstm implementation ([`c524ca2`](https://github.com/es-ude/elastic-ai.creator/commit/c524ca20cc49333007c4e0bbfa167912580e5c01))
+* Add variable ([`229d452`](https://github.com/es-ude/elastic-ai.creator/commit/229d452d0c2f798ee1dd0124f50be8f01d69ede4))
+* Fix not inserted process name ([`dbabea0`](https://github.com/es-ude/elastic-ai.creator/commit/dbabea07c888a5309d9ca55cd2c01ae0debea57d))
+
 ## v0.37.2 (2023-05-07)
 ### Fix
 * Try manual publishing ([`c8b6c35`](https://github.com/es-ude/elastic-ai.creator/commit/c8b6c355896c1f3b0630c227af8414f281b5d3ff))
