@@ -1,3 +1,4 @@
+from elasticai.creator.hdl.auto_wire_protocols.bufferless import base_vhdl_port
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     TemplateExpander,
@@ -21,7 +22,9 @@ class BaseTemplateGenerator:
         self._base_template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="base_template.tpl.vhd",
-            parameters={},
+            parameters={
+                "port": base_vhdl_port(),
+            },
         )
 
     def generate(self) -> str:

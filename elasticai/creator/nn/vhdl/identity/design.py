@@ -1,3 +1,9 @@
+from elasticai.creator.hdl.auto_wire_protocols.buffered import (
+    create_port_for_buffered_design,
+)
+from elasticai.creator.hdl.auto_wire_protocols.bufferless import (
+    create_port_for_bufferless_design,
+)
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
@@ -5,11 +11,8 @@ from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.ports import (
-    create_port_for_base_design,
-    create_port_for_buffered_design,
-)
+from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.design_base.ports import Port
 from elasticai.creator.hdl.savable import Path
 
 
@@ -22,7 +25,7 @@ class BufferedIdentity(Design):
 
     @property
     def port(self) -> Port:
-        return create_port_for_buffered_design(
+        return create_port_for_bufferless_design(
             x_width=self._num_input_bits,
             y_width=self._num_input_bits,
             x_count=self._num_input_features,
@@ -51,7 +54,7 @@ class BaseIdentity(Design):
 
     @property
     def port(self) -> Port:
-        return create_port_for_base_design(
+        return create_port_for_bufferless_design(
             x_width=self._num_input_bits, y_width=self._num_input_bits
         )
 
