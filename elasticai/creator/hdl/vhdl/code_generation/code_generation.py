@@ -95,12 +95,12 @@ def generate_hex_for_rom(value: str):
 
 
 @overload
-def extract_rom_values(text: str) -> tuple[str]:
+def extract_rom_values(text: str) -> tuple[str, ...]:
     ...
 
 
 @overload
-def extract_rom_values(text: list[str]) -> tuple[str]:
+def extract_rom_values(text: list[str]) -> tuple[str, ...]:
     ...
 
 
