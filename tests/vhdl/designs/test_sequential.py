@@ -18,7 +18,7 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     signal_definition,
 )
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
+from elasticai.creator.nn.vhdl.identity.layer import BaseIdentity, BufferedIdentity
 from elasticai.creator.nn.vhdl.sequential import Sequential
 
 
@@ -80,7 +80,7 @@ class TestSequential:
 
         signals = extract_signal_definitions(sequential_code)
         target_signals = signal_definitions_for_identity(
-            entity=f"fpidentity_{entity_id}", num_input_features=6, total_bits=16
+            entity=f"bufferedidentity_{entity_id}", num_input_features=6, total_bits=16
         )
 
         assert set(target_signals) <= set(signals)
@@ -93,7 +93,9 @@ class TestSequential:
         sequential_code = sequential_code_for_model(model)
         generated_code = "\n".join(remove_indentation(sequential_code))
 
-        instantiation = identity_layer_instantiation(entity=f"fpidentity_{entity_id}")
+        instantiation = identity_layer_instantiation(
+            entity=f"bufferedidentity_{entity_id}"
+        )
         target_instantiation = "\n".join(remove_indentation(instantiation))
 
         assert target_instantiation in generated_code
@@ -102,15 +104,16 @@ class TestSequential:
         sequential_code = sequential_code_for_model(single_layer_model())
 
         connections = extract_layer_connections(sequential_code)
+        name = "bufferedidentity"
         target_connections = create_connections_using_to_from_pairs(
             {
-                "i_fpidentity_0_x": "x",
-                "y": "i_fpidentity_0_y",
-                "i_fpidentity_0_enable": "enable",
-                "i_fpidentity_0_clock": "clock",
-                "done": "i_fpidentity_0_done",
-                "i_fpidentity_0_y_address": "y_address",
-                "x_address": "i_fpidentity_0_x_address",
+                f"i_{name}_0_x": "x",
+                "y": f"i_{name}_0_y",
+                f"i_{name}_0_enable": "enable",
+                f"i_{name}_0_clock": "clock",
+                "done": f"i_{name}_0_done",
+                f"i_{name}_0_y_address": "y_address",
+                "x_address": f"i_{name}_0_x_address",
             }
         )
 
@@ -118,8 +121,8 @@ class TestSequential:
 
     def test_layer_connections_for_two_layer_model(self) -> None:
         sequential_code = sequential_code_for_model(two_layer_model())
-        layer_0 = "i_fpidentity_0"
-        layer_1 = "i_fpidentity_1"
+        layer_0 = "i_bufferedidentity_0"
+        layer_1 = "i_bufferedidentity_1"
         connections = extract_layer_connections(sequential_code)
         target_connections = create_connections_using_to_from_pairs(
             {

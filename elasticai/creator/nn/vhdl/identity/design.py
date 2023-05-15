@@ -25,7 +25,7 @@ class BufferedIdentity(Design):
 
     @property
     def port(self) -> Port:
-        return create_port_for_bufferless_design(
+        return create_port_for_buffered_design(
             x_width=self._num_input_bits,
             y_width=self._num_input_bits,
             x_count=self._num_input_features,
