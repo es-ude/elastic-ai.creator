@@ -18,31 +18,21 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     signal_definition,
 )
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import FPIdentity
+from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
 from elasticai.creator.nn.vhdl.sequential import Sequential
 
 
 def single_layer_model() -> Sequential:
-    return Sequential((FPIdentity(num_input_features=6, total_bits=16),))
+    return Sequential((BufferedIdentity(num_input_features=6, total_bits=16),))
 
 
 def two_layer_model() -> Sequential:
     return Sequential(
         (
-            FPIdentity(num_input_features=6, total_bits=16),
-            FPIdentity(num_input_features=6, total_bits=16),
+            BufferedIdentity(num_input_features=6, total_bits=16),
+            BufferedIdentity(num_input_features=6, total_bits=16),
         )
     )
-
-
-"""
-Tests:
-  - [x] replace fplinear1d with minimal layer that implements identity
-  - [x] remove hardsigmoid cases from tests
-  - [x] check that sequential layer generates a unique name for each instantiated subdesign (entity instance)
-  - [?] check that each of the above names corresponds to an existing generated subdesign
-  - [x] test each section (connections, instantiations, etc.) in isolation
-"""
 
 
 class TestSequential:

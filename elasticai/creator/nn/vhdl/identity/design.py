@@ -10,7 +10,7 @@ from elasticai.creator.hdl.design_base.ports import create_port_for_buffered_des
 from elasticai.creator.hdl.savable import Path
 
 
-class Identity(Design):
+class BufferedIdentity(Design):
     def __init__(self, name: str, num_input_features: int, num_input_bits: int) -> None:
         self._num_input_features = num_input_features
         self._num_input_bits = num_input_bits

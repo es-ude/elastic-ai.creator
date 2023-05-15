@@ -5,7 +5,7 @@ import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import FPIdentity
+from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
 
 scenarios("features/generate_identity_implementation.feature")
 
@@ -21,12 +21,14 @@ def build_root() -> InMemoryPath:
     ),
     target_fixture="identity_layer",
 )
-def identity_layer(input_features: int, bit_width: int) -> FPIdentity:
-    return FPIdentity(num_input_features=input_features, total_bits=bit_width)
+def identity_layer(input_features: int, bit_width: int) -> BufferedIdentity:
+    return BufferedIdentity(num_input_features=input_features, total_bits=bit_width)
 
 
 @when("translating and saving hw implementation", target_fixture="generated_code")
-def generated_code(build_root: InMemoryPath, identity_layer: FPIdentity) -> list[str]:
+def generated_code(
+    build_root: InMemoryPath, identity_layer: BufferedIdentity
+) -> list[str]:
     savable = identity_layer.translate("fpidentity")
     savable.save_to(build_root)
     identity_file = cast(InMemoryFile, build_root["fpidentity"])
