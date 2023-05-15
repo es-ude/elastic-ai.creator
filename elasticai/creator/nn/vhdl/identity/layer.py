@@ -17,3 +17,16 @@ class BufferedIdentity(Translatable, torch.nn.Identity):
             num_input_features=self._num_input_features,
             num_input_bits=self._num_input_bits,
         )
+
+
+class BaseIdentity(Translatable, torch.nn.Identity):
+    def __init__(self, total_bits: int) -> None:
+        self._num_input_bits = total_bits
+        super().__init__()
+
+    def translate(self, name: str) -> Design:
+        return IdentityDesign(
+            name=name,
+            num_input_features=self._num_input_features,
+            num_input_bits=self._num_input_bits,
+        )
