@@ -53,23 +53,30 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
                 return list(map(float_to_signed_int, value))
             return self._arithmetics.config.as_integer(value)
 
-        bn_weight = self._batch_norm.weight
-        bn_bias = self._batch_norm.bias
         bn_mean = cast(torch.Tensor, self._batch_norm.running_mean)
         bn_variance = cast(torch.Tensor, self._batch_norm.running_var)
         bn_epsilon = self._batch_norm.eps
+        lin_weight = self._linear.weight
+        lin_bias = (
+            torch.tensor([0] * self._linear.out_features)
+            if self._linear.bias is None
+            else self._linear.bias
+        )
 
-        factor = bn_weight / torch.sqrt(bn_variance + bn_epsilon)
+        std = torch.sqrt(bn_variance + bn_epsilon)
+        weights = lin_weight / std
+        bias = (lin_bias - bn_mean) / std
 
-        new_weights = (factor * self._linear.weight.t()).t()
-        new_bias = factor * (self._linear.bias - bn_mean) + bn_bias
+        if self._batch_norm.affine:
+            weights = (self._batch_norm.weight * weights.t()).t()
+            bias = self._batch_norm.weight * bias + self._batch_norm.bias
 
         return FPLinear(
             in_feature_num=self._linear.in_features,
             out_feature_num=self._linear.out_features,
             total_bits=self._arithmetics.config.total_bits,
             frac_bits=self._arithmetics.config.frac_bits,
-            weights=cast(list[list[int]], float_to_signed_int(new_weights.tolist())),
-            bias=cast(list[int], float_to_signed_int(new_bias.tolist())),
+            weights=cast(list[list[int]], float_to_signed_int(weights.tolist())),
+            bias=cast(list[int], float_to_signed_int(bias.tolist())),
             name=name,
         )
