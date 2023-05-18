@@ -38,17 +38,14 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
             eps=bn_eps,
             momentum=bn_momentum,
             affine=bn_affine,
+            track_running_stats=True,
             device=device,
         )
-
-    def _quantize(self, x: torch.Tensor) -> torch.Tensor:
-        return self._arithmetics.quantize(x)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = self._linear(inputs)
         x = self._batch_norm(x)
-        x = self._quantize(x)
-        return x
+        return self._arithmetics.quantize(x)
 
     def translate(self, name: str) -> FPLinear:
         def float_to_signed_int(value: float | list) -> int | list:
