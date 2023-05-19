@@ -6,7 +6,7 @@ from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
-from .design import FPLinear1d as FPLinearDesign
+from .design import FPLinear as FPLinearDesign
 
 
 class FPLinear(Translatable, Linear):

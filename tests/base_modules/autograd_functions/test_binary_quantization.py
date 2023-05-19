@@ -3,7 +3,9 @@ from types import SimpleNamespace
 import torch
 from torch import Tensor
 
-from elasticai.creator.base_modules.functional import binarize
+from elasticai.creator.base_modules.autograd_functions.binary_quantization import (
+    Binarize,
+)
 from tests.tensor_test_case import TensorTestCase
 
 
@@ -14,7 +16,7 @@ class BinarizeFunctionTest(TensorTestCase):
 
         dummy_context = SimpleNamespace(save_for_backward=save_for_backward_dummy)
         try:
-            binarize.forward(dummy_context)
+            Binarize.forward(dummy_context)
         except TypeError:
             return
 
@@ -22,22 +24,22 @@ class BinarizeFunctionTest(TensorTestCase):
 
     def test_Yields1For0(self):
         self.assertTensorEqual(
-            expected=Tensor([1.0]), actual=binarize.apply(Tensor([0.0]))
+            expected=Tensor([1.0]), actual=Binarize.apply(Tensor([0.0]))
         )
 
     def test_Yields1For2Point4(self):
         self.assertTensorEqual(
-            expected=Tensor([1.0]), actual=binarize.apply(Tensor([2.4]))
+            expected=Tensor([1.0]), actual=Binarize.apply(Tensor([2.4]))
         )
 
     def test_YieldMinus1ForNegativeInput(self):
         self.assertTensorEqual(
-            expected=Tensor([-1.0]), actual=binarize.apply(Tensor([-2.8]))
+            expected=Tensor([-1.0]), actual=Binarize.apply(Tensor([-2.8]))
         )
 
     def check_gradient(self, expected_grad, x):
         x = torch.tensor([x], requires_grad=True)
-        y = binarize.apply(x)
+        y = Binarize.apply(x)
         y.backward()
         self.assertTensorEqual(torch.tensor([expected_grad]), x.grad)
 

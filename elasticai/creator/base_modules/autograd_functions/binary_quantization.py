@@ -6,7 +6,7 @@ from typing import Any
 import torch
 
 
-class binarize(torch.autograd.Function):
+class Binarize(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> Any:
         if len(args) == 0:
