@@ -1,5 +1,5 @@
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
-    TemplateConfig,
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplate,
     TemplateExpander,
     module_to_package,
 )
@@ -17,8 +17,8 @@ can use as a starting point to develop your design.
 
 
 class BaseTemplateGenerator:
-    def __init__(self):
-        self._base_config = TemplateConfig(
+    def __init__(self) -> None:
+        self._base_template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="base_template.tpl.vhd",
             parameters={},
@@ -28,4 +28,4 @@ class BaseTemplateGenerator:
         return self._expand_base_template()
 
     def _expand_base_template(self) -> str:
-        return "\n".join(TemplateExpander(self._base_config).lines())
+        return "\n".join(TemplateExpander(self._base_template).lines())

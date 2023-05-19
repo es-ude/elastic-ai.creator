@@ -1,6 +1,6 @@
-from collections.abc import Iterable
 from typing import Optional
 
+from elasticai.creator.hdl.code_generation.template import Template, TemplateExpander
 from elasticai.creator.hdl.savable import File, Path
 
 
@@ -9,8 +9,15 @@ class InMemoryFile(File):
         self.text: list[str] = []
         self.name = name
 
-    def write_text(self, text: Iterable[str]) -> None:
-        for line in text:
+    def write(self, template: Template) -> None:
+        expander = TemplateExpander(template)
+        unfilled_variables = expander.unfilled_variables()
+        if len(unfilled_variables) > 0:
+            raise KeyError(
+                "Template is not filled completly. The following variables are"
+                f" unfilled: {', '.join(unfilled_variables)}."
+            )
+        for line in expander.lines():
             self.text.append(line)
 
 
@@ -24,9 +31,8 @@ class InMemoryPath(Path):
         file = InMemoryFile(f"{self.name}{suffix}")
         if len(self.children) > 0:
             raise ValueError(
-                "non empty path {}, present children: {}".format(
-                    self.name, ", ".join(self.children)
-                )
+                f"non empty path {self.name}, "
+                f"present children: {', '.join(self.children)}"
             )
         if self.parent is not None:
             self.parent.children[self.name] = file

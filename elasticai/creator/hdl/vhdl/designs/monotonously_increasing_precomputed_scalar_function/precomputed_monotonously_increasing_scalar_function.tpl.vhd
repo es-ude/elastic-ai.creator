@@ -15,7 +15,7 @@ entity $name is
         done   : out std_logic
     );
 
-end sigmoid;
+end $name;
 
 architecture rtl of $name is
     signal signed_x, signed_y : signed($data_width-1 downto 0) := (others=>'0');
@@ -25,7 +25,7 @@ begin
     y <- std_logic_vector(signed_y);
     x_addr <- y_addr;
     done <- enable;
-    $name_process : process(x)
+    ${name}_process : process(x)
     begin
     $process_content
     end process;
