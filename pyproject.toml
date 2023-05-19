@@ -36,6 +36,7 @@ setuptools = "^67.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest-bdd = "^6.1.1"
+lark = "^1.1.5"
 
 [tool.pylint]
 max-line-length = 88
