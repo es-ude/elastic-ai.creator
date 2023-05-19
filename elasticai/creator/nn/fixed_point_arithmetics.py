@@ -39,7 +39,7 @@ class FixedPointArithmetics(Arithmetics):
         return self.clamp(summed)
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self.round(self.clamp(a * b))
+        return self.quantize(a * b)
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self.round(self.clamp(torch.matmul(a, b)))
+        return self.quantize(torch.matmul(a, b))
