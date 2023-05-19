@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.39.0 (2023-05-19)
+### Feature
+* Implement batch normed linear layer ([`9322f6f`](https://github.com/es-ude/elastic-ai.creator/commit/9322f6f699f9884273c3f9815b9a026c9f7840ae))
+
+### Fix
+* Allow to set affine and bias equals false in translate function ([`b351284`](https://github.com/es-ude/elastic-ai.creator/commit/b351284335a77caec838a8f4ea57684e429cc35b))
+* Remove dequantize ([`c111022`](https://github.com/es-ude/elastic-ai.creator/commit/c111022854ce6965b705b3a3de296e032d7ff107))
+
 ## v0.38.0 (2023-05-09)
 ### Feature
 * Add check that all variables are filled when saving a template ([`c988d2b`](https://github.com/es-ude/elastic-ai.creator/commit/c988d2bc203790ba8ab900e8a2de6996b22d6fcb))
