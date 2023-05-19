@@ -30,11 +30,15 @@ class FloatArithmeticsTest(TensorTestCase):
         expected = [5, 7, 9]
         self.assertTensorEqual(expected, actual)
 
-    def test_sum(self) -> None:
-        a = torch.tensor([1, 2, 3])
-        b = torch.tensor([-4, 5, -6])
-        c = torch.tensor([1, 1, 1])
-        actual = self.ops.sum(a, b, c)
+    def test_sum_over_all_values(self) -> None:
+        a = torch.tensor([[1, 2, 3], [-4, 5, -6], [1, 1, 1]])
+        actual = self.ops.sum(a)
+        expected = torch.tensor(4)
+        self.assertTensorEqual(expected, actual)
+
+    def test_sum_on_first_dim(self) -> None:
+        a = torch.tensor([[1, 2, 3], [-4, 5, -6], [1, 1, 1]])
+        actual = self.ops.sum(a, dim=0)
         expected = [-2, 8, -2]
         self.assertTensorEqual(expected, actual)
 

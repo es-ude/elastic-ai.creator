@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 
 from elasticai.creator.base_modules.arithmetics import Arithmetics
@@ -19,8 +21,10 @@ class BinaryArithmetics(Arithmetics):
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(a + b)
 
-    def sum(self, a: torch.Tensor, *others: torch.Tensor) -> torch.Tensor:
-        return self.quantize(torch.sum(a, *others))
+    def sum(
+        self, a: torch.Tensor, dim: Optional[int | tuple[int, ...]] = None
+    ) -> torch.Tensor:
+        return self.quantize(torch.sum(a, dim=dim))
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(a * b)

@@ -48,11 +48,15 @@ class FixedPointArithmeticsTest(TensorTestCase):
         expected = [-1.75, 1.5, 1.75]
         self.assertTensorEqual(expected, actual)
 
-    def test_sum(self) -> None:
-        a = torch.tensor([-0.25, 0.5, 1.0])
-        b = torch.tensor([-1.5, 1.0, 1.5])
-        c = torch.tensor([-0.5, -1.0, -1.0])
-        actual = self.ops.sum(a, b, c)
+    def test_sum_over_all_values(self) -> None:
+        a = torch.tensor([[-0.25, 0.5, 1.0], [-1.5, 1.0, 1.5], [-0.5, -1.0, -1.0]])
+        actual = self.ops.sum(a)
+        expected = torch.tensor(-0.25)
+        self.assertTensorEqual(expected, actual)
+
+    def test_sum_on_first_dim(self) -> None:
+        a = torch.tensor([[-0.25, 0.5, 1.0], [-1.5, 1.0, 1.5], [-0.5, -1.0, -1.0]])
+        actual = self.ops.sum(a, dim=0)
         expected = [-2.0, 0.5, 1.5]
         self.assertTensorEqual(expected, actual)
 

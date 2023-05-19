@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 
 from elasticai.creator.base_modules.arithmetics import Arithmetics
@@ -32,11 +34,10 @@ class FixedPointArithmetics(Arithmetics):
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.clamp(a + b)
 
-    def sum(self, tensor: torch.Tensor, *tensors: torch.Tensor) -> torch.Tensor:
-        summed = tensor
-        for t in tensors:
-            summed += t
-        return self.clamp(summed)
+    def sum(
+        self, a: torch.Tensor, dim: Optional[int | tuple[int, ...]] = None
+    ) -> torch.Tensor:
+        return self.clamp(torch.sum(a, dim=dim))
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(a * b)

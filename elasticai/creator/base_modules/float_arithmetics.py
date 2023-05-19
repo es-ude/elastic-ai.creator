@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 
 from elasticai.creator.base_modules.arithmetics import Arithmetics
@@ -16,11 +18,10 @@ class FloatArithmetics(Arithmetics):
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return a + b
 
-    def sum(self, tensor: torch.Tensor, *tensors: torch.Tensor) -> torch.Tensor:
-        summed = tensor
-        for t in tensors:
-            summed += t
-        return summed
+    def sum(
+        self, a: torch.Tensor, dim: Optional[int | tuple[int, ...]] = None
+    ) -> torch.Tensor:
+        return torch.sum(a, dim=dim)
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return a * b
