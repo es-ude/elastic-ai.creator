@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import Any
 
 import pytest
@@ -19,7 +20,7 @@ def _torch_and_creator_conv1d_with_fixed_params(
     out_channels: int,
     kernel_size: int,
     stride: int,
-    padding: int,
+    padding: int | str,
     bias: bool,
 ) -> tuple[TorchConv1d, CreatorConv1d]:
     conv_args: dict[str, Any] = dict(
@@ -37,14 +38,13 @@ def _torch_and_creator_conv1d_with_fixed_params(
     return torch_conv, creator_conv
 
 
-def _ones_as_conv1d_input(
+def _fixed_conv1d_input(
     batch_size: int, in_channels: int, input_length: int
 ) -> torch.Tensor:
-    return (
-        torch.ones(batch_size, in_channels, input_length)
-        if batch_size > 0
-        else torch.ones(in_channels, input_length)
-    )
+    unbatched = (in_channels, input_length)
+    output_shape = (batch_size, *unbatched) if batch_size > 0 else unbatched
+    num_values = reduce(lambda x, y: x * y, output_shape)
+    return torch.arange(num_values).reshape(*output_shape).to(torch.float32)
 
 
 @pytest.mark.parametrize(
@@ -54,7 +54,11 @@ def _ones_as_conv1d_input(
         (1, 3, 2, 1, 0, True, 10, 0),
         (3, 1, 2, 1, 0, False, 10, 1),
         (3, 1, 3, 1, 0, True, 10, 4),
-        (1, 3, 2, 1, 1, True, 10, 1),
+        (1, 3, 2, 1, 5, True, 10, 1),
+        (1, 3, 2, 1, "valid", True, 10, 1),
+        (1, 3, 4, 1, "same", True, 10, 1),
+        (1, 3, 5, 1, "same", True, 10, 1),
+        (1, 3, 5, 2, 0, True, 10, 1),
     ],
 )
 def test_output_matches_expected(
@@ -62,7 +66,7 @@ def test_output_matches_expected(
     out_channels: int,
     kernel_size: int,
     stride: int,
-    padding: int,
+    padding: int | str,
     bias: bool,
     input_length: int,
     batch_size: int,
@@ -75,7 +79,7 @@ def test_output_matches_expected(
         padding=padding,
         bias=bias,
     )
-    inputs = _ones_as_conv1d_input(batch_size, in_channels, input_length)
+    inputs = _fixed_conv1d_input(batch_size, in_channels, input_length)
     target_outputs = torch_conv(inputs)
     actual_outputs = creator_conv(inputs)
     assert (target_outputs == actual_outputs).all()
