@@ -7,6 +7,8 @@ from torch.nn import Conv1d as TorchConv1d
 
 from elasticai.creator.base_modules.conv1d import Conv1d as CreatorConv1d
 from elasticai.creator.base_modules.float_arithmetics import FloatArithmetics
+from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
+from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 
 def _set_fixed_params(conv: torch.nn.Conv1d) -> None:
@@ -82,4 +84,22 @@ def test_output_matches_expected(
     inputs = _fixed_conv1d_input(batch_size, in_channels, input_length)
     target_outputs = torch_conv(inputs)
     actual_outputs = creator_conv(inputs)
+    assert (target_outputs == actual_outputs).all()
+
+
+def test_use_different_arithmetics() -> None:
+    conv = CreatorConv1d(
+        arithmetics=FixedPointArithmetics(FixedPointConfig(total_bits=8, frac_bits=2)),
+        in_channels=1,
+        out_channels=1,
+        kernel_size=2,
+        stride=1,
+        padding="valid",
+        bias=True,
+    )
+    _set_fixed_params(conv)
+
+    inputs = torch.tensor([[-1.75, -1.5, -1, -0.25, 1, 2.5, 3.75]])
+    actual_outputs = conv(inputs)
+    target_outputs = torch.tensor([[-2.25, -1.5, -0.25, 1.75, 4.5, 7.25]])
     assert (target_outputs == actual_outputs).all()
