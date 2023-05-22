@@ -13,12 +13,14 @@ from elasticai.creator.hdl.code_generation.template import (
 )
 from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
-    create_connections_using_to_from_pairs,
+    AssignmentList,
+    Signal,
+    SignalDefinitionList,
     create_instance,
     signal_definition,
 )
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import BaseIdentity, BufferedIdentity
+from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
 from elasticai.creator.nn.vhdl.sequential import Sequential
 
 
@@ -77,13 +79,12 @@ class TestSequential:
     )
     def test_signal_definitions(self, model: Sequential, entity_id: int) -> None:
         sequential_code = sequential_code_for_model(model)
-
         signals = extract_signal_definitions(sequential_code)
         target_signals = signal_definitions_for_identity(
             entity=f"bufferedidentity_{entity_id}", num_input_features=6, total_bits=16
         )
 
-        assert set(target_signals) <= set(signals)
+        assert set(signals) >= set(target_signals)
 
     @pytest.mark.parametrize(
         "model,entity_id",
@@ -105,42 +106,38 @@ class TestSequential:
 
         connections = extract_layer_connections(sequential_code)
         name = "bufferedidentity"
-        target_connections = create_connections_using_to_from_pairs(
-            {
-                f"i_{name}_0_x": "x",
-                "y": f"i_{name}_0_y",
-                f"i_{name}_0_enable": "enable",
-                f"i_{name}_0_clock": "clock",
-                "done": f"i_{name}_0_done",
-                f"i_{name}_0_y_address": "y_address",
-                "x_address": f"i_{name}_0_x_address",
-            }
-        )
+        target_connections = {
+            f"i_{name}_0_x": "x",
+            "y": f"i_{name}_0_y",
+            f"i_{name}_0_enable": "enable",
+            f"i_{name}_0_clock": "clock",
+            "done": f"i_{name}_0_done",
+            f"i_{name}_0_y_address": "y_address",
+            "x_address": f"i_{name}_0_x_address",
+        }
 
-        assert set(connections) == set(target_connections)
+        assert connections == target_connections
 
     def test_layer_connections_for_two_layer_model(self) -> None:
         sequential_code = sequential_code_for_model(two_layer_model())
         layer_0 = "i_bufferedidentity_0"
         layer_1 = "i_bufferedidentity_1"
         connections = extract_layer_connections(sequential_code)
-        target_connections = create_connections_using_to_from_pairs(
-            {
-                f"{layer_0}_clock": "clock",
-                f"{layer_0}_enable": "enable",
-                f"{layer_0}_x": "x",
-                "x_address": f"{layer_0}_x_address",
-                f"{layer_0}_y_address": f"{layer_1}_x_address",
-                f"{layer_1}_x": f"{layer_0}_y",
-                f"{layer_1}_enable": f"{layer_0}_done",
-                f"{layer_1}_clock": "clock",
-                f"{layer_1}_y_address": "y_address",
-                "y": f"{layer_1}_y",
-                "done": f"{layer_1}_done",
-            }
-        )
+        target_connections = {
+            f"{layer_0}_clock": "clock",
+            f"{layer_0}_enable": "enable",
+            f"{layer_0}_x": "x",
+            "x_address": f"{layer_0}_x_address",
+            f"{layer_0}_y_address": f"{layer_1}_x_address",
+            f"{layer_1}_x": f"{layer_0}_y",
+            f"{layer_1}_enable": f"{layer_0}_done",
+            f"{layer_1}_clock": "clock",
+            f"{layer_1}_y_address": "y_address",
+            "y": f"{layer_1}_y",
+            "done": f"{layer_1}_done",
+        }
 
-        assert set(connections) == set(target_connections)
+        assert connections == target_connections
 
 
 def get_code(code_file: InMemoryPath | InMemoryFile) -> list[str]:
@@ -161,9 +158,9 @@ def sequential_code_for_model(model: Sequential) -> list[str]:
 
 def signal_definitions_for_identity(
     entity: str, num_input_features: int, total_bits: int
-) -> list[str]:
+) -> list[Signal]:
     return [
-        signal_definition(name=f"i_{entity}_{signal.name}", width=signal.width)
+        Signal(name=f"i_{entity}_{signal.name}", width=signal.width)
         for signal in (
             std_signals.x(total_bits),
             std_signals.y(total_bits),
@@ -203,9 +200,10 @@ def extract_layer_name(code: Iterable[str]) -> str:
     return matches[0]
 
 
-def extract_signal_definitions(code: Iterable[str]) -> list[str]:
-    return _find_all_matches(pattern=r"\s*(signal .*;)", lines=code)
+def extract_signal_definitions(code: Iterable[str]) -> list[Signal]:
+    return SignalDefinitionList.from_code(code).signals
 
 
-def extract_layer_connections(code: Iterable[str]) -> list[str]:
-    return _find_all_matches(pattern=r"\s*(.*<=.*;)", lines=code)
+def extract_layer_connections(code: Iterable[str]) -> dict[str, str]:
+    assignments = AssignmentList.from_code(code)
+    return assignments.to_dict()
