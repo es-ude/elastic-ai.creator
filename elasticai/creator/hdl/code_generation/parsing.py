@@ -1,38 +1,12 @@
-from dataclasses import dataclass
 from itertools import chain
-from re import finditer as find_regex
-from typing import Callable, Iterable, Iterator, Sequence, cast
+from typing import Callable, Iterator, Sequence
 
-
-@dataclass(eq=True, frozen=True)
-class Token:
-    type: str
-    value: str
-
-    def matches(self, actual) -> bool:
-        return (self.type == "CAPTURING_TERMINAL" and self.value == actual.type) or (
-            self == actual
-        )
-
-    @classmethod
-    def capturing_terminal(cls, type: str) -> "Token":
-        return cls("CAPTURING_TERMINAL", type)
-
-
-def tokenize(code: str | Iterable[str], token_pattern: str):
-    if not isinstance(code, str):
-        for line in code:
-            yield from tokenize(line, token_pattern)
-    else:
-        for match in find_regex(token_pattern, code):
-            token = Token(cast(str, match.lastgroup), match.group())
-            if token.type != "SKIP":
-                yield token
+from elasticai.creator.hdl.code_generation.tokens import Rule, Token
 
 
 def parse(
-    tokens: Iterator[Token],
-    rules: tuple[tuple[Token, ...]],
+    input: Iterator[Token],
+    rules: tuple[Rule],
     handle: Callable[[Sequence[Token]], None],
 ):
     """
@@ -45,39 +19,42 @@ def parse(
     It's primary use case is to extract simple patterns from vhdl code without having to parse an entire file
     or specify a full vhdl grammar.
     """
-    tokens = chain(tokens, (Token("END", ""),))
+    input = chain(input, (Token("END", ""),))
 
-    try:
-        seen_tokens: list[Token] = []
-        token = next(tokens)
+    seen_tokens: list[Token] = []
+    token = next(input)
+
+    active_rules = set(rules)
+
+    def reset():
+        seen_tokens.clear()
+        nonlocal active_rules
         active_rules = set(rules)
 
-        def reset():
-            seen_tokens.clear()
-            nonlocal active_rules
-            active_rules = set(rules)
+    def determine_followup_rules(token: Token):
+        nonlocal active_rules
+        new_active_rules: set[Rule] = set()
+        num_seen_symbols = len(seen_tokens)
+        for rule in active_rules:
+            rhs = rule[1]
+            if rhs[num_seen_symbols].matches(token):
+                new_active_rules.add(rule)
+        there_is_a_rule_for_next_token = len(new_active_rules) > 0
+        if there_is_a_rule_for_next_token:
+            active_rules = new_active_rules
+        else:
+            reset()
 
-        def determine_followup_rules(token: Token):
-            nonlocal active_rules
-            new_active_rules: set[tuple[Token, ...]] = set()
-            num_seen_symbols = len(seen_tokens)
-            for rule in active_rules:
-                if rule[num_seen_symbols].matches(token):
-                    new_active_rules.add(rule)
-            there_is_a_rule_for_next_token = len(new_active_rules) > 0
-            if there_is_a_rule_for_next_token:
-                active_rules = new_active_rules
-            else:
-                reset()
+    def a_rule_has_completed():
+        num_seen_symbols = len(seen_tokens)
+        for rule in active_rules:
+            rhs = rule[1]
+            rule_length = len(rhs)
+            if num_seen_symbols == rule_length:
+                return True
+        return False
 
-        def a_rule_has_completed():
-            num_seen_symbols = len(seen_tokens)
-            for rule in active_rules:
-                rule_length = len(rule)
-                if num_seen_symbols == rule_length:
-                    return True
-            return False
-
+    try:
         while True:
             if a_rule_has_completed():
                 handle(seen_tokens)
@@ -85,7 +62,7 @@ def parse(
             else:
                 determine_followup_rules(token)
                 seen_tokens.append(token)
-                token = next(tokens)
+                token = next(input)
 
     except StopIteration:
         pass

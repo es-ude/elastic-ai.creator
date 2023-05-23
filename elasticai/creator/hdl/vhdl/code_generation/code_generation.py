@@ -4,8 +4,9 @@ from typing import Iterable, Sequence, overload
 
 from elasticai.creator.hdl.code_generation.code_generation import to_hex
 from elasticai.creator.hdl.code_generation.parsing import parse
-from elasticai.creator.hdl.code_generation.tokens import tokenize_rule
-from elasticai.creator.hdl.vhdl.code_generation.tokens import Token, tokenize
+from elasticai.creator.hdl.code_generation.tokens import Token
+from elasticai.creator.hdl.design_base.signal import Signal as _Signal
+from elasticai.creator.hdl.vhdl.code_generation.tokens import tokenize, tokenize_rule
 
 
 def _sorted_dict(items: dict[str, str]) -> dict[str, str]:
@@ -33,6 +34,31 @@ def create_instance(
 
 
 @dataclass(eq=True, frozen=True)
+class EntityInstance:
+    name: str
+    entity: str
+    signal_mapping: dict[str, str]
+    library: str
+    architecture: str = "rtl"
+
+    def to_code(self) -> list[str]:
+        return create_instance(
+            name=self.name,
+            entity=self.entity,
+            signal_mapping=self.signal_mapping,
+            library=self.library,
+            architecture=self.architecture,
+        )
+
+    def from_code(self):
+        rule = (
+            "ID ':' entity ID '.' ID '(' ID ')' 'port' 'map' '(' port_assignment_list"
+            " ')' ';'"
+        )
+        assignment_list_rules = ["port_assignment_list ';' ID '=>' ID", "ID '=>' ID"]
+
+
+@dataclass(eq=True, frozen=True)
 class AssignmentList:
     sources: tuple[str, ...]
     sinks: tuple[str, ...]
@@ -48,7 +74,7 @@ class AssignmentList:
 
     @classmethod
     def from_code(cls, code: Iterable[str]) -> "AssignmentList":
-        assignment = tokenize_rule("ID '<=' ID ';'")
+        assignment = tokenize_rule("assignment: ID '<=' ID ';'")
         result: dict[str, str] = {}
 
         tokens = tokenize(code)
@@ -73,10 +99,7 @@ def create_connections_using_to_from_pairs(mapping: dict[str, str]) -> list[str]
 
 
 @dataclass(eq=True, frozen=True)
-class Signal:
-    name: str
-    width: int
-
+class Signal(_Signal):
     def define(self) -> str:
         return signal_definition(name=self.name, width=self.width)
 
@@ -89,7 +112,7 @@ class Signal:
                 width = width - int(tokens[7].value)
         else:
             width = 0
-        name = tokens[1]
+        name = tokens[1].value
         return cls(name=name, width=width)
 
 
@@ -102,18 +125,14 @@ class SignalDefinitionList:
 
     @classmethod
     def from_code(cls, code: Iterable[str]):
+        _rule_start = "signal_definition: 'signal' ID ':'"
+        _vector_end = "'downto' '0' ')'  ':' '=' '(' 'others' '=>' ''' '0' ''' ')' ';'"
         rules = (
             tokenize_rule(r)
             for r in [
-                "'signal' ID ':' 'std_logic' ':' '=' ''0'' ';'",
-                (
-                    "'signal' ID ':' 'std_logic_vector' '(' NUMBER '-' '1' 'downto'"
-                    " '0' ')'  ':' '=' '(' 'others' '=>' ''' '0' ''' ')' ';'"
-                ),
-                (
-                    "'signal' ID ':' 'std_logic_vector' '(' NUMBER 'downto'"
-                    " '0' ')'  ':' '=' '(' 'others' '=>' ''' '0' ''' ')' ';'"
-                ),
+                f"{_rule_start} 'std_logic' ':' '=' ''0'' ';'",
+                f"{_rule_start} 'std_logic_vector' '(' NUMBER '-' '1' {_vector_end}",
+                f"{_rule_start} 'std_logic_vector' '(' NUMBER {_vector_end}",
             ]
         )
         signals = set()
