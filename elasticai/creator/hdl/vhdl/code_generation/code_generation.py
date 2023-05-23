@@ -5,11 +5,8 @@ from itertools import chain, product
 from typing import Any, Callable, Iterable, Iterator, Protocol, Sequence, overload
 
 from elasticai.creator.hdl.code_generation.code_generation import to_hex
-from elasticai.creator.hdl.vhdl.code_generation.tokens import (
-    Token,
-    tokenize,
-    tokenize_rule,
-)
+from elasticai.creator.hdl.code_generation.tokens import tokenize_rule
+from elasticai.creator.hdl.vhdl.code_generation.tokens import Token, tokenize
 
 
 def _sorted_dict(items: dict[str, str]) -> dict[str, str]:
