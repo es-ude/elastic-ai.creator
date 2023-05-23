@@ -1,10 +1,9 @@
 import re
-from abc import abstractmethod
 from dataclasses import dataclass
-from itertools import chain, product
-from typing import Any, Callable, Iterable, Iterator, Protocol, Sequence, overload
+from typing import Iterable, Sequence, overload
 
 from elasticai.creator.hdl.code_generation.code_generation import to_hex
+from elasticai.creator.hdl.code_generation.parsing import parse
 from elasticai.creator.hdl.code_generation.tokens import tokenize_rule
 from elasticai.creator.hdl.vhdl.code_generation.tokens import Token, tokenize
 
@@ -57,7 +56,7 @@ class AssignmentList:
         def handle_completion(tokens: Sequence[Token]):
             result[tokens[0].value] = tokens[2].value
 
-        _parse_for_rules(tokens, (assignment,), handle_completion)
+        parse(tokens, (assignment,), handle_completion)
         return cls.from_dict(result)
 
     @classmethod
@@ -129,7 +128,7 @@ class SignalDefinitionList:
             name = parsed_tokens[1].value
             signals.add(Signal(name=name, width=width))
 
-        _parse_for_rules(tokenize(code), tuple(rules), handle_completion)
+        parse(tokenize(code), tuple(rules), handle_completion)
 
         return SignalDefinitionList(signals)
 
@@ -203,64 +202,3 @@ def extract_rom_values(text: str | list[str]) -> tuple[str, ...]:
             values = tuple(re.split(r'(?:",\s?x")', array))
 
     return values
-
-
-def _parse_for_rules(
-    tokens: Iterator[Token],
-    rules: tuple[tuple[Token, ...]],
-    handle: Callable[[Sequence[Token]], None],
-):
-    """
-    This is a rudimentary but robust parser.
-    Given a tuple of rules, that consist entirely of terminals (see the `.tokens` module) it will call `handle`
-    on the sequence of tokens that matches the shortest of the given rules and continue parsing.
-    It is robust in the following sense: when encountering an unexpected token, the algorithm will start parsing
-    from scratch with that token instead of raising an exception.
-
-    It's primary use case is to extract simple patterns from vhdl code without having to parse an entire file
-    or specify a full vhdl grammar.
-    """
-    tokens = chain(tokens, (Token("END", ""),))
-
-    try:
-        seen_tokens: list[Token] = []
-        token = next(tokens)
-        active_rules = set(rules)
-
-        def reset():
-            seen_tokens.clear()
-            nonlocal active_rules
-            active_rules = set(rules)
-
-        def determine_followup_rules(token: Token):
-            nonlocal active_rules
-            new_active_rules: set[tuple[Token, ...]] = set()
-            num_seen_symbols = len(seen_tokens)
-            for rule in active_rules:
-                if rule[num_seen_symbols].matches(token):
-                    new_active_rules.add(rule)
-            there_is_a_rule_for_next_token = len(new_active_rules) > 0
-            if there_is_a_rule_for_next_token:
-                active_rules = new_active_rules
-            else:
-                reset()
-
-        def a_rule_has_completed():
-            num_seen_symbols = len(seen_tokens)
-            for rule in active_rules:
-                rule_length = len(rule)
-                if num_seen_symbols == rule_length:
-                    return True
-            return False
-
-        while True:
-            if a_rule_has_completed():
-                handle(seen_tokens)
-                reset()
-            else:
-                determine_followup_rules(token)
-                seen_tokens.append(token)
-                token = next(tokens)
-
-    except StopIteration:
-        pass
