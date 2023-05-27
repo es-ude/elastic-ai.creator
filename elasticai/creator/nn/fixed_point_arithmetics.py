@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 
@@ -24,10 +24,10 @@ class FixedPointArithmetics(Arithmetics):
 
     def round(self, a: torch.Tensor) -> torch.Tensor:
         def float_to_int(x: torch.Tensor) -> torch.Tensor:
-            return FixedPointQuantFunction.apply(x, self.config)
+            return cast(torch.Tensor, FixedPointQuantFunction.apply(x, self.config))
 
         def int_to_fixed_point(x: torch.Tensor) -> torch.Tensor:
-            return FixedPointDequantFunction.apply(x, self.config)
+            return cast(torch.Tensor, FixedPointDequantFunction.apply(x, self.config))
 
         return int_to_fixed_point(float_to_int(a))
 
@@ -44,3 +44,24 @@ class FixedPointArithmetics(Arithmetics):
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(torch.matmul(a, b))
+
+    def conv1d(
+        self,
+        inputs: torch.Tensor,
+        weights: torch.Tensor,
+        bias: torch.Tensor | None,
+        stride: int,
+        padding: int | str,
+        dilation: int,
+        groups: int,
+    ) -> torch.Tensor:
+        outputs = torch.nn.functional.conv1d(
+            input=inputs,
+            weight=weights,
+            bias=bias,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+        )
+        return self.quantize(outputs)

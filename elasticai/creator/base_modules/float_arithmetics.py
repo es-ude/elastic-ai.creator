@@ -28,3 +28,23 @@ class FloatArithmetics(Arithmetics):
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return torch.matmul(a, b)
+
+    def conv1d(
+        self,
+        inputs: torch.Tensor,
+        weights: torch.Tensor,
+        bias: torch.Tensor | None,
+        stride: int,
+        padding: int | str,
+        dilation: int,
+        groups: int,
+    ) -> torch.Tensor:
+        return torch.nn.functional.conv1d(
+            input=inputs,
+            weight=weights,
+            bias=bias,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+        )

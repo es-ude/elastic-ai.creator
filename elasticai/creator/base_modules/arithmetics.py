@@ -26,3 +26,15 @@ class Arithmetics(Protocol):
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         ...
+
+    def conv1d(
+        self,
+        inputs: torch.Tensor,
+        weights: torch.Tensor,
+        bias: Optional[torch.Tensor],
+        stride: int,
+        padding: int | str,
+        dilation: int,
+        groups: int,
+    ) -> torch.Tensor:
+        ...
