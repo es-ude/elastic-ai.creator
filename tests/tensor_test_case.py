@@ -3,12 +3,24 @@ from unittest import TestCase
 from torch import Tensor
 
 
-def _to_list(x: Tensor) -> list:
-    return x.detach().numpy().tolist()
+def _unify_inputs(*inputs: float | list | Tensor) -> list[float | list]:
+    def unify(obj: float | list | Tensor) -> float | list:
+        if isinstance(obj, (float, list)):
+            return obj
+        return obj.detach().tolist()
+
+    return list(map(unify, inputs))
 
 
 class TensorTestCase(TestCase):
-    def assertTensorEqual(self, expected: list | Tensor, actual: list | Tensor) -> None:
-        expected = _to_list(expected) if isinstance(expected, Tensor) else expected
-        actual = _to_list(actual) if isinstance(actual, Tensor) else actual
-        self.assertEqual(expected, actual)
+    def assertTensorEqual(
+        self, expected: float | list | Tensor, actual: float | list | Tensor
+    ) -> None:
+        self.assertEqual(*_unify_inputs(expected, actual))
+
+
+def assertTensorEqual(
+    expected: float | list | Tensor, actual: float | list | Tensor
+) -> None:
+    expected, actual = _unify_inputs(expected, actual)
+    assert expected == actual
