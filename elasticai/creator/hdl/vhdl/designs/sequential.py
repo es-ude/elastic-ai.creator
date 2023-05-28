@@ -1,14 +1,10 @@
-from abc import ABC, abstractmethod
-from collections.abc import Iterator
-from functools import partial
 from itertools import chain
 
-from elasticai.creator.hdl.code_generation.abstract_base_template import (
+from elasticai.creator.hdl.code_generation.template import (
+    InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.hdl.design_base import std_signals
 from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.design_base.std_signals import (
     clock,
     done,
@@ -24,7 +20,6 @@ from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
     create_connections_using_to_from_pairs,
     create_signal_definitions,
 )
-from elasticai.creator.hdl.vhdl.code_generation.template import Template
 
 
 class Sequential(Design):
@@ -138,19 +133,19 @@ class Sequential(Design):
         )
 
     def save_to(self, destination: Path):
-        network_implementation = Template(
-            "network", package=module_to_package(self.__module__)
-        )
         self._save_subdesigns(destination)
-        network_implementation.update_parameters(
-            layer_connections=self._generate_connections(),
-            layer_instantiations=self._generate_instantiations(),
-            signal_definitions=self._generate_signal_definitions(),
-            x_address_width=str(self._x_address_width),
-            y_address_width=str(self._y_address_width),
-            x_width=str(self._x_width),
-            y_width=str(self._y_width),
-            layer_name=self.name,
+        network_template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="network.tpl.vhd",
+            parameters=dict(
+                layer_connections=self._generate_connections(),
+                layer_instantiations=self._generate_instantiations(),
+                signal_definitions=self._generate_signal_definitions(),
+                x_address_width=str(self._x_address_width),
+                y_address_width=str(self._y_address_width),
+                x_width=str(self._x_width),
+                y_width=str(self._y_width),
+                layer_name=self.name,
+            ),
         )
-        target_file = destination.create_subpath(self.name).as_file(".vhd")
-        target_file.write_text(network_implementation.lines())
+        destination.create_subpath(self.name).as_file(".vhd").write(network_template)

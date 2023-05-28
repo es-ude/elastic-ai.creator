@@ -2,6 +2,37 @@
 
 <!--next-version-placeholder-->
 
+## v0.39.0 (2023-05-19)
+### Feature
+* Implement batch normed linear layer ([`9322f6f`](https://github.com/es-ude/elastic-ai.creator/commit/9322f6f699f9884273c3f9815b9a026c9f7840ae))
+
+### Fix
+* Allow to set affine and bias equals false in translate function ([`b351284`](https://github.com/es-ude/elastic-ai.creator/commit/b351284335a77caec838a8f4ea57684e429cc35b))
+* Remove dequantize ([`c111022`](https://github.com/es-ude/elastic-ai.creator/commit/c111022854ce6965b705b3a3de296e032d7ff107))
+
+## v0.38.0 (2023-05-09)
+### Feature
+* Add check that all variables are filled when saving a template ([`c988d2b`](https://github.com/es-ude/elastic-ai.creator/commit/c988d2bc203790ba8ab900e8a2de6996b22d6fcb))
+* Add function to get all unfilled variables of a template ([`d635cb6`](https://github.com/es-ude/elastic-ai.creator/commit/d635cb6098735b451aea259a8a6f15619bfcd64f))
+* Write function of InMemoryFile and OnDiskFile now takes Template object ([`a867ea1`](https://github.com/es-ude/elastic-ai.creator/commit/a867ea15980b8ca1390327f2999c4d7b91ef3041))
+
+### Fix
+* Remove broken lstm implementation ([`c524ca2`](https://github.com/es-ude/elastic-ai.creator/commit/c524ca20cc49333007c4e0bbfa167912580e5c01))
+* Add variable ([`229d452`](https://github.com/es-ude/elastic-ai.creator/commit/229d452d0c2f798ee1dd0124f50be8f01d69ede4))
+* Fix not inserted process name ([`dbabea0`](https://github.com/es-ude/elastic-ai.creator/commit/dbabea07c888a5309d9ca55cd2c01ae0debea57d))
+
+## v0.37.2 (2023-05-07)
+### Fix
+* Try manual publishing ([`c8b6c35`](https://github.com/es-ude/elastic-ai.creator/commit/c8b6c355896c1f3b0630c227af8414f281b5d3ff))
+
+## v0.37.1 (2023-05-07)
+### Fix
+* Try to fix semantic release ([`2625e89`](https://github.com/es-ude/elastic-ai.creator/commit/2625e8982c021cbf5b778e95194cc53170ab0afb))
+
+## v0.37.0 (2023-05-05)
+### Feature
+* Assert that all inserted variables exists in template and remove AbstractBaseTemplate ([`51f1a08`](https://github.com/es-ude/elastic-ai.creator/commit/51f1a0883a8d0a54caee66080ef85f84049ad806))
+
 ## v0.36.0 (2023-04-26)
 ### Feature
 * Autogenerate sequential signal connections ([`6dfca07`](https://github.com/es-ude/elastic-ai.creator/commit/6dfca078b735a3387b65c20de601426ea27371c6))

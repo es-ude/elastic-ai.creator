@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
+from elasticai.creator.base_modules.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )

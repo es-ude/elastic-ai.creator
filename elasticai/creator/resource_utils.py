@@ -1,6 +1,6 @@
 from importlib import resources
 from pathlib import Path, PurePath
-from typing import AnyStr, ContextManager, Iterator
+from typing import ContextManager, Iterator
 
 PathType = str | PurePath
 Package = resources.Package
@@ -19,9 +19,7 @@ def get_file_from_package(package: Package, file_name: str) -> ContextManager[Pa
     )
 
 
-def read_text(
-    package: Package, file_name: str, encoding: str = "utf-8"
-) -> Iterator[AnyStr]:
+def read_text(package: Package, file_name: str) -> Iterator[str]:
     with get_file_from_package(package, file_name) as file:
         with open(file, "r") as opened_file:
             yield from map(lambda line: line.rstrip("\n"), opened_file)
