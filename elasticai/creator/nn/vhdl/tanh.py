@@ -1,6 +1,5 @@
 import torch
 from torch import Tensor
-from torch.nn import Tanh as _BaseTanh
 
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.translatable import Translatable
@@ -11,7 +10,7 @@ from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 
-class PrecomputedTanh(_BaseTanh, Translatable):
+class FPTanh(torch.nn.Tanh, Translatable):
     def __init__(self, total_bits: int, frac_bits: int):
         super().__init__()
         self.op = FixedPointArithmetics(
@@ -38,6 +37,6 @@ class PrecomputedTanh(_BaseTanh, Translatable):
         return _PrecomputedMonotonouslyIncreasingScalarFunction(
             name=name,
             width=self._total_bits,
-            inputs=range(2**self._total_bits),
+            inputs=list(range(2**self._total_bits)),
             function=self._sampling_function,
         )
