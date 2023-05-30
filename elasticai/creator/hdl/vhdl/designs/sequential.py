@@ -88,12 +88,12 @@ class Sequential(Design):
         def wire_top_to_start_and_end(start, end):
             connections.update(
                 {
-                    "done": f"{end}done",
-                    "y": f"{end}y",
-                    f"{end}y_address": f"y_address",
-                    f"{start}x": "x",
                     f"{start}enable": "enable",
+                    f"{start}x": "x",
+                    "y": f"{end}y",
                     f"x_address": f"{start}x_address",
+                    f"{end}y_address": f"y_address",
+                    "done": f"{end}done",
                 }
             )
 

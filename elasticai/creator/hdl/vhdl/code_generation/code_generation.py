@@ -91,7 +91,6 @@ class AssignmentList:
 
 
 def create_connections_using_to_from_pairs(mapping: dict[str, str]) -> list[str]:
-    mapping = _sorted_dict(mapping)
     connections: list[str] = []
     for _to, _from in mapping.items():
         connections.append(f"{_to} <= {_from};")
