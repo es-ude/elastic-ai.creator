@@ -1,10 +1,32 @@
-from elasticai.creator.hdl.auto_wire_protocols.autowiring import AutoWirer, DataFlowNode
+import re
+
+import pytest
+
+from elasticai.creator.hdl.auto_wire_protocols.autowiring import (
+    AutoWirer,
+    AutoWiringProtocolViolation,
+    DataFlowNode,
+)
 
 
 def _wire(top: DataFlowNode, graph: tuple[DataFlowNode, ...]):
     _autowirer = AutoWirer()
     _autowirer.wire(top, graph)
     return _autowirer.connections()
+
+
+"""
+TODO: add tests for graphs containing unknown signal names
+"""
+
+
+def _build_expected_connections(spec: str):
+    regex = r"\s*(\w+)\s*,\s*(\w+)\s*:\s*(\w+)\s*,\s*(\w+)\s*\n*"
+    result = {}
+    for match in re.finditer(regex, spec):
+        sink_node, sink_signal, source_node, source_signal = match.groups()
+        result[(sink_node, sink_signal)] = (source_node, source_signal)
+    return result
 
 
 def test_wire_buffered_entity_to_top_module():
@@ -54,8 +76,32 @@ def test_wire_unbuffered_entity():
         ("a", "clock"): ("top", "clock"),
     }
     connections = _wire(top=DataFlowNode.top("top"), graph=(a,))
-    """
-    just use a list with buffered and a list with mixed entities
-    and apply wire defs accordingly
-    """
     assert connections == expected_connections
+
+
+def test_wire_buffered_and_unbuffered():
+    a = DataFlowNode.buffered("a")
+    b = DataFlowNode.unbuffered("b")
+    top = DataFlowNode.top("top")
+    expected_connections = _build_expected_connections(
+        """
+        top, x_address : a, x_address
+        a, clock : top, clock
+        a, enable : top, enable
+        a, y_address : top, y_address
+        a, x : top, x
+        b, enable : a, done
+        b, clock : top, clock
+        b, x : a, y
+        top, y: b, y
+        top, done: a, done
+        """
+    )
+    connections = _wire(top=top, graph=(a, b))
+    assert connections == expected_connections
+
+
+def test_wiring_unknown_signals_yields_error():
+    a = DataFlowNode(name="a", sinks=("signal_a",), sources=tuple())
+    with pytest.raises(AutoWiringProtocolViolation):
+        _wire(top=DataFlowNode.top("top"), graph=(a,))

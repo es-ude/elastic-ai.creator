@@ -1,5 +1,6 @@
 from itertools import chain
 
+from elasticai.creator.hdl.auto_wire_protocols.autowiring import AutoWirer, DataFlowNode
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
@@ -70,39 +71,35 @@ class Sequential(Design):
         return [f"i_{design.name}" for design in self._subdesigns]
 
     def _generate_connections(self) -> list[str]:
-        prefixes = [f"{name}_" for name in self._instance_names()]
-        connections = {f"{name}clock": "clock" for name in prefixes}
-
-        def wire_pair(a, b):
-            connections.update(
-                {
-                    f"{a}y_address": f"{b}x_address",
-                    f"{b}x": f"{a}y",
-                    f"{b}enable": f"{a}done",
-                }
+        named_ports = [(d.name, d.port) for d in self._subdesigns]
+        nodes = [
+            DataFlowNode(
+                name=n[0],
+                sinks=tuple(s.name for s in n[1].incoming),
+                sources=tuple(s.name for s in n[1].outgoing),
             )
+            for n in named_ports
+        ]
+        top = DataFlowNode.top(self.name)
+        autowirer = AutoWirer()
+        autowirer.wire(top, graph=nodes)
 
-        for a, b in zip(prefixes[:-1], prefixes[1:]):
-            wire_pair(a, b)
+        def generate_name(node_name: str, signal_name: str) -> str:
+            if node_name == self.name:
+                return signal_name
+            else:
+                return "_".join(("i", node_name, signal_name))
 
-        def wire_top_to_start_and_end(start, end):
-            connections.update(
-                {
-                    f"{start}enable": "enable",
-                    f"{start}x": "x",
-                    "y": f"{end}y",
-                    f"x_address": f"{start}x_address",
-                    f"{end}y_address": f"y_address",
-                    "done": f"{end}done",
-                }
-            )
+        connections = {
+            generate_name(*k): generate_name(*v)
+            for k, v in autowirer.connections().items()
+        }
+        sinks = sorted(connections.keys())
+        lines = []
+        for sink in sinks:
+            lines.append(f"{sink} <= {connections[sink]};")
 
-        if len(prefixes) == 0:
-            connections.update({"x_address": "y_address", "y": "x", "done": "enable"})
-        else:
-            wire_top_to_start_and_end(prefixes[0], prefixes[-1])
-
-        return create_connections_using_to_from_pairs(connections)
+        return lines
 
     def _instance_name_and_design_pairs(self):
         yield from zip(self._instance_names(), self._subdesigns)

@@ -31,9 +31,9 @@ end sequential;
 
 architecture rtl of sequential is
 begin
+    done <= enable;
     x_address <= y_address;
     y <= x;
-    done <= enable;
     --------------------------------------------------------------------------------
     -- Instantiate all layers
     --------------------------------------------------------------------------------
@@ -73,13 +73,13 @@ architecture rtl of sequential is
     signal i_bufferedidentity_0_y : std_logic_vector(3 downto 0) := (others => '0');
     signal i_bufferedidentity_0_y_address : std_logic_vector(0 downto 0) := (others => '0');
 begin
+    done <= i_bufferedidentity_0_done;
     i_bufferedidentity_0_clock <= clock;
     i_bufferedidentity_0_enable <= enable;
     i_bufferedidentity_0_x <= x;
-    y <= i_bufferedidentity_0_y;
-    x_address <= i_bufferedidentity_0_x_address;
     i_bufferedidentity_0_y_address <= y_address;
-    done <= i_bufferedidentity_0_done;
+    x_address <= i_bufferedidentity_0_x_address;
+    y <= i_bufferedidentity_0_y;
     --------------------------------------------------------------------------------
     -- Instantiate all layers
     --------------------------------------------------------------------------------

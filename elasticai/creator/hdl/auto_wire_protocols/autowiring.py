@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from itertools import chain
+from typing import Any, Iterable, Iterator, Sequence, TypeVar
 
 
 @dataclass(eq=True, frozen=True)
@@ -59,28 +60,65 @@ BASIC_WIRING = WiringProtocol(
 )
 
 
+class AutoWiringProtocolViolation(Exception):
+    pass
+
+
+T = TypeVar("T")
+
+
 class AutoWirer:
+    """
+    Please note that this implementation performs the wiring solely based on names.
+    Hence, it will not check whether signals are compatible based on their width
+    or data type.
+    It only supports a sequence of nodes as the input graph.
+    Handling nodes with more than one child requires deciding how data paths are split
+    and merged.
+    """
+
     def __init__(self) -> None:
         self._reset()
+
+    def _check_protocol_support_violations(self, graph, top):
+        for node in chain(graph, (top,)):
+            for sink in node.sinks:
+                if sink not in self._all_protocol_sinks():
+                    raise AutoWiringProtocolViolation(f"{sink}")
+            for source in node.sources:
+                if source not in self._all_protocol_sources():
+                    raise AutoWiringProtocolViolation(f"{source}")
+
+    def _all_protocol_sources(self) -> Iterator[str]:
+        def flatten(items: Iterable[Iterable[str]]) -> Iterable[str]:
+            return chain.from_iterable(items)
+
+        down_sources = flatten(self._protocol.down_sinks.values())
+        up_sources = flatten(self._protocol.up_sinks.values())
+        return chain(down_sources, up_sources)
+
+    def _all_protocol_sinks(self) -> Iterator[str]:
+        return chain(self._protocol.up_sinks, self._protocol.down_sinks)
 
     def connections(self) -> dict[tuple[str, str], tuple[str, str]]:
         return self._connections
 
-    def wire(self, top: DataFlowNode, graph: tuple[DataFlowNode, ...]):
+    def wire(self, top: DataFlowNode, graph: Iterable[DataFlowNode]):
+        self._check_protocol_support_violations(graph=graph, top=top)
         self._reset()
         self._remember_sources_provided_by(top)
         self._remember_unsatisfied_down_sinks_from(top)
         g = chain(graph, (top,))
         for node in g:
-            self._connect_all_up_sinks_for(node)
             self._connect_all_down_sinks_for(node)
+            self._connect_all_up_sinks_for(node)
             self._remember_sources_provided_by(node)
             self._remember_unsatisfied_down_sinks_from(node)
 
     def _remember_unsatisfied_down_sinks_from(self, node: "DataFlowNode"):
-        self._unsatisfied_down_sinks.update(
-            {(node.name, s) for s in self._protocol_down_sinks(node)}
-        )
+        for s in self._protocol_down_sinks(node):
+            if (node.name, s) not in self._unsatisfied_down_sinks:
+                self._unsatisfied_down_sinks.append((node.name, s))
 
     def _connect_all_down_sinks_for(self, node: "DataFlowNode"):
         unsatisfied_down_sinks = self._unsatisfied_down_sinks.copy()
@@ -106,21 +144,33 @@ class AutoWirer:
 
     def _reset(self) -> None:
         self._available_sources: dict[str, tuple[str, str]] = {}
-        self._unsatisfied_down_sinks: set[tuple[str, str]] = set()
+        self._unsatisfied_down_sinks: list[tuple[str, str]] = list()
         self._connections: dict[tuple[str, str], tuple[str, str]] = {}
         self._protocol = BASIC_WIRING
 
-    def _protocol_down_sinks(self, node) -> set[str]:
-        return set(node.sinks).intersection(self._protocol.down_sinks)
+    @staticmethod
+    def _intersection_iterator(
+        a: Iterable[T], b: Sequence[T] | dict[T, Any]
+    ) -> Iterator[T]:
+        for s in a:
+            if s in b:
+                yield s
 
-    def _protocol_up_sinks(self, node) -> set[str]:
-        return set(node.sinks).intersection(self._protocol.up_sinks)
+    def _protocol_down_sinks(self, node) -> Iterator[str]:
+        yield from self._intersection_iterator(node.sinks, self._protocol.down_sinks)
 
-    def _protocol_up_sources(self, sink: str, node: "DataFlowNode") -> set[str]:
-        return set(self._protocol.up_sinks[sink]).intersection(node.sources)
+    def _protocol_up_sinks(self, node) -> Iterator[str]:
+        yield from self._intersection_iterator(node.sinks, self._protocol.up_sinks)
 
-    def _protocol_down_sources(self, sink: str, node: "DataFlowNode") -> set[str]:
-        return set(node.sources).intersection(self._protocol.down_sinks[sink])
+    def _protocol_up_sources(self, sink: str, node: "DataFlowNode") -> Iterator[str]:
+        yield from self._intersection_iterator(
+            node.sources, self._protocol.up_sinks[sink]
+        )
+
+    def _protocol_down_sources(self, sink: str, node: "DataFlowNode") -> Iterator[str]:
+        yield from self._intersection_iterator(
+            node.sources, self._protocol.down_sinks[sink]
+        )
 
     def _connect_up_sink(self, node_name: str, sink_name: str):
         self._connections[(node_name, sink_name)] = self._available_sources[sink_name]
