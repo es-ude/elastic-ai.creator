@@ -3,8 +3,8 @@ from typing import cast
 import torch
 
 from elasticai.creator.base_modules.arithmetics import Arithmetics
-from elasticai.creator.base_modules.autograd_functions.step_function_inputs import (
-    StepFunctionInputs,
+from elasticai.creator.base_modules.autograd_functions.identity_step_function import (
+    IdentityStepFunction,
 )
 
 
@@ -23,7 +23,9 @@ class Tanh(torch.nn.Tanh):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         step_inputs = cast(
             torch.Tensor,
-            StepFunctionInputs.apply(inputs, *self.sampling_intervall, self.num_steps),
+            IdentityStepFunction.apply(
+                inputs, *self.sampling_intervall, self.num_steps
+            ),
         )
         quantized_step_inputs = self._arithmetics.quantize(step_inputs)
         outputs = torch.nn.functional.tanh(quantized_step_inputs)

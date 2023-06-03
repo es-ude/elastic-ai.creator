@@ -4,10 +4,14 @@ from typing import cast
 import pytest
 import torch
 
-from elasticai.creator.base_modules.autograd_functions.step_function_inputs import (
-    StepFunctionInputs,
+from elasticai.creator.base_modules.autograd_functions.identity_step_function import (
+    IdentityStepFunction,
 )
 from tests.tensor_test_case import assertTensorEqual
+
+
+def generate_step_lut(min: float, max: float, steps: int) -> torch.Tensor:
+    return torch.linspace(min, max, steps)
 
 
 @pytest.mark.parametrize(
@@ -26,17 +30,16 @@ def test_inputs_correctly_mapped_to_step_function_inputs(
     inputs: Iterable[float],
     outputs: Iterable[float],
 ) -> None:
+    step_lut = generate_step_lut(minimum, maximum, steps)
     actual_outputs = cast(
-        torch.Tensor,
-        StepFunctionInputs.apply(
-            torch.tensor(inputs, dtype=torch.float32), minimum, maximum, steps
-        ),
+        torch.Tensor, IdentityStepFunction.apply(torch.tensor(inputs), step_lut)
     )
     assertTensorEqual(list(outputs), actual_outputs)
 
 
 @pytest.mark.parametrize("steps", [1, 0])
 def test_raises_error_when_steps_less_than_or_equal_one(steps: int) -> None:
-    inputs = torch.tensor([1, 2], dtype=torch.float32)
+    inputs = torch.tensor([1, 2])
+    step_lut = generate_step_lut(-1, 1, steps)
     with pytest.raises(ValueError):
-        StepFunctionInputs.apply(inputs, -1, 1, steps)
+        IdentityStepFunction.apply(inputs, step_lut)
