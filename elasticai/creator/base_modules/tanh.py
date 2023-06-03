@@ -17,16 +17,15 @@ class Tanh(torch.nn.Tanh):
     ) -> None:
         super().__init__()
         self._arithmetics = arithmetics
-        self.num_steps = num_steps
-        self.sampling_intervall = sampling_intervall
+        self._step_lut = torch.linspace(*sampling_intervall, num_steps)
+
+    def _quantized_step_inputs(self, inputs: torch.Tensor) -> torch.Tensor:
+        step_inputs = cast(
+            torch.Tensor, IdentityStepFunction.apply(inputs, self._step_lut)
+        )
+        return self._arithmetics.quantize(step_inputs)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        step_inputs = cast(
-            torch.Tensor,
-            IdentityStepFunction.apply(
-                inputs, *self.sampling_intervall, self.num_steps
-            ),
-        )
-        quantized_step_inputs = self._arithmetics.quantize(step_inputs)
-        outputs = torch.nn.functional.tanh(quantized_step_inputs)
+        inputs = self._quantized_step_inputs(inputs)
+        outputs = torch.nn.functional.tanh(inputs)
         return self._arithmetics.quantize(outputs)
