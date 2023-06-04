@@ -49,7 +49,7 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
             outgoing=[signal(name="y")],
         )
 
-    def save_to(self, destination: Path):
+    def save_to(self, destination: Path) -> None:
         process_content = []
         pairs = list(self._io_pairs.items())
         for input, output in pairs[0:1]:
@@ -67,4 +67,4 @@ class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
                 f"else signed_y <= to_signed({output}, {self._width});\nend if;"
             )
         self._template.parameters.update(process_content=process_content)
-        destination.as_file(".vhd").write(self._template)
+        destination.create_subpath(self.name).as_file(".vhd").write(self._template)
