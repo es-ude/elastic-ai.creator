@@ -2,6 +2,25 @@
 
 <!--next-version-placeholder-->
 
+## v0.40.0 (2023-06-04)
+
+### Feature
+
+* Simplify the use of the sequential layer (same as in torch) ([`9fad15d`](https://github.com/es-ude/elastic-ai.creator/commit/9fad15d774f3573fb26f168295f9bd2ae5cdd046))
+* Improve performance of the identity step autograd function ([`46f036c`](https://github.com/es-ude/elastic-ai.creator/commit/46f036c8fb2d007d21e32214ac92d4d9aa2fe9d1))
+* Add quantized tanh implementation with lookup tables ([`3a1fb10`](https://github.com/es-ude/elastic-ai.creator/commit/3a1fb10944e566ca33e3e745b939b6700421fdb9))
+* Implement bufferless component interface for precomputed scalar function ([`f701a57`](https://github.com/es-ude/elastic-ai.creator/commit/f701a57db54e0d5f3e5e43047725b28646cb5f15))
+* Pass step lut to identity step function and improve readablility ([`c1b6747`](https://github.com/es-ude/elastic-ai.creator/commit/c1b67473c33ddc27590068472dcff6969f9e7135))
+* Rename autograd function and pass step lut to autograd function ([`d607e98`](https://github.com/es-ude/elastic-ai.creator/commit/d607e98bd14dfa1ae23e9726b2046baaede21361))
+* Implement autograd fn to map inputs to a subset of inputs ([`26c6ec7`](https://github.com/es-ude/elastic-ai.creator/commit/26c6ec7a203eea4fed4c3eb3d5c3e4893acb545f))
+* Add a function to easily compare tensors with pytest ([`24e737e`](https://github.com/es-ude/elastic-ai.creator/commit/24e737eaea48044df3e8addaca0d1cc804a3b6f4))
+* Add experimental precomputed tanh in fixed point ([`0e76d03`](https://github.com/es-ude/elastic-ai.creator/commit/0e76d03b6d0f23d8932b94bb7728cbeea2de0289))
+
+### Fix
+
+* Fix that last io pair was dropped when calling save_to function ([`2bc46ac`](https://github.com/es-ude/elastic-ai.creator/commit/2bc46ac9c535b65ef7a3dc5cbe12b27d253c3b37))
+* Fix missing creation of a subpath in the save_to function ([`2a4dbdf`](https://github.com/es-ude/elastic-ai.creator/commit/2a4dbdf2f6fce4de567281002dd4640ff3ae54ed))
+
 ## v0.39.0 (2023-05-19)
 ### Feature
 * Implement batch normed linear layer ([`9322f6f`](https://github.com/es-ude/elastic-ai.creator/commit/9322f6f699f9884273c3f9815b9a026c9f7840ae))
