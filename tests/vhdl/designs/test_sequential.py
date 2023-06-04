@@ -23,15 +23,13 @@ from elasticai.creator.nn.vhdl.sequential import Sequential
 
 
 def single_layer_model() -> Sequential:
-    return Sequential((FPIdentity(num_input_features=6, total_bits=16),))
+    return Sequential(FPIdentity(num_input_features=6, total_bits=16))
 
 
 def two_layer_model() -> Sequential:
     return Sequential(
-        (
-            FPIdentity(num_input_features=6, total_bits=16),
-            FPIdentity(num_input_features=6, total_bits=16),
-        )
+        FPIdentity(num_input_features=6, total_bits=16),
+        FPIdentity(num_input_features=6, total_bits=16),
     )
 
 
@@ -47,7 +45,7 @@ Tests:
 
 class TestSequential:
     def test_empty_sequential(self) -> None:
-        model = Sequential(tuple())
+        model = Sequential()
         actual_code = sequential_code_for_model(model)
 
         template = InProjectTemplate(
