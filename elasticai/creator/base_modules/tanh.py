@@ -13,7 +13,7 @@ class Tanh(torch.nn.Tanh):
         self,
         arithmetics: Arithmetics,
         num_steps: int,
-        sampling_intervall: tuple[float, float] = (-5, 5),
+        sampling_intervall: tuple[float, float],
     ) -> None:
         super().__init__()
         self._arithmetics = arithmetics
