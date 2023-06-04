@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Iterable
+from typing import Callable
 
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
