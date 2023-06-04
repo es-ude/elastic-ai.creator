@@ -1,6 +1,8 @@
-import torch
-from torch import Tensor
+from typing import cast
 
+import torch
+
+from elasticai.creator.base_modules.tanh import Tanh
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.precomputed_scalar_function import (
@@ -10,33 +12,34 @@ from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 
-class FPTanh(torch.nn.Tanh, Translatable):
-    def __init__(self, total_bits: int, frac_bits: int):
-        super().__init__()
-        self.op = FixedPointArithmetics(
-            config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+class FPTanh(Tanh, Translatable):
+    def __init__(
+        self,
+        total_bits: int,
+        frac_bits: int,
+        num_steps: int,
+        sampling_intervall: tuple[float, float] = (-5, 5),
+    ) -> None:
+        super().__init__(
+            arithmetics=FixedPointArithmetics(
+                config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+            ),
+            num_steps=num_steps,
+            sampling_intervall=sampling_intervall,
         )
-        self._total_bits = total_bits
-        self._precomputed_values: list = list()
+        self._config = cast(FixedPointArithmetics, self._arithmetics).config
 
-    def forward(self, input: Tensor) -> Tensor:
-        result = super().forward(input)
-        result = self.op.quantize(result)
-        return result
-
-    def _sampling_function(self, input: int) -> int:
-        return self._precomputed_values[input]
+    def _quantized_inference(self, x: int) -> int:
+        fp_input = self._config.as_rational(x)
+        with torch.no_grad():
+            output = self(torch.tensor(fp_input))
+        return self._config.as_integer(float(output.item()))
 
     def translate(self, name: str) -> Design:
-        training_state = self.training
-        self.train(False)
-        self._precomputed_values = self.forward(
-            torch.tensor(tuple(range(2**self._total_bits)))
-        ).tolist()
-        self.train(training_state)
+        quantized_inputs = list(map(self._config.as_integer, self._step_lut.tolist()))
         return _PrecomputedMonotonouslyIncreasingScalarFunction(
             name=name,
-            width=self._total_bits,
-            inputs=list(range(2**self._total_bits)),
-            function=self._sampling_function,
+            width=self._config.total_bits,
+            inputs=quantized_inputs,
+            function=self._quantized_inference,
         )
