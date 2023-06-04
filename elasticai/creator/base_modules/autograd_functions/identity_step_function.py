@@ -24,16 +24,13 @@ class IdentityStepFunction(torch.autograd.Function):
             raise ValueError(
                 f"Number of steps cannot be less than or equal to 1 (steps == {steps})."
             )
+        inputs = inputs.to(torch.float32).clamp(min=step_lut.min(), max=step_lut.max())
 
-        inputs = inputs.to(torch.float32)
-        clipped_inputs = inputs.clamp(min=step_lut.min(), max=step_lut.max())
+        for step_idx in range(1, len(step_lut)):
+            prev_step, curr_step = step_lut[step_idx - 1], step_lut[step_idx]
+            inputs[(inputs > prev_step) & (inputs <= curr_step)] = curr_step
 
-        step_lut, _ = torch.sort(step_lut, descending=True)
-
-        def get_step_value(input_value: torch.Tensor) -> torch.Tensor:
-            return step_lut[int(sum(step_lut >= input_value) - 1)]
-
-        return clipped_inputs.detach().apply_(get_step_value)
+        return inputs
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
