@@ -6,7 +6,7 @@ from elasticai.creator.base_modules.tanh import Tanh
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.translatable import Translatable
 from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.precomputed_scalar_function import (
-    _PrecomputedMonotonouslyIncreasingScalarFunction,
+    PrecomputedMonotonouslyIncreasingScalarFunction,
 )
 from elasticai.creator.nn.fixed_point_arithmetics import FixedPointArithmetics
 from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
@@ -37,7 +37,7 @@ class FPTanh(Tanh, Translatable):
 
     def translate(self, name: str) -> Design:
         quantized_inputs = list(map(self._config.as_integer, self._step_lut.tolist()))
-        return _PrecomputedMonotonouslyIncreasingScalarFunction(
+        return PrecomputedMonotonouslyIncreasingScalarFunction(
             name=name,
             width=self._config.total_bits,
             inputs=quantized_inputs,

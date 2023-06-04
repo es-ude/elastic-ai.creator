@@ -10,7 +10,7 @@ from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.savable import Path
 
 
-class _PrecomputedMonotonouslyIncreasingScalarFunction(Design):
+class PrecomputedMonotonouslyIncreasingScalarFunction(Design):
     _template_package = module_to_package(__name__)
 
     def __init__(
