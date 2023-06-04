@@ -1,11 +1,9 @@
 from math import ceil, floor
 
-from .precomputed_scalar_function import (
-    _PrecomputedMonotonouslyIncreasingScalarFunction,
-)
+from .precomputed_scalar_function import PrecomputedMonotonouslyIncreasingScalarFunction
 
 
-class HardSigmoid(_PrecomputedMonotonouslyIncreasingScalarFunction):
+class HardSigmoid(PrecomputedMonotonouslyIncreasingScalarFunction):
     def __init__(self, width: int, lower_bound_for_zero: int, upper_bound_for_one: int):
         self.lower_bound_for_zero = lower_bound_for_zero
         self.upper_bound_for_one = upper_bound_for_one
