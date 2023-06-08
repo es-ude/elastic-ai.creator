@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.42.0 (2023-06-08)
+
+### Feature
+
+* Reimplement hard tanh activation function ([`9b86f9d`](https://github.com/es-ude/elastic-ai.creator/commit/9b86f9d440cc991d624a6f3492a3caf7419bdbf3))
+* Add working hardsigmoid implementation ([`db03ff0`](https://github.com/es-ude/elastic-ai.creator/commit/db03ff080f878c9b9fe54303ead97c673022f3a1))
+* Make sure that inplace parameter is fixed defined ([`79b7a1e`](https://github.com/es-ude/elastic-ai.creator/commit/79b7a1eea0cb71f5a838cfebf02970927410f594))
+
 ## v0.41.0 (2023-06-08)
 
 ### Feature
