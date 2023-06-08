@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.41.0 (2023-06-08)
+
+### Feature
+
+* Add fixed point ReLU module ([`62c1555`](https://github.com/es-ude/elastic-ai.creator/commit/62c15557fc515c89644c674aef9fc39d22ab672f))
+
 ## v0.40.0 (2023-06-04)
 
 ### Feature
