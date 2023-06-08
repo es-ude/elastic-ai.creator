@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics import Arithmetics
+from .arithmetics.arithmetics import Arithmetics
 
 
 class Linear(torch.nn.Linear):

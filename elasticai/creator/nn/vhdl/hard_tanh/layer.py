@@ -1,7 +1,9 @@
 from elasticai.creator.base_modules.hard_tanh import HardTanh
+from elasticai.creator.base_modules.two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.translatable import Translatable
-from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 from .design import FPHardTanh as FPHardTanhDesign
 

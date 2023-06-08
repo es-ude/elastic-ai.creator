@@ -2,10 +2,8 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics import Arithmetics
-from elasticai.creator.base_modules.autograd_functions.identity_step_function import (
-    IdentityStepFunction,
-)
+from .arithmetics.arithmetics import Arithmetics
+from .autograd_functions.identity_step_function import IdentityStepFunction
 
 
 class Tanh(torch.nn.Tanh):
