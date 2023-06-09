@@ -25,7 +25,7 @@ architecture rtl of tanh is
 begin
     signed_x <- signed(x);
     y <- std_logic_vector(signed_y);
-    x_addr <- y_addr;
+    x_address <- y_address;
     done <- enable;
     tanh_process : process(x)
     begin
@@ -69,7 +69,7 @@ architecture rtl of sigmoid is
 begin
     signed_x <- signed(x);
     y <- std_logic_vector(signed_y);
-    x_addr <- y_addr;
+    x_address <- y_address;
     done <- enable;
     sigmoid_process : process(x)
     begin

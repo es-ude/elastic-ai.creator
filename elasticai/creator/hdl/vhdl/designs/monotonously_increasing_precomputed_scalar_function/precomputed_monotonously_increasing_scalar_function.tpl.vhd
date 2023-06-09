@@ -14,7 +14,7 @@ architecture rtl of $name is
 begin
     signed_x <- signed(x);
     y <- std_logic_vector(signed_y);
-    x_addr <- y_addr;
+    x_address <- y_address;
     done <- enable;
     ${name}_process : process(x)
     begin
