@@ -1,8 +1,8 @@
 import re
-from abc import abstractmethod
-from typing import Protocol, Sequence, overload
+from typing import Sequence, overload
 
 from elasticai.creator.hdl.code_generation.code_generation import to_hex
+from elasticai.creator.hdl.design_base.signal import Signal
 
 
 def _sorted_dict(items: dict[str, str]) -> dict[str, str]:
@@ -30,23 +30,14 @@ def create_instance(
 
 
 def create_connections_using_to_from_pairs(mapping: dict[str, str]) -> list[str]:
-    mapping = _sorted_dict(mapping)
     connections: list[str] = []
     for _to, _from in mapping.items():
-        connections.append(f"{_to} <= {_from};")
+        connections.append(create_connection(_to, _from))
     return connections
 
 
-class Signal(Protocol):
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        ...
-
-    @property
-    @abstractmethod
-    def width(self) -> int:
-        ...
+def create_connection(sink, source) -> str:
+    return f"{sink} <= {source};"
 
 
 def create_signal_definitions(prefix: str, signals: Sequence[Signal]):
@@ -95,12 +86,12 @@ def generate_hex_for_rom(value: str):
 
 
 @overload
-def extract_rom_values(text: str) -> tuple[str]:
+def extract_rom_values(text: str) -> tuple[str, ...]:
     ...
 
 
 @overload
-def extract_rom_values(text: list[str]) -> tuple[str]:
+def extract_rom_values(text: list[str]) -> tuple[str, ...]:
     ...
 
 

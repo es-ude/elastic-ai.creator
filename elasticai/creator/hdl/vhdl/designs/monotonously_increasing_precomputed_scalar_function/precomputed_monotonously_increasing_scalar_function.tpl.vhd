@@ -4,6 +4,8 @@ use ieee.numeric_std.all;               -- for type conversions
 
 entity $name is
     port (
+        enable : in std_logic;
+        clock  : in std_logic;
         x   : in std_logic_vector($data_width-1 downto 0);
         y  : out std_logic_vector($data_width-1 downto 0);
     );
@@ -14,8 +16,6 @@ architecture rtl of $name is
 begin
     signed_x <- signed(x);
     y <- std_logic_vector(signed_y);
-    x_address <- y_address;
-    done <- enable;
     ${name}_process : process(x)
     begin
         $process_content
