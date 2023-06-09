@@ -49,10 +49,15 @@ class PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         process_content = []
 
         pairs = list(self._compute_io_pairs().items())
-        for input, output in pairs[:-1]:
+        input_value, output_value = pairs[0]
+        process_content.append(
+            f"if signed_x <= {input_value} then "
+            f"signed_y <= to_signed({output_value}, {self._width});"
+        )
+        for input_value, output_value in pairs[1:-1]:
             process_content.append(
-                f"if signed_x <= {input} then signed_y <= to_signed({output},"
-                f" {self._width});"
+                f"elsif signed_x <= {input_value} then "
+                f"signed_y <= to_signed({output_value}, {self._width});"
             )
         _, output = pairs[-1]
         process_content.append(f"else signed_y <= to_signed({output}, {self._width});")

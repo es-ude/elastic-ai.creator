@@ -30,9 +30,9 @@ begin
     tanh_process : process(x)
     begin
         if signed_x <= 20 then signed_y <= to_signed(3, 8);
-        if signed_x <= 10 then signed_y <= to_signed(3, 8);
-        if signed_x <= 0 then signed_y <= to_signed(0, 8);
-        if signed_x <= -10 then signed_y <= to_signed(-3, 8);
+        elsif signed_x <= 10 then signed_y <= to_signed(3, 8);
+        elsif signed_x <= 0 then signed_y <= to_signed(0, 8);
+        elsif signed_x <= -10 then signed_y <= to_signed(-3, 8);
         else signed_y <= to_signed(-3, 8);
         end if;
     end process;
@@ -74,9 +74,9 @@ begin
     sigmoid_process : process(x)
     begin
         if signed_x <= 20 then signed_y <= to_signed(3, 8);
-        if signed_x <= 10 then signed_y <= to_signed(3, 8);
-        if signed_x <= 0 then signed_y <= to_signed(2, 8);
-        if signed_x <= -10 then signed_y <= to_signed(0, 8);
+        elsif signed_x <= 10 then signed_y <= to_signed(3, 8);
+        elsif signed_x <= 0 then signed_y <= to_signed(2, 8);
+        elsif signed_x <= -10 then signed_y <= to_signed(0, 8);
         else signed_y <= to_signed(0, 8);
         end if;
     end process;
