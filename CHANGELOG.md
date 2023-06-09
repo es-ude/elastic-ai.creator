@@ -2,6 +2,29 @@
 
 <!--next-version-placeholder-->
 
+## v0.44.0 (2023-06-09)
+
+### Feature
+
+* Check for autowiring protocol violation ([`3f17e00`](https://github.com/es-ude/elastic-ai.creator/commit/3f17e002e050dc92516e4ff5468041f06ebd6760))
+* Add AutoWirer ([`f4159c8`](https://github.com/es-ude/elastic-ai.creator/commit/f4159c800fe54cc0fe73fbebdf2ac0410ddac635))
+* Add intermediate symbols to rule definitions ([`624b310`](https://github.com/es-ude/elastic-ai.creator/commit/624b310fc9beb130902fdf3269e3f30714fe0c3f))
+* Support parsing partial files ([`f2c2eb6`](https://github.com/es-ude/elastic-ai.creator/commit/f2c2eb69ceb8a0b02c1c4617511ccb1528931e23))
+* Support parsing partial files ([`8170012`](https://github.com/es-ude/elastic-ai.creator/commit/817001208b774e57cfb27fb4d4ee9d704541c9f8))
+* Add standalone parser module ([`5a9b141`](https://github.com/es-ude/elastic-ai.creator/commit/5a9b141285fefecf61f581417061428cda382ad5))
+* Add basic vhdl parsing ([`5df2a3f`](https://github.com/es-ude/elastic-ai.creator/commit/5df2a3ff4e9ba7ec33398a267cd983ad886d1fe7))
+* Port expansion/template based on autowiring protocol ([`0d14618`](https://github.com/es-ude/elastic-ai.creator/commit/0d146181c8b789b09871af43654ca2d83ea55ddb))
+* **template:** Make precomputed scalar functions bufferless ([`89986fa`](https://github.com/es-ude/elastic-ai.creator/commit/89986fad041c89d0543fe9a22946e5f5f49e2b61))
+
+### Fix
+
+* Use new Sequential constructor ([`6bb111b`](https://github.com/es-ude/elastic-ai.creator/commit/6bb111b748567502c23a48a52d7e477645969996))
+* Port def and impl of monotonous function design ([`2d423d4`](https://github.com/es-ude/elastic-ai.creator/commit/2d423d46faa86fbf43cb8ba1d01aafe92c5bfa23))
+* Children of sequential layer determine signal widths ([`3dd5c0c`](https://github.com/es-ude/elastic-ai.creator/commit/3dd5c0cc4f7a52c7b3a86cec437005b86aa0a509))
+* Remove obsolete parsing functionality ([`7f85d05`](https://github.com/es-ude/elastic-ai.creator/commit/7f85d05aa3da2e0fd7c266bfc9c1aad573adecc4))
+* Adjust tests to follow previous change ([`c328bd5`](https://github.com/es-ude/elastic-ai.creator/commit/c328bd565d6ba84a9d1fab788051c3e884ea2094))
+* Correct tuple type annotation ([`f0e7da0`](https://github.com/es-ude/elastic-ai.creator/commit/f0e7da0cf186015004970102f2b9b57a9f839585))
+
 ## v0.43.0 (2023-06-09)
 
 ### Feature
