@@ -3,9 +3,7 @@ import pytest
 from elasticai.creator.hdl.auto_wire_protocols.buffered import create_port
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.design_base.ports import Port
-from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.savable import Path
-from elasticai.creator.nn.vhdl.identity.design import BufferedIdentity, BufferlessDesign
 from elasticai.creator.nn.vhdl.sequential.design import Sequential
 
 
