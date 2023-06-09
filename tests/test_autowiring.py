@@ -15,11 +15,6 @@ def _wire(top: DataFlowNode, graph: tuple[DataFlowNode, ...]):
     return _autowirer.connections()
 
 
-"""
-TODO: add tests for graphs containing unknown signal names
-"""
-
-
 def _build_expected_connections(spec: str):
     regex = r"\s*(\w+)\s*,\s*(\w+)\s*:\s*(\w+)\s*,\s*(\w+)\s*\n*"
     result = {}

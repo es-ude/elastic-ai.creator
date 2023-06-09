@@ -47,7 +47,7 @@ class BufferedIdentity(Design):
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
 
-class BaseIdentity(Design):
+class BufferlessDesign(Design):
     def __init__(self, name: str, num_input_bits: int):
         super().__init__(name)
         self._num_input_bits = num_input_bits

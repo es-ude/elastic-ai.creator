@@ -1,21 +1,14 @@
+from functools import partial, reduce
 from itertools import chain
 
 from elasticai.creator.hdl.auto_wire_protocols.autowiring import AutoWirer, DataFlowNode
+from elasticai.creator.hdl.auto_wire_protocols.buffered import create_port
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.design_base.ports import Port
-from elasticai.creator.hdl.design_base.std_signals import (
-    clock,
-    done,
-    enable,
-    x,
-    x_address,
-    y,
-    y_address,
-)
 from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.code_generation import create_instance
 from elasticai.creator.hdl.vhdl.code_generation.code_generation import (
@@ -29,39 +22,78 @@ class Sequential(Design):
         self,
         sub_designs: list[Design],
         *,
-        x_width: int,
-        y_width: int,
-        x_address_width: int,
-        y_address_width: int,
         name: str,
     ) -> None:
         super().__init__(name)
-        self._x_width = x_width
-        self._y_width = y_width
-        self._x_address_width = x_address_width
-        self._y_address_width = y_address_width
+        self._subdesigns = sub_designs
+        self._connections: dict[tuple[str, str], tuple[str, str]] = (
+            self._build_connections_map()
+        )
+        print(self._connections)
+        self._port = self._build_port()
         self._library_name_for_instances = "work"
         self._architecture_name_for_instances = "rtl"
-        self._subdesigns = sub_designs
 
     def _qualified_signal_name(self, instance: str, signal: str) -> str:
         return f"{instance}_{signal}"
 
+    def _build_port(self) -> Port:
+        def get_designs_by_name(name: str) -> list[Design]:
+            return [d for d in self._subdesigns if d.name == name]
+
+        def connected_to_self_source(
+            sink_source: tuple[tuple[str, str], tuple[str, str]], self_source_name: str
+        ) -> bool:
+            return sink_source[1] == (self.name, self_source_name)
+
+        def connected_to_self_sink(sink_source, self_sink_name):
+            return sink_source[0] == (self.name, self_sink_name)
+
+        def sink_design_name(sink_source):
+            return sink_source[0][0]
+
+        def source_design_name(
+            sink_source: tuple[tuple[str, str], tuple[str, str]]
+        ) -> str:
+            return sink_source[1][0]
+
+        def get_connected_designs(get_name, is_connected) -> list[Design]:
+            return reduce(
+                lambda a, b: a + b,
+                map(
+                    get_designs_by_name,
+                    map(
+                        get_name,
+                        filter(is_connected, self._connections.items()),
+                    ),
+                ),
+                [],
+            )
+
+        width = {k: 1 for k in ("x", "y_address", "x_address", "y")}
+        sink_keys = ("y", "x_address")
+        source_keys = ("x", "y_address")
+
+        for key in sink_keys:
+            connected = partial(connected_to_self_sink, self_sink_name=key)
+            for d in get_connected_designs(source_design_name, connected):
+                width[key] = d.port[key].width
+
+        for key in source_keys:
+            connected = partial(connected_to_self_source, self_source_name=key)
+            for d in get_connected_designs(sink_design_name, connected):
+                width[key] = d.port[key].width
+
+        return create_port(
+            x_width=width["x"],
+            y_width=width["y"],
+            x_address_width=width["x_address"],
+            y_address_width=width["y_address"],
+        )
+
     @property
     def port(self) -> Port:
-        return Port(
-            incoming=[
-                x(width=self._x_width),
-                y_address(width=self._y_address_width),
-                clock(),
-                enable(),
-            ],
-            outgoing=[
-                y(width=self._y_width),
-                x_address(width=self._x_address_width),
-                done(),
-            ],
-        )
+        return self._port
 
     def _save_subdesigns(self, destination: Path) -> None:
         for design in self._subdesigns:
@@ -70,7 +102,7 @@ class Sequential(Design):
     def _instance_names(self) -> list[str]:
         return [f"i_{design.name}" for design in self._subdesigns]
 
-    def _generate_connections(self) -> list[str]:
+    def _build_connections_map(self) -> dict[tuple[str, str], tuple[str, str]]:
         named_ports = [(d.name, d.port) for d in self._subdesigns]
         nodes = [
             DataFlowNode(
@@ -83,22 +115,21 @@ class Sequential(Design):
         top = DataFlowNode.top(self.name)
         autowirer = AutoWirer()
         autowirer.wire(top, graph=nodes)
+        return autowirer.connections()
 
+    def _generate_connections_code(self) -> list[str]:
         def generate_name(node_name: str, signal_name: str) -> str:
             if node_name == self.name:
                 return signal_name
             else:
                 return "_".join(("i", node_name, signal_name))
 
-        connections = {
-            generate_name(*k): generate_name(*v)
-            for k, v in autowirer.connections().items()
+        map = {
+            generate_name(*k): generate_name(*v) for k, v in self._connections.items()
         }
-        sinks = sorted(connections.keys())
-        lines = []
-        for sink in sinks:
-            lines.append(f"{sink} <= {connections[sink]};")
 
+        lines = create_connections_using_to_from_pairs(map)
+        lines = list(sorted(lines))
         return lines
 
     def _instance_name_and_design_pairs(self):
@@ -130,13 +161,29 @@ class Sequential(Design):
             )
         )
 
+    @property
+    def _x_address_width(self) -> int:
+        return self.port["x_address"].width
+
+    @property
+    def _y_address_width(self) -> int:
+        return self.port["y_address"].width
+
+    @property
+    def _x_width(self) -> int:
+        return self.port["x"].width
+
+    @property
+    def _y_width(self) -> int:
+        return self.port["y"].width
+
     def save_to(self, destination: Path):
         self._save_subdesigns(destination)
         network_template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="network.tpl.vhd",
             parameters=dict(
-                layer_connections=self._generate_connections(),
+                layer_connections=self._generate_connections_code(),
                 layer_instantiations=self._generate_instantiations(),
                 signal_definitions=self._generate_signal_definitions(),
                 x_address_width=str(self._x_address_width),

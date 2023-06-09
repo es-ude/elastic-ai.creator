@@ -1,7 +1,12 @@
 from typing import cast
 
+import pytest
+
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
+from elasticai.creator.nn.vhdl.identity.layer import (
+    BufferedIdentity,
+    BufferlessIdentity,
+)
 from elasticai.creator.nn.vhdl.sequential.sequential import Sequential
 
 
@@ -41,8 +46,11 @@ end rtl;"""
         actual_code = "\n".join(sequential_layer_code_for_model(Sequential(tuple())))
         assert actual_code == expected
 
-    def test_single_layer_model(self) -> None:
-        expected = """library ieee;
+    @pytest.mark.parametrize(
+        "number_of_layer_inputs, address_width", [(2, 1), (3, 2), (8, 3)]
+    )
+    def test_single_layer_model(self, number_of_layer_inputs, address_width) -> None:
+        expected = f"""library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
@@ -54,8 +62,8 @@ entity sequential is
         enable: in std_logic;
         clock: in std_logic;
 
-        x_address: out std_logic_vector(1-1 downto 0);
-        y_address: in std_logic_vector(1-1 downto 0);
+        x_address: out std_logic_vector({address_width}-1 downto 0);
+        y_address: in std_logic_vector({address_width}-1 downto 0);
 
         x: in std_logic_vector(4-1 downto 0);
         y: out std_logic_vector(4-1 downto 0);
@@ -69,9 +77,9 @@ architecture rtl of sequential is
     signal i_bufferedidentity_0_done : std_logic := '0';
     signal i_bufferedidentity_0_enable : std_logic := '0';
     signal i_bufferedidentity_0_x : std_logic_vector(3 downto 0) := (others => '0');
-    signal i_bufferedidentity_0_x_address : std_logic_vector(0 downto 0) := (others => '0');
+    signal i_bufferedidentity_0_x_address : std_logic_vector({address_width-1} downto 0) := (others => '0');
     signal i_bufferedidentity_0_y : std_logic_vector(3 downto 0) := (others => '0');
-    signal i_bufferedidentity_0_y_address : std_logic_vector(0 downto 0) := (others => '0');
+    signal i_bufferedidentity_0_y_address : std_logic_vector({address_width-1} downto 0) := (others => '0');
 begin
     done <= i_bufferedidentity_0_done;
     i_bufferedidentity_0_clock <= clock;
@@ -94,7 +102,9 @@ begin
       y_address => i_bufferedidentity_0_y_address
     );
 end rtl;"""
-        model = Sequential((BufferedIdentity(2, 4),))
+        model = Sequential(
+            (BufferedIdentity(num_input_features=number_of_layer_inputs, total_bits=4),)
+        )
         actual_code = "\n".join(sequential_layer_code_for_model(model))
         assert actual_code == expected
 
