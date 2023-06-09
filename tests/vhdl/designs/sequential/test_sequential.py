@@ -3,10 +3,7 @@ from typing import cast
 import pytest
 
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import (
-    BufferedIdentity,
-    BufferlessIdentity,
-)
+from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
 from elasticai.creator.nn.vhdl.sequential.sequential import Sequential
 
 
@@ -43,7 +40,7 @@ begin
     -- Instantiate all layers
     --------------------------------------------------------------------------------
 end rtl;"""
-        actual_code = "\n".join(sequential_layer_code_for_model(Sequential(tuple())))
+        actual_code = "\n".join(sequential_layer_code_for_model(Sequential()))
         assert actual_code == expected
 
     @pytest.mark.parametrize(

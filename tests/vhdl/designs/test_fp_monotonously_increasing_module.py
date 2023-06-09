@@ -15,6 +15,8 @@ use ieee.numeric_std.all;               -- for type conversions
 
 entity tanh is
     port (
+        enable : in std_logic;
+        clock  : in std_logic;
         x   : in std_logic_vector(8-1 downto 0);
         y  : out std_logic_vector(8-1 downto 0);
     );
@@ -25,8 +27,6 @@ architecture rtl of tanh is
 begin
     signed_x <- signed(x);
     y <- std_logic_vector(signed_y);
-    x_address <- y_address;
-    done <- enable;
     tanh_process : process(x)
     begin
         if signed_x <= 20 then signed_y <= to_signed(3, 8);
@@ -59,6 +59,8 @@ use ieee.numeric_std.all;               -- for type conversions
 
 entity sigmoid is
     port (
+        enable : in std_logic;
+        clock  : in std_logic;
         x   : in std_logic_vector(8-1 downto 0);
         y  : out std_logic_vector(8-1 downto 0);
     );
@@ -69,8 +71,6 @@ architecture rtl of sigmoid is
 begin
     signed_x <- signed(x);
     y <- std_logic_vector(signed_y);
-    x_address <- y_address;
-    done <- enable;
     sigmoid_process : process(x)
     begin
         if signed_x <= 20 then signed_y <= to_signed(3, 8);

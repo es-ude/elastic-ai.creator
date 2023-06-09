@@ -1,9 +1,9 @@
+from elasticai.creator.hdl.auto_wire_protocols.buffered import create_port
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
 from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.ports import create_port_for_base_design
 from elasticai.creator.hdl.savable import Path
 
 
@@ -15,9 +15,7 @@ class FPReLU(Design):
 
     @property
     def port(self) -> Port:
-        return create_port_for_base_design(
-            x_width=self._data_width, y_width=self._data_width
-        )
+        return create_port(x_width=self._data_width, y_width=self._data_width)
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
