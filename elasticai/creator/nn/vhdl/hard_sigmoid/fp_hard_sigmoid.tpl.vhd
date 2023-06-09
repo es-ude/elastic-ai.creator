@@ -9,26 +9,25 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity fp_hard_sigmoid_${layer_name} is
-generic (
-    DATA_WIDTH : integer := ${data_width};
-    FRAC_WIDTH : integer := ${frac_width};
-    ONE : integer := ${one};
-    ZERO_THRESHOLD : integer := ${zero_threshold};
-    ONE_THRESHOLD : integer := ${one_threshold};
-    SLOPE : integer := ${slope};
-    Y_INTERCEPT: integer := ${y_intercept}
-);
+entity ${layer_name} is
+    generic (
+        DATA_WIDTH : integer := ${data_width};
+        FRAC_WIDTH : integer := ${frac_width};
+        ONE : integer := ${one};
+        ZERO_THRESHOLD : integer := ${zero_threshold};
+        ONE_THRESHOLD : integer := ${one_threshold};
+        SLOPE : integer := ${slope};
+        Y_INTERCEPT: integer := ${y_intercept}
+    );
+    port (
+        enable : in std_logic;
+    	clock  : in std_logic;
+    	x      : in std_logic_vector(DATA_WIDTH-1 downto 0);
+    	y      : out std_logic_vector(DATA_WIDTH-1 downto 0)
+    );
+end entity ${layer_name};
 
-port (
-    enable : in std_logic;
-	clock  : in std_logic;
-	input  : in std_logic_vector(DATA_WIDTH-1 downto 0);
-	output : out std_logic_vector(DATA_WIDTH-1 downto 0)
-);
-end entity fp_hard_sigmoid_${layer_name};
-
-architecture rtl of fp_hard_sigmoid_${layer_name} is
+architecture rtl of ${layer_name} is
     signal fp_input : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal fp_output : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 
@@ -63,11 +62,10 @@ architecture rtl of fp_hard_sigmoid_${layer_name} is
         return TEMP2 + b;
     end function;
 
-
 begin
 
-    fp_input <= signed(input);
-    output <= std_logic_vector(fp_output);
+    fp_input <= signed(x);
+    y <= std_logic_vector(fp_output);
 
     main_process : process (enable, clock)
     begin
@@ -84,5 +82,4 @@ begin
             end if;
         end if;
     end process;
-
 end architecture rtl;

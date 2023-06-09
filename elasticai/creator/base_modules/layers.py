@@ -3,8 +3,9 @@ from typing import Callable, Optional
 import torch
 from torch.nn.utils.parametrize import register_parametrization
 
-from elasticai.creator.base_modules.functional import binarize as BinarizeFn
 from elasticai.creator.mlframework import Module, Tensor
+
+from .autograd_functions.binary_quantization import Binarize as BinarizeFn
 
 """Implementation of quantizers and quantized variants of pytorch layers"""
 

@@ -1,10 +1,12 @@
 import torch
 
-from elasticai.creator.nn.autograd_functions.fixed_point_quantization import (
+from elasticai.creator.base_modules.autograd_functions.fixed_point_quantization import (
     FixedPointDequantFunction,
     FixedPointQuantFunction,
 )
-from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
+from elasticai.creator.base_modules.two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from tests.tensor_test_case import TensorTestCase
 
 

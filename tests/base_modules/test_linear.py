@@ -3,8 +3,10 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.base_modules.arithmetics import Arithmetics
-from elasticai.creator.base_modules.float_arithmetics import FloatArithmetics
+from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
+from elasticai.creator.base_modules.arithmetics.float_arithmetics import (
+    FloatArithmetics,
+)
 from elasticai.creator.base_modules.linear import Linear
 from tests.tensor_test_case import TensorTestCase
 

@@ -14,7 +14,7 @@ from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 
 
-class FPLinear1d(Design):
+class FPLinear(Design):
     @property
     def port(self) -> Port:
         return self._port

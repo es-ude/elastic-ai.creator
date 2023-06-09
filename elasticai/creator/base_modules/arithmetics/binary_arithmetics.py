@@ -1,12 +1,17 @@
+from typing import cast
+
 import torch
 
-from elasticai.creator.base_modules.arithmetics import Arithmetics
-from elasticai.creator.base_modules.functional import binarize
+from elasticai.creator.base_modules.autograd_functions.binary_quantization import (
+    Binarize,
+)
+
+from .arithmetics import Arithmetics
 
 
 class BinaryArithmetics(Arithmetics):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
-        return binarize.apply(a)
+        return cast(torch.Tensor, Binarize.apply(a))
 
     def clamp(self, a: torch.Tensor) -> torch.Tensor:
         return self.quantize(a)

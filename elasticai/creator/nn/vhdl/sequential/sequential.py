@@ -9,7 +9,7 @@ from elasticai.creator.nn.vhdl.sequential.design import Sequential as _Sequentia
 
 
 class Sequential(Translatable, torch.nn.Sequential):
-    def __init__(self, submodules: tuple[Translatable, ...]):
+    def __init__(self, *submodules: Translatable):
         super().__init__(*cast(tuple[torch.nn.Module, ...], submodules))
 
     def translate(self, name: str) -> Design:

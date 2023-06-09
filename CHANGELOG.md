@@ -2,6 +2,60 @@
 
 <!--next-version-placeholder-->
 
+## v0.43.0 (2023-06-09)
+
+### Feature
+
+* Add tests for the FPMonotonouslyIncreasingModule ([`9ba64ae`](https://github.com/es-ude/elastic-ai.creator/commit/9ba64ae3d253db76a6368c5e561ce28bcec2aab5))
+* Introduce FPMonotonouslyIncreasingModule to easily add new activations ([`b78c922`](https://github.com/es-ude/elastic-ai.creator/commit/b78c9225f7f70ec329bee5705c11d9e7b1392c41))
+
+### Fix
+
+* Set correct signal names for x and y address ([`5354a2a`](https://github.com/es-ude/elastic-ai.creator/commit/5354a2a0e85bc0788f5d74377c1a685e9d0e0de7))
+* Use elsif in lookup table ([`f375ba3`](https://github.com/es-ude/elastic-ai.creator/commit/f375ba3784bf92887e689f77f592dfc2fa2c7e2c))
+* Increase default sampling intervall ([`07620d3`](https://github.com/es-ude/elastic-ai.creator/commit/07620d3e2ee9db1bc6aa081a15274cb79b5ee4b0))
+
+## v0.42.0 (2023-06-08)
+
+### Feature
+
+* Reimplement hard tanh activation function ([`9b86f9d`](https://github.com/es-ude/elastic-ai.creator/commit/9b86f9d440cc991d624a6f3492a3caf7419bdbf3))
+* Add working hardsigmoid implementation ([`db03ff0`](https://github.com/es-ude/elastic-ai.creator/commit/db03ff080f878c9b9fe54303ead97c673022f3a1))
+* Make sure that inplace parameter is fixed defined ([`79b7a1e`](https://github.com/es-ude/elastic-ai.creator/commit/79b7a1eea0cb71f5a838cfebf02970927410f594))
+
+## v0.41.0 (2023-06-08)
+
+### Feature
+
+* Add fixed point ReLU module ([`62c1555`](https://github.com/es-ude/elastic-ai.creator/commit/62c15557fc515c89644c674aef9fc39d22ab672f))
+
+## v0.40.0 (2023-06-04)
+
+### Feature
+
+* Simplify the use of the sequential layer (same as in torch) ([`9fad15d`](https://github.com/es-ude/elastic-ai.creator/commit/9fad15d774f3573fb26f168295f9bd2ae5cdd046))
+* Improve performance of the identity step autograd function ([`46f036c`](https://github.com/es-ude/elastic-ai.creator/commit/46f036c8fb2d007d21e32214ac92d4d9aa2fe9d1))
+* Add quantized tanh implementation with lookup tables ([`3a1fb10`](https://github.com/es-ude/elastic-ai.creator/commit/3a1fb10944e566ca33e3e745b939b6700421fdb9))
+* Implement bufferless component interface for precomputed scalar function ([`f701a57`](https://github.com/es-ude/elastic-ai.creator/commit/f701a57db54e0d5f3e5e43047725b28646cb5f15))
+* Pass step lut to identity step function and improve readablility ([`c1b6747`](https://github.com/es-ude/elastic-ai.creator/commit/c1b67473c33ddc27590068472dcff6969f9e7135))
+* Rename autograd function and pass step lut to autograd function ([`d607e98`](https://github.com/es-ude/elastic-ai.creator/commit/d607e98bd14dfa1ae23e9726b2046baaede21361))
+* Implement autograd fn to map inputs to a subset of inputs ([`26c6ec7`](https://github.com/es-ude/elastic-ai.creator/commit/26c6ec7a203eea4fed4c3eb3d5c3e4893acb545f))
+* Add a function to easily compare tensors with pytest ([`24e737e`](https://github.com/es-ude/elastic-ai.creator/commit/24e737eaea48044df3e8addaca0d1cc804a3b6f4))
+* Add experimental precomputed tanh in fixed point ([`0e76d03`](https://github.com/es-ude/elastic-ai.creator/commit/0e76d03b6d0f23d8932b94bb7728cbeea2de0289))
+
+### Fix
+
+* Fix that last io pair was dropped when calling save_to function ([`2bc46ac`](https://github.com/es-ude/elastic-ai.creator/commit/2bc46ac9c535b65ef7a3dc5cbe12b27d253c3b37))
+* Fix missing creation of a subpath in the save_to function ([`2a4dbdf`](https://github.com/es-ude/elastic-ai.creator/commit/2a4dbdf2f6fce4de567281002dd4640ff3ae54ed))
+
+## v0.39.0 (2023-05-19)
+### Feature
+* Implement batch normed linear layer ([`9322f6f`](https://github.com/es-ude/elastic-ai.creator/commit/9322f6f699f9884273c3f9815b9a026c9f7840ae))
+
+### Fix
+* Allow to set affine and bias equals false in translate function ([`b351284`](https://github.com/es-ude/elastic-ai.creator/commit/b351284335a77caec838a8f4ea57684e429cc35b))
+* Remove dequantize ([`c111022`](https://github.com/es-ude/elastic-ai.creator/commit/c111022854ce6965b705b3a3de296e032d7ff107))
+
 ## v0.38.0 (2023-05-09)
 ### Feature
 * Add check that all variables are filled when saving a template ([`c988d2b`](https://github.com/es-ude/elastic-ai.creator/commit/c988d2bc203790ba8ab900e8a2de6996b22d6fcb))
