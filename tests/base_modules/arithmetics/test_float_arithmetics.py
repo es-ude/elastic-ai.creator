@@ -1,6 +1,8 @@
 import torch
 
-from elasticai.creator.base_modules.float_arithmetics import FloatArithmetics
+from elasticai.creator.base_modules.arithmetics.float_arithmetics import (
+    FloatArithmetics,
+)
 from tests.tensor_test_case import TensorTestCase
 
 

@@ -1,7 +1,9 @@
 import torch
 
+from elasticai.creator.base_modules.arithmetics.binary_arithmetics import (
+    BinaryArithmetics,
+)
 from elasticai.creator.base_modules.linear import Linear
-from elasticai.creator.nn.binary_arithmetics import BinaryArithmetics
 
 
 class TestLinearLayer:
