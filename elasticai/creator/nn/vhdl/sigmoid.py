@@ -10,7 +10,7 @@ class FPSigmoid(FPMonotonouslyIncreasingModule):
         total_bits: int,
         frac_bits: int,
         num_steps: int,
-        sampling_intervall: tuple[float, float] = (-5, 5),
+        sampling_intervall: tuple[float, float] = (-10, 10),
     ) -> None:
         super().__init__(
             base_module=Sigmoid(),
