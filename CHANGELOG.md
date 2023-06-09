@@ -2,6 +2,19 @@
 
 <!--next-version-placeholder-->
 
+## v0.43.0 (2023-06-09)
+
+### Feature
+
+* Add tests for the FPMonotonouslyIncreasingModule ([`9ba64ae`](https://github.com/es-ude/elastic-ai.creator/commit/9ba64ae3d253db76a6368c5e561ce28bcec2aab5))
+* Introduce FPMonotonouslyIncreasingModule to easily add new activations ([`b78c922`](https://github.com/es-ude/elastic-ai.creator/commit/b78c9225f7f70ec329bee5705c11d9e7b1392c41))
+
+### Fix
+
+* Set correct signal names for x and y address ([`5354a2a`](https://github.com/es-ude/elastic-ai.creator/commit/5354a2a0e85bc0788f5d74377c1a685e9d0e0de7))
+* Use elsif in lookup table ([`f375ba3`](https://github.com/es-ude/elastic-ai.creator/commit/f375ba3784bf92887e689f77f592dfc2fa2c7e2c))
+* Increase default sampling intervall ([`07620d3`](https://github.com/es-ude/elastic-ai.creator/commit/07620d3e2ee9db1bc6aa081a15274cb79b5ee4b0))
+
 ## v0.42.0 (2023-06-08)
 
 ### Feature
