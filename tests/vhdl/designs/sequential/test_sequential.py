@@ -100,7 +100,7 @@ begin
     );
 end rtl;"""
         model = Sequential(
-            (BufferedIdentity(num_input_features=number_of_layer_inputs, total_bits=4),)
+            BufferedIdentity(num_input_features=number_of_layer_inputs, total_bits=4)
         )
         actual_code = "\n".join(sequential_layer_code_for_model(model))
         assert actual_code == expected
