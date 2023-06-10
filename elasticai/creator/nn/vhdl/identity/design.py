@@ -1,4 +1,4 @@
-from elasticai.creator.hdl.auto_wire_protocols.ports import create_port
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )

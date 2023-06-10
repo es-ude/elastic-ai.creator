@@ -1,4 +1,4 @@
-from elasticai.creator.hdl.auto_wire_protocols.ports import (
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import (
     port_definition_template_for_bufferless_design,
 )
 from elasticai.creator.hdl.code_generation.template import (
