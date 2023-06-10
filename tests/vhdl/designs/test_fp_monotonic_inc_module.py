@@ -2,10 +2,10 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.hdl.vhdl.designs.monotonic_increasing_scalar_function.fp_monotonic_inc_module import (
-    FPMonotonicIncModule,
-)
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.vhdl.precomputed.fp_monotonic_increasing_module import (
+    FPPrecomputedMonotonicIncreasingModule,
+)
 
 
 def test_vhdl_code_matches_expected_for_tanh_as_base_module() -> None:
@@ -38,7 +38,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    tanh = FPMonotonicIncModule(
+    tanh = FPPrecomputedMonotonicIncreasingModule(
         base_module=torch.nn.Tanh(),
         total_bits=8,
         frac_bits=2,
@@ -82,7 +82,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    sigmoid = FPMonotonicIncModule(
+    sigmoid = FPPrecomputedMonotonicIncreasingModule(
         base_module=torch.nn.Sigmoid(),
         total_bits=8,
         frac_bits=2,
