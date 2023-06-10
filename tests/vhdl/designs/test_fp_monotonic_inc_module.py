@@ -17,16 +17,16 @@ entity tanh is
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x   : in std_logic_vector(8-1 downto 0);
-        y  : out std_logic_vector(8-1 downto 0);
+        x      : in std_logic_vector(8-1 downto 0);
+        y      : out std_logic_vector(8-1 downto 0)
     );
 end tanh;
 
 architecture rtl of tanh is
     signal signed_x, signed_y : signed(8-1 downto 0) := (others=>'0');
 begin
-    signed_x <- signed(x);
-    y <- std_logic_vector(signed_y);
+    signed_x <= signed(x);
+    y <= std_logic_vector(signed_y);
     tanh_process : process(x)
     begin
         if signed_x <= 20 then signed_y <= to_signed(3, 8);
@@ -61,16 +61,16 @@ entity sigmoid is
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x   : in std_logic_vector(8-1 downto 0);
-        y  : out std_logic_vector(8-1 downto 0);
+        x      : in std_logic_vector(8-1 downto 0);
+        y      : out std_logic_vector(8-1 downto 0)
     );
 end sigmoid;
 
 architecture rtl of sigmoid is
     signal signed_x, signed_y : signed(8-1 downto 0) := (others=>'0');
 begin
-    signed_x <- signed(x);
-    y <- std_logic_vector(signed_y);
+    signed_x <= signed(x);
+    y <= std_logic_vector(signed_y);
     sigmoid_process : process(x)
     begin
         if signed_x <= 20 then signed_y <= to_signed(3, 8);
