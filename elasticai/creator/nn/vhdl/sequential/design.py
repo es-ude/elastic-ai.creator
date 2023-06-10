@@ -29,7 +29,6 @@ class Sequential(Design):
         self._connections: dict[tuple[str, str], tuple[str, str]] = (
             self._build_connections_map()
         )
-        print(self._connections)
         self._port = self._build_port()
         self._library_name_for_instances = "work"
         self._architecture_name_for_instances = "rtl"
