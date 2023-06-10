@@ -88,3 +88,7 @@ def port_definition_template_for_buffered_design() -> list[str]:
     return template_string_for_port_definition(
         create_port_for_buffered_design(x_width=1, y_width=1, x_count=1, y_count=1)
     )
+
+
+def port_definition_template_for_bufferless_design() -> list[str]:
+    return template_string_for_port_definition(create_port_for_bufferless_design(1, 1))

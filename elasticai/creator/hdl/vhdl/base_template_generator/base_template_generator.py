@@ -1,4 +1,6 @@
-from elasticai.creator.hdl.auto_wire_protocols.bufferless import base_vhdl_port
+from elasticai.creator.hdl.auto_wire_protocols.ports import (
+    port_definition_template_for_bufferless_design,
+)
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     TemplateExpander,
@@ -23,7 +25,7 @@ class BaseTemplateGenerator:
             package=module_to_package(self.__module__),
             file_name="base_template.tpl.vhd",
             parameters={
-                "port": base_vhdl_port(),
+                "port": port_definition_template_for_bufferless_design(),
             },
         )
 
