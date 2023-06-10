@@ -1,10 +1,10 @@
 from elasticai.creator.base_modules.sigmoid import Sigmoid
-from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.fp_monotonously_increasing_module import (
-    FPMonotonouslyIncreasingModule,
+from elasticai.creator.hdl.vhdl.designs.monotonic_increasing_scalar_function import (
+    FPMonotonicIncModule,
 )
 
 
-class FPSigmoid(FPMonotonouslyIncreasingModule):
+class FPSigmoid(FPMonotonicIncModule):
     def __init__(
         self,
         total_bits: int,

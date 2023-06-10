@@ -2,8 +2,8 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.hdl.vhdl.designs.monotonously_increasing_precomputed_scalar_function.fp_monotonously_increasing_module import (
-    FPMonotonouslyIncreasingModule,
+from elasticai.creator.hdl.vhdl.designs.monotonic_increasing_scalar_function.fp_monotonic_inc_module import (
+    FPMonotonicIncModule,
 )
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 
@@ -38,7 +38,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    tanh = FPMonotonouslyIncreasingModule(
+    tanh = FPMonotonicIncModule(
         base_module=torch.nn.Tanh(),
         total_bits=8,
         frac_bits=2,
@@ -82,7 +82,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    sigmoid = FPMonotonouslyIncreasingModule(
+    sigmoid = FPMonotonicIncModule(
         base_module=torch.nn.Sigmoid(),
         total_bits=8,
         frac_bits=2,
