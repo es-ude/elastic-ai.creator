@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.45.0 (2023-06-10)
+
+### Feature
+
+* Simplify usage for the elasticai.creator.nn.vhdl package by adding layers to __init__ ([`2c7c968`](https://github.com/es-ude/elastic-ai.creator/commit/2c7c96858ec9d935389a960baee46e8c506f9b5c))
+
+### Fix
+
+* Fix broken import in base template generator and move it with its template to own folder ([`9eb1f70`](https://github.com/es-ude/elastic-ai.creator/commit/9eb1f70cff10e075712d5bf7e3fc9fcfed2aae19))
+
 ## v0.44.0 (2023-06-09)
 
 ### Feature
