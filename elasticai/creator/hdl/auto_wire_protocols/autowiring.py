@@ -1,6 +1,7 @@
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from itertools import chain
-from typing import Any, Iterable, Iterator, Sequence, TypeVar
+from typing import Any, TypeVar
 
 
 @dataclass(eq=True, frozen=True)

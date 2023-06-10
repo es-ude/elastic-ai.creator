@@ -1,5 +1,5 @@
+from collections.abc import Callable, Sequence
 from itertools import chain
-from typing import Callable, Sequence
 
 from elasticai.creator.hdl.design_base.ports import Port
 from elasticai.creator.hdl.design_base.signal import Signal

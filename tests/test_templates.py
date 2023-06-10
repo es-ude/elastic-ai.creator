@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 from unittest import TestCase
 
 from elasticai.creator.hdl.code_generation.template import TemplateExpander

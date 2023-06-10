@@ -1,5 +1,6 @@
 import re
-from typing import Sequence, overload
+from collections.abc import Sequence
+from typing import overload
 
 from elasticai.creator.hdl.code_generation.code_generation import to_hex
 from elasticai.creator.hdl.design_base.signal import Signal
