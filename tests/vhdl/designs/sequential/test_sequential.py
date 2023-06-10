@@ -4,7 +4,7 @@ import pytest
 
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.vhdl.identity.layer import BufferedIdentity
-from elasticai.creator.nn.vhdl.sequential.sequential import Sequential
+from elasticai.creator.nn.vhdl.sequential.layer import Sequential
 
 
 class TestSequential:

@@ -1,4 +1,4 @@
-from elasticai.creator.hdl.auto_wire_protocols.buffered import create_port
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,

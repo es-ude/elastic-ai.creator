@@ -1,5 +1,5 @@
+from collections.abc import Iterator
 from itertools import chain
-from typing import Iterator
 
 from elasticai.creator.hdl.design_base.signal import Signal
 

@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
@@ -11,7 +11,7 @@ from elasticai.creator.hdl.design_base.signal import Signal
 from elasticai.creator.hdl.savable import Path
 
 
-class PrecomputedMonotonouslyIncreasingScalarFunction(Design):
+class PrecomputedMonotonicIncreasingScalarFunction(Design):
     _template_package = module_to_package(__name__)
 
     def __init__(
@@ -26,7 +26,7 @@ class PrecomputedMonotonouslyIncreasingScalarFunction(Design):
         self._function = function
         self._inputs = inputs
         self._template = InProjectTemplate(
-            file_name="precomputed_monotonously_increasing_scalar_function.tpl.vhd",
+            file_name="precomputed_monotonic_increasing_scalar_function.tpl.vhd",
             package=self._template_package,
             parameters=dict(name=self.name, data_width=str(width)),
         )

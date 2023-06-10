@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Iterable, Protocol
+from typing import Protocol
 
 from elasticai.creator.hdl.code_generation.template import Template
 

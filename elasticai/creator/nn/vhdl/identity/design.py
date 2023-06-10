@@ -1,9 +1,4 @@
-from elasticai.creator.hdl.auto_wire_protocols.buffered import (
-    create_port_for_buffered_design,
-)
-from elasticai.creator.hdl.auto_wire_protocols.bufferless import (
-    create_port_for_bufferless_design,
-)
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.hdl.code_generation.code_generation import (
     calculate_address_width,
 )
@@ -25,7 +20,7 @@ class BufferedIdentity(Design):
 
     @property
     def port(self) -> Port:
-        return create_port_for_buffered_design(
+        return create_port(
             x_width=self._num_input_bits,
             y_width=self._num_input_bits,
             x_count=self._num_input_features,
@@ -54,14 +49,12 @@ class BufferlessDesign(Design):
 
     @property
     def port(self) -> Port:
-        return create_port_for_bufferless_design(
-            x_width=self._num_input_bits, y_width=self._num_input_bits
-        )
+        return create_port(x_width=self._num_input_bits, y_width=self._num_input_bits)
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="buffered_identity.tpl.vhd",
+            file_name="bufferless_identity.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 x_width=str(self._num_input_bits),

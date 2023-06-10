@@ -1,14 +1,7 @@
 """Interfaces/Adapters to the used machine learning framework"""
 from abc import abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Iterator,
-    Protocol,
-    TypeVar,
-    runtime_checkable,
-)
+from collections.abc import Callable, Iterable, Iterator
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 from numpy.typing import ArrayLike
 

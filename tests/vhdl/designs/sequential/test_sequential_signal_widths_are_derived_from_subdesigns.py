@@ -1,6 +1,6 @@
 import pytest
 
-from elasticai.creator.hdl.auto_wire_protocols.buffered import create_port
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.hdl.design_base.design import Design
 from elasticai.creator.hdl.design_base.ports import Port
 from elasticai.creator.hdl.savable import Path
