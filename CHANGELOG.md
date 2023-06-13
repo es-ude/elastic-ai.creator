@@ -2,6 +2,19 @@
 
 <!--next-version-placeholder-->
 
+## v0.46.0 (2023-06-13)
+
+### Feature
+
+* Use conv1d arithmetics function to implement conv1d module ([`69778be`](https://github.com/es-ude/elastic-ai.creator/commit/69778be7fd1becab2ad5099ebb8d64d4a0db0de5))
+* Add conv1d function to arithmetics ([`1cab190`](https://github.com/es-ude/elastic-ai.creator/commit/1cab1901e324eb100f1cbccf6d54fae429210b33))
+* Test that conv1d uses different arithmetics ([`7eb01db`](https://github.com/es-ude/elastic-ai.creator/commit/7eb01dbaa2afbbb02410e6fc6272ba02fec7878a))
+* Add the ability to sum over dimension ([`c45c0e6`](https://github.com/es-ude/elastic-ai.creator/commit/c45c0e676e1df70bf99c4c943874168781ef2a93))
+
+### Fix
+
+* Quantize weights before inference ([`61153e6`](https://github.com/es-ude/elastic-ai.creator/commit/61153e60d6854bacf0bd2501d96efc3f6e62714e))
+
 ## v0.45.0 (2023-06-10)
 
 ### Feature
