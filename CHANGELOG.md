@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.46.1 (2023-06-13)
+
+### Fix
+
+* Fix wrong port definitions ([`9a4c8af`](https://github.com/es-ude/elastic-ai.creator/commit/9a4c8af6f8f8be2bf6fff49c25fc0ca12cbea45a))
+* Fix some syntax errors ([`3997bbd`](https://github.com/es-ude/elastic-ai.creator/commit/3997bbdb134a94defd4e32ad1a2eb3aa236d6b96))
+
 ## v0.46.0 (2023-06-13)
 
 ### Feature
