@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics import Arithmetics
+from .arithmetics.arithmetics import Arithmetics
 
 
 class Conv1d(torch.nn.Conv1d):
@@ -40,10 +40,14 @@ class Conv1d(torch.nn.Conv1d):
         return x[0] if isinstance(x, tuple) else x
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        quantized_weights = self._arithmetics.quantize(self.weight)
+        quantized_bias = (
+            self._arithmetics.quantize(self.bias) if self.bias is not None else None
+        )
         return self._arithmetics.conv1d(
             inputs=inputs,
-            weights=self.weight,
-            bias=self.bias,
+            weights=quantized_weights,
+            bias=quantized_bias,
             stride=self._flatten_tuple(self.stride),
             padding=(
                 self.padding
