@@ -1,6 +1,7 @@
+from collections.abc import Iterator
 from importlib import resources
 from pathlib import Path, PurePath
-from typing import ContextManager, Iterator
+from typing import ContextManager
 
 PathType = str | PurePath
 Package = resources.Package

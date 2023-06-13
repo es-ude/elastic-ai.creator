@@ -2,6 +2,85 @@
 
 <!--next-version-placeholder-->
 
+## v0.45.0 (2023-06-10)
+
+### Feature
+
+* Simplify usage for the elasticai.creator.nn.vhdl package by adding layers to __init__ ([`2c7c968`](https://github.com/es-ude/elastic-ai.creator/commit/2c7c96858ec9d935389a960baee46e8c506f9b5c))
+
+### Fix
+
+* Fix broken import in base template generator and move it with its template to own folder ([`9eb1f70`](https://github.com/es-ude/elastic-ai.creator/commit/9eb1f70cff10e075712d5bf7e3fc9fcfed2aae19))
+
+## v0.44.0 (2023-06-09)
+
+### Feature
+
+* Check for autowiring protocol violation ([`3f17e00`](https://github.com/es-ude/elastic-ai.creator/commit/3f17e002e050dc92516e4ff5468041f06ebd6760))
+* Add AutoWirer ([`f4159c8`](https://github.com/es-ude/elastic-ai.creator/commit/f4159c800fe54cc0fe73fbebdf2ac0410ddac635))
+* Add intermediate symbols to rule definitions ([`624b310`](https://github.com/es-ude/elastic-ai.creator/commit/624b310fc9beb130902fdf3269e3f30714fe0c3f))
+* Support parsing partial files ([`f2c2eb6`](https://github.com/es-ude/elastic-ai.creator/commit/f2c2eb69ceb8a0b02c1c4617511ccb1528931e23))
+* Support parsing partial files ([`8170012`](https://github.com/es-ude/elastic-ai.creator/commit/817001208b774e57cfb27fb4d4ee9d704541c9f8))
+* Add standalone parser module ([`5a9b141`](https://github.com/es-ude/elastic-ai.creator/commit/5a9b141285fefecf61f581417061428cda382ad5))
+* Add basic vhdl parsing ([`5df2a3f`](https://github.com/es-ude/elastic-ai.creator/commit/5df2a3ff4e9ba7ec33398a267cd983ad886d1fe7))
+* Port expansion/template based on autowiring protocol ([`0d14618`](https://github.com/es-ude/elastic-ai.creator/commit/0d146181c8b789b09871af43654ca2d83ea55ddb))
+* **template:** Make precomputed scalar functions bufferless ([`89986fa`](https://github.com/es-ude/elastic-ai.creator/commit/89986fad041c89d0543fe9a22946e5f5f49e2b61))
+
+### Fix
+
+* Use new Sequential constructor ([`6bb111b`](https://github.com/es-ude/elastic-ai.creator/commit/6bb111b748567502c23a48a52d7e477645969996))
+* Port def and impl of monotonous function design ([`2d423d4`](https://github.com/es-ude/elastic-ai.creator/commit/2d423d46faa86fbf43cb8ba1d01aafe92c5bfa23))
+* Children of sequential layer determine signal widths ([`3dd5c0c`](https://github.com/es-ude/elastic-ai.creator/commit/3dd5c0cc4f7a52c7b3a86cec437005b86aa0a509))
+* Remove obsolete parsing functionality ([`7f85d05`](https://github.com/es-ude/elastic-ai.creator/commit/7f85d05aa3da2e0fd7c266bfc9c1aad573adecc4))
+* Adjust tests to follow previous change ([`c328bd5`](https://github.com/es-ude/elastic-ai.creator/commit/c328bd565d6ba84a9d1fab788051c3e884ea2094))
+* Correct tuple type annotation ([`f0e7da0`](https://github.com/es-ude/elastic-ai.creator/commit/f0e7da0cf186015004970102f2b9b57a9f839585))
+
+## v0.43.0 (2023-06-09)
+
+### Feature
+
+* Add tests for the FPMonotonouslyIncreasingModule ([`9ba64ae`](https://github.com/es-ude/elastic-ai.creator/commit/9ba64ae3d253db76a6368c5e561ce28bcec2aab5))
+* Introduce FPMonotonouslyIncreasingModule to easily add new activations ([`b78c922`](https://github.com/es-ude/elastic-ai.creator/commit/b78c9225f7f70ec329bee5705c11d9e7b1392c41))
+
+### Fix
+
+* Set correct signal names for x and y address ([`5354a2a`](https://github.com/es-ude/elastic-ai.creator/commit/5354a2a0e85bc0788f5d74377c1a685e9d0e0de7))
+* Use elsif in lookup table ([`f375ba3`](https://github.com/es-ude/elastic-ai.creator/commit/f375ba3784bf92887e689f77f592dfc2fa2c7e2c))
+* Increase default sampling intervall ([`07620d3`](https://github.com/es-ude/elastic-ai.creator/commit/07620d3e2ee9db1bc6aa081a15274cb79b5ee4b0))
+
+## v0.42.0 (2023-06-08)
+
+### Feature
+
+* Reimplement hard tanh activation function ([`9b86f9d`](https://github.com/es-ude/elastic-ai.creator/commit/9b86f9d440cc991d624a6f3492a3caf7419bdbf3))
+* Add working hardsigmoid implementation ([`db03ff0`](https://github.com/es-ude/elastic-ai.creator/commit/db03ff080f878c9b9fe54303ead97c673022f3a1))
+* Make sure that inplace parameter is fixed defined ([`79b7a1e`](https://github.com/es-ude/elastic-ai.creator/commit/79b7a1eea0cb71f5a838cfebf02970927410f594))
+
+## v0.41.0 (2023-06-08)
+
+### Feature
+
+* Add fixed point ReLU module ([`62c1555`](https://github.com/es-ude/elastic-ai.creator/commit/62c15557fc515c89644c674aef9fc39d22ab672f))
+
+## v0.40.0 (2023-06-04)
+
+### Feature
+
+* Simplify the use of the sequential layer (same as in torch) ([`9fad15d`](https://github.com/es-ude/elastic-ai.creator/commit/9fad15d774f3573fb26f168295f9bd2ae5cdd046))
+* Improve performance of the identity step autograd function ([`46f036c`](https://github.com/es-ude/elastic-ai.creator/commit/46f036c8fb2d007d21e32214ac92d4d9aa2fe9d1))
+* Add quantized tanh implementation with lookup tables ([`3a1fb10`](https://github.com/es-ude/elastic-ai.creator/commit/3a1fb10944e566ca33e3e745b939b6700421fdb9))
+* Implement bufferless component interface for precomputed scalar function ([`f701a57`](https://github.com/es-ude/elastic-ai.creator/commit/f701a57db54e0d5f3e5e43047725b28646cb5f15))
+* Pass step lut to identity step function and improve readablility ([`c1b6747`](https://github.com/es-ude/elastic-ai.creator/commit/c1b67473c33ddc27590068472dcff6969f9e7135))
+* Rename autograd function and pass step lut to autograd function ([`d607e98`](https://github.com/es-ude/elastic-ai.creator/commit/d607e98bd14dfa1ae23e9726b2046baaede21361))
+* Implement autograd fn to map inputs to a subset of inputs ([`26c6ec7`](https://github.com/es-ude/elastic-ai.creator/commit/26c6ec7a203eea4fed4c3eb3d5c3e4893acb545f))
+* Add a function to easily compare tensors with pytest ([`24e737e`](https://github.com/es-ude/elastic-ai.creator/commit/24e737eaea48044df3e8addaca0d1cc804a3b6f4))
+* Add experimental precomputed tanh in fixed point ([`0e76d03`](https://github.com/es-ude/elastic-ai.creator/commit/0e76d03b6d0f23d8932b94bb7728cbeea2de0289))
+
+### Fix
+
+* Fix that last io pair was dropped when calling save_to function ([`2bc46ac`](https://github.com/es-ude/elastic-ai.creator/commit/2bc46ac9c535b65ef7a3dc5cbe12b27d253c3b37))
+* Fix missing creation of a subpath in the save_to function ([`2a4dbdf`](https://github.com/es-ude/elastic-ai.creator/commit/2a4dbdf2f6fce4de567281002dd4640ff3ae54ed))
+
 ## v0.39.0 (2023-05-19)
 ### Feature
 * Implement batch normed linear layer ([`9322f6f`](https://github.com/es-ude/elastic-ai.creator/commit/9322f6f699f9884273c3f9815b9a026c9f7840ae))

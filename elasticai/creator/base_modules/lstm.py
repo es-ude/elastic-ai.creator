@@ -2,7 +2,7 @@ from typing import Optional, Protocol
 
 import torch
 
-from elasticai.creator.base_modules.lstm_cell import LSTMCell
+from .lstm_cell import LSTMCell
 
 
 class LayerFactory(Protocol):

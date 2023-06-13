@@ -1,14 +1,15 @@
 from itertools import chain
 from typing import Optional
 
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import (
+    create_port_for_buffered_design as create_port,
+)
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.ports import (
-    create_port_for_buffered_design as create_port,
-)
+from elasticai.creator.hdl.design_base.design import Design
+from elasticai.creator.hdl.design_base.ports import Port
 from elasticai.creator.hdl.savable import Path
 from elasticai.creator.hdl.vhdl.designs.rom import Rom
 

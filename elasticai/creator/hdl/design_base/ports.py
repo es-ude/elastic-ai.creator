@@ -1,33 +1,41 @@
-from elasticai.creator.hdl.code_generation.code_generation import (
-    calculate_address_width,
-)
-from elasticai.creator.hdl.design_base import std_signals as _signals
-from elasticai.creator.hdl.design_base.design import Port
+from collections.abc import Iterator
+from itertools import chain
+
+from elasticai.creator.hdl.design_base.signal import Signal
 
 
-def create_port_for_base_design(x_width: int, y_width: int):
-    return Port(
-        incoming=[
-            _signals.enable(),
-            _signals.clock(),
-            _signals.x(x_width),
-        ],
-        outgoing=[_signals.y(y_width)],
-    )
+class Port:
+    def __init__(self, incoming: list[Signal], outgoing: list[Signal]):
+        self._incoming = set(incoming)
+        self._outgoing = set(outgoing)
 
+    @property
+    def incoming(self) -> list[Signal]:
+        return list(self._incoming)
 
-def create_port_for_buffered_design(
-    x_width: int, y_width: int, x_count: int, y_count: int
-) -> Port:
-    in_signals = [
-        _signals.enable(),
-        _signals.clock(),
-        _signals.x(x_width),
-        _signals.y_address(calculate_address_width(y_count)),
-    ]
-    out_signals = [
-        _signals.done(),
-        _signals.y(y_width),
-        _signals.x_address(calculate_address_width(x_count)),
-    ]
-    return Port(incoming=in_signals, outgoing=out_signals)
+    @property
+    def outgoing(self) -> list[Signal]:
+        return list(self._outgoing)
+
+    @property
+    def signals(self) -> list[Signal]:
+        return self.outgoing + self.incoming
+
+    @property
+    def signal_names(self) -> list[str]:
+        return [s.name for s in self.signals]
+
+    def __getitem__(self, item: str) -> Signal:
+        for signal in self.signals:
+            if signal.name == item:
+                return signal
+        raise AttributeError(f"Port has no signal {item}")
+
+    def __contains__(self, item: str | Signal) -> bool:
+        if isinstance(item, str):
+            return item in self.signal_names
+        else:
+            return item in self.signals
+
+    def __iter__(self) -> Iterator[Signal]:
+        yield from chain(self._incoming, self._outgoing)
