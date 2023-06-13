@@ -44,7 +44,6 @@ def create_port_for_bufferless_design(x_width: int, y_width: int) -> Port:
         _signals.x(x_width),
     ]
     out_signals = [
-        _signals.done(),
         _signals.y(y_width),
     ]
     return Port(incoming=in_signals, outgoing=out_signals)

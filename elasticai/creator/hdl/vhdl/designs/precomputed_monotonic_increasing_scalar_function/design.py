@@ -1,6 +1,6 @@
 from collections.abc import Callable
-from functools import partial
 
+from elasticai.creator.hdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.hdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
@@ -40,11 +40,7 @@ class PrecomputedMonotonicIncreasingScalarFunction(Design):
 
     @property
     def port(self) -> Port:
-        signal = partial(Signal, width=self._width)
-        return Port(
-            incoming=[signal(name="x")],
-            outgoing=[signal(name="y")],
-        )
+        return create_port(x_width=self._width, y_width=self._width)
 
     def save_to(self, destination: Path) -> None:
         process_content = []
