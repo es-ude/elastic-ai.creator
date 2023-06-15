@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from unittest import TestCase
 
-from elasticai.creator.hdl.code_generation.template import TemplateExpander
+from elasticai.creator.vhdl.code_generation.template import TemplateExpander
 
 
 @dataclass

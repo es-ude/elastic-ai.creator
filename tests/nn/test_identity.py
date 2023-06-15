@@ -1,10 +1,7 @@
 from typing import cast
 
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.vhdl.identity.layer import (
-    BufferedIdentity,
-    BufferlessIdentity,
-)
+from elasticai.creator.nn.identity.layer import BufferedIdentity, BufferlessIdentity
 
 
 def test_buffered_identity_generates_correct_vhdl_code() -> None:

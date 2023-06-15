@@ -1,5 +1,3 @@
-from typing import Any
-
 import torch
 
 from elasticai.creator.base_modules.arithmetics.fixed_point_arithmetics import (
