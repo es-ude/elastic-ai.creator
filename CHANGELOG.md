@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.47.1 (2023-06-16)
+
+### Fix
+
+* Remove wrongly committed files ([`4fdea0c`](https://github.com/es-ude/elastic-ai.creator/commit/4fdea0c9ff2db5e8af3f208bbd83d995332d5b85))
+
 ## v0.47.0 (2023-06-16)
 
 ### Feature
