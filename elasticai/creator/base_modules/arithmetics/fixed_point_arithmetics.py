@@ -2,9 +2,8 @@ from typing import Optional, cast
 
 import torch
 
-from elasticai.creator.base_modules.autograd_functions.fixed_point_quantization import (
-    FixedPointDequantFunction,
-    FixedPointQuantFunction,
+from elasticai.creator.base_modules.autograd_functions.round_to_fixed_point import (
+    RoundToFixedPoint,
 )
 from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
@@ -26,13 +25,7 @@ class FixedPointArithmetics(Arithmetics):
         )
 
     def round(self, a: torch.Tensor) -> torch.Tensor:
-        def float_to_int(x: torch.Tensor) -> torch.Tensor:
-            return cast(torch.Tensor, FixedPointQuantFunction.apply(x, self.config))
-
-        def int_to_fixed_point(x: torch.Tensor) -> torch.Tensor:
-            return cast(torch.Tensor, FixedPointDequantFunction.apply(x, self.config))
-
-        return int_to_fixed_point(float_to_int(a))
+        return cast(torch.Tensor, RoundToFixedPoint.apply(a, self.config))
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.clamp(a + b)
