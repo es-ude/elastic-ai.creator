@@ -1,6 +1,5 @@
 .ijwb/
 data
-elasticai/creator/translator/systemTests/expected_model/processed_data.pickle
 venv
 simulation
 simulation/*
@@ -11,9 +10,7 @@ package.json
 .coverage
 *.onnx
 htmlcov
-elasticai/creator/examples/build
-elasticai/creator/examples/build/*
-
+do_not_commit/*
 
 # python build output
 dist/
