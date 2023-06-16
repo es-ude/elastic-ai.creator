@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, cast
 
 import torch
 from torch.nn.utils.parametrize import register_parametrization
@@ -104,10 +104,12 @@ class QuantizeTwoBit(torch.nn.Module):
         self.factors = torch.nn.Parameter(torch.Tensor([factors]), requires_grad=True)
 
     def forward(self, input):
-        binarize = BinarizeFn.apply
+        def binarize(x: torch.Tensor) -> torch.Tensor:
+            return cast(torch.Tensor, BinarizeFn.apply(x))
+
         first_half = binarize(input)
         second_half = input - self.factors * binarize(input)
-        return binarize(torch.cat((first_half, second_half), dim=1))
+        return binarize(torch.cat([first_half, second_half], dim=1))
 
 
 def _hook_quantizer(module: torch.nn.Module, quantizer: Module, bias: bool):

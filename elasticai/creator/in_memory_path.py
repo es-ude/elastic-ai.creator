@@ -1,7 +1,7 @@
 from typing import Optional
 
-from elasticai.creator.hdl.code_generation.template import Template, TemplateExpander
-from elasticai.creator.hdl.savable import File, Path
+from elasticai.creator.vhdl.code_generation.template import Template, TemplateExpander
+from elasticai.creator.vhdl.savable import File, Path
 
 
 class InMemoryFile(File):
