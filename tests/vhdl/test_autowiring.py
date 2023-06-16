@@ -78,8 +78,7 @@ def test_wire_buffered_and_unbuffered():
     a = DataFlowNode.buffered("a")
     b = DataFlowNode.unbuffered("b")
     top = DataFlowNode.top("top")
-    expected_connections = _build_expected_connections(
-        """
+    expected_connections = _build_expected_connections("""
         top, x_address : a, x_address
         a, clock : top, clock
         a, enable : top, enable
@@ -90,8 +89,7 @@ def test_wire_buffered_and_unbuffered():
         b, x : a, y
         top, y: b, y
         top, done: a, done
-        """
-    )
+        """)
     connections = _wire(top=top, graph=(a, b))
     assert connections == expected_connections
 
