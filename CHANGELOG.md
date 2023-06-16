@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.47.0 (2023-06-16)
+
+### Feature
+
+* Simplify project structure ([`81cbcb3`](https://github.com/es-ude/elastic-ai.creator/commit/81cbcb343b26473290609c7715051059127a924b))
+
 ## v0.46.1 (2023-06-13)
 
 ### Fix
