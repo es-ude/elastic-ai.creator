@@ -21,22 +21,23 @@ def build_root() -> InMemoryPath:
 
 
 @pytest.fixture
-def rom_destination(build_root: InMemoryPath, rom_name: str) -> InMemoryPath:
-    return build_root.create_subpath(rom_name)
+def rom_code(
+    rom_name: str, build_root: InMemoryPath
+) -> Callable[[list[int]], list[str]]:
+    destination = build_root.create_subpath(rom_name)
 
-
-@pytest.fixture
-def get_rom_content(build_root: InMemoryPath, rom_name: str) -> Callable[[], list[str]]:
-    def build() -> list[str]:
+    def generate_code(values_as_integers: list[int]) -> list[str]:
+        rom = Rom(name=rom_name, data_width=8, values_as_integers=values_as_integers)
+        rom.save_to(destination)
         return cast(InMemoryFile, build_root[rom_name]).text
 
-    return build
+    return generate_code
 
 
 @pytest.fixture
-def get_address_width(get_rom_content) -> Callable[[], int]:
-    def extract() -> int:
-        text = get_rom_content()
+def address_width(rom_code) -> Callable[[list[int]], int]:
+    def extract(values_as_integers: list[int]) -> int:
+        text = rom_code(values_as_integers)
         actual = 0
         for line in text:
             match = re.match(
@@ -58,16 +59,28 @@ def get_address_width(get_rom_content) -> Callable[[], int]:
     ],
 )
 def test_generating_correct_rom_values(
-    rom_destination: InMemoryPath,
-    rom_name: str,
-    get_rom_content: Callable[[], list[str]],
+    rom_code: Callable[[list[int]], list[str]],
     values_as_integers: list[int],
     expected_rom_values: tuple[str, ...],
 ) -> None:
-    rom = Rom(rom_name, data_width=8, values_as_integers=values_as_integers)
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(get_rom_content())
-    assert actual == expected_rom_values
+    code = rom_code(values_as_integers)
+    assert extract_rom_values(code) == expected_rom_values
+
+
+@pytest.mark.parametrize(
+    ("values_as_integers", "expected_rom_values"),
+    [
+        ([1] * 3, ("1", "1", "1", "0")),
+        ([1] * 18, tuple(["1"] * 18 + ["0"] * 14)),
+    ],
+)
+def test_rom_values_are_padded_correctly(
+    rom_code: Callable[[list[int]], list[str]],
+    values_as_integers: list[int],
+    expected_rom_values: list[str],
+) -> None:
+    code = rom_code(values_as_integers)
+    assert extract_rom_values(code) == expected_rom_values
 
 
 @pytest.mark.parametrize(
@@ -78,32 +91,8 @@ def test_generating_correct_rom_values(
     ],
 )
 def test_address_width_is_set_correctly(
-    rom_destination: InMemoryPath,
-    rom_name: str,
-    get_address_width: Callable[[], int],
+    address_width: Callable[[list[int]], int],
     values_as_integers: list[int],
     expected_address_width: int,
 ) -> None:
-    rom = Rom(rom_name, data_width=8, values_as_integers=values_as_integers)
-    rom.save_to(rom_destination)
-    assert get_address_width() == expected_address_width
-
-
-@pytest.mark.parametrize(
-    ("values_as_integers", "expected_rom_values"),
-    [
-        ([1] * 3, ("1", "1", "1", "0")),
-        ([1] * 18, tuple(["1"] * 18 + ["0"] * 14)),
-    ],
-)
-def test_rom_values_are_filled_up_correctly(
-    rom_destination: InMemoryPath,
-    rom_name: str,
-    get_rom_content: Callable[[], list[str]],
-    values_as_integers: list[int],
-    expected_rom_values: list[str],
-) -> None:
-    rom = Rom(rom_name, data_width=8, values_as_integers=values_as_integers)
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(get_rom_content())
-    assert actual == expected_rom_values
+    assert address_width(values_as_integers) == expected_address_width
