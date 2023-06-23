@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.47.2 (2023-06-23)
+
+### Fix
+
+* Fix error when passing a cuda tensor to the IdentityStepFunction ([`7f49617`](https://github.com/es-ude/elastic-ai.creator/commit/7f496171a547bae17c69976c35d437428022447f))
+
 ## v0.47.1 (2023-06-16)
 
 ### Fix
