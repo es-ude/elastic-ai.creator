@@ -1,17 +1,18 @@
-from elasticai.creator.vhdl.code_generation.code_abstractions import to_vhdl_hex_string
+import pytest
+
+from elasticai.creator.vhdl.code_generation.code_abstractions import (
+    to_vhdl_binary_string,
+)
 
 
-def test_convert_1_to_1bit_hex():
-    assert to_vhdl_hex_string(1, 1) == "'x1'"
-
-
-def test_convert_1_to_5bit_hex():
-    assert to_vhdl_hex_string(1, 5) == "'x01'"
-
-
-def test_convert_11_to_4bit_hex():
-    assert to_vhdl_hex_string(11, 4) == "'xb'"
-
-
-def test_convert_254_to_9bit_hex():
-    assert to_vhdl_hex_string(254, 9) == "'x0fe'"
+@pytest.mark.parametrize(
+    ("number", "expected"),
+    [
+        (0, '"0"'),
+        (1, '"1"'),
+        (6, '"110"'),
+        (-6, '"-110"'),
+    ],
+)
+def test_to_vhdl_binary_string(number: int, expected: str) -> None:
+    assert to_vhdl_binary_string(number) == expected

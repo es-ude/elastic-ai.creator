@@ -76,6 +76,10 @@ def bin_representation(bin_value: str) -> str:
     return f'"{bin_value}"'
 
 
+def to_vhdl_binary_string(number: int) -> str:
+    return f'"{number:b}"'
+
+
 def to_vhdl_hex_string(number: int, bit_width: int) -> str:
     def to_hex(number: int, bit_width: int) -> str:
         return f"{number:0{math.ceil(bit_width / 4)}x}"
