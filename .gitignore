@@ -8,6 +8,7 @@ node_modules
 package-lock.json
 package.json
 .coverage
+coverage.xml
 *.onnx
 htmlcov
 do_not_commit/*
