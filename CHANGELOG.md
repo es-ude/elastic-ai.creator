@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.48.1 (2023-06-24)
+
+### Fix
+
+* Only create coverage reports in PR ([`1bd728f`](https://github.com/es-ude/elastic-ai.creator/commit/1bd728f4e8edb6595a35dafd71c5d68263a7358f))
+
 ## v0.48.0 (2023-06-24)
 
 ### Feature
