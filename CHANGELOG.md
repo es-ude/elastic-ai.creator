@@ -2,6 +2,18 @@
 
 <!--next-version-placeholder-->
 
+## v0.48.0 (2023-06-24)
+
+### Feature
+
+* Only trigger coverage report when pushing to main ([`b4b23c9`](https://github.com/es-ude/elastic-ai.creator/commit/b4b23c988803165895c14a8357427a3069f09233))
+* Add coverage workflow to create reports ([`3f6caca`](https://github.com/es-ude/elastic-ai.creator/commit/3f6caca6a626923ec3d8078320fa9b70092495ee))
+* Add pytest-cov dependency ([`a737729`](https://github.com/es-ude/elastic-ai.creator/commit/a7377290ffee7359f6f8c0392960d7038fe2a73b))
+
+### Fix
+
+* Use poetry run to run pytest ([`7058e42`](https://github.com/es-ude/elastic-ai.creator/commit/7058e42cc7fa0849841578f2bafd6a3fc6155f2a))
+
 ## v0.47.2 (2023-06-23)
 
 ### Fix
