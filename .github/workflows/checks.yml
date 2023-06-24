@@ -12,6 +12,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
       - run: poetry run python -m pytest tests
+
   lint-commit-messages:
     name: Lint Commit Messages
     runs-on: ubuntu-latest
