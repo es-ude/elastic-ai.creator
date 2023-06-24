@@ -14,10 +14,6 @@ jobs:
     needs: [ checks ]
     uses: ./.github/workflows/beautify.yml
 
-  coverage:
-    needs: [ checks ]
-    uses: ./.github/workflows/coverage.yml
-
   semantic-release:
     name: Bump Version and Release
     runs-on: ubuntu-latest
