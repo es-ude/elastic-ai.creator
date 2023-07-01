@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v0.49.0 (2023-07-01)
+
+### Feature
+
+* Update readme and add small improvements ([`8f2bbd0`](https://github.com/es-ude/elastic-ai.creator/commit/8f2bbd093e18c15421abab20ecb0f9afbc6d12a1))
+
+### Documentation
+
+* Add minimal example that demonstrates the usage of the creator ([`64030f2`](https://github.com/es-ude/elastic-ai.creator/commit/64030f2eb129ff8275022ab0b8bf4945d42626a8))
+* Complete table of contents ([`cf0ef63`](https://github.com/es-ude/elastic-ai.creator/commit/cf0ef63eb628521f14406fb7d59cee53c71c8d60))
+
 ## v0.48.1 (2023-06-24)
 
 ### Fix
