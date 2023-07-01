@@ -11,23 +11,52 @@ This version currently only supports parts of VHDL as target representations.
 The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at [researchgate](https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial).
 
 
+
 ## Table of contents
 
 - [Users Guide](#users-guide)
   - [Install](#install)
+  - [Minimal Example](#minimal-example)
+  - [General Limitations](#general-limitations)
 - [Structure of the Project](#structure-of-the-project)
-- [General Limitations](#general-limitations)
 - [Developers Guide](#developers-guide)
   - [Install Dev Dependencies](#install-dev-dependencies)
+  - [Conventional Commit Rules](#conventional-commit-rules)
+  - [Adding new translation targets](#adding-new-translation-targets)
+  - [Syntax Checking](#syntax-checking)
+  - [Tests](#tests)
+    - [Test Style Guidelines](#test-style-guidelines)
+      - [File IO](#file-io)
+      - [Directory structure and file names](#directory-structure-and-file-names)
+      - [Unit tests](#unit-tests)
+      - [Integration tests](#integration-tests)
+      - [System tests](#system-tests)
+      - [Adding new functionalities and tests required](#adding-new-functionalities-and-tests-required)
+      - [Updating tests](#updating-tests)
+
 
 
 ## Users Guide
 
 ### Install
+
 You can install the ElasticAI.creator as a dependency using pip:
 ```bash
 python3 -m pip install elasticai-creator
 ```
+
+
+### Minimal Example
+
+```python
+...
+```
+
+
+### General Limitations
+
+By now we only support Sequential models for our translations.
+
 
 
 ## Structure of the Project
@@ -38,12 +67,11 @@ It also includes the supported target representations, like the subfolder [nn](e
 Additionally, we have unit and integration tests in the [tests](tests) folder.
 
 
-## General Limitations
-
-By now we only support Sequential models for our translations.
 
 ## Developers Guide
+
 ### Install Dev Dependencies
+
 - [poetry](https://python-poetry.org/)
 - recommended:
   - [pre-commit](https://pre-commit.com/)
@@ -57,6 +85,7 @@ pre-commit install
 npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
+
 
 ### Conventional Commit Rules
 
@@ -75,8 +104,8 @@ We use conventional commits (see [here](https://www.conventionalcommits.org/en/v
 | perf         |                |
 
 
-
 ### Adding new translation targets
+
 New translation targets should be located in their own folder, e.g. vhdl for translating from any language to vhdl.
 Workflow for adding a new translation:
 1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
@@ -87,40 +116,49 @@ Workflow for adding a new translation:
 
 Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
 
+
 ### Syntax Checking
 
 [GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
 The command is as follows:
-```
+```bash
 ghdl -s path/to/vhdl/file
 ```
 For checking all vhdl files together in our project we can just run:
-```
+```bash
 ghdl -s elasticai/creator/**/*.vhd
 ```
+
 
 ### Tests
 
 Our implementation is tested with unit and integration.
 You can run one explicit test with the following statement:
 
-```python3 -m pytest ./tests/path/to/specific/test.py```
+```bash
+python3 -m pytest ./tests/path/to/specific/test.py
+```
 
 If you want to run all tests, give the path to the tests:
 
-```python3 -m pytest ./tests```
+```bash
+python3 -m pytest ./tests
+```
 
 If you want to add more tests please refer to the Test Guidelines in the following.
 
-### Test style Guidelines
 
-#### File IO
+#### Test Style Guidelines
+
+##### File IO
+
 In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
 If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
 In most cases you can use the [`InMemoryPath`](elasticai/creator/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
 
 
-### Directory structure and file names
+##### Directory structure and file names
+
 Files containing tests for a python module should be located in a test directory for the sake of separation of concerns.
 Each file in the test directory should contain tests for one and only one class/function defined in the module.
 Files containing tests should be named according to the rubric
@@ -135,30 +173,36 @@ Each class contains methods that implement a test.
 These methods are named according to the rubric
 `test_<name>_<condition>`
 
-#### Unit tests
+
+##### Unit tests
+
 In those tests each functionality of each function in the module is tested, it is the entry point  when adding new functions.
 It assures that the function behaves correctly independently of others.
 Each test has to be fast, so use of heavier libraries is discouraged.
 The input used is the minimal one needed to obtain a reproducible output.
 Dependencies should be replaced with mocks as needed.
 
-#### Integration Tests
+##### Integration Tests
+
 Here the functions' behaviour with other modules is tested.
 In this repository each integration function is in the correspondent folder.
 Then the integration with a single class of the target, or the minimum amount of classes for a functionality, is tested in each separated file.
 
-#### System tests
+##### System tests
+
 Those tests will use every component of the system, comprising multiple classes.
 Those tests include expected use cases and unexpected or stress tests.
 
-#### Adding new functionalities and tests required
+##### Adding new functionalities and tests required
+
 When adding new functions to an existing module, add unit tests in the correspondent file in the same order of the module, if a new module is created a new file should be created.
 When a bug is solved created the respective regression test to ensure that it will not return.
 Proceed similarly with integration tests.
 Creating a new file if a functionality completely different from the others is created e.g. support for a new layer.
 System tests are added if support for a new library is added.
 
-#### Updating tests
+##### Updating tests
+
 If new functionalities are changed or removed the tests are expected to reflect that, generally the ordering is unit tests -> integration tests-> system tests.
 Also, unit tests that change the dependencies should be checked, since this system is fairly small the internal dependencies are not always mocked.
 
