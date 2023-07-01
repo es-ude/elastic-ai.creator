@@ -1,8 +1,8 @@
-# ElasticAi.creator
+# ElasticAI.creator
 
 Design, train and compile neural networks optimized specifically for FPGAs.
 Obtaining a final model is typically a three stage process.
-* design and train it using the layers provided in the `elasticai.creator.qat` package.
+* design and train it using the layers provided in the `elasticai.creator.nn` package.
 * translate the model to a target representation, e.g. VHDL
 * compile the intermediate representation with a third party tool, e.g. Xilinx Vivado (TM)
 
@@ -26,7 +26,7 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 ### Install
 You can install the ElasticAI.creator as a dependency using pip:
 ```bash
-python3 -m pip install "elasticai.creator"
+python3 -m pip install elasticai-creator
 ```
 
 
@@ -34,8 +34,8 @@ python3 -m pip install "elasticai.creator"
 
 The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
-It also includes the supported target representations, like the subfolder [vhdl](elasticai/creator/hdl/vhdl) is for the translation to vhdl.
-Additionally, we have folders for [unit tests](elasticai/creator/tests/unit) and [integration tests](elasticai/creator/tests/integration).
+It also includes the supported target representations, like the subfolder [nn](elasticai/creator/nn) is for the translation to vhdl.
+Additionally, we have unit and integration tests in the [tests](tests) folder.
 
 
 ## General Limitations
@@ -58,26 +58,23 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
-### Commit Message Types
-The following commit message types are allowed:
-  - feat
-  - fix
-  - docs
-  - style
-  - refactor
-  - revert
-  - chore
-  - wip
-  - perf
+### Conventional Commit Rules
 
-### Commit Message Scopes
-The following commit message scopes are allowed:
-  - template
-  - translation
-  - nn
-  - transformation
-  - unit
-  - integration
+We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types and message scopes are allowed. The message scope is optional.
+
+| Commit Types | Message Scopes |
+|--------------|----------------|
+| feat         | template       |
+| fix          | translation    |
+| docs         | nn             |
+| style        | transformation |
+| refactor     | unit           |
+| revert       | integration    |
+| chore        |                |
+| wip          |                |
+| perf         |                |
+
+
 
 ### Adding new translation targets
 New translation targets should be located in their own folder, e.g. vhdl for translating from any language to vhdl.
@@ -104,15 +101,14 @@ ghdl -s elasticai/creator/**/*.vhd
 
 ### Tests
 
-Our implementation is fully tested with unit, integration and system tests.
-Please refer to the system tests as examples of how to use the Elastic Ai Creator Translator.
+Our implementation is tested with unit and integration.
 You can run one explicit test with the following statement:
 
-```python -m unittest discover -p "test_*.py" elasticai/creator/path/to/test.py```
+```python3 -m pytest ./tests/path/to/specific/test.py```
 
 If you want to run all tests, give the path to the tests:
 
-```python -m unittest discover -p "test_*.py" elasticai/creator/path/to/testfolder```
+```python3 -m pytest ./tests```
 
 If you want to add more tests please refer to the Test Guidelines in the following.
 
@@ -121,14 +117,15 @@ If you want to add more tests please refer to the Test Guidelines in the followi
 #### File IO
 In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
 If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
+In most cases you can use the [`InMemoryPath`](elasticai/creator/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
 
 
-#### Diectory structure and file names
+### Directory structure and file names
 Files containing tests for a python module should be located in a test directory for the sake of separation of concerns.
 Each file in the test directory should contain tests for one and only one class/function defined in the module.
 Files containing tests should be named according to the rubric
-`test_ClassName.py`.
-Next, if needed for more specific tests define a class. Then subclass it, in this class define a setUp method (and possibly tearDown) to create the global environment.
+`test_<class_name>.py`.
+Next, if needed for more specific tests define a class. Then subclass it.
 It avoids introducing the category of bugs associated with copying and pasting code for reuse.
 This class should be named similarly to the file name.
 There's a category of bugs that appear if  the initialization parameters defined at the top of the test file are directly used: some tests require the initialization parameters to be changed slightly.
@@ -136,7 +133,7 @@ Its possible to define a parameter and have it change in memory as a result of a
 Subsequent tests will therefore throw errors.
 Each class contains methods that implement a test.
 These methods are named according to the rubric
-`test_name_condition`
+`test_<name>_<condition>`
 
 #### Unit tests
 In those tests each functionality of each function in the module is tested, it is the entry point  when adding new functions.
