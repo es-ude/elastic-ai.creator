@@ -8,7 +8,7 @@ from elasticai.creator.base_modules.autograd_functions.round_to_custom_float imp
 )
 
 
-class CustomFloatArithmetics(Arithmetics):
+class FloatArithmetics(Arithmetics):
     def __init__(self, mantissa_bits: int, exponent_bits: int) -> None:
         self.mantissa_bits = mantissa_bits
         self.exponent_bits = exponent_bits
