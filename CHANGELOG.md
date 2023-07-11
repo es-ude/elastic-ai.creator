@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v0.50.0 (2023-07-11)
+
+### Feature
+
+* Implement custom float arithmetics ([`b72713e`](https://github.com/es-ude/elastic-ai.creator/commit/b72713e3db1e15957e865ed95216a2f180523114))
+* Implement RoundToCustomFloat autograd function ([`0794a8e`](https://github.com/es-ude/elastic-ai.creator/commit/0794a8e900d6f87edc03dbd71162e7300e13b5ae))
+
+### Fix
+
+* Return wrong number of values in the backward pass ([`6bcfa4e`](https://github.com/es-ude/elastic-ai.creator/commit/6bcfa4eff8d9b7c0c0461a61800ef68ef6b0cb62))
+
 ## v0.49.0 (2023-07-01)
 
 ### Feature
