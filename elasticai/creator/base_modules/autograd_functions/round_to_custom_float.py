@@ -36,4 +36,4 @@ class RoundToCustomFloat(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        return *grad_outputs, None
+        return *grad_outputs, None, None
