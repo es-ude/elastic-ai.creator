@@ -1,14 +1,14 @@
 import torch
 
-from elasticai.creator.base_modules.arithmetics.float_arithmetics import (
-    FloatArithmetics,
+from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
+    TorchArithmetics,
 )
 from tests.tensor_test_case import TensorTestCase
 
 
-class FloatArithmeticsTest(TensorTestCase):
+class TorchArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
-        self.ops = FloatArithmetics()
+        self.ops = TorchArithmetics()
 
     def test_quantize(self) -> None:
         a = torch.tensor([0, 1.5, 2.25, 3.123456])

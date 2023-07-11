@@ -5,7 +5,7 @@ import torch
 from .arithmetics import Arithmetics
 
 
-class FloatArithmetics(Arithmetics):
+class TorchArithmetics(Arithmetics):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return a
 

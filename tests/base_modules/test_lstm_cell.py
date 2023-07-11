@@ -4,8 +4,8 @@ import torch
 from torch.nn.parameter import Parameter
 
 from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
-from elasticai.creator.base_modules.arithmetics.float_arithmetics import (
-    FloatArithmetics,
+from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
+    TorchArithmetics,
 )
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from tests.tensor_test_case import TensorTestCase
@@ -19,7 +19,7 @@ def create_lstm_cell_and_reference(
     input_size: int,
     hidden_size: int,
     bias: bool,
-    arithmetics: Arithmetics = FloatArithmetics(),
+    arithmetics: Arithmetics = TorchArithmetics(),
 ) -> tuple[LSTMCell, torch.nn.LSTMCell]:
     cell = LSTMCell(
         input_size=input_size,
@@ -49,7 +49,7 @@ def create_lstm_cell_and_reference(
 
 
 @dataclass
-class FixedMulArithmetics(FloatArithmetics):
+class FixedMulArithmetics(TorchArithmetics):
     values: list[float]
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -57,7 +57,7 @@ class FixedMulArithmetics(FloatArithmetics):
 
 
 @dataclass
-class FixedAddArithmetics(FloatArithmetics):
+class FixedAddArithmetics(TorchArithmetics):
     values: list[float]
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -140,7 +140,7 @@ class LSTMCellTest(TensorTestCase):
             input_size=1,
             hidden_size=2,
             bias=False,
-            arithmetics=FloatArithmetics(),
+            arithmetics=TorchArithmetics(),
             sigmoid_factory=ZeroActivation,
             tanh_factory=torch.nn.Tanh,
         )
@@ -156,7 +156,7 @@ class LSTMCellTest(TensorTestCase):
             input_size=1,
             hidden_size=2,
             bias=False,
-            arithmetics=FloatArithmetics(),
+            arithmetics=TorchArithmetics(),
             sigmoid_factory=torch.nn.Sigmoid,
             tanh_factory=ZeroActivation,
         )
