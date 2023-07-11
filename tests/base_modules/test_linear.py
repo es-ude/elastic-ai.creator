@@ -4,8 +4,8 @@ import torch
 from torch.nn.parameter import Parameter
 
 from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
-from elasticai.creator.base_modules.arithmetics.float_arithmetics import (
-    FloatArithmetics,
+from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
+    TorchArithmetics,
 )
 from elasticai.creator.base_modules.linear import Linear
 from tests.tensor_test_case import TensorTestCase
@@ -19,7 +19,7 @@ def linear_base_with_fixed_params(
     in_features: int,
     out_features: int,
     bias: bool,
-    arithmetics: Arithmetics = FloatArithmetics(),
+    arithmetics: Arithmetics = TorchArithmetics(),
 ) -> Linear:
     linear = Linear(
         in_features=in_features,
@@ -33,13 +33,13 @@ def linear_base_with_fixed_params(
     return linear
 
 
-class AddThreeArithmetics(FloatArithmetics):
+class AddThreeArithmetics(TorchArithmetics):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return a + 3
 
 
 @dataclass
-class FixedMatmulResultArithmetics(FloatArithmetics):
+class FixedMatmulResultArithmetics(TorchArithmetics):
     value: list[float]
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -47,7 +47,7 @@ class FixedMatmulResultArithmetics(FloatArithmetics):
 
 
 @dataclass
-class FixedAddResultArithmetics(FloatArithmetics):
+class FixedAddResultArithmetics(TorchArithmetics):
     value: list[float]
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:

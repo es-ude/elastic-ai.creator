@@ -3,8 +3,8 @@ from typing import Any, Optional, cast
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics.float_arithmetics import (
-    FloatArithmetics,
+from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
+    TorchArithmetics,
 )
 from elasticai.creator.base_modules.lstm import LSTM
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
@@ -45,7 +45,7 @@ class OutputsZeroLSTMCell(LSTMCell):
             input_size=input_size,
             hidden_size=hidden_size,
             bias=bias,
-            arithmetics=FloatArithmetics(),
+            arithmetics=TorchArithmetics(),
             sigmoid_factory=torch.nn.Sigmoid,
             tanh_factory=torch.nn.Tanh,
         )
