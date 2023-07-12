@@ -3,7 +3,7 @@ from typing import Any
 import torch
 
 
-class RoundToCustomFloat(torch.autograd.Function):
+class RoundToFloat(torch.autograd.Function):
     @staticmethod
     def jvp(ctx: Any, *grad_inputs: Any) -> Any:
         raise NotImplementedError()

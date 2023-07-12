@@ -3,8 +3,8 @@ from typing import cast
 import pytest
 import torch
 
-from elasticai.creator.base_modules.autograd_functions.round_to_custom_float import (
-    RoundToCustomFloat,
+from elasticai.creator.base_modules.autograd_functions.round_to_float import (
+    RoundToFloat,
 )
 from tests.tensor_test_case import assertTensorEqual
 
@@ -14,9 +14,7 @@ def roundToFloat(
 ) -> torch.Tensor:
     if not isinstance(inputs, torch.Tensor):
         inputs = torch.tensor(inputs)
-    return cast(
-        torch.Tensor, RoundToCustomFloat.apply(inputs, mantissa_bits, exponent_bits)
-    )
+    return cast(torch.Tensor, RoundToFloat.apply(inputs, mantissa_bits, exponent_bits))
 
 
 @pytest.mark.parametrize(

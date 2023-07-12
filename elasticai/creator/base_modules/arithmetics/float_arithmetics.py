@@ -3,8 +3,8 @@ from typing import Optional, cast
 import torch
 
 from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
-from elasticai.creator.base_modules.autograd_functions.round_to_custom_float import (
-    RoundToCustomFloat,
+from elasticai.creator.base_modules.autograd_functions.round_to_float import (
+    RoundToFloat,
 )
 
 
@@ -35,7 +35,7 @@ class FloatArithmetics(Arithmetics):
     def round(self, a: torch.Tensor) -> torch.Tensor:
         return cast(
             torch.Tensor,
-            RoundToCustomFloat.apply(a, self.mantissa_bits, self.exponent_bits),
+            RoundToFloat.apply(a, self.mantissa_bits, self.exponent_bits),
         )
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
