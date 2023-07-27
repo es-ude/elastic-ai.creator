@@ -5,10 +5,6 @@ import torch
 
 class IdentityStepFunction(torch.autograd.Function):
     @staticmethod
-    def jvp(ctx: Any, *grad_inputs: Any) -> Any:
-        raise NotImplementedError()
-
-    @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 2:
             raise TypeError(
