@@ -3,7 +3,7 @@ from typing import Any
 import torch
 
 
-class RoundToCustomFloat(torch.autograd.Function):
+class RoundToFloat(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 3:
