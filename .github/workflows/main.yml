@@ -9,7 +9,6 @@ jobs:
   checks:
     uses: ./.github/workflows/checks.yml
 
-  # the jobs below are taken from the actions in https://github.com/relekang/python-semantic-release under MIT License
   beautify:
     needs: [ checks ]
     uses: ./.github/workflows/beautify.yml
@@ -35,13 +34,17 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.beautify.outputs.new_sha }}
 
-      - name: Semantic Release
+      - name: Install semantic release
+        run: pip install python-semantic-release==7.34.6
+
+      - name: Set git user
+        run: |
+          git config user.name github-actions
+          git config user.email action@github.com
+
+      - name: Run semantic release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_PROJECT_API_TOKEN }}
-        run: |
-          pip install python-semantic-release
-          git config user.name github-actions
-          git config user.email action@github.com
-          semantic-release publish
+        run: semantic-release publish

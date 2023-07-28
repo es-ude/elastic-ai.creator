@@ -5,10 +5,6 @@ import torch
 
 class RoundToFloat(torch.autograd.Function):
     @staticmethod
-    def jvp(ctx: Any, *grad_inputs: Any) -> Any:
-        raise NotImplementedError()
-
-    @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 3:
             raise TypeError(

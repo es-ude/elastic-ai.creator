@@ -1,6 +1,3 @@
-""" This file corresponds to the functional module in pytorch. We keep here custom autograd functions
-"""
-
 from typing import Any
 
 import torch
