@@ -2,6 +2,23 @@
 
 <!--next-version-placeholder-->
 
+## v0.51.0 (2023-07-28)
+
+### Feature
+
+* Revert changes and explicitly set semantic release version to v7 instead of v8 ([`2ecf0db`](https://github.com/es-ude/elastic-ai.creator/commit/2ecf0db3c22ce034c4f36a26c96027f0229a4bf0))
+* Increase semantic release version to v8.0.4 ([`bb29612`](https://github.com/es-ude/elastic-ai.creator/commit/bb2961243f20ade3e7c4a142601f58fca6e9b5ad))
+* Apply proposed semantic release migration procedure ([`d5ea981`](https://github.com/es-ude/elastic-ai.creator/commit/d5ea981cd8852e5790c77d9667187168c34c81e3))
+* Seperate semantic release run into multiple steps ([`475b425`](https://github.com/es-ude/elastic-ai.creator/commit/475b425910c4a124c34ca9a68fd5c49b4789541b))
+* Enable debug messages ([`36ca597`](https://github.com/es-ude/elastic-ai.creator/commit/36ca597ded38bb3c5343e872ed7cf9cb09065a6f))
+* Add debug messages ([`ee09864`](https://github.com/es-ude/elastic-ai.creator/commit/ee09864686d87471617aae4ae65118096d31a6ff))
+* Rename custom float to float to improve readability ([`794bfe7`](https://github.com/es-ude/elastic-ai.creator/commit/794bfe79a6a821050b33cc246e9e1cad09e7e682))
+
+### Fix
+
+* Try to fix semantic release ([`0eab187`](https://github.com/es-ude/elastic-ai.creator/commit/0eab187389b3d435be473671d4a593ead8586e78))
+* Remove not implemented jvp function ([`0ea4834`](https://github.com/es-ude/elastic-ai.creator/commit/0ea48341c02d116dd3ef2a94e0997ce8e0641b60))
+
 ## v0.50.0 (2023-07-11)
 
 ### Feature
