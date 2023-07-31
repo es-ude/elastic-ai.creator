@@ -11,6 +11,6 @@ class SiLU(torch.nn.SiLU):
         self.beta = torch.nn.Parameter(torch.zeros(1, requires_grad=True))
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        a = super().forward(self.scale * input - self.beta)
+        a = self.scale * super().forward(input) + self.beta
         x = self._arithmetics.quantize(a)
         return x
