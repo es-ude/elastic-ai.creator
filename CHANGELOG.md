@@ -2,6 +2,15 @@
 
 <!--next-version-placeholder-->
 
+## v0.52.0 (2023-08-02)
+
+### Feature
+
+* Added Swish activation function precomputed ([`26d292e`](https://github.com/es-ude/elastic-ai.creator/commit/26d292e83183ac0b6bee7afa70f3d616e42b2438))
+* Added Swish activation function precomputed ([`fd487b5`](https://github.com/es-ude/elastic-ai.creator/commit/fd487b57bb7d3e7525f935f1533f815e58f1dc0d))
+* Added nn module for Swish activation function ([`b7579c9`](https://github.com/es-ude/elastic-ai.creator/commit/b7579c9f1111521064a7fd0366647da7a45e2d7a))
+* Implemeted base module for SiLU aka Swish activation function ([`93b5954`](https://github.com/es-ude/elastic-ai.creator/commit/93b59544c1d164de2a9f9362f0aefe1aaae8d7d8))
+
 ## v0.51.0 (2023-07-28)
 
 ### Feature
