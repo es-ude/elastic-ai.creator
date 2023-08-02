@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.53.0 (2023-08-02)
+
+### Feature
+
+* Implement fixed point one dimensional convolution ([`2ea9389`](https://github.com/es-ude/elastic-ai.creator/commit/2ea9389a37eac7be62e26a9727b8824b47fc2085))
+
+### Fix
+
+* Fix missing parameter in tests for conv1d ([`d8f8d4c`](https://github.com/es-ude/elastic-ai.creator/commit/d8f8d4c40ec1576c5dc58a38b2b80d9d4130b4fd))
+
 ## v0.52.0 (2023-08-02)
 
 ### Feature
