@@ -11,6 +11,7 @@ def make_conv1d() -> FPConv1d:
         out_channels=4,
         kernel_size=2,
         bias=False,
+        signal_length=5,
     )
 
 
