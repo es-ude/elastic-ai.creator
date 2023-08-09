@@ -1,9 +1,9 @@
 from elasticai.creator.base_modules.tanh import Tanh
 
-from .fp_monotonic_increasing_module import FPPrecomputedMonotonicIncreasingModule
+from .fp_precomputed_module import FPPrecomputedModule
 
 
-class FPTanh(FPPrecomputedMonotonicIncreasingModule):
+class FPTanh(FPPrecomputedModule):
     def __init__(
         self,
         total_bits: int,
