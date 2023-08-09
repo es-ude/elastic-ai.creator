@@ -75,5 +75,10 @@ def bin_representation(bin_value: str) -> str:
     return f'"{bin_value}"'
 
 
-def to_vhdl_binary_string(number: int) -> str:
-    return f'"{number:b}"'
+def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
+    if abs(number) >= 2**number_of_bits:
+        raise ValueError(
+            f"Value '{number}' cannot be represented with {number_of_bits} bits."
+        )
+    number_of_digits = number_of_bits + 1 if number < 0 else number_of_bits
+    return f'"{number:0{number_of_digits}b}"'

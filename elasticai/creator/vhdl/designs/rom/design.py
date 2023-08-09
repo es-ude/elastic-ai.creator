@@ -42,8 +42,8 @@ class Rom:
         return list(map(to_uint, values))
 
     def _rom_values(self) -> str:
-        values = map(to_vhdl_binary_string, self._values)
-        return ",".join(values)
+        to_binary = partial(to_vhdl_binary_string, number_of_bits=self._data_width)
+        return ",".join(map(to_binary, self._values))
 
     def _append_zeros_to_fill_addressable_memory(self, values: list[int]) -> list[int]:
         missing_number_of_zeros = 2**self._address_width - len(values)

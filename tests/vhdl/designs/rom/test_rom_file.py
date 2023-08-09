@@ -54,7 +54,7 @@ def address_width(rom_code) -> Callable[[list[int]], int]:
 @pytest.mark.parametrize(
     ("values_as_integers", "expected_rom_values"),
     [
-        ([0, 0], ("0", "0")),
+        ([0, 0], ("00000000", "00000000")),
         ([175, 187], ("10101111", "10111011")),
     ],
 )
@@ -70,8 +70,8 @@ def test_generating_correct_rom_values(
 @pytest.mark.parametrize(
     ("values_as_integers", "expected_rom_values"),
     [
-        ([1] * 3, ("1", "1", "1", "0")),
-        ([1] * 18, tuple(["1"] * 18 + ["0"] * 14)),
+        ([1] * 3, ("00000001", "00000001", "00000001", "00000000")),
+        ([1] * 18, tuple(["00000001"] * 18 + ["00000000"] * 14)),
     ],
 )
 def test_rom_values_are_padded_correctly(
