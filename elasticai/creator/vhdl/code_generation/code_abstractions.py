@@ -1,4 +1,3 @@
-import math
 from collections.abc import Sequence
 
 from elasticai.creator.vhdl.design_base.signal import Signal
@@ -76,8 +75,10 @@ def bin_representation(bin_value: str) -> str:
     return f'"{bin_value}"'
 
 
-def to_vhdl_hex_string(number: int, bit_width: int) -> str:
-    def to_hex(number: int, bit_width: int) -> str:
-        return f"{number:0{math.ceil(bit_width / 4)}x}"
-
-    return f"'x{to_hex(number, bit_width)}'"
+def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
+    if abs(number) >= 2**number_of_bits:
+        raise ValueError(
+            f"Value '{number}' cannot be represented with {number_of_bits} bits."
+        )
+    number_of_digits = number_of_bits + 1 if number < 0 else number_of_bits
+    return f'"{number:0{number_of_digits}b}"'

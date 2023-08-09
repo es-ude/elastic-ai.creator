@@ -1,68 +1,43 @@
 import re
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 
-from elasticai.creator.in_memory_path import InMemoryPath
+from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.vhdl.designs.rom import Rom
 
 from .utils import extract_rom_values
 
 
 @pytest.fixture
-def rom_name():
+def rom_name() -> str:
     return "test_rom"
 
 
 @pytest.fixture
-def build_root():
+def build_root() -> InMemoryPath:
     return InMemoryPath("build", parent=None)
 
 
 @pytest.fixture
-def rom_destination(build_root, rom_name):
-    return build_root.create_subpath(rom_name)
+def rom_code(
+    rom_name: str, build_root: InMemoryPath
+) -> Callable[[list[int]], list[str]]:
+    destination = build_root.create_subpath(rom_name)
+
+    def generate_code(values_as_integers: list[int]) -> list[str]:
+        rom = Rom(name=rom_name, data_width=8, values_as_integers=values_as_integers)
+        rom.save_to(destination)
+        return cast(InMemoryFile, build_root[rom_name]).text
+
+    return generate_code
 
 
 @pytest.fixture
-def built_rom_file(build_root, rom_name, rom_destination):
-    class Wrapper:
-        @property
-        def text(self) -> list[str]:
-            return build_root[rom_name].text
-
-    return Wrapper()
-
-
-def test_generating_00_00(rom_destination, rom_name, built_rom_file):
-    rom = Rom(rom_name, data_width=8, values_as_integers=[0, 0])
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(built_rom_file.text)
-    assert actual == ("00", "00")
-
-
-def test_generate_af_bb(rom_destination, rom_name, built_rom_file):
-    rom = Rom(
-        rom_name,
-        data_width=8,
-        values_as_integers=[2**4 * 10 + 15, 2**4 * 11 + 11],
-    )
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(built_rom_file.text)
-    assert actual == ("af", "bb")
-
-
-def test_generate_0000(rom_destination, rom_name, built_rom_file):
-    rom = Rom(rom_name, data_width=16, values_as_integers=[0, 0])
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(built_rom_file.text)
-    assert actual == ("0000", "0000")
-
-
-@pytest.fixture
-def get_address_width(built_rom_file) -> Callable[[], int]:
-    def extract() -> int:
-        text = built_rom_file.text
+def address_width(rom_code) -> Callable[[list[int]], int]:
+    def extract(values_as_integers: list[int]) -> int:
+        text = rom_code(values_as_integers)
         actual = 0
         for line in text:
             match = re.match(
@@ -76,31 +51,48 @@ def get_address_width(built_rom_file) -> Callable[[], int]:
     return extract
 
 
-def test_address_width_is_1(rom_destination, rom_name, get_address_width):
-    rom = Rom(rom_name, data_width=8, values_as_integers=[0, 0])
-    rom.save_to(rom_destination)
-    assert get_address_width() == 1
+@pytest.mark.parametrize(
+    ("values_as_integers", "expected_rom_values"),
+    [
+        ([0, 0], ("00000000", "00000000")),
+        ([175, 187], ("10101111", "10111011")),
+    ],
+)
+def test_generating_correct_rom_values(
+    rom_code: Callable[[list[int]], list[str]],
+    values_as_integers: list[int],
+    expected_rom_values: tuple[str, ...],
+) -> None:
+    code = rom_code(values_as_integers)
+    assert extract_rom_values(code) == expected_rom_values
 
 
-def test_address_width_is_3(rom_destination, rom_name, get_address_width):
-    rom = Rom(rom_name, data_width=8, values_as_integers=[0, 0, 0, 0, 0])
-    rom.save_to(rom_destination)
-    assert get_address_width() == 3
+@pytest.mark.parametrize(
+    ("values_as_integers", "expected_rom_values"),
+    [
+        ([1] * 3, ("00000001", "00000001", "00000001", "00000000")),
+        ([1] * 18, tuple(["00000001"] * 18 + ["00000000"] * 14)),
+    ],
+)
+def test_rom_values_are_padded_correctly(
+    rom_code: Callable[[list[int]], list[str]],
+    values_as_integers: list[int],
+    expected_rom_values: list[str],
+) -> None:
+    code = rom_code(values_as_integers)
+    assert extract_rom_values(code) == expected_rom_values
 
 
-def test_rom_values_are_filled_up_from_3_to_4(
-    rom_destination, rom_name, built_rom_file
-):
-    rom = Rom(rom_name, data_width=8, values_as_integers=[1] * 3)
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(built_rom_file.text)
-    assert actual == ("01", "01", "01", "00")
-
-
-def test_rom_values_are_filled_up_from_18_to_32(
-    rom_destination, rom_name, built_rom_file
-):
-    rom = Rom(rom_name, data_width=8, values_as_integers=[1] * 18)
-    rom.save_to(rom_destination)
-    actual = extract_rom_values(built_rom_file.text)
-    assert actual == tuple(["01"] * 18 + ["00"] * 14)
+@pytest.mark.parametrize(
+    ("values_as_integers", "expected_address_width"),
+    [
+        ([0, 0], 1),
+        ([0, 0, 0, 0, 0], 3),
+    ],
+)
+def test_address_width_is_set_correctly(
+    address_width: Callable[[list[int]], int],
+    values_as_integers: list[int],
+    expected_address_width: int,
+) -> None:
+    assert address_width(values_as_integers) == expected_address_width
