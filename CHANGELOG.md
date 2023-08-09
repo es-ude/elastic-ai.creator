@@ -2,6 +2,35 @@
 
 <!--next-version-placeholder-->
 
+## v0.54.0 (2023-08-09)
+
+### Feature
+
+* Use binary values instead of hex values to fill the rom template ([`af56c02`](https://github.com/es-ude/elastic-ai.creator/commit/af56c02da42433c2db1a9a2a6ddb3705d213d765))
+
+### Fix
+
+* Use same bit width for all rom values ([`cd609e6`](https://github.com/es-ude/elastic-ai.creator/commit/cd609e65f306e62110fbdc4113f4bb330f960f19))
+
+## v0.53.0 (2023-08-02)
+
+### Feature
+
+* Implement fixed point one dimensional convolution ([`2ea9389`](https://github.com/es-ude/elastic-ai.creator/commit/2ea9389a37eac7be62e26a9727b8824b47fc2085))
+
+### Fix
+
+* Fix missing parameter in tests for conv1d ([`d8f8d4c`](https://github.com/es-ude/elastic-ai.creator/commit/d8f8d4c40ec1576c5dc58a38b2b80d9d4130b4fd))
+
+## v0.52.0 (2023-08-02)
+
+### Feature
+
+* Added Swish activation function precomputed ([`26d292e`](https://github.com/es-ude/elastic-ai.creator/commit/26d292e83183ac0b6bee7afa70f3d616e42b2438))
+* Added Swish activation function precomputed ([`fd487b5`](https://github.com/es-ude/elastic-ai.creator/commit/fd487b57bb7d3e7525f935f1533f815e58f1dc0d))
+* Added nn module for Swish activation function ([`b7579c9`](https://github.com/es-ude/elastic-ai.creator/commit/b7579c9f1111521064a7fd0366647da7a45e2d7a))
+* Implemeted base module for SiLU aka Swish activation function ([`93b5954`](https://github.com/es-ude/elastic-ai.creator/commit/93b59544c1d164de2a9f9362f0aefe1aaae8d7d8))
+
 ## v0.51.0 (2023-07-28)
 
 ### Feature

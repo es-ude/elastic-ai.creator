@@ -1,9 +1,9 @@
 from elasticai.creator.base_modules.sigmoid import Sigmoid
 
-from .fp_monotonic_increasing_module import FPPrecomputedMonotonicIncreasingModule
+from .fp_precomputed_module import FPPrecomputedModule
 
 
-class FPSigmoid(FPPrecomputedMonotonicIncreasingModule):
+class FPSigmoid(FPPrecomputedModule):
     def __init__(
         self,
         total_bits: int,

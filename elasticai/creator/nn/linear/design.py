@@ -81,7 +81,7 @@ class FPLinear(Design):
                 **self._template_parameters(),
             ),
         )
-        destination.create_subpath(self.name).as_file(f".vhd").write(template)
+        destination.create_subpath(self.name).as_file(".vhd").write(template)
 
         weights_rom = Rom(
             name=rom_name["weights"],
