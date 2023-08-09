@@ -1,4 +1,5 @@
 from .batch_normed_linear import FPBatchNormedLinear
+from .conv1d import FPConv1d
 from .hard_sigmoid import FPHardSigmoid
 from .hard_tanh import FPHardTanh
 from .identity import BufferedIdentity, BufferlessIdentity

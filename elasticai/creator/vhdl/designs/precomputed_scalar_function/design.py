@@ -10,7 +10,7 @@ from elasticai.creator.vhdl.design_base.ports import Port
 from elasticai.creator.vhdl.savable import Path
 
 
-class PrecomputedMonotonicIncreasingScalarFunction(Design):
+class PrecomputedScalarFunction(Design):
     _template_package = module_to_package(__name__)
 
     def __init__(
@@ -25,7 +25,7 @@ class PrecomputedMonotonicIncreasingScalarFunction(Design):
         self._function = function
         self._inputs = inputs
         self._template = InProjectTemplate(
-            file_name="precomputed_monotonic_increasing_scalar_function.tpl.vhd",
+            file_name="precomputed_scalar_function.tpl.vhd",
             package=self._template_package,
             parameters=dict(name=self.name, data_width=str(width)),
         )

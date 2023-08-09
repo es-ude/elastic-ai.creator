@@ -2,6 +2,82 @@
 
 <!--next-version-placeholder-->
 
+## v0.53.0 (2023-08-02)
+
+### Feature
+
+* Implement fixed point one dimensional convolution ([`2ea9389`](https://github.com/es-ude/elastic-ai.creator/commit/2ea9389a37eac7be62e26a9727b8824b47fc2085))
+
+### Fix
+
+* Fix missing parameter in tests for conv1d ([`d8f8d4c`](https://github.com/es-ude/elastic-ai.creator/commit/d8f8d4c40ec1576c5dc58a38b2b80d9d4130b4fd))
+
+## v0.52.0 (2023-08-02)
+
+### Feature
+
+* Added Swish activation function precomputed ([`26d292e`](https://github.com/es-ude/elastic-ai.creator/commit/26d292e83183ac0b6bee7afa70f3d616e42b2438))
+* Added Swish activation function precomputed ([`fd487b5`](https://github.com/es-ude/elastic-ai.creator/commit/fd487b57bb7d3e7525f935f1533f815e58f1dc0d))
+* Added nn module for Swish activation function ([`b7579c9`](https://github.com/es-ude/elastic-ai.creator/commit/b7579c9f1111521064a7fd0366647da7a45e2d7a))
+* Implemeted base module for SiLU aka Swish activation function ([`93b5954`](https://github.com/es-ude/elastic-ai.creator/commit/93b59544c1d164de2a9f9362f0aefe1aaae8d7d8))
+
+## v0.51.0 (2023-07-28)
+
+### Feature
+
+* Revert changes and explicitly set semantic release version to v7 instead of v8 ([`2ecf0db`](https://github.com/es-ude/elastic-ai.creator/commit/2ecf0db3c22ce034c4f36a26c96027f0229a4bf0))
+* Increase semantic release version to v8.0.4 ([`bb29612`](https://github.com/es-ude/elastic-ai.creator/commit/bb2961243f20ade3e7c4a142601f58fca6e9b5ad))
+* Apply proposed semantic release migration procedure ([`d5ea981`](https://github.com/es-ude/elastic-ai.creator/commit/d5ea981cd8852e5790c77d9667187168c34c81e3))
+* Seperate semantic release run into multiple steps ([`475b425`](https://github.com/es-ude/elastic-ai.creator/commit/475b425910c4a124c34ca9a68fd5c49b4789541b))
+* Enable debug messages ([`36ca597`](https://github.com/es-ude/elastic-ai.creator/commit/36ca597ded38bb3c5343e872ed7cf9cb09065a6f))
+* Add debug messages ([`ee09864`](https://github.com/es-ude/elastic-ai.creator/commit/ee09864686d87471617aae4ae65118096d31a6ff))
+* Rename custom float to float to improve readability ([`794bfe7`](https://github.com/es-ude/elastic-ai.creator/commit/794bfe79a6a821050b33cc246e9e1cad09e7e682))
+
+### Fix
+
+* Try to fix semantic release ([`0eab187`](https://github.com/es-ude/elastic-ai.creator/commit/0eab187389b3d435be473671d4a593ead8586e78))
+* Remove not implemented jvp function ([`0ea4834`](https://github.com/es-ude/elastic-ai.creator/commit/0ea48341c02d116dd3ef2a94e0997ce8e0641b60))
+
+## v0.50.0 (2023-07-11)
+
+### Feature
+
+* Implement custom float arithmetics ([`b72713e`](https://github.com/es-ude/elastic-ai.creator/commit/b72713e3db1e15957e865ed95216a2f180523114))
+* Implement RoundToCustomFloat autograd function ([`0794a8e`](https://github.com/es-ude/elastic-ai.creator/commit/0794a8e900d6f87edc03dbd71162e7300e13b5ae))
+
+### Fix
+
+* Return wrong number of values in the backward pass ([`6bcfa4e`](https://github.com/es-ude/elastic-ai.creator/commit/6bcfa4eff8d9b7c0c0461a61800ef68ef6b0cb62))
+
+## v0.49.0 (2023-07-01)
+
+### Feature
+
+* Update readme and add small improvements ([`8f2bbd0`](https://github.com/es-ude/elastic-ai.creator/commit/8f2bbd093e18c15421abab20ecb0f9afbc6d12a1))
+
+### Documentation
+
+* Add minimal example that demonstrates the usage of the creator ([`64030f2`](https://github.com/es-ude/elastic-ai.creator/commit/64030f2eb129ff8275022ab0b8bf4945d42626a8))
+* Complete table of contents ([`cf0ef63`](https://github.com/es-ude/elastic-ai.creator/commit/cf0ef63eb628521f14406fb7d59cee53c71c8d60))
+
+## v0.48.1 (2023-06-24)
+
+### Fix
+
+* Only create coverage reports in PR ([`1bd728f`](https://github.com/es-ude/elastic-ai.creator/commit/1bd728f4e8edb6595a35dafd71c5d68263a7358f))
+
+## v0.48.0 (2023-06-24)
+
+### Feature
+
+* Only trigger coverage report when pushing to main ([`b4b23c9`](https://github.com/es-ude/elastic-ai.creator/commit/b4b23c988803165895c14a8357427a3069f09233))
+* Add coverage workflow to create reports ([`3f6caca`](https://github.com/es-ude/elastic-ai.creator/commit/3f6caca6a626923ec3d8078320fa9b70092495ee))
+* Add pytest-cov dependency ([`a737729`](https://github.com/es-ude/elastic-ai.creator/commit/a7377290ffee7359f6f8c0392960d7038fe2a73b))
+
+### Fix
+
+* Use poetry run to run pytest ([`7058e42`](https://github.com/es-ude/elastic-ai.creator/commit/7058e42cc7fa0849841578f2bafd6a3fc6155f2a))
+
 ## v0.47.2 (2023-06-23)
 
 ### Fix
