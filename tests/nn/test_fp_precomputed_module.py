@@ -3,9 +3,7 @@ from typing import cast
 import torch
 
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.precomputed.fp_monotonic_increasing_module import (
-    FPPrecomputedMonotonicIncreasingModule,
-)
+from elasticai.creator.nn.precomputed.fp_precomputed_module import FPPrecomputedModule
 
 
 def test_vhdl_code_matches_expected_for_tanh_as_base_module() -> None:
@@ -38,7 +36,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    tanh = FPPrecomputedMonotonicIncreasingModule(
+    tanh = FPPrecomputedModule(
         base_module=torch.nn.Tanh(),
         total_bits=8,
         frac_bits=2,
@@ -82,7 +80,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    sigmoid = FPPrecomputedMonotonicIncreasingModule(
+    sigmoid = FPPrecomputedModule(
         base_module=torch.nn.Sigmoid(),
         total_bits=8,
         frac_bits=2,

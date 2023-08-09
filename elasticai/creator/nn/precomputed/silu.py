@@ -6,10 +6,10 @@ from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 
-from .fp_monotonic_increasing_module import FPPrecomputedMonotonicIncreasingModule
+from .fp_precomputed_module import FPPrecomputedModule
 
 
-class FPSiLU(FPPrecomputedMonotonicIncreasingModule):
+class FPSiLU(FPPrecomputedModule):
     def __init__(
         self,
         total_bits: int,

@@ -12,13 +12,13 @@ from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.vhdl.design_base.design import Design
-from elasticai.creator.vhdl.designs.precomputed_monotonic_increasing_scalar_function import (
-    PrecomputedMonotonicIncreasingScalarFunction,
+from elasticai.creator.vhdl.designs.precomputed_scalar_function import (
+    PrecomputedScalarFunction,
 )
 from elasticai.creator.vhdl.translatable import Translatable
 
 
-class FPPrecomputedMonotonicIncreasingModule(torch.nn.Module, Translatable):
+class FPPrecomputedModule(torch.nn.Module, Translatable):
     def __init__(
         self,
         base_module: torch.nn.Module,
@@ -40,7 +40,7 @@ class FPPrecomputedMonotonicIncreasingModule(torch.nn.Module, Translatable):
 
     def translate(self, name: str) -> Design:
         quantized_inputs = list(map(self._config.as_integer, self._step_lut.tolist()))
-        return PrecomputedMonotonicIncreasingScalarFunction(
+        return PrecomputedScalarFunction(
             name=name,
             width=self._config.total_bits,
             inputs=quantized_inputs,
