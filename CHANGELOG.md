@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.54.0 (2023-08-09)
+
+### Feature
+
+* Use binary values instead of hex values to fill the rom template ([`af56c02`](https://github.com/es-ude/elastic-ai.creator/commit/af56c02da42433c2db1a9a2a6ddb3705d213d765))
+
+### Fix
+
+* Use same bit width for all rom values ([`cd609e6`](https://github.com/es-ude/elastic-ai.creator/commit/cd609e65f306e62110fbdc4113f4bb330f960f19))
+
 ## v0.53.0 (2023-08-02)
 
 ### Feature
