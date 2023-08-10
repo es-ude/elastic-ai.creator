@@ -27,14 +27,13 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
         bn_momentum: float = 0.1,
         bn_affine: bool = True,
         stride: int | tuple[int] = 1,
-        padding: int | tuple[int] | str = 0,
+        padding: int | tuple[int] = 0,
         bias: bool = True,
         device: Any = None,
     ) -> None:
         super().__init__()
-        self._arithmetics = FixedPointArithmetics(
-            config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-        )
+        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._arithmetics = FixedPointArithmetics(config=self._config)
         self._signal_length = signal_length
         self._conv1d = Conv1d(
             arithmetics=self._arithmetics,
@@ -58,7 +57,7 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         has_batches = inputs.dim() == 2
         input_shape = (
-            (inputs.shape[0], self.in_channels, -1)
+            (inputs.shape[0], self._conv1d.in_channels, -1)
             if has_batches
             else (self.in_channels, -1)
         )
@@ -105,9 +104,9 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
             out_channels=self._conv1d.out_channels,
             signal_length=self._signal_length,
             kernel_size=flatten_tuple(self._conv1d.kernel_size),
-            weights=float_to_signed_int(weights.tolist()),
-            bias=float_to_signed_int(bias.tolist()),
+            weights=cast(list[list[list[int]]], float_to_signed_int(weights.tolist())),
+            bias=cast(list[int], float_to_signed_int(bias.tolist())),
             stride=flatten_tuple(self._conv1d.stride),
-            padding=flatten_tuple(self._conv1d.padding),
+            padding=flatten_tuple(cast(int | tuple[int], self._conv1d.padding)),
             dilation=flatten_tuple(self._conv1d.dilation),
         )
