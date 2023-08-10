@@ -9,7 +9,7 @@ from elasticai.creator.base_modules.linear import Linear
 from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.linear.design import FPLinear
+from elasticai.creator.nn.linear.design import FPLinear as FPLinearDesign
 from elasticai.creator.vhdl.translatable import Translatable
 
 
@@ -51,7 +51,7 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         x = self._batch_norm(x)
         return self._arithmetics.quantize(x)
 
-    def translate(self, name: str) -> FPLinear:
+    def translate(self, name: str) -> FPLinearDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
@@ -75,7 +75,7 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
             weights = (self._batch_norm.weight * weights.t()).t()
             bias = self._batch_norm.weight * bias + self._batch_norm.bias
 
-        return FPLinear(
+        return FPLinearDesign(
             in_feature_num=self._linear.in_features,
             out_feature_num=self._linear.out_features,
             total_bits=self._arithmetics.config.total_bits,
