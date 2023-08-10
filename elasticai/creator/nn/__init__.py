@@ -1,3 +1,4 @@
+from .batch_normed_conv1d import FPBatchNormedConv1d
 from .batch_normed_linear import FPBatchNormedLinear
 from .conv1d import FPConv1d
 from .hard_sigmoid import FPHardSigmoid
