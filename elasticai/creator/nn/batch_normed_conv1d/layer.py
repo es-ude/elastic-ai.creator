@@ -1,4 +1,3 @@
-import math
 from typing import Any, cast
 
 import torch.nn
@@ -59,7 +58,7 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
         input_shape = (
             (inputs.shape[0], self._conv1d.in_channels, -1)
             if has_batches
-            else (self.in_channels, -1)
+            else (self._conv1d.in_channels, -1)
         )
         output_shape = (inputs.shape[0], -1) if has_batches else (-1,)
         x = inputs.view(*input_shape)
