@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.55.1 (2023-08-11)
+
+### Fix
+
+* Fix non existing in_channels variable and remove unused import ([`0e73c2d`](https://github.com/es-ude/elastic-ai.creator/commit/0e73c2dc6876772d0caba46639af77bd5ac53b62))
+
 ## v0.55.0 (2023-08-11)
 
 ### Feature
