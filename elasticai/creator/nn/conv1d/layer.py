@@ -25,7 +25,7 @@ class FPConv1d(Translatable, Conv1d):
         signal_length: int,
         kernel_size: int | tuple[int],
         stride: int | tuple[int] = 1,
-        padding: int | tuple[int] | str = 0,
+        padding: int | tuple[int] = 0,
         bias: bool = True,
         device: Any = None,
     ) -> None:
@@ -82,6 +82,6 @@ class FPConv1d(Translatable, Conv1d):
             weights=signed_int_weights,
             bias=signed_int_bias,
             stride=flatten_tuple(self.stride),
-            padding=flatten_tuple(self.padding),
+            padding=flatten_tuple(cast(int | tuple[int], self.padding)),
             dilation=flatten_tuple(self.dilation),
         )
