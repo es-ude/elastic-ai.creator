@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v0.55.0 (2023-08-11)
+
+### Feature
+
+* Implemented batch normed conv1d layer ([`cd6836c`](https://github.com/es-ude/elastic-ai.creator/commit/cd6836cc72b3fecee1b522f9b8934fabefd46d63))
+
+### Fix
+
+* Typing and errors ([`af6f859`](https://github.com/es-ude/elastic-ai.creator/commit/af6f85913fd6111bcc7164a106a9cbb8d4b7b9a0))
+
 ## v0.54.0 (2023-08-09)
 
 ### Feature
