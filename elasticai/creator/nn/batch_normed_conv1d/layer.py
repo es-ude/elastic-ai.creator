@@ -58,15 +58,16 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
         input_shape = (
             (inputs.shape[0], self._conv1d.in_channels, -1)
             if has_batches
-            else (self._conv1d.in_channels, -1)
+            else (1, self._conv1d.in_channels, -1)
         )
         output_shape = (inputs.shape[0], -1) if has_batches else (-1,)
+
         x = inputs.view(*input_shape)
         x = self._conv1d(x)
         x = self._batch_norm(x)
         x = self._arithmetics.quantize(x)
-        outputs = x.view(*output_shape)
-        return outputs
+
+        return x.view(*output_shape)
 
     def translate(self, name: str) -> FPConv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:

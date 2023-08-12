@@ -47,9 +47,16 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = self._linear(inputs)
+        has_batches = inputs.dim() == 2
+        input_shape = inputs.shape if has_batches else (1, -1)
+        output_shape = (inputs.shape[0], -1) if has_batches else (-1,)
+
+        x = inputs.view(*input_shape)
+        x = self._linear(x)
         x = self._batch_norm(x)
-        return self._arithmetics.quantize(x)
+        x = self._arithmetics.quantize(x)
+
+        return x.view(*output_shape)
 
     def translate(self, name: str) -> FPLinearDesign:
         def float_to_signed_int(value: float | list) -> int | list:
