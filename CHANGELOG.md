@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.55.2 (2023-08-12)
+
+### Fix
+
+* Add dummy batch dimension to meet the requirements of the batch norm ([`0f499f0`](https://github.com/es-ude/elastic-ai.creator/commit/0f499f048c0606de3e14163f16e8bf049708e6f1))
+
 ## v0.55.1 (2023-08-11)
 
 ### Fix
