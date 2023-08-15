@@ -1,9 +1,9 @@
 from typing import Callable, Optional, cast
 
 import torch
+from torch import Tensor
+from torch.nn import Module
 from torch.nn.utils.parametrize import register_parametrization
-
-from elasticai.creator.mlframework import Module, Tensor
 
 from .autograd_functions.binary_quantization import Binarize as BinarizeFn
 

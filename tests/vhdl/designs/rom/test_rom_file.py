@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 
 from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.vhdl.designs.rom import Rom
+from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 from .utils import extract_rom_values
 

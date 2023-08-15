@@ -12,7 +12,7 @@ from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.vhdl.designs.precomputed_scalar_function import (
+from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )
 from elasticai.creator.vhdl.translatable import Translatable
