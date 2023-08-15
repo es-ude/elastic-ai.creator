@@ -52,27 +52,27 @@ The following example shows how to use the ElasticAI.creator to define and trans
 
 ```python
 from elasticai.creator.nn import Sequential, FPLinear, FPHardSigmoid
-from elasticai.creator.on_disk_path import OnDiskPath
+from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 
 
 def main() -> None:
-    # Define a model
-    model = Sequential(
-        FPLinear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
-        FPHardSigmoid(total_bits=16, frac_bits=8),
-    )
+  # Define a model
+  model = Sequential(
+    FPLinear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
+    FPHardSigmoid(total_bits=16, frac_bits=8),
+  )
 
-    # Train the model
-    run_training(model)
+  # Train the model
+  run_training(model)
 
-    # Save the VHDL code of the trained model
-    destination = OnDiskPath("build_dir")
-    design = model.translate("my_model")
-    design.save_to(destination)
+  # Save the VHDL code of the trained model
+  destination = OnDiskPath("build_dir")
+  design = model.translate("my_model")
+  design.save_to(destination)
 
 
 if __name__ == "__main__":
-    main()
+  main()
 ```
 
 
@@ -113,16 +113,13 @@ sudo apt install ghdl
 
 ### Project Structure
 
-All packages and modules fall into one of three main categories and can thus be found in the corresponding package
+All packages and modules fall into one of five main categories and can thus be found in the corresponding package
 
- - `elasticai.creator.nn`: contains trainable modules that can be translated to vhdl to build a hardware accelerator
- - `elasticai.creator.base_modules`: contains shared functionality and data structures, that we use to create our neural network software modules
- - `elasticai.creator.vhdl`: contains shared code that we use to represent and generate vhdl files
-
-#### Note
-I think actually we have four categories: A) generate vhdl, B) define pytorch/mlframework modules, C) generate files and fill templates, D) combine the three to create translatable modules
-
-Below we go into more detail on each of these packages
+ - `nn`: trainable modules that can be translated to vhdl to build a hardware accelerator
+ - `base_modules`: shared functionality and data structures, that we use to create our neural network software modules
+ - `vhdl`: shared code that we use to represent and generate vhdl code
+ - `file_generation`: provide a very restricted api to generate files or file subtrees under a given root node
+ - `templating`: defines a basic template api and datastructure, compatible with `file_generation`
 
 
 ### Conventional Commit Rules
@@ -166,7 +163,7 @@ If you want to add more tests please refer to the Test Guidelines in the followi
 
 In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
 If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
-In most cases you can use the [`InMemoryPath`](elasticai/creator/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
+In most cases you can use the [`InMemoryPath`](elasticai/creator/file_generation/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
 
 
 ##### Directory structure and file names

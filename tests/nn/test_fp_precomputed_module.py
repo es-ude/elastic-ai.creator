@@ -2,7 +2,7 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.precomputed.fp_precomputed_module import FPPrecomputedModule
 
 

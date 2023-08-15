@@ -1,6 +1,6 @@
 from typing import cast
 
-from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.hard_tanh.layer import FPHardTanh
 
 

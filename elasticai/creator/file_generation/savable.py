@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from elasticai.creator.vhdl.code_generation.template import Template
+from elasticai.creator.templating.template import Template
 
 
 class File(Protocol):

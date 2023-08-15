@@ -9,7 +9,6 @@ from elasticai.creator.base_modules.conv1d import Conv1d
 from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.translatable import Translatable
 
 from .design import FPConv1d as FPConv1dDesign

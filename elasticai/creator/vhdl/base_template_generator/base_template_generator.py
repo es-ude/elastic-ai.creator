@@ -1,10 +1,10 @@
-from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import (
-    port_definition_template_for_bufferless_design,
-)
-from elasticai.creator.vhdl.code_generation.template import (
+from elasticai.creator.templating.template import (
     InProjectTemplate,
     TemplateExpander,
     module_to_package,
+)
+from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import (
+    port_definition_template_for_bufferless_design,
 )
 
 """

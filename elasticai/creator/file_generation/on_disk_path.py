@@ -1,8 +1,8 @@
 import os
 from pathlib import Path as _PyPath
 
-from elasticai.creator.vhdl.code_generation.template import Template, TemplateExpander
-from elasticai.creator.vhdl.savable import File, Path
+from elasticai.creator.file_generation.savable import File, Path
+from elasticai.creator.templating.template import Template, TemplateExpander
 
 
 class OnDiskFile(File):
