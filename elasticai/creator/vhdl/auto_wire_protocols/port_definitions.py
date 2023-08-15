@@ -4,8 +4,8 @@ from elasticai.creator.vhdl.code_generation.addressable import calculate_address
 from elasticai.creator.vhdl.code_generation.vhdl_ports import (
     template_string_for_port_definition,
 )
-from elasticai.creator.vhdl.design_base import std_signals as _signals
-from elasticai.creator.vhdl.design_base.ports import Port
+from elasticai.creator.vhdl.design import std_signals as _signals
+from elasticai.creator.vhdl.design.ports import Port
 
 
 def create_port(

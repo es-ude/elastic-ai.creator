@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from itertools import chain
 
-from elasticai.creator.vhdl.design_base.signal import Signal
+from elasticai.creator.vhdl.design.signal import Signal
 
 
 class Port:

@@ -2,8 +2,8 @@ import pytest
 
 from elasticai.creator.nn.sequential.design import Sequential
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
-from elasticai.creator.vhdl.design_base.design import Design
-from elasticai.creator.vhdl.design_base.ports import Port
+from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.savable import Path
 
 

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from elasticai.creator.vhdl.design_base.signal import Signal
+from elasticai.creator.vhdl.design.signal import Signal
 
 
 def _sorted_dict(items: dict[str, str]) -> dict[str, str]:

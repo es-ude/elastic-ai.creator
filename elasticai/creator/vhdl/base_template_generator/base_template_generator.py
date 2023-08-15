@@ -8,8 +8,8 @@ from elasticai.creator.vhdl.code_generation.template import (
 )
 
 """
-We want to programmatically use designs that are either hand-written or based on hand-written templates
-these designs need to adhere to a well defined protocol. As a hardware designer you specify your protocol
+We want to programmatically use shared_designs that are either hand-written or based on hand-written templates
+these shared_designs need to adhere to a well defined protocol. As a hardware designer you specify your protocol
 and the expected version of the elasticai.creator in a file called `design_meta.toml` that lives in the
 same folder as your `layer.py` that defines how the hdl code for the hardware design and the behaviour of
 the corresponding neural network layer in software.

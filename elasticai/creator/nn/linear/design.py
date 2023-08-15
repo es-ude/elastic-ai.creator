@@ -6,8 +6,8 @@ from elasticai.creator.vhdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.vhdl.design_base.design import Design
-from elasticai.creator.vhdl.design_base.ports import Port
+from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.designs.rom import Rom
 from elasticai.creator.vhdl.savable import Path
 

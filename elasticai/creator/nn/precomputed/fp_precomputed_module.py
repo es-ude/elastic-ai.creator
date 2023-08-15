@@ -11,7 +11,7 @@ from elasticai.creator.base_modules.autograd_functions.identity_step_function im
 from elasticai.creator.base_modules.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.design_base.design import Design
+from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )

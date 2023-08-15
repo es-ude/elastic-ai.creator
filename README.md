@@ -111,6 +111,19 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
+### Project Structure
+
+All packages and modules fall into one of three main categories and can thus be found in the corresponding package
+
+ - `elasticai.creator.nn`: contains trainable modules that can be translated to vhdl to build a hardware accelerator
+ - `elasticai.creator.base_modules`: contains shared functionality and data structures, that we use to create our neural network software modules
+ - `elasticai.creator.vhdl`: contains shared code that we use to represent and generate vhdl files
+
+#### Note
+I think actually we have four categories: A) generate vhdl, B) define pytorch/mlframework modules, C) generate files and fill templates, D) combine the three to create translatable modules
+
+Below we go into more detail on each of these packages
+
 
 ### Conventional Commit Rules
 
@@ -127,32 +140,6 @@ We use conventional commits (see [here](https://www.conventionalcommits.org/en/v
 | chore        |                |
 | wip          |                |
 | perf         |                |
-
-
-### Adding new translation targets
-
-New translation targets should be located in their own folder, e.g. vhdl for translating from any language to vhdl.
-Workflow for adding a new translation:
-1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
-2. Identify and label relevant structures, in the base cases it can be simply separate layers.
-3. Map each structure to its function which will convert it.
-4. Do such conversions.
-5. Recreate connections based on 1.
-
-Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
-
-
-### Syntax Checking
-
-[GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
-The command is as follows:
-```bash
-ghdl -s path/to/vhdl/file
-```
-For checking all vhdl files together in our project we can just run:
-```bash
-ghdl -s elasticai/creator/**/*.vhd
-```
 
 
 ### Tests

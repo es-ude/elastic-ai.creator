@@ -3,7 +3,7 @@ from elasticai.creator.vhdl.code_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.vhdl.design_base.design import Design, Port
+from elasticai.creator.vhdl.design.design import Design, Port
 from elasticai.creator.vhdl.savable import Path
 
 

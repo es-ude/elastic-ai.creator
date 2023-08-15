@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from elasticai.creator.vhdl.design_base.design import Design
+from elasticai.creator.vhdl.design.design import Design
 
 
 class Translatable(ABC):

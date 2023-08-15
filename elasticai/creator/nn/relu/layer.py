@@ -1,5 +1,5 @@
 from elasticai.creator.base_modules.relu import ReLU
-from elasticai.creator.vhdl.design_base.design import Design
+from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.translatable import Translatable
 
 from .design import FPReLU as FPReLUDesign

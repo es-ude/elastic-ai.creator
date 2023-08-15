@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from elasticai.creator.vhdl.design_base.ports import Port
+from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.savable import Path, Savable
 
 
