@@ -121,6 +121,16 @@ All packages and modules fall into one of five main categories and can thus be f
  - `file_generation`: provide a very restricted api to generate files or file subtrees under a given root node and defines a basic template api and datastructure, compatible with `file_generation`
 
 
+### Glossary
+
+ - **fxp/Fxp**: prefix for fixed point
+ - **flp/Flp**: prefix for floating point
+ - **x**: parameter input tensor for layer with single input tensor
+ - **y**: output value/tensor for layer with single output
+ - **_bits**: suffix to denote the number of bits, e.g. `total_bits`, `frac_bits`, in python context
+ - **_width**: suffix to denote the number of bits used for a data bus in vhdl, e.g. `total_width`, `frac_width`
+
+
 ### Conventional Commit Rules
 
 We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types and message scopes are allowed. The message scope is optional.
