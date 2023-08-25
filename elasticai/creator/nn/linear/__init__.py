@@ -1,1 +1,1 @@
-from .layer import FPLinear
+from .layer import FPBatchNormedLinear, FPLinear
