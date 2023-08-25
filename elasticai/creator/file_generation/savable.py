@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from elasticai.creator.templating.template import Template
+from .template import Template
 
 
 class File(Protocol):

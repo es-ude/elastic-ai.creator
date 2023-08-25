@@ -116,10 +116,9 @@ sudo apt install ghdl
 All packages and modules fall into one of five main categories and can thus be found in the corresponding package
 
  - `nn`: trainable modules that can be translated to vhdl to build a hardware accelerator
- - `base_modules`: shared functionality and data structures, that we use to create our neural network software modules
- - `vhdl`: shared code that we use to represent and generate vhdl code
- - `file_generation`: provide a very restricted api to generate files or file subtrees under a given root node
- - `templating`: defines a basic template api and datastructure, compatible with `file_generation`
+ - `base_modules`: (non-public) shared functionality and data structures, that we use to create our neural network software modules
+ - `vhdl`: (non-public) shared code that we use to represent and generate vhdl code
+ - `file_generation`: provide a very restricted api to generate files or file subtrees under a given root node and defines a basic template api and datastructure, compatible with `file_generation`
 
 
 ### Conventional Commit Rules

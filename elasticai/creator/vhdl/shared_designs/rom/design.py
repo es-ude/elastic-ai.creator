@@ -1,7 +1,10 @@
 from functools import partial
 
 from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.templating.template import InProjectTemplate, module_to_package
+from elasticai.creator.file_generation.template import (
+    InProjectTemplate,
+    module_to_package,
+)
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.code_generation.code_abstractions import (
     to_vhdl_binary_string,

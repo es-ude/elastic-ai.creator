@@ -2,7 +2,10 @@ from functools import partial, reduce
 from itertools import chain
 
 from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.templating.template import InProjectTemplate, module_to_package
+from elasticai.creator.file_generation.template import (
+    InProjectTemplate,
+    module_to_package,
+)
 from elasticai.creator.vhdl.auto_wire_protocols.autowiring import (
     AutoWirer,
     DataFlowNode,

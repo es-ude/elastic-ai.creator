@@ -1,4 +1,4 @@
-from elasticai.creator.templating.template import (
+from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     TemplateExpander,
     module_to_package,

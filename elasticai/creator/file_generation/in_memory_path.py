@@ -1,7 +1,7 @@
 from typing import Optional
 
-from elasticai.creator.file_generation.savable import File, Path
-from elasticai.creator.templating.template import Template, TemplateExpander
+from .savable import File, Path
+from .template import Template, TemplateExpander
 
 
 class InMemoryFile(File):

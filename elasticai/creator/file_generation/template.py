@@ -4,7 +4,7 @@ from itertools import repeat
 from string import Template as StringTemplate
 from typing import Protocol, cast
 
-from elasticai.creator.file_generation.resource_utils import read_text
+from .resource_utils import read_text
 
 
 def module_to_package(module: str) -> str:
