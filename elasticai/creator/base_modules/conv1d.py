@@ -1,11 +1,16 @@
-from typing import Any
+from typing import Any, Protocol
 
-import torch
+from torch import Tensor
+from torch.nn import Conv1d as _Conv1d
+from torch.nn.functional import conv1d
 
-from .arithmetics.arithmetics import Arithmetics
+
+class Arithmetics(Protocol):
+    def quantize(self, x: Tensor) -> Tensor:
+        ...
 
 
-class Conv1d(torch.nn.Conv1d):
+class Conv1d(_Conv1d):
     def __init__(
         self,
         arithmetics: Arithmetics,
@@ -39,21 +44,23 @@ class Conv1d(torch.nn.Conv1d):
     def _flatten_tuple(x: int | tuple[int, ...]) -> int:
         return x[0] if isinstance(x, tuple) else x
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         quantized_weights = self._arithmetics.quantize(self.weight)
         quantized_bias = (
             self._arithmetics.quantize(self.bias) if self.bias is not None else None
         )
-        return self._arithmetics.conv1d(
-            inputs=inputs,
-            weights=quantized_weights,
-            bias=quantized_bias,
-            stride=self._flatten_tuple(self.stride),
-            padding=(
-                self.padding
-                if isinstance(self.padding, str)
-                else self._flatten_tuple(self.padding)
-            ),
-            dilation=self._flatten_tuple(self.dilation),
-            groups=self.groups,
+        return self._arithmetics.quantize(
+            conv1d(
+                input=inputs,
+                weight=quantized_weights,
+                bias=quantized_bias,
+                stride=self._flatten_tuple(self.stride),
+                padding=(
+                    self.padding
+                    if isinstance(self.padding, str)
+                    else self._flatten_tuple(self.padding)
+                ),
+                dilation=self._flatten_tuple(self.dilation),
+                groups=self.groups,
+            )
         )
