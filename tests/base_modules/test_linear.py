@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
+from elasticai.creator.base_modules.arithmetics._arithmetics import Arithmetics
 from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
     TorchArithmetics,
 )

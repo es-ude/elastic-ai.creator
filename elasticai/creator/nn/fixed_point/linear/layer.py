@@ -1,14 +1,10 @@
 from typing import Any, cast
 
 import torch
+from fixed_point._math_operations import Operations
+from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
-from elasticai.creator.base_modules.arithmetics.fixed_point_arithmetics import (
-    FixedPointArithmetics,
-)
 from elasticai.creator.base_modules.linear import Linear
-from elasticai.creator.base_modules.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.translatable import Translatable
 
@@ -29,7 +25,7 @@ class FPLinear(Translatable, Linear):
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=FixedPointArithmetics(config=self._config),
+            arithmetics=Operations(config=self._config),
             bias=bias,
             device=device,
         )
@@ -71,7 +67,7 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         device: Any = None,
     ) -> None:
         super().__init__()
-        self._arithmetics = FixedPointArithmetics(
+        self._arithmetics = Operations(
             config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         )
         self._linear = Linear(

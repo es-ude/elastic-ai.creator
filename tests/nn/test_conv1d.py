@@ -1,6 +1,5 @@
 import torch
-
-from elasticai.creator.nn.conv1d.layer import FPConv1d
+from fixed_point.conv1d import FPConv1d
 
 
 def make_conv1d() -> FPConv1d:

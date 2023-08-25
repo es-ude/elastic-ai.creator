@@ -1,19 +1,16 @@
-from typing import Any, Protocol
+from typing import Any
 
 from torch import Tensor
 from torch.nn import Conv1d as _Conv1d
 from torch.nn.functional import conv1d
 
-
-class Arithmetics(Protocol):
-    def quantize(self, x: Tensor) -> Tensor:
-        ...
+from elasticai.creator.base_modules.math_operations import Quantize as MathOperations
 
 
 class Conv1d(_Conv1d):
     def __init__(
         self,
-        arithmetics: Arithmetics,
+        arithmetics: MathOperations,
         in_channels: int,
         out_channels: int,
         kernel_size: int | tuple[int],

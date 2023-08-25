@@ -1,7 +1,8 @@
 from typing import cast
 
+from fixed_point.relu import FPReLU
+
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.relu.layer import FPReLU
 
 
 def test_vhdl_code_matches_expected() -> None:

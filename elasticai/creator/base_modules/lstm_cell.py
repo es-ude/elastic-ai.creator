@@ -3,8 +3,7 @@ from typing import Any, Optional
 
 import torch
 
-from .arithmetics.arithmetics import Arithmetics
-from .linear import Linear
+from .linear import Linear, MathOperations
 
 
 class LSTMCell(torch.nn.Module):
@@ -13,7 +12,7 @@ class LSTMCell(torch.nn.Module):
         input_size: int,
         hidden_size: int,
         bias: bool,
-        arithmetics: Arithmetics,
+        arithmetics: MathOperations,
         sigmoid_factory: Callable[[], torch.nn.Module],
         tanh_factory: Callable[[], torch.nn.Module],
         device: Any = None,

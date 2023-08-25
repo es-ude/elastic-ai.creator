@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 
-from .arithmetics import Arithmetics
+from ._arithmetics import Arithmetics
 
 
 class TorchArithmetics(Arithmetics):

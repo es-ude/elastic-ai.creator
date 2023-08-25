@@ -1,9 +1,8 @@
-from elasticai.creator.base_modules.arithmetics.fixed_point_arithmetics import (
-    FixedPointArithmetics,
-)
-from elasticai.creator.base_modules.silu import SiLU
-from elasticai.creator.base_modules.two_complement_fixed_point_config import (
-    FixedPointConfig,
+from fixed_point._math_operations import Operations
+from fixed_point._two_complement_fixed_point_config import FixedPointConfig
+
+from elasticai.creator.base_modules.siluwithtrainablescalebeta import (
+    SiLUWithTrainableScaleBeta,
 )
 
 from .fp_precomputed_module import FPPrecomputedModule
@@ -18,8 +17,8 @@ class FPSiLU(FPPrecomputedModule):
         sampling_intervall: tuple[float, float] = (-10, 10),
     ) -> None:
         super().__init__(
-            base_module=SiLU(
-                arithmetics=FixedPointArithmetics(
+            base_module=SiLUWithTrainableScaleBeta(
+                arithmetics=Operations(
                     config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
                 ),
             ),

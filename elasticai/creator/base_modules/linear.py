@@ -1,8 +1,12 @@
-from typing import Any
+from typing import Any, Protocol
 
 import torch
 
-from .arithmetics.arithmetics import Arithmetics
+from elasticai.creator.base_modules.math_operations import Add, MatMul, Quantize
+
+
+class MathOperations(Quantize, Add, MatMul, Protocol):
+    ...
 
 
 class Linear(torch.nn.Linear):
@@ -10,7 +14,7 @@ class Linear(torch.nn.Linear):
         self,
         in_features: int,
         out_features: int,
-        arithmetics: Arithmetics,
+        arithmetics: MathOperations,
         bias: bool,
         device: Any = None,
         dtype: Any = None,

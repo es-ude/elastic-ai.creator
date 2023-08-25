@@ -1,15 +1,11 @@
 from typing import cast
 
 import torch
+from fixed_point._math_operations import Operations
+from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
-from elasticai.creator.base_modules.arithmetics.fixed_point_arithmetics import (
-    FixedPointArithmetics,
-)
 from elasticai.creator.base_modules.autograd_functions.identity_step_function import (
     IdentityStepFunction,
-)
-from elasticai.creator.base_modules.two_complement_fixed_point_config import (
-    FixedPointConfig,
 )
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
@@ -30,7 +26,7 @@ class FPPrecomputedModule(torch.nn.Module, Translatable):
         super().__init__()
         self._base_module = base_module
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-        self._arithmetics = FixedPointArithmetics(self._config)
+        self._arithmetics = Operations(self._config)
         self._step_lut = torch.linspace(*sampling_intervall, num_steps)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:

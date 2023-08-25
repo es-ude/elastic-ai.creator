@@ -1,10 +1,7 @@
 from typing import Any
 
 import torch
-
-from elasticai.creator.base_modules.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
+from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
 
 class RoundToFixedPoint(torch.autograd.Function):

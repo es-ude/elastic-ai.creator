@@ -6,7 +6,7 @@ from elasticai.creator.base_modules.autograd_functions.binary_quantization impor
     Binarize,
 )
 
-from .arithmetics import Arithmetics
+from ._arithmetics import Arithmetics
 
 
 class BinaryArithmetics(Arithmetics):

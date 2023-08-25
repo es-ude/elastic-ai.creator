@@ -2,7 +2,7 @@ from typing import Optional, cast
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
+from elasticai.creator.base_modules.arithmetics._arithmetics import Arithmetics
 from elasticai.creator.base_modules.autograd_functions.round_to_float import (
     RoundToFloat,
 )

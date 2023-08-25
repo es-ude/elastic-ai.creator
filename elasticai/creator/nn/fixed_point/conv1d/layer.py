@@ -2,14 +2,10 @@ from typing import Any, cast
 
 import torch
 import torch.nn
+from fixed_point._math_operations import Operations
+from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
-from elasticai.creator.base_modules.arithmetics.fixed_point_arithmetics import (
-    FixedPointArithmetics,
-)
 from elasticai.creator.base_modules.conv1d import Conv1d
-from elasticai.creator.base_modules.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.translatable import Translatable
 
 from .design import FPConv1d as FPConv1dDesign
@@ -32,7 +28,7 @@ class FPConv1d(Translatable, Conv1d):
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         self._signal_length = signal_length
         super().__init__(
-            arithmetics=FixedPointArithmetics(config=self._config),
+            arithmetics=Operations(config=self._config),
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
@@ -106,7 +102,7 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
     ) -> None:
         super().__init__()
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-        self._arithmetics = FixedPointArithmetics(config=self._config)
+        self._arithmetics = Operations(config=self._config)
         self._signal_length = signal_length
         self._conv1d = Conv1d(
             arithmetics=self._arithmetics,

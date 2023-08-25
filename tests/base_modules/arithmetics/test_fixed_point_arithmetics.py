@@ -1,18 +1,14 @@
 import torch
+from fixed_point._math_operations import Operations
+from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
-from elasticai.creator.base_modules.arithmetics.fixed_point_arithmetics import (
-    FixedPointArithmetics,
-)
-from elasticai.creator.base_modules.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from tests.tensor_test_case import TensorTestCase
 
 
 class FixedPointArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
         self.config: FixedPointConfig = FixedPointConfig(total_bits=4, frac_bits=2)
-        self.arithmetics = FixedPointArithmetics(config=self.config)
+        self.arithmetics = Operations(config=self.config)
 
     def test_quantize_clamps_minus5_to_minus2(self) -> None:
         a = torch.tensor([-5.0])
@@ -28,7 +24,7 @@ class FixedPointArithmeticsTest(TensorTestCase):
 
     def test_clamp(self) -> None:
         a = torch.tensor([-5, -2.1, -1.0, 0.0, 1.8, 5])
-        actual = self.arithmetics.clamp(a)
+        actual = self.arithmetics._clamp(a)
         expected = [
             self.config.minimum_as_rational,
             self.config.minimum_as_rational,
@@ -41,7 +37,7 @@ class FixedPointArithmeticsTest(TensorTestCase):
 
     def test_round(self) -> None:
         a = torch.tensor([-2.0, -1.8, 1.25, 1.6])
-        actual = self.arithmetics.round(a)
+        actual = self.arithmetics._round(a)
         expected = [-2.0, -1.75, 1.25, 1.5]
         self.assertTensorEqual(expected, actual)
 

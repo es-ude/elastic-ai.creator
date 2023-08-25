@@ -1,10 +1,10 @@
 import torch
 
-from elasticai.creator.base_modules.arithmetics.arithmetics import Arithmetics
+from elasticai.creator.base_modules.math_operations import QuantizeOperation
 
 
-class SiLU(torch.nn.SiLU):
-    def __init__(self, arithmetics: Arithmetics) -> None:
+class SiLUWithTrainableScaleBeta(torch.nn.SiLU):
+    def __init__(self, arithmetics: QuantizeOperation) -> None:
         super().__init__(inplace=False)
         self._arithmetics = arithmetics
         self.scale = torch.nn.Parameter(torch.ones(1, requires_grad=True))
