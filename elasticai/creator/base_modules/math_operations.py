@@ -6,7 +6,7 @@ from torch import Tensor
 
 class Quantize(Protocol):
     @abstractmethod
-    def quantize(self, x: Tensor) -> Tensor:
+    def quantize(self, a: Tensor) -> Tensor:
         ...
 
 

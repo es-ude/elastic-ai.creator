@@ -1,9 +1,11 @@
 from typing import cast
 
 import torch
-from fixed_point.precomputed.fp_precomputed_module import FPPrecomputedModule
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.fixed_point.precomputed.fp_precomputed_module import (
+    FPPrecomputedModule,
+)
 
 
 def test_vhdl_code_matches_expected_for_tanh_as_base_module() -> None:

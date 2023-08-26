@@ -2,9 +2,11 @@ from typing import cast
 
 import pytest
 import torch
-from fixed_point._round_to_fixed_point import RoundToFixedPoint
-from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
+from elasticai.creator.nn.fixed_point._round_to_fixed_point import RoundToFixedPoint
+from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from tests.tensor_test_case import assertTensorEqual
 
 

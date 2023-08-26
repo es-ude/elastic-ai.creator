@@ -1,8 +1,7 @@
 from typing import cast
 
-from fixed_point.hard_sigmoid import FPHardSigmoid
-
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.fixed_point.hard_sigmoid import FPHardSigmoid
 
 
 def test_vhdl_code_matches_expected() -> None:

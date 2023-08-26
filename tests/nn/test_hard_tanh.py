@@ -1,8 +1,7 @@
 from typing import cast
 
-from fixed_point.hard_tanh import FPHardTanh
-
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.fixed_point.hard_tanh import FPHardTanh
 
 
 def test_vhdl_code_matches_expected() -> None:

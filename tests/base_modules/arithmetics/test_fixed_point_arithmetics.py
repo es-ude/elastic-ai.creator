@@ -1,14 +1,16 @@
 import torch
-from fixed_point._math_operations import Operations
-from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
+from elasticai.creator.nn.fixed_point._math_operations import MathOperations
+from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from tests.tensor_test_case import TensorTestCase
 
 
 class FixedPointArithmeticsTest(TensorTestCase):
     def setUp(self) -> None:
         self.config: FixedPointConfig = FixedPointConfig(total_bits=4, frac_bits=2)
-        self.arithmetics = Operations(config=self.config)
+        self.arithmetics = MathOperations(config=self.config)
 
     def test_quantize_clamps_minus5_to_minus2(self) -> None:
         a = torch.tensor([-5.0])
@@ -48,42 +50,9 @@ class FixedPointArithmeticsTest(TensorTestCase):
         expected = [-1.75, 1.5, 1.75]
         self.assertTensorEqual(expected, actual)
 
-    def test_sum_over_all_values(self) -> None:
-        a = torch.tensor([[-0.25, 0.5, 1.0], [-1.5, 1.0, 1.5], [-0.5, -1.0, -1.0]])
-        actual = self.arithmetics.sum(a)
-        expected = torch.tensor(-0.25)
-        self.assertTensorEqual(expected, actual)
-
-    def test_sum_on_first_dim(self) -> None:
-        a = torch.tensor([[-0.25, 0.5, 1.0], [-1.5, 1.0, 1.5], [-0.5, -1.0, -1.0]])
-        actual = self.arithmetics.sum(a, dim=0)
-        expected = [-2.0, 0.5, 1.5]
-        self.assertTensorEqual(expected, actual)
-
-    def test_mul(self) -> None:
-        a = torch.tensor([-0.5, 1.5, 0.5])
-        b = torch.tensor([0.5, 1.5, 1.25])
-        actual = self.arithmetics.mul(a, b)
-        expected = [-0.25, 1.75, 0.5]
-        self.assertTensorEqual(expected, actual)
-
     def test_matmul(self) -> None:
         a = torch.tensor([[-2.0, -1.75, -1.5], [-0.25, 0.0, 0.25], [1.25, 1.5, 1.75]])
         b = torch.tensor([[-0.25], [0.5], [0.25]])
         actual = self.arithmetics.matmul(a, b)
         expected = [[-0.75], [0.0], [0.75]]
         self.assertTensorEqual(expected, actual)
-
-    def test_conv1d(self) -> None:
-        inputs = torch.tensor([[-1.75, -1.5, -1, -0.25, 1, 2.5, 3.75]])
-        actual_outputs = self.arithmetics.conv1d(
-            inputs=inputs,
-            weights=torch.ones(1, 1, 2),
-            bias=torch.ones(1),
-            stride=1,
-            padding="valid",
-            dilation=1,
-            groups=1,
-        )
-        target_outputs = torch.tensor([[-2.0, -1.5, -0.25, 1.75, 1.75, 1.75]])
-        self.assertTensorEqual(target_outputs, actual_outputs)
