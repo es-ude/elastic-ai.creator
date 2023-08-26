@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_p
 from elasticai.creator.vhdl.design.design import Design, Port
 
 
-class FPHardSigmoid(Design):
+class HardSigmoid(Design):
     def __init__(
         self,
         name: str,
@@ -35,7 +35,7 @@ class FPHardSigmoid(Design):
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="fp_hard_sigmoid.tpl.vhd",
+            file_name="hard_sigmoid.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
                 data_width=str(self._total_bits),

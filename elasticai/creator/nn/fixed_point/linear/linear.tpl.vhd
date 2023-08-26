@@ -83,8 +83,8 @@ architecture rtl of ${layer_name} is
     -----------------------------------------------------------
     -- Signals
     -----------------------------------------------------------
-    constant FP_ZERO : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
-    constant FP_ONE : signed(DATA_WIDTH-1 downto 0) := to_signed(2**FRAC_WIDTH,DATA_WIDTH);
+    constant FXP_ZERO : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    constant FXP_ONE : signed(DATA_WIDTH-1 downto 0) := to_signed(2**FRAC_WIDTH,DATA_WIDTH);
 
     type t_state is (s_stop, s_forward, s_idle);
 
@@ -96,7 +96,7 @@ architecture rtl of ${layer_name} is
     --signal addr_b : std_logic_vector((log2(OUT_FEATURE_NUM)-1) downto 0) := (others=>'0');
     signal addr_b : std_logic_vector(Y_ADDR_WIDTH-1 downto 0) := (others=>'0');
 
-    signal fp_x, fp_w, fp_b, fp_y : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal fxp_x, fxp_w, fxp_b, fxp_y : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal macc_sum : signed(2*DATA_WIDTH-1 downto 0) := (others=>'0');
 
     signal reset : std_logic := '0';
@@ -113,9 +113,9 @@ begin
     -- connecting signals to ports
     n_clock <= not clock;
 
-    fp_w <= signed(w_in);
-    fp_x <= signed(x);
-    fp_b <= signed(b_in);
+    fxp_w <= signed(w_in);
+    fxp_x <= signed(x);
+    fxp_b <= signed(b_in);
 
     -- connects ports
     reset <= not enable;
@@ -145,14 +145,14 @@ begin
 
                 -- first add b accumulated sum
                 var_y := (others=>'0');
-                var_x := fp_b;
-                var_w := FP_ONE;
+                var_x := fxp_b;
+                var_w := FXP_ONE;
             elsif state=s_forward then
 
                 -- remapping to x and w
                 var_y := macc_sum;
-                var_x := fp_x;
-                var_w := fp_w;
+                var_x := fxp_x;
+                var_w := fxp_w;
 
                 if current_input_idx<IN_FEATURE_NUM-1 then
                     current_input_idx := current_input_idx + 1;

@@ -3,11 +3,8 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.base_modules.arithmetics._arithmetics import Arithmetics
-from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
-    TorchArithmetics,
-)
-from elasticai.creator.base_modules.lstm_cell import LSTMCell
+from elasticai.creator.base_modules.lstm_cell import LSTMCell, MathOperations
+from elasticai.creator.base_modules.torch_math_operations import TorchMathOperations
 from tests.tensor_test_case import TensorTestCase
 
 
@@ -19,7 +16,7 @@ def create_lstm_cell_and_reference(
     input_size: int,
     hidden_size: int,
     bias: bool,
-    arithmetics: Arithmetics = TorchArithmetics(),
+    operations: MathOperations = TorchMathOperations(),
 ) -> tuple[LSTMCell, torch.nn.LSTMCell]:
     cell = LSTMCell(
         input_size=input_size,
@@ -27,7 +24,7 @@ def create_lstm_cell_and_reference(
         bias=bias,
         sigmoid_factory=torch.nn.Sigmoid,
         tanh_factory=torch.nn.Tanh,
-        arithmetics=arithmetics,
+        operations=operations,
     )
     reference_cell = torch.nn.LSTMCell(
         input_size=input_size, hidden_size=hidden_size, bias=bias
@@ -49,7 +46,7 @@ def create_lstm_cell_and_reference(
 
 
 @dataclass
-class FixedMulArithmetics(TorchArithmetics):
+class FixedMulOperations(TorchMathOperations):
     values: list[float]
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -57,7 +54,7 @@ class FixedMulArithmetics(TorchArithmetics):
 
 
 @dataclass
-class FixedAddArithmetics(TorchArithmetics):
+class FixedAddOperations(TorchMathOperations):
     values: list[float]
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -103,12 +100,12 @@ class LSTMCellTest(TensorTestCase):
         self.assertTensorEqual(expected_h, actual_h)
         self.assertTensorEqual(expected_c, actual_c)
 
-    def test_lstm_cell_uses_mul_from_arithmetics(self) -> None:
+    def test_lstm_cell_uses_mul_from_operations(self) -> None:
         cell = LSTMCell(
             input_size=1,
             hidden_size=2,
             bias=True,
-            arithmetics=FixedMulArithmetics([0.0]),
+            operations=FixedMulOperations([0.0]),
             sigmoid_factory=torch.nn.Sigmoid,
             tanh_factory=torch.nn.Tanh,
         )
@@ -119,12 +116,12 @@ class LSTMCellTest(TensorTestCase):
         self.assertTensorEqual(h, [0.0])
         self.assertTensorEqual(c, [0.0])
 
-    def test_lstm_cell_uses_add_from_arithmetics(self) -> None:
+    def test_lstm_cell_uses_add_from_operations(self) -> None:
         cell = LSTMCell(
             input_size=1,
             hidden_size=2,
             bias=False,
-            arithmetics=FixedAddArithmetics([0.0]),
+            operations=FixedAddOperations([0.0]),
             sigmoid_factory=torch.nn.Sigmoid,
             tanh_factory=torch.nn.Tanh,
         )
@@ -140,7 +137,7 @@ class LSTMCellTest(TensorTestCase):
             input_size=1,
             hidden_size=2,
             bias=False,
-            arithmetics=TorchArithmetics(),
+            operations=TorchMathOperations(),
             sigmoid_factory=ZeroActivation,
             tanh_factory=torch.nn.Tanh,
         )
@@ -156,7 +153,7 @@ class LSTMCellTest(TensorTestCase):
             input_size=1,
             hidden_size=2,
             bias=False,
-            arithmetics=TorchArithmetics(),
+            operations=TorchMathOperations(),
             sigmoid_factory=torch.nn.Sigmoid,
             tanh_factory=ZeroActivation,
         )

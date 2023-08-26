@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
-class FPConv1d(Design):
+class Conv1d(Design):
     def __init__(
         self,
         name: str,
@@ -70,7 +70,7 @@ class FPConv1d(Design):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="fp_conv1d.tpl.vhd",
+            file_name="conv1d.tpl.vhd",
             parameters=dict(
                 total_bits=str(self._total_bits),
                 frac_bits=str(self._frac_bits),

@@ -1,9 +1,9 @@
-from elasticai.creator.base_modules.sigmoid import Sigmoid
+from elasticai.creator.base_modules.sigmoid import Sigmoid as SigmoidBase
 
-from .fp_precomputed_module import FPPrecomputedModule
+from .precomputed_module import PrecomputedModule
 
 
-class FPSigmoid(FPPrecomputedModule):
+class Sigmoid(PrecomputedModule):
     def __init__(
         self,
         total_bits: int,
@@ -12,7 +12,7 @@ class FPSigmoid(FPPrecomputedModule):
         sampling_intervall: tuple[float, float] = (-10, 10),
     ) -> None:
         super().__init__(
-            base_module=Sigmoid(),
+            base_module=SigmoidBase(),
             total_bits=total_bits,
             frac_bits=frac_bits,
             num_steps=num_steps,

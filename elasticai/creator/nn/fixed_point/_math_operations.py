@@ -1,15 +1,16 @@
 from typing import cast
 
 import torch
+from torch import Tensor
 
-from elasticai.creator.base_modules.math_operations import Add, MatMul, Quantize
+from elasticai.creator.base_modules.math_operations import Add, MatMul, Mul, Quantize
 from elasticai.creator.nn.fixed_point._round_to_fixed_point import RoundToFixedPoint
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 
 
-class MathOperations(Quantize, Add, MatMul):
+class MathOperations(Quantize, Add, MatMul, Mul):
     def __init__(self, config: FixedPointConfig) -> None:
         self.config = config
 
@@ -29,3 +30,6 @@ class MathOperations(Quantize, Add, MatMul):
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(torch.matmul(a, b))
+
+    def mul(self, a: Tensor, b: Tensor) -> Tensor:
+        return self.quantize(a * b)

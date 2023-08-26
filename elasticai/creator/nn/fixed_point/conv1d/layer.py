@@ -1,19 +1,18 @@
 from typing import Any, cast
 
 import torch
-import torch.nn
 
-from elasticai.creator.base_modules.conv1d import Conv1d
+from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.vhdl.translatable import Translatable
 
-from .design import FPConv1d as FPConv1dDesign
+from .design import Conv1d as Conv1dDesign
 
 
-class FPConv1d(Translatable, Conv1d):
+class Conv1d(Translatable, Conv1dBase):
     def __init__(
         self,
         total_bits: int,
@@ -30,7 +29,7 @@ class FPConv1d(Translatable, Conv1d):
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         self._signal_length = signal_length
         super().__init__(
-            arithmetics=MathOperations(config=self._config),
+            operations=MathOperations(config=self._config),
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
@@ -40,21 +39,21 @@ class FPConv1d(Translatable, Conv1d):
             device=device,
         )
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        has_batches = inputs.dim() == 2
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        has_batches = x.dim() == 2
 
         input_shape = (
-            (inputs.shape[0], self.in_channels, -1)
+            (x.shape[0], self.in_channels, -1)
             if has_batches
             else (self.in_channels, -1)
         )
-        output_shape = (inputs.shape[0], -1) if has_batches else (-1,)
+        output_shape = (x.shape[0], -1) if has_batches else (-1,)
 
-        inputs = inputs.view(*input_shape)
-        outputs = super().forward(inputs)
+        x = x.view(*input_shape)
+        outputs = super().forward(x)
         return outputs.view(*output_shape)
 
-    def translate(self, name: str) -> FPConv1dDesign:
+    def translate(self, name: str) -> Conv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
@@ -69,7 +68,7 @@ class FPConv1d(Translatable, Conv1d):
         )
         signed_int_bias = cast(list[int], float_to_signed_int(bias))
 
-        return FPConv1dDesign(
+        return Conv1dDesign(
             name=name,
             total_bits=self._config.total_bits,
             frac_bits=self._config.frac_bits,
@@ -85,7 +84,7 @@ class FPConv1d(Translatable, Conv1d):
         )
 
 
-class FPBatchNormedConv1d(Translatable, torch.nn.Module):
+class BatchNormedConv1d(Translatable, torch.nn.Module):
     def __init__(
         self,
         total_bits: int,
@@ -104,10 +103,10 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
     ) -> None:
         super().__init__()
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-        self._arithmetics = MathOperations(config=self._config)
+        self._operations = MathOperations(config=self._config)
         self._signal_length = signal_length
-        self._conv1d = Conv1d(
-            arithmetics=self._arithmetics,
+        self._conv1d = Conv1dBase(
+            operations=self._operations,
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
@@ -125,27 +124,27 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
             device=device,
         )
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        has_batches = inputs.dim() == 2
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        has_batches = x.dim() == 2
         input_shape = (
-            (inputs.shape[0], self._conv1d.in_channels, -1)
+            (x.shape[0], self._conv1d.in_channels, -1)
             if has_batches
             else (1, self._conv1d.in_channels, -1)
         )
-        output_shape = (inputs.shape[0], -1) if has_batches else (-1,)
+        output_shape = (x.shape[0], -1) if has_batches else (-1,)
 
-        x = inputs.view(*input_shape)
+        x = x.view(*input_shape)
         x = self._conv1d(x)
         x = self._batch_norm(x)
-        x = self._arithmetics.quantize(x)
+        x = self._operations.quantize(x)
 
         return x.view(*output_shape)
 
-    def translate(self, name: str) -> FPConv1dDesign:
+    def translate(self, name: str) -> Conv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
-            return self._arithmetics.config.as_integer(value)
+            return self._operations.config.as_integer(value)
 
         def flatten_tuple(x: int | tuple[int, ...]) -> int:
             return x[0] if isinstance(x, tuple) else x
@@ -168,7 +167,7 @@ class FPBatchNormedConv1d(Translatable, torch.nn.Module):
             weights = (self._batch_norm.weight * weights.t()).t()
             bias = self._batch_norm.weight * bias + self._batch_norm.bias
 
-        return FPConv1dDesign(
+        return Conv1dDesign(
             name=name,
             total_bits=self._config.total_bits,
             frac_bits=self._config.frac_bits,

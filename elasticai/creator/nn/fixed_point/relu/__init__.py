@@ -1,1 +1,1 @@
-from .layer import FPReLU
+from .layer import ReLU

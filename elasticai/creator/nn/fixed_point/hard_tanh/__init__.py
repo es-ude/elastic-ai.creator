@@ -1,1 +1,1 @@
-from .layer import FPHardTanh
+from .layer import HardTanh

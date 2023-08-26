@@ -1,10 +1,10 @@
 import torch
 
-from elasticai.creator.nn.fixed_point.conv1d import FPConv1d
+from elasticai.creator.nn.fixed_point.conv1d import Conv1d
 
 
-def make_conv1d() -> FPConv1d:
-    return FPConv1d(
+def make_conv1d() -> Conv1d:
+    return Conv1d(
         total_bits=16,
         frac_bits=8,
         in_channels=3,

@@ -1,1 +1,1 @@
-from .layer import FPBatchNormedConv1d, FPConv1d
+from .layer import BatchNormedConv1d, Conv1d

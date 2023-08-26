@@ -1,1 +1,1 @@
-from .layer import FPHardSigmoid
+from .layer import HardSigmoid

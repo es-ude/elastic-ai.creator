@@ -3,11 +3,9 @@ from typing import Any, Optional, cast
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
-    TorchArithmetics,
-)
 from elasticai.creator.base_modules.lstm import LSTM
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
+from elasticai.creator.base_modules.torch_math_operations import TorchMathOperations
 from tests.tensor_test_case import TensorTestCase
 
 
@@ -45,7 +43,7 @@ class OutputsZeroLSTMCell(LSTMCell):
             input_size=input_size,
             hidden_size=hidden_size,
             bias=bias,
-            arithmetics=TorchArithmetics(),
+            operations=TorchMathOperations(),
             sigmoid_factory=torch.nn.Sigmoid,
             tanh_factory=torch.nn.Tanh,
         )

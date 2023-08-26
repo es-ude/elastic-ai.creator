@@ -3,11 +3,8 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.base_modules.arithmetics._arithmetics import Arithmetics
-from elasticai.creator.base_modules.arithmetics.torch_arithmetics import (
-    TorchArithmetics,
-)
-from elasticai.creator.base_modules.linear import Linear
+from elasticai.creator.base_modules.linear import Linear, MathOperations
+from elasticai.creator.base_modules.torch_math_operations import TorchMathOperations
 from tests.tensor_test_case import TensorTestCase
 
 
@@ -19,12 +16,12 @@ def linear_base_with_fixed_params(
     in_features: int,
     out_features: int,
     bias: bool,
-    arithmetics: Arithmetics = TorchArithmetics(),
+    operations: MathOperations = TorchMathOperations(),
 ) -> Linear:
     linear = Linear(
         in_features=in_features,
         out_features=out_features,
-        arithmetics=arithmetics,
+        operations=operations,
         bias=bias,
     )
     linear.weight = Parameter(torch.ones_like(linear.weight))
@@ -33,13 +30,13 @@ def linear_base_with_fixed_params(
     return linear
 
 
-class AddThreeArithmetics(TorchArithmetics):
+class AddThreeOperations(TorchMathOperations):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return a + 3
 
 
 @dataclass
-class FixedMatmulResultArithmetics(TorchArithmetics):
+class FixedMatmulResultOperations(TorchMathOperations):
     value: list[float]
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -47,7 +44,7 @@ class FixedMatmulResultArithmetics(TorchArithmetics):
 
 
 @dataclass
-class FixedAddResultArithmetics(TorchArithmetics):
+class FixedAddResultOperations(TorchMathOperations):
     value: list[float]
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -75,7 +72,7 @@ class LinearTest(TensorTestCase):
 
     def test_different_quantization(self) -> None:
         linear = linear_base_with_fixed_params(
-            in_features=3, out_features=1, bias=True, arithmetics=AddThreeArithmetics()
+            in_features=3, out_features=1, bias=True, operations=AddThreeOperations()
         )
 
         actual = linear(tensor([1, 2, 3]))
@@ -89,7 +86,7 @@ class LinearTest(TensorTestCase):
             in_features=3,
             out_features=1,
             bias=False,
-            arithmetics=FixedMatmulResultArithmetics(expected),
+            operations=FixedMatmulResultOperations(expected),
         )
 
         actual = linear(tensor([1, 2, 3]))
@@ -102,7 +99,7 @@ class LinearTest(TensorTestCase):
             in_features=3,
             out_features=1,
             bias=True,
-            arithmetics=FixedAddResultArithmetics(expected),
+            operations=FixedAddResultOperations(expected),
         )
 
         actual = linear(tensor([1, 2, 3]))

@@ -18,12 +18,12 @@ class RoundToFixedPoint(torch.autograd.Function):
         x: torch.Tensor = args[0]
         config: FixedPointConfig = args[1]
 
-        fp_ints = config.as_integer(x)
-        out_of_bounds = fp_ints[config.integer_out_of_bounds(fp_ints)]
+        fxp_ints = config.as_integer(x)
+        out_of_bounds = fxp_ints[config.integer_out_of_bounds(fxp_ints)]
         if torch.any(out_of_bounds):
             raise ValueError("Cannot quantize tensor. Values out of bounds.")
 
-        return config.as_rational(fp_ints)
+        return config.as_rational(fxp_ints)
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:

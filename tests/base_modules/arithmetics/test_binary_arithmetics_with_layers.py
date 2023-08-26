@@ -12,7 +12,7 @@ class TestLinearLayer:
         weight = [[0.1, -0.8], [-1.2, 4.0]]
         expected = [-1.0, 1.0]
         linear = Linear(
-            arithmetics=BinaryArithmetics(),
+            operations=BinaryArithmetics(),
             in_features=len(x),
             out_features=len(weight),
             bias=False,

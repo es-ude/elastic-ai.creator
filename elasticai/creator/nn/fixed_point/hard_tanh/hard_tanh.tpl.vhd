@@ -25,24 +25,24 @@ entity ${layer_name} is
 end entity ${layer_name};
 
 architecture rtl of ${layer_name} is
-    signal fp_input : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
-    signal fp_output : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal fxp_input : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal fxp_output : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 begin
-    fp_input <= signed(x);
-    y <= std_logic_vector(fp_output);
+    fxp_input <= signed(x);
+    y <= std_logic_vector(fxp_output);
 
     main_process : process (enable, clock)
     begin
         if (enable = '0') then
-            fp_output <= to_signed(0, DATA_WIDTH);
+            fxp_output <= to_signed(0, DATA_WIDTH);
         elsif (rising_edge(clock)) then
 
-            if fp_input <= to_signed(MIN_VAL, DATA_WIDTH) then
-                fp_output <= to_signed(MIN_VAL, DATA_WIDTH);
-            elsif fp_input >= to_signed(MAX_VAL, DATA_WIDTH) then
-                fp_output <= to_signed(MAX_VAL, DATA_WIDTH);
+            if fxp_input <= to_signed(MIN_VAL, DATA_WIDTH) then
+                fxp_output <= to_signed(MIN_VAL, DATA_WIDTH);
+            elsif fxp_input >= to_signed(MAX_VAL, DATA_WIDTH) then
+                fxp_output <= to_signed(MAX_VAL, DATA_WIDTH);
             else
-                fp_output <= fp_input;
+                fxp_output <= fxp_input;
             end if;
         end if;
     end process;

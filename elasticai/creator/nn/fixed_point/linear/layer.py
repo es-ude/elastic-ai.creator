@@ -1,17 +1,18 @@
 from typing import Any, cast
 
 import torch
-from fixed_point._math_operations import Operations
-from fixed_point._two_complement_fixed_point_config import FixedPointConfig
 
-from elasticai.creator.base_modules.linear import Linear
-from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.base_modules.linear import Linear as LinearBase
+from elasticai.creator.nn.fixed_point._math_operations import MathOperations
+from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from elasticai.creator.vhdl.translatable import Translatable
 
-from .design import FPLinear as FPLinearDesign
+from .design import Linear as LinearDesign
 
 
-class FPLinear(Translatable, Linear):
+class Linear(Translatable, LinearBase):
     def __init__(
         self,
         in_features: int,
@@ -25,12 +26,12 @@ class FPLinear(Translatable, Linear):
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=Operations(config=self._config),
+            operations=MathOperations(config=self._config),
             bias=bias,
             device=device,
         )
 
-    def translate(self, name: str) -> Design:
+    def translate(self, name: str) -> LinearDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
@@ -42,7 +43,7 @@ class FPLinear(Translatable, Linear):
         )
         signed_int_bias = cast(list[int], float_to_signed_int(bias))
 
-        return FPLinearDesign(
+        return LinearDesign(
             frac_bits=self._config.frac_bits,
             total_bits=self._config.total_bits,
             in_feature_num=self.in_features,
@@ -53,7 +54,7 @@ class FPLinear(Translatable, Linear):
         )
 
 
-class FPBatchNormedLinear(Translatable, torch.nn.Module):
+class BatchNormedLinear(Translatable, torch.nn.Module):
     def __init__(
         self,
         in_features: int,
@@ -67,13 +68,13 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         device: Any = None,
     ) -> None:
         super().__init__()
-        self._arithmetics = Operations(
+        self._operations = MathOperations(
             config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         )
-        self._linear = Linear(
+        self._linear = LinearBase(
             in_features=in_features,
             out_features=out_features,
-            arithmetics=self._arithmetics,
+            operations=self._operations,
             bias=bias,
             device=device,
         )
@@ -94,15 +95,15 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
         x = inputs.view(*input_shape)
         x = self._linear(x)
         x = self._batch_norm(x)
-        x = self._arithmetics.quantize(x)
+        x = self._operations.quantize(x)
 
         return x.view(*output_shape)
 
-    def translate(self, name: str) -> FPLinearDesign:
+    def translate(self, name: str) -> LinearDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
-            return self._arithmetics.config.as_integer(value)
+            return self._operations.config.as_integer(value)
 
         bn_mean = cast(torch.Tensor, self._batch_norm.running_mean)
         bn_variance = cast(torch.Tensor, self._batch_norm.running_var)
@@ -122,11 +123,11 @@ class FPBatchNormedLinear(Translatable, torch.nn.Module):
             weights = (self._batch_norm.weight * weights.t()).t()
             bias = self._batch_norm.weight * bias + self._batch_norm.bias
 
-        return FPLinearDesign(
+        return LinearDesign(
             in_feature_num=self._linear.in_features,
             out_feature_num=self._linear.out_features,
-            total_bits=self._arithmetics.config.total_bits,
-            frac_bits=self._arithmetics.config.frac_bits,
+            total_bits=self._operations.config.total_bits,
+            frac_bits=self._operations.config.frac_bits,
             weights=cast(list[list[int]], float_to_signed_int(weights.tolist())),
             bias=cast(list[int], float_to_signed_int(bias.tolist())),
             name=name,

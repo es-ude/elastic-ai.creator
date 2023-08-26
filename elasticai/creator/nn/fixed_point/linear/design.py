@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
-class FPLinear(Design):
+class Linear(Design):
     def __init__(
         self,
         *,
@@ -22,13 +22,11 @@ class FPLinear(Design):
         frac_bits: int,
         weights: list[list[int]],
         bias: list[int],
+        name: str,
         work_library_name: str = "work",
         resource_option: str = "auto",
-        name: Optional[str] = None,
-    ):
-        super().__init__(
-            name="fp_linear" if name is None else name,
-        )
+    ) -> None:
+        super().__init__(name=name)
         self.weights = weights
         self.bias = bias
         self.in_feature_num = in_feature_num
@@ -71,7 +69,7 @@ class FPLinear(Design):
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="fp_linear.tpl.vhd",
+            file_name="linear.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
                 weights_rom_name=rom_name["weights"],

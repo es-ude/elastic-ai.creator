@@ -3,8 +3,8 @@ from typing import cast
 import torch
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.fixed_point.precomputed.fp_precomputed_module import (
-    FPPrecomputedModule,
+from elasticai.creator.nn.fixed_point.precomputed.precomputed_module import (
+    PrecomputedModule,
 )
 
 
@@ -38,7 +38,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    tanh = FPPrecomputedModule(
+    tanh = PrecomputedModule(
         base_module=torch.nn.Tanh(),
         total_bits=8,
         frac_bits=2,
@@ -82,7 +82,7 @@ begin
     end process;
 end rtl;
 """.splitlines()
-    sigmoid = FPPrecomputedModule(
+    sigmoid = PrecomputedModule(
         base_module=torch.nn.Sigmoid(),
         total_bits=8,
         frac_bits=2,
