@@ -130,6 +130,7 @@ All packages and modules fall into one of five main categories and can thus be f
  - **y**: output value/tensor for layer with single output
  - **_bits**: suffix to denote the number of bits, e.g. `total_bits`, `frac_bits`, in python context
  - **_width**: suffix to denote the number of bits used for a data bus in vhdl, e.g. `total_width`, `frac_width`
+ - **MathOperations/operations**: definition of how to perform mathematical operations (quantization, addition, matrix multiplication, ...)
 
 
 ### Conventional Commit Rules
