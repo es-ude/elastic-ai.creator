@@ -37,13 +37,13 @@ class Conv1d(_Conv1d):
         )
         self._operations = operations
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         quantized_weights = self._operations.quantize(self.weight)
         quantized_bias = (
             self._operations.quantize(self.bias) if self.bias is not None else None
         )
         convolved = conv1d(
-            input=inputs,
+            input=x,
             weight=quantized_weights,
             bias=quantized_bias,
             stride=self.stride,

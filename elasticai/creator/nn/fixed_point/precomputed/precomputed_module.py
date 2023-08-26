@@ -6,13 +6,12 @@ from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.precomputed.identity_step_function import (
-    IdentityStepFunction,
-)
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )
 from elasticai.creator.vhdl.translatable import Translatable
+
+from .identity_step_function import IdentityStepFunction
 
 
 class PrecomputedModule(torch.nn.Module, Translatable):
@@ -30,9 +29,9 @@ class PrecomputedModule(torch.nn.Module, Translatable):
         self._operations = MathOperations(self._config)
         self._step_lut = torch.linspace(*sampling_intervall, num_steps)
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        inputs = self._stepped_inputs(inputs)
-        outputs = self._base_module(inputs)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self._stepped_inputs(x)
+        outputs = self._base_module(x)
         return self._operations.quantize(outputs)
 
     def translate(self, name: str) -> PrecomputedScalarFunction:
@@ -44,10 +43,8 @@ class PrecomputedModule(torch.nn.Module, Translatable):
             function=self._quantized_inference,
         )
 
-    def _stepped_inputs(self, inputs: torch.Tensor) -> torch.Tensor:
-        step_inputs = cast(
-            torch.Tensor, IdentityStepFunction.apply(inputs, self._step_lut)
-        )
+    def _stepped_inputs(self, x: torch.Tensor) -> torch.Tensor:
+        step_inputs = cast(torch.Tensor, IdentityStepFunction.apply(x, self._step_lut))
         return self._operations.quantize(step_inputs)
 
     def _quantized_inference(self, x: int) -> int:

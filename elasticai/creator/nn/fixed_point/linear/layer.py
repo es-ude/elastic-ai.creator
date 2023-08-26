@@ -87,12 +87,12 @@ class BatchNormedLinear(Translatable, torch.nn.Module):
             device=device,
         )
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        has_batches = inputs.dim() == 2
-        input_shape = inputs.shape if has_batches else (1, -1)
-        output_shape = (inputs.shape[0], -1) if has_batches else (-1,)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        has_batches = x.dim() == 2
+        input_shape = x.shape if has_batches else (1, -1)
+        output_shape = (x.shape[0], -1) if has_batches else (-1,)
 
-        x = inputs.view(*input_shape)
+        x = x.view(*input_shape)
         x = self._linear(x)
         x = self._batch_norm(x)
         x = self._operations.quantize(x)
