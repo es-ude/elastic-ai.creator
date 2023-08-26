@@ -51,28 +51,29 @@ python3 -m pip install elasticai-creator
 The following example shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
 
 ```python
-from elasticai.creator.nn import Sequential, FPLinear, FPHardSigmoid
+from elasticai.creator.nn import Sequential
+from elasticai.creator.nn.fixed_point import Linear, HardSigmoid
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 
 
 def main() -> None:
-  # Define a model
-  model = Sequential(
-    FPLinear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
-    FPHardSigmoid(total_bits=16, frac_bits=8),
-  )
+    # Define a model
+    model = Sequential(
+        Linear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
+        HardSigmoid(total_bits=16, frac_bits=8),
+    )
 
-  # Train the model
-  run_training(model)
+    # Train the model
+    run_training(model)
 
-  # Save the VHDL code of the trained model
-  destination = OnDiskPath("build_dir")
-  design = model.translate("my_model")
-  design.save_to(destination)
+    # Save the VHDL code of the trained model
+    destination = OnDiskPath("build_dir")
+    design = model.translate("my_model")
+    design.save_to(destination)
 
 
 if __name__ == "__main__":
-  main()
+    main()
 ```
 
 
