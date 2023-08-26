@@ -2,12 +2,12 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.base_modules.autograd_functions.identity_step_function import (
-    IdentityStepFunction,
-)
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
+)
+from elasticai.creator.nn.fixed_point.precomputed.identity_step_function import (
+    IdentityStepFunction,
 )
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,

@@ -1,14 +1,13 @@
-from typing import Optional, cast
+from typing import cast
 
 import torch
 
-from elasticai.creator.base_modules.arithmetics._arithmetics import Arithmetics
-from elasticai.creator.base_modules.autograd_functions.round_to_float import (
-    RoundToFloat,
-)
+from elasticai.creator.base_modules.math_operations import Add, MatMul, Mul, Quantize
+
+from ._round_to_float import RoundToFloat
 
 
-class FloatArithmetics(Arithmetics):
+class MathOperations(Quantize, Add, MatMul, Mul):
     def __init__(self, mantissa_bits: int, exponent_bits: int) -> None:
         self.mantissa_bits = mantissa_bits
         self.exponent_bits = exponent_bits
@@ -25,14 +24,14 @@ class FloatArithmetics(Arithmetics):
         return -self.largest_positive_value
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
-        return self.round(self.clamp(a))
+        return self._round(self._clamp(a))
 
-    def clamp(self, a: torch.Tensor) -> torch.Tensor:
+    def _clamp(self, a: torch.Tensor) -> torch.Tensor:
         return torch.clamp(
             a, min=self.smallest_negative_value, max=self.largest_positive_value
         )
 
-    def round(self, a: torch.Tensor) -> torch.Tensor:
+    def _round(self, a: torch.Tensor) -> torch.Tensor:
         return cast(
             torch.Tensor,
             RoundToFloat.apply(a, self.mantissa_bits, self.exponent_bits),
@@ -41,34 +40,8 @@ class FloatArithmetics(Arithmetics):
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(a + b)
 
-    def sum(
-        self, a: torch.Tensor, dim: Optional[int | tuple[int, ...]] = None
-    ) -> torch.Tensor:
-        return self.quantize(torch.sum(a, dim=dim))
-
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(a * b)
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(torch.matmul(a, b))
-
-    def conv1d(
-        self,
-        inputs: torch.Tensor,
-        weights: torch.Tensor,
-        bias: Optional[torch.Tensor],
-        stride: int,
-        padding: int | str,
-        dilation: int,
-        groups: int,
-    ) -> torch.Tensor:
-        outputs = torch.nn.functional.conv1d(
-            input=inputs,
-            weight=weights,
-            bias=bias,
-            stride=stride,
-            padding=padding,
-            dilation=dilation,
-            groups=groups,
-        )
-        return self.quantize(outputs)

@@ -4,9 +4,7 @@ from typing import cast
 import torch
 from torch import Tensor
 
-from elasticai.creator.base_modules.autograd_functions.binary_quantization import (
-    Binarize,
-)
+from elasticai.creator.nn.binary._binary_quantization_function import Binarize
 from tests.tensor_test_case import TensorTestCase
 
 

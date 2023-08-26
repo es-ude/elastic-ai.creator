@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 import torch
 
-from elasticai.creator.base_modules.autograd_functions.identity_step_function import (
+from elasticai.creator.nn.fixed_point.precomputed.identity_step_function import (
     IdentityStepFunction,
 )
 from tests.tensor_test_case import assertTensorEqual
