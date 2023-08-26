@@ -134,19 +134,19 @@ All packages and modules fall into one of five main categories and can thus be f
 
 ### Conventional Commit Rules
 
-We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types and message scopes are allowed. The message scope is optional.
+We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types are allowed. The message scope is optional.
 
-| Commit Types | Message Scopes |
-|--------------|----------------|
-| feat         | template       |
-| fix          | translation    |
-| docs         | nn             |
-| style        | transformation |
-| refactor     | unit           |
-| revert       | integration    |
-| chore        |                |
-| wip          |                |
-| perf         |                |
+| Commit Types |
+|--------------|
+| feat         |
+| fix          |
+| docs         |
+| style        |
+| refactor     |
+| revert       |
+| chore        |
+| wip          |
+| perf         |
 
 
 ### Tests
