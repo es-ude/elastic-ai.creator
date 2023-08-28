@@ -2,6 +2,26 @@
 
 <!--next-version-placeholder-->
 
+## v0.56.0 (2023-08-28)
+
+### Feature
+
+* Add a public quantize function to allow initial quantization of model inputs ([`c8a170c`](https://github.com/es-ude/elastic-ai.creator/commit/c8a170cb1ba529855790dcaf2dad97c38171174e))
+* Add layers to __init__ file in fixed_point package to improve usability ([`93917d8`](https://github.com/es-ude/elastic-ai.creator/commit/93917d8654794b7f5baa005e989f2984d6c846e3))
+
+### Fix
+
+* Fix broken imports and other errors that leads to failing tests ([`6eac561`](https://github.com/es-ude/elastic-ai.creator/commit/6eac56189e1e449d378867a4b4d8003967f48689))
+* Remove deprecated layers ([`59cdaae`](https://github.com/es-ude/elastic-ai.creator/commit/59cdaaea412f2d7aa6a8fd63a8ba931688ddc855))
+* Remove deprecated layers ([`d55c041`](https://github.com/es-ude/elastic-ai.creator/commit/d55c041e0141fe30bf3038074c061704ed057682))
+* Outdated imports ([`650a71e`](https://github.com/es-ude/elastic-ai.creator/commit/650a71e36f9c12db1160b86f82ad4d37715b19d7))
+
+### Documentation
+
+* Add glossary entry ([`8855e02`](https://github.com/es-ude/elastic-ai.creator/commit/8855e0248e97a2628c1ff73e69538c969f52d685))
+* Update minimal example to reflect the most recent changes ([`8f122a0`](https://github.com/es-ude/elastic-ai.creator/commit/8f122a04699c42ff7abb7179d3cb7412cf94c0ef))
+* Start glossary ([`b2d82cd`](https://github.com/es-ude/elastic-ai.creator/commit/b2d82cdcc663d13492b611a700321c4bbcf452be))
+
 ## v0.55.2 (2023-08-12)
 
 ### Fix
