@@ -1,14 +1,16 @@
 from typing import Any
 
-import torch
+from torch import Tensor
+from torch.nn import Conv1d as _Conv1d
+from torch.nn.functional import conv1d
 
-from .arithmetics.arithmetics import Arithmetics
+from elasticai.creator.base_modules.math_operations import Quantize as MathOperations
 
 
-class Conv1d(torch.nn.Conv1d):
+class Conv1d(_Conv1d):
     def __init__(
         self,
-        arithmetics: Arithmetics,
+        operations: MathOperations,
         in_channels: int,
         out_channels: int,
         kernel_size: int | tuple[int],
@@ -33,27 +35,20 @@ class Conv1d(torch.nn.Conv1d):
             device=device,
             dtype=dtype,
         )
-        self._arithmetics = arithmetics
+        self._operations = operations
 
-    @staticmethod
-    def _flatten_tuple(x: int | tuple[int, ...]) -> int:
-        return x[0] if isinstance(x, tuple) else x
-
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        quantized_weights = self._arithmetics.quantize(self.weight)
+    def forward(self, x: Tensor) -> Tensor:
+        quantized_weights = self._operations.quantize(self.weight)
         quantized_bias = (
-            self._arithmetics.quantize(self.bias) if self.bias is not None else None
+            self._operations.quantize(self.bias) if self.bias is not None else None
         )
-        return self._arithmetics.conv1d(
-            inputs=inputs,
-            weights=quantized_weights,
+        convolved = conv1d(
+            input=x,
+            weight=quantized_weights,
             bias=quantized_bias,
-            stride=self._flatten_tuple(self.stride),
-            padding=(
-                self.padding
-                if isinstance(self.padding, str)
-                else self._flatten_tuple(self.padding)
-            ),
-            dilation=self._flatten_tuple(self.dilation),
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
             groups=self.groups,
         )
+        return self._operations.quantize(convolved)

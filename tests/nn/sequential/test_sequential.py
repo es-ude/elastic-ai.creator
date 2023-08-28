@@ -2,7 +2,7 @@ from typing import cast
 
 import pytest
 
-from elasticai.creator.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.identity.layer import BufferedIdentity
 from elasticai.creator.nn.sequential.layer import Sequential
 

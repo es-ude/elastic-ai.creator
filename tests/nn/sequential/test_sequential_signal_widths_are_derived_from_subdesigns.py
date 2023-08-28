@@ -1,16 +1,16 @@
 import pytest
 
+from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.sequential.design import Sequential
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
-from elasticai.creator.vhdl.design_base.design import Design
-from elasticai.creator.vhdl.design_base.ports import Port
-from elasticai.creator.vhdl.savable import Path
+from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.vhdl.design.ports import Port
 
 
 class DummyDesign(Design):
     def __init__(
         self, name: str, x_width: int, y_width: int, x_count: int = 0, y_count: int = 0
-    ):
+    ) -> None:
         super().__init__(name)
         self._port = create_port(
             x_width=x_width, y_width=y_width, x_count=x_count, y_count=y_count
@@ -25,7 +25,7 @@ class DummyDesign(Design):
 
 
 @pytest.fixture
-def port_of_mixed_sequential():
+def port_of_mixed_sequential() -> Port:
     return Sequential(
         [
             DummyDesign("dd_0", x_width=4, y_width=3),
@@ -36,9 +36,9 @@ def port_of_mixed_sequential():
     ).port
 
 
-def test_x_width_matches(port_of_mixed_sequential: Port):
+def test_x_width_matches(port_of_mixed_sequential: Port) -> None:
     assert port_of_mixed_sequential["x"].width == 4
 
 
-def test_y_width_matches(port_of_mixed_sequential: Port):
+def test_y_width_matches(port_of_mixed_sequential: Port) -> None:
     assert port_of_mixed_sequential["y"].width == 2

@@ -51,15 +51,16 @@ python3 -m pip install elasticai-creator
 The following example shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
 
 ```python
-from elasticai.creator.nn import Sequential, FPLinear, FPHardSigmoid
-from elasticai.creator.on_disk_path import OnDiskPath
+from elasticai.creator.nn import Sequential
+from elasticai.creator.nn.fixed_point import Linear, HardSigmoid
+from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 
 
 def main() -> None:
     # Define a model
     model = Sequential(
-        FPLinear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
-        FPHardSigmoid(total_bits=16, frac_bits=8),
+        Linear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
+        HardSigmoid(total_bits=16, frac_bits=8),
     )
 
     # Train the model
@@ -111,48 +112,42 @@ npm install --save-dev @commitlint/{config-conventional,cli}
 sudo apt install ghdl
 ```
 
+### Project Structure
+
+All packages and modules fall into one of five main categories and can thus be found in the corresponding package
+
+ - `nn`: trainable modules that can be translated to vhdl to build a hardware accelerator
+ - `base_modules`: (non-public) shared functionality and data structures, that we use to create our neural network software modules
+ - `vhdl`: (non-public) shared code that we use to represent and generate vhdl code
+ - `file_generation`: provide a very restricted api to generate files or file subtrees under a given root node and defines a basic template api and datastructure, compatible with `file_generation`
+
+
+### Glossary
+
+ - **fxp/Fxp**: prefix for fixed point
+ - **flp/Flp**: prefix for floating point
+ - **x**: parameter input tensor for layer with single input tensor
+ - **y**: output value/tensor for layer with single output
+ - **_bits**: suffix to denote the number of bits, e.g. `total_bits`, `frac_bits`, in python context
+ - **_width**: suffix to denote the number of bits used for a data bus in vhdl, e.g. `total_width`, `frac_width`
+ - **MathOperations/operations**: definition of how to perform mathematical operations (quantization, addition, matrix multiplication, ...)
+
 
 ### Conventional Commit Rules
 
-We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types and message scopes are allowed. The message scope is optional.
+We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types are allowed. The message scope is optional.
 
-| Commit Types | Message Scopes |
-|--------------|----------------|
-| feat         | template       |
-| fix          | translation    |
-| docs         | nn             |
-| style        | transformation |
-| refactor     | unit           |
-| revert       | integration    |
-| chore        |                |
-| wip          |                |
-| perf         |                |
-
-
-### Adding new translation targets
-
-New translation targets should be located in their own folder, e.g. vhdl for translating from any language to vhdl.
-Workflow for adding a new translation:
-1. Obtain a structure, such as a list in a sequential case, which will describe the connection between every component.
-2. Identify and label relevant structures, in the base cases it can be simply separate layers.
-3. Map each structure to its function which will convert it.
-4. Do such conversions.
-5. Recreate connections based on 1.
-
-Each sub-step should be separable and it helps for testing if common functions are wrapped around an adapter.
-
-
-### Syntax Checking
-
-[GHDL](https://ghdl.github.io/ghdl/) supports a [syntax checking](https://umarcor.github.io/ghdl/using/InvokingGHDL.html#check-syntax-s) which checks the syntax of a vhdl file without generating code.
-The command is as follows:
-```bash
-ghdl -s path/to/vhdl/file
-```
-For checking all vhdl files together in our project we can just run:
-```bash
-ghdl -s elasticai/creator/**/*.vhd
-```
+| Commit Types |
+|--------------|
+| feat         |
+| fix          |
+| docs         |
+| style        |
+| refactor     |
+| revert       |
+| chore        |
+| wip          |
+| perf         |
 
 
 ### Tests
@@ -179,7 +174,7 @@ If you want to add more tests please refer to the Test Guidelines in the followi
 
 In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
 If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
-In most cases you can use the [`InMemoryPath`](elasticai/creator/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
+In most cases you can use the [`InMemoryPath`](elasticai/creator/file_generation/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
 
 
 ##### Directory structure and file names

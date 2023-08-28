@@ -1,12 +1,12 @@
-from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
-from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
-from elasticai.creator.vhdl.code_generation.template import (
+from elasticai.creator.file_generation.savable import Path
+from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.vhdl.design_base.design import Design
-from elasticai.creator.vhdl.design_base.ports import Port
-from elasticai.creator.vhdl.savable import Path
+from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
+from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
+from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.vhdl.design.ports import Port
 
 
 class BufferedIdentity(Design):

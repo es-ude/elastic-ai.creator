@@ -1,8 +1,8 @@
 from collections.abc import Callable, Sequence
 from itertools import chain
 
-from elasticai.creator.vhdl.design_base.ports import Port
-from elasticai.creator.vhdl.design_base.signal import Signal
+from elasticai.creator.vhdl.design.ports import Port
+from elasticai.creator.vhdl.design.signal import Signal
 
 
 def signal_string(name: str, direction: str, width: int | str) -> str:

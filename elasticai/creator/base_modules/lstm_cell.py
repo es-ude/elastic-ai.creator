@@ -1,10 +1,14 @@
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any, Optional, Protocol
 
 import torch
 
-from .arithmetics.arithmetics import Arithmetics
 from .linear import Linear
+from .math_operations import Add, MatMul, Mul, Quantize
+
+
+class MathOperations(Quantize, Add, MatMul, Mul, Protocol):
+    ...
 
 
 class LSTMCell(torch.nn.Module):
@@ -13,7 +17,7 @@ class LSTMCell(torch.nn.Module):
         input_size: int,
         hidden_size: int,
         bias: bool,
-        arithmetics: Arithmetics,
+        operations: MathOperations,
         sigmoid_factory: Callable[[], torch.nn.Module],
         tanh_factory: Callable[[], torch.nn.Module],
         device: Any = None,
@@ -22,20 +26,20 @@ class LSTMCell(torch.nn.Module):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.bias = bias
-        self.ops = arithmetics
+        self._operations = operations
 
         self.linear_ih = Linear(
             in_features=input_size,
             out_features=hidden_size * 4,
             bias=bias,
-            arithmetics=arithmetics,
+            operations=operations,
             device=device,
         )
         self.linear_hh = Linear(
             in_features=hidden_size,
             out_features=hidden_size * 4,
             bias=bias,
-            arithmetics=arithmetics,
+            operations=operations,
             device=device,
         )
         self.sigmoid = sigmoid_factory()
@@ -61,12 +65,14 @@ class LSTMCell(torch.nn.Module):
             self.linear_hh(h_prev), self.hidden_size, dim=-1
         )
 
-        i = self.sigmoid(self.ops.add(pred_ii, pred_hi))
-        f = self.sigmoid(self.ops.add(pred_if, pred_hf))
-        g = self.tanh(self.ops.add(pred_ig, pred_hg))
-        o = self.sigmoid(self.ops.add(pred_io, pred_ho))
+        i = self.sigmoid(self._operations.add(pred_ii, pred_hi))
+        f = self.sigmoid(self._operations.add(pred_if, pred_hf))
+        g = self.tanh(self._operations.add(pred_ig, pred_hg))
+        o = self.sigmoid(self._operations.add(pred_io, pred_ho))
 
-        c = self.ops.add(self.ops.mul(f, c_prev), self.ops.mul(i, g))
-        h = self.ops.mul(o, self.tanh(c))
+        c = self._operations.add(
+            self._operations.mul(f, c_prev), self._operations.mul(i, g)
+        )
+        h = self._operations.mul(o, self.tanh(c))
 
         return h, c
