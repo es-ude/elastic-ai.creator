@@ -8,6 +8,8 @@ authors = ["Department Embedded Systems - University Duisburg Essen"]
 packages = [
     { include = "elasticai/" }
 ]
+exclude = ["*_test.py", "test_*.py"]
+
 
 [tool.poetry.dependencies]
 python = "~3.11"
@@ -30,17 +32,21 @@ pylint = "^2.16.2"
 pytest = "^7.2.2"
 setuptools = "^67.5.1"
 
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.pylint]
 max-line-length = 88
 accept-no-raise-doc = "False"
 disable="C0115, C0116, C0114" # disable missing docstring messages as they incourage adding noise comments
 
+
 [tool.black]
 preview = true
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -50,21 +56,25 @@ testpaths = [
 ]
 python_files = ["*_test.py", "test_*.py"]
 
+
 [tool.coverage.run]
 omit = ["elasticai/creator/examples/*py", "elasticai/creator/tests/*py", "elasticai/creator/*Tests/*py", "elasticai/**/__init__.py"]
 source = ["elasticai/creator"]
 command_line = "-m unittest discover ."
+
 
 [tool.importlinter]
 root_package = "elasticai"
 contract_types = [
 "package_private_modules: import_contract.PackagePrivateModules"]
 
+
 [[tool.importlinter.contracts]]
 name = "package private"
 type = "package_private_modules"
 targets = ["elasticai.creator"]
 sources = ["elasticai.creator"]
+
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:tool.poetry.version"]
@@ -76,6 +86,7 @@ branch = "main"
 parser_angular_allowed_types="chore,docs,feat,style,fix,refactor,wip,perf,revert"
 parser_angular_minor_types="feat"
 parser_angular_patch_types="fix,perf"
+
 
 [tool.isort]
 profile = "black"
