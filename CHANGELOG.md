@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.57.1 (2023-08-29)
+
+### Fix
+
+* Try to exclude test files from build ([`f282ac0`](https://github.com/es-ude/elastic-ai.creator/commit/f282ac06aae45451d3787d74cda54b51e7f28200))
+
 ## v0.57.0 (2023-08-29)
 
 ### Feature
