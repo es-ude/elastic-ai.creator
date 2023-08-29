@@ -8,7 +8,7 @@ authors = ["Department Embedded Systems - University Duisburg Essen"]
 packages = [
     { include = "elasticai/" }
 ]
-exclude = ["*_test.py", "test_*.py"]
+exclude = ["elasticai/**/*_test.py", "elasticai/**/test_*.py"]
 
 
 [tool.poetry.dependencies]
