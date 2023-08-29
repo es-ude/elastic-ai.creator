@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.57.0 (2023-08-29)
+
+### Feature
+
+* Exclude tests from build ([`72b8e0a`](https://github.com/es-ude/elastic-ai.creator/commit/72b8e0af0e3fddc154be5763b26f5174cc49d7f4))
+* Global math operations depend on math operations of supported layers ([`127ffdb`](https://github.com/es-ude/elastic-ai.creator/commit/127ffdb29853587e4f819d75077e524e7a168bc5))
+
 ## v0.56.0 (2023-08-28)
 
 ### Feature
