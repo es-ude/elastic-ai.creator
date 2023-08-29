@@ -3,14 +3,18 @@ from typing import cast
 import torch
 from torch import Tensor
 
-from elasticai.creator.base_modules.math_operations import Add, MatMul, Mul, Quantize
-from elasticai.creator.nn.fixed_point._round_to_fixed_point import RoundToFixedPoint
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
-    FixedPointConfig,
+from elasticai.creator.base_modules.conv1d import MathOperations as Conv1dOps
+from elasticai.creator.base_modules.linear import MathOperations as LinearOps
+from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
+from elasticai.creator.base_modules.silu_with_trainable_scale_beta import (
+    MathOperations as SiLUOps,
 )
 
+from ._round_to_fixed_point import RoundToFixedPoint
+from ._two_complement_fixed_point_config import FixedPointConfig
 
-class MathOperations(Quantize, Add, MatMul, Mul):
+
+class MathOperations(LinearOps, Conv1dOps, LSTMOps, SiLUOps):
     def __init__(self, config: FixedPointConfig) -> None:
         self.config = config
 
