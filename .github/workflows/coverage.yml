@@ -15,7 +15,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
 
       - name: Create coverage report
-        run: poetry run python -m pytest --cov-report xml --cov elasticai.creator tests
+        run: poetry run python -m pytest --cov-report xml --cov elasticai.creator tests elasticai
 
       - name: Publish coverage report
         uses: orgoro/coverage@v3.1
