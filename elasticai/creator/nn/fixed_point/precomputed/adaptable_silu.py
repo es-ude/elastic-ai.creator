@@ -1,11 +1,11 @@
-from elasticai.creator.base_modules.silu_with_trainable_scale_beta import (
-    SiLUWithTrainableScaleBeta as SiLUWithTrainableScaleBetaBase,
+from elasticai.creator.base_modules.adaptable_silu import (
+    AdaptableSiLU as AdaptableSiLUBase,
 )
 
 from .precomputed_module import PrecomputedModule
 
 
-class SiLUWithTrainableScaleBeta(PrecomputedModule):
+class AdaptableSiLU(PrecomputedModule):
     def __init__(
         self,
         total_bits: int,
@@ -14,7 +14,7 @@ class SiLUWithTrainableScaleBeta(PrecomputedModule):
         sampling_intervall: tuple[float, float] = (-10, 10),
     ) -> None:
         super().__init__(
-            base_module=SiLUWithTrainableScaleBetaBase(),
+            base_module=AdaptableSiLUBase(),
             total_bits=total_bits,
             frac_bits=frac_bits,
             num_steps=num_steps,

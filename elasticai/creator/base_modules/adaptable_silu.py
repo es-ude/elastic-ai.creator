@@ -1,7 +1,7 @@
 import torch
 
 
-class SiLUWithTrainableScaleBeta(torch.nn.SiLU):
+class AdaptableSiLU(torch.nn.SiLU):
     def __init__(self) -> None:
         super().__init__(inplace=False)
         self.scale = torch.nn.Parameter(torch.ones(1, requires_grad=True))
