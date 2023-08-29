@@ -1,10 +1,14 @@
-from typing import Any
+from typing import Any, Protocol
 
 from torch import Tensor
 from torch.nn import Conv1d as _Conv1d
 from torch.nn.functional import conv1d
 
-from elasticai.creator.base_modules.math_operations import Quantize as MathOperations
+from elasticai.creator.base_modules.math_operations import Quantize
+
+
+class MathOperations(Quantize, Protocol):
+    ...
 
 
 class Conv1d(_Conv1d):

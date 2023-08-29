@@ -1,10 +1,16 @@
+from typing import Protocol
+
 import torch
 
 from elasticai.creator.base_modules.math_operations import Quantize
 
 
+class MathOperations(Quantize, Protocol):
+    ...
+
+
 class SiLUWithTrainableScaleBeta(torch.nn.SiLU):
-    def __init__(self, operations: Quantize) -> None:
+    def __init__(self, operations: MathOperations) -> None:
         super().__init__(inplace=False)
         self._operations = operations
         self.scale = torch.nn.Parameter(torch.ones(1, requires_grad=True))

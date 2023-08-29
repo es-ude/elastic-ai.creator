@@ -1,9 +1,12 @@
 import torch
 
-from .math_operations import Add, MatMul, Mul, Quantize
+from .conv1d import MathOperations as Conv1dOps
+from .linear import MathOperations as LinearOps
+from .lstm_cell import MathOperations as LSTMOps
+from .silu_with_trainable_scale_beta import MathOperations as SiluOps
 
 
-class TorchMathOperations(Quantize, Add, MatMul, Mul):
+class TorchMathOperations(LinearOps, Conv1dOps, LSTMOps, SiluOps):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return a
 

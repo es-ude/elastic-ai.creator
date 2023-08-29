@@ -2,12 +2,17 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.base_modules.math_operations import Add, MatMul, Mul, Quantize
+from elasticai.creator.base_modules.conv1d import MathOperations as Conv1dOps
+from elasticai.creator.base_modules.linear import MathOperations as LinearOps
+from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
+from elasticai.creator.base_modules.silu_with_trainable_scale_beta import (
+    MathOperations as SiLUOps,
+)
 
 from ._binary_quantization_function import Binarize
 
 
-class MathOperations(Quantize, Add, MatMul, Mul):
+class MathOperations(LinearOps, Conv1dOps, LSTMOps, SiLUOps):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, Binarize.apply(a))
 
