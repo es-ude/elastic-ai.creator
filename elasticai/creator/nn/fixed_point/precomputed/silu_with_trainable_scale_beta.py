@@ -1,10 +1,6 @@
 from elasticai.creator.base_modules.silu_with_trainable_scale_beta import (
     SiLUWithTrainableScaleBeta as SiLUWithTrainableScaleBetaBase,
 )
-from elasticai.creator.nn.fixed_point._math_operations import MathOperations
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 from .precomputed_module import PrecomputedModule
 
@@ -18,11 +14,7 @@ class SiLUWithTrainableScaleBeta(PrecomputedModule):
         sampling_intervall: tuple[float, float] = (-10, 10),
     ) -> None:
         super().__init__(
-            base_module=SiLUWithTrainableScaleBetaBase(
-                operations=MathOperations(
-                    config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-                ),
-            ),
+            base_module=SiLUWithTrainableScaleBetaBase(),
             total_bits=total_bits,
             frac_bits=frac_bits,
             num_steps=num_steps,
