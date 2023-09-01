@@ -1,3 +1,12 @@
+"""
+Here we collect several functions to convert fixed point,
+integer and natural numbers to bit patterns and vice versa.
+
+IMPORTANT: We assume, the numbers to be representable in
+the target format!
+"""
+
+
 def _toggle_bits(number: int, total_bits: int) -> int:
     def invert(value: int) -> int:
         return value ^ int("1" * total_bits, 2)
