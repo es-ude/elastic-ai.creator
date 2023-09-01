@@ -1,4 +1,10 @@
-from fixed_point.mac.number_conversion import bits_to_rational, integer_to_bits
+from fixed_point.mac.number_conversion import (
+    bits_to_rational,
+    integer_to_bits,
+    max_rational,
+    min_rational,
+    rational_to_bits,
+)
 
 
 def test_001_to_0_5():
@@ -53,3 +59,31 @@ def test_minus_5_to_1011():
 
 def test_minus_8_to_1000():
     assert "1000" == integer_to_bits(number=-8, total_bits=4)
+
+
+def test_0_5_to_01():
+    assert "01" == rational_to_bits(rational=0.5, total_bits=2, frac_bits=1)
+
+
+def test_0_5_to_001():
+    assert "001" == rational_to_bits(rational=0.5, total_bits=3, frac_bits=1)
+
+
+def test_0_25_to_000_because_of_rounding():
+    assert "000" == rational_to_bits(rational=0.25, total_bits=3, frac_bits=1)
+
+
+def test_max_rational_for_3_and_1_is_1_5():
+    assert 1.5 == max_rational(total_bits=3, frac_bits=1)
+
+
+def test_max_rational_for_3_and_2_is_0_75():
+    assert 0.75 == max_rational(3, 2)
+
+
+def test_min_rational_for_3_and_2_is_minus_1_75():
+    assert -1.0 == min_rational(3, 2)
+
+
+def test_min_rational_for_3_and_1_is_minus_3_5():
+    assert -2 == min_rational(3, 1)
