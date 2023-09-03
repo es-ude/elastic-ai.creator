@@ -14,14 +14,16 @@ Notes:
   - The software layer knows the correct result for an input
   - The translatable layer knows how to convert inputs and outputs to correct vhdl representation
 """
+"""
+TODO:
+ - add automatic output parsing and compare to expected result
+"""
 
 
 def hw_test():
     root_name = "hw_test"
     root = OnDiskPath(root_name)
     testbench_name = "testbench_fxp_mac"
-    unit_under_test_name = "fxp_MAC_RoundToEven"
-    heading = ("reset", "next_sample", "x1", "x2")
     x1 = (0.0, 1.0)
     x2 = (1.0, -1.0)
     mac = MacLayer(total_bits=4, frac_bits=2)
@@ -30,9 +32,9 @@ def hw_test():
         total_bits=4, frac_bits=2, inputs=zip(x1, x2), name="mac_fxp_test_bench"
     )
     mac_design = mac.create_design()
-    testbench.save_to(root_name)
-    mac_design.save_to(root_name)
-    files = list(glob.glob(f"{root_name}/**/*.vhd", recursive=True))
+    testbench.save_to(root)
+    mac_design.save_to(root)
+    files = list(glob.glob(f"**/*.vhd", root_dir=root_name, recursive=True))
     runner = TestBenchRunner(
         workdir=f"{root_name}", files=files, test_bench_name=testbench_name
     )

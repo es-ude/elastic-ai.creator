@@ -17,4 +17,4 @@ class MacDesign(Savable):
             file_name="fxp_mac.tpl.vhd",
             parameters={},
         )
-        destination.as_file(".vhd").write(template)
+        destination.create_subpath("fxp_mac").as_file(".vhd").write(template)

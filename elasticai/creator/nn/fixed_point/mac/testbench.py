@@ -14,7 +14,10 @@ class InputsFile:
 
     @property
     def parameters(self):
-        return {"heading": " ".join(self._heading), "values": " ".join(self._inputs)}
+        return {
+            "heading_row": ",".join(self._heading),
+            "values": [",".join(row) for row in self._inputs],
+        }
 
 
 class TestBench:
@@ -33,6 +36,6 @@ class TestBench:
         test_bench = InProjectTemplate(
             package="elasticai.creator.nn.fixed_point.mac",
             file_name="testbench.tpl.vhd",
-            parameters={"input_file": f"inputs.txt", "output_file": f"outputs.txt"},
+            parameters={"input_file": f"inputs.csv", "output_file": f"outputs.csv"},
         )
         destination.create_subpath(self._name).as_file(".vhd").write(test_bench)

@@ -67,6 +67,7 @@ begin
     variable reset_val, next_sample_val : std_logic; -- to save col1 and col2 values of 1 bit
     variable x1_val, x2_val : std_logic_vector(TOTAL_WIDTH-1 downto 0); -- to save col3 value of 2 bit
     variable val_SPACE : character;  -- for spaces between data in file
+    variable delimiter : string(1 to 1) := ",";
 
     begin
     file_open(input_buf, "${input_file}",  read_mode);
@@ -75,7 +76,7 @@ begin
 
     write(write_col_to_output_buf, string'("START_SIM"));
     writeline(output_buf, write_col_to_output_buf);
-    write(write_col_to_output_buf, string'("reset next_sample x1 x2 sum done"));
+    write(write_col_to_output_buf, string'("reset,next_sample,x1,x2,sum,done"));
     writeline(output_buf, write_col_to_output_buf);
 
     readline(input_buf, read_col_from_input_buf); --read headerrow and throw away
@@ -100,15 +101,15 @@ begin
 
           -- writing output
           write(write_col_to_output_buf, reset_val);
-          write(write_col_to_output_buf, string'(" "));
+          write(write_col_to_output_buf, delimiter);
           write(write_col_to_output_buf, next_sample_val);
-          write(write_col_to_output_buf, string'(" "));
+          write(write_col_to_output_buf, delimiter);
           write(write_col_to_output_buf, x1_val);
-          write(write_col_to_output_buf, string'(" "));
+          write(write_col_to_output_buf, delimiter);
           write(write_col_to_output_buf, x2_val);
-          write(write_col_to_output_buf, string'(" "));
+          write(write_col_to_output_buf, delimiter);
           write(write_col_to_output_buf, std_logic_vector(sum));
-          write(write_col_to_output_buf, string'(" "));
+          write(write_col_to_output_buf, delimiter);
           write(write_col_to_output_buf, done);
           writeline(output_buf, write_col_to_output_buf);
 
