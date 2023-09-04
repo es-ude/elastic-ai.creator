@@ -2,7 +2,10 @@ from ._ghdl_report_parsing import parse
 
 
 def test_parse_ghdl_simulation_results_one_liner():
-    simulation_output = "my_test_bench.vhd:64:17:@4ps:(report note):my report message\n"
+    simulation_output = (
+        "my_test_bench.vhd:64:17:@4ps:(report note):my report message\nsimulation"
+        " finished\n"
+    )
     expected = [
         {
             "source": "my_test_bench.vhd",
@@ -17,7 +20,7 @@ def test_parse_ghdl_simulation_results_one_liner():
 
 
 def test_parse_ghdl_another_line():
-    simulation_output = "A:1:2:@B:(C):D\n"
+    simulation_output = "A:1:2:@B:(C):D\nsimulation finished\n"
     expected = [
         {
             "source": "A",
@@ -33,8 +36,8 @@ def test_parse_ghdl_another_line():
 
 def test_parse_two_lines():
     simulation_output = (
-        "source:1:1:@time:(type):content\nsource:1:1:@time:(type):content\nignored last"
-        " line"
+        "source:1:1:@time:(type):content\nsource:1:1:@time:(type):content\nignored"
+        " last line\n"
     )
     expected = [
         {
@@ -50,5 +53,5 @@ def test_parse_two_lines():
 
 
 def test_put_colon_content_in_content_field():
-    simulation_output = "A:1:2:@B:(C):D:e:f\n"
+    simulation_output = "A:1:2:@B:(C):D:e:f\n\n"
     assert "D:e:f" == parse(simulation_output)[0]["content"]

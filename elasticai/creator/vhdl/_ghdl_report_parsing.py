@@ -1,5 +1,5 @@
-def parse(text):
-    lines = text.split("\n")[:-1]
+def parse(text: str):
+    lines = text.split("\n")[:-2]
 
     def split_first_five_colons(line):
         all_split = line.split(":")
