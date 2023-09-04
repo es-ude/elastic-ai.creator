@@ -60,8 +60,7 @@ begin
                 x2 <= x2_values(iteration_id);
                 iteration_id := iteration_id + 1;
             elsif done = '1' then
-                report "sum: " & to_bstring(sum);
-                report "iterations: " & to_string(iteration_id);
+                report to_bstring(sum);
                 finish;
             else
                 iteration_id := iteration_id + 1;
