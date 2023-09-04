@@ -1,6 +1,7 @@
-from creator.file_generation.savable import Path, Savable
-from creator.file_generation.template import InProjectTemplate
-from fixed_point.mac._signal_number_converter import SignalNumberConverter
+from elasticai.creator.file_generation.savable import Path, Savable
+from elasticai.creator.file_generation.template import InProjectTemplate
+
+from ._signal_number_converter import SignalNumberConverter
 
 
 class MacDesign(Savable):

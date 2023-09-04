@@ -1,4 +1,4 @@
-from fixed_point.mac.number_conversion import (
+from .number_conversion import (
     bits_to_rational,
     integer_to_bits,
     max_rational,

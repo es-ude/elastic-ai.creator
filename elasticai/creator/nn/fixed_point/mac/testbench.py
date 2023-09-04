@@ -1,6 +1,7 @@
-from creator.file_generation.savable import Path
-from creator.file_generation.template import InProjectTemplate
-from fixed_point.mac._signal_number_converter import SignalNumberConverter
+from elasticai.creator.file_generation.savable import Path
+from elasticai.creator.file_generation.template import InProjectTemplate
+
+from ._signal_number_converter import SignalNumberConverter
 
 
 class InputsFile:
@@ -21,6 +22,17 @@ class InputsFile:
 
 
 class TestBench:
+    """
+    The testbench aims to provide an interface between hw and sw engineer for
+    generating hw/sw tests for a hw/sw module pair.
+    The use case is as follows:
+     - Given a translatable software module and some input data `X`, we
+        - call the software module with the provided data and record the outputs
+        - generate the hw design (unit under test UUT) for the sw equivalent
+        - generate a testbench, that feeds the same input data `X` to the UUT and writes the output data to a file or stdout
+        - compare the output observed by the testbench to the output of the sw module
+    """
+
     def __init__(self, total_bits, frac_bits, inputs, name):
         self._number_converter = SignalNumberConverter(
             total_bits=total_bits, frac_bits=frac_bits
@@ -36,6 +48,6 @@ class TestBench:
         test_bench = InProjectTemplate(
             package="elasticai.creator.nn.fixed_point.mac",
             file_name="testbench.tpl.vhd",
-            parameters={"input_file": f"inputs.csv", "output_file": f"outputs.csv"},
+            parameters={},
         )
         destination.create_subpath(self._name).as_file(".vhd").write(test_bench)

@@ -1,13 +1,14 @@
 import glob
 
 import torch
-from fixed_point.mac._signal_number_converter import SignalNumberConverter
-from fixed_point.mac.sw_function import MacLayer
-from fixed_point.mac.testbench import TestBench
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.file_generation.template import InProjectTemplate
 from elasticai.creator.vhdl.test_bench_runner import TestBenchRunner
+
+from ._signal_number_converter import SignalNumberConverter
+from .sw_function import MacLayer
+from .testbench import TestBench
 
 """
 Notes:

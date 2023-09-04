@@ -1,7 +1,8 @@
-from creator.file_generation.savable import Savable
-from fixed_point._math_operations import MathOperations
-from fixed_point._two_complement_fixed_point_config import FixedPointConfig
-from fixed_point.mac.design import MacDesign
+from elasticai.creator.file_generation.savable import Savable
+
+from .._math_operations import MathOperations
+from .._two_complement_fixed_point_config import FixedPointConfig
+from .design import MacDesign
 
 
 class MacLayer:

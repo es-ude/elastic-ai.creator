@@ -1,6 +1,6 @@
 import math
 
-from fixed_point.mac._signal_number_converter import SignalNumberConverter
+from ._signal_number_converter import SignalNumberConverter
 
 
 def test_reset_two_times_without_input():

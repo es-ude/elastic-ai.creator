@@ -1,11 +1,7 @@
 from functools import partial
 from typing import Iterable
 
-from fixed_point.mac.number_conversion import (
-    bits_to_rational,
-    integer_to_bits,
-    rational_to_bits,
-)
+from .number_conversion import bits_to_rational, integer_to_bits, rational_to_bits
 
 
 class SignalNumberConverter:
