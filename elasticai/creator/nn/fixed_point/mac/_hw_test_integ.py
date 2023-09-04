@@ -41,6 +41,7 @@ def hw_test():
     )
     runner.initialize()
     runner.run()
+    print(runner.getResult())
 
 
 if __name__ == "__main__":
