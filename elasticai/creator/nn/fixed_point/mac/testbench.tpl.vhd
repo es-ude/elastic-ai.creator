@@ -25,8 +25,8 @@ architecture Behavioral of testbench_fxp_mac is
     signal done :  std_logic;
 
     type input_array_t is array (0 to 1) of signed(TOTAL_WIDTH-1 downto 0);
-    signal x1_values : input_array_t := (b"0000", b"0010");
-    signal x2_values : input_array_t := (b"0000", b"0010");
+    signal x1_values : input_array_t := ($x1);
+    signal x2_values : input_array_t := ($x2);
 
 
 

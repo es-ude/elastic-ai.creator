@@ -1,5 +1,8 @@
 import os
 import subprocess
+from typing import Union
+
+from ._ghdl_report_parsing import parse
 
 
 class TestBenchRunner:
@@ -9,6 +12,7 @@ class TestBenchRunner:
         self._files = files
         self._standard = "08"
         self._test_bench_name = test_bench_name
+        self._result = {}
 
     def initialize(self):
         os.makedirs(f"{self._root}/{self._ghdl_dir}", exist_ok=True)
@@ -17,6 +21,16 @@ class TestBenchRunner:
 
     def run(self):
         self._run()
+
+    def getReportedContent(self) -> list[str]:
+        parsed = parse(self._result)
+        return [line["content"] for line in parsed]
+
+    def getFullReport(self) -> list[dict]:
+        return parse(self._result)
+
+    def getRawResult(self) -> str:
+        return self._result
 
     def _load_files(self):
         self._execute_command(self._assemble_command("-i") + self._files)
@@ -27,7 +41,7 @@ class TestBenchRunner:
         )
 
     def _run(self):
-        output = self._execute_command_and_return_stdout(
+        self._result = self._execute_command_and_return_stdout(
             self._assemble_command("-r") + [self._test_bench_name]
         )
 
@@ -35,7 +49,9 @@ class TestBenchRunner:
         return subprocess.run(command, cwd=self._root)
 
     def _execute_command_and_return_stdout(self, command):
-        return subprocess.run(command, cwd=self._root, capture_output=True).stdout
+        return subprocess.run(
+            command, cwd=self._root, capture_output=True
+        ).stdout.decode()
 
     def _assemble_command(self, command_flag):
         return ["ghdl", command_flag, f"--std={self._standard}", self._workdir_flag]

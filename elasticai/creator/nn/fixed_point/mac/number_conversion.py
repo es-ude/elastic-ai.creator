@@ -30,6 +30,7 @@ def bits_to_integer(pattern: str) -> int:
 
 
 def bits_to_rational(pattern: str, frac_bits: int) -> float:
+    pattern = pattern.strip()
     number = bits_to_integer(pattern)
     return number / (1 << frac_bits)
 

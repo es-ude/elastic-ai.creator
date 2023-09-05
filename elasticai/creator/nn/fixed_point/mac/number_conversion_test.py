@@ -12,6 +12,11 @@ def test_001_to_0_5():
     assert 0.5 == bits_to_rational(pattern, frac_bits=1)
 
 
+def test_bits_to_rational_strips_whitespace():
+    pattern = " 100"
+    assert -4 == bits_to_rational(pattern, frac_bits=0)
+
+
 def test_001_to_0_25():
     pattern = "001"
     assert 0.25 == bits_to_rational(pattern, frac_bits=2)
@@ -33,6 +38,11 @@ def test_110_to_minus_1():
 def test_1_to_minus_1():
     pattern = "1"
     assert -1 == bits_to_rational(pattern, frac_bits=0)
+
+
+def test_1100_to_minus_1():
+    pattern = "1100"
+    assert -1 == bits_to_rational(pattern, frac_bits=2)
 
 
 def test_10_to_minus_2():

@@ -43,11 +43,9 @@ class TestBench:
 
     def save_to(self, destination: Path):
         self._destination = destination
-        inputs_file = InputsFile(self._number_converter.to_signals(self._inputs))
-        self._destination.create_subpath("inputs").as_file(".csv").write(inputs_file)
         test_bench = InProjectTemplate(
             package="elasticai.creator.nn.fixed_point.mac",
             file_name="testbench.tpl.vhd",
-            parameters={},
+            parameters=self._inputs,
         )
         destination.create_subpath(self._name).as_file(".vhd").write(test_bench)
