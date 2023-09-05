@@ -50,6 +50,9 @@ preview = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+markers = [
+  "simulation: possibly slow running integration tests including hw simulation"
+]
 testpaths = [
     "elasticai",
     "tests",
