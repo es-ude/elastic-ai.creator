@@ -21,8 +21,6 @@ class Conv1d(Translatable, Conv1dBase):
         out_channels: int,
         signal_length: int,
         kernel_size: int | tuple[int],
-        stride: int | tuple[int] = 1,
-        padding: int | tuple[int] = 0,
         bias: bool = True,
         device: Any = None,
     ) -> None:
@@ -33,8 +31,6 @@ class Conv1d(Translatable, Conv1dBase):
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
-            stride=stride,
-            padding=padding,
             bias=bias,
             device=device,
         )
@@ -96,8 +92,6 @@ class BatchNormedConv1d(Translatable, torch.nn.Module):
         bn_eps: float = 1e-5,
         bn_momentum: float = 0.1,
         bn_affine: bool = True,
-        stride: int | tuple[int] = 1,
-        padding: int | tuple[int] = 0,
         bias: bool = True,
         device: Any = None,
     ) -> None:
@@ -110,8 +104,6 @@ class BatchNormedConv1d(Translatable, torch.nn.Module):
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
-            stride=stride,
-            padding=padding,
             bias=bias,
             device=device,
         )
