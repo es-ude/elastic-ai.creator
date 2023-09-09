@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from .layer import Conv1d
+from .conv1d import Conv1d
 
 
 @pytest.fixture
