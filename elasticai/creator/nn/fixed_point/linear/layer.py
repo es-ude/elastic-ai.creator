@@ -87,6 +87,22 @@ class BatchNormedLinear(Translatable, torch.nn.Module):
             device=device,
         )
 
+    @property
+    def lin_weight(self) -> torch.Tensor:
+        return self._linear.weight
+
+    @property
+    def lin_bias(self) -> torch.Tensor | None:
+        return self._linear.bias
+
+    @property
+    def bn_weight(self) -> torch.Tensor:
+        return self._batch_norm.weight
+
+    @property
+    def bn_bias(self) -> torch.Tensor:
+        return self._batch_norm.bias
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         has_batches = x.dim() == 2
         input_shape = x.shape if has_batches else (1, -1)
