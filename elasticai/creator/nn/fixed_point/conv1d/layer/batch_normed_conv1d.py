@@ -116,7 +116,4 @@ class BatchNormedConv1d(Translatable, torch.nn.Module):
             kernel_size=flatten_tuple(self._conv1d.kernel_size),
             weights=cast(list[list[list[int]]], float_to_signed_int(weights.tolist())),
             bias=cast(list[int], float_to_signed_int(bias.tolist())),
-            stride=flatten_tuple(self._conv1d.stride),
-            padding=flatten_tuple(cast(int | tuple[int], self._conv1d.padding)),
-            dilation=flatten_tuple(self._conv1d.dilation),
         )

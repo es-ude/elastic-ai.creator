@@ -73,7 +73,4 @@ class Conv1d(Translatable, Conv1dBase):
             kernel_size=flatten_tuple(self.kernel_size),
             weights=signed_int_weights,
             bias=signed_int_bias,
-            stride=flatten_tuple(self.stride),
-            padding=flatten_tuple(cast(int | tuple[int], self.padding)),
-            dilation=flatten_tuple(self.dilation),
         )

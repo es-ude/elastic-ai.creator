@@ -23,9 +23,6 @@ class Conv1d(Design):
         kernel_size: int,
         weights: list[list[list[int]]],
         bias: list[int],
-        stride: int,
-        padding: int,
-        dilation: int,
     ) -> None:
         super().__init__(name=name)
         self._total_bits = total_bits
@@ -36,17 +33,8 @@ class Conv1d(Design):
         self._kernel_size = kernel_size
         self._weights = weights
         self._bias = bias
-        self._stride = stride
-        self._padding = padding
         self._output_signal_length = math.floor(
-            (
-                self._input_signal_length
-                + 2 * self._padding
-                - dilation * (self._kernel_size - 1)
-                - 1
-            )
-            / self._stride
-            + 1
+            self._input_signal_length - self._kernel_size + 1
         )
 
     @property
@@ -77,8 +65,6 @@ class Conv1d(Design):
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
                 kernel_size=str(self._kernel_size),
-                stride=str(self._stride),
-                padding=str(self._padding),
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)

@@ -4,5 +4,3 @@ ${frac_bits}
 ${in_channels}
 ${out_channels}
 ${kernel_size}
-${stride}
-${padding}
