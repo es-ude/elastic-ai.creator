@@ -289,7 +289,6 @@ end architecture rtl;"""
     linear = Linear(
         total_bits=16, frac_bits=8, in_features=3, out_features=2, bias=False
     )
-    linear.weight.data = torch.ones_like(linear.weight.data)
 
     design = linear.translate("linear")
     destination = InMemoryPath("linear", parent=None)
