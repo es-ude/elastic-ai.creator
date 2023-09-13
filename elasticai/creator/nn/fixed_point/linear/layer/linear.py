@@ -16,7 +16,7 @@ class Linear(Translatable, LinearBase):
         out_features: int,
         total_bits: int,
         frac_bits: int,
-        bias: bool,
+        bias: bool = True,
         device: Any = None,
     ) -> None:
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)

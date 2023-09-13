@@ -14,11 +14,11 @@ from elasticai.creator.vhdl.translatable import Translatable
 class BatchNormedLinear(Translatable, torch.nn.Module):
     def __init__(
         self,
-        in_features: int,
-        out_features: int,
-        bias: bool,
         total_bits: int,
         frac_bits: int,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
         bn_eps: float = 1e-5,
         bn_momentum: float = 0.1,
         bn_affine: bool = True,
