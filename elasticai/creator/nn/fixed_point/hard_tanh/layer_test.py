@@ -58,7 +58,7 @@ end architecture rtl;
 """.splitlines()
     tanh = HardTanh(total_bits=16, frac_bits=8)
     build_path = InMemoryPath("build", parent=None)
-    design = tanh.translate("tanh")
+    design = tanh.create_design("tanh")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["tanh"]).text
     assert actual == expected
