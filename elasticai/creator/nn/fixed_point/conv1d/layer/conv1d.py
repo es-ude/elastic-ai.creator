@@ -8,10 +8,10 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
-from elasticai.creator.vhdl.translatable import Translatable
+from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
-class Conv1d(Translatable, Conv1dBase):
+class Conv1d(DesignCreator, Conv1dBase):
     def __init__(
         self,
         total_bits: int,
@@ -48,7 +48,7 @@ class Conv1d(Translatable, Conv1dBase):
         outputs = super().forward(x)
         return outputs.view(*output_shape)
 
-    def translate(self, name: str) -> Conv1dDesign:
+    def create_design(self, name: str) -> Conv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))

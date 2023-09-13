@@ -8,10 +8,10 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
-from elasticai.creator.vhdl.translatable import Translatable
+from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
-class BatchNormedConv1d(Translatable, torch.nn.Module):
+class BatchNormedConv1d(DesignCreator, torch.nn.Module):
     def __init__(
         self,
         total_bits: int,
@@ -23,6 +23,8 @@ class BatchNormedConv1d(Translatable, torch.nn.Module):
         bn_eps: float = 1e-5,
         bn_momentum: float = 0.1,
         bn_affine: bool = True,
+        stride: int | tuple[int] = 1,
+        padding: int | tuple[int] = 0,
         bias: bool = True,
         device: Any = None,
     ) -> None:
@@ -35,6 +37,8 @@ class BatchNormedConv1d(Translatable, torch.nn.Module):
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
             bias=bias,
             device=device,
         )
@@ -79,7 +83,7 @@ class BatchNormedConv1d(Translatable, torch.nn.Module):
 
         return x.view(*output_shape)
 
-    def translate(self, name: str) -> Conv1dDesign:
+    def create_design(self, name: str) -> Conv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))

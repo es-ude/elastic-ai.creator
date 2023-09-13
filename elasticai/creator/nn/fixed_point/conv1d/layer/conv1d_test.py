@@ -149,7 +149,7 @@ def test_conv1d_layer_creates_correct_design(conv1d: Conv1d) -> None:
 4
 2"""
 
-    design = conv1d.translate("conv1d")
+    design = conv1d.create_design("conv1d")
     destination = InMemoryPath("conv1d", parent=None)
     design.save_to(destination)
     actual_conv1d_code = "\n".join(cast(InMemoryFile, destination["conv1d"]).text)

@@ -290,7 +290,7 @@ end architecture rtl;"""
         total_bits=16, frac_bits=8, in_features=3, out_features=2, bias=False
     )
 
-    design = linear.translate("linear")
+    design = linear.create_design("linear")
     destination = InMemoryPath("linear", parent=None)
     design.save_to(destination)
     actual_linear_code = "\n".join(cast(InMemoryFile, destination["linear"]).text)

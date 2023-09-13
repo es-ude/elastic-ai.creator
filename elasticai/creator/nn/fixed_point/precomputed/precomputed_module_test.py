@@ -45,7 +45,7 @@ end rtl;
         sampling_intervall=(-5, 5),
     )
     build_path = InMemoryPath("build", parent=None)
-    design = tanh.translate("tanh")
+    design = tanh.create_design("tanh")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["tanh"]).text
     assert actual == expected
@@ -89,7 +89,7 @@ end rtl;
         sampling_intervall=(-5, 5),
     )
     build_path = InMemoryPath("build", parent=None)
-    design = sigmoid.translate("sigmoid")
+    design = sigmoid.create_design("sigmoid")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["sigmoid"]).text
     assert actual == expected

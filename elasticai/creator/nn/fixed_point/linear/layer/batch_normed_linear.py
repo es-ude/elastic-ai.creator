@@ -8,10 +8,10 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
-from elasticai.creator.vhdl.translatable import Translatable
+from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
-class BatchNormedLinear(Translatable, torch.nn.Module):
+class BatchNormedLinear(DesignCreator, torch.nn.Module):
     def __init__(
         self,
         total_bits: int,
@@ -72,7 +72,7 @@ class BatchNormedLinear(Translatable, torch.nn.Module):
 
         return x.view(*output_shape)
 
-    def translate(self, name: str) -> LinearDesign:
+    def create_design(self, name: str) -> LinearDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))

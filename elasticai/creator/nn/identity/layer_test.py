@@ -31,7 +31,7 @@ end rtl;
 """.splitlines()
     identity = BufferedIdentity(num_input_features=6, total_bits=16)
     build_path = InMemoryPath("build", parent=None)
-    design = identity.translate("identity")
+    design = identity.create_design("identity")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["identity"]).text
     assert actual == expected
@@ -58,7 +58,7 @@ end rtl;
 """.splitlines()
     identity = BufferlessIdentity(total_bits=8)
     build_path = InMemoryPath("build", parent=None)
-    design = identity.translate("identity")
+    design = identity.create_design("identity")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["identity"]).text
     assert actual == expected

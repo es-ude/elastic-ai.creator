@@ -7,8 +7,7 @@ from .linear import Linear
 from .math_operations import Add, MatMul, Mul, Quantize
 
 
-class MathOperations(Quantize, Add, MatMul, Mul, Protocol):
-    ...
+class MathOperations(Quantize, Add, MatMul, Mul, Protocol): ...
 
 
 class LSTMCell(torch.nn.Module):

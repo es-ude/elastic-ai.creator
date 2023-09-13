@@ -68,7 +68,7 @@ def main() -> None:
 
     # Save the VHDL code of the trained model
     destination = OnDiskPath("build_dir")
-    design = model.translate("my_model")
+    design = model.create_design("my_model")
     design.save_to(destination)
 
 

@@ -7,8 +7,7 @@ from torch.nn.functional import conv1d
 from elasticai.creator.base_modules.math_operations import Quantize
 
 
-class MathOperations(Quantize, Protocol):
-    ...
+class MathOperations(Quantize, Protocol): ...
 
 
 class Conv1d(_Conv1d):
