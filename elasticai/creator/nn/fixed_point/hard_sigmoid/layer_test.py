@@ -94,7 +94,7 @@ end architecture rtl;
 """.splitlines()
     sigmoid = HardSigmoid(total_bits=16, frac_bits=8)
     build_path = InMemoryPath("build", parent=None)
-    design = sigmoid.translate("sigmoid")
+    design = sigmoid.create_design("sigmoid")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["sigmoid"]).text
     assert actual == expected

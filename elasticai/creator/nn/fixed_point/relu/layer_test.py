@@ -71,7 +71,7 @@ end architecture rtl;
 """.splitlines()
     relu = ReLU(total_bits=16, use_clock=True)
     build_path = InMemoryPath("build", parent=None)
-    design = relu.translate("relu")
+    design = relu.create_design("relu")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["relu"]).text
     assert actual == expected

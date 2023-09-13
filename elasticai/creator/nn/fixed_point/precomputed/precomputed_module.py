@@ -9,12 +9,12 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )
-from elasticai.creator.vhdl.translatable import Translatable
+from elasticai.creator.vhdl.translatable import DesignCreator
 
 from .identity_step_function import IdentityStepFunction
 
 
-class PrecomputedModule(torch.nn.Module, Translatable):
+class PrecomputedModule(torch.nn.Module, DesignCreator):
     def __init__(
         self,
         base_module: torch.nn.Module,
@@ -34,7 +34,7 @@ class PrecomputedModule(torch.nn.Module, Translatable):
         outputs = self._base_module(x)
         return self._operations.quantize(outputs)
 
-    def translate(self, name: str) -> PrecomputedScalarFunction:
+    def create_design(self, name: str) -> PrecomputedScalarFunction:
         quantized_inputs = list(map(self._config.as_integer, self._step_lut.tolist()))
         return PrecomputedScalarFunction(
             name=name,
