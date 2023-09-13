@@ -5,8 +5,7 @@ import torch
 from elasticai.creator.base_modules.math_operations import Add, MatMul, Quantize
 
 
-class MathOperations(Quantize, Add, MatMul, Protocol):
-    ...
+class MathOperations(Quantize, Add, MatMul, Protocol): ...
 
 
 class Linear(torch.nn.Linear):

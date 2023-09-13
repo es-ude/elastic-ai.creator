@@ -6,8 +6,7 @@ from .lstm_cell import LSTMCell
 
 
 class LayerFactory(Protocol):
-    def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
-        ...
+    def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell: ...
 
 
 class LSTM(torch.nn.Module):

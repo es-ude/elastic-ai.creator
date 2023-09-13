@@ -5,8 +5,7 @@ import torch
 from elasticai.creator.base_modules.math_operations import Quantize
 
 
-class MathOperations(Quantize, Protocol):
-    ...
+class MathOperations(Quantize, Protocol): ...
 
 
 class SiLUWithTrainableScaleBeta(torch.nn.SiLU):
