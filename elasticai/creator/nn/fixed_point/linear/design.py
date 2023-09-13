@@ -1,5 +1,4 @@
 from itertools import chain
-from typing import Optional
 
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
