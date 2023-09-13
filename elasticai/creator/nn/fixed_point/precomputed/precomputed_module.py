@@ -6,10 +6,10 @@ from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
+from elasticai.creator.vhdl.design_creator import DesignCreator
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )
-from elasticai.creator.vhdl.translatable import DesignCreator
 
 from .identity_step_function import IdentityStepFunction
 

@@ -1,6 +1,6 @@
 from elasticai.creator.base_modules.identity import Identity
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.vhdl.translatable import DesignCreator
+from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .design import BufferedIdentity as IdentityDesign
 from .design import BufferlessDesign

@@ -1,5 +1,5 @@
 from elasticai.creator.base_modules.relu import ReLU as ReLUBase
-from elasticai.creator.vhdl.translatable import DesignCreator
+from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .design import ReLU as ReLUDesign
 
