@@ -1,4 +1,4 @@
-from ._ghdl_report_parsing import parse
+from ._ghdl_report_parsing import parse_report
 
 
 def test_parse_ghdl_simulation_results_one_liner():
@@ -16,7 +16,7 @@ def test_parse_ghdl_simulation_results_one_liner():
             "content": "my report message",
         }
     ]
-    assert expected == parse(simulation_output)
+    assert expected == parse_report(simulation_output)
 
 
 def test_parse_ghdl_another_line():
@@ -31,7 +31,7 @@ def test_parse_ghdl_another_line():
             "content": "D",
         }
     ]
-    assert expected == parse(simulation_output)
+    assert expected == parse_report(simulation_output)
 
 
 def test_parse_two_lines():
@@ -49,9 +49,9 @@ def test_parse_two_lines():
             "content": "content",
         }
     ] * 2
-    assert expected == parse(simulation_output)
+    assert expected == parse_report(simulation_output)
 
 
 def test_put_colon_content_in_content_field():
     simulation_output = "A:1:2:@B:(C):D:e:f\n\n"
-    assert "D:e:f" == parse(simulation_output)[0]["content"]
+    assert "D:e:f" == parse_report(simulation_output)[0]["content"]

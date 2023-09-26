@@ -35,7 +35,9 @@ def bits_to_rational(pattern: str, frac_bits: int) -> float:
     return number / (1 << frac_bits)
 
 
-def rational_to_bits(rational: float, total_bits: int, frac_bits: int) -> str:
+def convert_rational_to_bit_pattern(
+    rational: float, total_bits: int, frac_bits: int
+) -> str:
     return integer_to_bits(int(rational * (1 << frac_bits)), total_bits=total_bits)
 
 

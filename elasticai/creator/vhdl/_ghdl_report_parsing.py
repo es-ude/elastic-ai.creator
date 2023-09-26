@@ -1,4 +1,4 @@
-def parse(text: str):
+def parse_report(text: str):
     lines = text.split("\n")[:-2]
 
     def split_first_five_colons(line):

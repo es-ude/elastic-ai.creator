@@ -1,7 +1,9 @@
+from functools import partial
+
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import InProjectTemplate
 
-from ._signal_number_converter import SignalNumberConverter
+from .number_conversion import bits_to_rational, convert_rational_to_bit_pattern
 
 
 class InputsFile:
@@ -33,13 +35,28 @@ class TestBench:
         - compare the output observed by the testbench to the output of the sw module
     """
 
-    def __init__(self, total_bits, frac_bits, inputs, name):
-        self._number_converter = SignalNumberConverter(
-            total_bits=total_bits, frac_bits=frac_bits
-        )
-        self._inputs = inputs
+    def __init__(self, total_bits, frac_bits, x1, x2, name):
+        self._total_bits = total_bits
+        self._frac_bits = frac_bits
+
+        def prepare_inputs_for_test_bench(x1, x2):
+            to_bit_pattern = partial(
+                convert_rational_to_bit_pattern, total_bits=4, frac_bits=2
+            )
+            x1 = map(to_bit_pattern, x1)
+            x2 = map(to_bit_pattern, x2)
+            inputs = {
+                "x1": ", ".join([f'b"{x}"' for x in x1]),
+                "x2": ", ".join([f'b"{x}"' for x in x2]),
+            }
+            return inputs
+
+        self._inputs = prepare_inputs_for_test_bench(x1, x2)
         self._destination = None
-        self._name = name
+        self.name = name
+
+    def parse_reported_content(self, outputs: list[str]):
+        return bits_to_rational(outputs[0], frac_bits=self._frac_bits)
 
     def save_to(self, destination: Path):
         self._destination = destination
@@ -48,4 +65,4 @@ class TestBench:
             file_name="testbench.tpl.vhd",
             parameters=self._inputs,
         )
-        destination.create_subpath(self._name).as_file(".vhd").write(test_bench)
+        destination.create_subpath(self.name).as_file(".vhd").write(test_bench)

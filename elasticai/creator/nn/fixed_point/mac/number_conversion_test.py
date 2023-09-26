@@ -1,9 +1,9 @@
 from .number_conversion import (
     bits_to_rational,
+    convert_rational_to_bit_pattern,
     integer_to_bits,
     max_rational,
     min_rational,
-    rational_to_bits,
 )
 
 
@@ -72,15 +72,21 @@ def test_minus_8_to_1000():
 
 
 def test_0_5_to_01():
-    assert "01" == rational_to_bits(rational=0.5, total_bits=2, frac_bits=1)
+    assert "01" == convert_rational_to_bit_pattern(
+        rational=0.5, total_bits=2, frac_bits=1
+    )
 
 
 def test_0_5_to_001():
-    assert "001" == rational_to_bits(rational=0.5, total_bits=3, frac_bits=1)
+    assert "001" == convert_rational_to_bit_pattern(
+        rational=0.5, total_bits=3, frac_bits=1
+    )
 
 
 def test_0_25_to_000_because_of_rounding():
-    assert "000" == rational_to_bits(rational=0.25, total_bits=3, frac_bits=1)
+    assert "000" == convert_rational_to_bit_pattern(
+        rational=0.25, total_bits=3, frac_bits=1
+    )
 
 
 def test_max_rational_for_3_and_1_is_1_5():
