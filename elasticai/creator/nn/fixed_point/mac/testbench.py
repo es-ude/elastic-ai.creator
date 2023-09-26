@@ -6,23 +6,6 @@ from elasticai.creator.file_generation.template import InProjectTemplate
 from .number_conversion import bits_to_rational, convert_rational_to_bit_pattern
 
 
-class InputsFile:
-    def __init__(self, inputs):
-        self._inputs = inputs
-        self._heading = ("reset", "next_sample", "x1", "x2")
-
-    @property
-    def content(self):
-        return ["$heading_row", "$values"]
-
-    @property
-    def parameters(self):
-        return {
-            "heading_row": ",".join(self._heading),
-            "values": [",".join(row) for row in self._inputs],
-        }
-
-
 class TestBench:
     """
     The testbench aims to provide an interface between hw and sw engineer for
@@ -35,13 +18,16 @@ class TestBench:
         - compare the output observed by the testbench to the output of the sw module
     """
 
-    def __init__(self, total_bits, frac_bits, x1, x2, name):
+    def __init__(self, total_bits, frac_bits, x1, x2, name, vector_width):
         self._total_bits = total_bits
         self._frac_bits = frac_bits
+        self._vector_width = vector_width
 
         def prepare_inputs_for_test_bench(x1, x2):
             to_bit_pattern = partial(
-                convert_rational_to_bit_pattern, total_bits=4, frac_bits=2
+                convert_rational_to_bit_pattern,
+                total_bits=self._total_bits,
+                frac_bits=self._frac_bits,
             )
             x1 = map(to_bit_pattern, x1)
             x2 = map(to_bit_pattern, x2)
@@ -63,6 +49,11 @@ class TestBench:
         test_bench = InProjectTemplate(
             package="elasticai.creator.nn.fixed_point.mac",
             file_name="testbench.tpl.vhd",
-            parameters=self._inputs,
+            parameters=self._inputs
+            | {
+                "total_width": str(self._total_bits),
+                "frac_width": str(self._frac_bits),
+                "vector_width": str(self._vector_width),
+            },
         )
         destination.create_subpath(self.name).as_file(".vhd").write(test_bench)

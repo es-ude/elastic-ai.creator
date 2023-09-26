@@ -3,9 +3,6 @@ from elasticai.creator.file_generation.template import InProjectTemplate
 
 
 class MacDesign(Savable):
-    def __init__(self, total_bits, frac_bits):
-        pass
-
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
             package="elasticai.creator.nn.fixed_point.mac",

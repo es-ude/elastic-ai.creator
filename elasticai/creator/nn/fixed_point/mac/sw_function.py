@@ -17,4 +17,4 @@ class MacLayer:
         return self.ops.matmul(a, b)
 
     def create_design(self) -> Savable:
-        return MacDesign(total_bits=self._total_bits, frac_bits=self._frac_bits)
+        return MacDesign()
