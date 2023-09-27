@@ -1,6 +1,6 @@
 import dataclasses
 
-from fixed_point.mac._number_conversion import (
+from fixed_point._number_conversion import (
     bits_to_integer,
     bits_to_rational,
     convert_rational_to_bit_pattern,

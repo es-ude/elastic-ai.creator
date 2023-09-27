@@ -1,11 +1,11 @@
 import pytest
 import torch
+from fixed_point.number_converter import FXPParams
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulation
 
 from .layer import MacLayer
-from .number_converter import FXPParams
 
 integer_test_data = [
     (FXPParams(4, 0), x1, x2)
