@@ -2,7 +2,7 @@ library IEEE;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity fxp_MAC_RoundToEven is
+entity fxp_MAC_RoundToZero is
     generic (
         VECTOR_WIDTH : integer;
         TOTAL_WIDTH   : integer;
@@ -16,9 +16,9 @@ entity fxp_MAC_RoundToEven is
         sum : out signed(TOTAL_WIDTH-1 downto 0) := (others => '0');
         done   : out std_logic := '0'
     );
-end fxp_MAC_RoundToEven;
+end;
 
-architecture rtl of fxp_MAC_RoundToEven is
+architecture rtl of fxp_Mac_RoundToZero is
 
     function cut_down(x: in signed(2*TOTAL_WIDTH-1 downto 0)) return signed is
         variable result : signed(TOTAL_WIDTH-1 downto 0) := (others=>'0');
@@ -26,16 +26,22 @@ architecture rtl of fxp_MAC_RoundToEven is
         constant right_bit : natural := FRAC_WIDTH;
         constant max : signed(left_bit downto 0) := ('0', others => '1');
         constant min : signed(left_bit downto 0) := ('1', others => '0');
-
+        variable dropped_fractional_part : signed(FRAC_WIDTH-1 downto 0);
     begin
         -- get result-range of x and underflow part
         result := x(left_bit downto right_bit);
+        dropped_fractional_part := x(right_bit-1 downto 0);
+
+        -- round negative towards zero
+        if FRAC_WIDTH > 0 and result < 0 and dropped_fractional_part /= 0 then
+            result := result + 1;
+        end if;
 
         -- check if overflow occured
-        if x > max then
-            result := max(left_bit downto right_bit);
-        elsif x < min then
+        if x < 0 and result >= 0 then
             result := min(left_bit downto right_bit);
+        elsif x >= 0 and result < 0 then
+            result := max(left_bit downto right_bit);
         end if;
         return result;
     end function;

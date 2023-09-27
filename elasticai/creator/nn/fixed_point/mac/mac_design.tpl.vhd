@@ -19,7 +19,7 @@ architecture rtl of $name is
     constant FRAC_WIDTH : natural := ${frac_width};
     constant VECTOR_WIDTH : natural := ${vector_width};
 begin
-    ${name}_fxp_MAC_RoundToEven : entity work.fxp_MAC_RoundToEven
+    ${name}_fxp_MAC : entity work.fxp_MAC_RoundToZero
         generic map(
             VECTOR_WIDTH => VECTOR_WIDTH,
             TOTAL_WIDTH=>TOTAL_WIDTH,
