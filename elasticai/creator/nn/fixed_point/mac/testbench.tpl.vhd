@@ -11,9 +11,7 @@ entity testbench_fxp_mac is
 end testbench_fxp_mac;
 
 architecture Behavioral of testbench_fxp_mac is
-    constant VECTOR_WIDTH : integer := $vector_width;
     constant TOTAL_WIDTH : integer := $total_width;
-    constant FRAC_WIDTH : integer := $frac_width;
     constant total_clock_cycles: integer := 4;
     signal clock_period : time := 2 ps;
     signal clock : std_logic := '0';
@@ -31,7 +29,7 @@ architecture Behavioral of testbench_fxp_mac is
 
 
 begin
-    UUT : entity work.fxp_MAC_RoundToEven generic map(VECTOR_WIDTH => VECTOR_WIDTH, TOTAL_WIDTH=>TOTAL_WIDTH, FRAC_WIDTH => FRAC_WIDTH)
+    UUT : entity work.${uut_name}
     port map (reset => reset, next_sample => next_sample, x1 => x1, x2 => x2, sum => sum, done => done);
 
     next_sample <= clock;
@@ -42,7 +40,7 @@ begin
       variable reset_performed : std_logic := '0';
       variable value_id : integer := 0;
       constant max_iterations : integer := 5;
-      constant max_values : integer := 2;
+      constant max_values : integer := $vector_width;
     begin
         if rising_edge(clock) and iteration_id < max_iterations then
             reset <= '1';

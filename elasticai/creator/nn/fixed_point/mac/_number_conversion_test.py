@@ -1,4 +1,4 @@
-from .number_conversion import (
+from ._number_conversion import (
     bits_to_rational,
     convert_rational_to_bit_pattern,
     integer_to_bits,
