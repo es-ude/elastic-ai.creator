@@ -3,15 +3,14 @@ data
 venv
 simulation
 simulation/*
-node_modules
+node_modules/
 .mypy_cache
-package-lock.json
-package.json
 .coverage
 coverage.xml
 *.onnx
 htmlcov
 do_not_commit/*
+.husky/
 
 # python build output
 dist/

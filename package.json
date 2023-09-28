@@ -1,0 +1,19 @@
+{
+  "name": "elastic-ai.creator",
+  "version": "1.0.0",
+  "description": "Design, train and compile neural networks optimized specifically for FPGAs. Obtaining a final model is typically a three stage process. * design and train it using the layers provided in the `elasticai.creator.nn` package. * translate the model to a target representation, e.g. VHDL * compile the intermediate representation with a third party tool, e.g. Xilinx Vivado (TM)",
+  "main": "commitlint.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@commitlint/cli": "^17.7.1",
+    "@commitlint/config-conventional": "^17.7.0",
+    "husky": "^8.0.3"
+  }
+}
