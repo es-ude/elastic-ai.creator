@@ -5,14 +5,11 @@ import torch
 from elasticai.creator.base_modules.conv1d import MathOperations as Conv1dOps
 from elasticai.creator.base_modules.linear import MathOperations as LinearOps
 from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
-from elasticai.creator.base_modules.silu_with_trainable_scale_beta import (
-    MathOperations as SiLUOps,
-)
 
 from ._binary_quantization_function import Binarize
 
 
-class MathOperations(LinearOps, Conv1dOps, LSTMOps, SiLUOps):
+class MathOperations(LinearOps, Conv1dOps, LSTMOps):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, Binarize.apply(a))
 
