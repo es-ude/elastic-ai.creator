@@ -2,6 +2,29 @@
 
 <!--next-version-placeholder-->
 
+## v0.58.0 (2023-09-29)
+
+### Feature
+
+* **tests:** Add small integration test to verify that conv1d layer generates correct design ([`da45cc3`](https://github.com/es-ude/elastic-ai.creator/commit/da45cc30b481ee27e9bd9d5d172e29a0bd0b519f))
+* **tests:** Add small integration test to verify that linear layer creates correct design ([`f71e43f`](https://github.com/es-ude/elastic-ai.creator/commit/f71e43f92cbfbf2c7a735a610c3dbca790ea8299))
+* **tests:** Add tests for linear design ([`55a366a`](https://github.com/es-ude/elastic-ai.creator/commit/55a366a34049708ee62d0c440f67640435716900))
+* **tests:** Add tests for fixed point linear layer ([`2e959b6`](https://github.com/es-ude/elastic-ai.creator/commit/2e959b619ea9ef66dfede042131f7116b18f3532))
+* **linear:** Use bias as default ([`14b01be`](https://github.com/es-ude/elastic-ai.creator/commit/14b01be0e3aad2315daa1864588701ce2fd8dff7))
+* **tests:** Add tests for the conv1d design ([`c2c94bd`](https://github.com/es-ude/elastic-ai.creator/commit/c2c94bd91e09e507120cfcf71e28b0797dca419c))
+* Add parameter getters ([`3c184c0`](https://github.com/es-ude/elastic-ai.creator/commit/3c184c075cdb94ffae05ea7424e33dd98a4c09f9))
+* **tests:** Add tests for conv1d layer ([`c645297`](https://github.com/es-ude/elastic-ai.creator/commit/c6452975ef02d6c2a46ca4550311238a46917636))
+
+### Fix
+
+* Remove already dropped padding, stride and dilation ([`79494fe`](https://github.com/es-ude/elastic-ai.creator/commit/79494fe6116921ff7b4d1287bd67451ba7498ecd))
+* Remove stride and padding as supported parameters for conv1d ([`05b57d1`](https://github.com/es-ude/elastic-ai.creator/commit/05b57d1d2e112a21259fa2221f2204b3f6d87bfe))
+* Remove unnecessary output quantization of the SiLU base module ([`350faa5`](https://github.com/es-ude/elastic-ai.creator/commit/350faa52d93994738a68cc0222dfb907b5174f12))
+
+### Documentation
+
+* **readme:** Use create_design function instead of translate in minimal example ([`b9351ca`](https://github.com/es-ude/elastic-ai.creator/commit/b9351ca28b37a0ee7f34187b01986c3ba11c6827))
+
 ## v0.57.1 (2023-08-29)
 
 ### Fix
