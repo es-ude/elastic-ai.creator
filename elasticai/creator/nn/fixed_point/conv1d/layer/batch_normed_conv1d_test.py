@@ -46,24 +46,3 @@ def test_that_batched_output_is_flat(batched_input: torch.Tensor) -> None:
     tensor_rank = prediction.dim()
     expected_rank = 2
     assert expected_rank == tensor_rank
-
-
-@pytest.mark.skip(reason="Find out how running_var calculation works.")
-@pytest.mark.parametrize(
-    "signal_length, inputs, expected",
-    [
-        (3, [1.0, 1.0, 1.0], [2.0, 2.0]),
-        (4, [0.5, 0.5, 1.0, 1.0], [1.0, 1.5, 2.0]),
-    ],
-)
-def test_ones_weight_kernel_convolution(
-    signal_length: int, inputs: list[float], expected: list[float]
-) -> None:
-    # TODO: Find out how the running_var calculation works?
-    # BatchNorm layer has a running_var of 0.25 for [1.0, 1.5, 2.0]
-    # But the correct running_var should be 0.166667
-    conv = conv1d(signal_length=signal_length, bias=False, affine=False)
-    conv.conv_weight.data = torch.ones_like(conv.conv_weight.data)
-    input_tensor = torch.tensor(inputs)
-    prediction = conv(input_tensor)
-    assert expected == prediction.tolist()
