@@ -1,10 +1,9 @@
-from creator.vhdl.simulated_layer import SimulatedLayer
-from fixed_point.number_converter import FXPParams
-
 from elasticai.creator.file_generation.savable import Savable
+from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 from .._math_operations import MathOperations
 from .._two_complement_fixed_point_config import FixedPointConfig
+from ..number_converter import FXPParams
 from .design import MacDesign
 from .mactestbench import MacTestBench
 

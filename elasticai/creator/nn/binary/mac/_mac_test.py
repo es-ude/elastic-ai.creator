@@ -1,6 +1,5 @@
 import pytest
 import torch
-from creator.vhdl.simulated_layer import SimulatedLayer
 
 from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 

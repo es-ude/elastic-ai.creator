@@ -1,6 +1,5 @@
-from creator.vhdl.simulated_layer import SimulatedLayer
-
 from elasticai.creator.file_generation.savable import Savable
+from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 from .._math_operations import MathOperations
 from .design import MacDesign

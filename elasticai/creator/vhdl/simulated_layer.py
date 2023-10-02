@@ -1,8 +1,8 @@
 from typing import Any, Protocol
 
-from creator.file_generation.on_disk_path import OnDiskPath
-from creator.file_generation.savable import Path
-from creator.vhdl.ghdl_simulation import GHDLSimulator
+from elasticai.creator.file_generation.on_disk_path import OnDiskPath
+from elasticai.creator.file_generation.savable import Path
+from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 
 
 class Design(Protocol):
