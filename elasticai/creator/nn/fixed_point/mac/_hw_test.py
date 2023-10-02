@@ -3,7 +3,7 @@ import torch
 from fixed_point.number_converter import FXPParams
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
-from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulation
+from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 
 from .layer import MacLayer
 
@@ -43,17 +43,10 @@ fractions_test_data = [
 )
 def test_mac_hw_for_integers(tmp_path, fxp_params, x1, x2):
     root_dir_path = str(tmp_path)
-    root = OnDiskPath("main", parent=root_dir_path)
     mac = MacLayer(fxp_params=fxp_params, vector_width=2)
-    test_bench_name = "testbench_fxp_mac"
     y = mac(torch.tensor(x1), torch.tensor(x2)).item()
-    testbench = mac.create_testbench(test_bench_name)
-    testbench.set_inputs(x1=x1, x2=x2)
-    testbench.save_to(root)
-    runner = GHDLSimulation(workdir=f"{root_dir_path}", top_design=testbench)
-    runner.initialize()
-    runner.run()
-    actual = testbench.parse_reported_content(runner.getReportedContent())
+    sim = mac.create_simulation(GHDLSimulator, root_dir_path)
+    actual = sim(x1, x2)
     assert y == actual
 
 

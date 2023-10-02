@@ -1,4 +1,4 @@
-from fixed_point.number_converter import FXPParams
+from creator.vhdl.simulated_layer import SimulatedLayer
 
 from elasticai.creator.file_generation.savable import Savable
 
@@ -10,6 +10,7 @@ from .mactestbench import MacTestBench
 class MacLayer:
     def __init__(self, vector_width: int):
         self.ops = MathOperations()
+        self.name = "bin_mac"
         self._vector_width = vector_width
 
     def __call__(self, a, b):
@@ -24,3 +25,6 @@ class MacLayer:
             uut_name="mac_wrapper_test",
             name=name,
         )
+
+    def create_simulation(self, simulator, working_dir):
+        return SimulatedLayer(self, simulator, working_dir=working_dir)

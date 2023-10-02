@@ -1,3 +1,4 @@
+from creator.vhdl.simulated_layer import SimulatedLayer
 from fixed_point.number_converter import FXPParams
 
 from elasticai.creator.file_generation.savable import Savable
@@ -17,6 +18,7 @@ class MacLayer:
         )
         self._vector_width = vector_width
         self._fxp_params = fxp_params
+        self.name = "fxp_mac"
 
     def __call__(self, a, b):
         return self.ops.matmul(a, b)
@@ -33,3 +35,6 @@ class MacLayer:
             uut_name="mac_wrapper_test",
             name=name,
         )
+
+    def create_simulation(self, simulator, working_dir):
+        return SimulatedLayer(self, simulator, working_dir=working_dir)

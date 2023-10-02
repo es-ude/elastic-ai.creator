@@ -5,7 +5,7 @@ import subprocess
 from ._ghdl_report_parsing import parse_report
 
 
-class GHDLSimulation:
+class GHDLSimulator:
     """Run a simulation tool for a given `top_design` and save whatever is written to stdout
     for subsequent inspection.
 
@@ -13,13 +13,13 @@ class GHDLSimulation:
     The parsed content has the following keys: `("source", "line", "column", "time", "type", "content")'
     """
 
-    def __init__(self, workdir, top_design):
+    def __init__(self, workdir, top_design_name):
         self._root = workdir
         self._ghdl_dir = "ghdl_build"
         self._files = list(glob.glob(f"**/*.vhd", root_dir=self._root, recursive=True))
         self._standard = "08"
-        self._top = top_design
         self._result = {}
+        self._test_bench_name = top_design_name
 
     def initialize(self):
         """Call this function once before calling `run()` and on every file change."""
@@ -73,7 +73,3 @@ class GHDLSimulation:
     @property
     def _workdir_flag(self):
         return f"--workdir={self._ghdl_dir}"
-
-    @property
-    def _test_bench_name(self) -> str:
-        return self._top.name

@@ -14,8 +14,8 @@ class MacTestBench:
         self._destination = None
         self.name = name
 
-    def set_inputs(self, **inputs: dict[str, tuple[float, ...]]):
-        self._inputs = inputs["x1"], inputs["x2"]
+    def set_inputs(self, *inputs):
+        self._inputs = inputs
 
     def parse_reported_content(self, outputs: list[str]):
         return self._converter.bits_to_rational(outputs[0])
