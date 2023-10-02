@@ -112,7 +112,7 @@ def get_code(code_file: InMemoryPath | InMemoryFile) -> list[str]:
 
 
 def translate_model(model: Sequential) -> InMemoryPath:
-    design = model.translate("sequential")
+    design = model.create_design("sequential")
     destination = InMemoryPath("sequential", parent=None)
     design.save_to(destination)
     return destination

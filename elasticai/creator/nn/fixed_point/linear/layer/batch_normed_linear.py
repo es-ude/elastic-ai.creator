@@ -7,61 +7,18 @@ from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.translatable import Translatable
+from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
+from elasticai.creator.vhdl.design_creator import DesignCreator
 
-from .design import Linear as LinearDesign
 
-
-class Linear(Translatable, LinearBase):
+class BatchNormedLinear(DesignCreator, torch.nn.Module):
     def __init__(
         self,
-        in_features: int,
-        out_features: int,
         total_bits: int,
         frac_bits: int,
-        bias: bool,
-        device: Any = None,
-    ) -> None:
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-        super().__init__(
-            in_features=in_features,
-            out_features=out_features,
-            operations=MathOperations(config=self._config),
-            bias=bias,
-            device=device,
-        )
-
-    def translate(self, name: str) -> LinearDesign:
-        def float_to_signed_int(value: float | list) -> int | list:
-            if isinstance(value, list):
-                return list(map(float_to_signed_int, value))
-            return self._config.as_integer(value)
-
-        bias = [0] * self.out_features if self.bias is None else self.bias.tolist()
-        signed_int_weights = cast(
-            list[list[int]], float_to_signed_int(self.weight.tolist())
-        )
-        signed_int_bias = cast(list[int], float_to_signed_int(bias))
-
-        return LinearDesign(
-            frac_bits=self._config.frac_bits,
-            total_bits=self._config.total_bits,
-            in_feature_num=self.in_features,
-            out_feature_num=self.out_features,
-            weights=signed_int_weights,
-            bias=signed_int_bias,
-            name=name,
-        )
-
-
-class BatchNormedLinear(Translatable, torch.nn.Module):
-    def __init__(
-        self,
         in_features: int,
         out_features: int,
-        bias: bool,
-        total_bits: int,
-        frac_bits: int,
+        bias: bool = True,
         bn_eps: float = 1e-5,
         bn_momentum: float = 0.1,
         bn_affine: bool = True,
@@ -87,6 +44,22 @@ class BatchNormedLinear(Translatable, torch.nn.Module):
             device=device,
         )
 
+    @property
+    def lin_weight(self) -> torch.Tensor:
+        return self._linear.weight
+
+    @property
+    def lin_bias(self) -> torch.Tensor | None:
+        return self._linear.bias
+
+    @property
+    def bn_weight(self) -> torch.Tensor:
+        return self._batch_norm.weight
+
+    @property
+    def bn_bias(self) -> torch.Tensor:
+        return self._batch_norm.bias
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         has_batches = x.dim() == 2
         input_shape = x.shape if has_batches else (1, -1)
@@ -99,7 +72,7 @@ class BatchNormedLinear(Translatable, torch.nn.Module):
 
         return x.view(*output_shape)
 
-    def translate(self, name: str) -> LinearDesign:
+    def create_design(self, name: str) -> LinearDesign:
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
