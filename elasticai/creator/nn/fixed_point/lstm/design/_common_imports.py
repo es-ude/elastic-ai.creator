@@ -9,7 +9,6 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.linear.design import Linear as FPLinear1d
-from elasticai.creator.nn.fixed_point.lstm.design.fp_hard_tanh import FPHardTanh
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design import std_signals
 from elasticai.creator.vhdl.design.design import Design

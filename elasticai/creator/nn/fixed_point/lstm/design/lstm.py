@@ -1,20 +1,17 @@
 from functools import partial
 
-from _common_imports import (
+from elasticai.creator.nn.fixed_point.linear.layer import Linear as FPLinear1d
+
+from ._common_imports import (
     Design,
-    FixedPointConfig,
-    FPHardTanh,
     InProjectTemplate,
     Path,
     Port,
-    Rom,
     Signal,
     calculate_address_width,
     module_to_package,
     std_signals,
 )
-
-from elasticai.creator.nn.fixed_point.linear.layer import Linear as FPLinear1d
 
 
 class LSTMNetworkDesign(Design):

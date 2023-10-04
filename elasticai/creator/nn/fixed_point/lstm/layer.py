@@ -3,13 +3,13 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid
-from elasticai.creator.base_modules.hard_tanh import HardTanh
 from elasticai.creator.base_modules.lstm import LSTM
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
+from elasticai.creator.nn.fixed_point.hard_sigmoid import HardSigmoid
+from elasticai.creator.nn.fixed_point.hard_tanh import HardTanh
 from elasticai.creator.nn.fixed_point.linear import Linear
 from elasticai.creator.nn.fixed_point.linear.design import Linear as _LinearDesign
 from elasticai.creator.nn.fixed_point.lstm.design.fp_lstm_cell import FPLSTMCell
@@ -40,12 +40,12 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
         follow_up_linear_layers = cast(
             list[_LinearDesign],
             [
-                cast(Linear, layer).translate(self.layer_names[i])
+                cast(Linear, layer).create_design(self.layer_names[i])
                 for i, layer in enumerate(self.layers)
             ],
         )
         return LSTMNetworkDesign(
-            lstm=first_lstm.translate(),
+            lstm=first_lstm.create_design(),
             linear_layers=follow_up_linear_layers,
             total_bits=total_bits,
             frac_bits=frac_bits,
@@ -72,10 +72,16 @@ class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
 
         class LayerFactory:
             def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
+                def activation(constructor):
+                    def wrapped_constructor():
+                        return constructor(total_bits=total_bits, frac_bits=frac_bits)
+
+                    return wrapped_constructor
+
                 return LSTMCell(
                     operations=MathOperations(config=config),
-                    sigmoid_factory=HardSigmoid,
-                    tanh_factory=HardTanh,
+                    sigmoid_factory=activation(HardSigmoid),
+                    tanh_factory=activation(HardTanh),
                     input_size=input_size,
                     hidden_size=hidden_size,
                     bias=bias,

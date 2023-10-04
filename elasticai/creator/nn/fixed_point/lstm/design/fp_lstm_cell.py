@@ -3,10 +3,14 @@ from functools import partial
 from typing import Any, cast
 
 import numpy as np
-from _common_imports import (
+
+from elasticai.creator.nn.fixed_point.hard_sigmoid.design import (
+    HardSigmoid as HardSigmoidDesign,
+)
+
+from ._common_imports import (
     Design,
     FixedPointConfig,
-    FPHardTanh,
     InProjectTemplate,
     Path,
     Port,
@@ -16,10 +20,7 @@ from _common_imports import (
     module_to_package,
     std_signals,
 )
-
-from elasticai.creator.nn.fixed_point.hard_sigmoid.design import (
-    HardSigmoid as HardSigmoidDesign,
-)
+from .fp_hard_tanh import FPHardTanh
 
 
 class FPLSTMCell(Design):
