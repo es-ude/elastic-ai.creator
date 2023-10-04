@@ -2,6 +2,28 @@
 
 <!--next-version-placeholder-->
 
+## v0.59.0 (2023-10-02)
+
+### Feature
+
+* Add xnor-popcount based mac bin impl ([`6a63eb3`](https://github.com/es-ude/elastic-ai.creator/commit/6a63eb358ce3279bcdbca468aed25445ab0be13e))
+* Basic fxp mac + hw/sw simulation tests ([`f34a1ed`](https://github.com/es-ude/elastic-ai.creator/commit/f34a1edc70c34d456daa222bed537d793ee0c29e))
+* Handle colons in ghdl sim parsing ([`f485531`](https://github.com/es-ude/elastic-ai.creator/commit/f485531881b0874eb14df58ccb3873889cb1cac6))
+* Parse ghdl output ([`3f7e05f`](https://github.com/es-ude/elastic-ai.creator/commit/3f7e05f44f86776ea01b28b176116730d94a9354))
+* Add number_conversion ([`1fde323`](https://github.com/es-ude/elastic-ai.creator/commit/1fde32308a83a3de71af736eda47a81bb5bc468b))
+
+### Fix
+
+* Make mac impl use round to zero logic ([`f8c674f`](https://github.com/es-ude/elastic-ai.creator/commit/f8c674f5a2382a1d8b9b1630a8af35977dc0c9c9))
+* **chore:** Exclude simulations from coverage ([`de6a293`](https://github.com/es-ude/elastic-ai.creator/commit/de6a29324c6e688139a82bea0b08afda1f0388bc))
+* **chore:** Exclude simulations from coverage ([`3b31a45`](https://github.com/es-ude/elastic-ai.creator/commit/3b31a45bccb262d60a1d920618457514a2bd8a95))
+* Ignore one more line for ghdl out parsing ([`c48ec8f`](https://github.com/es-ude/elastic-ai.creator/commit/c48ec8f42f906222223b7282c677ffdfe5cd06ec))
+* Remove need for csv in testbench ([`f905bbf`](https://github.com/es-ude/elastic-ai.creator/commit/f905bbf6e1f9119677b7f73caf58b35343e0d7bb))
+
+### Documentation
+
+* Add documentation for number conversion ([`617e2c6`](https://github.com/es-ude/elastic-ai.creator/commit/617e2c61fab2b21459a1a62c65c184cdbcc35e09))
+
 ## v0.58.0 (2023-09-29)
 
 ### Feature

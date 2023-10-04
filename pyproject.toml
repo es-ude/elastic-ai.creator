@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elasticai.creator"
-version = "0.58.0"
+version = "0.59.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 repository = "https://github.com/es-ude/elastic-ai.creator"
@@ -53,6 +53,9 @@ preview = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+markers = [
+  "simulation: possibly slow running integration tests including hw simulation"
+]
 testpaths = [
     "elasticai",
     "tests",
