@@ -1,11 +1,12 @@
-from elasticai.creator.hdl.code_generation.template import (
+from _common_imports import (
+    Design,
+    FixedPointConfig,
     InProjectTemplate,
+    Path,
+    Port,
+    Signal,
     module_to_package,
 )
-from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.savable import Path
-from elasticai.creator.nn.two_complement_fixed_point_config import FixedPointConfig
 
 
 class FPHardTanh(Design):

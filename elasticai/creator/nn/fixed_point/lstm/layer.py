@@ -10,10 +10,10 @@ from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
+from elasticai.creator.nn.fixed_point.linear import Linear
+from elasticai.creator.nn.fixed_point.linear.design import Linear as _LinearDesign
 from elasticai.creator.nn.fixed_point.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.fixed_point.lstm.design.lstm import LSTMNetworkDesign
-from elasticai.creator.nn.vhdl.linear import FPLinear
-from elasticai.creator.nn.vhdl.linear.design import FPLinear1d as _FPLinear1dDesign
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
@@ -38,9 +38,9 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
         hidden_size = first_lstm.hidden_size
         input_size = first_lstm.input_size
         follow_up_linear_layers = cast(
-            list[_FPLinear1dDesign],
+            list[_LinearDesign],
             [
-                cast(FPLinear, layer).translate(self.layer_names[i])
+                cast(Linear, layer).translate(self.layer_names[i])
                 for i, layer in enumerate(self.layers)
             ],
         )
@@ -59,7 +59,7 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
         return self.layers(x)
 
 
-class FixedPointLSTMWithHardActivations(LSTM):
+class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
     def __init__(
         self,
         total_bits: int,
@@ -112,6 +112,4 @@ class FixedPointLSTMWithHardActivations(LSTM):
             w_hh=cast_weights(float_to_signed_int(self.cell.linear_hh.weight.tolist())),
             b_ih=cast_bias(float_to_signed_int(self.cell.linear_ih.bias.tolist())),
             b_hh=cast_bias(float_to_signed_int(self.cell.linear_hh.bias.tolist())),
-            lower_bound_for_hard_sigmoid=cast(int, float_to_signed_int(-3)),
-            upper_bound_for_hard_sigmoid=cast(int, float_to_signed_int(3)),
         )

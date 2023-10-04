@@ -1,17 +1,20 @@
 from functools import partial
 
-from elasticai.creator.hdl.code_generation.code_generation import (
-    calculate_address_width,
-)
-from elasticai.creator.hdl.code_generation.template import (
+from _common_imports import (
+    Design,
+    FixedPointConfig,
+    FPHardTanh,
     InProjectTemplate,
+    Path,
+    Port,
+    Rom,
+    Signal,
+    calculate_address_width,
     module_to_package,
+    std_signals,
 )
-from elasticai.creator.hdl.design_base import std_signals
-from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.savable import Path
-from elasticai.creator.nn.vhdl.linear.design import FPLinear1d
+
+from elasticai.creator.nn.fixed_point.linear.layer import Linear as FPLinear1d
 
 
 class LSTMNetworkDesign(Design):

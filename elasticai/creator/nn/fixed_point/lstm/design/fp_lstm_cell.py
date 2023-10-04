@@ -3,22 +3,23 @@ from functools import partial
 from typing import Any, cast
 
 import numpy as np
-
-from elasticai.creator.hdl.code_generation.code_generation import (
-    calculate_address_width,
-)
-from elasticai.creator.hdl.code_generation.template import (
+from _common_imports import (
+    Design,
+    FixedPointConfig,
+    FPHardTanh,
     InProjectTemplate,
+    Path,
+    Port,
+    Rom,
+    Signal,
+    calculate_address_width,
     module_to_package,
+    std_signals,
 )
-from elasticai.creator.hdl.design_base import std_signals
-from elasticai.creator.hdl.design_base.design import Design, Port
-from elasticai.creator.hdl.design_base.signal import Signal
-from elasticai.creator.hdl.savable import Path
-from elasticai.creator.hdl.vhdl.code_generation.twos_complement import to_unsigned
-from elasticai.creator.hdl.vhdl.designs import HardSigmoid
-from elasticai.creator.hdl.vhdl.designs.rom import Rom
-from elasticai.creator.nn.fixed_point.lstm.design.fp_hard_tanh import FPHardTanh
+
+from elasticai.creator.nn.fixed_point.hard_sigmoid.design import (
+    HardSigmoid as HardSigmoidDesign,
+)
 
 
 class FPLSTMCell(Design):
@@ -28,8 +29,6 @@ class FPLSTMCell(Design):
         name: str,
         total_bits: int,
         frac_bits: int,
-        lower_bound_for_hard_sigmoid: int,
-        upper_bound_for_hard_sigmoid: int,
         w_ih: list[list[list[int]]],
         w_hh: list[list[list[int]]],
         b_ih: list[list[int]],
@@ -44,8 +43,7 @@ class FPLSTMCell(Design):
         self.weights_hh = w_hh
         self.biases_ih = b_ih
         self.biases_hh = b_hh
-        self._upper_bound_for_hard_sigmoid = upper_bound_for_hard_sigmoid
-        self._lower_bound_for_hard_sigmoid = lower_bound_for_hard_sigmoid
+        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
 
         self._template = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -120,7 +118,9 @@ class FPLSTMCell(Design):
         destination.create_subpath("lstm_cell").as_file(".vhd").write(self._template)
 
     def _build_weights(self) -> tuple[list[list], list[list]]:
-        weights = np.concatenate((self.weights_ih, self.weights_hh), axis=1)
+        weights = np.concatenate(
+            (np.array(self.weights_ih), np.array(self.weights_hh)), axis=1
+        )
         w_i, w_f, w_g, w_o = weights.reshape(4, -1).tolist()
 
         bias = np.add(self.biases_ih, self.biases_hh)
@@ -142,14 +142,15 @@ class FPLSTMCell(Design):
 
     def _save_sigmoid(self, destination: Path) -> None:
         sigmoid_destination = destination.create_subpath("hard_sigmoid")
-        sigmoid = HardSigmoid(
-            width=self.total_bits,
-            lower_bound_for_zero=to_unsigned(
-                self._lower_bound_for_hard_sigmoid, total_bits=self.total_bits
-            ),
-            upper_bound_for_one=to_unsigned(
-                self._upper_bound_for_hard_sigmoid, total_bits=self.total_bits
-            ),
+        sigmoid = HardSigmoidDesign(
+            name=f"{self.name}_hard_sigmoid",
+            total_bits=self.total_bits,
+            frac_bits=self.frac_bits,
+            one=self._config.as_integer(1),
+            zero_threshold=self._config.as_integer(-3),
+            one_threshold=self._config.as_integer(3),
+            slope=self._config.as_integer(1 / 6),
+            y_intercept=self._config.as_integer(0.5),
         )
         sigmoid.save_to(sigmoid_destination)
 
