@@ -64,6 +64,13 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
 
 
 class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
+    """
+    Use only together with the above `LSTMNetwork`.
+    There is no single hw design corresponding to this sw layer.
+    Instead, the design of the `LSTMNetwork` handles most of the tasks,
+    that are performed by `FixedPointLSTMWithHardActivations`
+    """
+
     def __init__(
         self,
         total_bits: int,
