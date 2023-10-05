@@ -18,25 +18,30 @@ class LSTMNetworkDesign(Design):
     def __init__(
         self,
         lstm: Design,
-        linear_layers: list[FPLinear1d],
+        linear_layer: FPLinear1d,
         total_bits: int,
         frac_bits: int,
         hidden_size: int,
         input_size: int,
     ) -> None:
         super().__init__(name="lstm_network")
-        self._linear_layers = linear_layers
+        self._linear_layer = linear_layer
         self._lstm = lstm
         self.template = InProjectTemplate(
             module_to_package(self.__module__),
             file_name="lstm_network.tpl.vhd",
             parameters=dict(
+                name=self.name,
+                lstm_cell_instance_name=f"i_{self._lstm.name}_0",
+                lstm_cell_name=self._lstm.name,
+                linear_name=self._linear_layer.name,
+                linear_instance_name=f"i_{self._linear_layer.name}_0",
                 data_width=str(total_bits),
                 frac_width=str(frac_bits),
                 hidden_size=str(hidden_size),
                 input_size=str(input_size),
-                linear_in_features=str(self._linear_layers[0].in_feature_num),
-                linear_out_features=str(self._linear_layers[0].out_feature_num),
+                linear_in_features=str(self._linear_layer.in_feature_num),
+                linear_out_features=str(self._linear_layer.out_feature_num),
                 hidden_addr_width=(
                     f"{calculate_address_width(hidden_size + input_size)}"
                 ),
@@ -69,6 +74,5 @@ class LSTMNetworkDesign(Design):
 
     def save_to(self, destination: Path) -> None:
         self._lstm.save_to(destination)
-        for index, layer in enumerate(self._linear_layers):
-            layer.save_to(destination.create_subpath(f"linear_{index}"))
+        self._linear_layer.save_to(destination.create_subpath(f"linear"))
         destination.create_subpath("lstm_network").as_file(".vhd").write(self.template)

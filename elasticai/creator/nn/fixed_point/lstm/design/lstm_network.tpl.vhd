@@ -2,8 +2,6 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library xil_defaultlib;
-
 entity ${name} is
     generic (
         DATA_WIDTH  : integer := ${data_width};    -- that fixed point data has 16bits
@@ -133,7 +131,7 @@ begin
     end process; -- NETWORK_CTRL
 
 
-    i_${lstm_cell_instance_name}: entity work.${lstm_cell_name}(rtl)
+    ${lstm_cell_instance_name}: entity work.${lstm_cell_name}(rtl)
 
     port map (
         clock => clock,
@@ -151,9 +149,7 @@ begin
 
     ${linear_instance_name}_x_data <= ${lstm_cell_instance_name}_out_data;
 
---    ${linear_instance_name}_x_data <= std_logic_vector(to_signed(test_x_ram(to_integer(unsigned(${linear_instance_name}_read_addr))),d_out'length));
-
-    i_${linear_instance_name} : entity work.${linear_name}(rtl)
+    ${linear_instance_name} : entity work.${linear_name}(rtl)
     port map (
         enable => ${linear_instance_name}_enable,
         clock => clock,
@@ -167,13 +163,6 @@ begin
 
     d_out <= ${linear_instance_name}_out_data;
 
---    i_output_sigmoid : entity work.fp_hard_sigmoid_2(rtl)
---    port map (
---        enable =>${linear_instance_name}_done,
---        clock => clock,
---        x => ${linear_instance_name}_out_data,
---        y => d_out
---    );
 
 
 end architecture rtl;

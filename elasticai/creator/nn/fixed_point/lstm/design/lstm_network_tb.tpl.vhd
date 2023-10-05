@@ -22,13 +22,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
 
-library xil_defaultlib;
+library work;
 
-entity lstm_network_tb is
+entity $name is
     port ( clk: out std_logic);
-end lstm_network_tb;
+end;
 
-architecture Behavioral of lstm_network_tb is
+architecture Behavioral of $name is
 
 
     ------------------------------------------------------------
@@ -93,7 +93,7 @@ begin
     port map (
         clock => clock,
         enable => ${uut_name}_enable,
-        x_in => data_in,
+        x => data_in,
         addr_in => address_in,
         x_we => wr,
         done => busy,

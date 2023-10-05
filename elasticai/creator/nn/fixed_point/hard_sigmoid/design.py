@@ -47,4 +47,4 @@ class HardSigmoid(Design):
                 y_intercept=str(self._y_intercept),
             ),
         )
-        destination.as_file(".vhd").write(template)
+        destination.create_subpath(self.name).as_file(".vhd").write(template)

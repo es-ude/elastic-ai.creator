@@ -415,7 +415,7 @@ sigmoid_out <= signed(std_sigmoid_out);
 std_tanh_in <= std_logic_vector(tanh_in);
 tanh_out <= signed(std_tanh_out);
 
-SHARED_SIGMOID : entity ${library}.fp_hard_sigmoid_${name}(rtl)
+SHARED_SIGMOID : entity ${library}.${sigmoid_name}(rtl)
 port map (
     '1',
     clock,
@@ -423,7 +423,7 @@ port map (
     std_sigmoid_out
 );
 
-SHARED_TANH : entity ${library}.fp_hard_tanh_${name}(rtl)
+SHARED_TANH : entity ${library}.${tanh_name}(rtl)
 port map (
     '1',
     clock,

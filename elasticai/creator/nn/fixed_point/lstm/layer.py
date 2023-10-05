@@ -45,9 +45,11 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
                 for i, layer in enumerate(self.layers)
             ],
         )
+        if len(follow_up_linear_layers) > 1:
+            raise NotImplementedError
         return LSTMNetworkDesign(
             lstm=first_lstm.create_design(),
-            linear_layers=follow_up_linear_layers,
+            linear_layer=follow_up_linear_layers[0],
             total_bits=total_bits,
             frac_bits=frac_bits,
             hidden_size=hidden_size,
@@ -120,9 +122,10 @@ class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
 
         cast_weights = lambda x: cast(list[list[list[int]]], x)
         cast_bias = lambda x: cast(list[list[int]], x)
-
         return FPLSTMCell(
             name=name,
+            hardtanh=self.cell.tanh.create_design(f"{name}_hardtanh"),
+            hardsigmoid=self.cell.sigmoid.create_design(f"{name}_hardsigmoid"),
             total_bits=self._config.total_bits,
             frac_bits=self._config.frac_bits,
             w_ih=cast_weights(float_to_signed_int(self.cell.linear_ih.weight.tolist())),

@@ -4,10 +4,6 @@ from typing import Any, cast
 
 import numpy as np
 
-from elasticai.creator.nn.fixed_point.hard_sigmoid.design import (
-    HardSigmoid as HardSigmoidDesign,
-)
-
 from ._common_imports import (
     Design,
     FixedPointConfig,
@@ -20,7 +16,6 @@ from ._common_imports import (
     module_to_package,
     std_signals,
 )
-from .fp_hard_tanh import FPHardTanh
 
 
 class FPLSTMCell(Design):
@@ -28,6 +23,8 @@ class FPLSTMCell(Design):
         self,
         *,
         name: str,
+        hardtanh: Design,
+        hardsigmoid: Design,
         total_bits: int,
         frac_bits: int,
         w_ih: list[list[list[int]]],
@@ -45,13 +42,16 @@ class FPLSTMCell(Design):
         self.biases_ih = b_ih
         self.biases_hh = b_hh
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-
+        self._htanh = hardtanh
+        self._hsigmoid = hardsigmoid
         self._template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name=f"{self.name}.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 library=work_library_name,
+                tanh_name=self._htanh.name,
+                sigmoid_name=self._hsigmoid.name,
                 data_width=str(total_bits),
                 frac_width=str(frac_bits),
                 input_size=str(self.input_size),
@@ -141,28 +141,11 @@ class FPLSTMCell(Design):
             )
             rom.save_to(destination.create_subpath(name + suffix))
 
-    def _save_sigmoid(self, destination: Path) -> None:
-        sigmoid_destination = destination.create_subpath("hard_sigmoid")
-        sigmoid = HardSigmoidDesign(
-            name=f"{self.name}_hard_sigmoid",
-            total_bits=self.total_bits,
-            frac_bits=self.frac_bits,
-            one=self._config.as_integer(1),
-            zero_threshold=self._config.as_integer(-3),
-            one_threshold=self._config.as_integer(3),
-            slope=self._config.as_integer(1 / 6),
-            y_intercept=self._config.as_integer(0.5),
-        )
-        sigmoid.save_to(sigmoid_destination)
-
     def _save_hardtanh(self, destination: Path) -> None:
-        name = f"{self.name}_hard_tanh"
-        hardtanh = FPHardTanh(
-            name=name,
-            total_bits=self.total_bits,
-            frac_bits=self.frac_bits,
-        )
-        hardtanh.save_to(destination.create_subpath("hard_tanh"))
+        self._htanh.save_to(destination)
+
+    def _save_sigmoid(self, destination: Path) -> None:
+        self._hsigmoid.save_to(destination)
 
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
         template = InProjectTemplate(
