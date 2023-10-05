@@ -7,9 +7,9 @@ from elasticai.creator.vhdl.design.design import Design
 
 
 class LSTMTestBench:
-    def __init__(self, uut: Design):
+    def __init__(self, name: str, uut: Design):
         self._uut = uut
-        self._base_name = "lstm_network"
+        self._base_name = name
 
     def save_to(self, destination: Path):
         test_bench = InProjectTemplate(

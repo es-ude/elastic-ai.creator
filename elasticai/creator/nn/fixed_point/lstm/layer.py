@@ -18,6 +18,7 @@ from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .._math_operations import MathOperations
+from .design.testbench import LSTMTestBench
 
 
 class LSTMNetwork(DesignCreator, torch.nn.Module):
@@ -100,6 +101,9 @@ class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
     @property
     def fixed_point_config(self) -> FixedPointConfig:
         return self._config
+
+    def create_testbench(self, test_bench_name, uut: Design) -> Design:
+        return LSTMTestBench(uut)
 
     def create_design(self, name: str = "lstm_cell") -> Design:
         def float_to_signed_int(value: float | list) -> int | list:

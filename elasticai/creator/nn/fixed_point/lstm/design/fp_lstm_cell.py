@@ -34,9 +34,9 @@ class FPLSTMCell(Design):
         w_hh: list[list[list[int]]],
         b_ih: list[list[int]],
         b_hh: list[list[int]],
-        work_library_name: str = "work",
     ) -> None:
         super().__init__(name=name)
+        work_library_name: str = "work"
 
         self.input_size = len(w_ih[0])
         self.hidden_size = len(w_ih) // 4
@@ -156,9 +156,13 @@ class FPLSTMCell(Design):
         sigmoid.save_to(sigmoid_destination)
 
     def _save_hardtanh(self, destination: Path) -> None:
-        hardtanh_destination = destination.create_subpath("hard_tanh")
-        hardtanh = FPHardTanh(total_bits=self.total_bits, frac_bits=self.frac_bits)
-        hardtanh.save_to(hardtanh_destination)
+        name = f"{self.name}_hard_tanh"
+        hardtanh = FPHardTanh(
+            name=name,
+            total_bits=self.total_bits,
+            frac_bits=self.frac_bits,
+        )
+        hardtanh.save_to(destination.create_subpath("hard_tanh"))
 
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
         template = InProjectTemplate(

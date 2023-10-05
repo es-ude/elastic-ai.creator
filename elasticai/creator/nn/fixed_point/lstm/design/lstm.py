@@ -68,7 +68,7 @@ class LSTMNetworkDesign(Design):
         return self._port
 
     def save_to(self, destination: Path) -> None:
-        self._lstm.save_to(destination.create_subpath("lstm_cell"))
+        self._lstm.save_to(destination)
         for index, layer in enumerate(self._linear_layers):
-            layer.save_to(destination.create_subpath(f"fp_linear_1d_{index}"))
+            layer.save_to(destination.create_subpath(f"linear_{index}"))
         destination.create_subpath("lstm_network").as_file(".vhd").write(self.template)

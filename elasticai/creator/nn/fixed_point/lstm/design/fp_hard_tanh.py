@@ -10,8 +10,8 @@ from ._common_imports import (
 
 
 class FPHardTanh(Design):
-    def __init__(self, total_bits: int, frac_bits: int) -> None:
-        super().__init__(name="hardtanh")
+    def __init__(self, name: str, total_bits: int, frac_bits: int) -> None:
+        super().__init__(name=name)
         self._data_width = total_bits
         fp_config = FixedPointConfig(frac_bits=frac_bits, total_bits=total_bits)
         self._template = InProjectTemplate(
