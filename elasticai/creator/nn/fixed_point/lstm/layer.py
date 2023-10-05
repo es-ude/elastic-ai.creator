@@ -103,7 +103,7 @@ class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
         return self._config
 
     def create_testbench(self, test_bench_name, uut: Design) -> Design:
-        return LSTMTestBench(uut)
+        return LSTMTestBench(test_bench_name, uut)
 
     def create_design(self, name: str = "lstm_cell") -> Design:
         def float_to_signed_int(value: float | list) -> int | list:
