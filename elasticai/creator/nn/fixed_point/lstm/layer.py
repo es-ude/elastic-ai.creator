@@ -25,7 +25,7 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
     def __init__(self, layers: list[torch.nn.Module]):
         super().__init__()
         self.lstm = layers[0]
-        self.layer_names = [f"fp_linear_1d_{i}" for i in range(len(layers[1:]))]
+        self.layer_names = [f"fp_linear_{i}" for i in range(len(layers[1:]))]
         self.layers = torch.nn.Sequential(
             OrderedDict(
                 {name: layer for name, layer in zip(self.layer_names, layers[1:])}
@@ -53,6 +53,9 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
             hidden_size=hidden_size,
             input_size=input_size,
         )
+
+    def create_testbench(self, test_bench_name, uut: Design) -> Design:
+        return LSTMTestBench(test_bench_name, uut)
 
     def forward(self, x):
         x, (_, _) = self.lstm(x)
@@ -101,9 +104,6 @@ class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
     @property
     def fixed_point_config(self) -> FixedPointConfig:
         return self._config
-
-    def create_testbench(self, test_bench_name, uut: Design) -> Design:
-        return LSTMTestBench(test_bench_name, uut)
 
     def create_design(self, name: str = "lstm_cell") -> Design:
         def float_to_signed_int(value: float | list) -> int | list:
