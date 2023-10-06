@@ -22,6 +22,7 @@ def forge_silu(scale: float, beta: float) -> AdaptableSiLU:
         {
             "_base_module.scale": torch.tensor([scale]),
             "_base_module.beta": torch.tensor([beta]),
+            "_step_lut": torch.linspace(-10, 10, 5),
         }
     )
     return silu
