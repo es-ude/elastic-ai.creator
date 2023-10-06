@@ -18,4 +18,3 @@ class LSTMTestBench:
             parameters={"name": self.name, "uut_name": self._uut.name},
         )
         destination.create_subpath(f"{self.name}").as_file(".vhd").write(test_bench)
-        self._uut.save_to(destination.create_subpath(self._uut.name))
