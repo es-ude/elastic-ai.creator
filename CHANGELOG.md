@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.59.2 (2023-10-06)
+
+### Fix
+
+* Copy model to cpu for quantized inference ([`0c5d88e`](https://github.com/es-ude/elastic-ai.creator/commit/0c5d88e26e55eb11d2a729c5a7bf6b865927b61f))
+
 ## v0.59.1 (2023-10-06)
 
 ### Fix
