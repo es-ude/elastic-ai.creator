@@ -53,5 +53,5 @@ class PrecomputedModule(torch.nn.Module, DesignCreator):
     def _quantized_inference(self, x: int) -> int:
         fxp_input = self._config.as_rational(x)
         with torch.no_grad():
-            output = self(torch.tensor(fxp_input))
+            output = self.cpu()(torch.tensor(fxp_input))
         return self._config.as_integer(float(output.item()))
