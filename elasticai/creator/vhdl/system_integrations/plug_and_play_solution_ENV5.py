@@ -1,4 +1,5 @@
 from elasticai.creator.file_generation.savable import Path
+from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.system_integrations.env5_constraints.env5_constraints import (
     ENV5Constraints,
 )
@@ -9,11 +10,14 @@ from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
 )
 
 
-class PlugAndPlaySolutionENV5:
+class FirmwareENv5:
+    def __init__(self, network: Design):
+        self._network = network
+
     def save_to(self, destination: Path):
         def save_srcs(destination: Path):
-            lstm_skeleton = LSTMSkeleton()
-            lstm_skeleton.save_to(destination.create_subpath(subpath_name="skeleton"))
+            lstm_skeleton = self._network
+            lstm_skeleton.save_to(destination.create_subpath(subpath_name="network"))
 
             middleware = Middleware()
             middleware.save_to(destination.create_subpath(subpath_name="middleware"))
