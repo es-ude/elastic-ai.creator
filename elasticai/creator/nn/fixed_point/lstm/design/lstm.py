@@ -67,6 +67,14 @@ class LSTMNetworkDesign(Design):
                 Signal("d_out", width=lstm.port["h_out_data"].width),
             ],
         )
+        self._subpath_name = "lstm_network"
+
+    def get_file_load_order(self) -> list[str]:
+        return [
+            "/".join([self._subpath_name, file])
+            for file in ["/".join(["linear", linear_file]) for linear_file in []]
+            + self._lstm.get_file_load_order()
+        ]
 
     @property
     def port(self) -> Port:
@@ -75,4 +83,6 @@ class LSTMNetworkDesign(Design):
     def save_to(self, destination: Path) -> None:
         self._lstm.save_to(destination)
         self._linear_layer.save_to(destination.create_subpath(f"linear"))
-        destination.create_subpath("lstm_network").as_file(".vhd").write(self.template)
+        destination.create_subpath(self._subpath_name).as_file(".vhd").write(
+            self.template
+        )

@@ -10,8 +10,6 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
 )
 from elasticai.creator.nn.fixed_point.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.fixed_point.hard_tanh import HardTanh
-from elasticai.creator.nn.fixed_point.linear import Linear
-from elasticai.creator.nn.fixed_point.linear.design import Linear as _LinearDesign
 from elasticai.creator.nn.fixed_point.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.fixed_point.lstm.design.lstm import LSTMNetworkDesign
 from elasticai.creator.vhdl.design.design import Design
@@ -26,6 +24,8 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
         super().__init__()
         self.lstm = layers[0]
         self.layer_names = [f"fp_linear_{i}" for i in range(len(layers[1:]))]
+        if len(self.layer_names) > 1:
+            raise NotImplementedError
         self.layers = torch.nn.Sequential(
             OrderedDict(
                 {name: layer for name, layer in zip(self.layer_names, layers[1:])}
@@ -38,18 +38,10 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
         frac_bits = first_lstm.fixed_point_config.frac_bits
         hidden_size = first_lstm.hidden_size
         input_size = first_lstm.input_size
-        follow_up_linear_layers = cast(
-            list[_LinearDesign],
-            [
-                cast(Linear, layer).create_design(self.layer_names[i])
-                for i, layer in enumerate(self.layers)
-            ],
-        )
-        if len(follow_up_linear_layers) > 1:
-            raise NotImplementedError
+
         return LSTMNetworkDesign(
             lstm=first_lstm.create_design(),
-            linear_layer=follow_up_linear_layers[0],
+            linear_layer=self.layers[0].create_design(self.layer_names[0]),
             total_bits=total_bits,
             frac_bits=frac_bits,
             hidden_size=hidden_size,

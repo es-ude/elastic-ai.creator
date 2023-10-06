@@ -44,6 +44,8 @@ class FPLSTMCell(Design):
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         self._htanh = hardtanh
         self._hsigmoid = hardsigmoid
+        self._rom_base_names = ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
+        self._ram_base_name = f"dual_port_2_clock_ram_{self.name}"
         self._template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name=f"{self.name}.tpl.vhd",
@@ -104,12 +106,18 @@ class FPLSTMCell(Design):
             ],
         )
 
+    def get_file_load_order(self) -> list[str]:
+        return [f"{file}.vhd" for file in self._get_qualified_rom_names()] + [
+            f"{self._ram_base_name}.vhd",
+            f"{self._htanh.name}.vhd",
+            f"{self._hsigmoid.name}.vhd",
+        ]
+
     def save_to(self, destination: Path) -> None:
         weights, biases = self._build_weights()
 
         self._save_roms(
             destination=destination,
-            names=("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo"),
             parameters=[*weights, *biases],
         )
         self._save_dual_port_double_clock_ram(destination)
@@ -129,17 +137,18 @@ class FPLSTMCell(Design):
 
         return [w_i, w_f, w_g, w_o], [b_i, b_f, b_g, b_o]
 
-    def _save_roms(
-        self, destination: Path, names: Iterable[str], parameters: Iterable[Any]
-    ) -> None:
+    def _get_qualified_rom_names(self) -> list[str]:
         suffix = f"_rom_{self.name}"
-        for name, values in zip(names, parameters):
+        return [name + suffix for name in self._rom_base_names]
+
+    def _save_roms(self, destination: Path, parameters: Iterable[Any]) -> None:
+        for name, values in zip(self._get_qualified_rom_names(), parameters):
             rom = Rom(
-                name=name + suffix,
+                name=name,
                 data_width=self.total_bits,
                 values_as_integers=values,
             )
-            rom.save_to(destination.create_subpath(name + suffix))
+            rom.save_to(destination.create_subpath(name))
 
     def _save_hardtanh(self, destination: Path) -> None:
         self._htanh.save_to(destination)
@@ -153,5 +162,4 @@ class FPLSTMCell(Design):
             package=module_to_package(self.__module__),
             parameters=dict(name=self.name),
         )
-        name = f"dual_port_2_clock_ram_{self.name}"
-        destination.create_subpath(name).as_file(".vhd").write(template)
+        destination.create_subpath(self._ram_base_name).as_file(".vhd").write(template)
