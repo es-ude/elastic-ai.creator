@@ -32,10 +32,8 @@ class LSTMNetworkDesign(Design):
             file_name="lstm_network.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                lstm_cell_instance_name=f"i_{self._lstm.name}_0",
                 lstm_cell_name=self._lstm.name,
                 linear_name=self._linear_layer.name,
-                linear_instance_name=f"i_{self._linear_layer.name}_0",
                 data_width=str(total_bits),
                 frac_width=str(frac_bits),
                 hidden_size=str(hidden_size),
@@ -69,20 +67,13 @@ class LSTMNetworkDesign(Design):
         )
         self._subpath_name = "lstm_network"
 
-    def get_file_load_order(self) -> list[str]:
-        return [
-            "/".join([self._subpath_name, file])
-            for file in ["/".join(["linear", linear_file]) for linear_file in []]
-            + self._lstm.get_file_load_order()
-        ]
-
     @property
     def port(self) -> Port:
         return self._port
 
     def save_to(self, destination: Path) -> None:
         self._lstm.save_to(destination)
-        self._linear_layer.save_to(destination.create_subpath(f"linear"))
+        self._linear_layer.save_to(destination.create_subpath("linear"))
         destination.create_subpath(self._subpath_name).as_file(".vhd").write(
             self.template
         )

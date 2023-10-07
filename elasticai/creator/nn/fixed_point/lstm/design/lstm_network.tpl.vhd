@@ -36,22 +36,22 @@ architecture rtl of ${name} is
     signal network_state : TYPE_STATE := s_reset;
 
     signal lstm_input_addr : unsigned(IN_ADDR_WIDTH-1 downto 0);
-    signal ${lstm_cell_instance_name}_done : std_logic;
-    signal ${lstm_cell_instance_name}_reset: std_logic;
-    signal ${lstm_cell_instance_name}_enable: std_logic;
-    signal ${lstm_cell_instance_name}_zero_state : std_logic;
-    signal ${lstm_cell_instance_name}_x_data : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal ${lstm_cell_instance_name}_out_data : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal ${lstm_cell_instance_name}_out_addr : std_logic_vector(LSTM_CELL_HIDDEN_ADDR_WIDTH-1 downto 0);
-    signal ${lstm_cell_instance_name}_out_en : std_logic;
+    signal i_lstm_cell_done : std_logic;
+    signal i_lstm_cell_reset: std_logic;
+    signal i_lstm_cell_enable: std_logic;
+    signal i_lstm_cell_zero_state : std_logic;
+    signal i_lstm_cell_x_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal i_lstm_cell_out_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal i_lstm_cell_out_addr : std_logic_vector(LSTM_CELL_HIDDEN_ADDR_WIDTH-1 downto 0);
+    signal i_lstm_cell_out_en : std_logic;
 
-    signal ${linear_instance_name}_enable : std_logic;
-    signal ${linear_instance_name}_read_addr : std_logic_vector(LSTM_CELL_HIDDEN_ADDR_WIDTH-1 downto 0);
-    signal ${linear_instance_name}_x_data : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal ${linear_instance_name}_w_data : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal ${linear_instance_name}_b_data : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal ${linear_instance_name}_out_data : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal ${linear_instance_name}_done : std_logic;
+    signal i_linear_enable : std_logic;
+    signal i_linear_read_addr : std_logic_vector(LSTM_CELL_HIDDEN_ADDR_WIDTH-1 downto 0);
+    signal i_linear_x_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal i_linear_w_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal i_linear_b_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal i_linear_out_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal i_linear_done : std_logic;
 
     type t_y_array is array (0 to 31) of integer;
     shared variable test_x_ram : t_y_array:=(-7,-4,-8,4,5,5,-10,0,8,8,12,-8,1,-6,-13,-5,0,4,9,5,0,0,0,0,0,0,0,0,0,0,0,0); --27
@@ -70,55 +70,55 @@ begin
     begin
         if falling_edge(clock) then
             if enable ='1' then
-                ${lstm_cell_instance_name}_x_data <= std_logic_vector(input_buffer(to_integer(lstm_input_addr)));
+                i_lstm_cell_x_data <= std_logic_vector(input_buffer(to_integer(lstm_input_addr)));
             end if;
         end if;
     end process; -- INPUT_READ
 
     NETWORK_CTRL: process(clock)
-    variable ${lstm_cell_instance_name}_itter : integer := 0;
+    variable i_lstm_cell_itter : integer := 0;
     begin
         if rising_edge(clock) then
             if enable = '0' then
-                ${lstm_cell_instance_name}_out_en<='0';
+                i_lstm_cell_out_en<='0';
                 network_state <= s_reset;
-                ${lstm_cell_instance_name}_reset <= '1';
-                ${lstm_cell_instance_name}_enable <= '0';
+                i_lstm_cell_reset <= '1';
+                i_lstm_cell_enable <= '0';
                 done <='0';
-                ${linear_instance_name}_enable <='0';
+                i_linear_enable <='0';
             else
                 if network_state = s_reset then
-                    ${lstm_cell_instance_name}_itter := 0;
+                    i_lstm_cell_itter := 0;
                     network_state <= s_lstm;
-                    ${lstm_cell_instance_name}_zero_state <= '1';
+                    i_lstm_cell_zero_state <= '1';
                 else
                     if network_state = s_lstm then
-                        ${lstm_cell_instance_name}_enable <= '1';
-                        if ${lstm_cell_instance_name}_reset='1' then
+                        i_lstm_cell_enable <= '1';
+                        if i_lstm_cell_reset='1' then
 
-                            ${lstm_cell_instance_name}_reset <= '0';
+                            i_lstm_cell_reset <= '0';
                         else
-                            if ${lstm_cell_instance_name}_done ='1' then
-                                ${lstm_cell_instance_name}_zero_state <= '0';
-                                if ${lstm_cell_instance_name}_itter = LSTM_INPUTS-1 then
+                            if i_lstm_cell_done ='1' then
+                                i_lstm_cell_zero_state <= '0';
+                                if i_lstm_cell_itter = LSTM_INPUTS-1 then
                                     network_state <= s_linear;
-                                    ${lstm_cell_instance_name}_out_en<='1';
+                                    i_lstm_cell_out_en<='1';
                                 else
-                                    ${lstm_cell_instance_name}_itter := ${lstm_cell_instance_name}_itter + 1;
-                                    ${lstm_cell_instance_name}_reset <= '1';
+                                    i_lstm_cell_itter := i_lstm_cell_itter + 1;
+                                    i_lstm_cell_reset <= '1';
                                 end if;
                             end if;
                         end if;
 
                     else
                         if network_state = s_linear then
-                            if ${linear_instance_name}_enable='0' then
-                                ${linear_instance_name}_enable <='1';
+                            if i_linear_enable='0' then
+                                i_linear_enable <='1';
                             else
-                                if ${linear_instance_name}_done='1' then
+                                if i_linear_done='1' then
                                     network_state <= s_done;
                                     done <='1';
-                                    ${lstm_cell_instance_name}_out_en<='0';
+                                    i_lstm_cell_out_en<='0';
                                 end if;
                             end if;
 
@@ -126,42 +126,42 @@ begin
                     end if;
                 end if;
             end if;
-            lstm_input_addr <= to_unsigned(${lstm_cell_instance_name}_itter, IN_ADDR_WIDTH);
+            lstm_input_addr <= to_unsigned(i_lstm_cell_itter, IN_ADDR_WIDTH);
         end if;
     end process; -- NETWORK_CTRL
 
 
-    ${lstm_cell_instance_name}: entity work.${lstm_cell_name}(rtl)
+    i_lstm_cell: entity work.${lstm_cell_name}(rtl)
 
     port map (
         clock => clock,
-        reset => ${lstm_cell_instance_name}_reset,
-        enable => ${lstm_cell_instance_name}_enable,
-        zero_state => ${lstm_cell_instance_name}_zero_state,
-        x_data => ${lstm_cell_instance_name}_x_data,
-        done => ${lstm_cell_instance_name}_done,
-        h_out_en => ${lstm_cell_instance_name}_out_en,
-        h_out_data => ${lstm_cell_instance_name}_out_data,
-        h_out_addr => ${lstm_cell_instance_name}_out_addr
+        reset => i_lstm_cell_reset,
+        enable => i_lstm_cell_enable,
+        zero_state => i_lstm_cell_zero_state,
+        x_data => i_lstm_cell_x_data,
+        done => i_lstm_cell_done,
+        h_out_en => i_lstm_cell_out_en,
+        h_out_data => i_lstm_cell_out_data,
+        h_out_addr => i_lstm_cell_out_addr
     );
 
-    ${lstm_cell_instance_name}_out_addr <= ${linear_instance_name}_read_addr;
+    i_lstm_cell_out_addr <= i_linear_read_addr;
 
-    ${linear_instance_name}_x_data <= ${lstm_cell_instance_name}_out_data;
+    i_linear_x_data <= i_lstm_cell_out_data;
 
-    ${linear_instance_name} : entity work.${linear_name}(rtl)
+    i_linear : entity work.${linear_name}(rtl)
     port map (
-        enable => ${linear_instance_name}_enable,
+        enable => i_linear_enable,
         clock => clock,
-        x_address => ${linear_instance_name}_read_addr,
-        x => ${linear_instance_name}_x_data,
+        x_address => i_linear_read_addr,
+        x => i_linear_x_data,
         y_address => (others=>'0'),
-        y => ${linear_instance_name}_out_data,
+        y => i_linear_out_data,
 
-        done => ${linear_instance_name}_done
+        done => i_linear_done
     );
 
-    d_out <= ${linear_instance_name}_out_data;
+    d_out <= i_linear_out_data;
 
 
 
