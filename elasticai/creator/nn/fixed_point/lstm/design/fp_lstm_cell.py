@@ -114,6 +114,7 @@ class FPLSTMCell(Design):
         ]
 
     def save_to(self, destination: Path) -> None:
+        destination = destination.create_subpath(self.name)
         weights, biases = self._build_weights()
 
         self._save_roms(
