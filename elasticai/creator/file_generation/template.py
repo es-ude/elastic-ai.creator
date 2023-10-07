@@ -1,3 +1,4 @@
+import typing
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from itertools import repeat
@@ -11,7 +12,14 @@ def module_to_package(module: str) -> str:
     return ".".join(module.split(".")[:-1])
 
 
+@typing.runtime_checkable
 class Template(Protocol):
+    parameters: dict[str, str | list[str]]
+    content: list[str]
+
+
+@dataclass
+class SimpleTemplate:
     parameters: dict[str, str | list[str]]
     content: list[str]
 
