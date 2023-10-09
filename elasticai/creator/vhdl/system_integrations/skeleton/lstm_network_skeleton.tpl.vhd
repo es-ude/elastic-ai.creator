@@ -59,7 +59,7 @@ begin
     port map (
         clock => clock,
         enable => network_enable,
-        x_in => x_config_data,
+        x => x_config_data,
         addr_in => x_config_addr,
         x_we => x_config_en,
 
