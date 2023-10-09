@@ -11,18 +11,18 @@ entity lstm_network_skeleton is
         clk_hadamard                : in std_logic;
         reset                : in std_logic; -- controls functionality (sleep)
         busy                : out std_logic; -- done with entire calculation
-        wake_up             : out std_logic;        
+        wake_up             : out std_logic;
         -- indicate new data or request
         rd                    : in std_logic;    -- request a variable
         wr                 : in std_logic;     -- request changing a variable
-        
+
         -- data interface
         data_in            : in std_logic_vector(7 downto 0);
         address_in        : in std_logic_vector(15 downto 0);
         data_out            : out std_logic_vector(7 downto 0);
-        
+
         debug                : out std_logic_vector(7 downto 0);
-        
+
         led_ctrl             : out std_logic_vector(3 DOWNTO 0)
     );
 end lstm_network_skeleton;
@@ -35,10 +35,10 @@ architecture rtl of lstm_network_skeleton is
 
 
     signal network_enable :  std_logic;
-    
+
     signal c_config_en :  std_logic;
     signal done :  std_logic;
-    
+
     signal x_config_en :  std_logic;
     signal x_config_data :  std_logic_vector(DATA_WIDTH-1 downto 0);
     signal x_config_addr :  std_logic_vector(X_ADDR_WIDTH-1 downto 0);
@@ -46,13 +46,13 @@ architecture rtl of lstm_network_skeleton is
     signal network_out_data : std_logic_vector(DATA_WIDTH-1 downto 0);
 
 begin
-    
+
 --    led_ctrl(0) <= reset;
     led_ctrl(2) <= network_enable;
     led_ctrl(3) <= done;
 --    led_ctrl(3) <= '0';
-    
-    i_lstm_network: entity xil_defaultlib.lstm_network(rtl)
+
+    i_lstm_network: entity work.lstm_network(rtl)
     generic map(
         DATA_WIDTH  => DATA_WIDTH,
         FRAC_WIDTH  => FRAC_WIDTH,
@@ -75,11 +75,11 @@ begin
     wake_up <= done;
 
 
-    -- process data receive 
+    -- process data receive
     process (clock, rd, wr, reset)
         variable int_addr : integer range 0 to 20000;
     begin
-        
+
         if reset = '1' then
 
             network_enable <= '0';
@@ -88,15 +88,15 @@ begin
         -- beginning/end
             if rising_edge(clock) then
                 -- process address of written value
-                
+
                 -- calculate <= '0'; -- set to not calculate (can be overwritten below)
-                
+
                 if wr = '1' or rd = '1' then
                     -- variable being set
                     -- reverse from big to little endian
                     int_addr := to_integer(unsigned(address_in));
                     if wr = '1' then
-                    
+
                         if int_addr<6 then
                             x_config_data <= data_in(7 downto 0);
                             x_config_addr <= address_in(x_config_addr'length-1 downto 0);
@@ -112,9 +112,11 @@ begin
                             data_out(7 downto 0) <= network_out_data;
                         elsif int_addr=2 then
                             data_out(7 downto 0) <= x"bb";
+
+
                         elsif int_addr=2000 then
                             data_out(7 downto 0) <= x"14";
-                            
+
                         else
                             data_out(7 downto 0) <= address_in(7 downto 0);
                         end if;
