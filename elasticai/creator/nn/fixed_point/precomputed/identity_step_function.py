@@ -20,7 +20,7 @@ class IdentityStepFunction(torch.autograd.Function):
             raise ValueError(
                 f"Number of steps cannot be less than or equal to 1 (steps == {steps})."
             )
-        x = x.cpu().to(torch.float32)
+        x = x.to(torch.float32)
         x = x.clamp(min=step_lut.min(), max=step_lut.max())
 
         for step_idx in range(1, len(step_lut)):

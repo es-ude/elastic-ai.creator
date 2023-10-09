@@ -2,6 +2,20 @@
 
 <!--next-version-placeholder-->
 
+## v0.59.2 (2023-10-06)
+
+### Fix
+
+* Copy model to cpu for quantized inference ([`0c5d88e`](https://github.com/es-ude/elastic-ai.creator/commit/0c5d88e26e55eb11d2a729c5a7bf6b865927b61f))
+
+## v0.59.1 (2023-10-06)
+
+### Fix
+
+* **tests:** Add step_lut to state_dict ([`e18f46f`](https://github.com/es-ude/elastic-ai.creator/commit/e18f46f0a70b1000e8e6d0ea3ecdddce2ad325d5))
+* **precomputed:** Do not copy input to cpu ([`586b774`](https://github.com/es-ude/elastic-ai.creator/commit/586b77458e9529dc8f12023fbefb6a3747fd222e))
+* **precomputed:** Set step_lut as non trainable parameter ([`95954c2`](https://github.com/es-ude/elastic-ai.creator/commit/95954c2cbd52a85f762128ce3a88259085431536))
+
 ## v0.59.0 (2023-10-02)
 
 ### Feature

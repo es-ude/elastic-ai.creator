@@ -27,7 +27,10 @@ class PrecomputedModule(torch.nn.Module, DesignCreator):
         self._base_module = base_module
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         self._operations = MathOperations(self._config)
-        self._step_lut = torch.linspace(*sampling_intervall, num_steps)
+        self._step_lut = torch.nn.Parameter(
+            torch.linspace(*sampling_intervall, num_steps),
+            requires_grad=False,
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self._stepped_inputs(x)
@@ -50,5 +53,5 @@ class PrecomputedModule(torch.nn.Module, DesignCreator):
     def _quantized_inference(self, x: int) -> int:
         fxp_input = self._config.as_rational(x)
         with torch.no_grad():
-            output = self(torch.tensor(fxp_input))
+            output = self.cpu()(torch.tensor(fxp_input))
         return self._config.as_integer(float(output.item()))
