@@ -74,13 +74,13 @@ MWMCU --> MWFPGA
 
 ## Skeleton
 The supported address range for the neural network skeleton ranges from
-0 to 20000.
+0 to 99.
 The skeleton we use for neural networks uses its memory mapped io
 as follows:
 
 
-|mode | address (bytewise) | value (byte) | meaning                  |
-+-----+--------------------+--------------+--------------------------+
-|write| 100                | 0x01         | start computation        |
-|write| 0 to 99            | arbitrary    | write up to 99 bytes of input data |
-|read |   1                | ??           | read 1 byte of computation result |
+|mode | address (bytewise) | value (byte) | meaning                                   |
++-----+--------------------+--------------+-------------------------------------------+
+|write| 100                | 0x01         | start computation                         |
+|write| 0 to 99            | arbitrary    | write up to 99 bytes of input data        |
+|read | 0 to 99            | result       | read up to 99 bytes of computation result |
