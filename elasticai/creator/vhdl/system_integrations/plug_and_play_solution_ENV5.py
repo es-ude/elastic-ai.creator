@@ -24,7 +24,11 @@ class FirmwareENv5:
 
             middleware = Middleware()
             middleware.save_to(destination.create_subpath("middleware"))
-            self._testbench.save_to(destination.create_subpath(self._testbench.name))
+            self._testbench.save_to(
+                destination.create_subpath("test_benches").create_subpath(
+                    self._testbench.name
+                )
+            )
             env5_reconfig_top = ENV5ReconfigTop()
             env5_reconfig_top.save_to(destination.create_subpath("env5_reconfig_top"))
 
