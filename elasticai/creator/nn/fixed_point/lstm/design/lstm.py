@@ -73,7 +73,7 @@ class LSTMNetworkDesign(Design):
 
     def save_to(self, destination: Path) -> None:
         self._lstm.save_to(destination)
-        self._linear_layer.save_to(destination.create_subpath("linear"))
+        self._linear_layer.save_to(destination.create_subpath(self._linear_layer.name))
         destination.create_subpath(self._subpath_name).as_file(".vhd").write(
             self.template
         )
