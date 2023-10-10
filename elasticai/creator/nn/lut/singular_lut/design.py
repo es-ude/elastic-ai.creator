@@ -40,8 +40,10 @@ class LUT(Design):
     def _input_to_string(self, input: int):
         return to_vhdl_binary_string(input, self._in_bits)
 
-    def _output_to_string(self, output: int):
-        return to_vhdl_binary_string(output, self._out_bits)
+    def _output_to_string(self, output: int | tuple[int, ...]):
+        if isinstance(output, int):
+            return to_vhdl_binary_string(output, self._out_bits)
+        return '"{}"'.format("".join(map(str, output)))
 
     def _gen_cases(self):
         counter = 0
@@ -71,6 +73,7 @@ begin
     begin
         case x is
             $cases
+            when others => $others;
         end case;
     end process;
 end rtl;""".splitlines()
@@ -80,6 +83,7 @@ end rtl;""".splitlines()
                 "name": self.name,
                 "y_width": str(self._out_bits),
                 "x_width": str(self._in_bits),
+                "others": '"{}"'.format("0" * self._out_bits),
             },
         )
         with destination.create_subpath(f"{self.name}.vhd").open("w") as f:
