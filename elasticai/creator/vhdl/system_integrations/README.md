@@ -84,7 +84,7 @@ We transmit data via SPI in the following format to interact with the FPGA. The 
 - LED: 0x03 (1 byte)
   - each of the lowest four bits control one of the LEDs
   - 0=off, 1=on
-  - eg., command to turn on first led: `char command[] = {0x80, 0x03, 0x01}; for (i=0; i < 2; i++) {send_byte(command[i]);}`
+  - eg., command to turn on first led: `char command[] = {0x80, 0x03, 0x01}; for (i=0; i < 3; i++) {send_byte(command[i]);}`
 - USERLOGIC_CONTROL: 0x04 (1 byte)
   - sets the reset pin of the skeleton
 - Multiboot: 0x05-0x07 (3 bytes)
