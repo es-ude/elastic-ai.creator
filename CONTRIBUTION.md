@@ -2,11 +2,11 @@
 ## Concepts
 The `elasticai.creator` aims to support
     1. the design and training of hardware optimization aware neural networks
-    2. the translation of above designs to a neural network accelerator in a hardware definition language
+    2. the translation of designs from 1. to a neural network accelerator in a hardware definition language
 The first point means that the network architecture, algorithms used during forward as well as backward
 propagation strongly depend on the targeted hardware implementation.
 Since the tool is aimed at researchers we want the translation process to be straight-forward and easy to reason about.
-Opposed to other tools (Apache TVM, FINN, etc.) we prefer flexible prototyping and hand-written
+Opposed to other tools (Apache TVM, FINN, etc.) we prefer flexible prototyping and handwritten
 hardware definitions over a wide range of supported architectures and platforms or highly scalable solutions.
 
 The code-base is composed out of the following packages
@@ -18,7 +18,7 @@ The code-base is composed out of the following packages
   - helper functions to generate frequently used vhdl constructs
   - the `Design` interface to facilitate composition of hardware designs
   - basic vhdl design without a machine learning layer counterpart to be used as dependencies in other designs (e.g., rom modules)
-  - additional vhdl designs to make the neural network accelerator accessible via the elasticai.runtime
+  - additional vhdl designs to make the neural network accelerator accessible via the elasticai.runtime, also see [skeleton](./elasticai/creator/vhdl/system_integrations/README.md)
 - `base_modules`:
   - basic machine learning modules that are used as dependencies by translatable layers
 - `nn`:
@@ -32,9 +32,9 @@ Adding a new layer involves three main tasks:
    - this specifies the forward and backward pass behavior of your layer
 2. define a corresponding `Design` class
    - this specifies
-     - the hardware implementation (ie., which files are written to where and what's their content)
+     - the hardware implementation (i.e., which files are written to where and what's their content)
      - the interface (`Port`) of the design, so we can automatically combine it with other designs
-     - to help with the implementation you can use the template system as well as the `elasticai.creator.vhdl.code_generation` modules
+     - to help with the implementation, you can use the template system as well as the `elasticai.creator.vhdl.code_generation` modules
 3. define a trainable `DesignCreator`, typically inheriting from the class defined in 1. and implement the `create_design` method which
    a. extracts information from the module defined in 1.
    b. converts that information to native python types
@@ -54,7 +54,7 @@ The *autowiring algorithm* will take care of generating vhdl code to correctly c
 A bufferless design features the following signals:
 
 | name |direction | type           | meaning                                         |
-+------+----------+----------------+-------------------------------------------------+
+|------|----------|----------------|-------------------------------------------------|
 | x    | in       |std_logic_vector| input data for this layer                       |
 | y    | out      |std_logic_vector| output data of this layer                       |
 | clock| in       |std_logic       | clock signal, possibly shared with other layers |
@@ -63,7 +63,7 @@ A bufferless design features the following signals:
 For a buffered design we define the following signals:
 
 | name |direction | type           | meaning                                         |
-+------+----------+----------------+-------------------------------------------------+
+|------|----------|----------------|-------------------------------------------------|
 | x    | in       |std_logic_vector| input data for this layer                       |
 | x_address | out | std_logic_vector | used by this layer to address the previous buffer and fetch data, we address per input data point (this typically corresponds to the number of input features) |
 | y    | out      |std_logic_vector| output data of this layer                       |
