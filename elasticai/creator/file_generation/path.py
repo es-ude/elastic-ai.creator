@@ -2,7 +2,6 @@ import pathlib
 from typing import ContextManager, Protocol
 
 from creator.file_generation.template import Template
-from creator.file_generation.template_writer import TemplateWriter
 
 
 class TextIO(ContextManager, Protocol):
@@ -47,28 +46,3 @@ class OnDiskPath:
 
     def open(self, mode: str = "w") -> TextIO:
         return self._path.open(mode=mode)
-
-
-class TemplateIOImpl:
-    def __init__(self, text_io: TextIO):
-        self._text_io = text_io
-
-    def write(self, text: Template | str):
-        if isinstance(text, str):
-            self._text_io.write(text)
-        elif isinstance(text, Template):
-            writer = TemplateWriter(self._text_io)
-            writer.write(text)
-
-
-class TemplateWriterPathDecorator:
-    def __init__(self, path: Path):
-        self._path = path
-
-    def create_subpath(self, name: str) -> Path:
-        return TemplateWriterPathDecorator(self._path.create_subpath(name))
-
-    def open(self, mode: str = "w") -> TemplateIO:
-        if mode != "w":
-            raise NotImplementedError
-        return TemplateIOImpl(self._path.open())
