@@ -68,7 +68,7 @@ MWMCU --> MWFPGA
 ## Middleware Memory Mapped IO via SPI
 
 We transmit data via SPI in the following format to interact with the FPGA. The FPGA :
- - First two byte determines the message type, transmitted low byte first.
+ - First two byte determines the message type, transmitted high byte first.
  - the rest of the transferred data is the payload
  - c code example of read/write:
    - `uint16_t write_command = command | 0x8000;`
