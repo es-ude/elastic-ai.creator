@@ -1,3 +1,5 @@
+from typing import Iterable, Sequence
+
 import torch
 from torch import tensor
 
@@ -5,12 +7,15 @@ from torch import tensor
 def vhd_when(pair):
     a = pair[0]
     b = pair[1]
-    return f"when '{a}' => y <= '{b}';"
+    return f"when {a} => y <= {b};"
 
 
 def vhd_lut_cases(io_pairs):
     def to_vhd_text(io_pairs):
-        """input and output have the form (B, C, K, N)
+        """
+        Args:
+            io_pairs: is a sequence of (input, output) pairs.
+        input and output have the form (B, C, K, N)
         [B: batch size, C: input channels,
          K: kernel size, N: number of sample points]"""
 
