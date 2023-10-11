@@ -13,7 +13,7 @@ from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
 
 warnings.warn(
     message=(
-        "Will be removed. Use FirmwareENV5 from the"
+        "Will be removed. Use LSTMFirmwareENV5 from the"
         " elasticai.creator.vhdl.system_integrations.firmware_env5 package"
         " instead."
     ),
