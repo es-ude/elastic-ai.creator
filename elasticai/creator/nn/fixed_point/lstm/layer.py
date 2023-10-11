@@ -48,7 +48,7 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
             input_size=input_size,
         )
 
-    def create_testbench(self, test_bench_name, uut: Design) -> Design:
+    def create_testbench(self, test_bench_name, uut: Design) -> LSTMTestBench:
         return LSTMTestBench(test_bench_name, uut)
 
     def forward(self, x):
