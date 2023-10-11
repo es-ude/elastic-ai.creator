@@ -7,10 +7,8 @@ to interact with a given HWFunction.
 This stub is specific to its corresponding HWFunction.
 In our case the HWFunction corresponds to the neural network accelerator.
 
-
 ```mermaid
 flowchart LR
-
 
 subgraph FPGA
     direction TB
@@ -20,7 +18,6 @@ subgraph FPGA
     MWFPGA --> Skeleton
     Skeleton --> HWFunction
 end
-
 
 subgraph MCU
     direction TB
@@ -32,8 +29,6 @@ subgraph MCU
 end
 
 MWMCU --> MWFPGA
-
-
 ```
 
  - **App**: user supplied application, calling stub to access neural network accelerator (HWFunction)
@@ -73,14 +68,14 @@ MWMCU --> MWFPGA
 - the offset 0x100 is transparent to stub and skeleton
 
 ## Skeleton
+
 The supported address range for the neural network skeleton ranges from
 0 to 99.
 The skeleton we use for neural networks uses its memory mapped io
 as follows:
 
-
 |mode | address (bytewise) | value (byte) | meaning                                   |
-+-----+--------------------+--------------+-------------------------------------------+
+|:----|:-------------------|:-------------|:------------------------------------------|
 |write| 100                | 0x01         | start computation                         |
 |write| 0 to 99            | arbitrary    | write up to 99 bytes of input data        |
 |read | 0 to 99            | result       | read up to 99 bytes of computation result |
