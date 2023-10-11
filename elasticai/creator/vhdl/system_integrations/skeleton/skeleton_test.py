@@ -1,11 +1,10 @@
 from typing import cast
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.vhdl.system_integrations.skeleton.skeleton import LSTMSkeleton
 
 
-def test_skeleton_save_to_disk():
+def test_lstm_skeleton_save_to_disk() -> None:
     root = InMemoryPath(name="build", parent=None)
     name = "lstm_skeleton"
     destination = root.create_subpath(subpath_name=name)
@@ -75,7 +74,7 @@ begin
     port map (
         clock => clock,
         enable => network_enable,
-        x_in => x_config_data,
+        x => x_config_data,
         addr_in => x_config_addr,
         x_we => x_config_en,
 
