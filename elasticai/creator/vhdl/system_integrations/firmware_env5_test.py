@@ -8,10 +8,8 @@ from elasticai.creator.vhdl.design_creator import DesignCreator
 from .firmware_env5 import FirmwareENv5
 
 
-def extract_skeleton_code(model: Sequential) -> str:
+def extract_skeleton_code(firmware) -> str:
     destination = InMemoryPath(name="build", parent=None)
-    design = model.create_design("network")
-    firmware = FirmwareENv5(design)
     firmware.save_to(destination)
     srcs_dir = cast(InMemoryPath, destination["srcs"])
     actual_code_lines = cast(InMemoryFile, srcs_dir["skeleton"]).text
@@ -21,7 +19,10 @@ def extract_skeleton_code(model: Sequential) -> str:
 
 def test_firmware_generates_correct_skeleton() -> None:
     model = Sequential(BufferedIdentity(num_input_features=10, total_bits=16))
-    actual_code = extract_skeleton_code(model)
+    design = model.create_design("network")
+    print(design.port.incoming)
+    firmware = FirmwareENv5(design, x_num_values=10, y_num_values=10, id=66)
+    actual_code = extract_skeleton_code(firmware)
     expected_code = """library ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -50,99 +51,89 @@ entity skeleton is
 end;
 
 architecture rtl of skeleton is
-    constant DATA_WIDTH : integer := 16;
+    constant DATA_WIDTH_IN : integer := 16;
+    constant DATA_WIDTH_OUT : integer := 16;
     constant X_ADDR_WIDTH : integer := 4;
-
+    constant X_NUM_VALUES : integer := 10;
+    constant Y_ADDR_WIDTH : integer:= 4;
+    constant Y_NUM_VALUES : integer := 10;
 
     signal network_enable :  std_logic;
 
     signal c_config_en :  std_logic;
     signal done :  std_logic;
 
-    signal x_config_en :  std_logic;
-    signal x_config_data :  std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal x_config_addr :  std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+    signal x :  std_logic_vector(DATA_WIDTH_IN-1 downto 0);
+    signal y : std_logic_vector(DATA_WIDTH_OUT-1 downto 0);
+    signal x_address :  std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+    signal y_address :  std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
 
-    signal network_out_data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    type buf_data_in_t is array (0 to X_NUM_VALUES) of std_logic_vector(DATA_WIDTH_IN-1 downto 0);
+    signal data_buf_in : buf_data_in_t;
+    type skeleton_id_data_t is array (0 to 0) of std_logic_vector(7 downto 0);
+    signal skeleton_id_str : skeleton_id_data_t := (0 => x"42");
 
 begin
-
---    led_ctrl(0) <= reset;
-    led_ctrl(2) <= network_enable;
-    led_ctrl(3) <= done;
---    led_ctrl(3) <= '0';
 
     i_network: entity work.network(rtl)
     port map (
         clock => clock,
         enable => network_enable,
-        x => x_config_data,
-        addr_in => x_config_addr,
-        x_we => x_config_en,
-
-        done => done,
-
-        d_out => network_out_data
+        x => x,
+        x_address => x_address,
+        y => y,
+        y_address => y_address,
+        done => done
     );
 
     -- orignial implementation
     busy <= not done;
     wake_up <= done;
 
-
-    -- process data receive
-    process (clock, rd, wr, reset)
-        variable int_addr : integer range 0 to 20000;
+    receive_data_from_middleware: process (clock, wr, address_in)
+    variable int_addr : integer range 0 to 20000;
+    variable led_state : std_logic_vector(3 downto 0);
     begin
-
-        if reset = '1' then
-
-            network_enable <= '0';
-            led_ctrl(1) <='0';
-        else
-        -- beginning/end
-            if rising_edge(clock) then
-                -- process address of written value
-
-                -- calculate <= '0'; -- set to not calculate (can be overwritten below)
-
-                if wr = '1' or rd = '1' then
-                    -- variable being set
-                    -- reverse from big to little endian
-                    int_addr := to_integer(unsigned(address_in));
-                    if wr = '1' then
-
-                        if int_addr<6 then
-                            x_config_data <= data_in(7 downto 0);
-                            x_config_addr <= address_in(x_config_addr'length-1 downto 0);
-                            x_config_en <= '1';
-                            led_ctrl(1) <= '1';
-                        elsif int_addr=100 then
-                            network_enable <= data_in(0);
-                        end if;
-                    elsif rd = '1' then
-                        if int_addr=0 then
-                            data_out(7 downto 0) <= x"aa";
-                        elsif int_addr=1 then
-                            data_out(7 downto 0) <= network_out_data;
-                        elsif int_addr=2 then
-                            data_out(7 downto 0) <= x"bb";
-                        elsif int_addr=2000 then
-                            data_out(7 downto 0) <= x"14";
-
-                        else
-                            data_out(7 downto 0) <= address_in(7 downto 0);
-                        end if;
-                    end if;
-                else
-                    x_config_en <= '0';
-                end if;
-
+        if rising_edge(clock) then
+            int_addr := to_integer(unsigned(address_in));
+            if int_addr < X_NUM_VALUES then
+                data_buf_in(int_addr) <= data_in(7 downto 0);
+                led_ctrl(1) <= '1';
+            elsif int_addr = 100 then
+                network_enable <= data_in(0);
+            elsif int_addr = 1999 then
+                led_state(3 downto 0) := data_in(3 downto 0);
             end if;
+            led_ctrl <= led_state;
         end if;
-
     end process;
 
-end rtl;"""
+    sendback_data_to_middleware: process  (clock, rd, address_in)
+    variable led_state : std_logic_vector(3 downto 0);
+    variable int_addr : integer range 0 to 20000;
+    begin
+        if rising_edge(clock) then
+            int_addr := to_integer(unsigned(address_in));
+            if int_addr = 1 then
+                y_address <= address_in(y_address'length-1 downto 0);
+                data_out(7 downto 0) <= y;
+            elsif int_addr = 1999 then
+                data_out(7 downto 4)<= (others=>'0');
+                data_out(3 downto 0)<= led_state(3 downto 0);
+            elsif int_addr = 2000  then
+                data_out(7 downto 0) <= skeleton_id_str(int_addr-2000);
+            end if;
+        end if;
+    end process;
+
+    send_buf_to_network: process (clock, x_address)
+    begin
+        if rising_edge(clock) then
+            x <= data_buf_in(to_integer(unsigned(x_address)));
+        end if;
+    end process;
+
+end rtl;
+"""
 
     assert expected_code == actual_code

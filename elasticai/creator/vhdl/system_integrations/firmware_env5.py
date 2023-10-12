@@ -45,8 +45,18 @@ class _FirmwareENv5Base:
 
 
 class FirmwareENv5(_FirmwareENv5Base):
-    def __init__(self, network: Design) -> None:
-        super().__init__(skeleton=Skeleton(network.name, network.port))
+    def __init__(
+        self, network: Design, x_num_values: int, y_num_values: int, id: int
+    ) -> None:
+        super().__init__(
+            skeleton=Skeleton(
+                network_name=network.name,
+                port=network.port,
+                x_num_values=x_num_values,
+                y_num_values=y_num_values,
+                id=id,
+            )
+        )
 
 
 class LSTMFirmwareENv5(_FirmwareENv5Base):
