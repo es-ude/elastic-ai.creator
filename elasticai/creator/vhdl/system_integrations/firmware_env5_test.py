@@ -20,7 +20,6 @@ def extract_skeleton_code(firmware) -> str:
 def test_firmware_generates_correct_skeleton() -> None:
     model = Sequential(BufferedIdentity(num_input_features=10, total_bits=16))
     design = model.create_design("network")
-    print(design.port.incoming)
     firmware = FirmwareENv5(design, x_num_values=10, y_num_values=10, id=66)
     actual_code = extract_skeleton_code(firmware)
     expected_code = """library ieee;
@@ -133,7 +132,6 @@ begin
         end if;
     end process;
 
-end rtl;
-"""
+end rtl;"""
 
     assert expected_code == actual_code
