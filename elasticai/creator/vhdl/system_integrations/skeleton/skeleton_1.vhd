@@ -1,0 +1,111 @@
+library ieee;
+USE ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity skeleton is
+    port (
+        -- control interface
+        clock                : in std_logic;
+        clk_hadamard                : in std_logic;
+        reset                : in std_logic; -- controls functionality (sleep)
+        busy                : out std_logic; -- done with entire calculation
+        wake_up             : out std_logic;
+        -- indicate new data or request
+        rd                    : in std_logic;    -- request a variable
+        wr                 : in std_logic;     -- request changing a variable
+
+        -- data interface
+        data_in            : in std_logic_vector(7 downto 0);
+        address_in        : in std_logic_vector(15 downto 0);
+        data_out            : out std_logic_vector(7 downto 0);
+
+        debug                : out std_logic_vector(7 downto 0);
+
+        led_ctrl             : out std_logic_vector(3 DOWNTO 0)
+    );
+end;
+
+architecture rtl of skeleton is
+    constant DATA_WIDTH_IN : integer := ${data_width_in};
+    constant DATA_WIDTH_OUT : integer := ${data_width_out};
+    constant X_ADDR_WIDTH : integer := ${x_addr_width};
+    constant X_NUM_VALUES : integer := ${x_num};
+    constant Y_ADDR_WIDTH : integer:= 1;
+    constant Y_NUM_VALUES : integer := 1; 
+
+    signal network_enable :  std_logic;
+
+    signal c_config_en :  std_logic;
+    signal done :  std_logic;
+
+    signal x :  std_logic_vector(DATA_WIDTH_IN-1 downto 0);
+    signal y : std_logic_vector(DATA_WIDTH_OUT-1 downto 0);
+    signal x_address :  std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+    signal y_address :  std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+
+    type buf_data_in_t is array (0 to X_NUM_VALUES) of std_logic_vector(DATA_WIDTH_IN-1 downto 0);
+    signal data_buf_in : buf_data_in_t;
+    type skeleton_id_data_t is array (0 to 0) of std_logic_vector(7 downto 0);
+    signal skeleten_id_str : skeleton_id_data_t := (0 => x"32");
+
+begin
+    
+    i_network: entity work.network(rtl)
+    port map (
+        clock => clock,
+        enable => network_enable,
+        x => x,
+        x_address => x_address,
+        y => y,
+        y_address => y_address,
+        done => done
+    );
+
+    -- orignial implementation
+    busy <= not done;
+    wake_up <= done;
+    
+    receive_data_from_middleware: process (clock, wr, address_in)
+    variable int_addr : integer range 0 to 20000;
+    variable led_state : std_logic_vector(3 downto 0);
+    begin
+        if rising_edge(clock) then
+            int_addr := to_integer(unsigned(address_in));
+            if int_addr < X_NUM_VALUES then
+                data_buf_in(int_addr) <= data_in(7 downto 0);
+                led_ctrl(1) <= '1';
+            elsif int_addr = 100 then
+                network_enable <= data_in(0);
+            elsif int_addr = 1999 then
+                led_state(3 downto 0) := data_in(3 downto 0);
+            end if;
+            led_ctrl <= led_state;
+        end if;
+    end process;
+    
+    sendback_data_to_middleware: process  (clock, rd, address_in)
+    variable led_state : std_logic_vector(3 downto 0);
+    variable int_addr : integer range 0 to 20000;
+    begin
+        if rising_edge(clock) then
+            int_addr := to_integer(unsigned(address_in));
+            if int_addr = 1 then
+                y_address <= address_in(y_address'length-1 downto 0);
+                data_out(7 downto 0) <= y;
+            elsif int_addr = 1999 then
+                data_out(7 downto 4)<= (others=>'0');
+                data_out(3 downto 0)<= led_state(3 downto 0);
+            elsif int_addr = 2000  then
+                data_out(7 downto 0) <= skeleten_id_str(int_addr-2000);
+            end if;
+        end if;
+    end process;
+    
+    send_buf_to_network: process (clock, x_address)
+    begin
+        if rising_edge(clock) then
+            x <= data_buf_in(to_integer(unsigned(x_address)));
+        end if;
+    end process;
+    
+end rtl;
