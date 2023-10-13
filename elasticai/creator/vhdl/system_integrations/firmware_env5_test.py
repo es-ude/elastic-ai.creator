@@ -3,7 +3,6 @@ from typing import cast
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.identity.layer import BufferedIdentity
 from elasticai.creator.nn.sequential.layer import Sequential
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .firmware_env5 import FirmwareENv5
 
@@ -72,6 +71,16 @@ architecture rtl of skeleton is
     type skeleton_id_data_t is array (0 to 0) of std_logic_vector(7 downto 0);
     signal skeleton_id_str : skeleton_id_data_t := (0 => x"42");
 
+    function pad_output_to_middleware(network_out : std_logic_vector(DATA_WIDTH_OUT-1 downto 0)) return std_logic_vector is
+    variable k : std_logic_vector(7 downto 0);
+    begin
+        if DATA_WIDTH_OUT /= 8 then
+            k(7 downto DATA_WIDTH_OUT) := (others => '0');
+        end if;
+        k(DATA_WIDTH_OUT-1 downto 0) := network_out;
+        return k;
+    end function;
+
 begin
 
     i_network: entity work.network(rtl)
@@ -91,34 +100,25 @@ begin
 
     receive_data_from_middleware: process (clock, wr, address_in)
     variable int_addr : integer range 0 to 20000;
-    variable led_state : std_logic_vector(3 downto 0);
     begin
         if rising_edge(clock) then
             int_addr := to_integer(unsigned(address_in));
             if int_addr < X_NUM_VALUES then
-                data_buf_in(int_addr) <= data_in(7 downto 0);
-                led_ctrl(1) <= '1';
+                data_buf_in(int_addr) <= data_in(DATA_WIDTH_IN-1 downto 0);
             elsif int_addr = 100 then
                 network_enable <= data_in(0);
-            elsif int_addr = 1999 then
-                led_state(3 downto 0) := data_in(3 downto 0);
             end if;
-            led_ctrl <= led_state;
         end if;
     end process;
 
     sendback_data_to_middleware: process  (clock, rd, address_in)
-    variable led_state : std_logic_vector(3 downto 0);
     variable int_addr : integer range 0 to 20000;
     begin
         if rising_edge(clock) then
             int_addr := to_integer(unsigned(address_in));
             if int_addr = 1 then
                 y_address <= address_in(y_address'length-1 downto 0);
-                data_out(7 downto 0) <= y;
-            elsif int_addr = 1999 then
-                data_out(7 downto 4)<= (others=>'0');
-                data_out(3 downto 0)<= led_state(3 downto 0);
+                data_out(7 downto 0) <= pad_output_to_middleware(y);
             elsif int_addr = 2000  then
                 data_out(7 downto 0) <= skeleton_id_str(int_addr-2000);
             end if;
