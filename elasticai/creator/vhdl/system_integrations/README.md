@@ -99,6 +99,24 @@ We transmit data via SPI in the following format to interact with the FPGA. The 
 - passed through to skeleton
 - the offset 0x100 is transparent to stub and skeleton
 
+```plantuml
+
+@startuml
+clock clk with period 1
+binary "Enable" as EN
+
+@0
+EN is low
+
+@5
+EN is high
+
+@10
+EN is low
+@enduml
+```
+
+
 ## Skeleton
 The supported address range for the neural network skeleton ranges from
 0 to 99.
