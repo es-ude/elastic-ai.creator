@@ -79,6 +79,24 @@ We transmit data via SPI in the following format to interact with the FPGA. The 
  |---------|--------------|
  | r=0/w=1 | message type |
 
+### Timing diagram
+SPI Master clock is left out.
+![wavedrom.png](wavedrom.png)
+
+The code to generate the diagram above using [wavedrom](https://wavedrom.com/editor.html)
+
+```
+{signal: [
+  {name: 'byte', wave:                   '===...............===|====', data: ['', '', '0', '1', '2', '3', 'n', 'n+1']},
+  {name: 'chip_select', wave:            '1.0..................|..1.'},
+  {name: 'miso for write case', wave:        'x.34..............5..|..x.', data: ['w', 'start address', 'data byte wise']},
+  {name: 'mosi for write case', wave: 'x..........................'},
+  {name: 'miso for read case', wave:         'x.34..............x..|..x.', data: ['r', 'start address']},
+
+  {name: 'mosi for read case', wave:         'x.x...............5..|..x.', data: ['data byte wise']},
+]}
+
+```
 
 **Message Types: 0x00 - 0xFF:**
 - LED: 0x03 (1 byte)
@@ -98,24 +116,6 @@ We transmit data via SPI in the following format to interact with the FPGA. The 
 **User Logic Region: 0x100 - ??**
 - passed through to skeleton
 - the offset 0x100 is transparent to stub and skeleton
-
-```plantuml
-
-@startuml
-clock clk with period 1
-binary "Enable" as EN
-
-@0
-EN is low
-
-@5
-EN is high
-
-@10
-EN is low
-@enduml
-```
-
 
 ## Skeleton
 The supported address range for the neural network skeleton ranges from
