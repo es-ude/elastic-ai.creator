@@ -87,9 +87,18 @@ For a buffered design we define the following signals:
 
 
 ### Generating Files
-#### The Path Module
-#### Templates
-#### File Hierarchy
+
 The `Design` class provides an abstract object representation of HW designs.
 As such a `Design` can generate one or more files each featuring vhdl constructs, e.g., entities.
 `Design` instances can be nested.
+
+**Important**:
+ - All generated design units live in the same library and are referenced via the `work` library name.
+ - Our current auto-wiring algorithms, assume that each `Design` object is used by at most one other `Design` object.
+ - Never call a `Design`'s constructor from another `Design`. Instead, create a new `Design` object at the caller site,
+   e.g., in the `create_design` method of the translatable layer and pass that object to the other design, that should
+   use it.
+ - If you need to generate vhdl design units, that do not need to be compatible with the auto-wiring algorithms, just
+   generate/save the corresponding files in the parent `Design`'s `save_to` method. Be aware that you're responsible for
+   avoiding naming conflicts. You can achieve that by combining that units name with the `Design`'s name, that was generated
+   by the auto-wiring algorithm, thus ensuring uniqueness.
