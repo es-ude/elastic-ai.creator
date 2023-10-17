@@ -136,3 +136,7 @@ The byte for triggering computation start/stop is written to the address directl
 
 The skeleton provides a `busy` and a `done` signal that tell whether computation is still running or finished.
 The FPGA GPIO2 is connected to `busy`, the MCU can read that line to find out if computation has finished.
+
+*IMPORTANT*: We assume that data is read byte by byte using a new read command per byte.
+You need to read each of these bytes two times and can only be sure that the second read produces
+a valid result.
