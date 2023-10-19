@@ -1,3 +1,5 @@
+import warnings
+
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.vhdl.design_creator import DesignCreator
 from elasticai.creator.vhdl.system_integrations.env5_constraints.env5_constraints import (
@@ -7,6 +9,15 @@ from elasticai.creator.vhdl.system_integrations.middleware.middleware import Mid
 from elasticai.creator.vhdl.system_integrations.skeleton.skeleton import LSTMSkeleton
 from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
     ENV5ReconfigTop,
+)
+
+warnings.warn(
+    message=(
+        "Will be removed. Use LSTMFirmwareENV5 from the"
+        " elasticai.creator.vhdl.system_integrations.firmware_env5 package"
+        " instead."
+    ),
+    category=DeprecationWarning,
 )
 
 

@@ -4,9 +4,7 @@ from elasticai.creator.nn.fixed_point.lstm.layer import (
     FixedPointLSTMWithHardActivations,
     LSTMNetwork,
 )
-from elasticai.creator.vhdl.system_integrations.plug_and_play_solution_ENV5 import (
-    FirmwareENv5,
-)
+from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
 
 if __name__ == "__main__":
     hidden_size = 20
@@ -31,5 +29,10 @@ if __name__ == "__main__":
         ]
     )
     destination = OnDiskPath("build")
-    firmware = FirmwareENv5(model)
+    design = model.create_design("network")
+
+    firmware = FirmwareENv5("network")
     firmware.save_to(destination)
+
+    testbench = model.create_testbench("network_tb", design)
+    testbench.save_to(destination)
