@@ -5,21 +5,21 @@ repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-    -   id: trailing-whitespace
+    -   id: trailing-whitespace       #handhabt trailing whitespace :)
         stages: [commit, manual ]
-    -   id: end-of-file-fixer
+    -   id: end-of-file-fixer         # :)
         stages: [ commit, manual ]
-    -   id: check-yaml
+    -   id: check-yaml                # :)
         stages: [ commit, manual ]
-    -   id: check-added-large-files
+    -   id: check-added-large-files   # !!!
         stages: [ commit, manual ]
-    -   id: check-merge-conflict
+    -   id: check-merge-conflict      # skippen
         stages: [ commit, manual ]
-    -   id: check-toml
+    -   id: check-toml                # check toml ähnlich check yaml :)
         stages: [ commit, manual ]
-    -   id: check-vcs-permalinks
+    -   id: check-vcs-permalinks      # skippen
         stages: [ commit, manual ]
-    -   id: no-commit-to-branch
+    -   id: no-commit-to-branch       # !!!
         stages: [ commit, manual ]
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.1.1
@@ -31,12 +31,12 @@ repos:
     hooks:
     -   id: dead
         stages: [ manual ]
-- repo: https://github.com/PyCQA/isort
+- repo: https://github.com/PyCQA/isort  #sortiert importstatements - brauche ich beides als huskyhook !
   rev: 5.12.0
   hooks:
       - id: isort
         stages: [ commit, manual ]
-- repo: https://github.com/psf/black
+- repo: https://github.com/psf/black  #codeformatter !!!
   rev: 23.1.0
   hooks:
       - id: black

@@ -2,7 +2,7 @@
 data
 venv
 simulation
-simulation/*
+simulation/*cd
 node_modules/
 .mypy_cache
 .coverage
