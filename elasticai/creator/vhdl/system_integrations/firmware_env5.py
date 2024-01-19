@@ -16,8 +16,7 @@ from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
 
 
 class SkeletonType(Protocol):
-    def save_to(self, destination: Path) -> None:
-        ...
+    def save_to(self, destination: Path) -> None: ...
 
 
 class _FirmwareENv5Base:

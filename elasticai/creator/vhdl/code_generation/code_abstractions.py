@@ -39,12 +39,10 @@ def create_connection(sink, source) -> str:
 
 
 def create_signal_definitions(prefix: str, signals: Sequence[Signal]):
-    return sorted(
-        [
-            signal_definition(name=f"{prefix}{signal.name}", width=signal.width)
-            for signal in signals
-        ]
-    )
+    return sorted([
+        signal_definition(name=f"{prefix}{signal.name}", width=signal.width)
+        for signal in signals
+    ])
 
 
 def signal_definition(
@@ -92,6 +90,7 @@ def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
             value = discard_leading_bits(invert(abs(value)) + 1)
 
         return value
+
     two_complement = _to_unsigned(number, number_of_bits)
 
     return f'"{two_complement:0{number_of_bits}b}"'
