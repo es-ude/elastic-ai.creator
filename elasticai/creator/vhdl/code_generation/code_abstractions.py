@@ -80,5 +80,18 @@ def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
         raise ValueError(
             f"Value '{number}' cannot be represented with {number_of_bits} bits."
         )
-    number_of_digits = number_of_bits + 1 if number < 0 else number_of_bits
-    return f'"{number:0{number_of_digits}b}"'
+
+    def _to_unsigned(value: int, total_bits: int) -> int:
+        def invert(value: int) -> int:
+            return value ^ int("1" * total_bits, 2)
+
+        def discard_leading_bits(value: int) -> int:
+            return value & int("1" * total_bits, 2)
+
+        if value < 0:
+            value = discard_leading_bits(invert(abs(value)) + 1)
+
+        return value
+    two_complement = _to_unsigned(number, number_of_bits)
+
+    return f'"{two_complement:0{number_of_bits}b}"'

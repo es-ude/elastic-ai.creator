@@ -19,9 +19,8 @@ class Rom:
         self._data_width = data_width
         number_of_values = len(values_as_integers)
         self._address_width = self._bits_required_to_address_n_values(number_of_values)
-        self._values = self._append_zeros_to_fill_addressable_memory(
-            self._values_to_unsigned_integers(values_as_integers)
-        )
+        self._values = [to_vhdl_binary_string(x, self._data_width) for x in
+                        self._append_zeros_to_fill_addressable_memory(values_as_integers)]
 
     def save_to(self, destination: Path):
         template = InProjectTemplate(
@@ -37,13 +36,8 @@ class Rom:
         )
         destination.as_file(".vhd").write(template)
 
-    def _values_to_unsigned_integers(self, values: list[int]) -> list[int]:
-        to_uint = partial(_to_unsigned, total_bits=self._data_width)
-        return list(map(to_uint, values))
-
     def _rom_values(self) -> str:
-        to_binary = partial(to_vhdl_binary_string, number_of_bits=self._data_width)
-        return ",".join(map(to_binary, self._values))
+        return ",".join(self._values)
 
     def _append_zeros_to_fill_addressable_memory(self, values: list[int]) -> list[int]:
         missing_number_of_zeros = 2**self._address_width - len(values)
@@ -57,14 +51,3 @@ def _zeros(n: int) -> list[int]:
     return [0] * n
 
 
-def _to_unsigned(value: int, total_bits: int) -> int:
-    def invert(value: int) -> int:
-        return value ^ int("1" * total_bits, 2)
-
-    def discard_leading_bits(value: int) -> int:
-        return value & int("1" * total_bits, 2)
-
-    if value < 0:
-        value = discard_leading_bits(invert(abs(value)) + 1)
-
-    return value
