@@ -18,7 +18,7 @@ class Skeleton:
         network_name: str,
         port: Port,
         id: list[int] | int,
-        skeleton_version: str
+        skeleton_version: str = "v1"
     ):
         self.name = "skeleton"
         self._network_name = network_name
@@ -29,6 +29,7 @@ class Skeleton:
             id = [id]
         self._id = id
         if skeleton_version == "v1":
+            raise FutureWarning(f"Skeleton V1 might be deprecated in the future. Consider using Skeleton V2 instead.")
             self._template_file_name = "network_skeleton.tpl.vhd"
             if len(id) != 1:
                 raise Exception(f"should give an id of 1 byte. Actual length is {len(id)}")
@@ -36,11 +37,6 @@ class Skeleton:
                 raise Exception(f"Not more than 100 input values allowed. Actual num of inputs {x_num_values} .")
             if y_num_values > 100:
                 raise Exception(f"Not more than 100 input values allowed. Actual num of inputs {x_num_values} .")
-            if y_num_values > 1:
-                raise Warning(f"If you use the ElasticAi.runtime and have not modified the Stub, this"
-                              f" will likely not work. Because the stub only supports one output. "
-                              f"Actual num of outputs {y_num_values} .")
-
         elif skeleton_version == "v2":
             self._template_file_name = "network_skeleton_v2.tpl.vhd"
             if len(id) != 16:
