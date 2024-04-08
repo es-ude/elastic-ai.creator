@@ -106,13 +106,13 @@ The skeleton we use for neural networks uses its memory mapped io
 as follows:
 
 
-|mode | address (bytewise) | value (byte) | meaning                                   |
-|-----|--------------------|--------------|-------------------------------------------|
-|write| 100                | 0x01         | start computation                         |
-|write| 100                | 0x00         | stop computation                          |
-|write| 0 to 99            | arbitrary    | write up to 99 bytes of input data        |
-|read | 0 to 99            | result       | read up to 99 bytes of computation result |
-|read | 2000               | id           | id of the loaded hw function              |
+|mode | address (bytewise) | value (byte) | meaning                                    |
+|-----|--------------------|--------------|--------------------------------------------|
+|write| 100                | 0x01         | start computation                          |
+|write| 100                | 0x00         | stop computation                           |
+|write| 0 to 99            | arbitrary    | write up to 100 bytes of input data        |
+|read | 0 to 99            | result       | read up to 100 bytes of computation result |
+|read | 2000               | id           | id of the loaded hw function               |
 
 The byte for triggering computation start/stop is written to the address directly after the end of the input data.
 

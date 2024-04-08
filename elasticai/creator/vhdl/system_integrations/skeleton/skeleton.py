@@ -32,12 +32,30 @@ class Skeleton:
             self._template_file_name = "network_skeleton.tpl.vhd"
             if len(id) != 1:
                 raise Exception(f"should give an id of 1 byte. Actual length is {len(id)}")
+            if x_num_values > 100:
+                raise Exception(f"Not more than 100 input values allowed. Actual num of inputs {x_num_values} .")
+            if y_num_values > 100:
+                raise Exception(f"Not more than 100 input values allowed. Actual num of inputs {x_num_values} .")
+            if y_num_values > 1:
+                raise Warning(f"If you use the ElasticAi.runtime and have not modified the Stub, this"
+                              f" will likely not work. Because the stub only supports one output. "
+                              f"Actual num of outputs {y_num_values} .")
+
         elif skeleton_version == "v2":
             self._template_file_name = "network_skeleton_v2.tpl.vhd"
             if len(id) != 16:
                 raise Exception(f"should give an id of 16 byte. Actual length is {len(id)}")
+            if x_num_values > 19983:
+                raise Exception(f"Not more than 19983 input values allowed. Actual num of inputs {x_num_values} .")
+            if y_num_values > 19983:
+                raise Exception(f"Not more than 19983 input values allowed. Actual num of inputs {x_num_values} .")
         else:
             raise Exception(f"Skeleton version {skeleton_version} does not exist")
+        if port["x"].width > 8:
+            raise Exception(f"port x width should not be bigger than 8. You assigned  {port['x'].width=}")
+        if port["y"].width > 8:
+            raise Exception(f"port x width should not be bigger than 8. You assigned  {port['y'].width=}")
+
 
     def save_to(self, destination: Path):
         template = InProjectTemplate(
