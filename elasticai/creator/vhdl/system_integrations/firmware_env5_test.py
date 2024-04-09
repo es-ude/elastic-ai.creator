@@ -23,10 +23,10 @@ def test_firmware_generates_correct_skeleton_v1() -> None:
     design = model.create_design("network")
     with pytest.warns(FutureWarning):
         firmware = FirmwareENv5(
-                design, x_num_values=10, y_num_values=10, id=66, skeleton_version="v1"
-            )
+            design, x_num_values=10, y_num_values=10, id=66, skeleton_version="v1"
+        )
 
-    actual_code = extract_skeleton_code(firmware)
+        actual_code = extract_skeleton_code(firmware)
     expected_code = """library ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -145,9 +145,7 @@ begin
 end rtl;"""
 
     assert expected_code == actual_code
-    assert len(recwarn) == 1
-    w = recwarn.pop(FutureWarning)
-    assert issubclass(w.category, FutureWarning)
+
 
 def test_firmware_generates_correct_skeleton_v2() -> None:
     model = Sequential(BufferedIdentity(num_input_features=10, total_bits=8))
