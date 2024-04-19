@@ -41,7 +41,8 @@ class PrecomputedModule(torch.nn.Module, DesignCreator):
         quantized_inputs = list(map(self._config.as_integer, self._step_lut.tolist()))
         return PrecomputedScalarFunction(
             name=name,
-            width=self._config.total_bits,
+            input_width=self._config.total_bits,
+            output_width=self._config.total_bits,
             inputs=quantized_inputs,
             function=self._quantized_inference,
         )
