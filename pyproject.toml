@@ -10,7 +10,7 @@ exclude = ["elasticai/**/*_test.py", "elasticai/**/test_*.py"]
 
 
 [tool.poetry.dependencies]
-python = "~3.11"
+python = ">= 3.10, < 3.12"
 torch = ">=1.11"
 numpy = "^1.23.0"
 setuptools = "^67.5.1"
