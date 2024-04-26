@@ -99,22 +99,40 @@ We transmit data via SPI in the following format to interact with the FPGA. The 
 - passed through to skeleton
 - the offset 0x100 is transparent to stub and skeleton
 
-## Skeleton
+## Skeleton v1
 The supported address range for the neural network skeleton ranges from
 0 to 99.
 The skeleton we use for neural networks uses its memory mapped io
 as follows:
 
 
-|mode | address (bytewise) | value (byte) | meaning                                   |
-|-----|--------------------|--------------|-------------------------------------------|
-|write| 100                | 0x01         | start computation                         |
-|write| 100                | 0x00         | stop computation                          |
-|write| 0 to 99            | arbitrary    | write up to 99 bytes of input data        |
-|read | 0 to 99            | result       | read up to 99 bytes of computation result |
-|read | 2000               | id           | id of the loaded hw function              |
+|mode | address (bytewise) | value (byte) | meaning                                    |
+|-----|--------------------|--------------|--------------------------------------------|
+|write| 100                | 0x01         | start computation                          |
+|write| 100                | 0x00         | stop computation                           |
+|write| 0 to 99            | arbitrary    | write up to 100 bytes of input data        |
+|read | 0 to 99            | result       | read up to 100 bytes of computation result |
+|read | 2000               | id           | id of the loaded hw function               |
 
 The byte for triggering computation start/stop is written to the address directly after the end of the input data.
 
 The skeleton provides a `busy` and a `done` signal that tell whether computation is still running or finished.
 The FPGA GPIO2 is connected to `busy`, the MCU can read that line to find out if computation has finished.
+
+
+## Skeleton v2
+The supported address range for the neural network skeleton ranges from
+18 to 20000.
+The control register is from address 16-17.  
+
+The skeleton we use for neural networks uses its memory mapped io
+as follows:
+
+|mode | address (bytewise) | value (byte)   | meaning                                      |
+|-----|--------------------|----------------|----------------------------------------------|
+|write| 16                 | 0b XXXX XXX1   | start computation                            |
+|write| 16                 | 0b XXXX XXX0   | stop computation                             |
+|write| 17                 | 0b XXXX XXXX   | Reserved for Control Register                |
+|write| 18 to 20000        | arbitrary      | write up to 19983 bytes of input data        |
+|read | 18 to 20000        | result         | read up to 19983 bytes of computation result |
+|read | 0 to 15            | id             | id of the loaded hw function                 |
