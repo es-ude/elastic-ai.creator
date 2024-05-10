@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from itertools import repeat
@@ -113,4 +114,10 @@ def _expand_template(template: str | Iterable[str], **kwargs: str) -> Iterator[s
 
 
 def _extract_template_variables(template: list[str]) -> set[str]:
-    return set(StringTemplate("\n".join(template)).get_identifiers())
+    template_text = "\n".join(template)
+    id_pattern = r"\$([_a-z][_a-z0-9]*)"
+    bid_pattern = r"\${([_a-z][_a-z0-9]*)}"
+    identifiers = set(
+        re.findall(id_pattern, template_text) + re.findall(bid_pattern, template_text)
+    )
+    return identifiers
