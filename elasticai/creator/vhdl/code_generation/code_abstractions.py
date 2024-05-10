@@ -39,10 +39,12 @@ def create_connection(sink, source) -> str:
 
 
 def create_signal_definitions(prefix: str, signals: Sequence[Signal]):
-    return sorted([
-        signal_definition(name=f"{prefix}{signal.name}", width=signal.width)
-        for signal in signals
-    ])
+    return sorted(
+        [
+            signal_definition(name=f"{prefix}{signal.name}", width=signal.width)
+            for signal in signals
+        ]
+    )
 
 
 def signal_definition(

@@ -18,11 +18,13 @@ def quantize(x: torch.Tensor) -> torch.Tensor:
 
 def forge_silu(scale: float, beta: float) -> AdaptableSiLU:
     silu = AdaptableSiLU(num_steps=5, sampling_intervall=(-10, 10), **fxp_args())
-    silu.load_state_dict({
-        "_base_module.scale": torch.tensor([scale]),
-        "_base_module.beta": torch.tensor([beta]),
-        "_step_lut": torch.linspace(-10, 10, 5),
-    })
+    silu.load_state_dict(
+        {
+            "_base_module.scale": torch.tensor([scale]),
+            "_base_module.beta": torch.tensor([beta]),
+            "_step_lut": torch.linspace(-10, 10, 5),
+        }
+    )
     return silu
 
 
