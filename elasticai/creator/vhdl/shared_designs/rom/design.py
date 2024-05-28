@@ -19,8 +19,10 @@ class Rom:
         self._data_width = data_width
         number_of_values = len(values_as_integers)
         self._address_width = self._bits_required_to_address_n_values(number_of_values)
-        self._values = [to_vhdl_binary_string(x, self._data_width) for x in
-                        self._append_zeros_to_fill_addressable_memory(values_as_integers)]
+        self._values = [
+            to_vhdl_binary_string(x, self._data_width)
+            for x in self._append_zeros_to_fill_addressable_memory(values_as_integers)
+        ]
 
     def save_to(self, destination: Path):
         template = InProjectTemplate(
@@ -49,5 +51,3 @@ class Rom:
 
 def _zeros(n: int) -> list[int]:
     return [0] * n
-
-

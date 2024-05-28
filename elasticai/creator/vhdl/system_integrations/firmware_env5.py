@@ -16,8 +16,7 @@ from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
 
 
 class SkeletonType(Protocol):
-    def save_to(self, destination: Path) -> None:
-        ...
+    def save_to(self, destination: Path) -> None: ...
 
 
 class _FirmwareENv5Base:
@@ -46,7 +45,12 @@ class _FirmwareENv5Base:
 
 class FirmwareENv5(_FirmwareENv5Base):
     def __init__(
-        self, network: Design, x_num_values: int, y_num_values: int, id: list[int] | int, skeleton_version: str = "v1"
+        self,
+        network: Design,
+        x_num_values: int,
+        y_num_values: int,
+        id: list[int] | int,
+        skeleton_version: str = "v1",
     ) -> None:
         super().__init__(
             skeleton=Skeleton(
@@ -55,9 +59,10 @@ class FirmwareENv5(_FirmwareENv5Base):
                 x_num_values=x_num_values,
                 y_num_values=y_num_values,
                 id=id,
-                skeleton_version=skeleton_version
+                skeleton_version=skeleton_version,
             )
         )
+
 
 class LSTMFirmwareENv5(_FirmwareENv5Base):
     def __init__(self, network: Design):

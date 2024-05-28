@@ -55,7 +55,7 @@ class Sequential(Design):
             return sink_source[0][0]
 
         def source_design_name(
-            sink_source: tuple[tuple[str, str], tuple[str, str]]
+            sink_source: tuple[tuple[str, str], tuple[str, str]],
         ) -> str:
             return sink_source[1][0]
 

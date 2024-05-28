@@ -92,6 +92,7 @@ def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
             value = discard_leading_bits(invert(abs(value)) + 1)
 
         return value
+
     two_complement = _to_unsigned(number, number_of_bits)
 
     return f'"{two_complement:0{number_of_bits}b}"'
