@@ -90,7 +90,7 @@ def _expand_multiline_template(
     for line in lines:
         contains_no_key = True
         for key in kwargs:
-            if f"${key}" in line:
+            if f"${key}" in line or f"${{{key}}}" in line:
                 contains_no_key = False
                 for placeholder_line, value in zip(repeat(line), kwargs[key]):
                     t = StringTemplate(placeholder_line)
