@@ -22,18 +22,17 @@ entity tanh is
 end tanh;
 
 architecture rtl of tanh is
-    signal signed_x : signed(8-1 downto 0) := (others=>'0');
-    signal signed_y : signed(8-1 downto 0) := (others=>'0');
+    signal signed_x, signed_y : signed(8-1 downto 0) := (others=>'0');
 begin
     signed_x <= signed(x);
     y <= std_logic_vector(signed_y);
     tanh_process : process(x)
     begin
-        if signed_x <= -20 then signed_y <= to_signed(-3, 8);
-        elsif signed_x <= -10 then signed_y <= to_signed(-3, 8);
-        elsif signed_x <= 0 then signed_y <= to_signed(0, 8);
+        if signed_x <= 20 then signed_y <= to_signed(3, 8);
         elsif signed_x <= 10 then signed_y <= to_signed(3, 8);
-        else signed_y <= to_signed(3, 8);
+        elsif signed_x <= 0 then signed_y <= to_signed(0, 8);
+        elsif signed_x <= -10 then signed_y <= to_signed(-3, 8);
+        else signed_y <= to_signed(-3, 8);
         end if;
     end process;
 end rtl;
@@ -67,18 +66,17 @@ entity sigmoid is
 end sigmoid;
 
 architecture rtl of sigmoid is
-    signal signed_x : signed(8-1 downto 0) := (others=>'0');
-    signal signed_y : signed(8-1 downto 0) := (others=>'0');
+    signal signed_x, signed_y : signed(8-1 downto 0) := (others=>'0');
 begin
     signed_x <= signed(x);
     y <= std_logic_vector(signed_y);
     sigmoid_process : process(x)
     begin
-        if signed_x <= -20 then signed_y <= to_signed(0, 8);
-        elsif signed_x <= -10 then signed_y <= to_signed(0, 8);
-        elsif signed_x <= 0 then signed_y <= to_signed(2, 8);
+        if signed_x <= 20 then signed_y <= to_signed(3, 8);
         elsif signed_x <= 10 then signed_y <= to_signed(3, 8);
-        else signed_y <= to_signed(3, 8);
+        elsif signed_x <= 0 then signed_y <= to_signed(2, 8);
+        elsif signed_x <= -10 then signed_y <= to_signed(0, 8);
+        else signed_y <= to_signed(0, 8);
         end if;
     end process;
 end rtl;
