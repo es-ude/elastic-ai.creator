@@ -247,3 +247,5 @@ Temporary Items
 /presentation/presentation.html
 /presentation/presentation.pdf
 /vhdl93-bnf.html
+tmp/
+examples/MLP
