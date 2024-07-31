@@ -156,13 +156,13 @@ Our implementation is tested with unit and integration.
 You can run one explicit test with the following statement:
 
 ```bash
-python3 -m pytest ./tests/path/to/specific/test.py
+python3 -m pytest ./path/to/specific/test.py
 ```
 
 If you want to run all tests, give the path to the tests:
 
 ```bash
-python3 -m pytest ./tests
+python3 -m pytest ./elasticai
 ```
 
 If you want to add more tests please refer to the Test Guidelines in the following.
