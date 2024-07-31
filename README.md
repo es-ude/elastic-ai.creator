@@ -76,11 +76,31 @@ if __name__ == "__main__":
     main()
 ```
 
+### Supported network architectures and layers
 
-### General Limitations
+- all sequential network architectures representable with `torch.nn.Sequential`
+- fixed-point quantized:
+  - layers: linear, linear with batch normalization, LSTM
+  - activations: hard sigmoid, hard tanh, ReLU
+    - precomputed: sigmoid, tanh, adaptable SiLU
 
-By now we only support Sequential models for our translations.
 
+### General limitations
+
+By now we only support sequential models for our translations.
+That excludes skip and residual connections.
+
+
+### Planned network architectures and layers supported in the future
+
+- integer-only linear quantization
+- 1D convolutional layers (fixed-point)
+- gated recurrent unit (fixed-point)
+
+
+### Broken modules:
+
+- TODO
 
 
 ## Structure of the Project
