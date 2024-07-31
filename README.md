@@ -99,7 +99,9 @@ Additionally, we have unit and integration tests in the [tests](tests) folder.
 - [poetry](https://python-poetry.org/)
 - recommended:
   - [pre-commit](https://pre-commit.com/)
-  - [commitlint](https://github.com/conventional-changelog/commitlint) to help following our [conventional commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary) guidelines
+  - [node](https://github.com/nvm-sh/nvm)
+  - [commitlint](https://github.com/conventional-changelog/commitlint) to help following our [conventional commit]
+  (https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary) guidelines
 poetry can be installed in the following way:
 ```bash
 pip install poetry
@@ -107,10 +109,13 @@ poetry install
 poetry shell
 pre-commit install
 npm install --save-dev @commitlint/{config-conventional,cli}
-
-# Optional:
 sudo apt install ghdl
 ```
+
+The repository should work with the following versions:
+- Python: >=3.10
+- GHDL: >=1.0.0, <=4.1.0
+- Node: >=v12.22.9, <=v22.4.1
 
 ### Project Structure
 
