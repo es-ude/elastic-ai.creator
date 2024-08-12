@@ -36,21 +36,12 @@ class ReLU(DesignCreator, nn.Module):
             clock_option=False,
         )
 
-    def int_forward(
-        self,
-        input: torch.int32,
-        do_dequant_output: torch.bool,
-        save_quantization_data: bool = False,
-        model_for_hw_path: str = None,
-    ) -> torch.float32:
-        q_input = (
-            self.input_QParams.quantizeProcess(input)
-            if input.dtype == torch.float32
-            else input
-        )
-        if save_quantization_data:
-            save_quant_data(q_input, "q_x", model_for_hw_path, self.name)
-
+    def int_forward(self, input: torch.IntTensor) -> torch.FloatTensor:
+        # quantise input if input is of floating point type
+        if input.dtype == torch.float32 or input.dtype == torch.float64:
+            q_input = self.input_QParams.quantizeProcess(input)
+        else:
+            q_input = input
         QuantizedTensorValidator.check_dtype(
             q_input, "q_input", torch.int32, self.logger
         )
@@ -78,25 +69,11 @@ class ReLU(DesignCreator, nn.Module):
         )
         output = q_input
 
-        if save_quantization_data:
-            save_quant_data(output, "q_y", model_for_hw_path, self.name)
-
-        if do_dequant_output:
-            output = self.input_QParams.dequantizeProcess(q_input)
-            QuantizedTensorValidator.check_dtype(
-                output, "dequantised_output", torch.float32, self.logger
-            )
-
         return output
 
-    def forward(
-        self, input: torch.float32, given_input_QParams: torch.nn.Module
-    ) -> torch.float32:
+    def forward(self, input: torch.FloatTensor) -> torch.FloatTensor:
         if self.training:
-            if given_input_QParams is not None:
-                self.input_QParams = given_input_QParams
-            else:
-                self.input_QParams.updateScaleZeropoint(input)
+            self.input_QParams.updateScaleZeropoint(input)
 
         input = FakeQuantize.apply(input.to(DEVICE), self.input_QParams)
 

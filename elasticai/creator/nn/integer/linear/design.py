@@ -5,11 +5,16 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.design import Design
+from elasticai.creator.nn.integer.rom.design import Rom
+
+# from elasticai.creator.nn.integer.template import Template, save_code
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
-from elasticai.creator.vhdl.shared_designs.rom import Rom
+
+# from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class Linear(Design):
@@ -17,7 +22,6 @@ class Linear(Design):
         self,
         name: str,
         data_width: int,
-        num_dimensions: int,
         in_features: int,
         out_features: int,
         weights: list[list[int]],
@@ -34,7 +38,6 @@ class Linear(Design):
         super().__init__(name=name)
 
         self._data_width = data_width
-        self._num_dimensions = num_dimensions
         self._in_features = in_features
         self._out_features = out_features
 
@@ -49,12 +52,8 @@ class Linear(Design):
         self._weights = weights
         self._bias = bias
 
-        self._x_addr_width = calculate_address_width(
-            self._in_features * self._num_dimensions
-        )
-        self._y_addr_width = calculate_address_width(
-            self._out_features * self._num_dimensions
-        )
+        self._x_addr_width = calculate_address_width(self._in_features)
+        self._y_addr_width = calculate_address_width(self._out_features)
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
@@ -81,7 +80,6 @@ class Linear(Design):
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
                 data_width=str(self._data_width),
-                num_dimensions=str(self._num_dimensions),
                 in_features=str(self._in_features),
                 out_features=str(self._out_features),
                 z_x=str(self._z_x),
@@ -95,6 +93,7 @@ class Linear(Design):
                 resource_option=self._resource_option,
             ),
         )
+        # save the template to the destination
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
         rom_weights = Rom(
@@ -120,12 +119,11 @@ class Linear(Design):
                 data_width=str(self._data_width),
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                num_dimensions=str(self._num_dimensions),
                 in_features=str(self._in_features),
                 out_features=str(self._out_features),
             ),
         )
-        destination.create_subpath(self.name).as_file(".vhd").write(template_test)
+        destination.create_subpath(self.name).as_file("_test.vhd").write(template_test)
 
 
 def _flatten_params(params: list[list[int]]) -> list[int]:

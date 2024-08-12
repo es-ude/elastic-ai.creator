@@ -28,7 +28,6 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         self.name = kwargs.get("name")
-        self.num_dimensions = kwargs.get("num_dimensions")
         self.quant_bits = kwargs.get("quant_bits")
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -52,7 +51,6 @@ class Linear(DesignCreator, nn.Linear):
         return LinearDesign(
             name=name,
             data_width=self.quant_bits,
-            num_dimensions=self.num_dimensions,
             in_features=self.in_features,
             out_features=self.out_features,
             weights=self.q_weight,
@@ -66,8 +64,8 @@ class Linear(DesignCreator, nn.Linear):
         )
 
     def _quant_weight(
-        self, weight: torch.float32, weight_QParams: torch.nn.Module
-    ) -> torch.int32:
+        self, weight: torch.FloatTensor, weight_QParams: torch.nn.Module
+    ) -> torch.FloatTensor:
         q_weight = weight_QParams.quantizeProcess(weight)
         lower_bound = -(2 ** (self.quant_bits - 1))
         upper_bound = (2 ** (self.quant_bits - 1)) - 1
@@ -95,11 +93,11 @@ class Linear(DesignCreator, nn.Linear):
 
     def _quant_bias(
         self,
-        bias: torch.float32,
+        bias: torch.FloatTensor,
         bias_QParams: torch.nn.Module,
-        given_quant_scale: torch.float32,
+        given_quant_scale: torch.FloatTensor,
         given_quant_bits: int,
-    ) -> torch.int32:
+    ) -> torch.FloatTensor:
         bias_QParams.set_scale(given_quant_scale)
         bias_QParams.set_zero_point(torch.zeros((1)))
         min_quant = -(2 ** (given_quant_bits - 1)) + 1
@@ -144,21 +142,13 @@ class Linear(DesignCreator, nn.Linear):
 
     def int_forward(
         self,
-        input: torch.int32,
-        do_dequant_output: torch.bool,
-        save_quantization_data: bool = False,
-        model_for_hw_path: str = None,
-    ) -> torch.float32:
-        # quantise_input
-        q_input = (
-            self.input_QParams.quantizeProcess(input)
-            if input.dtype == torch.float32
-            else input
-        )
-        if save_quantization_data:
-            save_quant_data(q_input, "q_x", model_for_hw_path, self.name)
-            if self.name == "input_linear":
-                save_quant_data(q_input, "q_x", model_for_hw_path, "transformer")
+        input: torch.Tensor,
+    ) -> torch.IntTensor:
+        # quantise input if input is of floating point type
+        if input.dtype == torch.float32 or input.dtype == torch.float64:
+            q_input = self.input_QParams.quantizeProcess(input)
+        else:
+            q_input = input
 
         QuantizedTensorValidator.check_dtype(
             q_input, "q_input", torch.int32, self.logger
@@ -236,31 +226,11 @@ class Linear(DesignCreator, nn.Linear):
             self.logger,
         )
 
-        if save_quantization_data:
-            save_quant_data(output, "q_y", model_for_hw_path, self.name)
-            if self.name == "output_linear":
-                save_quant_data(output, "q_y", model_for_hw_path, "transformer")
-
-        if do_dequant_output:
-            output = self.output_QParams.dequantizeProcess(output.to(DEVICE))
-            QuantizedTensorValidator.check_dtype(
-                output, "dequantised output", torch.float32, self.logger
-            )
-
         return output.to(DEVICE)
 
-    def forward(
-        self,
-        input: torch.float32,
-        given_input_QParams: object,
-        dropout_prob: torch.float32,
-    ) -> torch.float32:
+    def forward(self, input: torch.FloatTensor) -> torch.FloatTensor:
         if self.training:
-            if given_input_QParams is None:
-                self.input_QParams.updateScaleZeropoint(input)
-            else:
-                self.input_QParams = given_input_QParams
-
+            self.input_QParams.updateScaleZeropoint(input)
             self.weight_QParams.updateScaleZeropoint(self.weight)
             self.bias_QParams.updateScaleZeropoint(self.bias)
 
@@ -269,9 +239,6 @@ class Linear(DesignCreator, nn.Linear):
         bias = FakeQuantize.apply(self.bias.to(DEVICE), self.bias_QParams)
 
         output = F.linear(input, weight, bias)
-        output = F.dropout(
-            output, p=dropout_prob, training=self.training
-        )  # if dropout_prob > 0.0, apply dropout
 
         if self.training:
             self.output_QParams.updateScaleZeropoint(output)

@@ -2,8 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ${work_library_name};
-use ${work_library_name}.all;
+library work;
+use work.all;
 
 -----------------------------------------------------------
 entity ${name} is
@@ -11,7 +11,6 @@ entity ${name} is
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         DATA_WIDTH : integer := ${data_width};
-        NUM_DIMENSIONS : integer := ${num_dimensions};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features};
         SCALER : integer := ${scaler};
@@ -111,7 +110,7 @@ architecture rtl of ${name} is
 
     signal y_store_en : std_logic;
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;
+    signal y_store_addr : integer range 0 to OUT_FEATURES;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
@@ -151,12 +150,11 @@ begin
 
     -- mac process
     mac : process( clock, layer_state )
-        variable dimension_idx : integer range 0 to NUM_DIMENSIONS - 1 := 0;
         variable neuron_idx : integer range 0 to OUT_FEATURES-1 := 0;
-        variable input_idx : integer  range 0 to IN_FEATURES * NUM_DIMENSIONS - 1 := 0;
+        variable input_idx : integer  range 0 to IN_FEATURES - 1 := 0;
         variable weight_idx : integer range 0 to OUT_FEATURES * IN_FEATURES-1 := 0;
         variable bias_idx : integer range 0 to OUT_FEATURES-1 := 0;
-        variable output_idx : integer  range 0 to OUT_FEATURES * NUM_DIMENSIONS - 1 := 0;
+        variable output_idx : integer  range 0 to OUT_FEATURES - 1 := 0;
 
         variable mac_cnt : integer range 0 to IN_FEATURES+1 := 0;
         variable input_offset : integer;
@@ -220,17 +218,7 @@ begin
                             mac_state <= s_init;
                             output_idx := output_idx + 1;
                         else
-                            if dimension_idx < NUM_DIMENSIONS - 1 then
-                                dimension_idx := dimension_idx + 1;
-                                input_idx := 0 + dimension_idx * IN_FEATURES;
-                                neuron_idx := 0;
-                                weight_idx := 0;
-                                bias_idx := 0;
-                                output_idx := output_idx + 1;
-                                input_offset := input_offset + IN_FEATURES;
-                                mac_state <= s_init;
-                            else
-                                mac_state <= s_done;
+                            mac_state <= s_done;
                             end if;
                         end if;
 

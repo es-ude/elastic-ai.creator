@@ -1,3 +1,5 @@
+import abc
+from abc import abstractmethod
 from collections.abc import Iterator
 from typing import cast
 
@@ -25,6 +27,40 @@ class Sequential(DesignCreator, torch.nn.Sequential):
             sub_designs=subdesigns,
             name=name,
         )
+
+
+class IntForwardSubmission(torch.nn.Module, DesignCreator):
+    def __init__(self) -> None:
+        super().__init__()
+
+    @abstractmethod
+    def create_design(self, name: str) -> Design:
+        ...
+
+    @abstractmethod
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        ...
+
+    @abstractmethod
+    def int_forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        ...
+
+
+class IntegerSequential(Sequential):
+    def __init__(self, *submodules: IntForwardSubmission):
+        super().__init__(*submodules)
+
+        self.submodules = submodules
+
+    def int_forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        assert not self.training, "int_forward() should only be called in eval mode"
+
+        x = inputs
+        for submodule in self.submodules:
+            x = submodule.int_forward(x)
+        x = self.submodules[-1].output_QParams.dequantizeProcess(x)
+
+        return x
 
 
 class _Registry:

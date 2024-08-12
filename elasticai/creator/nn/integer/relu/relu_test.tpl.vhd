@@ -4,8 +4,8 @@ use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
 
-library ${work_library_name};
-use ${work_library_name}.all;
+library work;
+use work.all;
 
 -----------------------------------------------------------
 entity ${name}_tb is
