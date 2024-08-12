@@ -68,7 +68,7 @@ class ReLU(DesignCreator, nn.Module):
         )
 
         if quant_data_file_dir is not None:
-            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_x.txt"
+            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_q_x.txt"
             self._save_to_file(q_input, q_x_file_path)
 
         zero_point = self.input_QParams.zero_point
@@ -88,7 +88,7 @@ class ReLU(DesignCreator, nn.Module):
         output = q_input
 
         if quant_data_file_dir is not None:
-            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_y.txt"
+            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_q_y.txt"
             self._save_to_file(output, q_y_file_path)
         return output
 

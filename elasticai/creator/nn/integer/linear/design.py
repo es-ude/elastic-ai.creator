@@ -50,8 +50,8 @@ class Linear(Design):
         self._scaler = scaler.item()
         self._shift = shift.item()
 
-        self._weights = weights
-        self._bias = bias
+        self._weights = weights + self._z_w
+        self._bias = bias + self._z_b
 
         self._x_addr_width = calculate_address_width(self._in_features)
         self._y_addr_width = calculate_address_width(self._out_features)

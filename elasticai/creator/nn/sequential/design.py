@@ -208,8 +208,8 @@ class Sequential(Design):
                 x_address_width=str(self._x_address_width),
                 y_address_width=str(self._y_address_width),
                 data_width=str(self._x_width),
-                in_features=str(self._x_width),
-                out_features=str(self._y_width),
+                in_features=str(int(3)),
+                out_features=str(int(1)),
                 name=self.name,
             ),
         )

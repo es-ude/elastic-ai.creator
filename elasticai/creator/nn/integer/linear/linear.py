@@ -170,9 +170,11 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         if quant_data_file_dir is not None:
-            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_x.txt"
+            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_q_x.txt"
             self._save_to_file(q_input, q_x_file_path)
 
+        print(f"q_input: {q_input}")
+        print(f"self.input_QParams.zero_point: {self.input_QParams.zero_point}")
         q_input = q_input - self.input_QParams.zero_point.to(q_input.device)
         QuantizedTensorValidator.check_dtype(
             q_input, "q_input-zero_point", torch.int32, self.logger
@@ -184,6 +186,9 @@ class Linear(DesignCreator, nn.Linear):
             (2 ** (self.quant_bits)) - 1,
             self.logger,
         )
+        print(f"q_input-zero_point: {q_input}")
+
+        print(f"self.q_weight.t(): {self.q_weight.t()}")
 
         # integer-only matrix multiplication on CPU
         q_input = q_input.to("cpu")
@@ -196,7 +201,9 @@ class Linear(DesignCreator, nn.Linear):
             (2 ** (self.tmp_quant_bits)) - 1,
             self.logger,
         )
+        print(f"tmp1: {tmp}")
 
+        print(f"self.q_bias: {self.q_bias}")
         if self.bias is not None:
             tmp = tmp + self.q_bias.to("cpu")
             QuantizedTensorValidator.check_dtype(
@@ -209,6 +216,10 @@ class Linear(DesignCreator, nn.Linear):
                 (2 ** (self.tmp_quant_bits)) - 1,
                 self.logger,
             )
+        print(f"tmp2: {tmp}")
+
+        print(f"self.m_N_shifts: {self.m_N_shifts}")
+        print(f"self.m_int: {self.m_int}")
 
         tmp = simulate_bitshifting(tmp, self.m_N_shifts, self.m_int).to("cpu")
         QuantizedTensorValidator.check_dtype(
@@ -221,7 +232,9 @@ class Linear(DesignCreator, nn.Linear):
             (2 ** (self.quant_bits + 1)) - 1,
             self.logger,
         )
+        print(f"tmp3: {tmp}")
 
+        print(f"self.output_QParams.zero_point: {self.output_QParams.zero_point}")
         # process output
         output = tmp + self.output_QParams.zero_point.to("cpu")
         output = output.clamp(
@@ -238,8 +251,10 @@ class Linear(DesignCreator, nn.Linear):
             self.logger,
         )
         if quant_data_file_dir is not None:
-            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_y.txt"
+            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_q_y.txt"
             self._save_to_file(output, q_y_file_path)
+        print(f"output: {output}")
+        print("-------------------------------------")
         return output.to(DEVICE)
 
     def forward(
