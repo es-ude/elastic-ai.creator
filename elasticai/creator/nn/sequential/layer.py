@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections.abc import Iterator
 from typing import cast
 
+import numpy as np
 import torch
 
 from elasticai.creator.vhdl.design.design import Design
@@ -62,15 +63,36 @@ class IntegerSequential(Sequential):
 
         return x
 
-    def int_forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def int_forward(
+        self, inputs: torch.Tensor, q_x_file_path: str = None, q_y_file_path: str = None
+    ) -> torch.Tensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
         x = inputs
+
+        # Save quantized input to file
+        if x.dtype != torch.int32:
+            q_x = self.submodules[0].input_QParams.quantizeProcess(x)
+        else:
+            q_x = x
+
+        if q_x_file_path is not None:
+            self._save_to_file(q_x, q_x_file_path)
+
         for submodule in self.submodules:
             x = submodule.int_forward(x)
+
+        if x.dtype == torch.int32 and q_y_file_path is not None:
+            self._save_to_file(x, q_y_file_path)
+
         x = self.submodules[-1].output_QParams.dequantizeProcess(x)
 
         return x
+
+    def _save_to_file(self, tensor: torch.Tensor, file_path: str) -> None:
+        tensor_numpy = tensor.int().numpy()
+        with open(file_path, "a") as f:
+            np.savetxt(f, tensor_numpy.reshape(-1, 1), fmt="%d")
 
 
 class _Registry:

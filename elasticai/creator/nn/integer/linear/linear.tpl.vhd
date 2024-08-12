@@ -26,10 +26,10 @@ entity ${name} is
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x_addr : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x_in   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        y_addr : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y_out  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
@@ -39,32 +39,32 @@ architecture rtl of ${name} is
     ---------------------MAC Function-----------------------
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
-                    x : in signed(DATA_WIDTH downto 0);
+                    x_in : in signed(DATA_WIDTH downto 0);
                     y_0 : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0)
             ) return signed is
         variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
-        TMP := w * x;
+        TMP := w * x_in;
         return TMP + y_0;
     end function;
     ------------------Scaling Function---------------------
-    function scaling(x : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
-    scaler : in signed(SCLAER_DATA_WIDTH -1 downto 0);
-    shift : in integer
+    function scaling(x_in : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    scaler_m : in signed(SCLAER_DATA_WIDTH -1 downto 0);
+    shift_n : in integer
     ) return signed is
     variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + SCLAER_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + SCLAER_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + SCLAER_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable is_negative : boolean := x(x'left) = '1';
+    variable is_negative : boolean := x_in(x_in'left) = '1';
     begin
         if is_negative then
-            TMP_1 := -x * scaler;
+            TMP_1 := -x_in * scaler_m;
         else
-            TMP_1 := x * scaler;
+            TMP_1 := x_in * scaler_m;
         end if;
-        TMP_2 := shift_right(TMP_1, shift);
+        TMP_2 := shift_right(TMP_1, shift_n);
         TMP_3 := TMP_2;
-        if TMP_1(shift-1) = '1' then
+        if TMP_1(shift_n-1) = '1' then
             TMP_3 := TMP_2 + 1;
         end if;
         if is_negative then
@@ -120,7 +120,7 @@ begin
     -- connecting signals to ports
     n_clock <= not clock;
     w_int <= signed(w_in);
-    x_int <= signed(x_in);
+    x_int <= signed(x);
     b_int <= signed(b_in);
 
     -- connects ports
@@ -165,7 +165,6 @@ begin
         if rising_edge(clock) then
             if layer_state=s_stop then
                 mac_state <= s_init;
-                dimension_idx := 0;
                 neuron_idx := 0;
                 input_idx := 0;
                 weight_idx := 0;
@@ -219,7 +218,6 @@ begin
                             output_idx := output_idx + 1;
                         else
                             mac_state <= s_done;
-                            end if;
                         end if;
 
                     when others =>
@@ -229,7 +227,7 @@ begin
                 mac_state <= s_done;
                 y_store_en <= '0';
             end if;
-            x_addr <= std_logic_vector(to_unsigned(input_idx, x_addr'length));
+            x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
             w_addr <= std_logic_vector(to_unsigned(weight_idx, w_addr'length));
             b_addr <= std_logic_vector(to_unsigned(bias_idx, b_addr'length));
         end if;
@@ -248,7 +246,7 @@ begin
     )
     port map  (
         addra  => y_store_addr_std,
-        addrb  => y_addr,
+        addrb  => y_address,
         dina   => y_store_data,
         clka   => clock,
         clkb   => clock,
@@ -256,7 +254,7 @@ begin
         enb    => '1',
         rstb   => '0',
         regceb => '0',
-        doutb  => y_out
+        doutb  => y
     );
     ---------------- RAM Y ----------------
 

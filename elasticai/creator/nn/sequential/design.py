@@ -198,3 +198,22 @@ class Sequential(Design):
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(network_template)
+
+        network_template_test = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="network_tb.tpl.vhd",
+            parameters=dict(
+                # layer_connections=self._generate_connections_code(),
+                # layer_instantiations=self._generate_instantiations(),
+                # signal_definitions=self._generate_signal_definitions(),
+                x_address_width=str(self._x_address_width),
+                y_address_width=str(self._y_address_width),
+                data_width=str(self._x_width),
+                in_features=str(self._x_width),
+                out_features=str(self._y_width),
+                name=self.name,
+            ),
+        )
+        destination.create_subpath(self.name).as_file("_tb.vhd").write(
+            network_template_test
+        )

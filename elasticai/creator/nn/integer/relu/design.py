@@ -40,7 +40,7 @@ class ReLU(Design):
 
         template_test = Template(
             package=module_to_package(self.__module__),
-            file_name="relu_test.tpl.vhd",
+            file_name="relu_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
@@ -49,4 +49,4 @@ class ReLU(Design):
             ),
         )
 
-        destination.create_subpath(self.name).as_file("_test.vhd").write(template_test)
+        destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)

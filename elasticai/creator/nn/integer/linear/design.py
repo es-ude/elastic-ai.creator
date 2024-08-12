@@ -41,13 +41,13 @@ class Linear(Design):
         self._in_features = in_features
         self._out_features = out_features
 
-        self._z_x = z_x
-        self._z_w = z_w
-        self._z_b = z_b
-        self._z_y = z_y
+        self._z_x = z_x.item()
+        self._z_w = z_w.item()
+        self._z_b = z_b.item()
+        self._z_y = z_y.item()
 
-        self._scaler = scaler
-        self._shift = shift
+        self._scaler = scaler.item()
+        self._shift = shift.item()
 
         self._weights = weights
         self._bias = bias
@@ -113,7 +113,7 @@ class Linear(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="linear_test.tpl.vhd",
+            file_name="linear_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
@@ -123,7 +123,7 @@ class Linear(Design):
                 out_features=str(self._out_features),
             ),
         )
-        destination.create_subpath(self.name).as_file("_test.vhd").write(template_test)
+        destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)
 
 
 def _flatten_params(params: list[list[int]]) -> list[int]:

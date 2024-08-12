@@ -6,12 +6,11 @@ use ieee.std_logic_textio.all;
 
 library work;
 use work.all;
-
 -----------------------------------------------------------
 entity ${name}_tb is
     generic (
-        X_ADDR_WIDTH : integer := ${x_addr_width};
-        Y_ADDR_WIDTH : integer := ${y_addr_width};
+        X_ADDR_WIDTH : integer := ${x_address_width};
+        Y_ADDR_WIDTH : integer := ${y_address_width};
         DATA_WIDTH : integer := ${data_width};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features}
@@ -62,9 +61,9 @@ begin
     end process ;
     --------------------TESTBENCH SIMULATIONS----------------------------
     test_main : process
-        constant file_inputs:      string := "./data/${name}_q_x.txt";
-        constant file_labels:      string := "./data/${name}_q_y.txt";
-        constant file_pred:      string := "./data/${name}_out.txt";
+        constant file_inputs:      string := "./data/q_x.txt";
+        constant file_labels:      string := "./data/q_y.txt";
+        constant file_pred:      string := "./data/out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -151,10 +150,10 @@ begin
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_addr => x_addr,
-        y_addr => y_addr,
-        x_in   => x_in,
-        y_out   => y_out,
+        x_address => x_addr,
+        y_address => y_addr,
+        x   => x_in,
+        y   => y_out,
         done   => done
     );
 end architecture;
