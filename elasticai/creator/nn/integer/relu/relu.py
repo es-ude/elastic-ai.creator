@@ -1,5 +1,7 @@
 import logging
+from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -40,12 +42,20 @@ class ReLU(DesignCreator, nn.Module):
             clock_option=False,
         )
 
-    def int_forward(self, input: torch.IntTensor) -> torch.FloatTensor:
+    def _save_to_file(self, tensor: torch.Tensor, file_path: str) -> None:
+        tensor_numpy = tensor.int().numpy()
+        with open(file_path, "a") as f:
+            np.savetxt(f, tensor_numpy.reshape(-1, 1), fmt="%d")
+
+    def int_forward(
+        self, input: torch.IntTensor, quant_data_file_dir: str = None
+    ) -> torch.FloatTensor:
         # quantise input if input is of floating point type
         if input.dtype == torch.float32 or input.dtype == torch.float64:
             q_input = self.input_QParams.quantizeProcess(input)
         else:
             q_input = input
+
         QuantizedTensorValidator.check_dtype(
             q_input, "q_input", torch.int32, self.logger
         )
@@ -56,6 +66,10 @@ class ReLU(DesignCreator, nn.Module):
             (2 ** (self.quant_bits - 1)) - 1,
             self.logger,
         )
+
+        if quant_data_file_dir is not None:
+            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_x.txt"
+            self._save_to_file(q_input, q_x_file_path)
 
         zero_point = self.input_QParams.zero_point
         q_input = q_input.to(DEVICE)
@@ -73,6 +87,9 @@ class ReLU(DesignCreator, nn.Module):
         )
         output = q_input
 
+        if quant_data_file_dir is not None:
+            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_y.txt"
+            self._save_to_file(output, q_y_file_path)
         return output
 
     def forward(

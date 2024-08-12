@@ -1,6 +1,7 @@
 import abc
 from abc import abstractmethod
 from collections.abc import Iterator
+from pathlib import Path
 from typing import cast
 
 import numpy as np
@@ -64,7 +65,7 @@ class IntegerSequential(Sequential):
         return x
 
     def int_forward(
-        self, inputs: torch.Tensor, q_x_file_path: str = None, q_y_file_path: str = None
+        self, inputs: torch.Tensor, quant_data_file_dir: str = None
     ) -> torch.Tensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
@@ -76,13 +77,15 @@ class IntegerSequential(Sequential):
         else:
             q_x = x
 
-        if q_x_file_path is not None:
+        if quant_data_file_dir is not None:
+            q_x_file_path = Path(quant_data_file_dir) / f"q_x.txt"
             self._save_to_file(q_x, q_x_file_path)
 
         for submodule in self.submodules:
-            x = submodule.int_forward(x)
+            x = submodule.int_forward(x, quant_data_file_dir)
 
-        if x.dtype == torch.int32 and q_y_file_path is not None:
+        if x.dtype == torch.int32 and quant_data_file_dir is not None:
+            q_y_file_path = Path(quant_data_file_dir) / f"q_y.txt"
             self._save_to_file(x, q_y_file_path)
 
         x = self.submodules[-1].output_QParams.dequantizeProcess(x)

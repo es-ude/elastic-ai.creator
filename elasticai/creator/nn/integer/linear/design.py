@@ -6,6 +6,7 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.nn.integer.design import Design
+from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.nn.integer.rom.design import Rom
 
 # from elasticai.creator.nn.integer.template import Template, save_code
@@ -110,6 +111,9 @@ class Linear(Design):
             values_as_integers=self._bias,
         )
         rom_bias.save_to(destination)
+
+        ram = Ram(name=f"{self.name}_ram")
+        ram.save_to(destination)
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),

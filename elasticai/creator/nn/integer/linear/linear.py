@@ -1,6 +1,8 @@
 import logging
+from pathlib import Path
 from typing import Any, cast
 
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -140,9 +142,15 @@ class Linear(DesignCreator, nn.Linear):
             self.m_int, "m_int", torch.int32, self.logger
         )
 
+    def _save_to_file(self, tensor: torch.Tensor, file_path: str) -> None:
+        tensor_numpy = tensor.int().numpy()
+        with open(file_path, "a") as f:
+            np.savetxt(f, tensor_numpy.reshape(-1, 1), fmt="%d")
+
     def int_forward(
         self,
         input: torch.Tensor,
+        quant_data_file_dir: str = None,
     ) -> torch.IntTensor:
         # quantise input if input is of floating point type
         if input.dtype == torch.float32 or input.dtype == torch.float64:
@@ -160,6 +168,10 @@ class Linear(DesignCreator, nn.Linear):
             (2 ** (self.quant_bits - 1)) - 1,
             self.logger,
         )
+
+        if quant_data_file_dir is not None:
+            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_x.txt"
+            self._save_to_file(q_input, q_x_file_path)
 
         q_input = q_input - self.input_QParams.zero_point.to(q_input.device)
         QuantizedTensorValidator.check_dtype(
@@ -225,7 +237,9 @@ class Linear(DesignCreator, nn.Linear):
             (2 ** (self.quant_bits - 1)) - 1,
             self.logger,
         )
-
+        if quant_data_file_dir is not None:
+            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_y.txt"
+            self._save_to_file(output, q_y_file_path)
         return output.to(DEVICE)
 
     def forward(
