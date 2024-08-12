@@ -28,6 +28,10 @@ class ReLU(DesignCreator, nn.Module):
             is_symmetric=False, quant_bits=self.quant_bits, observer=MinMaxObserver()
         ).to(DEVICE)
 
+        self.output_QParams = QParams(
+            is_symmetric=False, quant_bits=self.quant_bits, observer=MinMaxObserver()
+        ).to(DEVICE)
+
     def create_design(self, name: str) -> ReLUDesign:
         return ReLUDesign(
             name=name,
@@ -71,12 +75,20 @@ class ReLU(DesignCreator, nn.Module):
 
         return output
 
-    def forward(self, input: torch.FloatTensor) -> torch.FloatTensor:
+    def forward(
+        self, input: torch.FloatTensor, given_input_QParams: QParams = None
+    ) -> torch.FloatTensor:
         if self.training:
-            self.input_QParams.updateScaleZeropoint(input)
+            if given_input_QParams is not None:
+                self.input_QParams = given_input_QParams
+            else:
+                self.input_QParams.updateScaleZeropoint(input)
 
         input = FakeQuantize.apply(input.to(DEVICE), self.input_QParams)
 
         output = F.relu(input)
+
+        self.output_QParams = self.input_QParams
+        output = FakeQuantize.apply(output, self.output_QParams)
 
         return output

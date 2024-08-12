@@ -228,9 +228,19 @@ class Linear(DesignCreator, nn.Linear):
 
         return output.to(DEVICE)
 
-    def forward(self, input: torch.FloatTensor) -> torch.FloatTensor:
+    def forward(
+        self, input: torch.FloatTensor, given_input_QParams: QParams = None
+    ) -> torch.FloatTensor:
         if self.training:
-            self.input_QParams.updateScaleZeropoint(input)
+            if given_input_QParams is not None:
+                self.input_QParams = given_input_QParams
+            else:
+                self.input_QParams.updateScaleZeropoint(
+                    input
+                )  # required for FakeQuantize even if scaler_mode is fixed
+
+        if self.training:
+            # self.input_QParams.updateScaleZeropoint(input)
             self.weight_QParams.updateScaleZeropoint(self.weight)
             self.bias_QParams.updateScaleZeropoint(self.bias)
 

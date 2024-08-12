@@ -52,6 +52,16 @@ class IntegerSequential(Sequential):
 
         self.submodules = submodules
 
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        x = inputs
+        given_input_QParams = None
+
+        for submodule in self.submodules:
+            x = submodule(x, given_input_QParams=given_input_QParams)
+            given_input_QParams = submodule.output_QParams
+
+        return x
+
     def int_forward(self, inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
