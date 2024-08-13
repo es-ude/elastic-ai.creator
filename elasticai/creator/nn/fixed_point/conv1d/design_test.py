@@ -4,12 +4,12 @@ import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 
-from .design import Conv1d
+from .design import Conv1dDesign
 
 
 @pytest.fixture
-def conv1d_design() -> Conv1d:
-    return Conv1d(
+def conv1d_design() -> Conv1dDesign:
+    return Conv1dDesign(
         name="conv1d",
         total_bits=16,
         frac_bits=8,
@@ -22,23 +22,23 @@ def conv1d_design() -> Conv1d:
     )
 
 
-def save_design(design: Conv1d) -> dict[str, str]:
+def save_design(design: Conv1dDesign) -> dict[str, str]:
     destination = InMemoryPath("conv1d", parent=None)
     design.save_to(destination)
     files = cast(list[InMemoryFile], list(destination.children.values()))
     return {file.name: "\n".join(file.text) for file in files}
 
 
-def test_saved_design_contains_needed_files(conv1d_design: Conv1d) -> None:
+def test_saved_design_contains_needed_files(conv1d_design: Conv1dDesign) -> None:
     saved_files = save_design(conv1d_design)
 
-    expected_files = {"conv1d_w_rom.vhd", "conv1d_b_rom.vhd", "conv1d.vhd"}
+    expected_files = {"conv1d_w_rom.vhd", "conv1d_b_rom.vhd", "conv1d.vhd", "conv1d_fxp_MAC_RoundToZero.vhd", "fxp_mac.vhd"}
     actual_files = set(saved_files.keys())
 
     assert expected_files == actual_files
 
 
-def test_weight_rom_code_generated_correctly(conv1d_design: Conv1d) -> None:
+def test_weight_rom_code_generated_correctly(conv1d_design: Conv1dDesign) -> None:
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
     use ieee.std_logic_unsigned.all;
@@ -70,7 +70,7 @@ end architecture rtl;"""
     assert expected_code == actual_code
 
 
-def test_bias_rom_code_generated_correctly(conv1d_design: Conv1d) -> None:
+def test_bias_rom_code_generated_correctly(conv1d_design: Conv1dDesign) -> None:
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
     use ieee.std_logic_unsigned.all;
@@ -101,14 +101,3 @@ end architecture rtl;"""
     actual_code = saved_files["conv1d_b_rom.vhd"]
     assert expected_code == actual_code
 
-
-def test_conv1d_code_generated_correctly(conv1d_design: Conv1d) -> None:
-    expected_code = """-- Dummy File for testing implementation of conv1d Design
-16
-8
-1
-2
-3"""
-    saved_files = save_design(conv1d_design)
-    actual_code = saved_files["conv1d.vhd"]
-    assert expected_code == actual_code

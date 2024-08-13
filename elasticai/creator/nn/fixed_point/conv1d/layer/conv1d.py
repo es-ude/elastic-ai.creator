@@ -1,14 +1,14 @@
 from typing import Any, cast
 
-import torch
-
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
+from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
 from elasticai.creator.vhdl.design_creator import DesignCreator
+
+from ..testbench import Conv1dTestbench
 
 
 class Conv1d(DesignCreator, Conv1dBase):
@@ -34,19 +34,8 @@ class Conv1d(DesignCreator, Conv1dBase):
             device=device,
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        has_batches = x.dim() == 2
-
-        input_shape = (
-            (x.shape[0], self.in_channels, -1)
-            if has_batches
-            else (self.in_channels, -1)
-        )
-        output_shape = (x.shape[0], -1) if has_batches else (-1,)
-
-        x = x.view(*input_shape)
-        outputs = super().forward(x)
-        return outputs.view(*output_shape)
+    def create_testbench(self, name: str, uut: Conv1dDesign) -> Conv1dTestbench:
+        return Conv1dTestbench(name=name, uut=uut, fxp_params=self._config)
 
     def create_design(self, name: str) -> Conv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:
