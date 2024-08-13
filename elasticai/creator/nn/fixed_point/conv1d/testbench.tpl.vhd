@@ -73,25 +73,22 @@ begin
                 readline(input_file, v_ILINE); -- read header
                 test_state := s_load_batch;
             elsif test_state = s_load_batch then
-                if endfile(input_file) and input_idx = ${input_signal_length}*${in_channels} then
-                    test_state := s_finish_simulation;
-                else
-                    if input_idx = 0 then
-                        report "status: start reading batch";
-                        readline(input_file, v_ILINE);
-                    end if;
-                    read(v_ILINE, v_in); -- read value
-                    data_in(input_idx) <= v_in;
-                    report("status: reading " & to_bstring(v_in));
-                    if input_idx /= ${input_signal_length}*${in_channels}-1 then
-                        read(v_ILINE, v_SPACE);
-                    else
-                        report "status: data for batch loaded!";
-                        test_state := s_reset;
-                    end if;
-                    input_idx := input_idx + 1;
+                if input_idx = 0 then
+                    report "status: start reading batch";
+                    readline(input_file, v_ILINE);
                 end if;
+                read(v_ILINE, v_in); -- read value
+                data_in(input_idx) <= v_in;
+                report("status: reading " & to_bstring(v_in));
+                if input_idx /= ${input_signal_length}*${in_channels}-1 then
+                    read(v_ILINE, v_SPACE);
+                else
+                    report "status: data for batch loaded!";
+                    test_state := s_reset;
+                end if;
+                input_idx := input_idx + 1;
             elsif test_state = s_reset then
+                input_idx := 0;
                 report "status: test_state = s_reset";
                 enable <= '0';
                 test_state := s_start_computation;
@@ -119,7 +116,11 @@ begin
                     test_state := s_write_uut_output_address;
                 else
                     input_cycles := input_cycles + 1;
-                    test_state := s_load_batch;
+                    if endfile(input_file) then
+                        test_state := s_finish_simulation;
+                    else
+                        test_state := s_load_batch;
+                    end if;
                 end if;
             elsif test_state = s_finish_simulation then
                 report "status: test_state = s_finish_simulation";
@@ -133,7 +134,7 @@ begin
     variable i : integer range 0 to 10000;
     begin
         if rising_edge(clock) then
-            if i = 200 then
+            if i = 2000 then
                 report("OUT of TIME");
                 finish;
             else

@@ -121,3 +121,36 @@ def test_verify_hw_sw_equivalence_4_inputs(x):
     sim_layer = SimulatedLayer(testbench, GHDLSimulator, working_dir="build")
     sim_output = sim_layer(input_data)
     assert sw_output.tolist() == sim_output
+
+@pytest.mark.simulation
+@pytest.mark.parametrize(
+    "x",
+    (
+        create_ones_conv1d_input_list(2, 2, 4),
+        [[[0.5, 0.25, -1.0, 1.0], [-1.0, 1.0, -1.0, 1.0]], [[0.5, 0.25, -1.0, 1.0], [-1.0, 1.0, -1.0, 1.0]]],
+        [[[0.0, 1.0, 1.0, 0.0], [-1.0, 1.0, -1.0, 1.0]], [[0.5, 0.25, -1.0, 1.0], [-1.0, 1.0, -1.0, 1.0]]],
+    ),
+)
+def test_verify_hw_sw_equivalence_4_inputs_2_channels_2_batches(x):
+    input_data = torch.Tensor(x)
+    sw_conv = Conv1d(
+        total_bits=5,
+        frac_bits=2,
+        in_channels=2,
+        out_channels=2,
+        signal_length=4,
+        kernel_size=2,
+        bias=True,
+    )
+    sw_conv.weight.data = torch.ones_like(sw_conv.weight)
+    sw_conv.bias.data = torch.ones_like(sw_conv.bias)
+    sw_output = sw_conv(input_data)
+    design = sw_conv.create_design("conv1d")
+    testbench = sw_conv.create_testbench("conv1d_testbench", design)
+    build_dir = OnDiskPath("build")
+    design.save_to(build_dir.create_subpath("srcs"))
+    testbench.save_to(build_dir.create_subpath("testbenches"))
+    sim_layer = SimulatedLayer(testbench, GHDLSimulator, working_dir="build")
+    sim_output = sim_layer(input_data)
+    assert sw_output.tolist() == sim_output
+
