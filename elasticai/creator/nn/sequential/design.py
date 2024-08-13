@@ -6,7 +6,6 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.template import Template, save_code
 from elasticai.creator.vhdl.auto_wire_protocols.autowiring import (
     AutoWirer,
     DataFlowNode,
@@ -19,7 +18,6 @@ from elasticai.creator.vhdl.code_generation.code_abstractions import (
 )
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
 class Sequential(Design):
