@@ -201,6 +201,9 @@ class Sequential(Design):
         )
         destination.create_subpath(self.name).as_file(".vhd").write(network_template)
 
+        in_features = self._subdesigns[0]._in_features
+        out_features = self._subdesigns[-1]._out_features
+
         network_template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="network_tb.tpl.vhd",
@@ -208,8 +211,8 @@ class Sequential(Design):
                 x_address_width=str(self._x_address_width),
                 y_address_width=str(self._y_address_width),
                 data_width=str(self._x_width),
-                in_features=str(int(3)),
-                out_features=str(int(1)),
+                in_features=str(in_features),
+                out_features=str(out_features),
                 name=self.name,
             ),
         )
