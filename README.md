@@ -158,6 +158,41 @@ All packages and modules fall into one of five main categories and can thus be f
  - **MathOperations/operations**: definition of how to perform mathematical operations (quantization, addition, matrix multiplication, ...)
 
 
+ ### Adding new modules
+
+ #### Adding new quantization scheme of an existing module
+ 
+ TODO
+
+ #### Adding completely new modules
+
+Example steps:
+- Create a new folder in `elasticai.creator.nn.<quantization_scheme>`
+- Create files: `__init__.py`, `layer.py`, `layer_test.py`, `layer.tpl.vhd`, `design.py`, `design_test.py`
+
+##### VHDL template
+
+- TODO: ask @glencoe to help describe the interface (x, y, x_address, y_address, buffered, unbuffered)
+- TODO: if you want to have a new VHDL template, please ask @SuperChange001
+
+##### design.py
+
+- needs to inherit from `elasticai.creator.vhdl.design.design.Design`
+- typical constructor arguments: num_bits (frac_bits, total_bits), in_feature_num, out_feature_num, weights, bias, name
+- `port(self)`: defines the number of inputs and outputs and their data widths
+- `save_to(self, destination: Path)`: load a template via `elasticai.creator.file_generation.template.InProjectTemplate` to make text replacements in the VHDL template for filling it with values and parameters; if you have read-only-values (like weights and biases) that you load in the VHDL template, use `elasticai.creator.vhdl.shared_designs.rom.Rom` to create them and call their `save_to()` function
+
+##### layer.py
+
+- Create a layer class which inherits from `elasticai.creator.vhdl.design_creator.DesignCreator` and `torch.nn.Module`
+- write `create_design` function that returns a `Design`
+
+##### Base modules
+
+- If you want to define custom mathematic operators for your quantization scheme, you can implement them in `elasticai.creator.nn.<quantization_scheme>._math_operations.py`.
+- Create a new file in `elasticai.creator.base_modules` which defines a class inheriting from `torch.nn.Module` and specifies the math operators that you need for your base module
+- Your different `layer.py` files for every `elasticai.creator.nn.<quantization_scheme>` can then inherit from `elasticai.creator.base_modules.<module>.py`
+
 ### Conventional Commit Rules
 
 We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types are allowed. The message scope is optional.

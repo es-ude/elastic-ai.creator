@@ -14,7 +14,7 @@ class InMemoryFile(File):
         unfilled_variables = expander.unfilled_variables()
         if len(unfilled_variables) > 0:
             raise KeyError(
-                "Template is not filled completly. The following variables are"
+                "Template is not filled completely. The following variables are"
                 f" unfilled: {', '.join(unfilled_variables)}."
             )
         for line in expander.lines():
