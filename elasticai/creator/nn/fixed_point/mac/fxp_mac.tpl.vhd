@@ -47,28 +47,36 @@ architecture rtl of fxp_Mac_RoundToZero is
     end function;
 
 begin
-    mac : process (next_sample)
+    mac : process (next_sample, reset)
         variable accumulator : signed(2*TOTAL_WIDTH-1 downto 0) := (others=>'0');
         variable vector_idx : integer := 0;
         type t_state is (s_compute, s_finished);
         variable state : t_state := s_compute;
     begin
-        if rising_edge(next_sample) then
-            if reset = '0' then
-                accumulator := (others => '0');
-                vector_idx := 0;
-                state := s_compute;
-                done <= '0';
-                sum <= (others => '0');
-            elsif state=s_compute then
-                accumulator := x1*x2 + accumulator;
-                vector_idx := vector_idx + 1;
-                if vector_idx = VECTOR_WIDTH then
-                   sum <= cut_down(accumulator);
-                   state := s_finished;
+        if reset = '0' then
+            --report("debug: fxpMAC: reset");
+            accumulator := (others => '0');
+            vector_idx := 0;
+            state := s_compute;
+            done <= '0';
+            sum <= (others => '0');
+        else
+            if rising_edge(next_sample) then
+                if state=s_compute then
+                    --report("debug: fxpMAC: state = s_compute");
+                    --report("debug: fxpMAC: x1 = " & to_bstring(x1));
+                    --report("debug: fxpMAC: x2 = " & to_bstring(x2));
+                    accumulator := x1*x2 + accumulator;
+                    vector_idx := vector_idx + 1;
+                    if vector_idx = VECTOR_WIDTH then
+                       --report("debug: fxpMAC: Vectorwidth reached");
+                       sum <= cut_down(accumulator);
+                       state := s_finished;
+                    end if;
+                elsif state = s_finished then
+                    --report("debug: fxpMAC: state = s_finished");
+                    done <= '1';
                 end if;
-            elsif state = s_finished then
-                done <= '1';
             end if;
         end if;
     end process mac;
