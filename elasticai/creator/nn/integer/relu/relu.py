@@ -1,11 +1,10 @@
 import logging
-from pathlib import Path
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
 
+from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
@@ -42,13 +41,8 @@ class ReLU(DesignCreator, nn.Module):
             clock_option=False,
         )
 
-    def _save_to_file(self, tensor: torch.Tensor, file_path: str) -> None:
-        tensor_numpy = tensor.int().numpy()
-        with open(file_path, "a") as f:
-            np.savetxt(f, tensor_numpy.reshape(-1, 1), fmt="%d")
-
     def int_forward(
-        self, input: torch.IntTensor, quant_data_file_dir: str = None
+        self, input: torch.IntTensor, quant_data_file_dir: Path = None
     ) -> torch.FloatTensor:
         # quantise input if input is of floating point type
         if input.dtype == torch.float32 or input.dtype == torch.float64:
@@ -68,8 +62,7 @@ class ReLU(DesignCreator, nn.Module):
         )
 
         if quant_data_file_dir is not None:
-            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_q_x.txt"
-            self._save_to_file(q_input, q_x_file_path)
+            save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
 
         zero_point = self.input_QParams.zero_point
         q_input = q_input.to(DEVICE)
@@ -88,8 +81,7 @@ class ReLU(DesignCreator, nn.Module):
         output = q_input
 
         if quant_data_file_dir is not None:
-            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_q_y.txt"
-            self._save_to_file(output, q_y_file_path)
+            save_quant_data(output, quant_data_file_dir, f"{self.name}_q_y")
         return output
 
     def forward(

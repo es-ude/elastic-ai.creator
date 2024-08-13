@@ -1,12 +1,11 @@
 import logging
-from pathlib import Path
-from typing import Any, cast
 
 import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.quant_utils.BitShifting import (
@@ -142,15 +141,10 @@ class Linear(DesignCreator, nn.Linear):
             self.m_int, "m_int", torch.int32, self.logger
         )
 
-    def _save_to_file(self, tensor: torch.Tensor, file_path: str) -> None:
-        tensor_numpy = tensor.int().numpy()
-        with open(file_path, "a") as f:
-            np.savetxt(f, tensor_numpy.reshape(-1, 1), fmt="%d")
-
     def int_forward(
         self,
         input: torch.Tensor,
-        quant_data_file_dir: str = None,
+        quant_data_file_dir: Path = None,
     ) -> torch.IntTensor:
         # quantise input if input is of floating point type
         if input.dtype == torch.float32 or input.dtype == torch.float64:
@@ -170,8 +164,7 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         if quant_data_file_dir is not None:
-            q_x_file_path = Path(quant_data_file_dir) / f"{self.name}_q_x.txt"
-            self._save_to_file(q_input, q_x_file_path)
+            save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
 
         q_input = q_input - self.input_QParams.zero_point.to(q_input.device)
         QuantizedTensorValidator.check_dtype(
@@ -238,8 +231,7 @@ class Linear(DesignCreator, nn.Linear):
             self.logger,
         )
         if quant_data_file_dir is not None:
-            q_y_file_path = Path(quant_data_file_dir) / f"{self.name}_q_y.txt"
-            self._save_to_file(output, q_y_file_path)
+            save_quant_data(output, quant_data_file_dir, f"{self.name}_q_y")
 
         return output.to(DEVICE)
 

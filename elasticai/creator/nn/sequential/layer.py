@@ -1,12 +1,11 @@
-import abc
 from abc import abstractmethod
 from collections.abc import Iterator
-from pathlib import Path
 from typing import cast
 
-import numpy as np
 import torch
 
+from elasticai.creator.file_generation.savable import Path
+from elasticai.creator.nn.integer.quant_utils.SaveQuantData import save_quant_data
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
@@ -65,7 +64,7 @@ class IntegerSequential(Sequential):
         return x
 
     def int_forward(
-        self, inputs: torch.Tensor, quant_data_file_dir: str = None
+        self, inputs: torch.Tensor, quant_data_file_dir: Path, name: str
     ) -> torch.Tensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
@@ -73,29 +72,19 @@ class IntegerSequential(Sequential):
 
         # Save quantized input to file
         if x.dtype != torch.int32:
-            q_x = self.submodules[0].input_QParams.quantizeProcess(x)
-        else:
-            q_x = x
-
-        if quant_data_file_dir is not None:
-            q_x_file_path = Path(quant_data_file_dir) / f"q_x.txt"
-            self._save_to_file(q_x, q_x_file_path)
+            x = self.submodules[0].input_QParams.quantizeProcess(x)
+            if quant_data_file_dir is not None:
+                save_quant_data(x, quant_data_file_dir, f"{name}_q_x")
 
         for submodule in self.submodules:
             x = submodule.int_forward(x, quant_data_file_dir)
 
         if x.dtype == torch.int32 and quant_data_file_dir is not None:
-            q_y_file_path = Path(quant_data_file_dir) / f"q_y.txt"
-            self._save_to_file(x, q_y_file_path)
+            save_quant_data(x, quant_data_file_dir, f"{name}_q_y")
 
         x = self.submodules[-1].output_QParams.dequantizeProcess(x)
 
         return x
-
-    def _save_to_file(self, tensor: torch.Tensor, file_path: str) -> None:
-        tensor_numpy = tensor.int().numpy()
-        with open(file_path, "a") as f:
-            np.savetxt(f, tensor_numpy.reshape(-1, 1), fmt="%d")
 
 
 class _Registry:

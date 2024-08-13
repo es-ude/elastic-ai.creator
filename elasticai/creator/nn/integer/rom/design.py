@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
