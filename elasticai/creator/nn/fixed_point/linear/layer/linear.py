@@ -5,7 +5,8 @@ from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
+from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
+from ..testbench import LinearTestbench
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
@@ -49,3 +50,6 @@ class Linear(DesignCreator, LinearBase):
             bias=signed_int_bias,
             name=name,
         )
+
+    def create_testbench(self, name: str, uut: LinearDesign) -> LinearTestbench:
+        return LinearTestbench(name, uut)
