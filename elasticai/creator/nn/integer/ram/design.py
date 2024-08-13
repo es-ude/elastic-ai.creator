@@ -5,8 +5,6 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.design import Design
-from elasticai.creator.nn.integer.rom.design import Rom
 
 # from elasticai.creator.nn.integer.template import Template, save_code
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port

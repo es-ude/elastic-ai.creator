@@ -5,7 +5,8 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.design import Design
+from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom.design import Rom as CreatorRom
 
 
@@ -27,6 +28,10 @@ class Rom(Design, CreatorRom):
             values_as_integers=values_as_integers,
         )
         self._resource_option = resource_option
+
+    @property
+    def port(self) -> Port:
+        pass
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(

@@ -5,7 +5,6 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.design import Design
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.nn.integer.rom.design import Rom
 
