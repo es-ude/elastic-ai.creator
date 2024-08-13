@@ -58,14 +58,14 @@ class SimulatedLayer:
             writer.writerows(inputs)
 
 
-def create_ones_input_list(
-    batch_size: int, in_feature_num: int
-):
-    return [[1.0] * in_feature_num] * batch_size
+def create_ones_input_list(batch_size: int, in_feature_num: int):
+    return [[[1.0] * in_feature_num]] * batch_size
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("x", ([[[0.0, 1.0, 1.0]]], [[[1.0, 1.0, 1.0]]], [[[2.0, 1.0, 0.0]]]))
+@pytest.mark.parametrize(
+    "x", ([[[0.0, 1.0, 1.0]]], [[[1.0, 1.0, 1.0]]], [[[2.0, 1.0, 0.0]]])
+)
 def test_verify_hw_sw_equivalence_3_inputs(x):
     input_data = torch.Tensor(x)
     sw_conv = Linear(
@@ -92,9 +92,9 @@ def test_verify_hw_sw_equivalence_3_inputs(x):
 @pytest.mark.parametrize(
     "x",
     (
-        create_ones_input_list(1, 4),
-        [[[0.5, 0.25, -1.0, 1.0], [-1.0, 1.0, -1.0, 1.0]]],
-        [[[0.0, 1.0, 1.0, 0.0], [-1.0, 1.0, -1.0, 1.0]]],
+        create_ones_input_list(2, 4),
+        [[[0.5, 0.25, -1.0, 1.0]], [[-1.0, 1.0, -1.0, 1.0]]],
+        [[[0.0, 1.0, 1.0, 0.0]], [[-1.0, 1.0, -1.0, 1.0]]],
     ),
 )
 def test_verify_hw_sw_equivalence_4_inputs(x):
@@ -110,6 +110,8 @@ def test_verify_hw_sw_equivalence_4_inputs(x):
     sw_conv.bias.data = torch.ones_like(sw_conv.bias)
     sw_output = sw_conv(input_data)
     design = sw_conv.create_design("linear")
+    print(f"{design.in_feature_num=}")
+    print(f"{design.out_feature_num=}")
     testbench = sw_conv.create_testbench("linear_testbench", design)
     build_dir = OnDiskPath("build")
     design.save_to(build_dir.create_subpath("srcs"))
