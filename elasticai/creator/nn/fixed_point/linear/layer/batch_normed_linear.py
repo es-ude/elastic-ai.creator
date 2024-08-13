@@ -7,7 +7,7 @@ from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
+from elasticai.creator.nn.fixed_point.linear.design import LinearDesign as LinearDesign
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
 

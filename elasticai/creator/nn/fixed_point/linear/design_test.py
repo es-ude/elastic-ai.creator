@@ -4,12 +4,12 @@ import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 
-from .design import Linear
+from .design import LinearDesign
 
 
 @pytest.fixture
-def linear_design() -> Linear:
-    return Linear(
+def linear_design() -> LinearDesign:
+    return LinearDesign(
         name="linear",
         in_feature_num=3,
         out_feature_num=2,
@@ -20,14 +20,14 @@ def linear_design() -> Linear:
     )
 
 
-def save_design(design: Linear) -> dict[str, str]:
+def save_design(design: LinearDesign) -> dict[str, str]:
     destination = InMemoryPath("linear", parent=None)
     design.save_to(destination)
     files = cast(list[InMemoryFile], list(destination.children.values()))
     return {file.name: "\n".join(file.text) for file in files}
 
 
-def test_saved_design_contains_needed_files(linear_design: Linear) -> None:
+def test_saved_design_contains_needed_files(linear_design: LinearDesign) -> None:
     saved_files = save_design(linear_design)
 
     expected_files = {"linear_w_rom.vhd", "linear_b_rom.vhd", "linear.vhd"}
@@ -36,7 +36,7 @@ def test_saved_design_contains_needed_files(linear_design: Linear) -> None:
     assert expected_files == actual_files
 
 
-def test_weight_rom_code_generated_correctly(linear_design: Linear) -> None:
+def test_weight_rom_code_generated_correctly(linear_design: LinearDesign) -> None:
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
     use ieee.std_logic_unsigned.all;
@@ -68,7 +68,7 @@ end architecture rtl;"""
     assert expected_code == actual_code
 
 
-def test_bias_rom_code_generated_correctly(linear_design: Linear) -> None:
+def test_bias_rom_code_generated_correctly(linear_design: LinearDesign) -> None:
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
     use ieee.std_logic_unsigned.all;
@@ -100,7 +100,7 @@ end architecture rtl;"""
     assert expected_code == actual_code
 
 
-def test_linear_code_generated_correctly(linear_design: Linear) -> None:
+def test_linear_code_generated_correctly(linear_design: LinearDesign) -> None:
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
