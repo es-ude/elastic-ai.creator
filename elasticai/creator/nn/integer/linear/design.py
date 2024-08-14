@@ -6,13 +6,11 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.nn.integer.ram.design import Ram
-from elasticai.creator.nn.integer.rom.design import Rom
+from elasticai.creator.vhdl.shared_designs.rom import Rom
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
-
-# from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class Linear(Design):
@@ -39,16 +37,16 @@ class Linear(Design):
         self._in_features = in_features
         self._out_features = out_features
 
-        self._z_x = z_x.item()
-        self._z_w = z_w.item()
-        self._z_b = z_b.item()
-        self._z_y = z_y.item()
+        self._z_x = z_x
+        self._z_w = z_w
+        self._z_b = z_b
+        self._z_y = z_y
 
-        self._scaler = scaler.item()
-        self._shift = shift.item()
+        self._scaler = scaler
+        self._shift = shift
 
-        self._weights = weights + self._z_w
-        self._bias = bias + self._z_b
+        self._weights = [[w + self._z_w for w in row] for row in weights]
+        self._bias = [b + self._z_b for b in bias]
 
         self._x_addr_width = calculate_address_width(self._in_features)
         self._y_addr_width = calculate_address_width(self._out_features)

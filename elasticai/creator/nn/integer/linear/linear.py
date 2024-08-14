@@ -47,20 +47,20 @@ class Linear(DesignCreator, nn.Linear):
         ).to(DEVICE)
 
     def create_design(self, name: str) -> LinearDesign:
-        # BUG:  to make sure about if the self.q_weight and self.q_bias are lists.
+        # BUG: to make sure about if the self.q_weight and self.q_bias are lists. (?! Done ?!)
         return LinearDesign(
             name=name,
             data_width=self.quant_bits,
             in_features=self.in_features,
             out_features=self.out_features,
-            weights=self.q_weight,
-            bias=self.q_bias,
-            scaler=self.m_int,
-            shift=self.m_N_shifts,
-            z_w=self.weight_QParams.zero_point,
-            z_b=self.bias_QParams.zero_point,
-            z_x=self.input_QParams.zero_point,
-            z_y=self.output_QParams.zero_point,
+            weights=self.q_weight.tolist(),
+            bias=self.q_bias.tolist(),
+            scaler=self.m_int.item(),
+            shift=self.m_N_shifts.item(),
+            z_w=self.weight_QParams.zero_point.item(),
+            z_b=self.bias_QParams.zero_point.item(),
+            z_x=self.input_QParams.zero_point.item(),
+            z_y=self.output_QParams.zero_point.item(),
         )
 
     def _quant_weight(
