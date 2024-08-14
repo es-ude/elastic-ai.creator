@@ -97,7 +97,7 @@ class Linear(Design):
             data_width=self._data_width,
             values_as_integers=_flatten_params(self._weights),
         )
-        rom_weights.save_to(destination)
+        rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
         rom_bias = Rom(
             name=rom_name["bias"],
@@ -105,7 +105,7 @@ class Linear(Design):
             * 2,  # Note: bias is 2x wider, check the drawio
             values_as_integers=self._bias,
         )
-        rom_bias.save_to(destination)
+        rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
 
         ram = Ram(name=f"{self.name}_ram")
         ram.save_to(destination)
@@ -122,7 +122,9 @@ class Linear(Design):
                 out_features=str(self._out_features),
             ),
         )
-        destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)
+        destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
+            template_test
+        )
 
 
 def _flatten_params(params: list[list[int]]) -> list[int]:
