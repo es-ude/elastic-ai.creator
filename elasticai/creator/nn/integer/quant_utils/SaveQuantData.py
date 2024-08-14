@@ -1,6 +1,4 @@
-import torch
-
-from elasticai.creator.file_generation.savable import Path
+from pathlib import Path
 
 
 def save_quant_data(tensor, file_dir: Path, file_name: str):
