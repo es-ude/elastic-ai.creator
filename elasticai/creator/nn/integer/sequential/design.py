@@ -15,7 +15,25 @@ class Sequential(_SequentialDesign):
         super().__init__(sub_designs, name=name)
 
     def save_to(self, destination: Path) -> None:
-        super().save_to(destination)
+        self._save_subdesigns(destination)
+
+        destination = destination.create_subpath(self.name)
+
+        network_template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="network.tpl.vhd",
+            parameters=dict(
+                layer_connections=self._generate_connections_code(),
+                layer_instantiations=self._generate_instantiations(),
+                signal_definitions=self._generate_signal_definitions(),
+                x_address_width=str(self._x_address_width),
+                y_address_width=str(self._y_address_width),
+                x_width=str(self._x_width),
+                y_width=str(self._y_width),
+                layer_name=self.name,
+            ),
+        )
+        destination.create_subpath(self.name).as_file(".vhd").write(network_template)
 
         in_features = cast(Linear, self._subdesigns[0])._in_features
         out_features = cast(Linear, self._subdesigns[-1])._out_features
