@@ -1,11 +1,8 @@
-from abc import abstractmethod
 from collections.abc import Iterator
 from typing import cast
 
 import torch
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.nn.integer.quant_utils.SaveQuantData import save_quant_data
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
@@ -16,6 +13,9 @@ class Sequential(DesignCreator, torch.nn.Sequential):
     def __init__(self, *submodules: DesignCreator):
         super().__init__(*cast(tuple[torch.nn.Module, ...], submodules))
 
+    def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:
+        return _SequentialDesign(sub_designs=sub_designs, name=name)
+
     def create_design(self, name: str) -> Design:
         registry = _Registry()
         submodules: list[DesignCreator] = [
@@ -24,67 +24,7 @@ class Sequential(DesignCreator, torch.nn.Sequential):
         for module in submodules:
             registry.register(module.__class__.__name__.lower(), module)
         subdesigns = list(registry.build_designs())
-        return _SequentialDesign(
-            sub_designs=subdesigns,
-            name=name,
-        )
-
-
-class IntForwardSubmission(torch.nn.Module, DesignCreator):
-    def __init__(self) -> None:
-        super().__init__()
-
-    @abstractmethod
-    def create_design(self, name: str) -> Design:
-        ...
-
-    @abstractmethod
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        ...
-
-    @abstractmethod
-    def int_forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        ...
-
-
-class IntegerSequential(Sequential):
-    def __init__(self, *submodules: IntForwardSubmission):
-        super().__init__(*submodules)
-
-        self.submodules = submodules
-
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = inputs
-        given_input_QParams = None
-
-        for submodule in self.submodules:
-            x = submodule(x, given_input_QParams=given_input_QParams)
-            given_input_QParams = submodule.output_QParams
-
-        return x
-
-    def int_forward(
-        self, inputs: torch.Tensor, quant_data_file_dir: Path, name: str
-    ) -> torch.Tensor:
-        assert not self.training, "int_forward() should only be called in eval mode"
-
-        x = inputs
-
-        # Save quantized input to file
-        if x.dtype != torch.int32:
-            x = self.submodules[0].input_QParams.quantizeProcess(x)
-            if quant_data_file_dir is not None:
-                save_quant_data(x, quant_data_file_dir, f"{name}_q_x")
-
-        for submodule in self.submodules:
-            x = submodule.int_forward(x, quant_data_file_dir)
-
-        if x.dtype == torch.int32 and quant_data_file_dir is not None:
-            save_quant_data(x, quant_data_file_dir, f"{name}_q_y")
-
-        x = self.submodules[-1].output_QParams.dequantizeProcess(x)
-
-        return x
+        return self.create_sequential_design(sub_designs=subdesigns, name=name)
 
 
 class _Registry:

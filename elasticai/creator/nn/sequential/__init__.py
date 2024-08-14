@@ -1,1 +1,1 @@
-from .layer import IntegerSequential, Sequential
+from .layer import Sequential
