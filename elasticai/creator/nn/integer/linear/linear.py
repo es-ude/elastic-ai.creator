@@ -65,8 +65,8 @@ class Linear(DesignCreator, nn.Linear):
             out_features=self.out_features,
             weights=self.q_weight.tolist(),
             bias=self.q_bias.tolist(),
-            scaler=self.m_int.item(),
-            shift=self.m_N_shifts.item(),
+            scaler=self.scale_factor_M_q.item(),
+            shift=self.scale_factor_M_q_shift.item(),
             z_w=self.weight_QParams.zero_point.item(),
             z_b=self.bias_QParams.zero_point.item(),
             z_x=self.input_QParams.zero_point.item(),
@@ -120,15 +120,14 @@ class Linear(DesignCreator, nn.Linear):
             given_quant_bits=new_bias_quant_bits,
         )
 
-        self.m = new_bias_scale_factor / self.output_QParams.scale
-        QuantizedTensorValidator.check_dtype(self.m, "m", torch.float32, self.logger)
-
-        self.m_N_shifts, self.m_int = scaling_m(self.m)
-        QuantizedTensorValidator.check_dtype(
-            self.m_N_shifts, "m_N_shifts", torch.int32, self.logger
+        self.scale_factor_M = (
+            self.input_QParams.scale
+            * self.weight_QParams.scale
+            / self.output_QParams.scale
         )
-        QuantizedTensorValidator.check_dtype(
-            self.m_int, "m_int", torch.int32, self.logger
+
+        self.scale_factor_M_q_shift, self.scale_factor_M_q = scaling_m(
+            self.scale_factor_M
         )
 
     def int_forward(
@@ -157,7 +156,9 @@ class Linear(DesignCreator, nn.Linear):
         if self.bias is not None:
             tmp = add(tmp, self.q_bias.to("cpu"), self.tmp_quant_bits + 1)
 
-        tmp = simulate_bitshifting(tmp, self.m_N_shifts, self.m_int).to("cpu")
+        tmp = simulate_bitshifting(
+            tmp, self.scale_factor_M_q_shift, self.scale_factor_M_q
+        ).to("cpu")
         QuantizedTensorValidator.check_dtype(
             tmp, "tmp after bit_shifting", torch.int32, self.logger
         )
