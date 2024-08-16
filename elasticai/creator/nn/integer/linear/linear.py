@@ -12,7 +12,6 @@ from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
-from elasticai.creator.nn.integer.quant_utils.SaveQuantData import save_quant_data
 from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
 from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
     simulate_bitshifting,
