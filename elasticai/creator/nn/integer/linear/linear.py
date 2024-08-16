@@ -71,15 +71,6 @@ class Linear(DesignCreator, nn.Linear):
         self, weight: torch.FloatTensor, weight_QParams: torch.nn.Module
     ) -> torch.FloatTensor:
         q_weight = weight_QParams.quantizeProcess(weight)
-        lower_bound = -(2 ** (self.quant_bits - 1))
-        upper_bound = (2 ** (self.quant_bits - 1)) - 1
-
-        QuantizedTensorValidator.check_dtype(
-            q_weight, "q_weight", torch.int32, self.logger
-        )
-        QuantizedTensorValidator.check_drange(
-            q_weight, "q_weight", lower_bound, upper_bound, self.logger
-        )
 
         if weight_QParams.is_symmetric == False:
             q_weight = subtract(
@@ -104,11 +95,6 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         q_bias = bias_QParams.quantizeProcess(bias)
-
-        QuantizedTensorValidator.check_dtype(q_bias, "q_bias", torch.int32, self.logger)
-        QuantizedTensorValidator.check_drange(
-            q_bias, "q_bias", min_quant, max_quant, self.logger
-        )
 
         return q_bias
 
@@ -147,17 +133,6 @@ class Linear(DesignCreator, nn.Linear):
             q_input = self.input_QParams.quantizeProcess(input)
         else:
             q_input = input
-
-        QuantizedTensorValidator.check_dtype(
-            q_input, "q_input", torch.int32, self.logger
-        )
-        QuantizedTensorValidator.check_drange(
-            q_input,
-            "q_input",
-            -(2 ** (self.quant_bits - 1)),
-            (2 ** (self.quant_bits - 1)) - 1,
-            self.logger,
-        )
 
         if quant_data_file_dir is not None:
             save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")

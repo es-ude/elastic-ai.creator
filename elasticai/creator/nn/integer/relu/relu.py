@@ -50,17 +50,6 @@ class ReLU(DesignCreator, nn.Module):
         else:
             q_input = input
 
-        QuantizedTensorValidator.check_dtype(
-            q_input, "q_input", torch.int32, self.logger
-        )
-        QuantizedTensorValidator.check_drange(
-            q_input,
-            "q_input",
-            -(2 ** (self.quant_bits - 1)),
-            (2 ** (self.quant_bits - 1)) - 1,
-            self.logger,
-        )
-
         if quant_data_file_dir is not None:
             save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
 
