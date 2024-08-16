@@ -8,6 +8,7 @@ from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.addition import add
+from elasticai.creator.nn.integer.math_operations.matrixmultiplication import matmul
 from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.BitShifting import (
     scaling_m,
@@ -164,15 +165,10 @@ class Linear(DesignCreator, nn.Linear):
         q_input = subtract(q_input, self.input_QParams.zero_point, self.quant_bits + 1)
 
         # integer-only matrix multiplication on CPU
-        q_input = q_input.to("cpu")
-        tmp = q_input.matmul(self.q_weight.t().to("cpu"))
-        QuantizedTensorValidator.check_dtype(tmp, "tmp", torch.int32, self.logger)
-        QuantizedTensorValidator.check_drange(
-            tmp,
-            "integer-only matmul",
-            -(2 ** (self.tmp_quant_bits)),
-            (2 ** (self.tmp_quant_bits)) - 1,
-            self.logger,
+        tmp = matmul(
+            q_input.to("cpu"),
+            self.q_weight.t().to("cpu"),
+            self.tmp_quant_bits,  # further +1 or not
         )
 
         if self.bias is not None:
