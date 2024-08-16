@@ -3,7 +3,7 @@ import warnings
 import torch
 
 
-def scaling_m(m: torch.Tensor):
+def scaling_M(m: torch.Tensor):
     N_shifts = torch.tensor(1, dtype=torch.int32)
     m = torch.round(m * 10**5) / 10**5
 

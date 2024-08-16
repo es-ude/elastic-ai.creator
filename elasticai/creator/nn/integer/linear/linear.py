@@ -4,14 +4,13 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.addition import add
 from elasticai.creator.nn.integer.math_operations.matrixmultiplication import matmul
 from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.BitShifting import (
-    scaling_m,
+    scaling_M,
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
@@ -126,7 +125,7 @@ class Linear(DesignCreator, nn.Linear):
             / self.output_QParams.scale
         )
 
-        self.scale_factor_M_q_shift, self.scale_factor_M_q = scaling_m(
+        self.scale_factor_M_q_shift, self.scale_factor_M_q = scaling_M(
             self.scale_factor_M
         )
 
