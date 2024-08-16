@@ -7,7 +7,7 @@ from .QuantizeProcess import quantizeProcess
 
 
 class QParams(nn.Module):
-    def __init__(self, is_symmetric: torch.bool, quant_bits: int, observer: nn.Module):
+    def __init__(self, is_symmetric: bool, quant_bits: int, observer: nn.Module):
         super().__init__()
         self.observer = observer
 
@@ -73,9 +73,13 @@ class QParams(nn.Module):
         self.min_quant.copy_(given_min_quant)
         self.max_quant.copy_(given_max_quant)
 
-    def quantizeProcess(self, x_r: torch.Tensor) -> torch.Tensor:
+    def quantizeProcess(self, x: torch.FloatTensor) -> torch.IntTensor:
         return quantizeProcess(
-            x_r, self.min_quant, self.max_quant, self.scale, self.zero_point
+            x=x,
+            min_quant=self.min_quant,
+            max_quant=self.max_quant,
+            scale_factor=self.scale,
+            zero_point=self.zero_point,
         )
 
     def dequantizeProcess(self, x_q: int) -> float:
