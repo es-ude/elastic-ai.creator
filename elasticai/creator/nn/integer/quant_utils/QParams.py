@@ -46,6 +46,7 @@ class QParams(nn.Module):
         )
 
         self.is_symmetric = is_symmetric
+        self.quant_bits = quant_bits
 
     def updateScaleZeropoint(self, x_r: float) -> None:
         self.observer(x_r)
@@ -78,7 +79,7 @@ class QParams(nn.Module):
         )
 
     def dequantizeProcess(self, x_q: int) -> float:
-        return dequantizeProcess(x_q, self.scale, self.zero_point)
+        return dequantizeProcess(x_q, self.scale, self.zero_point, self.quant_bits + 1)
 
     def _load_from_state_dict(
         self,

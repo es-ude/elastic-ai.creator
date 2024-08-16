@@ -7,6 +7,7 @@ from torch.nn import functional as F
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
+from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.BitShifting import (
     scaling_m,
     simulate_bitshifting,
@@ -79,16 +80,20 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         if weight_QParams.is_symmetric == False:
-            q_weight -= weight_QParams.zero_point
-            lower_bound = -(2**self.quant_bits)
-            upper_bound = (2**self.quant_bits) - 1
+            q_weight = subtract(
+                q_weight, weight_QParams.zero_point, self.quant_bits + 1
+            )
 
-            QuantizedTensorValidator.check_dtype(
-                q_weight, "q_weight-zero_point", torch.int32, self.logger
-            )
-            QuantizedTensorValidator.check_drange(
-                q_weight, "q_weight-zero_point", lower_bound, upper_bound, self.logger
-            )
+            # q_weight -= weight_QParams.zero_point
+            # lower_bound = -(2**self.quant_bits)
+            # upper_bound = (2**self.quant_bits) - 1
+
+            # QuantizedTensorValidator.check_dtype(
+            #     q_weight, "q_weight-zero_point", torch.int32, self.logger
+            # )
+            # QuantizedTensorValidator.check_drange(
+            #     q_weight, "q_weight-zero_point", lower_bound, upper_bound, self.logger
+            # )
 
         return q_weight
 
@@ -166,17 +171,18 @@ class Linear(DesignCreator, nn.Linear):
         if quant_data_file_dir is not None:
             save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
 
-        q_input = q_input - self.input_QParams.zero_point.to(q_input.device)
-        QuantizedTensorValidator.check_dtype(
-            q_input, "q_input-zero_point", torch.int32, self.logger
-        )
-        QuantizedTensorValidator.check_drange(
-            q_input,
-            "q_input-zero_point",
-            -(2 ** (self.quant_bits)),
-            (2 ** (self.quant_bits)) - 1,
-            self.logger,
-        )
+        q_input = subtract(q_input, self.input_QParams.zero_point, self.quant_bits + 1)
+        # q_input = q_input - self.input_QParams.zero_point.to(q_input.device)
+        # QuantizedTensorValidator.check_dtype(
+        #     q_input, "q_input-zero_point", torch.int32, self.logger
+        # )
+        # QuantizedTensorValidator.check_drange(
+        #     q_input,
+        #     "q_input-zero_point",
+        #     -(2 ** (self.quant_bits)),
+        #     (2 ** (self.quant_bits)) - 1,
+        #     self.logger,
+        # )
 
         # integer-only matrix multiplication on CPU
         q_input = q_input.to("cpu")
