@@ -1,9 +1,5 @@
 import torch
 
-from elasticai.creator.nn.integer.quant_utils.QuantizedTensorValidator import (
-    QuantizedTensorValidator,
-)
-
 
 def add(a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int) -> torch.IntTensor:
     c = a + b

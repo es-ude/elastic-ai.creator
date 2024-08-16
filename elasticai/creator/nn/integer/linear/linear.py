@@ -177,17 +177,6 @@ class Linear(DesignCreator, nn.Linear):
 
         if self.bias is not None:
             tmp = add(tmp, self.q_bias.to("cpu"), self.tmp_quant_bits + 1)
-            # tmp = tmp + self.q_bias.to("cpu")
-            # QuantizedTensorValidator.check_dtype(
-            #     tmp, "tmp+zero_point", torch.int32, self.logger
-            # )
-            # QuantizedTensorValidator.check_drange(
-            #     tmp,
-            #     "integer-only matmul+zero_point",
-            #     -(2 ** (self.tmp_quant_bits)),
-            #     (2 ** (self.tmp_quant_bits)) - 1,
-            #     self.logger,
-            # )
 
         tmp = simulate_bitshifting(tmp, self.m_N_shifts, self.m_int).to("cpu")
         QuantizedTensorValidator.check_dtype(
@@ -203,20 +192,7 @@ class Linear(DesignCreator, nn.Linear):
 
         # process output
         output = add(tmp, self.output_QParams.zero_point.to("cpu"), self.quant_bits)
-        # output = tmp + self.output_QParams.zero_point.to("cpu")
-        # output = output.clamp(
-        #     min=-(2 ** (self.quant_bits - 1)), max=(2 ** (self.quant_bits - 1)) - 1
-        # )
-        # QuantizedTensorValidator.check_dtype(
-        #     output, "q_output", torch.int32, self.logger
-        # )
-        # QuantizedTensorValidator.check_drange(
-        #     output,
-        #     "q_output",
-        #     -(2 ** (self.quant_bits - 1)),
-        #     (2 ** (self.quant_bits - 1)) - 1,
-        #     self.logger,
-        # )
+
         if quant_data_file_dir is not None:
             save_quant_data(output, quant_data_file_dir, f"{self.name}_q_y")
 
