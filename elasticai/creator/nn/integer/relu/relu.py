@@ -63,15 +63,16 @@ class ReLU(DesignCreator, nn.Module):
         self, input: torch.FloatTensor, given_input_QParams: QParams = None
     ) -> torch.FloatTensor:
         if self.training:
-            if given_input_QParams is not None:
-                self.input_QParams = given_input_QParams
-            else:
+            if given_input_QParams is None:
                 self.input_QParams.updateScaleZeropoint(input)
+            else:
+                self.input_QParams = given_input_QParams
 
         input = FakeQuantize.apply(input.to(DEVICE), self.input_QParams)
 
         output = F.relu(input)
 
+        # TODO: check if do fake quantization for output or not
         self.output_QParams = self.input_QParams
         output = FakeQuantize.apply(output, self.output_QParams)
 
