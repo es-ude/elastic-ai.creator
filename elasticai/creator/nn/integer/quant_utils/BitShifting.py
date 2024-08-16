@@ -8,8 +8,9 @@ def scaling_m(m: torch.Tensor):
     m = torch.round(m * 10**5) / 10**5
 
     while N_shifts.item() < 32:
-        # BUG: there is no limitation of m_int's range
+        # Attention: take care of the bitwidth of the scaler in the vdhl template
         m_int = torch.round(m * (2**N_shifts)).type(torch.int32)
+
         error = (m - m_int * (2 ** (-N_shifts.item()))) / m
         if torch.all(error > 0.0001) or torch.all(error < 0):
             N_shifts += 1

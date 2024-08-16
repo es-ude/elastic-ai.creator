@@ -19,7 +19,7 @@ entity ${name} is
         Z_W : integer := ${z_w};
         Z_B : integer := ${z_b};
         Z_Y : integer := ${z_y};
-        SCLAER_DATA_WIDTH : integer := 16;
+        SCLAER_DATA_WIDTH : integer := ${scaler_data_width};
         Y_RESOURCE_OPTION : string := "${resource_option}"
 
     );

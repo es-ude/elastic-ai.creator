@@ -1,16 +1,18 @@
 from itertools import chain
 
+import numpy as np
+
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
 from elasticai.creator.nn.integer.ram.design import Ram
-from elasticai.creator.vhdl.shared_designs.rom import Rom
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
+from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class Linear(Design):
@@ -52,6 +54,7 @@ class Linear(Design):
         self._y_addr_width = calculate_address_width(self._out_features)
 
         self._work_library_name = work_library_name
+        self._scaler_data_width = int(np.ceil(np.log2(self._scaler))) + 1
         self._resource_option = resource_option
 
         # assert self._scaler < 2**15, "scaler should be less than 2^15"
@@ -86,6 +89,7 @@ class Linear(Design):
                 shift=str(self._shift),
                 weights_rom_name=rom_name["weights"],
                 bias_rom_name=rom_name["bias"],
+                scaler_data_width=str(self._scaler_data_width),
                 resource_option=self._resource_option,
             ),
         )

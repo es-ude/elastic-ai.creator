@@ -176,7 +176,7 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         if self.bias is not None:
-            tmp = add(tmp, self.q_bias.to("cpu"), self.tmp_quant_bits)
+            tmp = add(tmp, self.q_bias.to("cpu"), self.tmp_quant_bits + 1)
             # tmp = tmp + self.q_bias.to("cpu")
             # QuantizedTensorValidator.check_dtype(
             #     tmp, "tmp+zero_point", torch.int32, self.logger
