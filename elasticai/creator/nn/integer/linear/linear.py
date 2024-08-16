@@ -7,6 +7,7 @@ from torch.nn import functional as F
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
+from elasticai.creator.nn.integer.math_operations.addition import add
 from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.BitShifting import (
     scaling_m,
@@ -83,17 +84,6 @@ class Linear(DesignCreator, nn.Linear):
             q_weight = subtract(
                 q_weight, weight_QParams.zero_point, self.quant_bits + 1
             )
-
-            # q_weight -= weight_QParams.zero_point
-            # lower_bound = -(2**self.quant_bits)
-            # upper_bound = (2**self.quant_bits) - 1
-
-            # QuantizedTensorValidator.check_dtype(
-            #     q_weight, "q_weight-zero_point", torch.int32, self.logger
-            # )
-            # QuantizedTensorValidator.check_drange(
-            #     q_weight, "q_weight-zero_point", lower_bound, upper_bound, self.logger
-            # )
 
         return q_weight
 
@@ -172,17 +162,6 @@ class Linear(DesignCreator, nn.Linear):
             save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
 
         q_input = subtract(q_input, self.input_QParams.zero_point, self.quant_bits + 1)
-        # q_input = q_input - self.input_QParams.zero_point.to(q_input.device)
-        # QuantizedTensorValidator.check_dtype(
-        #     q_input, "q_input-zero_point", torch.int32, self.logger
-        # )
-        # QuantizedTensorValidator.check_drange(
-        #     q_input,
-        #     "q_input-zero_point",
-        #     -(2 ** (self.quant_bits)),
-        #     (2 ** (self.quant_bits)) - 1,
-        #     self.logger,
-        # )
 
         # integer-only matrix multiplication on CPU
         q_input = q_input.to("cpu")
@@ -197,17 +176,18 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         if self.bias is not None:
-            tmp = tmp + self.q_bias.to("cpu")
-            QuantizedTensorValidator.check_dtype(
-                tmp, "tmp+zero_point", torch.int32, self.logger
-            )
-            QuantizedTensorValidator.check_drange(
-                tmp,
-                "integer-only matmul+zero_point",
-                -(2 ** (self.tmp_quant_bits)),
-                (2 ** (self.tmp_quant_bits)) - 1,
-                self.logger,
-            )
+            tmp = add(tmp, self.q_bias.to("cpu"), self.tmp_quant_bits)
+            # tmp = tmp + self.q_bias.to("cpu")
+            # QuantizedTensorValidator.check_dtype(
+            #     tmp, "tmp+zero_point", torch.int32, self.logger
+            # )
+            # QuantizedTensorValidator.check_drange(
+            #     tmp,
+            #     "integer-only matmul+zero_point",
+            #     -(2 ** (self.tmp_quant_bits)),
+            #     (2 ** (self.tmp_quant_bits)) - 1,
+            #     self.logger,
+            # )
 
         tmp = simulate_bitshifting(tmp, self.m_N_shifts, self.m_int).to("cpu")
         QuantizedTensorValidator.check_dtype(
@@ -222,20 +202,21 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         # process output
-        output = tmp + self.output_QParams.zero_point.to("cpu")
-        output = output.clamp(
-            min=-(2 ** (self.quant_bits - 1)), max=(2 ** (self.quant_bits - 1)) - 1
-        )
-        QuantizedTensorValidator.check_dtype(
-            output, "q_output", torch.int32, self.logger
-        )
-        QuantizedTensorValidator.check_drange(
-            output,
-            "q_output",
-            -(2 ** (self.quant_bits - 1)),
-            (2 ** (self.quant_bits - 1)) - 1,
-            self.logger,
-        )
+        output = add(tmp, self.output_QParams.zero_point.to("cpu"), self.quant_bits)
+        # output = tmp + self.output_QParams.zero_point.to("cpu")
+        # output = output.clamp(
+        #     min=-(2 ** (self.quant_bits - 1)), max=(2 ** (self.quant_bits - 1)) - 1
+        # )
+        # QuantizedTensorValidator.check_dtype(
+        #     output, "q_output", torch.int32, self.logger
+        # )
+        # QuantizedTensorValidator.check_drange(
+        #     output,
+        #     "q_output",
+        #     -(2 ** (self.quant_bits - 1)),
+        #     (2 ** (self.quant_bits - 1)) - 1,
+        #     self.logger,
+        # )
         if quant_data_file_dir is not None:
             save_quant_data(output, quant_data_file_dir, f"{self.name}_q_y")
 
