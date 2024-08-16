@@ -29,25 +29,31 @@ class Linear(DesignCreator, nn.Linear):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
-
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
         self.logger = logging.getLogger(self.__class__.__name__)
+
+        self.quant_bits = kwargs.get("quant_bits")
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = QParams(
-            is_symmetric=False, quant_bits=self.quant_bits, observer=MinMaxObserver()
+            is_symmetric=False,
+            quant_bits=kwargs.get("quant_bits"),
+            observer=MinMaxObserver(),
         ).to(DEVICE)
         self.bias_QParams = QParams(
-            is_symmetric=True,  # Only Bias applied signed symmetric quantization
-            quant_bits=self.quant_bits,
+            is_symmetric=True,
+            quant_bits=kwargs.get("quant_bits"),
             observer=MinMaxObserver(),
         ).to(DEVICE)
         self.input_QParams = QParams(
-            is_symmetric=False, quant_bits=self.quant_bits, observer=MinMaxObserver()
+            is_symmetric=False,
+            quant_bits=kwargs.get("quant_bits"),
+            observer=MinMaxObserver(),
         ).to(DEVICE)
         self.output_QParams = QParams(
-            is_symmetric=False, quant_bits=self.quant_bits, observer=MinMaxObserver()
+            is_symmetric=False,
+            quant_bits=kwargs.get("quant_bits"),
+            observer=MinMaxObserver(),
         ).to(DEVICE)
 
     def create_design(self, name: str) -> LinearDesign:
@@ -69,12 +75,12 @@ class Linear(DesignCreator, nn.Linear):
 
     def _quant_weight(
         self, weight: torch.FloatTensor, weight_QParams: torch.nn.Module
-    ) -> torch.FloatTensor:
+    ) -> torch.IntTensor:
         q_weight = weight_QParams.quantizeProcess(weight)
 
-        if weight_QParams.is_symmetric == False:
+        if not weight_QParams.is_symmetric:
             q_weight = subtract(
-                q_weight, weight_QParams.zero_point, self.quant_bits + 1
+                q_weight, weight_QParams.zero_point, weight_QParams.quant_bits + 1
             )
 
         return q_weight
@@ -83,36 +89,38 @@ class Linear(DesignCreator, nn.Linear):
         self,
         bias: torch.FloatTensor,
         bias_QParams: torch.nn.Module,
-        given_quant_scale: torch.FloatTensor,
+        given_scale_factor: torch.FloatTensor,
         given_quant_bits: int,
-    ) -> torch.FloatTensor:
-        bias_QParams.set_scale(given_quant_scale)
-        bias_QParams.set_zero_point(torch.zeros((1)))
-        min_quant = -(2 ** (given_quant_bits - 1)) + 1
-        max_quant = (2 ** (given_quant_bits - 1)) - 1
-        bias_QParams.set_quant_range(
-            given_min_quant=min_quant, given_max_quant=max_quant
-        )
+    ) -> torch.IntTensor:
+        bias_QParams.set_scale_factor(given_scale_factor)
+        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
+        bias_QParams.set_quant_range(given_quant_bits)
 
         q_bias = bias_QParams.quantizeProcess(bias)
+
+        if not bias_QParams.is_symmetric:
+            q_bias = subtract(q_bias, bias_QParams.zero_point, given_quant_bits + 1)
 
         return q_bias
 
     def precompute(self) -> None:
         self.q_weight = self._quant_weight(
-            weight=self.weight.to(DEVICE), weight_QParams=self.weight_QParams
+            weight=self.weight, weight_QParams=self.weight_QParams
         )
 
-        new_bias_QParms_scale = self.input_QParams.scale * self.weight_QParams.scale
-        self.tmp_quant_bits = 2 * (self.quant_bits + 1)
+        new_bias_scale_factor = self.input_QParams.scale * self.weight_QParams.scale
+        new_bias_quant_bits = (self.input_QParams.quant_bits + 1) + (
+            self.weight_QParams.quant_bits + 1
+        )
+        self.tmp_quant_bits = new_bias_quant_bits
         self.q_bias = self._quant_bias(
-            given_quant_scale=new_bias_QParms_scale,
+            given_scale_factor=new_bias_scale_factor,
             bias_QParams=self.bias_QParams,
             bias=self.bias.to(DEVICE),
-            given_quant_bits=self.tmp_quant_bits,
+            given_quant_bits=new_bias_quant_bits,
         )
 
-        self.m = new_bias_QParms_scale / self.output_QParams.scale
+        self.m = new_bias_scale_factor / self.output_QParams.scale
         QuantizedTensorValidator.check_dtype(self.m, "m", torch.float32, self.logger)
 
         self.m_N_shifts, self.m_int = scaling_m(self.m)

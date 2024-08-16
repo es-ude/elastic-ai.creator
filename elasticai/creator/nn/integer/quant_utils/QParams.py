@@ -63,15 +63,18 @@ class QParams(nn.Module):
         self.min_float.copy_(min_float)
         self.max_float.copy_(max_float)
 
-    def set_scale(self, given_scale: float) -> None:
-        self.scale.copy_(given_scale)
+    def set_scale_factor(self, given_scale_factor: float) -> None:
+        self.scale.copy_(given_scale_factor)
 
     def set_zero_point(self, given_zero_point: int) -> None:
         self.zero_point.copy_(given_zero_point)
 
-    def set_quant_range(self, given_min_quant: int, given_max_quant: int) -> None:
-        self.min_quant.copy_(given_min_quant)
-        self.max_quant.copy_(given_max_quant)
+    def set_quant_range(self, given_quant_bits: int) -> None:
+        min_quant = -(2 ** (given_quant_bits - 1)) + 1
+        max_quant = (2 ** (given_quant_bits - 1)) - 1
+
+        self.min_quant.copy_(min_quant)
+        self.max_quant.copy_(max_quant)
 
     def quantizeProcess(self, x: torch.FloatTensor) -> torch.IntTensor:
         return quantizeProcess(
