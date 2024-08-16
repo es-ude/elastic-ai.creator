@@ -249,3 +249,4 @@ Temporary Items
 /vhdl93-bnf.html
 tmp/
 examples/MLP
+__pycache__
