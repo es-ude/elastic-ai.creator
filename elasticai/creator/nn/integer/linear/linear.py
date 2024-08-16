@@ -31,6 +31,7 @@ class Linear(DesignCreator, nn.Linear):
         self.quant_bits = kwargs.get("quant_bits")
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = QParams(
             is_symmetric=False, quant_bits=self.quant_bits, observer=MinMaxObserver()
         ).to(DEVICE)

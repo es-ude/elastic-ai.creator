@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from elasticai.creator.nn.integer.math_operations.intadd import intadd
+from elasticai.creator.nn.integer.math_operations.add import intadd
 
 
 class TestIntAdd(unittest.TestCase):
