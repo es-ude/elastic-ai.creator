@@ -132,25 +132,19 @@ class Linear(DesignCreator, nn.Linear):
 
     def int_forward(
         self,
-        input: torch.Tensor,
-        quant_data_file_dir: Path = None,
+        q_input: torch.IntTensor,
     ) -> torch.IntTensor:
-        # quantise input if input is of floating point type
-        if input.dtype == torch.float32 or input.dtype == torch.float64:
-            q_input = self.input_QParams.quantizeProcess(input)
-        else:
-            q_input = input
+        q_input = subtract(
+            q_input, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
+        )
 
-        if quant_data_file_dir is not None:
-            save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
-
-        q_input = subtract(q_input, self.input_QParams.zero_point, self.quant_bits + 1)
-
-        # integer-only matrix multiplication on CPU
+        tmp_quant_bits = (self.input_QParams.quant_bits + 1) + (
+            self.weight_QParams.quant_bits + 1
+        )
         tmp = matmul(
             q_input.to("cpu"),
             self.q_weight.t().to("cpu"),
-            self.tmp_quant_bits,  # further +1 or not
+            tmp_quant_bits,  # TODO further +1 or not
         )
 
         if self.bias is not None:
@@ -172,9 +166,6 @@ class Linear(DesignCreator, nn.Linear):
 
         # process output
         output = add(tmp, self.output_QParams.zero_point.to("cpu"), self.quant_bits)
-
-        if quant_data_file_dir is not None:
-            save_quant_data(output, quant_data_file_dir, f"{self.name}_q_y")
 
         return output.to(DEVICE)
 

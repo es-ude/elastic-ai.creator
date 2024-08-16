@@ -2,10 +2,10 @@ from pathlib import Path
 
 import torch
 
-from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils.SaveQuantData import save_quant_data
 from elasticai.creator.nn.sequential.layer import Sequential as _SequentialBase
+from elasticai.creator.vhdl.design.design import Design
 
 from .design import Sequential as _SequentialDesign
 
@@ -26,27 +26,25 @@ class Sequential(_SequentialBase):
         return x
 
     def int_forward(
-        self, inputs: torch.Tensor, quant_data_file_dir: Path, name: str
-    ) -> torch.Tensor:
+        self, input: torch.FloatTensor, quant_data_file_dir: Path, name: str
+    ) -> torch.FloatTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
-        x = inputs
-
-        # Save quantized input to file
-        if x.dtype != torch.int32:
-            x = self.submodules[0].input_QParams.quantizeProcess(x)
-            if quant_data_file_dir is not None:
-                save_quant_data(x, quant_data_file_dir, f"{name}_q_x")
+        q_input = self.submodules[0].input_QParams.quantizeProcess(input)
+        if quant_data_file_dir is not None:
+            save_quant_data(q_input, quant_data_file_dir, f"{name}_q_x")
 
         for submodule in self.submodules:
-            x = submodule.int_forward(x, quant_data_file_dir)
+            save_quant_data(q_input, quant_data_file_dir, f"{submodule.name}_q_x")
+            q_output = submodule.int_forward(q_input)
+            save_quant_data(q_output, quant_data_file_dir, f"{submodule.name}_q_y")
+            q_input = q_output
 
-        if x.dtype == torch.int32 and quant_data_file_dir is not None:
-            save_quant_data(x, quant_data_file_dir, f"{name}_q_y")
+        save_quant_data(q_output, quant_data_file_dir, f"{name}_q_y")
 
-        x = self.submodules[-1].output_QParams.dequantizeProcess(x)
+        dq_output = self.submodules[-1].output_QParams.dequantizeProcess(q_output)
 
-        return x
+        return dq_output
 
     def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:
         return _SequentialDesign(sub_designs=sub_designs, name=name)

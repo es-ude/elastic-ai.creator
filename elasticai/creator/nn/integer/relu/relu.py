@@ -41,18 +41,7 @@ class ReLU(DesignCreator, nn.Module):
             clock_option=False,
         )
 
-    def int_forward(
-        self, input: torch.IntTensor, quant_data_file_dir: Path = None
-    ) -> torch.FloatTensor:
-        # quantise input if input is of floating point type
-        if input.dtype == torch.float32 or input.dtype == torch.float64:
-            q_input = self.input_QParams.quantizeProcess(input)
-        else:
-            q_input = input
-
-        if quant_data_file_dir is not None:
-            save_quant_data(q_input, quant_data_file_dir, f"{self.name}_q_x")
-
+    def int_forward(self, q_input: torch.IntTensor) -> torch.FloatTensor:
         zero_point = self.input_QParams.zero_point
         q_input = q_input.to(DEVICE)
         q_input[q_input < zero_point] = zero_point
@@ -67,11 +56,8 @@ class ReLU(DesignCreator, nn.Module):
             (2 ** (self.quant_bits - 1)) - 1,
             self.logger,
         )
-        output = q_input
-
-        if quant_data_file_dir is not None:
-            save_quant_data(output, quant_data_file_dir, f"{self.name}_q_y")
-        return output
+        q_output = q_input
+        return q_output
 
     def forward(
         self, input: torch.FloatTensor, given_input_QParams: QParams = None
