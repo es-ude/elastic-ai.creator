@@ -173,17 +173,13 @@ class Linear(DesignCreator, nn.Linear):
         self, input: torch.FloatTensor, given_input_QParams: QParams = None
     ) -> torch.FloatTensor:
         if self.training:
-            if given_input_QParams is not None:
-                self.input_QParams = given_input_QParams
+            if given_input_QParams is None:
+                self.input_QParams.updateScaleZeropoint(input)
             else:
-                self.input_QParams.updateScaleZeropoint(
-                    input
-                )  # required for FakeQuantize even if scaler_mode is fixed
+                self.input_QParams = given_input_QParams
 
-        if self.training:
-            # self.input_QParams.updateScaleZeropoint(input)
-            self.weight_QParams.updateScaleZeropoint(self.weight)
-            self.bias_QParams.updateScaleZeropoint(self.bias)
+        self.weight_QParams.updateScaleZeropoint(self.weight)
+        self.bias_QParams.updateScaleZeropoint(self.bias)
 
         input = FakeQuantize.apply(input, self.input_QParams)
         weight = FakeQuantize.apply(self.weight.to(DEVICE), self.weight_QParams)
