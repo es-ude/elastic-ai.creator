@@ -142,13 +142,13 @@ class Linear(DesignCreator, nn.Linear):
             self.weight_QParams.quant_bits + 1
         )
         tmp = matmul(
-            q_input.to("cpu"),
-            self.q_weight.t().to("cpu"),
+            q_input,
+            self.q_weight.t(),
             tmp_quant_bits,  # TODO further +1 or not
         )
 
         if self.bias is not None:
-            tmp = add(tmp, self.q_bias.to("cpu"), self.tmp_quant_bits + 1)
+            tmp = add(tmp, self.q_bias, self.tmp_quant_bits + 1)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_M_q_shift, self.scale_factor_M_q
@@ -165,7 +165,7 @@ class Linear(DesignCreator, nn.Linear):
         )
 
         # process output
-        output = add(tmp, self.output_QParams.zero_point.to("cpu"), self.quant_bits)
+        output = add(tmp, self.output_QParams.zero_point, self.quant_bits)
 
         return output.to(DEVICE)
 
