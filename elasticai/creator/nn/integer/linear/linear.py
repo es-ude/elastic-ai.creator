@@ -9,17 +9,14 @@ from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.addition import add
 from elasticai.creator.nn.integer.math_operations.matrixmultiplication import matmul
 from elasticai.creator.nn.integer.math_operations.subtraction import subtract
-from elasticai.creator.nn.integer.quant_utils.BitShifting import (
-    scaling_M,
-    simulate_bitshifting,
-)
 from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
-from elasticai.creator.nn.integer.quant_utils.QuantizedTensorValidator import (
-    QuantizedTensorValidator,
-)
 from elasticai.creator.nn.integer.quant_utils.SaveQuantData import save_quant_data
+from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
+from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    simulate_bitshifting,
+)
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
@@ -151,20 +148,11 @@ class Linear(DesignCreator, nn.Linear):
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_M_q_shift, self.scale_factor_M_q
-        ).to("cpu")
-        QuantizedTensorValidator.check_dtype(
-            tmp, "tmp after bit_shifting", torch.int32, self.logger
-        )
-        QuantizedTensorValidator.check_drange(
-            tmp,
-            "tmp after bit_shifting",
-            -(2 ** (self.quant_bits + 1)),
-            (2 ** (self.quant_bits + 1)) - 1,
-            self.logger,
         )
 
-        # process output
-        output = add(tmp, self.output_QParams.zero_point, self.quant_bits)
+        output = add(
+            tmp, self.output_QParams.zero_point, self.output_QParams.quant_bits
+        )
 
         return output.to(DEVICE)
 
