@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch import nn
 
 from elasticai.creator.nn.integer.config import DEVICE
-from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
+from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 from elasticai.creator.nn.integer.relu.design import ReLU as ReLUDesign
@@ -22,12 +22,12 @@ class ReLU(DesignCreator, nn.Module):
 
         self.input_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
-            observer=MinMaxObserver(),
+            observer=GlobalMinMaxObserver(),
         ).to(DEVICE)
 
         self.output_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
-            observer=MinMaxObserver(),
+            observer=GlobalMinMaxObserver(),
         ).to(DEVICE)
 
     def create_design(self, name: str) -> ReLUDesign:

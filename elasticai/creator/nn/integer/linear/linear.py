@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
+from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     SymmetricSignedQParams,
@@ -32,16 +32,16 @@ class Linear(DesignCreator, nn.Linear):
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
+            quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(DEVICE)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
+            quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(DEVICE)
         self.input_QParams = AsymmetricSignedQParams(
-            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
+            quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(DEVICE)
         self.output_QParams = AsymmetricSignedQParams(
-            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
+            quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(DEVICE)
 
         self.math_ops = MathOperations()
