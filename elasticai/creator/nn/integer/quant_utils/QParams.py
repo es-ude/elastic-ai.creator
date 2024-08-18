@@ -152,7 +152,7 @@ class SymmetricSignedQParams(QParams):
         super().__init__(quant_bits, observer, is_symmetric=True, is_signed=True)
 
 
-class AsymmetricUnsignedQparams(QParams):
+class AsymmetricUnsignedQParams(QParams):
     def __init__(self, quant_bits: int, observer: nn.Module):
         super().__init__(quant_bits, observer, is_symmetric=False, is_signed=False)
 
