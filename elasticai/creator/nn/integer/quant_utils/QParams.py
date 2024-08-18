@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 
-# from elasticai.creator.nn.integer.quant_utils.dequantize import dequantizeProcess
-# from elasticai.creator.nn.integer.quant_utils.quantize import quantizeProcess
-from elasticai.creator.nn.integer.math_operations.subtraction import subtract
+from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
     calculate_quant_params,
 )
@@ -48,6 +46,7 @@ class QParams(nn.Module):
         )
 
         self._calculate_quant_range()
+        self.math_ops = MathOperations()
 
     def _calculate_quant_range(self):
         if self.is_signed:
@@ -101,7 +100,7 @@ class QParams(nn.Module):
         return x_q
 
     def dequantize(self, x_q: torch.IntTensor) -> torch.FloatTensor:
-        x_q = subtract(x_q, self.zero_point, self.quant_bits + 1)
+        x_q = self.math_ops.intsub(x_q, self.zero_point, self.quant_bits + 1)
         x_dq = x_q.to(torch.float32) * self.scale_factor
         return x_dq
 

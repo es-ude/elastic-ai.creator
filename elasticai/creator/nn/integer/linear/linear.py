@@ -6,9 +6,7 @@ from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
-from elasticai.creator.nn.integer.math_operations.addition import add
-from elasticai.creator.nn.integer.math_operations.matrixmultiplication import matmul
-from elasticai.creator.nn.integer.math_operations.subtraction import subtract
+from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
@@ -46,6 +44,8 @@ class Linear(DesignCreator, nn.Linear):
             quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
         ).to(DEVICE)
 
+        self.math_ops = MathOperations()
+
     def create_design(self, name: str) -> LinearDesign:
         # BUG: to make sure about if the self.q_weight and self.q_bias are lists. (?! Done ?!)
         return LinearDesign(
@@ -69,7 +69,7 @@ class Linear(DesignCreator, nn.Linear):
         q_weight = weight_QParams.quantize(weight)
 
         if not weight_QParams.is_symmetric:
-            q_weight = subtract(
+            q_weight = self.math_ops.intsub(
                 q_weight, weight_QParams.zero_point, weight_QParams.quant_bits + 1
             )
 
@@ -89,7 +89,9 @@ class Linear(DesignCreator, nn.Linear):
         q_bias = bias_QParams.quantize(bias)
 
         if not bias_QParams.is_symmetric:
-            q_bias = subtract(q_bias, bias_QParams.zero_point, given_quant_bits + 1)
+            q_bias = self.math_ops.intsub(
+                q_bias, bias_QParams.zero_point, given_quant_bits + 1
+            )
 
         return q_bias
 
@@ -123,27 +125,27 @@ class Linear(DesignCreator, nn.Linear):
         self,
         q_input: torch.IntTensor,
     ) -> torch.IntTensor:
-        q_input = subtract(
+        q_input = self.math_ops.intsub(
             q_input, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
         )
 
         tmp_quant_bits = (self.input_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
-        tmp = matmul(
+        tmp = self.math_ops.intmatmul(
             q_input,
             self.q_weight.t(),
             tmp_quant_bits,  # TODO further +1 or not
         )
 
         if self.bias is not None:
-            tmp = add(tmp, self.q_bias, self.tmp_quant_bits + 1)
+            tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_M_q_shift, self.scale_factor_M_q
         )
 
-        output = add(
+        output = self.math_ops.intadd(
             tmp, self.output_QParams.zero_point, self.output_QParams.quant_bits
         )
 
