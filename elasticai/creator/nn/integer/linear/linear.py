@@ -9,13 +9,13 @@ from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.addition import add
 from elasticai.creator.nn.integer.math_operations.matrixmultiplication import matmul
 from elasticai.creator.nn.integer.math_operations.subtraction import subtract
-from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
+from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
     simulate_bitshifting,
 )
@@ -161,14 +161,14 @@ class Linear(DesignCreator, nn.Linear):
         self.weight_QParams.update_quant_params(self.weight)
         self.bias_QParams.update_quant_params(self.bias)
 
-        input = FakeQuantize.apply(input, self.input_QParams)
-        weight = FakeQuantize.apply(self.weight.to(DEVICE), self.weight_QParams)
-        bias = FakeQuantize.apply(self.bias.to(DEVICE), self.bias_QParams)
+        input = SimQuant.apply(input, self.input_QParams)
+        weight = SimQuant.apply(self.weight.to(DEVICE), self.weight_QParams)
+        bias = SimQuant.apply(self.bias.to(DEVICE), self.bias_QParams)
 
         output = F.linear(input, weight, bias)
 
         if self.training:
             self.output_QParams.update_quant_params(output)
 
-        output = FakeQuantize.apply(output, self.output_QParams)
+        output = SimQuant.apply(output, self.output_QParams)
         return output

@@ -1,7 +1,7 @@
 from torch.autograd import Function
 
 
-class FakeQuantize(Function):
+class SimQuant(Function):
     @staticmethod
     def forward(ctx, x_r: float, x_r_QParams) -> float:
         x_q = x_r_QParams.quantize(x_r)
