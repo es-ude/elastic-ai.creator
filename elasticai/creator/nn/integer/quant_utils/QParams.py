@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
 
+# from elasticai.creator.nn.integer.quant_utils.dequantize import dequantizeProcess
+# from elasticai.creator.nn.integer.quant_utils.quantize import quantizeProcess
+from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
     calculate_quant_params,
 )
-from elasticai.creator.nn.integer.quant_utils.DeQuantizeProcess import dequantizeProcess
-from elasticai.creator.nn.integer.quant_utils.QuantizeProcess import quantizeProcess
 
 
 class QParams(nn.Module):
@@ -94,18 +95,15 @@ class QParams(nn.Module):
         self._calculate_quant_range()
 
     def quantize(self, x: torch.FloatTensor) -> torch.IntTensor:
-        return quantizeProcess(
-            x=x,
-            min_quant=self.min_quant,
-            max_quant=self.max_quant,
-            scale_factor=self.scale_factor,
-            zero_point=self.zero_point,
-        )
+        x_q = x / self.scale_factor + self.zero_point
+        x_q = x_q.round_().clamp(min=self.min_quant.item(), max=self.max_quant.item())
+        x_q = x_q.to(torch.int32)
+        return x_q
 
     def dequantize(self, x_q: torch.IntTensor) -> torch.FloatTensor:
-        return dequantizeProcess(
-            x_q, self.scale_factor, self.zero_point, self.quant_bits + 1
-        )
+        x_q = subtract(x_q, self.zero_point, self.quant_bits + 1)
+        x_dq = x_q.to(torch.float32) * self.scale_factor
+        return x_dq
 
     def _load_from_state_dict(
         self,
