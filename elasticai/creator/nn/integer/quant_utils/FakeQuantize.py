@@ -4,12 +4,12 @@ from torch.autograd import Function
 class FakeQuantize(Function):
     @staticmethod
     def forward(ctx, x_r: float, x_r_QParams) -> float:
-        x_q = x_r_QParams.quantizeProcess(x_r)
+        x_q = x_r_QParams.quantize(x_r)
         min_float = x_r_QParams.min_float.to(x_r.device)
         max_float = x_r_QParams.max_float.to(x_r.device)
 
         ctx.save_for_backward(x_r, min_float, max_float)
-        return x_r_QParams.dequantizeProcess(x_q)
+        return x_r_QParams.dequantize(x_q)
 
     @staticmethod
     def backward(ctx, grad_output):

@@ -7,10 +7,7 @@ from torch import nn
 from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import QParams
-from elasticai.creator.nn.integer.quant_utils.QuantizedTensorValidator import (
-    QuantizedTensorValidator,
-)
+from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.relu.design import ReLU as ReLUDesign
 from elasticai.creator.vhdl.design_creator import DesignCreator
 
@@ -23,14 +20,12 @@ class ReLU(DesignCreator, nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.input_QParams = QParams(
-            is_symmetric=False,
+        self.input_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=MinMaxObserver(),
         ).to(DEVICE)
 
-        self.output_QParams = QParams(
-            is_symmetric=False,
+        self.output_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=MinMaxObserver(),
         ).to(DEVICE)
@@ -50,11 +45,11 @@ class ReLU(DesignCreator, nn.Module):
         return q_output
 
     def forward(
-        self, input: torch.FloatTensor, given_input_QParams: QParams = None
+        self, input: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         if self.training:
             if given_input_QParams is None:
-                self.input_QParams.updateScaleZeropoint(input)
+                self.input_QParams.update_quant_params(input)
             else:
                 self.input_QParams = given_input_QParams
 

@@ -30,7 +30,7 @@ class Sequential(_SequentialBase):
     ) -> torch.FloatTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
-        q_input = self.submodules[0].input_QParams.quantizeProcess(input)
+        q_input = self.submodules[0].input_QParams.quantize(input)
         if quant_data_file_dir is not None:
             save_quant_data(q_input, quant_data_file_dir, f"{name}_q_x")
 
@@ -42,7 +42,7 @@ class Sequential(_SequentialBase):
 
         save_quant_data(q_output, quant_data_file_dir, f"{name}_q_y")
 
-        dq_output = self.submodules[-1].output_QParams.dequantizeProcess(q_output)
+        dq_output = self.submodules[-1].output_QParams.dequantize(q_output)
 
         return dq_output
 

@@ -11,7 +11,10 @@ from elasticai.creator.nn.integer.math_operations.matrixmultiplication import ma
 from elasticai.creator.nn.integer.math_operations.subtraction import subtract
 from elasticai.creator.nn.integer.quant_utils.FakeQuantize import FakeQuantize
 from elasticai.creator.nn.integer.quant_utils.Observers import MinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import QParams
+from elasticai.creator.nn.integer.quant_utils.QParams import (
+    AsymmetricSignedQParams,
+    SymmetricSignedQParams,
+)
 from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
 from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
     simulate_bitshifting,
@@ -30,25 +33,17 @@ class Linear(DesignCreator, nn.Linear):
         self.quant_bits = kwargs.get("quant_bits")
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
-        self.weight_QParams = QParams(
-            is_symmetric=False,
-            quant_bits=kwargs.get("quant_bits"),
-            observer=MinMaxObserver(),
+        self.weight_QParams = AsymmetricSignedQParams(
+            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
         ).to(DEVICE)
-        self.bias_QParams = QParams(
-            is_symmetric=True,
-            quant_bits=kwargs.get("quant_bits"),
-            observer=MinMaxObserver(),
+        self.bias_QParams = SymmetricSignedQParams(
+            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
         ).to(DEVICE)
-        self.input_QParams = QParams(
-            is_symmetric=False,
-            quant_bits=kwargs.get("quant_bits"),
-            observer=MinMaxObserver(),
+        self.input_QParams = AsymmetricSignedQParams(
+            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
         ).to(DEVICE)
-        self.output_QParams = QParams(
-            is_symmetric=False,
-            quant_bits=kwargs.get("quant_bits"),
-            observer=MinMaxObserver(),
+        self.output_QParams = AsymmetricSignedQParams(
+            quant_bits=kwargs.get("quant_bits"), observer=MinMaxObserver()
         ).to(DEVICE)
 
     def create_design(self, name: str) -> LinearDesign:
@@ -71,7 +66,7 @@ class Linear(DesignCreator, nn.Linear):
     def _quant_weight(
         self, weight: torch.FloatTensor, weight_QParams: torch.nn.Module
     ) -> torch.IntTensor:
-        q_weight = weight_QParams.quantizeProcess(weight)
+        q_weight = weight_QParams.quantize(weight)
 
         if not weight_QParams.is_symmetric:
             q_weight = subtract(
@@ -91,7 +86,7 @@ class Linear(DesignCreator, nn.Linear):
         bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
         bias_QParams.set_quant_range(given_quant_bits)
 
-        q_bias = bias_QParams.quantizeProcess(bias)
+        q_bias = bias_QParams.quantize(bias)
 
         if not bias_QParams.is_symmetric:
             q_bias = subtract(q_bias, bias_QParams.zero_point, given_quant_bits + 1)
@@ -103,7 +98,9 @@ class Linear(DesignCreator, nn.Linear):
             weight=self.weight, weight_QParams=self.weight_QParams
         )
 
-        new_bias_scale_factor = self.input_QParams.scale * self.weight_QParams.scale
+        new_bias_scale_factor = (
+            self.input_QParams.scale_factor * self.weight_QParams.scale_factor
+        )
         new_bias_quant_bits = (self.input_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
@@ -114,12 +111,9 @@ class Linear(DesignCreator, nn.Linear):
             bias=self.bias.to(DEVICE),
             given_quant_bits=new_bias_quant_bits,
         )
-
         self.scale_factor_M = (
-            self.input_QParams.scale
-            * self.weight_QParams.scale
-            / self.output_QParams.scale
-        )
+            self.input_QParams.scale_factor * self.weight_QParams.scale_factor
+        ) / self.output_QParams.scale_factor
 
         self.scale_factor_M_q_shift, self.scale_factor_M_q = scaling_M(
             self.scale_factor_M
@@ -156,16 +150,16 @@ class Linear(DesignCreator, nn.Linear):
         return output.to(DEVICE)
 
     def forward(
-        self, input: torch.FloatTensor, given_input_QParams: QParams = None
+        self, input: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         if self.training:
             if given_input_QParams is None:
-                self.input_QParams.updateScaleZeropoint(input)
+                self.input_QParams.update_quant_params(input)
             else:
                 self.input_QParams = given_input_QParams
 
-        self.weight_QParams.updateScaleZeropoint(self.weight)
-        self.bias_QParams.updateScaleZeropoint(self.bias)
+        self.weight_QParams.update_quant_params(self.weight)
+        self.bias_QParams.update_quant_params(self.bias)
 
         input = FakeQuantize.apply(input, self.input_QParams)
         weight = FakeQuantize.apply(self.weight.to(DEVICE), self.weight_QParams)
@@ -174,7 +168,7 @@ class Linear(DesignCreator, nn.Linear):
         output = F.linear(input, weight, bias)
 
         if self.training:
-            self.output_QParams.updateScaleZeropoint(output)
+            self.output_QParams.update_quant_params(output)
 
         output = FakeQuantize.apply(output, self.output_QParams)
         return output
