@@ -1,36 +1,49 @@
-import warnings
+import unittest
 
 import torch
 
-
-def scaling_M(m: torch.Tensor):
-    N_shifts = torch.tensor(1, dtype=torch.int32)
-    m = torch.round(m * 10**5) / 10**5
-
-    while N_shifts.item() < 32:
-        # BUG: there is no limitation of m_int's range
-        m_int = torch.round(m * (2**N_shifts)).type(torch.int32)
-        error = (m - m_int * (2 ** (-N_shifts.item()))) / m
-        if torch.all(error > 0.0001) or torch.all(error < 0):
-            N_shifts += 1
-        else:
-            break
-    return N_shifts, m_int
+from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    simulate_bitshifting,
+)
 
 
-def simulate_bitshifting(
-    x_q: torch.Tensor, N_shifts: torch.Tensor, m_int: torch.Tensor
-):
-    x_q = x_q.to(torch.int64)
-    N_shifts = N_shifts.to(x_q.device)
-    m_int = m_int.to(torch.int64).to(x_q.device)
+class TestSimulateBitshifting(unittest.TestCase):
+    def test_simulate_bitshifting(self):
+        # float32
+        input = torch.tensor(
+            [[1.5000, -2.8000], [-9.0000, 4.2000]], dtype=torch.float32
+        )
+        weight = torch.tensor(
+            [[-1.0000, -0.3800], [0.5000, 1.0000]], dtype=torch.float32
+        )
+        bias = torch.tensor([-1.0, 1.0], dtype=torch.float32)
+        output = torch.tensor(
+            [[-1.4450, -1.0453], [6.3950, 0.7071]], dtype=torch.float32
+        )
 
-    product = x_q * m_int
-    max_int64 = torch.iinfo(torch.int64).max
-    min_int64 = torch.iinfo(torch.int64).min
-    if torch.any(product > max_int64) or torch.any(product < min_int64):
-        warnings.warn("Overflow of product in simulate_bitshifting")
+        # int8
+        input_scale = torch.tensor([0.0518], dtype=torch.float32)
+        input_zero_point = torch.tensor([46], dtype=torch.int32)
+        q_input = torch.tensor([[75, -8], [-128, 127]], dtype=torch.int32)
 
-    approx_result = (product / (2 ** N_shifts.item())).round_().int()
+        weight_scale = torch.tensor([0.0078], dtype=torch.float32)
+        weight_zero_point = torch.tensor([-1], dtype=torch.int32)
+        q_weight = torch.tensor([[-128, -49], [63, 126]], dtype=torch.int32)
 
-    return approx_result
+        bias_scale = input_scale * weight_scale
+        bias_zero_point = torch.tensor([0], dtype=torch.int32)
+        q_bias = torch.tensor([-2463, 2463], dtype=torch.int32)
+
+        output_scale = torch.tensor([0.0307], dtype=torch.float32)
+        output_zero_point = torch.tensor([-81], dtype=torch.int32)
+        q_output = torch.tensor([[-128, -115], [127, -58]], dtype=torch.int32)
+
+        scale_factor_M = input_scale * weight_scale / output_scale
+        M_q_shift = torch.tensor([21], dtype=torch.int32)
+        M_q = torch.tensor([27703], dtype=torch.int32)
+
+        tmp = (q_input - input_zero_point).mm(q_weight.t() - weight_zero_point) + q_bias
+        result = simulate_bitshifting(tmp, M_q_shift, M_q)
+
+        expected_result = torch.tensor([[-47, -34], [208, 21]], dtype=torch.int32)
+        torch.testing.assert_close(result, expected_result)
