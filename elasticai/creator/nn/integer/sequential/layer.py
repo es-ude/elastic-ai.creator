@@ -3,7 +3,6 @@ from pathlib import Path
 import torch
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.quant_utils.SaveQuantData import save_quant_data
 from elasticai.creator.nn.sequential.layer import Sequential as _SequentialBase
 from elasticai.creator.vhdl.design.design import Design
 
@@ -14,6 +13,11 @@ class Sequential(_SequentialBase):
     def __init__(self, *submodules: DesignCreatorModule):
         super().__init__(*submodules)
         self.submodules = submodules
+
+    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
+        file_path = file_dir / f"{file_name}.txt"
+        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
+        file_path.write_text(tensor_str)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs
@@ -32,15 +36,17 @@ class Sequential(_SequentialBase):
 
         q_input = self.submodules[0].input_QParams.quantize(input)
         if quant_data_file_dir is not None:
-            save_quant_data(q_input, quant_data_file_dir, f"{name}_q_x")
+            self._save_quant_data(q_input, quant_data_file_dir, f"{name}_q_x")
 
         for submodule in self.submodules:
-            save_quant_data(q_input, quant_data_file_dir, f"{submodule.name}_q_x")
+            self._save_quant_data(q_input, quant_data_file_dir, f"{submodule.name}_q_x")
             q_output = submodule.int_forward(q_input)
-            save_quant_data(q_output, quant_data_file_dir, f"{submodule.name}_q_y")
+            self._save_quant_data(
+                q_output, quant_data_file_dir, f"{submodule.name}_q_y"
+            )
             q_input = q_output
 
-        save_quant_data(q_output, quant_data_file_dir, f"{name}_q_y")
+        self._save_quant_data(q_output, quant_data_file_dir, f"{name}_q_y")
 
         dq_output = self.submodules[-1].output_QParams.dequantize(q_output)
 

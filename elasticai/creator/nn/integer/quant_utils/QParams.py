@@ -3,7 +3,8 @@ import torch.nn as nn
 
 from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
-    calculate_quant_params,
+    calculate_asymmetric_quant_params,
+    calculate_symmetric_quant_params,
 )
 
 
@@ -68,8 +69,12 @@ class QParams(nn.Module):
 
     def update_quant_params(self, x: torch.FloatTensor) -> None:
         self.observer(x)
-        scale_factor, zero_point, min_float, max_float = calculate_quant_params(
-            is_symmetric=self.is_symmetric,
+        calculate_quant_params_fn = (
+            calculate_symmetric_quant_params
+            if self.is_symmetric
+            else calculate_asymmetric_quant_params
+        )
+        scale_factor, zero_point, min_float, max_float = calculate_quant_params_fn(
             min_quant=self.min_quant,
             max_quant=self.max_quant,
             min_float=self.observer.min_float,
