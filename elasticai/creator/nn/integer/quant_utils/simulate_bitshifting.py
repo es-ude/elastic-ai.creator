@@ -2,10 +2,6 @@ import warnings
 
 import torch
 
-from elasticai.creator.nn.integer.quant_utils.QuantizedTensorValidator import (
-    QuantizedTensorValidator,
-)
-
 
 def simulate_bitshifting(
     x_q: torch.IntTensor, M_q_shift: torch.IntTensor, M_q: torch.IntTensor
@@ -22,13 +18,5 @@ def simulate_bitshifting(
         warnings.warn("Overflow of product in simulate_bitshifting")
 
     approx_result = (product / (2 ** M_q_shift.item())).round_().int()
-
-    # QuantizedTensorValidator.check_drange(
-    #     approx_result,
-    #     "tmp after bit_shifting",
-    #     -(2 ** (8 + 1)),
-    #     (2 ** (8 + 1)) - 1,
-    #     self.logger,
-    # )
 
     return approx_result
