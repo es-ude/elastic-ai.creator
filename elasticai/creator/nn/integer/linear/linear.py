@@ -113,13 +113,10 @@ class Linear(DesignCreator, nn.Linear):
             q_input, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
         )
 
-        tmp_quant_bits = (self.input_QParams.quant_bits + 1) + (
-            self.weight_QParams.quant_bits + 1
-        )
         tmp = self.math_ops.intmatmul(
             q_input,
             self.q_weight.t(),
-            tmp_quant_bits,  # TODO further +1 or not
+            self.tmp_quant_bits,  # TODO further +1 or not
         )
 
         if self.bias is not None:
