@@ -45,7 +45,6 @@ class Linear(DesignCreator, nn.Linear):
         self.math_ops = MathOperations()
 
     def create_design(self, name: str) -> LinearDesign:
-        # BUG: to make sure about if the self.q_weight and self.q_bias are lists. (?! Done ?!)
         return LinearDesign(
             name=name,
             data_width=self.quant_bits,
@@ -61,56 +60,43 @@ class Linear(DesignCreator, nn.Linear):
             z_y=self.output_QParams.zero_point.item(),
         )
 
-    def _quant_weight(
-        self, weight: torch.FloatTensor, weight_QParams: torch.nn.Module
-    ) -> torch.IntTensor:
-        q_weight = weight_QParams.quantize(weight)
+    def _get_quantized_weights(self) -> torch.IntTensor:
+        q_weight = self.weight_QParams.quantize(self.weight)
 
-        if not weight_QParams.is_symmetric:
+        if not self.weight_QParams.is_symmetric:
             q_weight = self.math_ops.intsub(
-                q_weight, weight_QParams.zero_point, weight_QParams.quant_bits + 1
+                q_weight,
+                self.weight_QParams.zero_point,
+                self.weight_QParams.quant_bits + 1,
             )
-
         return q_weight
 
-    def _quant_bias(
-        self,
-        bias: torch.FloatTensor,
-        bias_QParams: torch.nn.Module,
-        given_scale_factor: torch.FloatTensor,
-        given_quant_bits: int,
-    ) -> torch.IntTensor:
-        bias_QParams.set_scale_factor(given_scale_factor)
-        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(given_quant_bits)
-
-        q_bias = bias_QParams.quantize(bias)
-
-        if not bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, bias_QParams.zero_point, given_quant_bits + 1
-            )
-
-        return q_bias
-
-    def precompute(self) -> None:
-        self.q_weight = self._quant_weight(
-            weight=self.weight, weight_QParams=self.weight_QParams
-        )
-
+    def _get_quantized_bias(self) -> torch.IntTensor:
         new_bias_scale_factor = (
             self.input_QParams.scale_factor * self.weight_QParams.scale_factor
         )
         new_bias_quant_bits = (self.input_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
-        self.tmp_quant_bits = new_bias_quant_bits
-        self.q_bias = self._quant_bias(
-            given_scale_factor=new_bias_scale_factor,
-            bias_QParams=self.bias_QParams,
-            bias=self.bias,
-            given_quant_bits=new_bias_quant_bits,
-        )
+
+        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
+        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
+        self.bias_QParams.set_quant_range(new_bias_quant_bits)
+
+        q_bias = self.bias_QParams.quantize(self.bias)
+
+        if not self.bias_QParams.is_symmetric:
+            q_bias = self.math_ops.intsub(
+                q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
+            )
+        return q_bias
+
+    def precompute(self) -> None:
+        self.q_weight = self._get_quantized_weights()
+        self.q_bias = self._get_quantized_bias()
+
+        self.tmp_quant_bits = self.bias_QParams.quant_bits
+
         self.scale_factor_M = (
             self.input_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.output_QParams.scale_factor
