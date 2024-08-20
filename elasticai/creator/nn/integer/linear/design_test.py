@@ -1,16 +1,8 @@
-import difflib
 from typing import cast
-
-import torch
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.linear.linear import Linear
 from elasticai.creator.nn.integer.linear.linear_test import linear_layer_setup
-
-
-def normalize_code(code: str) -> str:
-    # 移除所有空白字符
-    return "".join(code.split())
 
 
 def save_design(design: Linear) -> dict[str, str]:

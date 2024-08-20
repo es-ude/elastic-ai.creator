@@ -52,4 +52,6 @@ class ReLU(Design):
             ),
         )
 
-        destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)
+        destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
+            template_test
+        )
