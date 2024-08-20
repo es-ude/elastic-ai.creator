@@ -89,8 +89,6 @@ class Linear(Design):
             resource_option=self._resource_option,
         )
 
-        print("Template parameters:", parameters)
-
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="linear.tpl.vhd",

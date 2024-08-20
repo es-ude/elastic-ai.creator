@@ -4,8 +4,8 @@ use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
 
-library work;
-use work.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 
 -----------------------------------------------------------
 entity ${name}_tb is
@@ -110,7 +110,7 @@ begin
         wait;
     end process ;
     ---------------------Entity Under Test------------------------
-    uut: entity work.${name}(rtl)
+    uut: entity ${work_library_name}.${name}(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,

@@ -10,12 +10,18 @@ from elasticai.creator.vhdl.design.ports import Port
 
 class ReLU(Design):
     def __init__(
-        self, name: str, data_width: int, threshold: int, clock_option: bool = True
+        self,
+        name: str,
+        data_width: int,
+        threshold: int,
+        clock_option: bool,
+        work_library_name: str,
     ) -> None:
         super().__init__(name=name)
         self._data_width = data_width
         self._threshold = threshold
         self._clock_option = clock_option
+        self._work_library_name = work_library_name
 
     @property
     def port(self) -> Port:
@@ -42,6 +48,7 @@ class ReLU(Design):
                 data_width=str(self._data_width),
                 threshold=str(self._threshold),
                 clock_option="true" if self._clock_option else "false",
+                work_library_name=self._work_library_name,
             ),
         )
 

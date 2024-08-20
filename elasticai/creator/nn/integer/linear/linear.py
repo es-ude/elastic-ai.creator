@@ -97,8 +97,6 @@ class Linear(DesignCreator, nn.Linear):
         self.q_weights = self._get_quantized_weights()
         self.q_bias = self._get_quantized_bias()
 
-        self.tmp_quant_bits = self.bias_QParams.quant_bits
-
         self.scale_factor_M = (
             self.input_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.output_QParams.scale_factor
@@ -118,11 +116,13 @@ class Linear(DesignCreator, nn.Linear):
         tmp = self.math_ops.intmatmul(
             q_input,
             self.q_weights.t(),
-            self.tmp_quant_bits,  # TODO further +1 or not
+            self.bias_QParams.quant_bits,  # TODO further +1 or not
         )
 
         if self.bias is not None:
-            tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
+            tmp = self.math_ops.intadd(
+                tmp, self.q_bias, self.bias_QParams.quant_bits + 1
+            )
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q

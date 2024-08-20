@@ -35,6 +35,7 @@ class ReLU(DesignCreator, nn.Module):
             data_width=self.quant_bits,
             threshold=int(self.input_QParams.zero_point.detach()),
             clock_option=False,
+            work_library_name="work",
         )
 
     def int_forward(self, q_input: torch.IntTensor) -> torch.FloatTensor:
