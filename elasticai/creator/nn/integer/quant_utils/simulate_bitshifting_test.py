@@ -30,11 +30,11 @@ def test_simulate_bitshifting():
     q_output = torch.tensor([[-128, -115], [127, -58]], dtype=torch.int32)
 
     scale_factor_M = input_scale * weight_scale / output_scale
-    M_q_shift = torch.tensor([21], dtype=torch.int32)
-    M_q = torch.tensor([27703], dtype=torch.int32)
+    m_q_shift = torch.tensor([21], dtype=torch.int32)
+    m_q = torch.tensor([27703], dtype=torch.int32)
 
     tmp = (q_input - input_zero_point).mm(q_weight.t() - weight_zero_point) + q_bias
-    result = simulate_bitshifting(tmp, M_q_shift, M_q)
+    result = simulate_bitshifting(tmp, m_q_shift, m_q)
 
     expected_result = torch.tensor([[-47, -34], [208, 21]], dtype=torch.int32)
     torch.testing.assert_close(result, expected_result)

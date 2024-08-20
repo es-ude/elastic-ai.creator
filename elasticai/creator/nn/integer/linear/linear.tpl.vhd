@@ -2,8 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library work;
-use work.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 
 -----------------------------------------------------------
 entity ${name} is
@@ -13,15 +13,14 @@ entity ${name} is
         DATA_WIDTH : integer := ${data_width};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features};
-        SCALER : integer := ${scaler};
-        SHIFT : integer := ${shift};
+        M_Q : integer := ${m_q};
+        M_Q_SHIFT : integer := ${m_q_shift};
         Z_X : integer := ${z_x};
         Z_W : integer := ${z_w};
         Z_B : integer := ${z_b};
         Z_Y : integer := ${z_y};
-        SCLAER_DATA_WIDTH : integer := ${scaler_data_width};
+        M_Q_DATA_WIDTH : integer := ${m_q_data_width};
         Y_RESOURCE_OPTION : string := "${resource_option}"
-
     );
     port (
         enable : in std_logic;
@@ -49,12 +48,12 @@ architecture rtl of ${name} is
     end function;
     ------------------Scaling Function---------------------
     function scaling(x_in : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
-    scaler_m : in signed(SCLAER_DATA_WIDTH -1 downto 0);
-    shift_n : in integer
+    scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
+    scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + SCLAER_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + SCLAER_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + SCLAER_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable is_negative : boolean := x_in(x_in'left) = '1';
     begin
         if is_negative then
@@ -62,9 +61,9 @@ architecture rtl of ${name} is
         else
             TMP_1 := x_in * scaler_m;
         end if;
-        TMP_2 := shift_right(TMP_1, shift_n);
+        TMP_2 := shift_right(TMP_1, scaler_m_shift);
         TMP_3 := TMP_2;
-        if TMP_1(shift_n-1) = '1' then
+        if TMP_1(scaler_m_shift-1) = '1' then
             TMP_3 := TMP_2 + 1;
         end if;
         if is_negative then
@@ -86,7 +85,7 @@ architecture rtl of ${name} is
         return result;
     end function log2;
     -----------------------Signals-----------------------
-    signal SCALER_SIGNED:signed(SCLAER_DATA_WIDTH - 1 downto 0) := to_signed(SCALER, SCLAER_DATA_WIDTH);
+    signal M_Q_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
 
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
@@ -203,7 +202,7 @@ begin
                             mac_state <= s_scaling;
                         end if;
                     when s_scaling =>
-                        y_scaled <= scaling(macc_sum, SCALER_SIGNED, SHIFT);
+                        y_scaled <= scaling(macc_sum, M_Q_SIGNED, M_Q_SHIFT);
                         mac_state <= s_output;
                     when s_output =>
                         var_y_store := y_scaled + to_signed(Z_Y, y_scaled'length);
@@ -236,7 +235,7 @@ begin
     ---------------- RAM Y ----------------
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
 
-    ram_y : entity work.${name}_ram(rtl)
+    ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
@@ -259,7 +258,7 @@ begin
     ---------------- RAM Y ----------------
 
     ---------------- WEIGHTS ROM ----------------
-    rom_w : entity work.${weights_rom_name}(rtl)
+    rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
     port map  (
         clk  => clock,
         en   => '1',
@@ -268,7 +267,7 @@ begin
     );
 
     ---------------- BIAS ROM  ----------------
-    rom_b : entity work.${bias_rom_name}(rtl)
+    rom_b : entity ${work_library_name}.${bias_rom_name}(rtl)
     port map  (
         clk  => clock,
         en   => '1',

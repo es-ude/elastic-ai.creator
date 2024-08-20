@@ -50,26 +50,28 @@ class Linear(DesignCreator, nn.Linear):
             data_width=self.quant_bits,
             in_features=self.in_features,
             out_features=self.out_features,
-            weights=self.q_weight.tolist(),
+            weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
-            scaler=self.scale_factor_M_q.item(),
-            shift=self.scale_factor_M_q_shift.item(),
+            m_q=self.scale_factor_m_q.item(),
+            m_q_shift=self.scale_factor_m_q_shift.item(),
+            z_x=self.input_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
             z_b=self.bias_QParams.zero_point.item(),
-            z_x=self.input_QParams.zero_point.item(),
             z_y=self.output_QParams.zero_point.item(),
+            work_library_name="work",
+            resource_option="auto",
         )
 
     def _get_quantized_weights(self) -> torch.IntTensor:
-        q_weight = self.weight_QParams.quantize(self.weight)
+        q_weights = self.weight_QParams.quantize(self.weight)
 
         if not self.weight_QParams.is_symmetric:
-            q_weight = self.math_ops.intsub(
-                q_weight,
+            q_weights = self.math_ops.intsub(
+                q_weights,
                 self.weight_QParams.zero_point,
                 self.weight_QParams.quant_bits + 1,
             )
-        return q_weight
+        return q_weights
 
     def _get_quantized_bias(self) -> torch.IntTensor:
         new_bias_scale_factor = (
@@ -92,7 +94,7 @@ class Linear(DesignCreator, nn.Linear):
         return q_bias
 
     def precompute(self) -> None:
-        self.q_weight = self._get_quantized_weights()
+        self.q_weights = self._get_quantized_weights()
         self.q_bias = self._get_quantized_bias()
 
         self.tmp_quant_bits = self.bias_QParams.quant_bits
@@ -101,7 +103,7 @@ class Linear(DesignCreator, nn.Linear):
             self.input_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.output_QParams.scale_factor
 
-        self.scale_factor_M_q_shift, self.scale_factor_M_q = scaling_M(
+        self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
 
@@ -115,7 +117,7 @@ class Linear(DesignCreator, nn.Linear):
 
         tmp = self.math_ops.intmatmul(
             q_input,
-            self.q_weight.t(),
+            self.q_weights.t(),
             self.tmp_quant_bits,  # TODO further +1 or not
         )
 
@@ -123,7 +125,7 @@ class Linear(DesignCreator, nn.Linear):
             tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
 
         tmp = simulate_bitshifting(
-            tmp, self.scale_factor_M_q_shift, self.scale_factor_M_q
+            tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
 
         output = self.math_ops.intadd(

@@ -97,8 +97,8 @@ def test_precompute():
     assert linear_layer.q_weight is not None
     assert linear_layer.q_bias is not None
     assert linear_layer.scale_factor_M is not None
-    assert linear_layer.scale_factor_M_q_shift is not None
-    assert linear_layer.scale_factor_M_q is not None
+    assert linear_layer.scale_factor_m_q_shift is not None
+    assert linear_layer.scale_factor_m_q is not None
 
 
 def test_forward():
