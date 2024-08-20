@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
@@ -23,12 +22,12 @@ class ReLU(DesignCreator, nn.Module):
         self.input_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=GlobalMinMaxObserver(),
-        ).to(DEVICE)
+        )
 
         self.output_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=GlobalMinMaxObserver(),
-        ).to(DEVICE)
+        )
 
     def create_design(self, name: str) -> ReLUDesign:
         return ReLUDesign(
@@ -40,7 +39,7 @@ class ReLU(DesignCreator, nn.Module):
 
     def int_forward(self, q_input: torch.IntTensor) -> torch.FloatTensor:
         zero_point = self.input_QParams.zero_point
-        q_input = q_input.to(DEVICE)
+        q_input = q_input
         q_output = torch.maximum(q_input, zero_point.clone().detach())
         return q_output
 
@@ -53,7 +52,7 @@ class ReLU(DesignCreator, nn.Module):
             else:
                 self.input_QParams = given_input_QParams
 
-        input = SimQuant.apply(input.to(DEVICE), self.input_QParams)
+        input = SimQuant.apply(input, self.input_QParams)
 
         output = F.relu(input)
 

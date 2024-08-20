@@ -4,7 +4,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from elasticai.creator.nn.integer.config import DEVICE
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
@@ -26,23 +25,22 @@ class Linear(DesignCreator, nn.Linear):
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
         self.name = kwargs.get("name")
-        self.logger = logging.getLogger(self.__class__.__name__)
-
         self.quant_bits = kwargs.get("quant_bits")
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
-        ).to(DEVICE)
+        )
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
-        ).to(DEVICE)
+        )
         self.input_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
-        ).to(DEVICE)
+        )
         self.output_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
-        ).to(DEVICE)
+        )
 
         self.math_ops = MathOperations()
 
@@ -110,7 +108,7 @@ class Linear(DesignCreator, nn.Linear):
         self.q_bias = self._quant_bias(
             given_scale_factor=new_bias_scale_factor,
             bias_QParams=self.bias_QParams,
-            bias=self.bias.to(DEVICE),
+            bias=self.bias,
             given_quant_bits=new_bias_quant_bits,
         )
         self.scale_factor_M = (
@@ -149,7 +147,7 @@ class Linear(DesignCreator, nn.Linear):
             tmp, self.output_QParams.zero_point, self.output_QParams.quant_bits
         )
 
-        return output.to(DEVICE)
+        return output
 
     def forward(
         self, input: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
@@ -164,8 +162,8 @@ class Linear(DesignCreator, nn.Linear):
         self.bias_QParams.update_quant_params(self.bias)
 
         input = SimQuant.apply(input, self.input_QParams)
-        weight = SimQuant.apply(self.weight.to(DEVICE), self.weight_QParams)
-        bias = SimQuant.apply(self.bias.to(DEVICE), self.bias_QParams)
+        weight = SimQuant.apply(self.weight, self.weight_QParams)
+        bias = SimQuant.apply(self.bias, self.bias_QParams)
 
         output = F.linear(input, weight, bias)
 
