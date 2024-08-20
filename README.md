@@ -98,9 +98,16 @@ That excludes skip and residual connections.
 - gated recurrent unit (fixed-point)
 
 
-### Broken modules:
+### Modules in development:
 
-- TODO
+- `elasticai.creator.nn.fixed_point.conv1d`
+
+
+### Deprecated modules (removal up to discussion):
+
+- `elasticai.creator.nn.binary` (binary quantization)
+- `elasticai.creator.nn.float` (limited-precision floating-point quantization)
+- `elasticai.creator.nn.fixed_point.mac`
 
 
 ## Structure of the Project
