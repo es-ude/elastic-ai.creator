@@ -17,17 +17,18 @@ class ReLU(DesignCreatorModule):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+        self.device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.input_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=GlobalMinMaxObserver(),
-        )
+        ).to(self.device)
 
         self.output_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=GlobalMinMaxObserver(),
-        )
+        ).to(self.device)
 
     def create_design(self, name: str) -> ReLUDesign:
         return ReLUDesign(
@@ -40,7 +41,7 @@ class ReLU(DesignCreatorModule):
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         zero_point = self.input_QParams.zero_point
-        q_inputs = q_inputs
+        q_inputs = q_inputs.to(self.device)
         q_outputs = torch.maximum(q_inputs, zero_point.clone().detach())
         return q_outputs
 
@@ -53,12 +54,12 @@ class ReLU(DesignCreatorModule):
             else:
                 self.input_QParams = given_input_QParams
 
-        inputs = SimQuant.apply(inputs, self.input_QParams)
+        inputs = SimQuant.apply(inputs.to(self.device), self.input_QParams)
 
         outputs = F.relu(inputs)
 
         # TODO: check if do fake quantization for output or not
         self.output_QParams = self.input_QParams
-        outputs = SimQuant.apply(outputs, self.output_QParams)
+        outputs = SimQuant.apply(outputs.to(self.device), self.output_QParams)
 
         return outputs
