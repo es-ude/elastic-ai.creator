@@ -13,13 +13,13 @@ from elasticai.creator.nn.fixed_point.hard_tanh import HardTanh
 from elasticai.creator.nn.fixed_point.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.fixed_point.lstm.design.lstm import LSTMNetworkDesign
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.vhdl.design_creator import DesignCreatorModule
 
 from .._math_operations import MathOperations
 from .design.testbench import LSTMTestBench
 
 
-class LSTMNetwork(DesignCreator, torch.nn.Module):
+class LSTMNetwork(DesignCreatorModule):
     def __init__(self, layers: list[torch.nn.Module]):
         super().__init__()
         self.lstm = layers[0]
@@ -57,7 +57,7 @@ class LSTMNetwork(DesignCreator, torch.nn.Module):
         return self.layers(x)
 
 
-class FixedPointLSTMWithHardActivations(LSTM, DesignCreator):
+class FixedPointLSTMWithHardActivations(DesignCreatorModule, LSTM):
     """
     Use only together with the above `LSTMNetwork`.
     There is no single hw design corresponding to this sw layer.

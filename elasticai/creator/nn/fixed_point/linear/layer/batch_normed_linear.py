@@ -8,10 +8,10 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.vhdl.design_creator import DesignCreatorModule
 
 
-class BatchNormedLinear(DesignCreator, torch.nn.Module):
+class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
     def __init__(
         self,
         total_bits: int,

@@ -6,10 +6,10 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.vhdl.design_creator import DesignCreatorModule
 
 
-class Linear(DesignCreator, LinearBase):
+class Linear(DesignCreatorModule, LinearBase):
     def __init__(
         self,
         in_features: int,

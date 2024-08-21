@@ -8,10 +8,10 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.vhdl.design_creator import DesignCreatorModule
 
 
-class Conv1d(DesignCreator, Conv1dBase):
+class Conv1d(DesignCreatorModule, Conv1dBase):
     def __init__(
         self,
         total_bits: int,
