@@ -3,15 +3,15 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
-class BatchNormedConv1d(DesignCreator, torch.nn.Module):
+class BatchNormedConv1d(DesignCreatorModule):
     def __init__(
         self,
         total_bits: int,

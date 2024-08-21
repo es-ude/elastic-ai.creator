@@ -3,21 +3,19 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .design import Sequential as _SequentialDesign
 
 
-class Sequential(DesignCreator, torch.nn.Sequential):
-    def __init__(self, *submodules: DesignCreator):
-        super().__init__(*cast(tuple[torch.nn.Module, ...], submodules))
+class Sequential(DesignCreatorModule, torch.nn.Sequential):
+    def __init__(self, *submodules: DesignCreatorModule):
+        super().__init__(*submodules)
 
     def create_design(self, name: str) -> Design:
         registry = _Registry()
-        submodules: list[DesignCreator] = [
-            cast(DesignCreator, m) for m in self.children()
-        ]
+        submodules = [cast(DesignCreatorModule, m) for m in self.children()]
         for module in submodules:
             registry.register(module.__class__.__name__.lower(), module)
         subdesigns = list(registry.build_designs())
@@ -29,7 +27,7 @@ class Sequential(DesignCreator, torch.nn.Sequential):
 
 class _Registry:
     def __init__(self) -> None:
-        self._nodes: dict[str, DesignCreator] = {}
+        self._nodes: dict[str, DesignCreatorModule] = {}
         self._name_counters: dict[str, int] = {}
 
     def _make_name_unique(self, name: str) -> str:
@@ -44,7 +42,7 @@ class _Registry:
     def _increment_name_counter(self, name: str):
         self._name_counters[name] = 1 + self._get_counter_for_name(name)
 
-    def register(self, name: str, d: DesignCreator):
+    def register(self, name: str, d: DesignCreatorModule):
         unique_name = self._make_name_unique(name)
         self._nodes[unique_name] = d
         self._increment_name_counter(name)
