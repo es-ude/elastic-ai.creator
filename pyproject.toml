@@ -29,6 +29,7 @@ impulse = "^1.0"
 pylint = "^2.16.2"
 pytest = "^7.2.2"
 setuptools = "^67.5.1"
+elastic-ai-runtime-utils = {git = "git@github.com:es-ude/elastic-ai.runtime.enV5.git", branch="245-implement-usb-protocol-EMBEDDED"}
 
 
 [build-system]

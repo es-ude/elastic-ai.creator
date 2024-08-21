@@ -259,6 +259,24 @@ files = [
 ]
 
 [[package]]
+name = "elastic-ai.runtime-utils"
+version = "0.0.1"
+description = ""
+optional = false
+python-versions = ">=3.10"
+files = []
+develop = false
+
+[package.dependencies]
+pyserial = "3.4"
+
+[package.source]
+type = "git"
+url = "git@github.com:es-ude/elastic-ai.runtime.enV5.git"
+reference = "245-implement-usb-protocol-EMBEDDED"
+resolved_reference = "d48c16bbc3c00e57840c491bdfc407ce7441d32d"
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
@@ -1454,6 +1472,17 @@ files = [
 pylint = ">=1.7"
 
 [[package]]
+name = "pyserial"
+version = "3.4"
+description = "Python Serial Port Extension"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyserial-3.4-py2.py3-none-any.whl", hash = "sha256:e0770fadba80c31013896c7e6ef703f72e7834965954a78e71a3049488d4d7d8"},
+    {file = "pyserial-3.4.tar.gz", hash = "sha256:6e2d401fdee0eab996cf734e67773a0143b932772ca8b42451440cfed942c627"},
+]
+
+[[package]]
 name = "pytest"
 version = "7.4.4"
 description = "pytest: simple powerful testing with Python"
@@ -1929,13 +1958,13 @@ files = [
 
 [[package]]
 name = "tomlkit"
-version = "0.13.0"
+version = "0.13.2"
 description = "Style preserving TOML library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tomlkit-0.13.0-py3-none-any.whl", hash = "sha256:7075d3042d03b80f603482d69bf0c8f345c2b30e41699fd8883227f89972b264"},
-    {file = "tomlkit-0.13.0.tar.gz", hash = "sha256:08ad192699734149f5b97b45f1f18dad7eb1b6d16bc72ad0c2335772650d7b72"},
+    {file = "tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde"},
+    {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
 ]
 
 [[package]]
@@ -2258,4 +2287,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">= 3.10, <4.0"
-content-hash = "f6b1224305a6100559556213a34c9e66dc97d76b4c394aa5c3c9f23e8b18d3d4"
+content-hash = "b1fdc34d0c39f19c260e9d4a57429dd21fb2dce5c4b8643eb4c4c06737ab2eeb"
