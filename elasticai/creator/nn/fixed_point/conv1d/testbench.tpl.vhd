@@ -106,6 +106,7 @@ begin
                     report "status: computation finished";
                     test_state := s_read_uut_output;
                     y_address <= (others => '0');
+                    enable <= '0';
                 end if;
             elsif test_state = s_write_uut_output_address then
                 report("status: test_state = s_write_uut_output_address");

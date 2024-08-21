@@ -22,6 +22,7 @@ def test_output_contains_correct_number_of_output_channels() -> None:
     input_data = torch.rand(1, 15)
     prediction = conv(input_data)
     num_channels, _ = prediction.shape
+    print(prediction)
     assert num_channels == 2
 
 
@@ -29,5 +30,6 @@ def test_that_batch_dimension_is_kept() -> None:
     conv = conv1d(signal_length=15, bias=False, affine=False)
     input_data = torch.rand(3, 1, 15)
     prediction = conv(input_data)
+    print(prediction.shape)
     batch_dimension = prediction.shape[0]
     assert batch_dimension == 3

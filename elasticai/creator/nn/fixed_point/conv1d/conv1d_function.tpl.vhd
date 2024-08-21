@@ -88,7 +88,7 @@ begin
         variable bias_added : std_logic;
     begin
         if reset = '1' then
-            -- reset such that MAC_enable triggers MAB_enable directly
+            -- reset such that MAC_enable triggers MAC_enable directly
             x_address <= (others => '0');
             w_address <= (others => '0');
             b_address <= (others => '0');
@@ -179,7 +179,7 @@ begin
 
     y_writing : process (clock, state)
     begin
-        if state = s_done then
+        if (state = s_done) or (state = s_reset) then
             if falling_edge(clock) then
                 -- After the layer in at idle mode, y is readable
                 -- but it only update at the falling edge of the clock
@@ -187,7 +187,7 @@ begin
             end if;
         end if;
     end process y_writing;
-    
+
     write_MAC_inputs : process (clock, state)
     begin
         if rising_edge(clock) then
@@ -200,7 +200,7 @@ begin
             end if;
         end if;
     end process write_MAC_inputs;
-    
+
     -- Weights
     rom_w : entity work.${rom_name_weights}(rtl)
     port map  (
