@@ -482,8 +482,8 @@ begin
         y   => y_out,
         done   => done
     );
-end architecture;
-"""
+end architecture;"""
+
     linear_layer, input_data, _ = linear_layer_setup()
     output_data = linear_layer.forward(input_data)
     linear_layer.precompute()
@@ -492,7 +492,7 @@ end architecture;
     saved_files = save_design(design)
     actual_code = saved_files["linear_0_tb.vhd"]
 
-    assert expected_code.strip() == actual_code.strip()
+    assert expected_code == actual_code
 
 
 def test_weight_rom_code_generated_correctly() -> None:
@@ -656,8 +656,7 @@ begin
         end process;
         doutb <= doutb_reg;
     end generate;
-end architecture rtl;
-"""
+end architecture rtl;"""
     linear_layer, input_data, _ = linear_layer_setup()
     output_data = linear_layer.forward(input_data)
     linear_layer.precompute()
@@ -666,4 +665,4 @@ end architecture rtl;
     saved_files = save_design(design)
     actual_code = saved_files["linear_0_ram.vhd"]
 
-    assert expected_code.strip() == actual_code.strip()
+    assert expected_code == actual_code
