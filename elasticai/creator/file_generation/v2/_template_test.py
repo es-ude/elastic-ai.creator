@@ -2,11 +2,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from elasticai.creator.file_generation.v2.template import fill_template, save_template
-from elasticai.creator.file_generation.v2.temporary import (
-    TemporaryDirectory,
-    read_lines_from_file,
-)
+from .template import fill_template, save_template
+from .temporary import TemporaryDirectory, read_lines_from_file
 
 
 @dataclass
