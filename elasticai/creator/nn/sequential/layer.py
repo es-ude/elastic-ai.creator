@@ -3,8 +3,8 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.nn.design_creator import DesignCreatorModule
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.vhdl.design_creator import DesignCreatorModule
 
 from .design import Sequential as _SequentialDesign
 

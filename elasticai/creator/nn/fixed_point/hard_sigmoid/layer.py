@@ -1,8 +1,8 @@
 from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid as HardSigmoidBase
+from elasticai.creator.nn.design_creator import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.design_creator import DesignCreatorModule
 
 from .design import HardSigmoid as HardSigmoidDesign
 
