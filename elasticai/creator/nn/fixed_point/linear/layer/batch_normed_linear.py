@@ -3,7 +3,7 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.base_modules.linear import Linear as LinearBase
-from elasticai.creator.nn.design_creator import DesignCreatorModule
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,

@@ -1,5 +1,5 @@
 from elasticai.creator.base_modules.identity import Identity
-from elasticai.creator.nn.design_creator import DesignCreatorModule
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.vhdl.design.design import Design
 
 from .design import BufferedIdentity as IdentityDesign
