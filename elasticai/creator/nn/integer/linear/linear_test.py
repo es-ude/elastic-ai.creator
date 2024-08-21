@@ -79,7 +79,9 @@ def test_forward():
         torch.tensor([0.0058823530562222]),
         atol=1e-10,
     )
-    assert torch.equal(linear_layer.input_QParams.zero_point, torch.tensor([42]))
+    assert torch.equal(
+        linear_layer.input_QParams.zero_point, torch.tensor([42], dtype=torch.int32)
+    )
 
     assert torch.allclose(
         linear_layer.weight_QParams.scale_factor,
@@ -169,7 +171,6 @@ def test_precompute():
         expected_scale_factor_M
     )
 
-    print("expected_scale_factor_m_q_shift", expected_scale_factor_m_q)
     assert torch.equal(linear_layer.scale_factor_m_q, expected_scale_factor_m_q)
     assert torch.equal(
         linear_layer.scale_factor_m_q_shift, expected_scale_factor_m_q_shift

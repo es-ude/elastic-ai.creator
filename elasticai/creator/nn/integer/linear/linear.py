@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
@@ -16,10 +17,9 @@ from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
     simulate_bitshifting,
 )
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
-class Linear(DesignCreator, nn.Linear):
+class Linear(DesignCreatorModule, nn.Linear):
     def __init__(self, **kwargs):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
@@ -107,14 +107,14 @@ class Linear(DesignCreator, nn.Linear):
 
     def int_forward(
         self,
-        q_input: torch.IntTensor,
+        q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
-        q_input = self.math_ops.intsub(
-            q_input, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
+        q_inputs = self.math_ops.intsub(
+            q_inputs, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
         )
 
         tmp = self.math_ops.intmatmul(
-            q_input,
+            q_inputs,
             self.q_weights.t(),
             self.bias_QParams.quant_bits,  # TODO further +1 or not
         )
@@ -128,32 +128,32 @@ class Linear(DesignCreator, nn.Linear):
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
 
-        output = self.math_ops.intadd(
+        q_outputs = self.math_ops.intadd(
             tmp, self.output_QParams.zero_point, self.output_QParams.quant_bits
         )
 
-        return output
+        return q_outputs
 
     def forward(
-        self, input: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         if self.training:
             if given_input_QParams is None:
-                self.input_QParams.update_quant_params(input)
+                self.input_QParams.update_quant_params(inputs)
             else:
                 self.input_QParams = given_input_QParams
 
         self.weight_QParams.update_quant_params(self.weight)
         self.bias_QParams.update_quant_params(self.bias)
 
-        input = SimQuant.apply(input, self.input_QParams)
+        inputs = SimQuant.apply(inputs, self.input_QParams)
         weight = SimQuant.apply(self.weight, self.weight_QParams)
         bias = SimQuant.apply(self.bias, self.bias_QParams)
 
-        output = F.linear(input, weight, bias)
+        outputs = F.linear(inputs, weight, bias)
 
         if self.training:
-            self.output_QParams.update_quant_params(output)
+            self.output_QParams.update_quant_params(outputs)
 
-        output = SimQuant.apply(output, self.output_QParams)
-        return output
+        outputs = SimQuant.apply(outputs, self.output_QParams)
+        return outputs

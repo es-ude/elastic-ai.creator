@@ -10,47 +10,58 @@ from .design import Sequential as _SequentialDesign
 
 
 class Sequential(_SequentialBase):
-    def __init__(self, *submodules: DesignCreatorModule):
+    def __init__(
+        self, *submodules: DesignCreatorModule, name: str, quant_data_file_dir: Path
+    ) -> None:
         super().__init__(*submodules)
         self.submodules = submodules
+        self.name = name
+        self.quant_data_file_dir = quant_data_file_dir
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
         file_path = file_dir / f"{file_name}.txt"
         tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
         file_path.write_text(tensor_str)
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = inputs
-        given_input_QParams = None
+    def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
+        return self.submodules[0].input_QParams.quantize(inputs)
 
+    def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
+        return self.submodules[-1].output_QParams.dequantize(q_outputs)
+
+    def forward(
+        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+    ) -> torch.FloatTensor:
+        outputs = inputs
         for submodule in self.submodules:
-            x = submodule(x, given_input_QParams=given_input_QParams)
+            outputs = submodule(outputs, given_input_QParams=given_input_QParams)
             given_input_QParams = submodule.output_QParams
 
-        return x
+        return outputs
 
-    def int_forward(
-        self, input: torch.FloatTensor, quant_data_file_dir: Path, name: str
-    ) -> torch.FloatTensor:
+    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
 
-        q_input = self.submodules[0].input_QParams.quantize(input)
-        if quant_data_file_dir is not None:
-            self._save_quant_data(q_input, quant_data_file_dir, f"{name}_q_x")
+        if self.quant_data_file_dir is not None:
+            self._save_quant_data(
+                q_inputs, self.quant_data_file_dir, f"{self.name}_q_x"
+            )
 
         for submodule in self.submodules:
-            self._save_quant_data(q_input, quant_data_file_dir, f"{submodule.name}_q_x")
-            q_output = submodule.int_forward(q_input)
             self._save_quant_data(
-                q_output, quant_data_file_dir, f"{submodule.name}_q_y"
+                q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
             )
-            q_input = q_output
 
-        self._save_quant_data(q_output, quant_data_file_dir, f"{name}_q_y")
+            q_outputs = submodule.int_forward(q_inputs)
 
-        dq_output = self.submodules[-1].output_QParams.dequantize(q_output)
+            self._save_quant_data(
+                q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
+            )
+            q_inputs = q_outputs
 
-        return dq_output
+        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
+
+        return q_outputs
 
     def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:
         return _SequentialDesign(sub_designs=sub_designs, name=name)

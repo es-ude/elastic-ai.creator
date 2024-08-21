@@ -4,14 +4,14 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 from elasticai.creator.nn.integer.relu.design import ReLU as ReLUDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 
-class ReLU(DesignCreator, nn.Module):
+class ReLU(DesignCreatorModule):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -38,27 +38,27 @@ class ReLU(DesignCreator, nn.Module):
             work_library_name="work",
         )
 
-    def int_forward(self, q_input: torch.IntTensor) -> torch.FloatTensor:
+    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         zero_point = self.input_QParams.zero_point
-        q_input = q_input
-        q_output = torch.maximum(q_input, zero_point.clone().detach())
-        return q_output
+        q_inputs = q_inputs
+        q_outputs = torch.maximum(q_inputs, zero_point.clone().detach())
+        return q_outputs
 
     def forward(
-        self, input: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         if self.training:
             if given_input_QParams is None:
-                self.input_QParams.update_quant_params(input)
+                self.input_QParams.update_quant_params(inputs)
             else:
                 self.input_QParams = given_input_QParams
 
-        input = SimQuant.apply(input, self.input_QParams)
+        inputs = SimQuant.apply(inputs, self.input_QParams)
 
-        output = F.relu(input)
+        outputs = F.relu(inputs)
 
         # TODO: check if do fake quantization for output or not
         self.output_QParams = self.input_QParams
-        output = SimQuant.apply(output, self.output_QParams)
+        outputs = SimQuant.apply(outputs, self.output_QParams)
 
-        return output
+        return outputs
