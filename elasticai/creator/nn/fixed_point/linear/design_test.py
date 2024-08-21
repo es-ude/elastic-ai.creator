@@ -207,9 +207,9 @@ architecture rtl of linear is
 
     -- simple solution for the output buffer
     type t_y_array is array (0 to OUT_FEATURE_NUM) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    shared variable y_ram : t_y_array;
+    signal y_ram : t_y_array;
     attribute rom_style : string;
-    attribute rom_style of y_ram : variable is RESOURCE_OPTION;
+    attribute rom_style of y_ram : signal is RESOURCE_OPTION;
 
 begin
 
@@ -284,7 +284,7 @@ begin
             macc_sum <= var_sum;
 
             if y_write_en='1'then
-                y_ram(var_y_write_idx) := std_logic_vector(cut_down(var_sum));
+                y_ram(var_y_write_idx) <= std_logic_vector(cut_down(var_sum));
                 y_write_en := '0';
             end if;
 

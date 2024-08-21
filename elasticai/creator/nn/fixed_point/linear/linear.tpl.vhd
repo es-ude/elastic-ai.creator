@@ -105,8 +105,8 @@ architecture rtl of ${layer_name} is
     -- simple solution for the output buffer
     type t_y_array is array (0 to OUT_FEATURE_NUM) of std_logic_vector(DATA_WIDTH-1 downto 0);
     signal y_ram : t_y_array;
-    --attribute rom_style : string;
-    --attribute rom_style of y_ram : variable is RESOURCE_OPTION;
+    attribute rom_style : string;
+    attribute rom_style of y_ram : signal is RESOURCE_OPTION;
 
 begin
 
