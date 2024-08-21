@@ -17,6 +17,7 @@ def fill_template(template: Template) -> list[str]:
 
 def save_template(template: Template, destination: Path) -> None:
     lines = fill_template(template)
+    destination.parent.mkdir(parents=True, exist_ok=True)
     with destination.open("w") as out_file:
         out_file.writelines(f"{line}\n" for line in lines)
 
