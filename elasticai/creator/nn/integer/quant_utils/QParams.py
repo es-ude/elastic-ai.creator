@@ -99,15 +99,21 @@ class QParams(nn.Module):
         self._calculate_quant_range()
 
     def quantize(self, x: torch.FloatTensor) -> torch.IntTensor:
-        x_q = x / self.scale_factor + self.zero_point
+        scale_factor = self.scale_factor.to(x.device)
+        zero_point = self.zero_point.to(x.device)
+
+        x_q = x / scale_factor + zero_point
         x_q = x_q.round_().clamp(min=self.min_quant.item(), max=self.max_quant.item())
         x_q = x_q.to(torch.int32)
-        return x_q
+
+        return x_q.to(x.device)
 
     def dequantize(self, x_q: torch.IntTensor) -> torch.FloatTensor:
-        x_q = self.math_ops.intsub(x_q, self.zero_point, self.quant_bits + 1)
-        x_dq = x_q.to(torch.float32) * self.scale_factor
-        return x_dq
+        zero_point = self.zero_point.to(x_q.device)
+        scale_factor = self.scale_factor.to(x_q.device)
+        x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits + 1)
+        x_dq = x_q * scale_factor
+        return x_dq.to(torch.float32).to(x_q.device)
 
     def _load_from_state_dict(
         self,

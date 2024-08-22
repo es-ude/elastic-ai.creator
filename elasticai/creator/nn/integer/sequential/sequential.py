@@ -23,12 +23,6 @@ class Sequential(_SequentialBase):
         tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
         file_path.write_text(tensor_str)
 
-    def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
-        return self.submodules[0].input_QParams.quantize(inputs)
-
-    def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
-        return self.submodules[-1].output_QParams.dequantize(q_outputs)
-
     def forward(
         self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
@@ -36,8 +30,18 @@ class Sequential(_SequentialBase):
         for submodule in self.submodules:
             outputs = submodule(outputs, given_input_QParams=given_input_QParams)
             given_input_QParams = submodule.output_QParams
-
         return outputs
+
+    def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
+        return self.submodules[0].input_QParams.quantize(inputs)
+
+    def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
+        return self.submodules[-1].output_QParams.dequantize(q_outputs)
+
+    def precompute(self):
+        for submodule in self.submodules:
+            if hasattr(submodule, "precompute"):
+                submodule.precompute()
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"

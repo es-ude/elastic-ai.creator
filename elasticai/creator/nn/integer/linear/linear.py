@@ -64,7 +64,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
     def _get_quantized_weights(self) -> torch.IntTensor:
-        q_weights = self.weight_QParams.quantize(self.weight.to(self.device))
+        q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
         if not self.weight_QParams.is_symmetric:
             q_weights = self.math_ops.intsub(
@@ -85,9 +85,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
         self.bias_QParams.set_quant_range(new_bias_quant_bits)
-
-        q_bias = self.bias_QParams.quantize(self.bias.to(self.device))
-
+        q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
         if not self.bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
                 q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
@@ -113,7 +111,6 @@ class Linear(DesignCreatorModule, nn.Linear):
         q_inputs = self.math_ops.intsub(
             q_inputs, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
         )
-
         tmp = self.math_ops.intmatmul(
             q_inputs,
             self.q_weights.t(),
@@ -124,14 +121,13 @@ class Linear(DesignCreatorModule, nn.Linear):
             tmp = self.math_ops.intadd(
                 tmp, self.q_bias, self.bias_QParams.quant_bits + 1
             )
-
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
 
         q_outputs = self.math_ops.intadd(
             tmp, self.output_QParams.zero_point, self.output_QParams.quant_bits
-        ).to(self.device)
+        )
 
         return q_outputs
 
@@ -147,14 +143,14 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.weight_QParams.update_quant_params(self.weight)
         self.bias_QParams.update_quant_params(self.bias)
 
-        inputs = SimQuant.apply(inputs.to(self.device), self.input_QParams)
-        weight = SimQuant.apply(self.weight.to(self.device), self.weight_QParams)
-        bias = SimQuant.apply(self.bias.to(self.device), self.bias_QParams)
+        inputs = SimQuant.apply(inputs, self.input_QParams)
+        weight = SimQuant.apply(self.weight, self.weight_QParams)
+        bias = SimQuant.apply(self.bias, self.bias_QParams)
 
         outputs = F.linear(inputs, weight, bias)
 
         if self.training:
             self.output_QParams.update_quant_params(outputs)
 
-        outputs = SimQuant.apply(outputs.to(self.device), self.output_QParams)
+        outputs = SimQuant.apply(outputs, self.output_QParams)
         return outputs

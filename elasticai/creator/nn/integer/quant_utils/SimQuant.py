@@ -4,7 +4,7 @@ from torch.autograd import Function
 class SimQuant(Function):
     @staticmethod
     def forward(ctx, x_r: float, x_r_QParams) -> float:
-        x_q = x_r_QParams.quantize(x_r)
+        x_q = x_r_QParams.quantize(x_r).to(x_r.device)
         min_float = x_r_QParams.min_float.to(x_r.device)
         max_float = x_r_QParams.max_float.to(x_r.device)
 
