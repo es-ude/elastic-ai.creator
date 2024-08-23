@@ -61,7 +61,7 @@ def test_linear_layer_initialization_input_quant_bits():
 
 def test_linear_layer_initialization_output_quant_bits():
     linear_layer, _, _ = linear_layer_setup()
-    assert linear_layer.output_QParams.quant_bits == 8
+    assert linear_layer.outputs_QParams.quant_bits == 8
 
 
 def test_linear_layer_initialization_weight_observer():
@@ -81,7 +81,7 @@ def test_linear_layer_initialization_input_observer():
 
 def test_linear_layer_initialization_output_observer():
     linear_layer, _, _ = linear_layer_setup()
-    assert isinstance(linear_layer.output_QParams.observer, GlobalMinMaxObserver)
+    assert isinstance(linear_layer.outputs_QParams.observer, GlobalMinMaxObserver)
 
 
 def test_linear_layer_initialization_math_ops():
@@ -198,7 +198,7 @@ def test_precompute():
     expected_scale_factor_M = (
         linear_layer.inputs_QParams.scale_factor
         * linear_layer.weight_QParams.scale_factor
-    ) / linear_layer.output_QParams.scale_factor
+    ) / linear_layer.outputs_QParams.scale_factor
 
     assert torch.allclose(
         linear_layer.scale_factor_M, expected_scale_factor_M, atol=1e-10
@@ -224,6 +224,6 @@ def test_int_forward():
     q_input = linear_layer.inputs_QParams.quantize(inputs)
     q_output = linear_layer.int_forward(q_input)
 
-    expected_q_output = linear_layer.output_QParams.quantize(outputs)
+    expected_q_output = linear_layer.outputs_QParams.quantize(outputs)
 
     assert torch.allclose(q_output, expected_q_output, atol=1)

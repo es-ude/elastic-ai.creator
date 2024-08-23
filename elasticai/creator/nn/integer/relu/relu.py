@@ -25,7 +25,7 @@ class ReLU(DesignCreatorModule):
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
 
-        self.output_QParams = AsymmetricSignedQParams(
+        self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
@@ -58,7 +58,7 @@ class ReLU(DesignCreatorModule):
         outputs = F.relu(inputs)
 
         # TODO: check if do fake quantization for output or not
-        self.output_QParams = self.inputs_QParams
-        outputs = SimQuant.apply(outputs, self.output_QParams)
+        self.outputs_QParams = self.inputs_QParams
+        outputs = SimQuant.apply(outputs, self.outputs_QParams)
 
         return outputs

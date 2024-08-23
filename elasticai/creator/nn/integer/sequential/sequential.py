@@ -29,14 +29,14 @@ class Sequential(_SequentialBase):
         outputs = inputs
         for submodule in self.submodules:
             outputs = submodule(outputs, given_inputs_QParams=given_inputs_QParams)
-            given_inputs_QParams = submodule.output_QParams
+            given_inputs_QParams = submodule.outputs_QParams
         return outputs
 
     def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
         return self.submodules[0].inputs_QParams.quantize(inputs)
 
     def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
-        return self.submodules[-1].output_QParams.dequantize(q_outputs)
+        return self.submodules[-1].outputs_QParams.dequantize(q_outputs)
 
     def precompute(self):
         for submodule in self.submodules:

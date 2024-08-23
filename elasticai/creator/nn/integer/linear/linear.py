@@ -39,7 +39,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(self.device)
-        self.output_QParams = AsymmetricSignedQParams(
+        self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(self.device)
 
@@ -58,7 +58,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
             z_b=self.bias_QParams.zero_point.item(),
-            z_y=self.output_QParams.zero_point.item(),
+            z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
         )
@@ -98,7 +98,7 @@ class Linear(DesignCreatorModule, nn.Linear):
 
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
-        ) / self.output_QParams.scale_factor
+        ) / self.outputs_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
@@ -126,7 +126,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.output_QParams.zero_point, self.output_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         return q_outputs
@@ -150,7 +150,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         outputs = F.linear(inputs, weight, bias)
 
         if self.training:
-            self.output_QParams.update_quant_params(outputs)
+            self.outputs_QParams.update_quant_params(outputs)
 
-        outputs = SimQuant.apply(outputs, self.output_QParams)
+        outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs
