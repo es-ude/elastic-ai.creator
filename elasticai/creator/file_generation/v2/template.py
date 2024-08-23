@@ -4,19 +4,22 @@ from ._resource_utils import read_text
 from ._template_expander import Template, TemplateExpander
 
 
-def fill_template(template: Template) -> list[str]:
+def fill_template(
+    template: Template, ignore_unfilled_variables: bool = False
+) -> list[str]:
     expander = TemplateExpander(template)
-    unfilled_variables = expander.unfilled_variables()
-    if len(unfilled_variables) > 0:
-        raise KeyError(
-            "Template is not filled completly. The following variables are"
-            f" unfilled: {', '.join(unfilled_variables)}."
-        )
+    if not ignore_unfilled_variables:
+        unfilled_variables = expander.unfilled_variables()
+        if len(unfilled_variables) > 0:
+            raise KeyError(
+                "Template is not filled completly. The following variables are"
+                f" unfilled: {', '.join(unfilled_variables)}."
+            )
     return expander.lines()
 
 
 def save_template(template: Template, destination: Path) -> None:
-    lines = fill_template(template)
+    lines = fill_template(template, ignore_unfilled_variables=False)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with destination.open("w") as out_file:
         out_file.writelines(f"{line}\n" for line in lines)
