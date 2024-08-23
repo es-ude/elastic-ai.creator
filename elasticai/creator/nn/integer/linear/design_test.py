@@ -2,7 +2,7 @@ from typing import cast
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.linear.linear_test import linear_layer_setup
+from elasticai.creator.nn.integer.linear.test_linear import linear_layer_setup
 
 
 def save_design(design: Linear) -> dict[str, str]:
