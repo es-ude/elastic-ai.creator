@@ -15,9 +15,9 @@ def test_initialization():
     relu, _ = relu_setup()
     assert relu.name == "test_relu"
     assert relu.quant_bits == 8
-    assert isinstance(relu.input_QParams, AsymmetricSignedQParams)
+    assert isinstance(relu.inputs_QParams, AsymmetricSignedQParams)
     assert isinstance(relu.output_QParams, AsymmetricSignedQParams)
-    assert isinstance(relu.input_QParams.observer, GlobalMinMaxObserver)
+    assert isinstance(relu.inputs_QParams.observer, GlobalMinMaxObserver)
     assert isinstance(relu.output_QParams.observer, GlobalMinMaxObserver)
 
 
@@ -37,8 +37,8 @@ def test_forward():
 
 def test_int_forward():
     relu, input = relu_setup()
-    relu.input_QParams.update_quant_params(input)
-    q_input = relu.input_QParams.quantize(input)
+    relu.inputs_QParams.update_quant_params(input)
+    q_input = relu.inputs_QParams.quantize(input)
 
     q_output = relu.int_forward(q_input)
 

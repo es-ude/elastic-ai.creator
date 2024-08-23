@@ -36,7 +36,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(self.device)
-        self.input_QParams = AsymmetricSignedQParams(
+        self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"), observer=GlobalMinMaxObserver()
         ).to(self.device)
         self.output_QParams = AsymmetricSignedQParams(
@@ -55,7 +55,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
-            z_x=self.input_QParams.zero_point.item(),
+            z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
             z_b=self.bias_QParams.zero_point.item(),
             z_y=self.output_QParams.zero_point.item(),
@@ -76,9 +76,9 @@ class Linear(DesignCreatorModule, nn.Linear):
 
     def _get_quantized_bias(self) -> torch.IntTensor:
         new_bias_scale_factor = (
-            self.input_QParams.scale_factor * self.weight_QParams.scale_factor
+            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.input_QParams.quant_bits + 1) + (
+        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
 
@@ -97,7 +97,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.q_bias = self._get_quantized_bias()
 
         self.scale_factor_M = (
-            self.input_QParams.scale_factor * self.weight_QParams.scale_factor
+            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.output_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
@@ -109,7 +109,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
         q_inputs = self.math_ops.intsub(
-            q_inputs, self.input_QParams.zero_point, self.input_QParams.quant_bits + 1
+            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
         tmp = self.math_ops.intmatmul(
             q_inputs,
@@ -132,18 +132,18 @@ class Linear(DesignCreatorModule, nn.Linear):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         if self.training:
-            if given_input_QParams is None:
-                self.input_QParams.update_quant_params(inputs)
+            if given_inputs_QParams is None:
+                self.inputs_QParams.update_quant_params(inputs)
             else:
-                self.input_QParams = given_input_QParams
+                self.inputs_QParams = given_inputs_QParams
 
         self.weight_QParams.update_quant_params(self.weight)
         self.bias_QParams.update_quant_params(self.bias)
 
-        inputs = SimQuant.apply(inputs, self.input_QParams)
+        inputs = SimQuant.apply(inputs, self.inputs_QParams)
         weight = SimQuant.apply(self.weight, self.weight_QParams)
         bias = SimQuant.apply(self.bias, self.bias_QParams)
 

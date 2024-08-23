@@ -20,7 +20,7 @@ class ReLU(DesignCreatorModule):
         self.device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.input_QParams = AsymmetricSignedQParams(
+        self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=kwargs.get("quant_bits"),
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
@@ -34,31 +34,31 @@ class ReLU(DesignCreatorModule):
         return ReLUDesign(
             name=name,
             data_width=self.quant_bits,
-            threshold=int(self.input_QParams.zero_point.detach()),
+            threshold=int(self.inputs_QParams.zero_point.detach()),
             clock_option=False,
             work_library_name="work",
         )
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
-        zero_point = self.input_QParams.zero_point.to(q_inputs.device)
+        zero_point = self.inputs_QParams.zero_point.to(q_inputs.device)
         q_outputs = torch.maximum(q_inputs, zero_point.clone().detach())
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         if self.training:
-            if given_input_QParams is None:
-                self.input_QParams.update_quant_params(inputs)
+            if given_inputs_QParams is None:
+                self.inputs_QParams.update_quant_params(inputs)
             else:
-                self.input_QParams = given_input_QParams
+                self.inputs_QParams = given_inputs_QParams
 
-        inputs = SimQuant.apply(inputs, self.input_QParams)
+        inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         outputs = F.relu(inputs)
 
         # TODO: check if do fake quantization for output or not
-        self.output_QParams = self.input_QParams
+        self.output_QParams = self.inputs_QParams
         outputs = SimQuant.apply(outputs, self.output_QParams)
 
         return outputs

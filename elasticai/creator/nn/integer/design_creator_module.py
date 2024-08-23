@@ -14,7 +14,7 @@ class DesignCreatorModule(torch.nn.Module, DesignCreator, ABC):
 
     @abstractmethod
     def forward(
-        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         ...
 

@@ -24,16 +24,16 @@ class Sequential(_SequentialBase):
         file_path.write_text(tensor_str)
 
     def forward(
-        self, inputs: torch.FloatTensor, given_input_QParams: torch.nn.Module = None
+        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
         outputs = inputs
         for submodule in self.submodules:
-            outputs = submodule(outputs, given_input_QParams=given_input_QParams)
-            given_input_QParams = submodule.output_QParams
+            outputs = submodule(outputs, given_inputs_QParams=given_inputs_QParams)
+            given_inputs_QParams = submodule.output_QParams
         return outputs
 
     def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
-        return self.submodules[0].input_QParams.quantize(inputs)
+        return self.submodules[0].inputs_QParams.quantize(inputs)
 
     def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
         return self.submodules[-1].output_QParams.dequantize(q_outputs)
