@@ -219,15 +219,7 @@ def simulate_linear_forward(linear_layer, inputs):
     bias = SimQuant.apply(linear_layer.bias, linear_layer.bias_QParams)
 
     outputs = F.linear(inputs, weight, bias)
-    return outputs
 
-
-def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
-    linear_layer.train()
-    given_inputs_QParams = None
-    linear_layer.forward(inputs, given_inputs_QParams)
-
-    outputs = simulate_linear_forward(linear_layer, inputs)
     min_float = outputs.min()
     max_float = outputs.max()
 
@@ -239,6 +231,18 @@ def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
     zero_point = zero_point.round_().clamp(min_quant, max_quant)
     zero_point = torch.tensor([zero_point.item()], dtype=torch.int32)
 
+    return min_float, max_float, scale_factor, zero_point
+
+
+def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
+    linear_layer.train()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+
+    min_float, max_float, scale_factor, zero_point = simulate_linear_forward(
+        linear_layer, inputs
+    )
+
     assert linear_layer.outputs_QParams.min_float == min_float
     assert linear_layer.outputs_QParams.max_float == max_float
     assert torch.allclose(
@@ -249,92 +253,82 @@ def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
     assert torch.equal(linear_layer.outputs_QParams.zero_point, zero_point)
 
 
-# def test_get_quantized_weights():
-#     linear_layer, inputs, _ = linear_layer_setup()
-#     _ = linear_layer.forward(inputs)
+def test_get_quantized_weights_in_precompute(linear_layer):
+    linear_layer.forward(inputs)
+    linear_layer.precompute()
 
-#     q_weight = linear_layer._get_quantized_weights()
-
-#     expected_q_weight = torch.tensor(
-#         [
-#             [53, -53, 32],
-#             [21, -21, 11],
-#             [42, -42, 21],
-#             [64, -64, 32],
-#             [74, -74, 42],
-#             [85, -85, 53],
-#             [96, -96, 64],
-#             [106, -106, 74],
-#             [117, -117, 85],
-#             [127, -128, 96],
-#         ],
-#         dtype=torch.int32,
-#     )
-#     assert torch.equal(q_weight, expected_q_weight)
+    expected_q_weight = torch.tensor(
+        [
+            [53, -53, 32],
+            [21, -21, 11],
+            [42, -42, 21],
+            [64, -64, 32],
+            [74, -74, 42],
+            [85, -85, 53],
+            [96, -96, 64],
+            [106, -106, 74],
+            [117, -117, 85],
+            [127, -128, 96],
+        ],
+        dtype=torch.int32,
+    )
+    assert torch.equal(linear_layer.q_weights, expected_q_weight)
 
 
-# def test_get_quantized_bias():
-#     linear_layer, inputs, _ = linear_layer_setup()
-#     _ = linear_layer.forward(inputs)
-#     q_bias = linear_layer._get_quantized_bias()
+def test_get_quantized_bias_in_precompute(linear_layer):
+    linear_layer.forward(inputs)
+    linear_layer.precompute()
 
-#     expected_scale_factor = (
-#         linear_layer.inputs_QParams.scale_factor
-#         * linear_layer.weight_QParams.scale_factor
-#     )
-#     assert torch.allclose(
-#         linear_layer.bias_QParams.scale_factor,
-#         expected_scale_factor,
-#         atol=1e-10,
-#     )
-#     assert torch.equal(linear_layer.bias_QParams.zero_point, torch.tensor([0]))
-#     expected_quant_bits = (linear_layer.inputs_QParams.quant_bits + 1) + (
-#         linear_layer.weight_QParams.quant_bits + 1
-#     )
-#     assert linear_layer.bias_QParams.quant_bits == expected_quant_bits
+    expected_scale_factor = (
+        linear_layer.inputs_QParams.scale_factor
+        * linear_layer.weight_QParams.scale_factor
+    )
+    assert torch.allclose(
+        linear_layer.bias_QParams.scale_factor,
+        expected_scale_factor,
+        atol=1e-10,
+    )
+    assert torch.equal(linear_layer.bias_QParams.zero_point, torch.tensor([0]))
+    expected_quant_bits = (linear_layer.inputs_QParams.quant_bits + 1) + (
+        linear_layer.weight_QParams.quant_bits + 1
+    )
+    assert linear_layer.bias_QParams.quant_bits == expected_quant_bits
 
-#     expected_q_bias = torch.tensor(
-#         [9031, -9031, 5419, 3612, -3612, 1806, 7225, -7225, 3612, 10838],
-#         dtype=torch.int32,
-#     )
-#     assert torch.equal(q_bias, expected_q_bias)
-
-
-# def test_precompute():
-#     linear_layer, inputs, _ = linear_layer_setup()
-#     _ = linear_layer.forward(inputs)
-
-#     linear_layer.precompute()
-
-#     expected_scale_factor_M = (
-#         linear_layer.inputs_QParams.scale_factor
-#         * linear_layer.weight_QParams.scale_factor
-#     ) / linear_layer.outputs_QParams.scale_factor
-
-#     assert torch.allclose(
-#         linear_layer.scale_factor_M, expected_scale_factor_M, atol=1e-10
-#     )
-
-#     expected_scale_factor_m_q_shift, expected_scale_factor_m_q = scaling_M(
-#         expected_scale_factor_M
-#     )
-
-#     assert torch.equal(linear_layer.scale_factor_m_q, expected_scale_factor_m_q)
-#     assert torch.equal(
-#         linear_layer.scale_factor_m_q_shift, expected_scale_factor_m_q_shift
-#     )
+    expected_q_bias = torch.tensor(
+        [9031, -9031, 5419, 3612, -3612, 1806, 7225, -7225, 3612, 10838],
+        dtype=torch.int32,
+    )
+    assert torch.equal(linear_layer.q_bias, expected_q_bias)
 
 
-# def test_int_forward():
-#     linear_layer, inputs, _ = linear_layer_setup()
-#     outputs = linear_layer.forward(inputs)
+def test_get_scale_fator_M_in_precompute(linear_layer):
+    linear_layer.forward(inputs)
+    linear_layer.precompute()
 
-#     linear_layer.precompute()
+    input_QParams_scale_factor = torch.tensor([0.0058823530562222], dtype=torch.float32)
+    weight_QParams_scale_factor = torch.tensor(
+        [0.00941176526248455], dtype=torch.float32
+    )
+    _, _, output_QParams_scale_factor, _ = simulate_linear_forward(linear_layer, inputs)
 
-#     # Quantize the input before passing to int_forward
-#     q_input = linear_layer.inputs_QParams.quantize(inputs)
-#     q_output = linear_layer.int_forward(q_input)
+    expected_scale_factor_M = (
+        input_QParams_scale_factor
+        * weight_QParams_scale_factor
+        / output_QParams_scale_factor
+    )
+    assert torch.allclose(
+        linear_layer.scale_factor_M, expected_scale_factor_M, atol=1e-3
+    )
 
-#     expected_q_output = linear_layer.outputs_QParams.quantize(outputs)
 
-#     assert torch.allclose(q_output, expected_q_output, atol=1)
+def test_int_forward(linear_layer):
+    outputs = linear_layer.forward(inputs)
+    linear_layer.precompute()
+
+    # Quantize the input before passing to int_forward
+    q_input = linear_layer.inputs_QParams.quantize(inputs)
+    q_output = linear_layer.int_forward(q_input)
+
+    expected_q_output = linear_layer.outputs_QParams.quantize(outputs)
+
+    assert torch.allclose(q_output, expected_q_output, atol=1)
