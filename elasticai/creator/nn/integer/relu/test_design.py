@@ -2,7 +2,7 @@ from typing import cast
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.relu.relu import ReLU
-from elasticai.creator.nn.integer.relu.relu_test import relu_setup
+from elasticai.creator.nn.integer.relu.test_relu import relu_setup
 
 
 def save_design(design: ReLU) -> dict[str, str]:

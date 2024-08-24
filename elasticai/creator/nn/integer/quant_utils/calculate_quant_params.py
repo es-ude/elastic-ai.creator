@@ -13,6 +13,7 @@ def calculate_asymmetric_quant_params(
 
     zero_point = max_quant - (max_float / scale_factor)
     zero_point = zero_point.round_().clamp(min_quant, max_quant)
+    zero_point = zero_point.clone().detach().to(torch.int32)
 
     return scale_factor, zero_point, min_float, max_float
 
@@ -32,5 +33,6 @@ def calculate_symmetric_quant_params(
     scale_factor = torch.max(scale_factor, eps)
 
     zero_point = torch.zeros(scale_factor.size())
+    zero_point = zero_point.clone().detach().to(torch.int32)
 
     return scale_factor, zero_point, min_float, max_float
