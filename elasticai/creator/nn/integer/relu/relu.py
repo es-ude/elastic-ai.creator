@@ -52,11 +52,12 @@ class ReLU(DesignCreatorModule):
                 self.inputs_QParams.update_quant_params(inputs)
             else:
                 self.inputs_QParams = given_inputs_QParams
-        self.outputs_QParams = self.inputs_QParams
 
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         outputs = F.relu(inputs)
+
+        self.outputs_QParams = self.inputs_QParams
 
         outputs = SimQuant.apply(outputs, self.outputs_QParams)
 

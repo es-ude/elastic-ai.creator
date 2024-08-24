@@ -41,6 +41,7 @@ class Linear(Design):
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
+        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
 
         self._z_x = z_x
         self._z_w = z_w
@@ -55,7 +56,6 @@ class Linear(Design):
 
         self._x_addr_width = calculate_address_width(self._in_features)
         self._y_addr_width = calculate_address_width(self._out_features)
-        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
 
     @property
     def port(self) -> Port:
