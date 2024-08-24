@@ -225,7 +225,7 @@ def simulate_linear_forward(linear_layer, inputs):
     zero_point = zero_point.round_().clamp(min_quant, max_quant)
     zero_point = torch.tensor([zero_point.item()], dtype=torch.int32)
 
-    return min_float, max_float, scale_factor, zero_point
+    return min_float, max_float, scale_factor, zero_point, outputs
 
 
 def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer) -> None:
@@ -233,7 +233,7 @@ def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer) -> None
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
 
-    min_float, max_float, scale_factor, zero_point = simulate_linear_forward(
+    min_float, max_float, scale_factor, zero_point, _ = simulate_linear_forward(
         linear_layer, inputs
     )
 
@@ -245,6 +245,20 @@ def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer) -> None
         atol=1e-5,
     )
     assert torch.equal(linear_layer.outputs_QParams.zero_point, zero_point)
+
+
+def test_forward(linear_layer) -> None:
+    expected_outputs = linear_layer.forward(inputs)
+    _, _, _, _, tmp_outputs = simulate_linear_forward(linear_layer, inputs)
+    linear_layer.outputs_QParams.update_quant_params(tmp_outputs)
+    actual_outputs = linear_layer.outputs_QParams.dequantize(
+        linear_layer.outputs_QParams.quantize(tmp_outputs)
+    )
+    assert torch.allclose(
+        expected_outputs,
+        actual_outputs,
+        atol=1e-5,
+    )
 
 
 def test_get_quantized_weights_in_precompute(linear_layer) -> None:
