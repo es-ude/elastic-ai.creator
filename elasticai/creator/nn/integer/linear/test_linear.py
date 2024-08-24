@@ -1,13 +1,13 @@
-from unittest.mock import MagicMock
-
 import pytest
 import torch
+from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.linear.linear import Linear
 from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
+from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 
 inputs = torch.tensor(
     [
@@ -90,7 +90,20 @@ def test_linear_layer_initialization_math_ops(linear_layer):
     assert isinstance(linear_layer.math_ops, MathOperations)
 
 
+def test_not_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
+    linear_layer.eval()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+    assert linear_layer.inputs_QParams.min_float == torch.ones((1), dtype=torch.float32)
+    assert linear_layer.inputs_QParams.max_float == torch.ones((1), dtype=torch.float32)
+    assert linear_layer.inputs_QParams.scale_factor == torch.ones(
+        (1), dtype=torch.float32
+    )
+    assert linear_layer.inputs_QParams.zero_point == torch.zeros((1), dtype=torch.int32)
+
+
 def test_use_given_inputs_QParams_in_forward(linear_layer):
+    linear_layer.train()
     given_inputs_QParams = AsymmetricSignedQParams(
         quant_bits=6, observer=GlobalMinMaxObserver()
     )
@@ -99,6 +112,7 @@ def test_use_given_inputs_QParams_in_forward(linear_layer):
 
 
 def test_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
+    linear_layer.train()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
     assert linear_layer.inputs_QParams.min_float == torch.tensor(
@@ -109,7 +123,7 @@ def test_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
     )
     assert torch.allclose(
         linear_layer.inputs_QParams.scale_factor,
-        torch.tensor([0.0058823530562222]),
+        torch.tensor([0.0058823530562222], dtype=torch.float32),
         atol=1e-10,
     )
     assert torch.equal(
@@ -117,36 +131,122 @@ def test_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
     )
 
 
-# def test_forward():
-#     linear_layer, inputs, expected_output = linear_layer_setup()
+def test_not_update_quant_params_of_weight_QParams_in_forward(linear_layer):
+    linear_layer.eval()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+    assert linear_layer.weight_QParams.min_float == torch.ones((1), dtype=torch.float32)
+    assert linear_layer.weight_QParams.max_float == torch.ones((1), dtype=torch.float32)
+    assert linear_layer.weight_QParams.scale_factor == torch.ones(
+        (1), dtype=torch.float32
+    )
+    assert linear_layer.weight_QParams.zero_point == torch.zeros((1), dtype=torch.int32)
 
-#     output = linear_layer.forward(inputs)
 
-#     assert torch.allclose(
-#         linear_layer.inputs_QParams.scale_factor,
-#         torch.tensor([0.0058823530562222]),
-#         atol=1e-10,
-#     )
-#     assert torch.equal(
-#         linear_layer.inputs_QParams.zero_point, torch.tensor([42], dtype=torch.int32)
-#     )
+def test_update_quant_params_of_weight_QParams_in_forward(linear_layer):
+    linear_layer.train()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+    assert linear_layer.weight_QParams.min_float == torch.tensor(
+        [-1.2], dtype=torch.float32
+    )
+    assert linear_layer.weight_QParams.max_float == torch.tensor(
+        [1.2], dtype=torch.float32
+    )
+    assert torch.allclose(
+        linear_layer.weight_QParams.scale_factor,
+        torch.tensor([0.00941176526248455], dtype=torch.float32),
+        atol=1e-10,
+    )
+    assert torch.equal(linear_layer.weight_QParams.zero_point, torch.tensor([0]))
 
-#     assert torch.allclose(
-#         linear_layer.weight_QParams.scale_factor,
-#         torch.tensor([0.00941176526248455]),
-#         atol=1e-10,
-#     )
-#     assert torch.equal(linear_layer.weight_QParams.zero_point, torch.tensor([0]))
 
-#     assert torch.allclose(
-#         linear_layer.bias_QParams.scale_factor,
-#         torch.tensor([0.004724409431219101]),
-#         atol=1e-10,
-#     )
-#     assert torch.equal(linear_layer.bias_QParams.zero_point, torch.tensor([0]))
+def test_not_update_quant_params_of_bias_QParams_in_forward(linear_layer):
+    linear_layer.eval()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+    assert linear_layer.bias_QParams.min_float == torch.ones((1), dtype=torch.float32)
+    assert linear_layer.bias_QParams.max_float == torch.ones((1), dtype=torch.float32)
+    assert linear_layer.bias_QParams.scale_factor == torch.ones(
+        (1), dtype=torch.float32
+    )
+    assert linear_layer.bias_QParams.zero_point == torch.zeros((1), dtype=torch.int32)
 
-#     # Adjust the tolerance value to match the actual output
-#     assert torch.allclose(output, expected_output, atol=1e-1)
+
+def test_update_quant_params_of_bias_QParams_in_forward(linear_layer):
+    linear_layer.train()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+    assert linear_layer.bias_QParams.min_float == torch.tensor(
+        [-0.6], dtype=torch.float32  # because applied symmetric quantization
+    )
+    assert linear_layer.bias_QParams.max_float == torch.tensor(
+        [0.6], dtype=torch.float32
+    )
+    assert torch.allclose(
+        linear_layer.bias_QParams.scale_factor,
+        torch.tensor([0.004724409431219101], dtype=torch.float32),
+        atol=1e-10,
+    )
+    assert torch.equal(linear_layer.bias_QParams.zero_point, torch.tensor([0]))
+
+
+def test_not_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
+    linear_layer.eval()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+    assert linear_layer.outputs_QParams.min_float == torch.ones(
+        (1), dtype=torch.float32
+    )
+    assert linear_layer.outputs_QParams.max_float == torch.ones(
+        (1), dtype=torch.float32
+    )
+    assert linear_layer.outputs_QParams.scale_factor == torch.ones(
+        (1), dtype=torch.float32
+    )
+    assert linear_layer.outputs_QParams.zero_point == torch.zeros(
+        (1), dtype=torch.int32
+    )
+
+
+def simulate_linear_forward(linear_layer, inputs):
+    linear_layer.inputs_QParams.update_quant_params(inputs)
+    linear_layer.weight_QParams.update_quant_params(linear_layer.weight)
+    linear_layer.bias_QParams.update_quant_params(linear_layer.bias)
+
+    inputs = SimQuant.apply(inputs, linear_layer.inputs_QParams)
+    weight = SimQuant.apply(linear_layer.weight, linear_layer.weight_QParams)
+    bias = SimQuant.apply(linear_layer.bias, linear_layer.bias_QParams)
+
+    outputs = F.linear(inputs, weight, bias)
+    return outputs
+
+
+def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
+    linear_layer.train()
+    given_inputs_QParams = None
+    linear_layer.forward(inputs, given_inputs_QParams)
+
+    outputs = simulate_linear_forward(linear_layer, inputs)
+    min_float = outputs.min()
+    max_float = outputs.max()
+
+    min_quant = linear_layer.outputs_QParams.min_quant
+    max_quant = linear_layer.outputs_QParams.max_quant
+    scale_factor = (max_float - min_float) / (max_quant.float() - min_quant.float())
+    scale_factor = torch.tensor([scale_factor.item()], dtype=torch.float32)
+    zero_point = max_quant - (max_float / scale_factor)
+    zero_point = zero_point.round_().clamp(min_quant, max_quant)
+    zero_point = torch.tensor([zero_point.item()], dtype=torch.int32)
+
+    assert linear_layer.outputs_QParams.min_float == min_float
+    assert linear_layer.outputs_QParams.max_float == max_float
+    assert torch.allclose(
+        linear_layer.outputs_QParams.scale_factor,
+        scale_factor,
+        atol=1e-5,
+    )
+    assert torch.equal(linear_layer.outputs_QParams.zero_point, zero_point)
 
 
 # def test_get_quantized_weights():

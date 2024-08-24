@@ -140,8 +140,8 @@ class Linear(DesignCreatorModule, nn.Linear):
             else:
                 self.inputs_QParams = given_inputs_QParams
 
-        self.weight_QParams.update_quant_params(self.weight)
-        self.bias_QParams.update_quant_params(self.bias)
+            self.weight_QParams.update_quant_params(self.weight)
+            self.bias_QParams.update_quant_params(self.bias)
 
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
         weight = SimQuant.apply(self.weight, self.weight_QParams)
