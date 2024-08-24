@@ -1,39 +1,28 @@
 from typing import cast
 
-import torch
+import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.linear.test_linear import linear_layer
-
-inputs = torch.tensor(
-    [
-        [-1.0, 0.5, 0.5],
-        [0.5, 0.5, -0.5],
-        [-0.5, 0.0, 0.5],
-    ],
-    dtype=torch.float32,
-)
+from elasticai.creator.nn.integer.linear.test_linear import inputs, linear_layer
 
 
-def save_design(design: Linear) -> dict[str, str]:
-    destination = InMemoryPath("linear_0", parent=None)
-    design.save_to(destination)
-    files = cast(list[InMemoryFile], list(destination.children.values()))
-    return {file.name: "\n".join(file.text) for file in files}
-
-
-def get_saved_files(linear_layer):
+@pytest.fixture
+def saved_files(linear_layer, inputs):
     linear_layer.forward(inputs)
     linear_layer.eval()
     linear_layer.precompute()
     design = linear_layer.create_design("linear_0")
-    saved_files = save_design(design)
-    return saved_files
+
+    destination = InMemoryPath("linear_0", parent=None)
+    design.save_to(destination)
+    files = cast(list[InMemoryFile], list(destination.children.values()))
+
+    return {file.name: "\n".join(file.text) for file in files}
 
 
-def test_saved_design_contains_needed_files(linear_layer) -> None:
-    saved_files = get_saved_files(linear_layer)
+def test_saved_design_contains_needed_files(saved_files) -> None:
+    # saved_files = get_saved_files(linear_layer)
     expected_files = {
         "linear_0_b_rom.vhd",
         "linear_0_ram.vhd",
@@ -45,8 +34,7 @@ def test_saved_design_contains_needed_files(linear_layer) -> None:
     assert expected_files == actual_files
 
 
-def test_linear_code_generated_correctly(linear_layer) -> None:
-    saved_files = get_saved_files(linear_layer)
+def test_linear_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0.vhd"]
 
     expected_code = """library ieee;
@@ -296,8 +284,7 @@ end architecture;"""
     assert expected_code == actual_code
 
 
-def test_linear_tb_code_generated_correctly(linear_layer) -> None:
-    saved_files = get_saved_files(linear_layer)
+def test_linear_tb_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_tb.vhd"]
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
@@ -437,8 +424,7 @@ end architecture;"""
     assert expected_code == actual_code
 
 
-def test_weight_rom_code_generated_correctly(linear_layer) -> None:
-    saved_files = get_saved_files(linear_layer)
+def test_weight_rom_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_w_rom.vhd"]
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
@@ -469,8 +455,7 @@ end architecture rtl;"""
     assert expected_code == actual_code
 
 
-def test_bias_rom_code_generated_correctly(linear_layer) -> None:
-    saved_files = get_saved_files(linear_layer)
+def test_bias_rom_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_b_rom.vhd"]
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
@@ -501,8 +486,7 @@ end architecture rtl;"""
     assert expected_code == actual_code
 
 
-def test_ram_code_generated_correctly(linear_layer) -> None:
-    saved_files = get_saved_files(linear_layer)
+def test_ram_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_ram.vhd"]
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
