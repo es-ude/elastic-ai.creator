@@ -17,16 +17,10 @@ inputs = torch.tensor(
     ],
     dtype=torch.float32,
 )
-# outputs = inputs.mm(linear_layer.weight.t()) + linear_layer.bias
-
-
-class MockQParams(torch.nn.Module):
-    def __init__(self):
-        super(MockQParams, self).__init__()
 
 
 @pytest.fixture
-def linear_layer():
+def linear_layer() -> Linear:
     linear_layer = Linear(
         name="linear", in_features=3, out_features=10, bias=True, quant_bits=8
     )
@@ -54,43 +48,43 @@ def linear_layer():
     return linear_layer
 
 
-def test_linear_layer_initialization_weight_quant_bits(linear_layer):
+def test_linear_layer_initialization_weight_quant_bits(linear_layer) -> None:
     assert linear_layer.weight_QParams.quant_bits == 8
 
 
-def test_linear_layer_initialization_bias_quant_bits(linear_layer):
+def test_linear_layer_initialization_bias_quant_bits(linear_layer) -> None:
     assert linear_layer.bias_QParams.quant_bits == 8
 
 
-def test_linear_layer_initialization_input_quant_bits(linear_layer):
+def test_linear_layer_initialization_input_quant_bits(linear_layer) -> None:
     assert linear_layer.inputs_QParams.quant_bits == 8
 
 
-def test_linear_layer_initialization_output_quant_bits(linear_layer):
+def test_linear_layer_initialization_output_quant_bits(linear_layer) -> None:
     assert linear_layer.outputs_QParams.quant_bits == 8
 
 
-def test_linear_layer_initialization_weight_observer(linear_layer):
+def test_linear_layer_initialization_weight_observer(linear_layer) -> None:
     assert isinstance(linear_layer.weight_QParams.observer, GlobalMinMaxObserver)
 
 
-def test_linear_layer_initialization_bias_observer(linear_layer):
+def test_linear_layer_initialization_bias_observer(linear_layer) -> None:
     assert isinstance(linear_layer.bias_QParams.observer, GlobalMinMaxObserver)
 
 
-def test_linear_layer_initialization_input_observer(linear_layer):
+def test_linear_layer_initialization_input_observer(linear_layer) -> None:
     assert isinstance(linear_layer.inputs_QParams.observer, GlobalMinMaxObserver)
 
 
-def test_linear_layer_initialization_output_observer(linear_layer):
+def test_linear_layer_initialization_output_observer(linear_layer) -> None:
     assert isinstance(linear_layer.outputs_QParams.observer, GlobalMinMaxObserver)
 
 
-def test_linear_layer_initialization_math_ops(linear_layer):
+def test_linear_layer_initialization_math_ops(linear_layer) -> None:
     assert isinstance(linear_layer.math_ops, MathOperations)
 
 
-def test_not_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
+def test_not_update_quant_params_of_inputs_QParams_in_forward(linear_layer) -> None:
     linear_layer.eval()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -102,7 +96,7 @@ def test_not_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
     assert linear_layer.inputs_QParams.zero_point == torch.zeros((1), dtype=torch.int32)
 
 
-def test_use_given_inputs_QParams_in_forward(linear_layer):
+def test_use_given_inputs_QParams_in_forward(linear_layer) -> None:
     linear_layer.train()
     given_inputs_QParams = AsymmetricSignedQParams(
         quant_bits=6, observer=GlobalMinMaxObserver()
@@ -111,7 +105,7 @@ def test_use_given_inputs_QParams_in_forward(linear_layer):
     assert linear_layer.inputs_QParams == given_inputs_QParams
 
 
-def test_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
+def test_update_quant_params_of_inputs_QParams_in_forward(linear_layer) -> None:
     linear_layer.train()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -131,7 +125,7 @@ def test_update_quant_params_of_inputs_QParams_in_forward(linear_layer):
     )
 
 
-def test_not_update_quant_params_of_weight_QParams_in_forward(linear_layer):
+def test_not_update_quant_params_of_weight_QParams_in_forward(linear_layer) -> None:
     linear_layer.eval()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -143,7 +137,7 @@ def test_not_update_quant_params_of_weight_QParams_in_forward(linear_layer):
     assert linear_layer.weight_QParams.zero_point == torch.zeros((1), dtype=torch.int32)
 
 
-def test_update_quant_params_of_weight_QParams_in_forward(linear_layer):
+def test_update_quant_params_of_weight_QParams_in_forward(linear_layer) -> None:
     linear_layer.train()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -161,7 +155,7 @@ def test_update_quant_params_of_weight_QParams_in_forward(linear_layer):
     assert torch.equal(linear_layer.weight_QParams.zero_point, torch.tensor([0]))
 
 
-def test_not_update_quant_params_of_bias_QParams_in_forward(linear_layer):
+def test_not_update_quant_params_of_bias_QParams_in_forward(linear_layer) -> None:
     linear_layer.eval()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -173,7 +167,7 @@ def test_not_update_quant_params_of_bias_QParams_in_forward(linear_layer):
     assert linear_layer.bias_QParams.zero_point == torch.zeros((1), dtype=torch.int32)
 
 
-def test_update_quant_params_of_bias_QParams_in_forward(linear_layer):
+def test_update_quant_params_of_bias_QParams_in_forward(linear_layer) -> None:
     linear_layer.train()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -191,7 +185,7 @@ def test_update_quant_params_of_bias_QParams_in_forward(linear_layer):
     assert torch.equal(linear_layer.bias_QParams.zero_point, torch.tensor([0]))
 
 
-def test_not_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
+def test_not_update_quant_params_of_outputs_QParams_in_forward(linear_layer) -> None:
     linear_layer.eval()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -234,7 +228,7 @@ def simulate_linear_forward(linear_layer, inputs):
     return min_float, max_float, scale_factor, zero_point
 
 
-def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
+def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer) -> None:
     linear_layer.train()
     given_inputs_QParams = None
     linear_layer.forward(inputs, given_inputs_QParams)
@@ -253,8 +247,9 @@ def test_update_quant_params_of_outputs_QParams_in_forward(linear_layer):
     assert torch.equal(linear_layer.outputs_QParams.zero_point, zero_point)
 
 
-def test_get_quantized_weights_in_precompute(linear_layer):
+def test_get_quantized_weights_in_precompute(linear_layer) -> None:
     linear_layer.forward(inputs)
+    linear_layer.eval()
     linear_layer.precompute()
 
     expected_q_weight = torch.tensor(
@@ -275,8 +270,9 @@ def test_get_quantized_weights_in_precompute(linear_layer):
     assert torch.equal(linear_layer.q_weights, expected_q_weight)
 
 
-def test_get_quantized_bias_in_precompute(linear_layer):
+def test_get_quantized_bias_in_precompute(linear_layer) -> None:
     linear_layer.forward(inputs)
+    linear_layer.eval()
     linear_layer.precompute()
 
     expected_scale_factor = (
@@ -301,8 +297,9 @@ def test_get_quantized_bias_in_precompute(linear_layer):
     assert torch.equal(linear_layer.q_bias, expected_q_bias)
 
 
-def test_get_scale_fator_M_in_precompute(linear_layer):
+def test_get_scale_fator_M_in_precompute(linear_layer) -> None:
     linear_layer.forward(inputs)
+    linear_layer.eval()
     linear_layer.precompute()
 
     input_QParams_scale_factor = torch.tensor([0.0058823530562222], dtype=torch.float32)
@@ -321,8 +318,9 @@ def test_get_scale_fator_M_in_precompute(linear_layer):
     )
 
 
-def test_int_forward(linear_layer):
+def test_int_forward(linear_layer) -> None:
     outputs = linear_layer.forward(inputs)
+    linear_layer.eval()
     linear_layer.precompute()
 
     # Quantize the input before passing to int_forward

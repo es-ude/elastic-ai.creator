@@ -1,11 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
 library ${work_library_name};
 use ${work_library_name}.all;
-
------------------------------------------------------------
 entity ${name} is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
@@ -32,10 +29,7 @@ entity ${name} is
         done   : out std_logic
     );
 end ${name};
------------------------------------------------------------
-
 architecture rtl of ${name} is
-    ---------------------MAC Function-----------------------
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);
@@ -46,7 +40,6 @@ architecture rtl of ${name} is
         TMP := w * x_in;
         return TMP + y_0;
     end function;
-    ------------------Scaling Function---------------------
     function scaling(x_in : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
@@ -72,7 +65,6 @@ architecture rtl of ${name} is
             return resize(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
-    ---------------------Log2 Function-----------------------
     function log2(val : INTEGER) return natural is
         variable result : natural;
     begin
@@ -84,48 +76,34 @@ architecture rtl of ${name} is
         end loop;
         return result;
     end function log2;
-    -----------------------Signals-----------------------
     signal M_Q_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
-
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
-
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
     type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling, s_output, s_done);
     signal mac_state : t_mac_state;
-
     signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-
     signal w_in : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal w_addr : std_logic_vector(log2(IN_FEATURES*OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal w_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-
     signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal b_int : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
-
     signal y_store_en : std_logic;
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-
     signal macc_sum : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
------------------------------------------------------------
 begin
-    -- connecting signals to ports
     n_clock <= not clock;
     w_int <= signed(w_in);
     x_int <= signed(x);
     b_int <= signed(b_in);
-
-    -- connects ports
     reset <= not enable;
-
-    -- state machine
     fsm : process (clock, reset)
     begin
         if (reset = '1') then
@@ -146,15 +124,12 @@ begin
             end if;
         end if;
     end process fsm;
-
-    -- mac process
     mac : process( clock, layer_state )
         variable neuron_idx : integer range 0 to OUT_FEATURES-1 := 0;
         variable input_idx : integer  range 0 to IN_FEATURES - 1 := 0;
         variable weight_idx : integer range 0 to OUT_FEATURES * IN_FEATURES-1 := 0;
         variable bias_idx : integer range 0 to OUT_FEATURES-1 := 0;
         variable output_idx : integer  range 0 to OUT_FEATURES - 1 := 0;
-
         variable mac_cnt : integer range 0 to IN_FEATURES+1 := 0;
         variable input_offset : integer;
         variable var_product : signed(DATA_WIDTH - 1 downto 0);
@@ -231,17 +206,14 @@ begin
             b_addr <= std_logic_vector(to_unsigned(bias_idx, b_addr'length));
         end if;
     end process ;
-
-    ---------------- RAM Y ----------------
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
-
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,
-        INIT_FILE => ""  -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
+        INIT_FILE => ""
     )
     port map  (
         addra  => y_store_addr_std,
@@ -255,9 +227,6 @@ begin
         regceb => '0',
         doutb  => y
     );
-    ---------------- RAM Y ----------------
-
-    ---------------- WEIGHTS ROM ----------------
     rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
     port map  (
         clk  => clock,
@@ -265,8 +234,6 @@ begin
         addr => w_addr,
         data => w_in
     );
-
-    ---------------- BIAS ROM  ----------------
     rom_b : entity ${work_library_name}.${bias_rom_name}(rtl)
     port map  (
         clk  => clock,

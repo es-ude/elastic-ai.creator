@@ -1,8 +1,19 @@
 from typing import cast
 
+import torch
+
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.linear.test_linear import linear_layer_setup
+from elasticai.creator.nn.integer.linear.test_linear import linear_layer
+
+inputs = torch.tensor(
+    [
+        [-1.0, 0.5, 0.5],
+        [0.5, 0.5, -0.5],
+        [-0.5, 0.0, 0.5],
+    ],
+    dtype=torch.float32,
+)
 
 
 def save_design(design: Linear) -> dict[str, str]:
@@ -12,14 +23,17 @@ def save_design(design: Linear) -> dict[str, str]:
     return {file.name: "\n".join(file.text) for file in files}
 
 
-def test_saved_design_contains_needed_files() -> None:
-    linear_layer, input_data, _ = linear_layer_setup()
-    _ = linear_layer.forward(input_data)
+def get_saved_files(linear_layer):
+    linear_layer.forward(inputs)
+    linear_layer.eval()
     linear_layer.precompute()
-
     design = linear_layer.create_design("linear_0")
     saved_files = save_design(design)
+    return saved_files
 
+
+def test_saved_design_contains_needed_files(linear_layer) -> None:
+    saved_files = get_saved_files(linear_layer)
     expected_files = {
         "linear_0_b_rom.vhd",
         "linear_0_ram.vhd",
@@ -28,19 +42,18 @@ def test_saved_design_contains_needed_files() -> None:
         "linear_0.vhd",
     }
     actual_files = set(saved_files.keys())
-
     assert expected_files == actual_files
 
 
-def test_linear_code_generated_correctly() -> None:
+def test_linear_code_generated_correctly(linear_layer) -> None:
+    saved_files = get_saved_files(linear_layer)
+    actual_code = saved_files["linear_0.vhd"]
+
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
 library work;
 use work.all;
-
------------------------------------------------------------
 entity linear_0 is
     generic (
         X_ADDR_WIDTH : integer := 2;
@@ -67,10 +80,7 @@ entity linear_0 is
         done   : out std_logic
     );
 end linear_0;
------------------------------------------------------------
-
 architecture rtl of linear_0 is
-    ---------------------MAC Function-----------------------
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);
@@ -81,7 +91,6 @@ architecture rtl of linear_0 is
         TMP := w * x_in;
         return TMP + y_0;
     end function;
-    ------------------Scaling Function---------------------
     function scaling(x_in : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
@@ -107,7 +116,6 @@ architecture rtl of linear_0 is
             return resize(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
-    ---------------------Log2 Function-----------------------
     function log2(val : INTEGER) return natural is
         variable result : natural;
     begin
@@ -119,48 +127,34 @@ architecture rtl of linear_0 is
         end loop;
         return result;
     end function log2;
-    -----------------------Signals-----------------------
     signal M_Q_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
-
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
-
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
     type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling, s_output, s_done);
     signal mac_state : t_mac_state;
-
     signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-
     signal w_in : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal w_addr : std_logic_vector(log2(IN_FEATURES*OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal w_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-
     signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal b_int : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
-
     signal y_store_en : std_logic;
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-
     signal macc_sum : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
------------------------------------------------------------
 begin
-    -- connecting signals to ports
     n_clock <= not clock;
     w_int <= signed(w_in);
     x_int <= signed(x);
     b_int <= signed(b_in);
-
-    -- connects ports
     reset <= not enable;
-
-    -- state machine
     fsm : process (clock, reset)
     begin
         if (reset = '1') then
@@ -181,15 +175,12 @@ begin
             end if;
         end if;
     end process fsm;
-
-    -- mac process
     mac : process( clock, layer_state )
         variable neuron_idx : integer range 0 to OUT_FEATURES-1 := 0;
         variable input_idx : integer  range 0 to IN_FEATURES - 1 := 0;
         variable weight_idx : integer range 0 to OUT_FEATURES * IN_FEATURES-1 := 0;
         variable bias_idx : integer range 0 to OUT_FEATURES-1 := 0;
         variable output_idx : integer  range 0 to OUT_FEATURES - 1 := 0;
-
         variable mac_cnt : integer range 0 to IN_FEATURES+1 := 0;
         variable input_offset : integer;
         variable var_product : signed(DATA_WIDTH - 1 downto 0);
@@ -266,17 +257,14 @@ begin
             b_addr <= std_logic_vector(to_unsigned(bias_idx, b_addr'length));
         end if;
     end process ;
-
-    ---------------- RAM Y ----------------
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
-
     ram_y : entity work.linear_0_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,
-        INIT_FILE => ""  -- so relative path also xil_defaultlibs for ghdl, this path is relative to the path of the makefile, e.g "data/xx.dat"
+        INIT_FILE => ""
     )
     port map  (
         addra  => y_store_addr_std,
@@ -290,9 +278,6 @@ begin
         regceb => '0',
         doutb  => y
     );
-    ---------------- RAM Y ----------------
-
-    ---------------- WEIGHTS ROM ----------------
     rom_w : entity work.linear_0_w_rom(rtl)
     port map  (
         clk  => clock,
@@ -300,8 +285,6 @@ begin
         addr => w_addr,
         data => w_in
     );
-
-    ---------------- BIAS ROM  ----------------
     rom_b : entity work.linear_0_b_rom(rtl)
     port map  (
         clk  => clock,
@@ -310,29 +293,19 @@ begin
         data => b_in
     );
 end architecture;"""
-
-    linear_layer, input_data, _ = linear_layer_setup()
-    output_data = linear_layer.forward(input_data)
-    linear_layer.precompute()
-
-    design = linear_layer.create_design("linear_0")
-    saved_files = save_design(design)
-    actual_code = saved_files["linear_0.vhd"]
-
     assert expected_code == actual_code
 
 
-def test_linear_tb_code_generated_correctly() -> None:
+def test_linear_tb_code_generated_correctly(linear_layer) -> None:
+    saved_files = get_saved_files(linear_layer)
+    actual_code = saved_files["linear_0_tb.vhd"]
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
-
 library work;
 use work.all;
-
------------------------------------------------------------
 entity linear_0_tb is
     generic (
         X_ADDR_WIDTH : integer := 2;
@@ -345,13 +318,11 @@ port(
     clk : out std_logic
     );
 end entity;
------------------------------------------------------------
 architecture rtl of linear_0_tb is
     constant C_CLK_PERIOD : time := 10 ns;
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-
     signal x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
@@ -359,9 +330,7 @@ architecture rtl of linear_0_tb is
     signal done : std_logic;
     type t_array_x is array (0 to IN_FEATURES - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
------------------------------------------------------------
 begin
-    --------------------CLOCKS------------------------
     CLK_GEN : process
     begin
         clock <= '1';
@@ -369,7 +338,6 @@ begin
         clock <= '0';
         wait for C_CLK_PERIOD/2;
     end process CLK_GEN;
-    --------------------RESET------------------------
     RESET_GEN : process
     begin
         reset <= '1',
@@ -377,15 +345,12 @@ begin
     wait;
     end process RESET_GEN;
     clk <= clock;
-
-    --------------------DATA READ------------------------
     data_read : process( clock )
     begin
         if rising_edge(clock) then
             x_in <= x_arr(to_integer(unsigned(x_addr)));
         end if;
     end process ;
-    --------------------TESTBENCH SIMULATIONS----------------------------
     test_main : process
         constant file_inputs:      string := "./data/linear_0_q_x.txt";
         constant file_labels:      string := "./data/linear_0_q_y.txt";
@@ -405,27 +370,23 @@ begin
                     file_open_status'image(filestatus);
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
-            severity FAILURE;    -- end simulation
-
+            severity FAILURE;
         file_open (filestatus, fp_labels, file_labels, READ_MODE);
         report file_labels & LF & HT & "file_open_status = " &
                     file_open_status'image(filestatus);
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
-            severity FAILURE;    -- end simulation
-
+            severity FAILURE;
         file_open (filestatus, fp_pred, file_pred, WRITE_MODE);
         report file_pred & LF & HT & "file_open_status = " &
                     file_open_status'image(filestatus);
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
-            severity FAILURE;    -- end simulation
-
+            severity FAILURE;
         y_addr <= (others=>'0');
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
-
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
             while input_rd_cnt < IN_FEATURES loop
@@ -435,27 +396,20 @@ begin
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             wait for C_CLK_PERIOD;
-
             v_TIME := now;
             uut_enable <= '1';
             wait for C_CLK_PERIOD;
             wait until done='1';
             v_TIME := now - v_TIME;
-
             output_rd_cnt := 0;
             while output_rd_cnt<OUT_FEATURES loop
-
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
-
                 y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
                 wait for 2*C_CLK_PERIOD;
-
                 report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-
                 write (line_num, to_integer(signed(y_out)));
                 writeline(fp_pred, line_num);
-
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
             uut_enable <= '0';
@@ -465,13 +419,10 @@ begin
         file_close (fp_labels);
         file_close (fp_pred);
         report  "all files closed.";
-
         report "Time taken for processing = " & time'image(v_TIME);
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
-    end process ;
-
-    ---------------------Entity Under Test------------------------
+    end process;
     uut: entity work.linear_0(rtl)
     port map (
         enable => uut_enable,
@@ -483,19 +434,12 @@ begin
         done   => done
     );
 end architecture;"""
-
-    linear_layer, input_data, _ = linear_layer_setup()
-    output_data = linear_layer.forward(input_data)
-    linear_layer.precompute()
-
-    design = linear_layer.create_design("linear_0")
-    saved_files = save_design(design)
-    actual_code = saved_files["linear_0_tb.vhd"]
-
     assert expected_code == actual_code
 
 
-def test_weight_rom_code_generated_correctly() -> None:
+def test_weight_rom_code_generated_correctly(linear_layer) -> None:
+    saved_files = get_saved_files(linear_layer)
+    actual_code = saved_files["linear_0_w_rom.vhd"]
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
     use ieee.std_logic_unsigned.all;
@@ -522,19 +466,12 @@ begin
         end if;
     end process ROM_process;
 end architecture rtl;"""
-
-    linear_layer, input_data, _ = linear_layer_setup()
-    _ = linear_layer.forward(input_data)
-    linear_layer.precompute()
-
-    design = linear_layer.create_design("linear_0")
-    saved_files = save_design(design)
-    actual_code = saved_files["linear_0_w_rom.vhd"]
-
     assert expected_code == actual_code
 
 
-def test_bias_rom_code_generated_correctly() -> None:
+def test_bias_rom_code_generated_correctly(linear_layer) -> None:
+    saved_files = get_saved_files(linear_layer)
+    actual_code = saved_files["linear_0_b_rom.vhd"]
     expected_code = """library ieee;
     use ieee.std_logic_1164.all;
     use ieee.std_logic_unsigned.all;
@@ -561,23 +498,16 @@ begin
         end if;
     end process ROM_process;
 end architecture rtl;"""
-    linear_layer, input_data, _ = linear_layer_setup()
-    _ = linear_layer.forward(input_data)
-    linear_layer.precompute()
-
-    design = linear_layer.create_design("linear_0")
-    saved_files = save_design(design)
-    actual_code = saved_files["linear_0_b_rom.vhd"]
-
     assert expected_code == actual_code
 
 
-def test_ram_code_generated_correctly() -> None:
+def test_ram_code_generated_correctly(linear_layer) -> None:
+    saved_files = get_saved_files(linear_layer)
+    actual_code = saved_files["linear_0_ram.vhd"]
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
-
 entity linear_0_ram is
     generic (
         RAM_WIDTH : integer := 64;
@@ -599,28 +529,22 @@ entity linear_0_ram is
         doutb : out std_logic_vector(RAM_WIDTH-1 downto 0)
     );
 end linear_0_ram;
-
 architecture rtl of linear_0_ram is
     constant C_RAM_WIDTH : integer := RAM_WIDTH;
     constant C_RAM_DEPTH : integer := 2**RAM_DEPTH_WIDTH;
     constant C_RAM_PERFORMANCE : string := RAM_PERFORMANCE;
     constant C_INIT_FILE : string := INIT_FILE;
-
     signal doutb_reg : std_logic_vector(C_RAM_WIDTH-1 downto 0) := (others => '0');
     type ram_type is array (0 to C_RAM_DEPTH-1) of std_logic_vector(C_RAM_WIDTH-1 downto 0);
     signal ram_data : std_logic_vector(C_RAM_WIDTH-1 downto 0);
-
     function init_from_file_or_zeroes(ramfile : string) return ram_type is
     begin
         return (others => (others => '0'));
     end;
-
     signal ram_name : ram_type := init_from_file_or_zeroes(C_INIT_FILE);
     attribute ram_style : string;
     attribute ram_style of ram_name : signal is RESOURCE_OPTION;
-
 begin
-
     process(clka)
     begin
         if rising_edge(clka) then
@@ -629,7 +553,6 @@ begin
             end if;
         end if;
     end process;
-
     process(clkb)
     begin
         if rising_edge(clkb) then
@@ -638,11 +561,9 @@ begin
             end if;
         end if;
     end process;
-
     no_output_register : if C_RAM_PERFORMANCE = "LOW_LATENCY" generate
         doutb <= ram_data;
     end generate;
-
     output_register : if C_RAM_PERFORMANCE = "HIGH_PERFORMANCE" generate
         process(clkb)
         begin
@@ -657,12 +578,4 @@ begin
         doutb <= doutb_reg;
     end generate;
 end architecture rtl;"""
-    linear_layer, input_data, _ = linear_layer_setup()
-    output_data = linear_layer.forward(input_data)
-    linear_layer.precompute()
-
-    design = linear_layer.create_design("linear_0")
-    saved_files = save_design(design)
-    actual_code = saved_files["linear_0_ram.vhd"]
-
     assert expected_code == actual_code
