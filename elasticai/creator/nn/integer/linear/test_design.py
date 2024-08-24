@@ -22,7 +22,6 @@ def saved_files(linear_layer, inputs):
 
 
 def test_saved_design_contains_needed_files(saved_files) -> None:
-    # saved_files = get_saved_files(linear_layer)
     expected_files = {
         "linear_0_b_rom.vhd",
         "linear_0_ram.vhd",
