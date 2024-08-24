@@ -44,6 +44,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         ).to(self.device)
 
         self.math_ops = MathOperations()
+        self.precomputed = False
 
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
@@ -64,6 +65,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
     def _get_quantized_weights(self) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
         if not self.weight_QParams.is_symmetric:
@@ -75,6 +77,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         return q_weights
 
     def _get_quantized_bias(self) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
@@ -93,6 +96,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         return q_bias
 
     def precompute(self) -> None:
+        assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
         self.q_bias = self._get_quantized_bias()
 
@@ -103,11 +107,14 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
+        self.precomputed = True
 
     def int_forward(
         self,
         q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "precompute should be called before int_forward"
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
