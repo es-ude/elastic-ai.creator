@@ -3,7 +3,7 @@ import torch
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
+from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
     calculate_asymmetric_quant_params,
     calculate_symmetric_quant_params,
@@ -595,6 +595,4 @@ def test_int_forward(linear_layer, inputs, q_inputs, q_outputs) -> None:
     assert linear_layer.precomputed == True
     expected_q_output = q_outputs
     actual_q_output = linear_layer.int_forward(q_inputs)
-    print("expected_q_output", expected_q_output)
-    print("actual_q_output", actual_q_output)
     assert torch.allclose(actual_q_output, expected_q_output, atol=1)

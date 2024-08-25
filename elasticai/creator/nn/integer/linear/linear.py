@@ -6,7 +6,7 @@ from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
-from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
+from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,

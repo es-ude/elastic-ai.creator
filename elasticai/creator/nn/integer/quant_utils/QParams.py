@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from elasticai.creator.nn.integer.math_operations.MathOperations import MathOperations
+from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
     calculate_asymmetric_quant_params,
     calculate_symmetric_quant_params,

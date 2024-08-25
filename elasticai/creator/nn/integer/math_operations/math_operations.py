@@ -2,10 +2,8 @@ import torch
 
 
 class MathOperations:
-    def _clamp_result(
-        self, result: torch.IntTensor, c_quant_bits: int
-    ) -> torch.IntTensor:
-        result.clamp_(-(2 ** (c_quant_bits - 1)), (2 ** (c_quant_bits - 1)) - 1)
+    def clamp_result(self, result: torch.IntTensor, quant_bits: int) -> torch.IntTensor:
+        result.clamp_(-(2 ** (quant_bits - 1)), (2 ** (quant_bits - 1)) - 1)
         return result
 
     def intadd(
@@ -14,7 +12,14 @@ class MathOperations:
         assert a.dtype == torch.int32
         assert b.dtype == torch.int32
         c = a + b.to(a.device)
-        return self._clamp_result(c, c_quant_bits)
+
+        if torch.any(c < -(2 ** (c_quant_bits - 1))) or torch.any(
+            c > (2 ** (c_quant_bits - 1)) - 1
+        ):
+            raise ValueError(
+                f"Result of addition is out of range for {c_quant_bits} bits"
+            )
+        return self.clamp_result(c, c_quant_bits)
 
     def intsub(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
@@ -23,7 +28,13 @@ class MathOperations:
         assert b.dtype == torch.int32
 
         c = a - b.to(a.device)
-        return self._clamp_result(c, c_quant_bits)
+        if torch.any(c < -(2 ** (c_quant_bits - 1))) or torch.any(
+            c > (2 ** (c_quant_bits - 1)) - 1
+        ):
+            raise ValueError(
+                f"Result of addition is out of range for {c_quant_bits} bits"
+            )
+        return self.clamp_result(c, c_quant_bits)
 
     def intmatmul(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
@@ -44,7 +55,10 @@ class MathOperations:
                 for p in range(k):
                     c_cpu[i, j] += a_cpu[i, p].item() * b_cpu[p, j].item()
         c = c_cpu.to(a.device)
-        return self._clamp_result(c, c_quant_bits)
-
-        # c = a.matmul(b.to(a.device))
-        # return self._clamp_result(c, c_quant_bits)
+        if torch.any(c < -(2 ** (c_quant_bits - 1))) or torch.any(
+            c > (2 ** (c_quant_bits - 1)) - 1
+        ):
+            raise ValueError(
+                f"Result of addition is out of range for {c_quant_bits} bits"
+            )
+        return self.clamp_result(c, c_quant_bits)
