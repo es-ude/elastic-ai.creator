@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.quant_utils.Observers import (
 
 
 def setUp1_for_GlobalMinMaxObserver():
+    # range gets larger
     tensor1 = torch.tensor([-1.0, 2.0, 3.0, 4.0], dtype=torch.float32)
     tensor2 = torch.tensor([-5.0, 6.0, 7.0, 8.0], dtype=torch.float32)
     tensor3 = torch.tensor([-9.0, 10.0, 11.0, 12.0], dtype=torch.float32)
@@ -15,6 +16,7 @@ def setUp1_for_GlobalMinMaxObserver():
 
 
 def _setUp2_for_GlobalMinMaxObserver():
+    # range gets smaller
     tensor1 = torch.tensor([-9.0, 10.0, 11.0, 12.0], dtype=torch.float32)
     tensor2 = torch.tensor([-5.0, 6.0, 7.0, 8.0], dtype=torch.float32)
     tensor3 = torch.tensor([-1.0, 2.0, 3.0, 4.0], dtype=torch.float32)

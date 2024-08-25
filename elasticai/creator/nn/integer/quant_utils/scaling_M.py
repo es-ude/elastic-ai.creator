@@ -1,12 +1,11 @@
 import torch
 
 
-def scaling_M(M: torch.FloatTensor):
+def scaling_M(M: torch.FloatTensor, m_q_shift_limit=32):
     M = torch.round(M * 10**5) / 10**5
     m_q_shift = torch.tensor(1, dtype=torch.int32)
 
-    while m_q_shift.item() < 32:
-        # Attention: take care of the bitwidth of the m_q in the vdhl template
+    while m_q_shift.item() < m_q_shift_limit:
         m_q = torch.round(M * (2**m_q_shift)).type(torch.int32)
 
         error = (M - m_q * (2 ** (-m_q_shift.item()))) / M

@@ -4,7 +4,6 @@ from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObser
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     AsymmetricUnsignedQParams,
-    QParams,
     SymmetricSignedQParams,
     SymmetricUnsignedQParams,
 )
@@ -20,15 +19,15 @@ def test_AsymmetricSignedQParams():
     zero_point = torch.tensor([-26], dtype=torch.int32)
 
     ASSSParams.update_quant_params(x)
-    q_x = ASSSParams.quantize(x)
+    actual_q_x = ASSSParams.quantize(x)
     expected_q_x = torch.tensor([[-128, 0, 25, 76, 127]], dtype=torch.int32)
-    assert torch.equal(q_x, expected_q_x)
+    assert torch.equal(actual_q_x, expected_q_x)
 
-    dq_x = ASSSParams.dequantize(q_x)
+    actual_dq_x = ASSSParams.dequantize(actual_q_x)
     expected_dq_x = torch.tensor(
         [[-2.0000, 0.5098, 1.0000, 2.0000, 3.0000]], dtype=torch.float32
     )
-    assert torch.allclose(dq_x, expected_dq_x, atol=1e-10)
+    assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-10)
 
 
 def test_AsymmetricUnsignedQParams():
@@ -43,15 +42,15 @@ def test_AsymmetricUnsignedQParams():
     zero_point = torch.tensor([102], dtype=torch.int32)
 
     ASUSParams.update_quant_params(x)
-    q_x = ASUSParams.quantize(x)
+    actual_q_x = ASUSParams.quantize(x)
     expected_q_x = torch.tensor([0, 128, 153, 204, 255], dtype=torch.int32)
-    assert torch.equal(q_x, expected_q_x)
+    assert torch.equal(actual_q_x, expected_q_x)
 
-    dq_x = ASUSParams.dequantize(q_x)
+    actual_dq_x = ASUSParams.dequantize(actual_q_x)
     expected_dq_x = torch.tensor(
         [-2.0000, 0.5098, 1.0000, 2.0000, 3.0000], dtype=torch.float32
     )
-    assert torch.allclose(dq_x, expected_dq_x, atol=1e-4)
+    assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
 
 
 def test_SymmetricSignedQParams():
@@ -63,15 +62,15 @@ def test_SymmetricSignedQParams():
     zero_point = torch.tensor([0], dtype=torch.int32)
 
     SSSSParams.update_quant_params(x)
-    q_x = SSSSParams.quantize(x)
+    actual_q_x = SSSSParams.quantize(x)
     expected_q_x = torch.tensor([-127, 32, 32, 64, 127], dtype=torch.int32)
-    assert torch.equal(q_x, expected_q_x)
+    assert torch.equal(actual_q_x, expected_q_x)
 
-    dq_x = SSSSParams.dequantize(q_x)
+    actual_dq_x = SSSSParams.dequantize(actual_q_x)
     expected_dq_x = torch.tensor(
         [-2.0000, 0.5039, 0.5039, 1.0079, 2.0000], dtype=torch.float32
     )
-    assert torch.allclose(dq_x, expected_dq_x, atol=1e-4)
+    assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
 
 
 def test_SymmetricUnsignedQParams():
@@ -85,36 +84,65 @@ def test_SymmetricUnsignedQParams():
     zero_point = torch.tensor([0], dtype=torch.int32)
 
     SSUSParams.update_quant_params(x)
-    q_x = SSUSParams.quantize(x)
+    actual_q_x = SSUSParams.quantize(x)
     expected_q_x = torch.tensor([0, 32, 32, 64, 127], dtype=torch.int32)
-    assert torch.equal(q_x, expected_q_x)
+    assert torch.equal(actual_q_x, expected_q_x)
 
-    dq_x = SSUSParams.dequantize(q_x)
+    actual_dq_x = SSUSParams.dequantize(actual_q_x)
     expected_dq_x = torch.tensor(
         [0.0000, 0.5039, 0.5039, 1.0079, 2.0000], dtype=torch.float32
     )
-    assert torch.allclose(dq_x, expected_dq_x, atol=1e-4)
+    assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
 
 
-def test_quant_range():
-    SSSSParams = SymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+def test_set_scale_factor():
+    SSSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 
-    expected_min_quant = torch.tensor([-127], dtype=torch.int32)
-    expected_max_quant = torch.tensor([127], dtype=torch.int32)
+    scale_factor = torch.tensor([0.0157480314], dtype=torch.float32)
+    SSSSParams.set_scale_factor(scale_factor)
 
-    assert torch.equal(SSSSParams.min_quant, expected_min_quant)
-    assert torch.equal(SSSSParams.max_quant, expected_max_quant)
+    assert torch.equal(SSSSParams.scale_factor, scale_factor)
 
 
-def test_out_of_range_values():
-    ASSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+def test_set_zero_point():
+    SSSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 
-    x = torch.tensor([-200.0, 0.5, 300.0], dtype=torch.float32)
-    ASSSParams.update_quant_params(x)
+    zero_point = torch.tensor([12], dtype=torch.int32)
+    SSSSParams.set_zero_point(zero_point)
 
-    q_x = ASSSParams.quantize(x)
-    assert torch.all(q_x >= ASSSParams.min_quant.item())
-    assert torch.all(q_x <= ASSSParams.max_quant.item())
+    assert torch.equal(SSSSParams.zero_point, zero_point)
+
+
+def test_set_quant_range():
+    SSSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+
+    SSSSParams.set_quant_range(16)
+
+    assert SSSSParams.quant_bits == 16
+    assert torch.equal(SSSSParams.min_quant, torch.tensor([-32768], dtype=torch.int32))
+    assert torch.equal(SSSSParams.max_quant, torch.tensor([32767], dtype=torch.int32))
+
+
+def test_quantize():
+    SSSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+
+    x = torch.tensor([-2.0, 0.5, 1.0], dtype=torch.float32)
+    SSSSParams.update_quant_params(x)
+
+    actual_q_x = SSSSParams.quantize(x)
+    expected_q_x = torch.tensor([-128, 84, 127], dtype=torch.int32)
+    assert torch.equal(actual_q_x, expected_q_x)
+
+
+def test_dequantize():
+    SSSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+
+    x = torch.tensor([-2.0, 0.5, 1.0], dtype=torch.float32)
+    SSSSParams.update_quant_params(x)
+    q_x = SSSSParams.quantize(x)
+    actual_dq_x = SSSSParams.dequantize(q_x)
+    expected_dq_x = torch.tensor([-2.0000, 0.4941, 1.0000], dtype=torch.float32)
+    assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
 
 
 def test_state_dict():
@@ -134,3 +162,5 @@ def test_state_dict():
     assert torch.equal(ASSSParams.max_float, ASSSParams_new.max_float)
     assert torch.equal(ASSSParams.scale_factor, ASSSParams_new.scale_factor)
     assert torch.equal(ASSSParams.zero_point, ASSSParams_new.zero_point)
+    assert torch.equal(ASSSParams.min_quant, ASSSParams_new.min_quant)
+    assert torch.equal(ASSSParams.max_quant, ASSSParams_new.max_quant)
