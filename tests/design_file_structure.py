@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import Any
 
+from elasticai.creator.file_generation.v2.savable import Savable
 from elasticai.creator.file_generation.v2.temporary import TemporaryDirectory
-from elasticai.creator.vhdl.design.design import Design
 
 
-def design_file_structure(design: Design) -> dict[str, Any]:
+def design_file_structure(design: Savable) -> dict[str, Any]:
     with TemporaryDirectory() as destination:
         design.save_to(destination)
 
