@@ -13,12 +13,12 @@ class MathOperations:
         assert b.dtype == torch.int32
         c = a + b.to(a.device)
 
-        if torch.any(c < -(2 ** (c_quant_bits - 1))) or torch.any(
-            c > (2 ** (c_quant_bits - 1)) - 1
-        ):
-            raise ValueError(
-                f"Result of addition is out of range for {c_quant_bits} bits"
-            )
+        # if torch.any(c < -(2 ** (c_quant_bits - 1))) or torch.any(
+        #     c > (2 ** (c_quant_bits - 1)) - 1
+        # ):
+        #     raise ValueError(
+        #         f"Result of addition is out of range for {c_quant_bits} bits"
+        #     )
         return self.clamp_result(c, c_quant_bits)
 
     def intsub(

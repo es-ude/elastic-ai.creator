@@ -45,25 +45,28 @@ class Sequential(_SequentialBase):
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
-
         if self.quant_data_file_dir is not None:
             self._save_quant_data(
                 q_inputs, self.quant_data_file_dir, f"{self.name}_q_x"
             )
 
         for submodule in self.submodules:
-            self._save_quant_data(
-                q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
-            )
+            if self.quant_data_file_dir is not None:
+                self._save_quant_data(
+                    q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
+                )
 
             q_outputs = submodule.int_forward(q_inputs)
 
-            self._save_quant_data(
-                q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
-            )
+            if self.quant_data_file_dir is not None:
+                self._save_quant_data(
+                    q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
+                )
             q_inputs = q_outputs
-
-        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
+        if self.quant_data_file_dir is not None:
+            self._save_quant_data(
+                q_outputs, self.quant_data_file_dir, f"{self.name}_q_y"
+            )
 
         return q_outputs
 
