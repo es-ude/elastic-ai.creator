@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 import torch
 
-from tests.tensor_test_case import assertTensorEqual
+from elasticai.creator.test_utils.tensor_test_case import assertTensorEqual
 
 from ._round_to_fixed_point import RoundToFixedPoint
 from ._two_complement_fixed_point_config import FixedPointConfig

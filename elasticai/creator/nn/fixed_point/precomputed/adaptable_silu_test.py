@@ -3,7 +3,7 @@ import torch
 from torch.nn.functional import silu as torch_silu
 
 from elasticai.creator.nn.fixed_point import quantize as fxp_quantize
-from tests.tensor_test_case import assertTensorEqual
+from elasticai.creator.test_utils.tensor_test_case import assertTensorEqual
 
 from .adaptable_silu import AdaptableSiLU
 

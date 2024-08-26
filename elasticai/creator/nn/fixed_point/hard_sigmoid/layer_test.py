@@ -1,4 +1,6 @@
-from tests.temporary_file_structure import get_savable_file_structure
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .layer import HardSigmoid
 

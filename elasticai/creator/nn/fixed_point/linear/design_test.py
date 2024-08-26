@@ -1,8 +1,8 @@
-from typing import cast
-
 import pytest
 
-from tests.temporary_file_structure import get_savable_file_structure
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .design import Linear
 

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.temporary_file_structure import get_file_structure
+from elasticai.creator.test_utils.temporary_file_structure import get_file_structure
 
 from .template import fill_template, save_template
 

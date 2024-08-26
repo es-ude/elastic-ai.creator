@@ -2,7 +2,9 @@ import pytest
 
 from elasticai.creator.nn.identity.layer import BufferedIdentity
 from elasticai.creator.nn.sequential.layer import Sequential
-from tests.temporary_file_structure import get_savable_file_structure
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .firmware_env5 import FirmwareENv5
 
