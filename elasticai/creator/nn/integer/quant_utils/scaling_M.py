@@ -2,6 +2,8 @@ import torch
 
 
 def scaling_M(M: torch.FloatTensor, m_q_shift_limit=32):
+    assert torch.all(M > 0), "M should be positive"
+
     M = torch.round(M * 10**5) / 10**5
     m_q_shift = torch.tensor(1, dtype=torch.int32)
 
