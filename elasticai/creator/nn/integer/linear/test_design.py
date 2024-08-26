@@ -17,7 +17,6 @@ def saved_files(linear_layer, inputs):
     destination = InMemoryPath("linear_0", parent=None)
     design.save_to(destination)
     files = cast(list[InMemoryFile], list(destination.children.values()))
-
     return {file.name: "\n".join(file.text) for file in files}
 
 

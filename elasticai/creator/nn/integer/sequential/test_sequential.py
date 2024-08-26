@@ -1,13 +1,10 @@
-import os
 import tempfile
 from pathlib import Path
-from typing import cast
 
 import pytest
 import torch
 from torch import nn
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.linear.linear import Linear
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
     calculate_asymmetric_quant_params,
