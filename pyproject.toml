@@ -51,7 +51,7 @@ minversion = "6.0"
 markers = [
   "simulation: possibly slow running integration tests including hw simulation",
 ]
-testpaths = ["elasticai", "tests"]
+testpaths = ["elasticai"]
 python_files = ["*_test.py", "test_*.py"]
 
 
