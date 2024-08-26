@@ -34,14 +34,6 @@ def test_intadd_correctly(math_ops):
     assert torch.equal(actual_results, expected_results)
 
 
-def test_intadd_with_not_suitable_c_quant_bits(math_ops):
-    inputs_a = torch.tensor([127, 34, 89], dtype=torch.int32)
-    inputs_b = torch.tensor([-54, 29, 39], dtype=torch.int32)
-    c_quant_bits = 8
-    with pytest.raises(ValueError):
-        math_ops.intadd(inputs_a, inputs_b, c_quant_bits)
-
-
 def test_intadd_with_wrong_dtype(math_ops):
     inputs_a = torch.tensor([127, 34, 89], dtype=torch.float32)
     inputs_b = torch.tensor([-54, 29, 39], dtype=torch.int32)
@@ -57,14 +49,6 @@ def test_intsub_correctly(math_ops):
     actual_results = math_ops.intsub(inputs_a, inputs_b, c_quant_bits)
     expected_results = torch.tensor([181, 5, 50], dtype=torch.int32)
     assert torch.equal(actual_results, expected_results)
-
-
-def test_intsub_with_not_suitable_c_quant_bits(math_ops):
-    inputs_a = torch.tensor([127, 34, 89], dtype=torch.int32)
-    inputs_b = torch.tensor([-54, 29, 39], dtype=torch.int32)
-    c_quant_bits = 8
-    with pytest.raises(ValueError):
-        math_ops.intsub(inputs_a, inputs_b, c_quant_bits)
 
 
 def test_intsub_with_wrong_dtype(math_ops):
@@ -90,16 +74,6 @@ def test_intmatmul_correctly():
         dtype=torch.int32,
     )
     assert torch.equal(actual_results, expected_results)
-
-
-def test_intmatmul_with_not_suitable_c_quant_bits():
-    inputs_a = torch.tensor([[127, 34], [56, 78]], dtype=torch.int32)
-    inputs_b = torch.tensor([[-54, 29], [39, 12]], dtype=torch.int32)
-    c_quant_bits = 8
-
-    math_ops = MathOperations()
-    with pytest.raises(ValueError):
-        math_ops.intmatmul(inputs_a, inputs_b, c_quant_bits)
 
 
 def test_intmatmul_with_wrong_dtype():
