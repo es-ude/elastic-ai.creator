@@ -30,8 +30,6 @@ architecture rtl of $name is
     constant NUM_VALUES : integer := ${num_values};
     signal network_enable :  std_logic;
 
-    signal c_config_en :  std_logic;
-    signal done :  std_logic;
 
     type buf_data_in_t is array (0 to NUM_VALUES) of std_logic_vector(DATA_WIDTH_IN-1 downto 0);
     signal data_buf_in : buf_data_in_t;
@@ -39,8 +37,8 @@ architecture rtl of $name is
     signal skeleton_id_str : skeleton_id_data_t := (${id});
 begin
 
-    busy <= not done;
-    wake_up <= done;
+    busy <= '0';
+    wake_up <= '0';
 
     receive_data_from_middleware: process (clock, wr, address_in)
     variable int_addr : integer range 0 to 20000;
