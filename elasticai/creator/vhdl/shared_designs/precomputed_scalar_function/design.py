@@ -1,9 +1,9 @@
 from collections.abc import Callable
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design
@@ -11,7 +11,7 @@ from elasticai.creator.vhdl.design.ports import Port
 
 
 class PrecomputedScalarFunction(Design):
-    _template_package = module_to_package(__name__)
+    _template_package = InProjectTemplate.module_to_package(__name__)
 
     def __init__(
         self,
@@ -71,7 +71,7 @@ class PrecomputedScalarFunction(Design):
         process_content.append("end if;")
 
         self._template.parameters.update(process_content=process_content)
-        destination.create_subpath(self.name).as_file(".vhd").write(self._template)
+        save_template(self._template, destination / f"{self.name}.vhd")
 
 
 def _assert_value_is_representable_with_n_bits(value: int, n_bits: int) -> None:

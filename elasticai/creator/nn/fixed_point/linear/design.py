@@ -1,9 +1,9 @@
 from itertools import chain
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design
@@ -67,7 +67,7 @@ class Linear(Design):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
         template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="linear.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
@@ -78,18 +78,18 @@ class Linear(Design):
                 **self._template_parameters(),
             ),
         )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+        save_template(template, destination / f"{self.name}.vhd")
 
         weights_rom = Rom(
             name=rom_name["weights"],
             data_width=self.data_width,
             values_as_integers=self._flatten_params(self.weights),
         )
-        weights_rom.save_to(destination.create_subpath(rom_name["weights"]))
+        weights_rom.save_to(destination)
 
         bias_rom = Rom(
             name=rom_name["bias"],
             data_width=self.data_width,
             values_as_integers=self.bias,
         )
-        bias_rom.save_to(destination.create_subpath(rom_name["bias"]))
+        bias_rom.save_to(destination)

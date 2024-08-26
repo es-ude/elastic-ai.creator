@@ -1,9 +1,9 @@
 import math
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design
@@ -57,7 +57,7 @@ class Conv1d(Design):
     def save_to(self, destination: Path) -> None:
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
         template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="conv1d.tpl.vhd",
             parameters=dict(
                 total_bits=str(self._total_bits),
@@ -67,18 +67,18 @@ class Conv1d(Design):
                 kernel_size=str(self._kernel_size),
             ),
         )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+        save_template(template, destination / f"{self.name}.vhd")
 
         weights_rom = Rom(
             name=rom_name["weights"],
             data_width=self._total_bits,
             values_as_integers=self._flatten_params(self._weights),
         )
-        weights_rom.save_to(destination.create_subpath(rom_name["weights"]))
+        weights_rom.save_to(destination)
 
         bias_rom = Rom(
             name=rom_name["bias"],
             data_width=self._total_bits,
             values_as_integers=self._bias,
         )
-        bias_rom.save_to(destination.create_subpath(rom_name["bias"]))
+        bias_rom.save_to(destination)

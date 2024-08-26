@@ -1,16 +1,17 @@
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
+from pathlib import Path
+
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point import Linear, ReLU
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
 
-if __name__ == "__main__":
+
+def main() -> None:
     inputs = 2
     outputs = 2
     total_bits = 8
     frac_bits = 4
 
-    output_dir = "build_dir"
-    destination = OnDiskPath(output_dir)
+    destination = Path("build_dir")
 
     model = Sequential(
         Linear(
@@ -22,7 +23,7 @@ if __name__ == "__main__":
         ReLU(total_bits=total_bits),
     )
     my_design = model.create_design("myNetwork")
-    my_design.save_to(destination.create_subpath("srcs"))
+    my_design.save_to(destination / "srcs")
 
     firmware = FirmwareENv5(
         network=my_design,
@@ -32,3 +33,7 @@ if __name__ == "__main__":
         skeleton_version="v2",
     )
     firmware.save_to(destination)
+
+
+if __name__ == "__main__":
+    main()

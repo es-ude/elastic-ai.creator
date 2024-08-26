@@ -1,8 +1,13 @@
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import InProjectTemplate
+from pathlib import Path
+
+from elasticai.creator.file_generation.v2.savable import Savable
+from elasticai.creator.file_generation.v2.template import (
+    InProjectTemplate,
+    save_template,
+)
 
 
-class MacTestBench:
+class MacTestBench(Savable):
     def __init__(self, uut, name, uut_name):
         self._uut = uut
         self._uut_name = uut_name
@@ -34,7 +39,7 @@ class MacTestBench:
             },
         )
         self._uut.save_to(destination)
-        destination.create_subpath(self.name).as_file(".vhd").write(test_bench)
+        save_template(test_bench, destination / f"{self.name}.vhd")
 
     def _prepare_inputs_for_test_bench(self, inputs):
         x1, x2 = inputs

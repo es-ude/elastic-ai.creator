@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path, Savable
+from elasticai.creator.file_generation.v2.savable import Savable
 from elasticai.creator.vhdl.design.ports import Port
 
 
@@ -10,7 +11,9 @@ class Design(Savable, ABC):
 
     @property
     @abstractmethod
-    def port(self) -> Port: ...
+    def port(self) -> Port:
+        ...
 
     @abstractmethod
-    def save_to(self, destination: Path) -> None: ...
+    def save_to(self, destination: Path) -> None:
+        ...

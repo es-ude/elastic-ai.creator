@@ -1,7 +1,8 @@
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from pathlib import Path
+
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design, Port
@@ -34,7 +35,7 @@ class HardSigmoid(Design):
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="hard_sigmoid.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
@@ -47,4 +48,4 @@ class HardSigmoid(Design):
                 y_intercept=str(self._y_intercept),
             ),
         )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+        save_template(template, destination / f"{self.name}.vhd")

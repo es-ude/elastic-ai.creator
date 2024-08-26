@@ -1,29 +1,36 @@
+from pathlib import Path
 from typing import Any, Protocol
 
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
-from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 
 
 class Design(Protocol):
-    def save_to(self, destination: Path): ...
+    name: str
+
+    def save_to(self, destination: Path):
+        ...
 
 
 class Layer(Design, Protocol):
     @property
-    def name(self) -> str: ...
+    def name(self) -> str:
+        ...
 
-    def create_testbench(self, name: str) -> "TestBench": ...
+    def create_testbench(self, name: str) -> "TestBench":
+        ...
 
 
 class TestBench(Design, Protocol):
-    def set_inputs(self, *inputs) -> None: ...
+    def set_inputs(self, *inputs) -> None:
+        ...
 
-    def parse_reported_content(self, content: Any) -> Any: ...
+    def parse_reported_content(self, content: Any) -> Any:
+        ...
 
 
 class SimulationConstructor(Protocol):
-    def __call__(self, workdir: str, top_design_name: str) -> GHDLSimulator: ...
+    def __call__(self, workdir: str, top_design_name: str) -> GHDLSimulator:
+        ...
 
 
 class SimulatedLayer:
@@ -39,7 +46,7 @@ class SimulatedLayer:
         self._inputs = None
 
     def __call__(self, *inputs):
-        root = OnDiskPath("main", parent=self._working_dir)
+        root = Path(self._working_dir) / "main"
         testbench_name = f"testbench_{self._layer_under_test.name}"
         testbench = self._layer_under_test.create_testbench(testbench_name)
         testbench.set_inputs(*inputs)

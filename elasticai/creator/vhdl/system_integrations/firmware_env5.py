@@ -1,6 +1,6 @@
+from pathlib import Path
 from typing import Protocol
 
-from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.system_integrations.env5_constraints.env5_constraints import (
     ENV5Constraints,
@@ -16,7 +16,8 @@ from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
 
 
 class SkeletonType(Protocol):
-    def save_to(self, destination: Path) -> None: ...
+    def save_to(self, destination: Path) -> None:
+        ...
 
 
 class _FirmwareENv5Base:
@@ -25,22 +26,20 @@ class _FirmwareENv5Base:
 
     def save_to(self, destination: Path) -> None:
         def save_srcs(destination: Path):
-            self._skeleton.save_to(destination.create_subpath("skeleton"))
+            self._skeleton.save_to(destination / "skeleton")
 
             middleware = Middleware()
-            middleware.save_to(destination.create_subpath("middleware"))
+            middleware.save_to(destination / "middleware")
 
             env5_reconfig_top = ENV5ReconfigTop()
-            env5_reconfig_top.save_to(destination.create_subpath("env5_reconfig_top"))
+            env5_reconfig_top.save_to(destination / "env5_reconfig_top")
 
         def save_constraints(destination: Path):
             env5_config = ENV5Constraints()
-            env5_config.save_to(destination.create_subpath("env5_config"))
+            env5_config.save_to(destination / "env5_config")
 
-        srcs = destination.create_subpath("srcs")
-        constraints = destination.create_subpath("constraints")
-        save_constraints(constraints)
-        save_srcs(srcs)
+        save_constraints(destination / "constraints")
+        save_srcs(destination / "srcs")
 
 
 class FirmwareENv5(_FirmwareENv5Base):

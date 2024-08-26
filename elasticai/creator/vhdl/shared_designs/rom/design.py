@@ -1,9 +1,8 @@
-from functools import partial
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.code_generation.code_abstractions import (
@@ -27,7 +26,7 @@ class Rom:
     def save_to(self, destination: Path):
         template = InProjectTemplate(
             file_name="rom.tpl.vhd",
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             parameters=dict(
                 rom_value=self._rom_values(),
                 rom_addr_bitwidth=str(self._address_width),
@@ -36,7 +35,7 @@ class Rom:
                 resource_option="auto",
             ),
         )
-        destination.as_file(".vhd").write(template)
+        save_template(template, destination / f"{self._name}.vhd")
 
     def _rom_values(self) -> str:
         return ",".join(self._values)

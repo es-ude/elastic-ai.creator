@@ -1,10 +1,10 @@
 from functools import partial, reduce
 from itertools import chain
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.autowiring import (
     AutoWirer,
@@ -99,7 +99,7 @@ class Sequential(Design):
 
     def _save_subdesigns(self, destination: Path) -> None:
         for design in self._subdesigns:
-            design.save_to(destination.create_subpath(design.name))
+            design.save_to(destination / design.name)
 
     def _instance_names(self) -> list[str]:
         return [f"i_{design.name}" for design in self._subdesigns]
@@ -182,7 +182,7 @@ class Sequential(Design):
     def save_to(self, destination: Path):
         self._save_subdesigns(destination)
         network_template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="network.tpl.vhd",
             parameters=dict(
                 layer_connections=self._generate_connections_code(),
@@ -195,4 +195,4 @@ class Sequential(Design):
                 layer_name=self.name,
             ),
         )
-        destination.create_subpath(self.name).as_file(".vhd").write(network_template)
+        save_template(network_template, destination / f"{self.name}.vhd")

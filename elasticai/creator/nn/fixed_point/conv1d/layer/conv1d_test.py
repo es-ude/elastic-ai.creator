@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 import torch
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from tests.design_file_structure import design_file_structure
 
 from .conv1d import Conv1d
 
@@ -147,11 +147,10 @@ def test_conv1d_layer_creates_correct_design(conv1d: Conv1d) -> None:
 8
 3
 4
-2"""
+2
+"""
 
     design = conv1d.create_design("conv1d")
-    destination = InMemoryPath("conv1d", parent=None)
-    design.save_to(destination)
-    actual_conv1d_code = "\n".join(cast(InMemoryFile, destination["conv1d"]).text)
+    saved_files = design_file_structure(design)
 
-    assert expected_conv1d_code == actual_conv1d_code
+    assert expected_conv1d_code == saved_files["conv1d.vhd"]

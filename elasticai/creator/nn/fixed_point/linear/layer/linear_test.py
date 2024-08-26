@@ -2,7 +2,7 @@ from typing import cast
 
 import torch
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from tests.design_file_structure import design_file_structure
 
 from .linear import Linear
 
@@ -284,15 +284,13 @@ begin
         data => b_in
     );
 
-end architecture rtl;"""
+end architecture rtl;
+"""
 
     linear = Linear(
         total_bits=16, frac_bits=8, in_features=3, out_features=2, bias=False
     )
-
     design = linear.create_design("linear")
-    destination = InMemoryPath("linear", parent=None)
-    design.save_to(destination)
-    actual_linear_code = "\n".join(cast(InMemoryFile, destination["linear"]).text)
+    files = design_file_structure(design)
 
-    assert expected_linear_code == actual_linear_code
+    assert expected_linear_code == files["linear.vhd"]

@@ -1,5 +1,10 @@
-from elasticai.creator.file_generation.savable import Path, Savable
-from elasticai.creator.file_generation.template import InProjectTemplate
+from pathlib import Path
+
+from elasticai.creator.file_generation.v2.savable import Savable
+from elasticai.creator.file_generation.v2.template import (
+    InProjectTemplate,
+    save_template,
+)
 
 
 class MacDesign(Savable):
@@ -24,5 +29,5 @@ class MacDesign(Savable):
             file_name="fxp_mac.tpl.vhd",
             parameters={},
         )
-        destination.create_subpath("fxp_mac").as_file(".vhd").write(core_component)
-        destination.create_subpath(self._name).as_file(".vhd").write(wrapper)
+        save_template(core_component, destination / "fxp_mac.vhd")
+        save_template(wrapper, destination / f"{self._name}.vhd")

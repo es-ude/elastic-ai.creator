@@ -1,10 +1,9 @@
 import re
 from collections.abc import Callable
-from typing import cast
 
 import pytest
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from tests.design_file_structure import design_file_structure
 
 from .design import Rom
 
@@ -51,25 +50,11 @@ class TestExtractRomValues:
 
 
 @pytest.fixture
-def rom_name() -> str:
-    return "test_rom"
-
-
-@pytest.fixture
-def build_root() -> InMemoryPath:
-    return InMemoryPath("build", parent=None)
-
-
-@pytest.fixture
-def rom_code(
-    rom_name: str, build_root: InMemoryPath
-) -> Callable[[list[int]], list[str]]:
-    destination = build_root.create_subpath(rom_name)
-
+def rom_code() -> Callable[[list[int]], list[str]]:
     def generate_code(values_as_integers: list[int]) -> list[str]:
-        rom = Rom(name=rom_name, data_width=8, values_as_integers=values_as_integers)
-        rom.save_to(destination)
-        return cast(InMemoryFile, build_root[rom_name]).text
+        rom = Rom(name="test_rom", data_width=8, values_as_integers=values_as_integers)
+        files = design_file_structure(rom)
+        return files["test_rom.vhd"].splitlines()
 
     return generate_code
 

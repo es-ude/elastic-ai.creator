@@ -1,10 +1,10 @@
 import warnings
 from functools import partial
+from pathlib import Path
 
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.code_generation.code_abstractions import (
     to_vhdl_binary_string,
@@ -84,7 +84,7 @@ class Skeleton:
 
     def save_to(self, destination: Path):
         template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name=self._template_file_name,
             parameters=dict(
                 name=self.name,
@@ -100,8 +100,7 @@ class Skeleton:
                 ),
             ),
         )
-        file = destination.as_file(".vhd")
-        file.write(template)
+        save_template(template, destination.with_suffix(".vhd"))
 
 
 class LSTMSkeleton:
@@ -111,9 +110,8 @@ class LSTMSkeleton:
 
     def save_to(self, destination: Path):
         template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="lstm_network_skeleton.tpl.vhd",
             parameters=dict(name=self.name, network_name=self._network_name),
         )
-        file = destination.as_file(".vhd")
-        file.write(template)
+        save_template(template, destination.with_suffix(".vhd"))

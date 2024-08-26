@@ -1,7 +1,8 @@
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
+from pathlib import Path
+
+from elasticai.creator.file_generation.v2.template import (
     InProjectTemplate,
-    module_to_package,
+    save_template,
 )
 from elasticai.creator.vhdl.design.design import Design
 
@@ -13,8 +14,8 @@ class LSTMTestBench:
 
     def save_to(self, destination: Path):
         test_bench = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name=f"lstm_network_tb.tpl.vhd",
             parameters={"name": self.name, "uut_name": self._uut.name},
         )
-        destination.create_subpath(f"{self.name}").as_file(".vhd").write(test_bench)
+        save_template(test_bench, destination / f"{self.name}.vhd")

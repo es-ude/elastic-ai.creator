@@ -1,9 +1,7 @@
-from typing import cast
-
 import pytest
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.identity.layer import BufferedIdentity
+from tests.design_file_structure import design_file_structure
 
 from .layer import Sequential
 
@@ -40,9 +38,9 @@ begin
     --------------------------------------------------------------------------------
     -- Instantiate all layers
     --------------------------------------------------------------------------------
-end rtl;"""
-        actual_code = "\n".join(sequential_layer_code_for_model(Sequential()))
-        assert actual_code == expected
+end rtl;
+"""
+        assert expected == get_code(Sequential())
 
     @pytest.mark.parametrize(
         "number_of_layer_inputs, address_width", [(2, 1), (3, 2), (8, 3)]
@@ -99,25 +97,14 @@ begin
       y => i_bufferedidentity_0_y,
       y_address => i_bufferedidentity_0_y_address
     );
-end rtl;"""
+end rtl;
+"""
         model = Sequential(
             BufferedIdentity(num_input_features=number_of_layer_inputs, total_bits=4)
         )
-        actual_code = "\n".join(sequential_layer_code_for_model(model))
-        assert actual_code == expected
+        assert expected == get_code(model)
 
 
-def get_code(code_file: InMemoryPath | InMemoryFile) -> list[str]:
-    return cast(InMemoryFile, code_file).text
-
-
-def translate_model(model: Sequential) -> InMemoryPath:
+def get_code(model: Sequential) -> str:
     design = model.create_design("sequential")
-    destination = InMemoryPath("sequential", parent=None)
-    design.save_to(destination)
-    return destination
-
-
-def sequential_layer_code_for_model(model: Sequential) -> list[str]:
-    destination = translate_model(model)
-    return get_code(destination["sequential"])
+    return design_file_structure(design)["sequential.vhd"]

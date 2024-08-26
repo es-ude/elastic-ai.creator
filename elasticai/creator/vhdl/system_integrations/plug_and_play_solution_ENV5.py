@@ -1,7 +1,7 @@
 import warnings
+from pathlib import Path
 from typing import Protocol
 
-from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.system_integrations.env5_constraints.env5_constraints import (
     ENV5Constraints,
@@ -38,25 +38,19 @@ class FirmwareENv5:
     def save_to(self, destination: Path):
         def save_srcs(destination: Path):
             lstm_skeleton = LSTMSkeleton(self._network.name)
-            lstm_skeleton.save_to(destination.create_subpath("skeleton"))
+            lstm_skeleton.save_to(destination / "skeleton")
 
-            self._network.save_to(destination.create_subpath(self._network.name))
+            self._network.save_to(destination / self._network.name)
 
             middleware = Middleware()
-            middleware.save_to(destination.create_subpath("middleware"))
-            self._testbench.save_to(
-                destination.create_subpath("test_benches").create_subpath(
-                    self._testbench.name
-                )
-            )
+            middleware.save_to(destination / "middleware")
+            self._testbench.save_to(destination / "test_benches" / self._testbench.name)
             env5_reconfig_top = ENV5ReconfigTop()
-            env5_reconfig_top.save_to(destination.create_subpath("env5_reconfig_top"))
+            env5_reconfig_top.save_to(destination / "env5_reconfig_top")
 
         def save_constraints(destination: Path):
             env5_config = ENV5Constraints()
-            env5_config.save_to(destination.create_subpath("env5_config"))
+            env5_config.save_to(destination / "env5_config")
 
-        srcs = destination.create_subpath("srcs")
-        constraints = destination.create_subpath("constraints")
-        save_constraints(constraints)
-        save_srcs(srcs)
+        save_constraints(destination / "constraints")
+        save_srcs(destination / "srcs")
