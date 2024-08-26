@@ -11,7 +11,7 @@ T = TypeVar("T")
 class _TemporaryDirectory(tempfile.TemporaryDirectory):
     def __init__(self) -> None:
         super().__init__(
-            suffix=None, prefix=None, dir=None, ignore_cleanup_errors=False, delete=True
+            suffix=None, prefix=None, dir=None, ignore_cleanup_errors=False
         )
 
     def __enter__(self) -> Path:
