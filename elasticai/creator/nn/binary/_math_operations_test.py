@@ -12,32 +12,29 @@ class TestBinaryOperations:
     def test_quantization_returns_1_for_0_8(self) -> None:
         x = torch.tensor([0.8])
         x = operations.quantize(x)
-        x = x.tolist()
-        assert x == [1.0]
+        assert x.tolist() == [1.0]
 
     def test_quantization_returns_1_for_2_3(self) -> None:
         x = torch.tensor([2.3])
         x = operations.quantize(x)
-        x = x.tolist()
-        assert x == [1.0]
+        assert x.tolist() == [1.0]
 
     def test_quantization_returns_minus_1_for_minus_0_7(self) -> None:
         x = torch.tensor([-0.7])
         x = operations.quantize(x)
-        x = x.tolist()
-        assert x == [-1.0]
+        assert x.tolist() == [-1.0]
 
     def test_quantization_returns_minus_1_for_minus_3(self) -> None:
         x = torch.tensor([-3])
         x = operations.quantize(x)
-        x = x.tolist()
-        assert x == [-1.0]
+        assert x.tolist() == [-1.0]
 
     def test_quantization_produces_gradient_1_for_minus_0_3(self) -> None:
         x = torch.tensor([-0.3], requires_grad=True)
         y = operations.quantize(x)
         y.backward()
         g = x.grad
+        assert g is not None
         assert g.tolist() == [1.0]
 
     def test_quantization_produces_gradient_0_for_3(self) -> None:
@@ -45,6 +42,7 @@ class TestBinaryOperations:
         y = operations.quantize(x)
         y.backward()
         g = x.grad
+        assert g is not None
         assert g.tolist() == [0.0]
 
     @pytest.mark.parametrize(

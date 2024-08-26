@@ -31,7 +31,7 @@ def create_lstm_cell_and_reference(
         input_size=input_size, hidden_size=hidden_size, bias=bias
     )
 
-    def ones_like(x: torch.Tensor) -> torch.Tensor:
+    def ones_like(x: torch.Tensor) -> Parameter:
         return Parameter(torch.ones_like(x))
 
     cell.linear_ih.weight = ones_like(cell.linear_ih.weight)

@@ -44,50 +44,50 @@ class ExpandTemplatesTestCase(TestCase):
                 check_single_item(value)
 
     def single_value_with_different_key(self) -> None:
-        template = "$my_key".splitlines()
+        template = ["$my_key"]
         expected = "value"
         actual = get_result_string(template, my_key=[expected])
         self.assertEqual(expected, actual)
 
     def test_expand_two_keys(self) -> None:
-        template = "$first\n$second".splitlines()
+        template = ["$first", "$second"]
         expected = "ab\ncd"
         actual = get_result_string(template, first=["ab"], second=["cd"])
         self.assertEqual(expected, actual)
 
     def test_two_values(self) -> None:
-        template = "$key".splitlines()
+        template = ["$key"]
         expected = "a\nb"
         actual = get_result_string(template, key=["a", "b"])
         self.assertEqual(expected, actual)
 
     def test_no_values(self) -> None:
-        template = "$key".splitlines()
+        template = ["$key"]
         expected = ""
         actual = get_result_string(template, key=[])
         self.assertEqual(expected, actual)
 
     def test_keep_indentation(self) -> None:
-        template = "\t  $key".splitlines()
+        template = ["\t  $key"]
         expected = "\t  a\n\t  b\n\t  c"
         actual = get_result_string(template, key=["a", "b", "c"])
         self.assertEqual(expected, actual)
 
     def test_no_error_if_not_all_keys_are_filled(self) -> None:
-        template = "$key\n$other_key".splitlines()
+        template = ["$key", "$other_key"]
         target = ["$key"]
         actual = expand_template(template, other_key=[])
         self.assertEqual(target, actual)
 
     def test_two_keys_on_one_line(self) -> None:
-        template = "\t$first $second".splitlines()
+        template = ["\t$first $second"]
         values = ["0", "1"]
         expected = "\t0 $second\n\t1 $second"
         actual = get_result_string(template, first=values, second=values)
         self.assertEqual(expected, actual)
 
     def test_expand_two_keys_by_running_twice(self) -> None:
-        template = "\t$first $second".splitlines()
+        template = ["\t$first $second"]
         values = ["0", "1"]
         expected = "\t0 0\n\t0 1\n\t1 0\n\t1 1"
         actual = expand_template(template, first=values)
@@ -95,7 +95,7 @@ class ExpandTemplatesTestCase(TestCase):
         self.assertEqual(expected, newline_join(actual))
 
     def test_expand_single_string_template_with_single_key(self) -> None:
-        template = "$some_key".splitlines()
+        template = ["$some_key"]
         expected = "42"
         actual = get_result_string(template, some_key="42")
         self.assertEqual(expected, actual)

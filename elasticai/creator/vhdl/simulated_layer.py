@@ -11,20 +11,20 @@ class Design(Protocol):
         ...
 
 
-class Layer(Design, Protocol):
-    @property
-    def name(self) -> str:
-        ...
-
-    def create_testbench(self, name: str) -> "TestBench":
-        ...
-
-
 class TestBench(Design, Protocol):
     def set_inputs(self, *inputs) -> None:
         ...
 
-    def parse_reported_content(self, content: Any) -> Any:
+    def parse_reported_content(self, content: list[str]) -> Any:
+        ...
+
+
+class Layer(Protocol):
+    @property
+    def name(self) -> str:
+        ...
+
+    def create_testbench(self, name: str) -> TestBench:
         ...
 
 
