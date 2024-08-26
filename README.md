@@ -51,9 +51,10 @@ python3 -m pip install elasticai-creator
 The following example shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
 
 ```python
+from pathlib import Path
+
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point import Linear, HardSigmoid
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 
 
 def main() -> None:
@@ -67,7 +68,7 @@ def main() -> None:
     run_training(model)
 
     # Save the VHDL code of the trained model
-    destination = OnDiskPath("build_dir")
+    destination = Path("build_dir")
     design = model.create_design("my_model")
     design.save_to(destination)
 
@@ -174,7 +175,6 @@ If you want to add more tests please refer to the Test Guidelines in the followi
 
 In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
 If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
-In most cases you can use the [`InMemoryPath`](elasticai/creator/file_generation/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
 
 
 ##### Directory structure and file names
