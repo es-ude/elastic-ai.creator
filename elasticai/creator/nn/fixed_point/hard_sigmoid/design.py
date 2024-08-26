@@ -1,9 +1,6 @@
 from pathlib import Path
 
-from elasticai.creator.file_generation.v2.template import (
-    InProjectTemplate,
-    save_template,
-)
+from elasticai.creator.file_generation.template import InProjectTemplate, save_template
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design, Port
 

@@ -1,4 +1,4 @@
-from elasticai.creator.file_generation.v2.savable import Savable
+from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 from .._math_operations import MathOperations

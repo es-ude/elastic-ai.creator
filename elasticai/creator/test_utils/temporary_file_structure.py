@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TypeVar
 
-from elasticai.creator.file_generation.v2.savable import Savable
+from elasticai.creator.file_generation.savable import Savable
 
 T = TypeVar("T")
 

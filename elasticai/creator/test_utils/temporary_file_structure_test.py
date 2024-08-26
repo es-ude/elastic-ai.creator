@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from elasticai.creator.file_generation.v2.savable import Savable
+from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.test_utils.temporary_file_structure import (
     get_savable_file_structure,
 )

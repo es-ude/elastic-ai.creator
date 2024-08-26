@@ -1,10 +1,7 @@
 from functools import partial
 from pathlib import Path
 
-from elasticai.creator.file_generation.v2.template import (
-    InProjectTemplate,
-    save_template,
-)
+from elasticai.creator.file_generation.template import InProjectTemplate, save_template
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )

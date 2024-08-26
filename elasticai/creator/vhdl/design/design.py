@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from elasticai.creator.file_generation.v2.savable import Savable
+from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.vhdl.design.ports import Port
 
 

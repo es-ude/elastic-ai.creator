@@ -1,7 +1,4 @@
-from elasticai.creator.file_generation.v2.template import (
-    InProjectTemplate,
-    fill_template,
-)
+from elasticai.creator.file_generation.template import InProjectTemplate, fill_template
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import (
     port_definition_template_for_bufferless_design,
 )
