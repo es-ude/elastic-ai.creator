@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .design import Rom
 
@@ -53,7 +53,7 @@ class TestExtractRomValues:
 def rom_code() -> Callable[[list[int]], list[str]]:
     def generate_code(values_as_integers: list[int]) -> list[str]:
         rom = Rom(name="test_rom", data_width=8, values_as_integers=values_as_integers)
-        files = design_file_structure(rom)
+        files = get_savable_file_structure(rom)
         return files["test_rom.vhd"].splitlines()
 
     return generate_code

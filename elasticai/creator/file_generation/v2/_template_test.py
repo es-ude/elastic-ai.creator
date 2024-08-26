@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
+from tests.temporary_file_structure import get_file_structure
+
 from .template import fill_template, save_template
-from .temporary import TemporaryDirectory, read_lines_from_file
 
 
 @dataclass
@@ -30,8 +32,15 @@ def test_fill_template(template: Template, expected_lines: list[str]) -> None:
 
 
 def test_save_template(template: Template, expected_lines: list[str]) -> None:
-    with TemporaryDirectory() as out_dir:
-        out_file = out_dir / "outputs.txt"
-        save_template(template, out_file)
-        written_lines = read_lines_from_file(out_file)
-        assert expected_lines == written_lines
+    files = get_file_structure(
+        template,
+        save_obj_fn=lambda tpl, dest: save_template(tpl, dest / "test.txt"),
+        read_file_fn=_read_saved_template,
+    )
+    assert expected_lines == files["test.txt"]
+
+
+def _read_saved_template(file: Path) -> list[str]:
+    with file.open("r") as in_file:
+        raw_lines = in_file.readlines()
+    return [line.rstrip("\n") for line in raw_lines]

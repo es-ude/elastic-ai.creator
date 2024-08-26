@@ -1,5 +1,5 @@
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .layer import BufferedIdentity, BufferlessIdentity
 
@@ -57,4 +57,4 @@ end rtl;
 
 def get_code(layer: DesignCreatorModule) -> str:
     design = layer.create_design("identity")
-    return design_file_structure(design)["identity.vhd"]
+    return get_savable_file_structure(design)["identity.vhd"]

@@ -2,7 +2,7 @@ from typing import cast
 
 import torch
 
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .linear import Linear
 
@@ -291,6 +291,6 @@ end architecture rtl;
         total_bits=16, frac_bits=8, in_features=3, out_features=2, bias=False
     )
     design = linear.create_design("linear")
-    files = design_file_structure(design)
+    files = get_savable_file_structure(design)
 
     assert expected_linear_code == files["linear.vhd"]

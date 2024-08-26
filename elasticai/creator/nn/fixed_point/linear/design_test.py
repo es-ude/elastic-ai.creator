@@ -2,7 +2,7 @@ from typing import cast
 
 import pytest
 
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .design import Linear
 
@@ -21,10 +21,10 @@ def linear_design() -> Linear:
 
 
 def test_saved_design_contains_needed_files(linear_design: Linear) -> None:
-    saved_files = design_file_structure(linear_design)
+    files = get_savable_file_structure(linear_design)
 
     expected_files = {"linear_w_rom.vhd", "linear_b_rom.vhd", "linear.vhd"}
-    actual_files = set(saved_files.keys())
+    actual_files = set(files.keys())
 
     assert expected_files == actual_files
 
@@ -57,8 +57,8 @@ begin
     end process ROM_process;
 end architecture rtl;
 """
-    saved_files = design_file_structure(linear_design)
-    actual_code = saved_files["linear_w_rom.vhd"]
+    files = get_savable_file_structure(linear_design)
+    actual_code = files["linear_w_rom.vhd"]
     assert expected_code == actual_code
 
 
@@ -90,8 +90,8 @@ begin
     end process ROM_process;
 end architecture rtl;
 """
-    saved_files = design_file_structure(linear_design)
-    actual_code = saved_files["linear_b_rom.vhd"]
+    files = get_savable_file_structure(linear_design)
+    actual_code = files["linear_b_rom.vhd"]
     assert expected_code == actual_code
 
 
@@ -321,6 +321,6 @@ begin
 
 end architecture rtl;
 """
-    saved_files = design_file_structure(linear_design)
-    actual_code = saved_files["linear.vhd"]
+    files = get_savable_file_structure(linear_design)
+    actual_code = files["linear.vhd"]
     assert expected_code == actual_code

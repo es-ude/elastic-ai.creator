@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 import torch
 
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .conv1d import Conv1d
 
@@ -151,6 +151,6 @@ def test_conv1d_layer_creates_correct_design(conv1d: Conv1d) -> None:
 """
 
     design = conv1d.create_design("conv1d")
-    saved_files = design_file_structure(design)
+    files = get_savable_file_structure(design)
 
-    assert expected_conv1d_code == saved_files["conv1d.vhd"]
+    assert expected_conv1d_code == files["conv1d.vhd"]

@@ -1,4 +1,4 @@
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .layer import HardSigmoid
 
@@ -92,5 +92,5 @@ end architecture rtl;
 """
     sigmoid = HardSigmoid(total_bits=16, frac_bits=8)
     design = sigmoid.create_design("sigmoid")
-    saved_files = design_file_structure(design)
-    assert expected == saved_files["sigmoid.vhd"]
+    files = get_savable_file_structure(design)
+    assert expected == files["sigmoid.vhd"]

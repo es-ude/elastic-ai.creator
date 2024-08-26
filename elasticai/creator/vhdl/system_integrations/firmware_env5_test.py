@@ -2,13 +2,13 @@ import pytest
 
 from elasticai.creator.nn.identity.layer import BufferedIdentity
 from elasticai.creator.nn.sequential.layer import Sequential
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .firmware_env5 import FirmwareENv5
 
 
 def extract_skeleton_code(firmware) -> str:
-    files = design_file_structure(firmware)
+    files = get_savable_file_structure(firmware)
     return files["srcs"]["skeleton.vhd"]
 
 

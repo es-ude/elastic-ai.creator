@@ -1,4 +1,4 @@
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .layer import ReLU
 
@@ -69,5 +69,5 @@ end architecture rtl;
 """
     relu = ReLU(total_bits=16, use_clock=True)
     design = relu.create_design("relu")
-    saved_files = design_file_structure(design)
-    assert expected == saved_files["relu.vhd"]
+    files = get_savable_file_structure(design)
+    assert expected == files["relu.vhd"]

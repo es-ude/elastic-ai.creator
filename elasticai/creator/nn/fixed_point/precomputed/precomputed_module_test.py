@@ -1,6 +1,6 @@
 import torch
 
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .precomputed_module import PrecomputedModule
 
@@ -44,7 +44,7 @@ end rtl;
         sampling_intervall=(-5, 5),
     )
     design = tanh.create_design("tanh")
-    files = design_file_structure(design)
+    files = get_savable_file_structure(design)
     assert expected == files["tanh.vhd"]
 
 
@@ -87,5 +87,5 @@ end rtl;
         sampling_intervall=(-5, 5),
     )
     design = sigmoid.create_design("sigmoid")
-    files = design_file_structure(design)
+    files = get_savable_file_structure(design)
     assert expected == files["sigmoid.vhd"]

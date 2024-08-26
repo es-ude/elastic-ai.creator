@@ -1,4 +1,4 @@
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .layer import HardTanh
 
@@ -56,5 +56,5 @@ end architecture rtl;
 """
     tanh = HardTanh(total_bits=16, frac_bits=8)
     design = tanh.create_design("tanh")
-    saved_files = design_file_structure(design)
-    assert expected == saved_files["tanh.vhd"]
+    files = get_savable_file_structure(design)
+    assert expected == files["tanh.vhd"]

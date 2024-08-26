@@ -1,7 +1,7 @@
 import pytest
 
 from elasticai.creator.nn.identity.layer import BufferedIdentity
-from tests.design_file_structure import design_file_structure
+from tests.temporary_file_structure import get_savable_file_structure
 
 from .layer import Sequential
 
@@ -107,4 +107,4 @@ end rtl;
 
 def get_code(model: Sequential) -> str:
     design = model.create_design("sequential")
-    return design_file_structure(design)["sequential.vhd"]
+    return get_savable_file_structure(design)["sequential.vhd"]
