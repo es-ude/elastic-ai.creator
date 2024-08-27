@@ -9,7 +9,7 @@ from ._common_imports import (
     Port,
     Signal,
     calculate_address_width,
-    module_to_package,
+    save_template,
     std_signals,
 )
 
@@ -28,7 +28,7 @@ class LSTMNetworkDesign(Design):
         self._linear_layer = linear_layer
         self._lstm = lstm
         self.template = InProjectTemplate(
-            module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="lstm_network.tpl.vhd",
             parameters=dict(
                 name=self.name,
@@ -73,7 +73,5 @@ class LSTMNetworkDesign(Design):
 
     def save_to(self, destination: Path) -> None:
         self._lstm.save_to(destination)
-        self._linear_layer.save_to(destination.create_subpath(self._linear_layer.name))
-        destination.create_subpath(self._subpath_name).as_file(".vhd").write(
-            self.template
-        )
+        self._linear_layer.save_to(destination / self._linear_layer.name)
+        save_template(self.template, destination / f"{self._subpath_name}.vhd")

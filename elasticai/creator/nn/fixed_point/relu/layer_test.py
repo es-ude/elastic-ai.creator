@@ -1,6 +1,6 @@
-from typing import cast
-
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .layer import ReLU
 
@@ -68,10 +68,8 @@ begin
         end process;
     end generate;
 end architecture rtl;
-""".splitlines()
+"""
     relu = ReLU(total_bits=16, use_clock=True)
-    build_path = InMemoryPath("build", parent=None)
     design = relu.create_design("relu")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["relu"]).text
-    assert actual == expected
+    files = get_savable_file_structure(design)
+    assert expected == files["relu.vhd"]

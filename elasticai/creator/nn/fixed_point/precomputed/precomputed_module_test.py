@@ -1,8 +1,8 @@
-from typing import cast
-
 import torch
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .precomputed_module import PrecomputedModule
 
@@ -37,7 +37,7 @@ begin
         end if;
     end process;
 end rtl;
-""".splitlines()
+"""
     tanh = PrecomputedModule(
         base_module=torch.nn.Tanh(),
         total_bits=8,
@@ -45,11 +45,9 @@ end rtl;
         num_steps=5,
         sampling_intervall=(-5, 5),
     )
-    build_path = InMemoryPath("build", parent=None)
     design = tanh.create_design("tanh")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["tanh"]).text
-    assert actual == expected
+    files = get_savable_file_structure(design)
+    assert expected == files["tanh.vhd"]
 
 
 def test_vhdl_code_matches_expected_for_sigmoid_as_base_module() -> None:
@@ -82,7 +80,7 @@ begin
         end if;
     end process;
 end rtl;
-""".splitlines()
+"""
     sigmoid = PrecomputedModule(
         base_module=torch.nn.Sigmoid(),
         total_bits=8,
@@ -90,8 +88,6 @@ end rtl;
         num_steps=5,
         sampling_intervall=(-5, 5),
     )
-    build_path = InMemoryPath("build", parent=None)
     design = sigmoid.create_design("sigmoid")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["sigmoid"]).text
-    assert actual == expected
+    files = get_savable_file_structure(design)
+    assert expected == files["sigmoid.vhd"]

@@ -1,8 +1,6 @@
-from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.file_generation.template import (
-    InProjectTemplate,
-    module_to_package,
-)
+from pathlib import Path
+
+from elasticai.creator.file_generation.template import InProjectTemplate, save_template
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design, Port
 
@@ -23,7 +21,7 @@ class HardTanh(Design):
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name="hard_tanh.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
@@ -33,4 +31,4 @@ class HardTanh(Design):
                 max_val=str(self._max_val),
             ),
         )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+        save_template(template, destination / f"{self.name}.vhd")

@@ -1,4 +1,5 @@
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
+from pathlib import Path
+
 from elasticai.creator.nn.fixed_point import Linear
 from elasticai.creator.nn.fixed_point.lstm.layer import (
     FixedPointLSTMWithHardActivations,
@@ -6,7 +7,8 @@ from elasticai.creator.nn.fixed_point.lstm.layer import (
 )
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
 
-if __name__ == "__main__":
+
+def main() -> None:
     hidden_size = 20
     total_bits = 8
     frac_bits = 4
@@ -28,7 +30,7 @@ if __name__ == "__main__":
             ),
         ]
     )
-    destination = OnDiskPath("build")
+    destination = Path("build")
     design = model.create_design("network")
 
     firmware = FirmwareENv5("network")
@@ -36,3 +38,7 @@ if __name__ == "__main__":
 
     testbench = model.create_testbench("network_tb", design)
     testbench.save_to(destination)
+
+
+if __name__ == "__main__":
+    main()

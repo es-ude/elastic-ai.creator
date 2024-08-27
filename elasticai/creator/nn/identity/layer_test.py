@@ -1,6 +1,7 @@
-from typing import cast
-
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .layer import BufferedIdentity, BufferlessIdentity
 
@@ -28,13 +29,9 @@ begin
     done <= enable;
     x_address <= y_address;
 end rtl;
-""".splitlines()
+"""
     identity = BufferedIdentity(num_input_features=6, total_bits=16)
-    build_path = InMemoryPath("build", parent=None)
-    design = identity.create_design("identity")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["identity"]).text
-    assert actual == expected
+    assert expected == get_code(identity)
 
 
 def test_bufferless_identity_generates_correct_vhdl_code() -> None:
@@ -55,10 +52,11 @@ architecture rtl of identity is
 begin
     y <= x;
 end rtl;
-""".splitlines()
+"""
     identity = BufferlessIdentity(total_bits=8)
-    build_path = InMemoryPath("build", parent=None)
-    design = identity.create_design("identity")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["identity"]).text
-    assert actual == expected
+    assert expected == get_code(identity)
+
+
+def get_code(layer: DesignCreatorModule) -> str:
+    design = layer.create_design("identity")
+    return get_savable_file_structure(design)["identity.vhd"]

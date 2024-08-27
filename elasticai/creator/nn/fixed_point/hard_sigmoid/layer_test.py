@@ -1,6 +1,6 @@
-from typing import cast
-
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .layer import HardSigmoid
 
@@ -91,10 +91,8 @@ begin
         end if;
     end process;
 end architecture rtl;
-""".splitlines()
+"""
     sigmoid = HardSigmoid(total_bits=16, frac_bits=8)
-    build_path = InMemoryPath("build", parent=None)
     design = sigmoid.create_design("sigmoid")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["sigmoid"]).text
-    assert actual == expected
+    files = get_savable_file_structure(design)
+    assert expected == files["sigmoid.vhd"]

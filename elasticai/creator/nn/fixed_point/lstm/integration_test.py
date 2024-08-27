@@ -1,6 +1,5 @@
 import pytest
 
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn.fixed_point import Linear
 from elasticai.creator.nn.fixed_point.lstm.layer import (
     FixedPointLSTMWithHardActivations,
@@ -33,4 +32,4 @@ def test_lstm_network_simulation(tmp_path):
     )
     design = model.create_design("lstm_network")
     testbench = model.create_testbench("lstm_network_tb", design)
-    testbench.save_to(OnDiskPath(str(tmp_path), parent=""))
+    testbench.save_to(tmp_path)

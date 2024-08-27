@@ -13,7 +13,7 @@ from ._common_imports import (
     Rom,
     Signal,
     calculate_address_width,
-    module_to_package,
+    save_template,
     std_signals,
 )
 
@@ -47,7 +47,7 @@ class FPLSTMCell(Design):
         self._rom_base_names = ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")
         self._ram_base_name = f"dual_port_2_clock_ram_{self.name}"
         self._template = InProjectTemplate(
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             file_name=f"{self.name}.tpl.vhd",
             parameters=dict(
                 name=self.name,
@@ -114,7 +114,7 @@ class FPLSTMCell(Design):
         ]
 
     def save_to(self, destination: Path) -> None:
-        destination = destination.create_subpath(self.name)
+        destination = destination / self.name
         weights, biases = self._build_weights()
 
         self._save_roms(
@@ -125,7 +125,7 @@ class FPLSTMCell(Design):
         self._save_hardtanh(destination)
         self._save_sigmoid(destination)
 
-        destination.create_subpath("lstm_cell").as_file(".vhd").write(self._template)
+        save_template(self._template, destination / "lstm_cell.vhd")
 
     def _build_weights(self) -> tuple[list[list], list[list]]:
         weights = np.concatenate(
@@ -149,7 +149,7 @@ class FPLSTMCell(Design):
                 data_width=self.total_bits,
                 values_as_integers=values,
             )
-            rom.save_to(destination.create_subpath(name))
+            rom.save_to(destination / name)
 
     def _save_hardtanh(self, destination: Path) -> None:
         self._htanh.save_to(destination)
@@ -160,7 +160,7 @@ class FPLSTMCell(Design):
     def _save_dual_port_double_clock_ram(self, destination: Path) -> None:
         template = InProjectTemplate(
             file_name="dual_port_2_clock_ram.tpl.vhd",
-            package=module_to_package(self.__module__),
+            package=InProjectTemplate.module_to_package(self.__module__),
             parameters=dict(name=self.name),
         )
-        destination.create_subpath(self._ram_base_name).as_file(".vhd").write(template)
+        save_template(template, destination / f"{self._ram_base_name}.vhd")

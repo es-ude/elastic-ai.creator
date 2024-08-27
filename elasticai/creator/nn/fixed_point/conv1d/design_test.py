@@ -1,8 +1,8 @@
-from typing import cast
-
 import pytest
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .design import Conv1d
 
@@ -22,18 +22,11 @@ def conv1d_design() -> Conv1d:
     )
 
 
-def save_design(design: Conv1d) -> dict[str, str]:
-    destination = InMemoryPath("conv1d", parent=None)
-    design.save_to(destination)
-    files = cast(list[InMemoryFile], list(destination.children.values()))
-    return {file.name: "\n".join(file.text) for file in files}
-
-
 def test_saved_design_contains_needed_files(conv1d_design: Conv1d) -> None:
-    saved_files = save_design(conv1d_design)
+    files = get_savable_file_structure(conv1d_design)
 
     expected_files = {"conv1d_w_rom.vhd", "conv1d_b_rom.vhd", "conv1d.vhd"}
-    actual_files = set(saved_files.keys())
+    actual_files = set(files.keys())
 
     assert expected_files == actual_files
 
@@ -64,9 +57,10 @@ begin
             end if;
         end if;
     end process ROM_process;
-end architecture rtl;"""
-    saved_files = save_design(conv1d_design)
-    actual_code = saved_files["conv1d_w_rom.vhd"]
+end architecture rtl;
+"""
+    files = get_savable_file_structure(conv1d_design)
+    actual_code = files["conv1d_w_rom.vhd"]
     assert expected_code == actual_code
 
 
@@ -96,9 +90,10 @@ begin
             end if;
         end if;
     end process ROM_process;
-end architecture rtl;"""
-    saved_files = save_design(conv1d_design)
-    actual_code = saved_files["conv1d_b_rom.vhd"]
+end architecture rtl;
+"""
+    files = get_savable_file_structure(conv1d_design)
+    actual_code = files["conv1d_b_rom.vhd"]
     assert expected_code == actual_code
 
 
@@ -108,7 +103,8 @@ def test_conv1d_code_generated_correctly(conv1d_design: Conv1d) -> None:
 8
 1
 2
-3"""
-    saved_files = save_design(conv1d_design)
-    actual_code = saved_files["conv1d.vhd"]
+3
+"""
+    files = get_savable_file_structure(conv1d_design)
+    actual_code = files["conv1d.vhd"]
     assert expected_code == actual_code

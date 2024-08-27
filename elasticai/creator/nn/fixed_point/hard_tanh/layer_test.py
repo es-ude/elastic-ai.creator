@@ -1,6 +1,6 @@
-from typing import cast
-
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .layer import HardTanh
 
@@ -55,10 +55,8 @@ begin
         end if;
     end process;
 end architecture rtl;
-""".splitlines()
+"""
     tanh = HardTanh(total_bits=16, frac_bits=8)
-    build_path = InMemoryPath("build", parent=None)
     design = tanh.create_design("tanh")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["tanh"]).text
-    assert actual == expected
+    files = get_savable_file_structure(design)
+    assert expected == files["tanh.vhd"]

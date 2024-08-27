@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from tests.tensor_test_case import TensorTestCase
+from elasticai.creator.test_utils.tensor_test_case import TensorTestCase
 
 from .lstm_cell import LSTMCell, MathOperations
 from .torch_math_operations import TorchMathOperations
@@ -31,7 +31,7 @@ def create_lstm_cell_and_reference(
         input_size=input_size, hidden_size=hidden_size, bias=bias
     )
 
-    def ones_like(x: torch.Tensor) -> torch.Tensor:
+    def ones_like(x: torch.Tensor) -> Parameter:
         return Parameter(torch.ones_like(x))
 
     cell.linear_ih.weight = ones_like(cell.linear_ih.weight)

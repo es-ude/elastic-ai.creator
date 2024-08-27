@@ -1,8 +1,8 @@
-from typing import cast
-
 import pytest
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .design import Linear
 
@@ -20,18 +20,11 @@ def linear_design() -> Linear:
     )
 
 
-def save_design(design: Linear) -> dict[str, str]:
-    destination = InMemoryPath("linear", parent=None)
-    design.save_to(destination)
-    files = cast(list[InMemoryFile], list(destination.children.values()))
-    return {file.name: "\n".join(file.text) for file in files}
-
-
 def test_saved_design_contains_needed_files(linear_design: Linear) -> None:
-    saved_files = save_design(linear_design)
+    files = get_savable_file_structure(linear_design)
 
     expected_files = {"linear_w_rom.vhd", "linear_b_rom.vhd", "linear.vhd"}
-    actual_files = set(saved_files.keys())
+    actual_files = set(files.keys())
 
     assert expected_files == actual_files
 
@@ -62,9 +55,10 @@ begin
             end if;
         end if;
     end process ROM_process;
-end architecture rtl;"""
-    saved_files = save_design(linear_design)
-    actual_code = saved_files["linear_w_rom.vhd"]
+end architecture rtl;
+"""
+    files = get_savable_file_structure(linear_design)
+    actual_code = files["linear_w_rom.vhd"]
     assert expected_code == actual_code
 
 
@@ -94,9 +88,10 @@ begin
             end if;
         end if;
     end process ROM_process;
-end architecture rtl;"""
-    saved_files = save_design(linear_design)
-    actual_code = saved_files["linear_b_rom.vhd"]
+end architecture rtl;
+"""
+    files = get_savable_file_structure(linear_design)
+    actual_code = files["linear_b_rom.vhd"]
     assert expected_code == actual_code
 
 
@@ -324,7 +319,8 @@ begin
         data => b_in
     );
 
-end architecture rtl;"""
-    saved_files = save_design(linear_design)
-    actual_code = saved_files["linear.vhd"]
+end architecture rtl;
+"""
+    files = get_savable_file_structure(linear_design)
+    actual_code = files["linear.vhd"]
     assert expected_code == actual_code

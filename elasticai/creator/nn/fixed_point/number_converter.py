@@ -2,6 +2,7 @@ import dataclasses
 
 from ._number_conversion import (
     bits_to_integer,
+    bits_to_natural,
     bits_to_rational,
     convert_rational_to_bit_pattern,
     integer_to_bits,
@@ -38,7 +39,7 @@ class NumberConverter:
         )
 
     def bits_to_natural(self, pattern: str) -> int:
-        return bits_to_rational(pattern, frac_bits=self._fxp_params.frac_bits)
+        return bits_to_natural(pattern)
 
     def integer_to_bits(self, number: int) -> str:
         return integer_to_bits(number, total_bits=self._fxp_params.total_bits)

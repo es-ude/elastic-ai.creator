@@ -1,21 +1,17 @@
-from typing import cast
-
 import pytest
 
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.identity.layer import BufferedIdentity
 from elasticai.creator.nn.sequential.layer import Sequential
+from elasticai.creator.test_utils.temporary_file_structure import (
+    get_savable_file_structure,
+)
 
 from .firmware_env5 import FirmwareENv5
 
 
 def extract_skeleton_code(firmware) -> str:
-    destination = InMemoryPath(name="build", parent=None)
-    firmware.save_to(destination)
-    srcs_dir = cast(InMemoryPath, destination["srcs"])
-    actual_code_lines = cast(InMemoryFile, srcs_dir["skeleton"]).text
-    actual_code = "\n".join(actual_code_lines)
-    return actual_code
+    files = get_savable_file_structure(firmware)
+    return files["srcs"]["skeleton.vhd"]
 
 
 def test_firmware_generates_correct_skeleton_v1() -> None:
@@ -142,7 +138,8 @@ begin
         end if;
     end process;
 
-end rtl;"""
+end rtl;
+"""
 
     assert expected_code == actual_code
 
@@ -272,5 +269,6 @@ begin
         end if;
     end process;
 
-end rtl;"""
+end rtl;
+"""
     assert expected_code == actual_code
