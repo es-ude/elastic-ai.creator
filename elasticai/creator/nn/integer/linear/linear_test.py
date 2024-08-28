@@ -510,7 +510,9 @@ def test_update_quant_params_of_outputs_QParams_in_forward(
     assert torch.equal(expected_zero_point, actual_zero_point)
 
 
-def test_forward(linear_layer, inputs, outputs_quant_params) -> None:
+def test_forward_outputs_is_correctly(
+    linear_layer, inputs, outputs_quant_params
+) -> None:
     expected_outputs = linear_layer.forward(inputs)
     (
         tmp_outputs,
@@ -587,7 +589,9 @@ def test_get_scale_fator_M_in_precompute(linear_layer, inputs, scale_fator_M) ->
     assert expected_scale_factor_M_q_shift == actual_scale_factor_M_q_shift
 
 
-def test_int_forward(linear_layer, inputs, q_inputs, q_outputs) -> None:
+def test_int_forward_q_outputs_is_correctly(
+    linear_layer, inputs, q_inputs, q_outputs
+) -> None:
     linear_layer.forward(inputs)
     linear_layer.eval()
     linear_layer.precompute()

@@ -4,7 +4,7 @@ import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.linear.test_linear import inputs, linear_layer
+from elasticai.creator.nn.integer.linear.linear_test import inputs, linear_layer
 
 
 @pytest.fixture
