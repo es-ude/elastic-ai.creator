@@ -47,11 +47,13 @@ begin
             if reset = '1' then
                 network_enable <= '0';
             else
-                int_addr := to_integer(unsigned(address_in));
-                if int_addr = 16 then
-                    network_enable <= data_in(0);
-                elsif int_addr >= 18 and int_addr < 18 + NUM_VALUES then
-                    data_buf_in(int_addr) <= data_in(DATA_WIDTH_IN-1 downto 0);
+                if wr = '1' then
+                    int_addr := to_integer(unsigned(address_in));
+                    if int_addr = 16 then
+                        network_enable <= data_in(0);
+                    elsif int_addr >= 18 and int_addr < 18 + NUM_VALUES then
+                        data_buf_in(int_addr) <= data_in(DATA_WIDTH_IN-1 downto 0);
+                    end if;
                 end if;
             end if;
         end if;
@@ -61,11 +63,13 @@ begin
     variable int_addr : integer range 0 to 20000;
     begin
         if rising_edge(clock) then
-            int_addr := to_integer(unsigned(address_in));
-            if int_addr <= 15 then
-                data_out(7 downto 0) <= skeleton_id_str(int_addr);
-            elsif int_addr >= 18 and int_addr < 18 + NUM_VALUES then
-                data_out(7 downto 0) <= data_buf_in(int_addr);
+            if rd = '1' then
+                int_addr := to_integer(unsigned(address_in));
+                if int_addr <= 15 then
+                    data_out(7 downto 0) <= skeleton_id_str(int_addr);
+                elsif int_addr >= 18 and int_addr < 18 + NUM_VALUES then
+                    data_out(7 downto 0) <= data_buf_in(int_addr);
+                end if;
             end if;
         end if;
     end process;
