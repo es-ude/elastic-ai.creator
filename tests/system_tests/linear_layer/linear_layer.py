@@ -36,8 +36,8 @@ def create_vhd_files(
             frac_bits=frac_bits,
         )
     )
-    nn[0].weight.data = torch.ones_like(nn[0].weight)
-    nn[0].bias.data = torch.ones_like(nn[0].bias)
+    nn[0].weight.data = torch.ones_like(nn[0].weight)*3
+    nn[0].bias.data = torch.ones_like(nn[0].bias)*7
     destination = OnDiskPath(output_dir)
     my_design = nn.create_design("nn")
     my_design.save_to(destination.create_subpath("srcs"))
@@ -74,40 +74,43 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str):
 def send_binfile(
     local_urc: UserRemoteControl, binfile_address: int, file_dir: str
 ) -> bool:
+    print(f"Sending binfile to {binfile_address=}")
     with open(file_dir + "output/env5_top_reconfig.bin", "rb") as file:
         binfile: bytes = file.read()
     finished = local_urc.send_data_to_flash(binfile_address, bytearray(binfile))
+    print(f"Sending binfile to {binfile_address=}: {finished=}")
     return finished
 
 
 def exit_handler(cdc_port: serial.Serial):
-    serial_con.close()
+    cdc_port.close()
     print(f"closed {cdc_port.port=}")
 
 
 if __name__ == "__main__":
-    torch.manual_seed(0)
+    torch.manual_seed(1)
     total_bits = 8
     frac_bits = 2
-    num_inputs = 3
+    num_inputs = 4
     num_outputs = 2
+    batches = 2
     skeleton_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     skeleton_id_as_bytearray = bytearray()
     for x in skeleton_id:
         skeleton_id_as_bytearray.extend(
             x.to_bytes(length=1, byteorder="little", signed=False)
         )
-    batches = 2
+
     vhdl_dir = "./tests/system_tests/linear_layer/build_dir"
     binfile_dir = "./tests/system_tests/linear_layer/build_dir_output/"
     nn = create_vhd_files(
         vhdl_dir, num_inputs, num_outputs, total_bits, frac_bits, skeleton_id
     )
-    vivado_build_binfile(vhdl_dir, binfile_dir)
+    #vivado_build_binfile(vhdl_dir, binfile_dir)
 
     fxp_conf = FixedPointConfig(total_bits, frac_bits)
     inputs = fxp_conf.as_rational(
-        fxp_conf.as_integer(torch.ones(batches, 1, num_inputs))
+        fxp_conf.as_integer(torch.rand(batches, 1, num_inputs))
     )
     expected_outputs = nn(inputs)
 
@@ -128,6 +131,9 @@ if __name__ == "__main__":
     actual_result = parse_bytearray_to_fxp_tensor(
         inference_result, total_bits, frac_bits, expected_outputs.shape
     )
+    skeleton_id = urc.enV5RCP.read_skeleton_id()
+    print(f"{skeleton_id=}")
+    print(f"{skeleton_id_as_bytearray=}")
     print(f"{inputs=}")
     # print(f"")
     # print(f"{nn[0].weight=}")

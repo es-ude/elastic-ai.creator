@@ -8,7 +8,8 @@ from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
+from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
+from elasticai.creator.nn.fixed_point.conv1d.testbench import Conv1dTestbench
 
 
 class Conv1d(DesignCreatorModule, Conv1dBase):
@@ -74,3 +75,6 @@ class Conv1d(DesignCreatorModule, Conv1dBase):
             weights=signed_int_weights,
             bias=signed_int_bias,
         )
+
+    def create_testbench(self, name: str, uut: Conv1dDesign) -> Conv1dTestbench:
+        return Conv1dTestbench(name=name, uut=uut, fxp_params=self._config)

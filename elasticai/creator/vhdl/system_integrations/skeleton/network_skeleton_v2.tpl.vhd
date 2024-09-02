@@ -94,7 +94,7 @@ begin
     end process;
 
     sendback_data_to_middleware: process  (clock, rd, address_in)
-    variable int_addr : integer range 0 to 20000;
+    variable int_addr : integer range 0 to 18 + Y_NUM_VALUES;
     begin
         if rising_edge(clock) then
             if rd = '1' then

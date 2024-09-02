@@ -1,4 +1,5 @@
 import warnings
+from types import NoneType
 from typing import Protocol
 
 from elasticai.creator.file_generation.savable import Path
@@ -70,11 +71,14 @@ class FirmwareEchoServerSkeletonV2:
     def __init__(self, num_inputs: int, bitwidth: int):
         self._num_inputs = num_inputs
         self._bitwidth = bitwidth
+        self.skeleton_id: list[int] = list()
 
     def save_to(self, destination: Path):
         def save_srcs(destination: Path):
             skeleton = EchoSkeletonV2(self._num_inputs, bitwidth=self._bitwidth)
+            self.skeleton_id = skeleton._id
             skeleton.save_to(destination.create_subpath("skeleton"))
+
 
             middleware = Middleware()
             middleware.save_to(destination.create_subpath("middleware"))
