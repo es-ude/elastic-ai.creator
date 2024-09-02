@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;               -- for type conversions
-use ieee.math_real.all;
 
 library ${work_library_name};
 use ${work_library_name}.all;
@@ -93,7 +92,7 @@ architecture rtl of ${layer_name} is
     signal w_in : std_logic_vector(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal b_in : std_logic_vector(DATA_WIDTH-1 downto 0) := (others=>'0');
 
-    signal addr_w : std_logic_vector(ceil(log2(IN_FEATURE_NUM*OUT_FEATURE_NUM)-1 downto 0)) := (others=>'0');
+    signal addr_w : std_logic_vector(log2(IN_FEATURE_NUM*OUT_FEATURE_NUM)-1 downto 0) := (others=>'0');
     --signal addr_b : std_logic_vector((log2(OUT_FEATURE_NUM)-1) downto 0) := (others=>'0');
     signal addr_b : std_logic_vector(Y_ADDR_WIDTH-1 downto 0) := (others=>'0');
 
