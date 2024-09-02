@@ -6,8 +6,9 @@ from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import 
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
-from ..testbench import LinearTestbench
 from elasticai.creator.vhdl.design_creator import DesignCreator
+
+from ..testbench import LinearTestbench
 
 
 class Linear(DesignCreator, LinearBase):
