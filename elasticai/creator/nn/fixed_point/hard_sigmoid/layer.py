@@ -1,13 +1,13 @@
 from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid as HardSigmoidBase
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .design import HardSigmoid as HardSigmoidDesign
 
 
-class HardSigmoid(DesignCreator, HardSigmoidBase):
+class HardSigmoid(DesignCreatorModule, HardSigmoidBase):
     def __init__(self, total_bits: int, frac_bits: int) -> None:
         super().__init__()
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)

@@ -1,13 +1,13 @@
 from elasticai.creator.base_modules.hard_tanh import HardTanh as HardTanhBase
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .design import HardTanh as HardTanhDesign
 
 
-class HardTanh(DesignCreator, HardTanhBase):
+class HardTanh(DesignCreatorModule, HardTanhBase):
     def __init__(
         self, total_bits: int, frac_bits: int, min_val: float = -1, max_val: float = 1
     ) -> None:

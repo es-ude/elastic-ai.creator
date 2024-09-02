@@ -1,7 +1,8 @@
 import warnings
+from typing import Protocol
 
 from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.system_integrations.env5_constraints.env5_constraints import (
     ENV5Constraints,
 )
@@ -21,8 +22,16 @@ warnings.warn(
 )
 
 
+class _DesignAndTestbenchCreator(Protocol):
+    def create_design(self, name: str) -> Design:
+        ...
+
+    def create_testbench(self, name: str, design: Design) -> Design:
+        ...
+
+
 class FirmwareENv5:
-    def __init__(self, model: DesignCreator):
+    def __init__(self, model: _DesignAndTestbenchCreator):
         self._network = model.create_design("network")
         self._testbench = model.create_testbench("network_tb", self._network)
 

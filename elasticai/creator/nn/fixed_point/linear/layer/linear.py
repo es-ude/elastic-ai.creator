@@ -1,17 +1,15 @@
 from typing import Any, cast
 
 from elasticai.creator.base_modules.linear import Linear as LinearBase
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
-
-from ..testbench import LinearTestbench
+from elasticai.creator.nn.fixed_point.linear.design import Linear as LinearDesign
 
 
-class Linear(DesignCreator, LinearBase):
+class Linear(DesignCreatorModule, LinearBase):
     def __init__(
         self,
         in_features: int,
@@ -51,6 +49,3 @@ class Linear(DesignCreator, LinearBase):
             bias=signed_int_bias,
             name=name,
         )
-
-    def create_testbench(self, name: str, uut: LinearDesign) -> LinearTestbench:
-        return LinearTestbench(name, uut)

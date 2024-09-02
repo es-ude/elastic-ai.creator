@@ -3,15 +3,15 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign as Conv1dDesign
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.nn.fixed_point.conv1d.design import Conv1d as Conv1dDesign
 
 
-class BatchNormedConv1d(DesignCreator, torch.nn.Module):
+class BatchNormedConv1d(DesignCreatorModule):
     def __init__(
         self,
         total_bits: int,
@@ -68,19 +68,20 @@ class BatchNormedConv1d(DesignCreator, torch.nn.Module):
         return self._batch_norm.bias
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        has_batches = x.dim() == 3
+        has_batches = x.dim() == 2
+        input_shape = (
+            (x.shape[0], self._conv1d.in_channels, -1)
+            if has_batches
+            else (1, self._conv1d.in_channels, -1)
+        )
+        output_shape = (x.shape[0], -1) if has_batches else (-1,)
 
-        if not has_batches:
-            x = x.view(1, *x.shape)
-
+        x = x.view(*input_shape)
         x = self._conv1d(x)
         x = self._batch_norm(x)
         x = self._operations.quantize(x)
 
-        if not has_batches:
-            x = x.squeeze(dim=0)
-
-        return x
+        return x.view(*output_shape)
 
     def create_design(self, name: str) -> Conv1dDesign:
         def float_to_signed_int(value: float | list) -> int | list:

@@ -1,10 +1,10 @@
 from elasticai.creator.base_modules.relu import ReLU as ReLUBase
-from elasticai.creator.vhdl.design_creator import DesignCreator
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 
 from .design import ReLU as ReLUDesign
 
 
-class ReLU(DesignCreator, ReLUBase):
+class ReLU(DesignCreatorModule, ReLUBase):
     def __init__(self, total_bits: int, use_clock: bool = False) -> None:
         super().__init__()
         self._total_bits = total_bits
