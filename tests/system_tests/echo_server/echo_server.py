@@ -58,9 +58,8 @@ def exit_handler(cdc_port: serial.Serial):
 
 
 if __name__ == "__main__":
-    torch.manual_seed(0)
     output_dir = vhdl_dir = "./tests/system_tests/echo_server/build_dir"
-    binfile_dir = "./tests/system_tests/echo_server/build_dir_output_4/"
+    binfile_dir = "./tests/system_tests/echo_server/build_dir_output/"
 
     total_bits = 8
     frac_bits = 2
@@ -69,11 +68,11 @@ if __name__ == "__main__":
     num_outputs = num_inputs
 
     skeleton_id_as_bytearray = build_vhdl_source(output_dir, num_inputs)
-    #exit()
-    #vivado_build_binfile(output_dir, binfile_dir)
 
-    #serial_con = serial.Serial(get_env5_port())
-    serial_con = serial.Serial("/dev/tty.usbmodem2101")
+    vivado_build_binfile(output_dir, binfile_dir)
+
+    serial_con = serial.Serial(get_env5_port())
+    #serial_con = serial.Serial("/dev/tty.usbmodem2101")
     atexit.register(exit_handler, serial_con)
     binfile_address = 0
 
@@ -84,33 +83,26 @@ if __name__ == "__main__":
     urc.enV5RCP.fpga_power(True)
     time.sleep(0.1)
 
-
     skeleton_id = urc.enV5RCP.read_skeleton_id()
-    print(f"{skeleton_id=}")
-    print(f"{skeleton_id_as_bytearray=}")
+    assert skeleton_id == skeleton_id_as_bytearray
 
     fxp_conf = FixedPointConfig(total_bits, frac_bits)
     x = torch.randn(batches, 1, num_inputs)
-    #x = torch.Tensor([[[1.0, 2.0, -1.0, 3.0]], [[-4.0, 5.0, -1.0, 0.0]]])
-    #x = torch.Tensor([[[4.0, 4.0, 4.0, 4.0]], [[3.0, 2.0, 1.0, 0.0]]])
     inputs = fxp_conf.as_rational(
         fxp_conf.as_integer(x)
     )
     inference_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
+
     inference_result = list()
     for batch_data in inference_data:
         batch_result = urc.inference_with_data(
             batch_data, num_outputs, binfile_address, skeleton_id_as_bytearray
         )
         inference_result.append(batch_result)
-        print(f"{batch_result=}")
-    print()
-    print(f"{inference_result=}")
+
     actual_result = parse_bytearray_to_fxp_tensor(
         inference_result, total_bits, frac_bits, inputs.shape
     )
 
-    print(f"{inputs=}")
-    print(f"{actual_result=}")
-    assert torch.equal(actual_result, inputs+ 1/(2**frac_bits))
+    assert torch.equal(actual_result, inputs + 1/(2**frac_bits))
     print("Test successful")
