@@ -1,4 +1,6 @@
 import atexit
+import time
+
 import serial  # type: ignore
 import subprocess
 import tomllib
@@ -58,33 +60,30 @@ def exit_handler(cdc_port: serial.Serial):
 if __name__ == "__main__":
     torch.manual_seed(0)
     output_dir = vhdl_dir = "./tests/system_tests/echo_server/build_dir"
-    binfile_dir = "./tests/system_tests/echo_server/build_dir_output/"
+    binfile_dir = "./tests/system_tests/echo_server/build_dir_output_4/"
 
     total_bits = 8
-    frac_bits = 0
+    frac_bits = 2
     batches = 3
     num_inputs = 16
     num_outputs = num_inputs
 
     skeleton_id_as_bytearray = build_vhdl_source(output_dir, num_inputs)
+    #exit()
     #vivado_build_binfile(output_dir, binfile_dir)
 
-    serial_con = serial.Serial(get_env5_port())
+    #serial_con = serial.Serial(get_env5_port())
+    serial_con = serial.Serial("/dev/tty.usbmodem2101")
     atexit.register(exit_handler, serial_con)
     binfile_address = 0
 
     urc = UserRemoteControl(device=serial_con)
 
 
-    #send_binfile(urc, binfile_address, binfile_dir)
+    send_binfile(urc, binfile_address, binfile_dir)
+    urc.enV5RCP.fpga_power(True)
+    time.sleep(0.1)
 
-    skeleton_id = urc.enV5RCP.read_skeleton_id()
-    print(f"{skeleton_id=}")
-    print(f"{skeleton_id_as_bytearray=}")
-
-    skeleton_id = urc.enV5RCP.read_skeleton_id()
-    print(f"{skeleton_id=}")
-    print(f"{skeleton_id_as_bytearray=}")
 
     skeleton_id = urc.enV5RCP.read_skeleton_id()
     print(f"{skeleton_id=}")
@@ -113,5 +112,5 @@ if __name__ == "__main__":
 
     print(f"{inputs=}")
     print(f"{actual_result=}")
-    assert torch.equal(actual_result, inputs)
+    assert torch.equal(actual_result, inputs+ 1/(2**frac_bits))
     print("Test successful")

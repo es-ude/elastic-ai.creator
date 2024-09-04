@@ -1,5 +1,6 @@
 import atexit
 import subprocess
+import time
 import tomllib
 
 import serial  # type: ignore
@@ -37,7 +38,7 @@ def create_vhd_files(
         )
     )
     nn[0].weight.data = torch.ones_like(nn[0].weight)*3
-    nn[0].bias.data = torch.ones_like(nn[0].bias)*7
+    nn[0].bias.data = torch.ones_like(nn[0].bias)
     destination = OnDiskPath(output_dir)
     my_design = nn.create_design("nn")
     my_design.save_to(destination.create_subpath("srcs"))
@@ -88,12 +89,12 @@ def exit_handler(cdc_port: serial.Serial):
 
 
 if __name__ == "__main__":
-    torch.manual_seed(1)
+    #torch.manual_seed(1)
     total_bits = 8
     frac_bits = 2
     num_inputs = 4
     num_outputs = 2
-    batches = 2
+    batches = 4
     skeleton_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     skeleton_id_as_bytearray = bytearray()
     for x in skeleton_id:
@@ -112,15 +113,22 @@ if __name__ == "__main__":
     inputs = fxp_conf.as_rational(
         fxp_conf.as_integer(torch.rand(batches, 1, num_inputs))
     )
+    inputs = fxp_conf.as_rational(fxp_conf.as_integer(torch.Tensor([[[0.0, 0.0, 0.0, 0.0]],
+                                                                    [[1.0, 0.0, 0.0, 0.0]],
+                                                                    [[0.0, 1.0, 0.0, 0.0]],
+                                                                    [[0.0, 0.0, 1.0, 0.0]],
+                                                                    [[0.0, 0.0, 0.0, 1.0]],])))
     expected_outputs = nn(inputs)
 
-    serial_con = serial.Serial(get_env5_port())
+    serial_con = serial.Serial("/dev/tty.usbmodem2101")
     atexit.register(exit_handler, serial_con)
 
     binfile_address = 0
     urc = UserRemoteControl(device=serial_con)
 
-    send_binfile(urc, binfile_address, binfile_dir)
+    #send_binfile(urc, binfile_address, binfile_dir)
+    urc.enV5RCP.fpga_power(True)
+    time.sleep(0.1)
     inference_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
     inference_result = list()
     for batch_data in inference_data:
