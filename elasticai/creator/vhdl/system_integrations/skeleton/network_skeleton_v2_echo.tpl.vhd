@@ -30,6 +30,8 @@ architecture rtl of $name is
     constant NUM_VALUES : integer := ${num_values};
     signal network_enable :  std_logic;
 
+    signal wake_up_write: std_logic := '0';
+    signal wake_up_read : std_logic := '0';
 
     type buf_data_in_t is array (0 to NUM_VALUES) of std_logic_vector(DATA_WIDTH_IN-1 downto 0);
     signal data_buf_in : buf_data_in_t;
@@ -38,6 +40,8 @@ architecture rtl of $name is
 begin
 
     busy <= '0';
+    wake_up <= wake_up_write;
+    wake_up <= wake_up_read;
 
     receive_data_from_middleware: process (clock, wr, address_in)
     variable int_addr : integer range 0 to 20000;
@@ -50,7 +54,7 @@ begin
                     int_addr := to_integer(unsigned(address_in));
                     if int_addr = 16 then
                         network_enable <= data_in(0);
-                        wake_up <= '1';
+                        wake_up_write <= '1';
                     elsif int_addr >= 18 and int_addr < 18 + NUM_VALUES then
                         data_buf_in(int_addr-18) <= data_in(DATA_WIDTH_IN-1 downto 0);
                     end if;
@@ -69,7 +73,7 @@ begin
                     data_out(7 downto 0) <= skeleton_id_str(int_addr);
                 elsif int_addr >= 18 and int_addr < 18 + NUM_VALUES then
                     data_out(7 downto 0) <= std_logic_vector(signed(data_buf_in(int_addr-18))+1);
-                    wake_up <= '0';
+                    wake_up_read <= '0';
                 end if;
             end if;
         end if;
