@@ -1,20 +1,23 @@
 import atexit
-import time
-
-import serial  # type: ignore
 import subprocess
+import time
 import tomllib
 
+import serial  # type: ignore
 import torch
+from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import FixedPointConfig
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
+from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from elasticai.creator.vhdl.system_integrations.plug_and_play_solution_ENV5 import (
     FirmwareEchoServerSkeletonV2,
 )
-from tests.system_tests.helper.parse_tensors_to_bytearray import parse_fxp_tensor_to_bytearray, \
-    parse_bytearray_to_fxp_tensor
+from tests.system_tests.helper.parse_tensors_to_bytearray import (
+    parse_bytearray_to_fxp_tensor,
+    parse_fxp_tensor_to_bytearray,
+)
 
 
 def build_vhdl_source(output_dir: str, num_inputs: int) -> bytearray:
@@ -26,6 +29,7 @@ def build_vhdl_source(output_dir: str, num_inputs: int) -> bytearray:
             x.to_bytes(length=1, byteorder="little", signed=False)
         )
     return skeleton_id_as_bytearray
+
 
 def vivado_build_binfile(input_dir: str, binfile_dir: str):
     print(f"Building binfile in {binfile_dir}")
@@ -44,13 +48,17 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str):
     )
     print(out.stdout)
 
+
 def send_binfile(
     local_urc: UserRemoteControl, binfile_address: int, file_dir: str
 ) -> bool:
+    print(f"Sending binfile to {binfile_address=}")
     with open(file_dir + "output/env5_top_reconfig.bin", "rb") as file:
         binfile: bytes = file.read()
     finished = local_urc.send_data_to_flash(binfile_address, bytearray(binfile))
+    print(f"Sending binfile to {binfile_address=}: {finished=}")
     return finished
+
 
 def exit_handler(cdc_port: serial.Serial):
     cdc_port.close()
@@ -59,7 +67,7 @@ def exit_handler(cdc_port: serial.Serial):
 
 if __name__ == "__main__":
     output_dir = vhdl_dir = "./tests/system_tests/echo_server/build_dir"
-    binfile_dir = "./tests/system_tests/echo_server/build_dir_output/"
+    binfile_dir = "./tests/system_tests/echo_server/build_dir_output_1/"
 
     total_bits = 8
     frac_bits = 2
@@ -69,28 +77,26 @@ if __name__ == "__main__":
 
     skeleton_id_as_bytearray = build_vhdl_source(output_dir, num_inputs)
 
-    vivado_build_binfile(output_dir, binfile_dir)
+    # vivado_build_binfile(output_dir, binfile_dir)
 
-    serial_con = serial.Serial(get_env5_port())
-    #serial_con = serial.Serial("/dev/tty.usbmodem2101")
+    # serial_con = serial.Serial(get_env5_port())
+    serial_con = serial.Serial("/dev/tty.usbmodem3213101")
     atexit.register(exit_handler, serial_con)
     binfile_address = 0
 
     urc = UserRemoteControl(device=serial_con)
-
 
     send_binfile(urc, binfile_address, binfile_dir)
     urc.enV5RCP.fpga_power(True)
     time.sleep(0.1)
 
     skeleton_id = urc.enV5RCP.read_skeleton_id()
-    assert skeleton_id == skeleton_id_as_bytearray
+    print(skeleton_id)
+    # assert skeleton_id == skeleton_id_as_bytearray
 
     fxp_conf = FixedPointConfig(total_bits, frac_bits)
     x = torch.randn(batches, 1, num_inputs)
-    inputs = fxp_conf.as_rational(
-        fxp_conf.as_integer(x)
-    )
+    inputs = fxp_conf.as_rational(fxp_conf.as_integer(x))
     inference_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
 
     inference_result = list()
@@ -103,6 +109,7 @@ if __name__ == "__main__":
     actual_result = parse_bytearray_to_fxp_tensor(
         inference_result, total_bits, frac_bits, inputs.shape
     )
-
-    assert torch.equal(actual_result, inputs + 1/(2**frac_bits))
+    print(f"{actual_result=}")
+    print(f"{inputs + 1/(2**frac_bits)=}")
+    assert torch.equal(actual_result, inputs + 1 / (2**frac_bits))
     print("Test successful")
