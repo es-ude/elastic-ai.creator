@@ -169,12 +169,10 @@ begin
                         state <= s_stop;
                     else
                         state <= s_idle;
-                        current_neuron_idx := 0;
+                        done <= '1';
                     end if;
 
                 end if;
-            else
-                done <= '1';
             end if;
 
             var_sum := multiply_accumulate(var_w, var_x, var_y);
@@ -194,13 +192,13 @@ begin
 
     y_reading : process (clock, state)
     begin
-        --if state=s_idle then
+        if (state=s_idle) or (state=s_stop) then
             if falling_edge(clock) then
                 -- After the layer in at idle mode, y is readable
                 -- but it only update at the rising edge of the clock
                 y <= y_ram(to_integer(unsigned(y_address)));
             end if;
-        --end if;
+        end if;
     end process y_reading;
 
     -- Weights

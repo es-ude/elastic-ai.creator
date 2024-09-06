@@ -37,7 +37,7 @@ def create_vhd_files(
             frac_bits=frac_bits,
         )
     )
-    nn[0].weight.data = torch.zeros_like(nn[0].weight)
+    nn[0].weight.data = torch.ones_like(nn[0].weight) * 2
     nn[0].bias.data = torch.Tensor([1.0, 2.0, -1.0])
     destination = OnDiskPath(output_dir)
     my_design = nn.create_design("nn")
@@ -56,6 +56,7 @@ def create_vhd_files(
 
 def vivado_build_binfile(input_dir: str, binfile_dir: str):
     print(f"Building binfile in {binfile_dir}")
+    time.sleep(5)
     with open("./tests/system_tests/vivado_build_server_conf.toml", "rb") as f:
         config = tomllib.load(f)
     out = subprocess.run(
@@ -76,7 +77,7 @@ def send_binfile(
     local_urc: UserRemoteControl, binfile_address: int, file_dir: str
 ) -> bool:
     print(f"Sending binfile to {binfile_address=}")
-    with open(file_dir + "output/env5_top_reconfig.bin", "rb") as file:
+    with open(file_dir + "/output/env5_top_reconfig.bin", "rb") as file:
         binfile: bytes = file.read()
     finished = local_urc.send_data_to_flash(binfile_address, bytearray(binfile))
     print(f"Sending binfile to {binfile_address=}: {finished=}")
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     frac_bits = 2
     num_inputs = 4
     num_outputs = 3
-    batches = 4
+    # batches = 4
     skeleton_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     skeleton_id_as_bytearray = bytearray()
     for x in skeleton_id:
@@ -102,8 +103,8 @@ if __name__ == "__main__":
             x.to_bytes(length=1, byteorder="little", signed=False)
         )
 
-    vhdl_dir = "./tests/system_tests/linear_layer/build_dir_1"
-    binfile_dir = "./tests/system_tests/linear_layer/build_dir_output_w_0_b_1_2_-1/"
+    vhdl_dir = "./tests/system_tests/linear_layer/build_dir_2"
+    binfile_dir = "./tests/system_tests/linear_layer/build_dir_output_2"
     nn = create_vhd_files(
         vhdl_dir, num_inputs, num_outputs, total_bits, frac_bits, skeleton_id
     )
@@ -115,6 +116,10 @@ if __name__ == "__main__":
             torch.Tensor(
                 [
                     [[0.0, 0.0, 0.0, 0.0]],
+                    [[1.0, 0.0, 0.0, 0.0]],
+                    [[0.0, 1.0, 0.0, 0.0]],
+                    [[0.0, 0.0, 1.0, 0.0]],
+                    [[0.0, 0.0, 0.0, 1.0]],
                     [[2.0, 0.0, 0.0, 0.0]],
                     [[1.0, 1.0, 0.0, 0.0]],
                     [[1.0, 0.0, 1.0, 0.0]],
@@ -123,10 +128,6 @@ if __name__ == "__main__":
                     [[1.0, 2.0, 0.0, 0.0]],
                     [[1.0, 0.0, 2.0, 0.0]],
                     [[1.0, 0.0, 0.0, 2.0]],
-                    [[1.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 1.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 1.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 1.0]],
                     [[1.0, 1.0, 0.0, 0.0]],
                     [[0.0, 1.0, 1.0, 0.0]],
                     [[0.0, 0.0, 1.0, 1.0]],
@@ -147,9 +148,9 @@ if __name__ == "__main__":
     print(batches)
     expected_outputs = nn(inputs)
 
-    vivado_build_binfile(vhdl_dir, binfile_dir)
+    # vivado_build_binfile(vhdl_dir, binfile_dir)
 
-    serial_con = serial.Serial("/dev/tty.usbmodem3213101")
+    serial_con = serial.Serial("/dev/tty.usbmodem1101")
     atexit.register(exit_handler, serial_con)
 
     binfile_address = 0
@@ -171,7 +172,7 @@ if __name__ == "__main__":
         my_result = parse_bytearray_to_fxp_tensor(
             [batch_result], total_bits, frac_bits, (1, 1, 3)
         )
-        print(f"Batch {i}: {my_result} == {expected_outputs[i]}")
+        print(f"Batch {i}: {my_result} == {expected_outputs[i]}, for input {inputs[i]}")
 
         inference_result.append(batch_result)
     actual_result = parse_bytearray_to_fxp_tensor(
