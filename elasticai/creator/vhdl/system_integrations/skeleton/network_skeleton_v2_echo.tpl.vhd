@@ -44,7 +44,7 @@ begin
     wake_up <= wake_up_read;
 
     receive_data_from_middleware: process (clock, wr, address_in)
-    variable int_addr : integer range 0 to 20000;
+    variable int_addr : integer range 0 to 18 + NUM_VALUES;
     begin
         if rising_edge(clock) then
             if reset = '1' then

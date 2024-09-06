@@ -235,7 +235,7 @@ begin
     wake_up <= done;
 
     receive_data_from_middleware: process (clock, wr, address_in)
-    variable int_addr : integer range 0 to 20000;
+    variable int_addr : integer range 0 to 18 + X_NUM_VALUES;
     begin
         if rising_edge(clock) then
             if reset = '1' then
@@ -254,7 +254,7 @@ begin
     end process;
 
     sendback_data_to_middleware: process  (clock, rd, address_in)
-    variable int_addr : integer range 0 to 20000;
+    variable int_addr : integer range 0 to 18 + Y_NUM_VALUES;
     begin
         if rising_edge(clock) then
             if rd = '1' then
