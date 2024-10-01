@@ -1,4 +1,5 @@
 import atexit
+import pathlib
 import subprocess
 import time
 import tomllib
@@ -55,7 +56,6 @@ def send_binfile(
     print(f"Sending binfile to {binfile_address=}")
     with open(file_dir + "output/env5_top_reconfig.bin", "rb") as file:
         binfile: bytes = file.read()
-    finished = local_urc.send_data_to_flash(binfile_address, bytearray(binfile))
     print(f"Sending binfile to {binfile_address=}: {finished=}")
     return finished
 
@@ -67,43 +67,42 @@ def exit_handler(cdc_port: serial.Serial):
 
 if __name__ == "__main__":
     output_dir = vhdl_dir = "./tests/system_tests/echo_server/build_dir"
-    binfile_dir = "./tests/system_tests/echo_server/build_dir_output_1/"
+    binfile_dir = "./tests/system_tests/echo_server/build_dir_output/"
+    binfile_path = pathlib.Path(binfile_dir + "output/env5_top_reconfig.bin")
 
     total_bits = 8
     frac_bits = 2
     batches = 3
-    num_inputs = 16
+    num_inputs = 4
     num_outputs = num_inputs
 
     skeleton_id_as_bytearray = build_vhdl_source(output_dir, num_inputs)
 
-    # vivado_build_binfile(output_dir, binfile_dir)
+    vivado_build_binfile(output_dir, binfile_dir)
 
     # serial_con = serial.Serial(get_env5_port())
-    serial_con = serial.Serial("/dev/tty.usbmodem3213101")
+    serial_con = serial.Serial("/dev/tty.usbmodem101")
     atexit.register(exit_handler, serial_con)
     binfile_address = 0
 
     urc = UserRemoteControl(device=serial_con)
 
-    send_binfile(urc, binfile_address, binfile_dir)
-    urc.enV5RCP.fpga_power(True)
-    time.sleep(0.1)
-
-    skeleton_id = urc.enV5RCP.read_skeleton_id()
-    print(skeleton_id)
-    # assert skeleton_id == skeleton_id_as_bytearray
+    print("Send and deploy model")
+    successful = urc.send_and_deploy_model(
+        binfile_path, binfile_address, skeleton_id_as_bytearray
+    )
+    successful = urc.deploy_model(binfile_address, skeleton_id_as_bytearray)
+    print(f"Model deployed {successful=}")
 
     fxp_conf = FixedPointConfig(total_bits, frac_bits)
     x = torch.randn(batches, 1, num_inputs)
     inputs = fxp_conf.as_rational(fxp_conf.as_integer(x))
     inference_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
 
+    print(f"Start inference")
     inference_result = list()
     for batch_data in inference_data:
-        batch_result = urc.inference_with_data(
-            batch_data, num_outputs, binfile_address, skeleton_id_as_bytearray
-        )
+        batch_result = urc.inference_with_data(batch_data, num_outputs)
         inference_result.append(batch_result)
 
     actual_result = parse_bytearray_to_fxp_tensor(

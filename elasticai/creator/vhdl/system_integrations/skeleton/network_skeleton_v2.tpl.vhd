@@ -111,7 +111,7 @@ begin
 
     send_buf_to_network: process (clock, x_address)
     begin
-        if rising_edge(clock) then
+        if falling_edge(clock) then
             x <= data_buf_in(to_integer(unsigned(x_address)));
         end if;
     end process;
