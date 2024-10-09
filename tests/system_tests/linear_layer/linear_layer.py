@@ -4,6 +4,7 @@ import time
 import tomllib
 from pathlib import Path
 
+import numpy as np
 import serial  # type: ignore
 import torch
 from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
@@ -80,18 +81,36 @@ def exit_handler(cdc_port: serial.Serial):
 
 
 if __name__ == "__main__":
+    # --- Settings
+    # dev_address = "COM8"
+    dev_address = get_env5_port()
+    vivado_build = False
+
     # torch.manual_seed(1)
     total_bits = 8
     frac_bits = 2
     num_inputs = 5
     num_outputs = 3
     skeleton_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+    # --- Processing
+    # --- Creating the dummy
+    input_tensor = torch.Tensor([[[0.0, 0.0, 0.0, 0.0, 0.0]]])
+    for idx_array in range(0, num_inputs):
+        for value in np.arange(-2, 2, 0.5):
+            list_zeros = [0.0 for idx in range(0, num_inputs)]
+            list_zeros[idx_array] = value
+            input_tensor = torch.cat(
+                (input_tensor, torch.Tensor([[list_zeros]])), dim=0
+            )
+
     skeleton_id_as_bytearray = bytearray()
     for x in skeleton_id:
         skeleton_id_as_bytearray.extend(
             x.to_bytes(length=1, byteorder="little", signed=False)
         )
 
+    # --- Preparing the VHDL code generation
     vhdl_dir = "./tests/system_tests/linear_layer/build_dir"
     binfile_dir = "./tests/system_tests/linear_layer/build_dir_output"
     binfile_path = Path(binfile_dir + "/output/env5_top_reconfig.bin")
@@ -101,54 +120,16 @@ if __name__ == "__main__":
 
     fxp_conf = FixedPointConfig(total_bits, frac_bits)
     # inputs = fxp_conf.as_rational(fxp_conf.as_integer(torch.rand(batches, 1, num_inputs)))
-    inputs = fxp_conf.as_rational(
-        fxp_conf.as_integer(
-            torch.Tensor(
-                [
-                    [[0.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[0.5, 0.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 1.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 1.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 1.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 0.0, 1.0]],
-                    [[2.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 1.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 1.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 1.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 0.0, 1.0]],
-                    [[3.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 2.0, 0.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 2.0, 0.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 2.0, 0.0]],
-                    [[1.0, 0.0, 0.0, 0.0, 2.0]],
-                    [[1.0, 1.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 1.0, 1.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 1.0, 1.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 1.0, 1.0]],
-                    [[-1.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[0.0, -1.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 0.0, -1.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 0.0, -1.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 0.0, -1.0]],
-                    [[2.0, 0.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 2.0, 0.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 2.0, 0.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 2.0, 0.0]],
-                    [[0.0, 0.0, 0.0, 0.0, 2.0]],
-                ]
-            )
-        )
-    )
+    inputs = fxp_conf.as_rational(fxp_conf.as_integer(input_tensor))
     batches = inputs.shape[0]
     expected_outputs = nn(inputs)
 
-    # vivado_build_binfile(vhdl_dir, binfile_dir)
+    # --- Building the code
+    if vivado_build:
+        vivado_build_binfile(vhdl_dir, binfile_dir)
 
-    serial_con = serial.Serial("/dev/tty.usbmodem1101")
+    # --- Open Serial Communication to Device
+    serial_con = serial.Serial(dev_address)
     atexit.register(exit_handler, serial_con)
 
     flash_start_address = 0
@@ -156,16 +137,33 @@ if __name__ == "__main__":
     # urc.send_and_deploy_model(binfile_path, flash_start_address, skeleton_id_as_bytearray)
     urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
 
+    # --- Doing the test
     batch_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
     inference_result = list()
+    state = False
+    urc.fpga_leds(True, False, False, False)
     for i, sample in enumerate(batch_data):
+        urc.fpga_leds(True, False, False, state)
+        state = False if state else True
+
         batch_result = urc.inference_with_data(sample, num_outputs)
         my_result = parse_bytearray_to_fxp_tensor(
             [batch_result], total_bits, frac_bits, (1, 1, 3)
         )
-        print(f"Batch {i}: {my_result} == {expected_outputs[i]}, for input {inputs[i]}")
+
+        dev_inp = my_result
+        dev_out = expected_outputs.data[i].view((1, 1, 3))
+        if not torch.equal(dev_inp, dev_out):
+            print(
+                f"Batch #{i:02d}: \t{dev_inp} == {dev_out}, (Delta ="
+                f" {dev_inp - dev_out}) \t\t\t\tfor input {inputs[i]}"
+            )
+            if i % 4 == 3:
+                print("\n")
 
         inference_result.append(batch_result)
+
+    urc.fpga_leds(False, False, False, False)
     actual_result = parse_bytearray_to_fxp_tensor(
         inference_result, total_bits, frac_bits, expected_outputs.shape
     )
