@@ -71,7 +71,7 @@ architecture rtl of ${layer_name} is
     function log2(val : INTEGER) return natural is
         variable res : natural;
     begin
-        for i in 1 to 31 loop
+        for i in 1 to ${log2_max_value} loop
             if (val <= (2 ** i)) then
                 res := i;
                 exit;

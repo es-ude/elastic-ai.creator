@@ -5,7 +5,6 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
@@ -99,6 +98,7 @@ class LinearDesign(Design, LinearDesignProtocol):
                 bias_rom_name=rom_name["bias"],
                 work_library_name=self.work_library_name,
                 resource_option=f'"{self.resource_option}"',
+                log2_max_value="31",
                 **self._template_parameters(),
             ),
         )
