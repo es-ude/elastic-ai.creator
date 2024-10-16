@@ -6,6 +6,7 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.nn.integer.linear.design import Linear
+from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.nn.sequential.design import Sequential as _SequentialDesign
 from elasticai.creator.vhdl.design.design import Design
 
@@ -53,3 +54,6 @@ class Sequential(_SequentialDesign):
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             network_template_test
         )
+
+        ram = Ram(name=f"dual_port_2_clock_ram")
+        ram.save_to(destination)
