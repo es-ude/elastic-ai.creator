@@ -56,7 +56,7 @@ def create_vhd_files(
     return nn
 
 
-def vivado_build_binfile(input_dir: str, binfile_dir: str):
+def vivado_build_binfile(input_dir: str, binfile_dir: str) -> None:
     print(f"Building binfile in {binfile_dir}")
     time.sleep(5)
     with open("./tests/system_tests/vivado_build_server_conf.toml", "rb") as f:
@@ -72,10 +72,10 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str):
         ],
         capture_output=True,
     )
-    print(f"{out.stdout=}")
+    # print(f"{out.stdout=}")
 
 
-def exit_handler(cdc_port: serial.Serial):
+def exit_handler(cdc_port: serial.Serial) -> None:
     cdc_port.close()
     print(f"closed {cdc_port.port=}")
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # --- Settings
     # dev_address = "COM8"
     dev_address = get_env5_port()
-    vivado_build = False
+    vivado_build = True
 
     # torch.manual_seed(1)
     total_bits = 8
@@ -134,8 +134,10 @@ if __name__ == "__main__":
 
     flash_start_address = 0
     urc = UserRemoteControl(device=serial_con)
-    # urc.send_and_deploy_model(binfile_path, flash_start_address, skeleton_id_as_bytearray)
-    urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
+    urc.send_and_deploy_model(
+        binfile_path, flash_start_address, skeleton_id_as_bytearray
+    )
+    # urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
 
     # --- Doing the test
     batch_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
