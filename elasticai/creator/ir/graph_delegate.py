@@ -4,7 +4,7 @@ from typing import Generic, TypeVar
 HashableT = TypeVar("HashableT", bound=Hashable)
 
 
-class HumbleBaseGraph(Generic[HashableT]):
+class GraphDelegate(Generic[HashableT]):
     def __init__(self) -> None:
         """We keep successor and predecessor nodes just to allow for easier implementation.
         Currently, this implementation is not optimized for performance.
@@ -14,7 +14,7 @@ class HumbleBaseGraph(Generic[HashableT]):
 
     @staticmethod
     def from_dict(d: dict[HashableT, Iterable[HashableT]]):
-        g = HumbleBaseGraph()
+        g = GraphDelegate()
         for node, successors in d.items():
             for s in successors:
                 g.add_edge(node, s)

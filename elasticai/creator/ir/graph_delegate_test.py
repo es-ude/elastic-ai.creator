@@ -1,9 +1,9 @@
+from .graph_delegate import GraphDelegate
 from .graph_iterators import bfs_iter_up, dfs_pre_order
-from .humble_base_graph import HumbleBaseGraph
 
 
 def test_iterating_breadth_first_upwards():
-    g = HumbleBaseGraph()
+    g = GraphDelegate()
     """
              0
              |
@@ -18,7 +18,7 @@ def test_iterating_breadth_first_upwards():
           |/----+
           5
     """
-    g = HumbleBaseGraph.from_dict(
+    g = GraphDelegate.from_dict(
         {
             "0": ["1", "2"],
             "1": ["3"],
@@ -37,7 +37,7 @@ def test_iterating_breadth_first_upwards():
 
 
 def test_iterating_depth_first_preorder():
-    g = HumbleBaseGraph()
+    g = GraphDelegate()
     """
              0
              |
@@ -52,7 +52,7 @@ def test_iterating_depth_first_preorder():
           |/----+
           5
     """
-    g = HumbleBaseGraph.from_dict(
+    g = GraphDelegate.from_dict(
         {
             "0": ["1", "2"],
             "1": ["3"],
