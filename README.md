@@ -17,8 +17,12 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 - [Users Guide](#users-guide)
   - [Install](#install)
   - [Minimal Example](#minimal-example)
-  - [General Limitations](#general-limitations)
-- [Structure of the Project](#structure-of-the-project)
+  - [Features](#features)
+    - [Supported Network Architectures and Layers](#supported-network-architectures-and-layers)
+    - [Planned Network Architectures](#planned-network-architectures-and-layers-supported-in-the-future)
+    - [Modules in Development](#modules-in-development)
+    - [Deprecated Modules](#deprecated-modules-removal-up-to-discussion)
+    - [General Limitations](#general-limitations)
 - [Developers Guide](#developers-guide)
   - [Install Dev Dependencies](#install-dev-dependencies)
   - [Conventional Commit Rules](#conventional-commit-rules)
@@ -45,38 +49,21 @@ You can install the ElasticAI.creator as a dependency using pip:
 python3 -m pip install elasticai-creator
 ```
 
+The latest version published on PyPi is the one tagged with:
+v0.59.2
+
+TODO: install via git
 
 ### Minimal Example
 
-The following example shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
-
-```python
-from elasticai.creator.nn import Sequential
-from elasticai.creator.nn.fixed_point import Linear, HardSigmoid
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
+In [examples](examples/minimal_example_FPGA_with_MiddlewareV2.py) you can find a minimal example.
+It shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
+Furthermore, it will generate a skeleton for the Elastic Node V5 that you can use to interface with your machine learning model on the FPGA via a C stub (defined in the [elastic-ai.runtime.enV5](https://github.com/es-ude/elastic-ai.runtime.enV5)).
 
 
-def main() -> None:
-    # Define a model
-    model = Sequential(
-        Linear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
-        HardSigmoid(total_bits=16, frac_bits=8),
-    )
+### Features
 
-    # Train the model
-    run_training(model)
-
-    # Save the VHDL code of the trained model
-    destination = OnDiskPath("build_dir")
-    design = model.create_design("my_model")
-    design.save_to(destination)
-
-
-if __name__ == "__main__":
-    main()
-```
-
-### Supported network architectures and layers
+#### Supported network architectures and layers
 
 - all sequential network architectures representable with `torch.nn.Sequential`
 - fixed-point quantized:
@@ -85,38 +72,29 @@ if __name__ == "__main__":
     - precomputed: sigmoid, tanh, adaptable SiLU
 
 
-### General limitations
-
-By now we only support sequential models for our translations.
-That excludes skip and residual connections.
-
-
-### Planned network architectures and layers supported in the future
+#### Planned network architectures and layers supported in the future
 
 - integer-only linear quantization
 - 1D convolutional layers (fixed-point)
 - gated recurrent unit (fixed-point)
 
 
-### Modules in development:
+#### Modules in development:
 
 - `elasticai.creator.nn.fixed_point.conv1d`
 
 
-### Deprecated modules (removal up to discussion):
+#### Deprecated modules (removal up to discussion):
 
 - `elasticai.creator.nn.binary` (binary quantization)
 - `elasticai.creator.nn.float` (limited-precision floating-point quantization)
 - `elasticai.creator.nn.fixed_point.mac`
 
 
-## Structure of the Project
+#### General limitations
 
-The structure of the project is as follows.
-The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
-It also includes the supported target representations, like the subfolder [nn](elasticai/creator/nn) is for the translation to vhdl.
-Additionally, we have unit and integration tests in the [tests](tests) folder.
-
+By now we only support sequential models for our translations.
+That excludes skip and residual connections.
 
 
 ## Developers Guide
