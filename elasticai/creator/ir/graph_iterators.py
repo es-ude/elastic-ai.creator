@@ -27,6 +27,7 @@ def bfs_iter_down(successors: NodeNeighbourFn, start: HashableT) -> Iterator[Has
         for p in successors(current):
             if p not in visited:
                 yield p
+                visited.add(p)
                 visit_next.append(p)
         visited.add(current)
 

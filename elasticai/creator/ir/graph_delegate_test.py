@@ -30,10 +30,7 @@ def test_iterating_breadth_first_upwards():
     )
 
     actual = tuple(bfs_iter_up(g.get_predecessors, "5"))
-    assert set(actual[0:2]) == {"3", "6"}
-    assert (set(actual[2:4]) == {"1", "2"} and actual[4] == "4") or (
-        set(actual[3:5]) == {"1", "2"} and actual[2] == "4"
-    )
+    assert actual == ("3", "6", "1", "2", "4", "0")
 
 
 def test_iterating_depth_first_preorder():
