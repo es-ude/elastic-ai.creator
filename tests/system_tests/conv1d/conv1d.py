@@ -6,7 +6,7 @@ from pathlib import Path
 
 import serial
 import torch
-from elasticai.runtime.env5.usb import UserRemoteControl
+from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
@@ -77,12 +77,9 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str):
     print(f"{out.stdout=}")
 
 
-def exit_handler(cdc_port: serial.Serial):
-    cdc_port.close()
-    print(f"closed {cdc_port.port=}")
-
-
 if __name__ == "__main__":
+    # dev_address = "COM8"
+    dev_address = get_env5_port()
     vhdl_dir = "./tests/system_tests/conv1d/build_dir"
     binfile_dir = "./tests/system_tests/conv1d/build_dir_output"
     binfile_path = Path(binfile_dir + "/output/env5_top_reconfig.bin")
@@ -158,29 +155,37 @@ if __name__ == "__main__":
 
     expected_outputs = nn(inputs)
 
-    # vivado_build_binfile(vhdl_dir, binfile_dir)
+    vivado_build_binfile(vhdl_dir, binfile_dir)
 
-    serial_con = serial.Serial("/dev/tty.usbmodem1101")
-    atexit.register(exit_handler, serial_con)
+    with serial.Serial(dev_address) as serial_con:
+        flash_start_address = 0
 
-    flash_start_address = 0
-
-    urc = UserRemoteControl(device=serial_con)
-    # urc.send_and_deploy_model(binfile_path, flash_start_address, skeleton_id_as_bytearray)
-    urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
-
-    batch_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
-    inference_result = list()
-    for i, sample in enumerate(batch_data):
-        batch_result = urc.inference_with_data(sample, num_outputs * num_out_channels)
-        my_result = parse_bytearray_to_fxp_tensor(
-            [batch_result], total_bits, frac_bits, (1, num_out_channels, num_outputs)
+        urc = UserRemoteControl(device=serial_con)
+        urc.send_and_deploy_model(
+            binfile_path, flash_start_address, skeleton_id_as_bytearray
         )
-        print(f"Batch {i}: {my_result} == {expected_outputs[i]}, for input {inputs[i]}")
+        # urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
 
-        inference_result.append(batch_result)
-    actual_result = parse_bytearray_to_fxp_tensor(
-        inference_result, total_bits, frac_bits, expected_outputs.shape
-    )
+        batch_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
+        inference_result = list()
+        for i, sample in enumerate(batch_data):
+            batch_result = urc.inference_with_data(
+                sample, num_outputs * num_out_channels
+            )
+            my_result = parse_bytearray_to_fxp_tensor(
+                [batch_result],
+                total_bits,
+                frac_bits,
+                (1, num_out_channels, num_outputs),
+            )
+            print(
+                f"Batch {i}: {my_result} == {expected_outputs[i]}, for input"
+                f" {inputs[i]}"
+            )
 
-    assert torch.equal(actual_result, expected_outputs)
+            inference_result.append(batch_result)
+        actual_result = parse_bytearray_to_fxp_tensor(
+            inference_result, total_bits, frac_bits, expected_outputs.shape
+        )
+
+        assert torch.equal(actual_result, expected_outputs)
