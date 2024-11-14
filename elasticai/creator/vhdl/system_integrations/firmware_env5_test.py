@@ -234,7 +234,7 @@ begin
     busy <= not done;
     wake_up <= done;
 
-    receive_data_from_middleware: process (clock, wr, address_in)
+    receive_data_from_middleware: process (clock)
     variable int_addr : integer range 0 to 18 + X_NUM_VALUES;
     begin
         if rising_edge(clock) then
@@ -253,7 +253,7 @@ begin
         end if;
     end process;
 
-    sendback_data_to_middleware: process  (clock, rd, address_in)
+    sendback_data_to_middleware: process  (clock)
     variable int_addr : integer range 0 to 18 + Y_NUM_VALUES;
     begin
         if rising_edge(clock) then
@@ -269,9 +269,9 @@ begin
         end if;
     end process;
 
-    send_buf_to_network: process (clock, x_address)
+    send_buf_to_network: process (clock)
     begin
-        if rising_edge(clock) then
+        if falling_edge(clock) then
             x <= data_buf_in(to_integer(unsigned(x_address)));
         end if;
     end process;
