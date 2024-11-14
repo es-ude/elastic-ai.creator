@@ -1,4 +1,3 @@
-import atexit
 import subprocess
 import time
 import tomllib
@@ -75,11 +74,6 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str) -> None:
     # print(f"{out.stdout=}")
 
 
-def exit_handler(cdc_port: serial.Serial) -> None:
-    cdc_port.close()
-    print(f"closed {cdc_port.port=}")
-
-
 if __name__ == "__main__":
     # --- Settings
     # dev_address = "COM8"
@@ -129,45 +123,43 @@ if __name__ == "__main__":
         vivado_build_binfile(vhdl_dir, binfile_dir)
 
     # --- Open Serial Communication to Device
-    serial_con = serial.Serial(dev_address)
-    atexit.register(exit_handler, serial_con)
+    with serial.Serial(dev_address) as serial_con:
+        flash_start_address = 0
+        urc = UserRemoteControl(device=serial_con)
+        urc.send_and_deploy_model(
+            binfile_path, flash_start_address, skeleton_id_as_bytearray
+        )
+        # urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
 
-    flash_start_address = 0
-    urc = UserRemoteControl(device=serial_con)
-    urc.send_and_deploy_model(
-        binfile_path, flash_start_address, skeleton_id_as_bytearray
-    )
-    # urc.deploy_model(flash_start_address, skeleton_id_as_bytearray)
+        # --- Doing the test
+        batch_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
+        inference_result = list()
+        state = False
+        urc.fpga_leds(True, False, False, False)
+        for i, sample in enumerate(batch_data):
+            urc.fpga_leds(True, False, False, state)
+            state = False if state else True
 
-    # --- Doing the test
-    batch_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
-    inference_result = list()
-    state = False
-    urc.fpga_leds(True, False, False, False)
-    for i, sample in enumerate(batch_data):
-        urc.fpga_leds(True, False, False, state)
-        state = False if state else True
+            batch_result = urc.inference_with_data(sample, num_outputs)
+            my_result = parse_bytearray_to_fxp_tensor(
+                [batch_result], total_bits, frac_bits, (1, 1, 3)
+            )
 
-        batch_result = urc.inference_with_data(sample, num_outputs)
-        my_result = parse_bytearray_to_fxp_tensor(
-            [batch_result], total_bits, frac_bits, (1, 1, 3)
+            dev_inp = my_result
+            dev_out = expected_outputs.data[i].view((1, 1, 3))
+            if not torch.equal(dev_inp, dev_out):
+                print(
+                    f"Batch #{i:02d}: \t{dev_inp} == {dev_out}, (Delta ="
+                    f" {dev_inp - dev_out}) \t\t\t\tfor input {inputs[i]}"
+                )
+                if i % 4 == 3:
+                    print("\n")
+
+            inference_result.append(batch_result)
+
+        urc.fpga_leds(False, False, False, False)
+        actual_result = parse_bytearray_to_fxp_tensor(
+            inference_result, total_bits, frac_bits, expected_outputs.shape
         )
 
-        dev_inp = my_result
-        dev_out = expected_outputs.data[i].view((1, 1, 3))
-        if not torch.equal(dev_inp, dev_out):
-            print(
-                f"Batch #{i:02d}: \t{dev_inp} == {dev_out}, (Delta ="
-                f" {dev_inp - dev_out}) \t\t\t\tfor input {inputs[i]}"
-            )
-            if i % 4 == 3:
-                print("\n")
-
-        inference_result.append(batch_result)
-
-    urc.fpga_leds(False, False, False, False)
-    actual_result = parse_bytearray_to_fxp_tensor(
-        inference_result, total_bits, frac_bits, expected_outputs.shape
-    )
-
-    assert torch.equal(actual_result, expected_outputs)
+        assert torch.equal(actual_result, expected_outputs)
