@@ -1,20 +1,18 @@
+import math
 from abc import abstractmethod
-from typing import Protocol
 from collections import defaultdict
+from typing import Protocol
 
-from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-
-from elasticai.creator.nn.fixed_point.number_converter import NumberConverter, FXPParams
-import math
+from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
+from elasticai.creator.vhdl.design.ports import Port
 
 
 class Conv1dDesignProtocol(Protocol):
-
     @property
     @abstractmethod
     def input_signal_length(self) -> int:
@@ -29,6 +27,7 @@ class Conv1dDesignProtocol(Protocol):
     @abstractmethod
     def kernel_size(self) -> int:
         ...
+
     @property
     @abstractmethod
     def in_channels(self) -> int:
@@ -43,7 +42,9 @@ class Conv1dDesignProtocol(Protocol):
 class Conv1dTestbench:
     def __init__(self, name: str, uut: Conv1dDesignProtocol, fxp_params: FXPParams):
         self._converter = NumberConverter(fxp_params)
-        self._converter_for_batch = NumberConverter(FXPParams(8, 0))  # max for 255 lines of inputs
+        self._converter_for_batch = NumberConverter(
+            FXPParams(8, 0)
+        )  # max for 255 lines of inputs
         self._name = name
         self._uut_name = uut.name
         self._input_signal_length = uut.input_signal_length
@@ -94,12 +95,21 @@ class Conv1dTestbench:
         return prepared_inputs
 
     def parse_reported_content(self, content: list[str]) -> list[list[list[float]]]:
+        """
+        This function parses the reported content, which is just a list of strings.
+        All lines starting with 'output_text:' are considered as a result of the testbench.
+        These results will be stacked for each batch.
+        So you get a list[list[list[float]]] which is similar to batch[out channels[output neurons[float]]].
+        """
+
         def split_list(a_list):
             print("len(a_list): ", len(a_list))
             print("self._out_channels: ", self._out_channels)
             out_channel_length = len(a_list) // self._out_channels
             new_list = list()
-            out_channel_counter = -1  # start with -1 because it will be increased in first iteration of loop
+            out_channel_counter = (
+                -1
+            )  # start with -1 because it will be increased in first iteration of loop
             for i, value in enumerate(a_list):
                 if i % out_channel_length == 0:
                     new_list.append(list())

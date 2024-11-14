@@ -1,16 +1,15 @@
+import math
 from abc import abstractmethod
-from typing import Protocol
 from collections import defaultdict
+from typing import Protocol
 
-from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-
-from elasticai.creator.nn.fixed_point.number_converter import NumberConverter, FXPParams
-import math
+from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
+from elasticai.creator.vhdl.design.ports import Port
 
 
 class LinearDesignProtocol(Protocol):
@@ -28,6 +27,7 @@ class LinearDesignProtocol(Protocol):
     @abstractmethod
     def in_feature_num(self) -> int:
         ...
+
     @property
     @abstractmethod
     def out_feature_num(self) -> int:
@@ -46,7 +46,9 @@ class LinearDesignProtocol(Protocol):
 
 class LinearTestbench:
     def __init__(self, name: str, uut: LinearDesignProtocol):
-        self._converter_for_batch = NumberConverter(FXPParams(8, 0))  # max for 255 lines of inputs
+        self._converter_for_batch = NumberConverter(
+            FXPParams(8, 0)
+        )  # max for 255 lines of inputs
         self._name = name
         self._uut_name = uut.name
         self._input_signal_length = uut.in_feature_num
@@ -89,6 +91,14 @@ class LinearTestbench:
         return prepared_inputs
 
     def parse_reported_content(self, content: list[str]) -> list[list[list[float]]]:
+        """
+        This function parses the reported content, which is just a list of strings.
+        All lines starting with 'output_text:' are considered as a result of the testbench.
+        These results will be stacked for each batch.
+        So you get a list[list[list[float]]] which is similar to batch[out channels[output neurons[float]]].
+        For linear layer the output neurons is 1.
+        """
+
         def split_list(a_list):
             print("len(a_list): ", len(a_list))
             new_list = list()
