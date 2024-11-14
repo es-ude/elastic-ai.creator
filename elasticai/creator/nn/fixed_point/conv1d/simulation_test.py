@@ -1,12 +1,3 @@
-"""
-1. create testbench
-2. save testbench to build folder
-3. hand sequence of vhdl files in correct order to simulation tool
-4. hand input data for testcase to simulation tool
-5. let simulation tool compile files (if necessary)
-6. let simulation tool run the simulation
-7. parse/deserialize simulation output to required data
-"""
 import csv
 import pathlib
 from typing import Any
@@ -65,7 +56,9 @@ def create_ones_conv1d_input_list(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("x", ([[[0.0, 1.0, 1.0]]], [[[1.0, 1.0, 1.0]]], [[[2.0, 1.0, 0.0]]]))
+@pytest.mark.parametrize(
+    "x", ([[[0.0, 1.0, 1.0]]], [[[1.0, 1.0, 1.0]]], [[[2.0, 1.0, 0.0]]])
+)
 def test_verify_hw_sw_equivalence_3_inputs(x):
     input_data = torch.Tensor(x)
     sw_conv = Conv1d(
