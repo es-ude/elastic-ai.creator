@@ -43,7 +43,7 @@ begin
     wake_up <= wake_up_write;
     wake_up <= wake_up_read;
 
-    receive_data_from_middleware: process (clock, wr, address_in)
+    receive_data_from_middleware: process (clock)
     variable int_addr : integer range 0 to 18 + NUM_VALUES;
     begin
         if rising_edge(clock) then
@@ -63,7 +63,7 @@ begin
         end if;
     end process;
 
-    sendback_data_to_middleware: process  (clock, rd, address_in)
+    sendback_data_to_middleware: process  (clock)
     variable int_addr : integer range 0 to 18 + NUM_VALUES;
     begin
         if rising_edge(clock) then
