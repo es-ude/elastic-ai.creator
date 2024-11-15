@@ -21,7 +21,7 @@ class Testbench:
 
 
 class SimulatedLayer:
-    def __init__(self, testbench, simulator_constructor, working_dir):
+    def __init__(self, testbench: Testbench, simulator_constructor, working_dir):
         self._testbench = testbench
         self._simulator_constructor = simulator_constructor
         self._working_dir = working_dir
@@ -45,8 +45,6 @@ class SimulatedLayer:
 
     def _write_csv(self, inputs):
         with open(self._inputs_file_path, "w") as f:
-            print()
-            print(inputs)
             header = [x for x in inputs[0].keys()]
             writer = csv.DictWriter(
                 f,
