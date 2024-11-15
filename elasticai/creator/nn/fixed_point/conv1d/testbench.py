@@ -10,9 +10,15 @@ from elasticai.creator.file_generation.template import (
 )
 from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
 from elasticai.creator.vhdl.design.ports import Port
+from elasticai.creator.vhdl.simulated_layer import Testbench
 
 
 class Conv1dDesignProtocol(Protocol):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        ...
+
     @property
     @abstractmethod
     def input_signal_length(self) -> int:
@@ -39,7 +45,7 @@ class Conv1dDesignProtocol(Protocol):
         ...
 
 
-class Conv1dTestbench:
+class Conv1dTestbench(Testbench):
     def __init__(self, name: str, uut: Conv1dDesignProtocol, fxp_params: FXPParams):
         self._converter = NumberConverter(fxp_params)
         self._converter_for_batch = NumberConverter(
@@ -100,6 +106,12 @@ class Conv1dTestbench:
         All lines starting with 'output_text:' are considered as a result of the testbench.
         These results will be stacked for each batch.
         So you get a list[list[list[float]]] which is similar to batch[out channels[output neurons[float]]].
+        For each item reported it is checked if the string starts with 'result: '.
+        If so the remaining part will be split by ','. The first number gives the batch. The second the result.
+        The channels are greedy guessed.
+        We do so by taking the first X-values, where X is the number of values per channel.
+        After we have enough values for the channel, we increase the channel number.
+        If you report not enough values per channel, this will look like the last channel has not reported enough values.
         """
 
         def split_list(a_list):

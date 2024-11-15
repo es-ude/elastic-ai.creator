@@ -10,6 +10,7 @@ from elasticai.creator.file_generation.template import (
 )
 from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
 from elasticai.creator.vhdl.design.ports import Port
+from elasticai.creator.vhdl.simulated_layer import Testbench
 
 
 class LinearDesignProtocol(Protocol):
@@ -44,7 +45,7 @@ class LinearDesignProtocol(Protocol):
         ...
 
 
-class LinearTestbench:
+class LinearTestbench(Testbench):
     def __init__(self, name: str, uut: LinearDesignProtocol):
         self._converter_for_batch = NumberConverter(
             FXPParams(8, 0)
@@ -97,6 +98,8 @@ class LinearTestbench:
         These results will be stacked for each batch.
         So you get a list[list[list[float]]] which is similar to batch[out channels[output neurons[float]]].
         For linear layer the output neurons is 1.
+        For each item reported it is checked if the string starts with 'result: '.
+        If so the remaining part will be split by ','. The first number gives the batch. The second the result.
         """
 
         def split_list(a_list):
