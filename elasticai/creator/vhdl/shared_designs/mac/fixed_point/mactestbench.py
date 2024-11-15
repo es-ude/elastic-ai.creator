@@ -1,7 +1,6 @@
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import InProjectTemplate
-
-from ..number_converter import NumberConverter
+from elasticai.creator.nn.fixed_point.number_converter import NumberConverter
 
 
 class MacTestBench:

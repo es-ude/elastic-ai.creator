@@ -8,9 +8,7 @@ from elasticai.creator.file_generation.template import (
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
-from elasticai.creator.vhdl.shared_designs.rom import (
-    Rom,
-)
+from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 from .testbench import Conv1dDesignProtocol
 
@@ -104,14 +102,17 @@ class Conv1dDesign(Design, Conv1dDesignProtocol):
         core_component = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="conv1d_function.tpl.vhd",
-            parameters={"rom_name_weights": rom_name["weights"], "rom_name_bias": rom_name["bias"]},
+            parameters={
+                "rom_name_weights": rom_name["weights"],
+                "rom_name_bias": rom_name["bias"],
+            },
         )
-        destination.create_subpath(f"{self.name}_fxp_MAC_RoundToZero").as_file(".vhd").write(
-            core_component
-        )
+        destination.create_subpath(f"{self.name}_fxp_MAC_RoundToZero").as_file(
+            ".vhd"
+        ).write(core_component)
 
         mac = InProjectTemplate(
-            package="elasticai.creator.nn.fixed_point.mac",
+            package="elasticai.creator.vhdl.shared_designs.mac.fixed_point",
             file_name="fxp_mac.tpl.vhd",
             parameters={},
         )
