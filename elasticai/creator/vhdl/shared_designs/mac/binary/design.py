@@ -9,7 +9,7 @@ class MacDesign(Savable):
 
     def save_to(self, destination: Path) -> None:
         core_component = InProjectTemplate(
-            package="elasticai.creator.nn.binary.mac",
+            package="elasticai.creator.vhdl.shared_designs.mac.binary",
             file_name="bin_mac.vhd",
             parameters={
                 "total_width": str(self._vector_width),

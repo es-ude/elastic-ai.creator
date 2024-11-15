@@ -121,8 +121,6 @@ def test_verify_hw_sw_equivalence_4_inputs_3_outputs(x):
     sw_conv.bias.data = torch.Tensor([1.0, 2.0, -1.0])
     sw_output = sw_conv(input_data)
     design = sw_conv.create_design("linear")
-    print(f"{design.in_feature_num=}")
-    print(f"{design.out_feature_num=}")
     testbench = sw_conv.create_testbench("linear_testbench", design)
     build_dir = OnDiskPath("build")
     design.save_to(build_dir.create_subpath("srcs"))

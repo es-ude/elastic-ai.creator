@@ -4,6 +4,7 @@ import subprocess
 
 from ._ghdl_report_parsing import parse_report
 
+
 class SimulationError(Exception):
     pass
 
@@ -44,7 +45,9 @@ class GHDLSimulator:
         You're supposed to call `initialize` once, before calling `run`."""
         generic_options = [f"-g{key}={value}" for key, value in self._generics.items()]
         self._execute_command(
-            self._assemble_command(["-r"]) + ["-fsynopsys", self._test_bench_name] + generic_options
+            self._assemble_command(["-r"])
+            + ["-fsynopsys", self._test_bench_name]
+            + generic_options
         )
 
     @property
@@ -77,7 +80,16 @@ class GHDLSimulator:
         )
 
     def _execute_command(self, command):
-        self._completed_process = subprocess.run(command, cwd=self._root, capture_output=True)
+        try:
+            self._completed_process = subprocess.run(
+                command, cwd=self._root, capture_output=True, check=True
+            )
+        except subprocess.CalledProcessError as e:
+            raise SimulationError(
+                f"ERROR:: executing {command}\n\tSTDERR::"
+                f" {e.stderr.decode()}\n\tSTDOUT:: {e.stdout.decode()}"
+            )
+
         self._check_for_error()
 
     def _check_for_error(self):

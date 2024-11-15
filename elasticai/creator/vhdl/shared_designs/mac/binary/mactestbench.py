@@ -1,54 +1,53 @@
+from collections import defaultdict
+
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import InProjectTemplate
+from elasticai.creator.vhdl.simulated_layer import Testbench
 
 
-class MacTestBench:
+class MacTestBench(Testbench):
     def __init__(self, uut, name, uut_name):
         self._uut = uut
         self._uut_name = uut_name
         self._inputs = None
         self._destination = None
-        self.name = name
-
-    def set_inputs(self, *inputs):
-        self._inputs = inputs
-
-    def parse_reported_content(self, outputs: list[str]):
-        return 2 * int(outputs[0]) - 1
+        self._name = name
 
     @property
-    def _width(self) -> str:
-        return str(len(self._inputs[0]))
+    def name(self) -> str:
+        return self._name
+
+    def parse_reported_content(self, content: list[str]):
+        """
+        Somehow there is no content...
+        """
+        for line in content:
+            print(line)
 
     def save_to(self, destination: Path):
         self._destination = destination
-        inputs = self._prepare_inputs_for_test_bench(self._inputs)
         test_bench = InProjectTemplate(
-            package="elasticai.creator.nn.binary.mac",
+            package="elasticai.creator.vhdl.shared_designs.mac.binary",
             file_name="testbench.tpl.vhd",
-            parameters=inputs
-            | {
+            parameters={
                 "uut_name": self._uut_name,
                 "name": self.name,
-                "total_width": self._width,
             },
         )
-        self._uut.save_to(destination)
         destination.create_subpath(self.name).as_file(".vhd").write(test_bench)
 
-    def _prepare_inputs_for_test_bench(self, inputs):
-        x1, x2 = inputs
+    def prepare_inputs(self, inputs) -> list[dict]:
+        def zero_one(x):
+            if x < 0:
+                return "0"
+            else:
+                return "1"
 
-        def zero_one(xs):
-            return ["0" if x < 0 else "1" for x in xs]
-
-        def to_string(xs):
-            return '"{}"'.format("".join(xs))
-
-        x1 = zero_one(x1)
-        x2 = zero_one(x2)
-        inputs = {
-            "x1": to_string(x1),
-            "x2": to_string(x2),
-        }
-        return inputs
+        prepared_inputs = []
+        for batch in inputs:
+            prepared_inputs.append({})
+            for i in range(0, len(batch[0])):
+                prepared_inputs[-1].update(
+                    {f"x1_{i}": zero_one(batch[0][i]), f"x2_{i}": zero_one(batch[1][i])}
+                )
+        return prepared_inputs
