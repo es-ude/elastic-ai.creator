@@ -7,46 +7,9 @@ import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
+from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 from .layer import Linear
-
-
-class SimulatedLayer:
-    def __init__(self, testbench, simulator_constructor, working_dir):
-        self._testbench = testbench
-        self._simulator_constructor = simulator_constructor
-        self._working_dir = working_dir
-        self._inputs_file_path = (
-            f"{self._working_dir}/{self._testbench.name}_inputs.csv"
-        )
-
-    def __call__(self, inputs: Any) -> Any:
-        runner = self._simulator_constructor(
-            workdir=f"{self._working_dir}", top_design_name=self._testbench.name
-        )
-        inputs = self._testbench.prepare_inputs(inputs)
-        self._write_csv(inputs)
-        runner.add_generic(
-            INPUTS_FILE_PATH=str(pathlib.Path(self._inputs_file_path).absolute())
-        )
-        runner.initialize()
-        runner.run()
-        actual = self._testbench.parse_reported_content(runner.getReportedContent())
-        return actual
-
-    def _write_csv(self, inputs):
-        with open(self._inputs_file_path, "w") as f:
-            print()
-            print(inputs)
-            header = [x for x in inputs[0].keys()]
-            writer = csv.DictWriter(
-                f,
-                fieldnames=header,
-                lineterminator="\n",
-                delimiter=" ",
-            )
-            writer.writeheader()
-            writer.writerows(inputs)
 
 
 def create_ones_input_list(batch_size: int, in_feature_num: int):
