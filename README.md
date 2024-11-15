@@ -52,7 +52,12 @@ python3 -m pip install elasticai-creator
 The latest version published on PyPi is the one tagged with:
 v0.59.2
 
-TODO: install via git
+Currently, we do not automatically pack and push the code to PyPi.
+If you want to make sure to use the latest version from the develop branch, you can install the ElasticAI.creator as a dependency via git:
+
+```bash
+python3 -m pip install git+https://github.com/es-ude/elastic-ai.creator.git@develop
+```
 
 ### Minimal Example
 
