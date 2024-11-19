@@ -234,40 +234,44 @@ begin
     busy <= not done;
     wake_up <= done;
 
-    receive_data_from_middleware: process (clock, wr, address_in)
-    variable int_addr : integer range 0 to 20000;
+    receive_data_from_middleware: process (clock)
+    variable int_addr : integer range 0 to 18 + X_NUM_VALUES;
     begin
         if rising_edge(clock) then
             if reset = '1' then
                 network_enable <= '0';
             else
-                int_addr := to_integer(unsigned(address_in));
-                if int_addr = 16 then
-                    network_enable <= data_in(0);
-                elsif int_addr >= 18 and int_addr < 18 + X_NUM_VALUES then
-                    data_buf_in(int_addr) <= data_in(DATA_WIDTH_IN-1 downto 0);
+                if wr = '1' then
+                    int_addr := to_integer(unsigned(address_in));
+                    if int_addr = 16 then
+                        network_enable <= data_in(0);
+                    elsif int_addr >= 18 and int_addr < 18 + X_NUM_VALUES then
+                        data_buf_in(int_addr-18) <= data_in(DATA_WIDTH_IN-1 downto 0);
+                    end if;
                 end if;
             end if;
         end if;
     end process;
 
-    sendback_data_to_middleware: process  (clock, rd, address_in)
-    variable int_addr : integer range 0 to 20000;
+    sendback_data_to_middleware: process  (clock)
+    variable int_addr : integer range 0 to 18 + Y_NUM_VALUES;
     begin
         if rising_edge(clock) then
-            int_addr := to_integer(unsigned(address_in));
-            if int_addr <= 15 then
-                data_out(7 downto 0) <= skeleton_id_str(int_addr);
-            elsif int_addr >= 18 and int_addr < 18 + Y_NUM_VALUES then
-                y_address <= std_logic_vector(unsigned(address_in(y_address'length-1 downto 0))-16);
-                data_out(7 downto 0) <= pad_output_to_middleware(y);
+            if rd = '1' then
+                int_addr := to_integer(unsigned(address_in));
+                if int_addr <= 15 then
+                    data_out(7 downto 0) <= skeleton_id_str(int_addr);
+                elsif int_addr >= 18 and int_addr < 18 + Y_NUM_VALUES then
+                    y_address <= std_logic_vector(unsigned(address_in(y_address'length-1 downto 0))-18);
+                    data_out(7 downto 0) <= pad_output_to_middleware(y);
+                end if;
             end if;
         end if;
     end process;
 
-    send_buf_to_network: process (clock, x_address)
+    send_buf_to_network: process (clock)
     begin
-        if rising_edge(clock) then
+        if falling_edge(clock) then
             x <= data_buf_in(to_integer(unsigned(x_address)));
         end if;
     end process;

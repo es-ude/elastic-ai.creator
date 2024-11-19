@@ -66,12 +66,12 @@ architecture rtl of ${layer_name} is
         return TEMP2;
     end function;
 
-    -- Log2 funtion is for calculating the bitwidth of the address lines
+    -- Log2 function is for calculating the bitwidth of the address lines
     -- for bias and weights rom
     function log2(val : INTEGER) return natural is
         variable res : natural;
     begin
-        for i in 0 to 31 loop
+        for i in 1 to ${log2_max_value} loop
             if (val <= (2 ** i)) then
                 res := i;
                 exit;
@@ -104,9 +104,9 @@ architecture rtl of ${layer_name} is
 
     -- simple solution for the output buffer
     type t_y_array is array (0 to OUT_FEATURE_NUM) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    shared variable y_ram : t_y_array;
+    signal y_ram : t_y_array;
     attribute rom_style : string;
-    attribute rom_style of y_ram : variable is RESOURCE_OPTION;
+    attribute rom_style of y_ram : signal is RESOURCE_OPTION;
 
 begin
 
@@ -120,7 +120,7 @@ begin
     -- connects ports
     reset <= not enable;
 
-    linear_main : process (clock, enable)
+    linear_main : process (clock, enable, reset)
         variable current_neuron_idx : integer range 0 to OUT_FEATURE_NUM-1 := 0;
         variable current_input_idx : integer  range 0 to IN_FEATURE_NUM-1 := 0;
         variable var_addr_w : integer range 0 to OUT_FEATURE_NUM*IN_FEATURE_NUM-1 := 0;
@@ -169,19 +169,17 @@ begin
                         state <= s_stop;
                     else
                         state <= s_idle;
-                        current_neuron_idx := 0;
+                        done <= '1';
                     end if;
 
                 end if;
-            else
-                done <= '1';
             end if;
 
             var_sum := multiply_accumulate(var_w, var_x, var_y);
             macc_sum <= var_sum;
 
             if y_write_en='1'then
-                y_ram(var_y_write_idx) := std_logic_vector(cut_down(var_sum));
+                y_ram(var_y_write_idx) <= std_logic_vector(cut_down(var_sum));
                 y_write_en := '0';
             end if;
 
@@ -194,7 +192,7 @@ begin
 
     y_reading : process (clock, state)
     begin
-        if state=s_idle then
+        if (state=s_idle) or (state=s_stop) then
             if falling_edge(clock) then
                 -- After the layer in at idle mode, y is readable
                 -- but it only update at the rising edge of the clock

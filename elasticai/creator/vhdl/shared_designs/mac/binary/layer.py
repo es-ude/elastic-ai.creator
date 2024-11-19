@@ -1,7 +1,6 @@
 from elasticai.creator.file_generation.savable import Savable
-from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
+from elasticai.creator.nn.binary._math_operations import MathOperations
 
-from .._math_operations import MathOperations
 from .design import MacDesign
 from .mactestbench import MacTestBench
 
@@ -18,12 +17,9 @@ class MacLayer:
     def create_design(self, name: str) -> Savable:
         return MacDesign(vector_width=self._vector_width, name=name)
 
-    def create_testbench(self, name: str) -> MacTestBench:
+    def create_testbench(self, name: str, design: MacDesign) -> MacTestBench:
         return MacTestBench(
-            uut=self.create_design("mac_wrapper_test"),
-            uut_name="mac_wrapper_test",
+            uut=design,
+            uut_name="mac",
             name=name,
         )
-
-    def create_simulation(self, simulator, working_dir):
-        return SimulatedLayer(self, simulator, working_dir=working_dir)
