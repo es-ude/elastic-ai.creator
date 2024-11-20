@@ -3,8 +3,10 @@ from typing import Any
 import torch
 
 from elasticai.creator.base_modules.batchnorm2d import BatchNorm2d as BatchNorm2dBase
-from elasticai.creator.nn.training.fixed_point import FixedPointConfigV2
-from elasticai.creator.nn.training.fixed_point._math_operations import MathOperations
+from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2
+from elasticai.creator.nn.quantized_grads.fixed_point._math_operations import (
+    MathOperations,
+)
 
 
 class BatchNorm2dTrainable(BatchNorm2dBase):

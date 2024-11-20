@@ -3,8 +3,10 @@ from typing import Any
 import torch
 
 from elasticai.creator.base_modules.linear import Linear as LinearBase
-from elasticai.creator.nn.training.fixed_point._math_operations import MathOperations
-from elasticai.creator.nn.training.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.quantized_grads.fixed_point._math_operations import (
+    MathOperations,
+)
+from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfigV2,
 )
 
