@@ -1,1 +1,1 @@
-from .layer import Linear
+from .linear import LinearTrainable as Linear

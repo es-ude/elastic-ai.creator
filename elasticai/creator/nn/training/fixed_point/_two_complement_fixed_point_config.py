@@ -28,17 +28,17 @@ class FixedPointConfigV2:
         return -self.minimum_as_rational - 1 / (2**self.frac_bits)
 
     # Todo: Is this needed? Otherwise remove it
-    @property
-    def device(self):
-        return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # @property
+    # def device(self):
+    #    return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     @property
     def minimum_as_rational_tensor(self):
-        return torch.Tensor([self.minimum_as_rational]).to(self.device)
+        return torch.Tensor([self.minimum_as_rational])
 
     @property
     def maximum_as_rational_tensor(self):
-        return torch.Tensor([self.maximum_as_rational]).to(self.device)
+        return torch.Tensor([self.maximum_as_rational])
 
     def round(self, number: torch.Tensor) -> torch.Tensor:
         if self.conf_is_valid:
@@ -58,7 +58,7 @@ class FixedPointConfigV2:
     def clamp(self, number: torch.Tensor) -> torch.Tensor:
         if self.conf_is_valid:
             return torch.clamp(
-                number.to(self.device),
+                number,
                 self.minimum_as_rational_tensor,
                 self.maximum_as_rational_tensor,
             )

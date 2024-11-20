@@ -6,9 +6,6 @@ from torch.optim.optimizer import Optimizer
 
 __all__ = ["QuantizedFxpSGD", "quantized_sgd"]
 
-from quantize_fxp import round_fxp, round_fxp_
-from quantize_fxp_stochastic import round_fxp_stochastic, round_fxp_stochastic_
-
 from elasticai.creator.nn.training.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfigV2,
 )

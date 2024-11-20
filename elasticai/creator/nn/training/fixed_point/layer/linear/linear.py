@@ -11,7 +11,7 @@ from elasticai.creator.nn.training.fixed_point._two_complement_fixed_point_confi
 from elasticai.creator.vhdl.design.design import Design
 
 
-class LinearTrainable(DesignCreatorModule, LinearBase):
+class LinearTrainable(LinearBase):
     def __init__(
         self,
         in_features: int,
@@ -22,7 +22,7 @@ class LinearTrainable(DesignCreatorModule, LinearBase):
         bias: bool = True,
         device: Any = None,
     ) -> None:
-        self.param_conf = param_fxp_conf
+        self.param_config = param_fxp_conf
         self._forward_config = forward_fxp_conf
         self._grad_config = grad_fxp_conf
         super().__init__(
@@ -34,9 +34,6 @@ class LinearTrainable(DesignCreatorModule, LinearBase):
             bias=bias,
             device=device,
         )
-        self.weight = torch.nn.Parameter(self._param_config.round(self.weight))
+        self.weight = torch.nn.Parameter(self.param_config.round(self.weight))
         if bias:
-            self.bias = torch.nn.Parameter(self._param_config.round(self.bias))
-
-    def create_design(self, name: str) -> Design:
-        pass
+            self.bias = torch.nn.Parameter(self.param_config.round(self.bias))
