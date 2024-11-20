@@ -40,7 +40,7 @@ class FixedPointConfigV2:
     def maximum_as_rational_tensor(self):
         return torch.Tensor([self.maximum_as_rational])
 
-    def round(self, number: torch.Tensor) -> torch.Tensor:
+    def quantize(self, number: torch.Tensor) -> torch.Tensor:
         if self.conf_is_valid:
             return self._round(self.clamp(number))
         return number

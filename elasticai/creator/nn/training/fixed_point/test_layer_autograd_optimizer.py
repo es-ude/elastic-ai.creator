@@ -33,7 +33,7 @@ def test_layer_autograd_optimizer():
         frac_bits=forward_conf_frac_bits,
         stochastic_rounding=forward_conf_stochastic_rounding,
     )
-    grad_conf = FixedPointConfigV2(
+    backward_conf = FixedPointConfigV2(
         total_bits=grad_conf_total_bits,
         frac_bits=grad_conf_frac_bits,
         stochastic_rounding=grad_conf_stochastic_rounding,
@@ -43,7 +43,7 @@ def test_layer_autograd_optimizer():
         out_features=out_features,
         param_fxp_conf=weight_conf,
         forward_fxp_conf=forward_conf,
-        grad_fxp_conf=grad_conf,
+        backard_fxp_conf=backward_conf,
     )
     nn.weight = torch.nn.Parameter(
         torch.reshape(

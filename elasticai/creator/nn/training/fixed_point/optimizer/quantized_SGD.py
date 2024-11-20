@@ -208,10 +208,10 @@ def _single_tensor_sgd(
                 momentum_buf = momentum_buffer_list[i]
 
                 if momentum_buf is None:
-                    momentum_buf = fxp_config.round(torch.clone(d_p).detach())
+                    momentum_buf = fxp_config.quantize(torch.clone(d_p).detach())
                     momentum_buffer_list[i] = momentum_buf
                 else:
-                    momentum_buf = fxp_config.round(
+                    momentum_buf = fxp_config.quantize(
                         momentum_buf.mul_(momentum).add_(d_p, alpha=1)
                     )
                 d_p = momentum_buf
@@ -233,7 +233,7 @@ def _single_tensor_sgd(
                 delta = torch.add(torch.mul(d_p, -lr), quant_buf)
             else:
                 delta = torch.mul(d_p, -lr)
-            quantized_delta = fxp_config.round(delta)
+            quantized_delta = fxp_config.quantize(delta)
             if debug_print:
                 print(f"{quantized_delta=}")
             if save_quantization_error:

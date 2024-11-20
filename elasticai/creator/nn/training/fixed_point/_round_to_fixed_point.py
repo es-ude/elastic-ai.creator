@@ -21,11 +21,11 @@ class RoundToFixedPointTrainable(torch.autograd.Function):
         if fxp_config is None:
             return x
         else:
-            return fxp_config.round(x)
+            return fxp_config.quantize(x)
 
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         if ctx.grad_fxp_config is None:
             return *grad_outputs, None, None
         else:
-            return ctx.grad_fxp_config.round(*grad_outputs), None, None
+            return ctx.grad_fxp_config.quantize(*grad_outputs), None, None

@@ -16,10 +16,12 @@ from elasticai.creator.nn.training.fixed_point._two_complement_fixed_point_confi
 
 class MathOperations(LinearOps, Conv1dOps, LSTMOps):
     def __init__(
-        self, config: FixedPointConfigV2, grad_config: FixedPointConfigV2 | None = None
+        self,
+        forward_config: FixedPointConfigV2,
+        backward_config: FixedPointConfigV2 | None = None,
     ) -> None:
-        self.config = config
-        self.grad_config = grad_config
+        self.config = forward_config
+        self.grad_config = backward_config
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return self._round(a)
