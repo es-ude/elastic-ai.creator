@@ -11,7 +11,7 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
-      - run: poetry run python -m pytest -m "not simulation" tests elasticai
+      - run: uv run python -m pytest -m "not simulation" tests elasticai
 
   lint-commit-messages:
     name: Lint Commit Messages

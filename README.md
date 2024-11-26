@@ -96,15 +96,15 @@ Additionally, we have unit and integration tests in the [tests](tests) folder.
 
 ### Install Dev Dependencies
 
-- [poetry](https://python-poetry.org/)
+- [uv](https://docs.astral.sh/)
 - recommended:
   - [pre-commit](https://pre-commit.com/)
   - [commitlint](https://github.com/conventional-changelog/commitlint) to help following our [conventional commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary) guidelines
 poetry can be installed in the following way:
 ```bash
-pip install poetry
-poetry install
-poetry shell
+pip install uv
+uv sync
+source .venv/bin/activate
 pre-commit install
 npm install --save-dev @commitlint/{config-conventional,cli}
 
