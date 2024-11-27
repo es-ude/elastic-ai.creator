@@ -5,6 +5,9 @@ simulation
 simulation/*
 node_modules
 .mypy_cache
+.pytest_cache
+.venv
+build/
 package-lock.json
 
 .coverage
@@ -247,3 +250,12 @@ Temporary Items
 /presentation/presentation.html
 /presentation/presentation.pdf
 /vhdl93-bnf.html
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

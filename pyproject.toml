@@ -3,13 +3,23 @@ name = "elasticai.creator"
 version = "0.59.2"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
-repository = "https://github.com/es-ude/elastic-ai.creator"
-author = ["Department Embedded Systems - University Duisburg Essen"]
+license = "MIT"
+authors = [ 
+  {name = "Intelligent Embedded Systems - University Duisburg Essen"},
+  ]
+
+maintainers = [
+  {name = "Lukas Einhaus", email="lukas.einhaus@uni-due.de"},
+  {name = "Julian Hoever", email="julian.hoever@uni-due.de"}, {name="Leo Buron", email="leo.buron@uni-due.de"}
+  ]
+
 dependencies = [
   "torch>=1.11",
   "numpy>=1.23.0",
 ]
 requires-python = ">=3.10"
+keywords = ["fpga", "embedded", "hw accelerators", "neural networks", "embedded ai", "tinyml"]
+repository = "https://github.com/es-ude/elastic-ai.creator"
 
 [dependency-groups]
 dev = [
@@ -17,6 +27,7 @@ dev = [
     "mypy>=1.13.0",
     "pylint>=3.3.1",
     "pytest>=8.3.3",
+    "ruff>=0.8.0",
     "semantic-release>=0.1.0",
 ]
 
