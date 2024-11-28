@@ -6,12 +6,9 @@ from torch import Tensor
 from elasticai.creator.base_modules.conv1d import MathOperations as Conv1dOps
 from elasticai.creator.base_modules.linear import MathOperations as LinearOps
 from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
-from elasticai.creator.nn.quantized_grads.fixed_point._round_to_fixed_point_autograd import (
-    RoundToFixedPointTrainable,
-)
-from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (
-    FixedPointConfigV2,
-)
+
+from ._round_to_fixed_point_autograd import RoundToFixedPoint
+from ._two_complement_fixed_point_config import FixedPointConfigV2
 
 
 class MathOperations(LinearOps, Conv1dOps, LSTMOps):
@@ -26,7 +23,7 @@ class MathOperations(LinearOps, Conv1dOps, LSTMOps):
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return cast(
             torch.Tensor,
-            RoundToFixedPointTrainable.apply(a, self.config, self.grad_config),
+            RoundToFixedPoint.apply(a, self.config, self.grad_config),
         )
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:

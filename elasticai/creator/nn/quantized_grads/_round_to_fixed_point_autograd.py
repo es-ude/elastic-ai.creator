@@ -2,15 +2,11 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.nn.quantized_grads.fixed_point._round_to_fixed_point import (
-    quantize,
-)
-from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (
-    FixedPointConfigV2,
-)
+from ._quantize_to_fixed_point import quantize
+from ._two_complement_fixed_point_config import FixedPointConfigV2
 
 
-class RoundToFixedPointTrainable(torch.autograd.Function):
+class RoundToFixedPoint(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         if len(args) != 3:

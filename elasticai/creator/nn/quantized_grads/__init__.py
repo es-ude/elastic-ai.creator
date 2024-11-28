@@ -1,1 +1,2 @@
+from ._quantize_to_fixed_point import quantize
 from ._two_complement_fixed_point_config import FixedPointConfigV2
