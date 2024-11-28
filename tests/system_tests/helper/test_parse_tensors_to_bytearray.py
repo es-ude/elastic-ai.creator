@@ -35,6 +35,5 @@ def test_bytearray_to_tensor():
     fxp_conf = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
     dimensions = (2, 3, 4)
     expected = fxp_conf.as_rational(fxp_conf.as_integer(torch.randn(dimensions)))
-    print(f"{expected=}")
     result = parse_bytearray_to_fxp_tensor(input, total_bits, frac_bits, dimensions)
     assert torch.equal(result, expected)
