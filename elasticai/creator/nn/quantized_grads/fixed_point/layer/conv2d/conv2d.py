@@ -7,6 +7,9 @@ from elasticai.creator.base_modules.conv2d import Conv2d as Conv2dBase
 from elasticai.creator.nn.quantized_grads.fixed_point._math_operations import (
     MathOperations,
 )
+from elasticai.creator.nn.quantized_grads.fixed_point._round_to_fixed_point import (
+    quantize,
+)
 from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfigV2,
 )
@@ -40,6 +43,6 @@ class Conv2dTrainable(Conv2dBase):
             bias=bias,
             device=device,
         )
-        self.weight = torch.nn.Parameter(self.param_config.quantize(self.weight))
+        self.weight = torch.nn.Parameter(quantize(self.weight, self.param_config))
         if bias:
-            self.bias = torch.nn.Parameter(self.param_config.quantize(self.bias))
+            self.bias = torch.nn.Parameter(quantize(self.bias, self.param_config))
