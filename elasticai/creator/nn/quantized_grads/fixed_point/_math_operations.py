@@ -6,7 +6,7 @@ from torch import Tensor
 from elasticai.creator.base_modules.conv1d import MathOperations as Conv1dOps
 from elasticai.creator.base_modules.linear import MathOperations as LinearOps
 from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
-from elasticai.creator.nn.quantized_grads.fixed_point._round_to_fixed_point import (
+from elasticai.creator.nn.quantized_grads.fixed_point._round_to_fixed_point_autograd import (
     RoundToFixedPointTrainable,
 )
 from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (

@@ -6,7 +6,10 @@ from torch.optim.optimizer import Optimizer
 
 __all__ = ["QuantizedFxpSGD", "quantized_sgd"]
 
-from elasticai.creator.nn.training.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.quantized_grads.fixed_point._round_to_fixed_point import (
+    quantize,
+)
+from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfigV2,
 )
 
@@ -208,11 +211,11 @@ def _single_tensor_sgd(
                 momentum_buf = momentum_buffer_list[i]
 
                 if momentum_buf is None:
-                    momentum_buf = fxp_config.quantize(torch.clone(d_p).detach())
+                    momentum_buf = quantize(torch.clone(d_p).detach(), fxp_config)
                     momentum_buffer_list[i] = momentum_buf
                 else:
-                    momentum_buf = fxp_config.quantize(
-                        momentum_buf.mul_(momentum).add_(d_p, alpha=1)
+                    momentum_buf = quantize(
+                        momentum_buf.mul_(momentum).add_(d_p, alpha=1), fxp_config
                     )
                 d_p = momentum_buf
 
@@ -233,7 +236,7 @@ def _single_tensor_sgd(
                 delta = torch.add(torch.mul(d_p, -lr), quant_buf)
             else:
                 delta = torch.mul(d_p, -lr)
-            quantized_delta = fxp_config.quantize(delta)
+            quantized_delta = quantize(delta, fxp_config)
             if debug_print:
                 print(f"{quantized_delta=}")
             if save_quantization_error:

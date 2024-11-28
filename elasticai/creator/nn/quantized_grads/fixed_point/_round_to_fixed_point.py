@@ -1,31 +1,27 @@
-from typing import Any
-
 import torch
 
-from elasticai.creator.nn.quantized_grads.fixed_point._two_complement_fixed_point_config import (
-    FixedPointConfigV2,
-)
+from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2
 
 
-class RoundToFixedPointTrainable(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
-        if len(args) != 3:
-            raise TypeError(
-                "apply() takes exactly two arguments "
-                "(x: torch.Tensor, config: FixedPointConfig)"
-            )
-        x: torch.Tensor = args[0]
-        fxp_config: FixedPointConfigV2 | None = args[1]
-        ctx.grad_fxp_config: FixedPointConfigV2 | None = args[2]
-        if fxp_config is None:
-            return x
-        else:
-            return fxp_config.quantize(x)
+def quantize(number: torch.Tensor, fxp_conf: FixedPointConfigV2) -> torch.Tensor:
+    return _round(clamp(number, fxp_conf), fxp_conf)
 
-    @staticmethod
-    def backward(ctx: Any, *grad_outputs: Any) -> Any:
-        if ctx.grad_fxp_config is None:
-            return *grad_outputs, None, None
-        else:
-            return ctx.grad_fxp_config.quantize(*grad_outputs), None, None
+
+def _round(number: torch.Tensor, fxp_conf: FixedPointConfigV2) -> torch.Tensor:
+    if fxp_conf.stochastic_rounding:
+        noise = (torch.rand_like(number) - 0.5) / (2**fxp_conf.frac_bits)
+        return round_to_fixed_point(number + noise, fxp_conf.frac_bits)
+    else:
+        return round_to_fixed_point(number, fxp_conf.frac_bits)
+
+
+def clamp(number: torch.Tensor, fxp_conf: FixedPointConfigV2) -> torch.Tensor:
+    return torch.clamp(
+        number,
+        fxp_conf.minimum_as_rational_tensor,
+        fxp_conf.maximum_as_rational_tensor,
+    )
+
+
+def round_to_fixed_point(number: torch.Tensor, frac_bits: int) -> torch.Tensor:
+    return torch.round(number * (2**frac_bits)) / 2**frac_bits
