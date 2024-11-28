@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.nn.training.fixed_point import (
+from elasticai.creator.nn.quantized_grads.fixed_point import (
     FixedPointConfigV2,
     Linear,
     QuantizedFxpSGD,
