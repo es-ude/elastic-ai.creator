@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2
+from ._two_complement_fixed_point_config import FixedPointConfigV2
 
 
 def quantize(number: torch.Tensor, fxp_conf: FixedPointConfigV2) -> torch.Tensor:
