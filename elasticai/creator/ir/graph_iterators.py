@@ -10,27 +10,31 @@ def dfs_pre_order(successors: NodeNeighbourFn, start: HashableT) -> Iterator[Has
     visited: set[HashableT] = set()
 
     def visit(nodes: tuple[HashableT, ...]):
-        for n in nodes:
+        for n in sorted(nodes):
             if n not in visited:
                 yield n
                 visited.add(n)
-                yield from visit(tuple(successors(n)))
+                yield from visit(sorted(tuple(successors(n))))
 
     yield from visit((start,))
 
 
-def bfs_iter_down(successors: NodeNeighbourFn, start: HashableT) -> Iterator[HashableT]:
+def bfs_iter_down(
+    successors: NodeNeighbourFn, predecessors: NodeNeighbourFn, start: HashableT
+) -> Iterator[HashableT]:
     visited: set[HashableT] = set()
-    visit_next = [start]
+    visit_next = sorted(list(successors(start)))
     while len(visit_next) > 0:
         current = visit_next.pop(0)
-        for p in successors(current):
-            if p not in visited:
-                yield p
-                visited.add(p)
-                visit_next.append(p)
-        visited.add(current)
+        if current not in visited:
+            visited.add(current)
+            yield current
+            for child in sorted(successors(current)):
+                if set(predecessors(child)).issubset(visited):
+                    visit_next.append(child)
 
 
-def bfs_iter_up(predecessors: NodeNeighbourFn, start: HashableT) -> Iterator[HashableT]:
-    return bfs_iter_down(predecessors, start)
+def bfs_iter_up(
+    predecessors: NodeNeighbourFn, successors: NodeNeighbourFn, start: HashableT
+) -> Iterator[HashableT]:
+    return bfs_iter_down(predecessors, successors, start)
