@@ -1,17 +1,10 @@
 from .ir_data_meta import IrDataMeta
-from .attributes_decorator import AttributesDescriptor
+from .attributes_descriptor import AttributesDescriptor
 from .attribute import Attribute
 from collections.abc import Callable
-import sys
+from typing import TypeVar
 
-_minor = sys.version_info[1]
-if _minor >= 12:  # Self was introduced in 3.12
-    from typing import Self
-else:
-    from typing import TypeVar
-
-    Self = TypeVar("Self", bound="IrData")  # type: ignore
-
+Self = TypeVar("Self", bound="IrData")
 
 class IrData(metaclass=IrDataMeta, create_init=False):
     _fields: dict[str, type]  # only here for type checkers
