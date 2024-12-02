@@ -1,4 +1,4 @@
-from .required_field import SimpleRequiredField, RequiredField
+from .required_field import SimpleRequiredField, RequiredField, is_required_field
 from typing import Any, cast
 from types import GenericAlias, resolve_bases, MappingProxyType
 
@@ -119,7 +119,7 @@ class IrDataMeta(type):
         for name, annotation in annotations.items():
             if not name.startswith("_") and name in namespace:
                 item = namespace[name]
-                if isinstance(item, RequiredField):
+                if is_required_field(item):
                     stored_type = annotation.__args__[0]
                     fields[name] = stored_type
         return cast(dict[str, type], fields)

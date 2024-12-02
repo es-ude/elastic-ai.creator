@@ -36,6 +36,8 @@ class RequiredField(Generic[StoredT, VisibleT]):
     {'number': "15"}
     """
 
+    __slots__ = ("set_convert", "get_convert", "name")
+
     def __init__(
         self,
         set_convert: Callable[[VisibleT], StoredT],
@@ -44,7 +46,7 @@ class RequiredField(Generic[StoredT, VisibleT]):
         self.set_convert = set_convert
         self.get_convert = get_convert
 
-    def __set_name__(self, owner, name: str) -> None:
+    def __set_name__(self, owner: type[HasData], name: str) -> None:
         """
         IMPORTANT: do not remove owner even though it's not used
         see https://docs.python.org/3/reference/datamodel.html#descriptors for more information
@@ -63,9 +65,26 @@ class RequiredField(Generic[StoredT, VisibleT]):
 
 
 class SimpleRequiredField(RequiredField[StoredT, StoredT]):
+    slots = ("get_convert", "set_convert", "name")
+
     def __init__(self):
         super().__init__(lambda x: x, lambda x: x)
 
 
-def is_mandatory_field(o: object) -> TypeIs[RequiredField]:
-    return isinstance(o, RequiredField)
+class ReadOnlyField(Generic[StoredT, VisibleT]):
+    slots = ("get_convert",)
+
+    def __init__(self, get_convert: Callable[[StoredT], VisibleT]) -> None:
+        self.get_convert = get_convert
+
+    def __set_name__(self, owner: type[HasData], name: str) -> None:
+        self.name = name
+
+    def __get__(
+        self, instance: HasData, owner: type[HasData] | None = None
+    ) -> VisibleT:
+        return self.get_convert(cast(StoredT, instance.data[self.name]))
+
+
+def is_required_field(o: object) -> TypeIs[RequiredField | ReadOnlyField]:
+    return isinstance(o, RequiredField) or isinstance(o, ReadOnlyField)
