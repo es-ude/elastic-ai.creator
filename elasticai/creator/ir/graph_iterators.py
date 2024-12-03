@@ -10,11 +10,11 @@ def dfs_pre_order(successors: NodeNeighbourFn, start: HashableT) -> Iterator[Has
     visited: set[HashableT] = set()
 
     def visit(nodes: tuple[HashableT, ...]):
-        for n in sorted(nodes):
+        for n in nodes:
             if n not in visited:
                 yield n
                 visited.add(n)
-                yield from visit(sorted(tuple(successors(n))))
+                yield from visit(tuple(successors(n)))
 
     yield from visit((start,))
 
@@ -29,7 +29,7 @@ def bfs_iter_down(
         if current not in visited:
             visited.add(current)
             yield current
-            for child in sorted(successors(current)):
+            for child in successors(current):
                 if set(predecessors(child)).issubset(visited):
                     visit_next.append(child)
 
