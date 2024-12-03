@@ -38,5 +38,13 @@ class FunctionRegistry(Generic[Tin, Tout]):
 
         return _make_register_fn(arg.__name__)(arg)
 
+    def __contains__(self, item: str | Callable[[Tin], Tout]) -> bool:
+        if isinstance(item, str):
+            return item in self._fns
+        return item.__name__ in self._fns
+
+    def can_dispatch(self, item: Tin) -> bool:
+        return self._key_fn(item) in self
+
     def call(self, arg: Tin) -> Tout:
         return self._fns[self._key_fn(arg)](arg)
