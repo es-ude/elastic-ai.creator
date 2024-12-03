@@ -35,6 +35,39 @@ def test_calling_a_function_with_custom_name():
     assert "convc0" == r.call(c)
 
 
+def test_register_lowering_fn_with_fn_name() -> None:
+    c = SimpleNamespace(name="c0", type="convolution")
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+
+    @p.register
+    def convolution(x: SimpleNamespace) -> str:
+        return f"conv{x.name}"
+
+    assert ("convc0",) == tuple(p((c,)))
+
+
+def test_can_directly_call_fn_as_defined() -> None:
+    c = SimpleNamespace(name="c0", type="convolution")
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+
+    @p.register
+    def convolution(x: SimpleNamespace) -> str:
+        return f"conv{x.name}"
+
+    assert "convc0" == convolution(c)
+
+
+def test_register_lowering_fn_with_custom_name() -> None:
+    c = SimpleNamespace(name="c0", type="convolution")
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+
+    @p.register("convolution")
+    def f(x: SimpleNamespace) -> str:
+        return f"conv{x.name}"
+
+    assert ("convc0",) == tuple(p((c,)))
+
+
 def test_lowering_iterates_over_input() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
     d = SimpleNamespace(name="c1", type="convolution")
