@@ -9,12 +9,12 @@ class GraphDelegate(Generic[HashableT]):
         """We keep successor and predecessor nodes just to allow for easier implementation.
         Currently, this implementation is not optimized for performance.
         """
-        self.successors: dict[HashableT, dict[HashableT, None]] = dict()
-        self.predecessors: dict[HashableT, dict[HashableT, None]] = dict()
+        self.successors: dict[HashableT, set[HashableT]] = dict()
+        self.predecessors: dict[HashableT, set[HashableT]] = dict()
 
     @staticmethod
     def from_dict(d: dict[HashableT, Iterable[HashableT]]):
-        g = GraphDelegate()
+        g: GraphDelegate[HashableT] = GraphDelegate()
         for node, successors in d.items():
             for s in successors:
                 g.add_edge(node, s)
@@ -26,15 +26,15 @@ class GraphDelegate(Generic[HashableT]):
     def add_edge(self, _from: HashableT, _to: HashableT):
         self.add_node(_from)
         self.add_node(_to)
-        self.predecessors[_to][_from] = None
-        self.successors[_from][_to] = None
+        self.predecessors[_to].add(_from)
+        self.successors[_from].add(_to)
         return self
 
     def add_node(self, node: HashableT):
         if node not in self.predecessors:
-            self.predecessors[node] = dict()
+            self.predecessors[node] = set()
         if node not in self.successors:
-            self.successors[node] = dict()
+            self.successors[node] = set()
         return self
 
     def iter_nodes(self) -> Iterator[HashableT]:
