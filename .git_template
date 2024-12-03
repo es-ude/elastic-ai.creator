@@ -1,0 +1,41 @@
+
+
+# Format:
+#
+# <type>[(<scope>)]: short description, imperative
+# -----------------------------------------------< max width 50 chars
+# <empty line>
+# [<optional elaborate multiline description of your changes>]
+# <empty line>
+# [BREAKING CHANGE[: <how/what does it break?>]]
+# <empty line>
+# [<Closes #IssueNr, #IssueNr, ...>]
+#
+##########################
+#
+# Valid types are
+#
+#  - feat: commit is part of implementing a new feature or removing/changing an old one
+#    - any change that alters the behaviour or structure of the public api is a
+       BREAKING CHANGE
+#  - fix: commit is part of a dedicated bug fix
+#  - refactor: structural without behavioural changes
+#    - no breaking changes!
+#	 - no new features!
+#  - build: changes to build system and/or external deps
+#    - e.g.: upgrading pytorch version
+#  - ci: changing continuous integration, e.g., github actions
+#  - perf: improving performance, e.g., changing an O(n) to an O(log(n)) algorithm
+#  - style: only changing whitespaces, formatting, no semantic changes to code
+#  - docs: only changing documentation
+#  - chore: changing other stuff not covered by the above types, e.g., changing `.gitignore`
+#  - test: add missing or fix existing tests
+#    - usually this will be system or integration tests as most unit tests
+#      should evolve alongside the feature (TDD)
+#
+#
+# Currently we have no fixed rules for scopes, pick one or several scopes (delimited by `,`)
+# as you see fit. Often the name of the package where the code you're working on lives in
+# is a good match
+#
+# Examples: vhdl, verilog, ir, torch, convolution, plugins, etc.
