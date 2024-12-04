@@ -247,3 +247,8 @@ Temporary Items
 /presentation/presentation.html
 /presentation/presentation.pdf
 /vhdl93-bnf.html
+.devenv/
+.direnv/
+build/
+justfile
+uv.lock
