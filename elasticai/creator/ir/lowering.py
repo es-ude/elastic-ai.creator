@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from collections.abc import Callable, Iterable
 from functools import wraps
 from typing import Generic, Protocol, TypeVar, overload
@@ -7,6 +8,7 @@ from .function_registry import FunctionRegistry as _Registry
 
 class Lowerable(Protocol):
     @property
+    @abstractmethod
     def type(self) -> str: ...
 
 

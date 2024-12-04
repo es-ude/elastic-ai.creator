@@ -1,4 +1,5 @@
-[plugin]
+[[plugins]]
+name = "minimal_plugin"
 target_platform = "elastic-node-v5"
 target_runtime = "vhdl"
 version = "0.1"

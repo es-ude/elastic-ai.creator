@@ -1,8 +1,8 @@
-from elasticai.creator.plugin_utils import Plugin, read_plugin_from_package
+from elasticai.creator.plugins import Plugin, read_plugins_from_package
 
 
 def test_can_read_plugin() -> None:
-    p = read_plugin_from_package("tests.integration_tests.minimal_plugin")
+    p = read_plugins_from_package("tests.integration_tests.minimal_plugin")
     assert (
         Plugin(
             name="minimal_plugin",
@@ -14,5 +14,5 @@ def test_can_read_plugin() -> None:
             templates=("skeleton_id_pkg",),
             static_files=("constraints.xdc",),
         )
-        == p
+        == p[0]
     )
