@@ -8,7 +8,9 @@ class SimQuant(Function):
         min_float = x_r_QParams.min_float.to(x_r.device)
         max_float = x_r_QParams.max_float.to(x_r.device)
 
-        ctx.save_for_backward(x_r, min_float, max_float)
+        # ctx.save_for_backward(x_r, min_float, max_float)
+        ctx.save_for_backward(x_r.clone(), min_float.clone(), max_float.clone())
+
         return x_r_QParams.dequantize(x_q)
 
     @staticmethod
