@@ -42,10 +42,16 @@ repos:
   hooks:
       - id: black
         stages: [ pre-commit, manual ]
+- repo: https://github.com/glencoe/cocogitto-pre-commit-hook
+  rev: main
+  hooks:
+      - id: cocogitto
+        args: [--file]
 - repo: https://github.com/commitizen-tools/commitizen
   rev: v4.0.0
   hooks:
       - id: commitizen-branch
         stages: [pre-push]
+        args: [--rev-range, origin/develop..HEAD]
       - id: commitizen
         stages: [commit-msg]
