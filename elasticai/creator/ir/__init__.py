@@ -7,8 +7,13 @@ __all__ = [
     "Node",
     "edge",
     "node",
+    "LoweringPass",
+    "Lowerable",
+    "Graph",
 ]
-from .required_field import RequiredField, SimpleRequiredField
+from .core import Edge, Node, edge, node
+from .graph import Graph
 from .ir_data import IrData
 from .ir_data_meta import IrDataMeta
-from .core import Node, Edge, node, edge
+from .lowering import Lowerable, LoweringPass
+from .required_field import RequiredField, SimpleRequiredField
