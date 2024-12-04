@@ -13,20 +13,14 @@ exclude = ["elasticai/**/*_test.py", "elasticai/**/test_*.py"]
 python = ">= 3.10, <4.0"
 torch = ">=1.11"
 numpy = "^1.23.0"
-setuptools = "^67.5.1"
-mypy = "^1.1.1"
-pytest-cov = "^4.1.0"
 tomlkit = "^0.13.2"
 
 
 [tool.poetry.dev-dependencies]
 python-language-server = "^0.36.2"
+mypy = "^1.13.0"
 black = ">21.12"
-prospector = { extras = ["with_mypy"], version = "^1.7.7" }
 pre-commit = "^3.0.0"
-wily = "^1.24.0"
-import-linter = "^1.7.0"
-impulse = "^1.0"
 pylint = "^2.16.2"
 pytest = "^7.2.2"
 setuptools = "^67.5.1"
@@ -65,7 +59,7 @@ omit = [
   "elasticai/**/__init__.py",
 ]
 source = ["elasticai/creator"]
-command_line = "-m unittest discover ."
+command_line = "-m pytest"
 
 
 [tool.importlinter]
