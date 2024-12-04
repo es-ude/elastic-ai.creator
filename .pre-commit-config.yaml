@@ -43,7 +43,6 @@ repos:
       - id: black
         stages: [ pre-commit, manual ]
 - repo: https://github.com/glencoe/cocogitto-pre-commit-hook
-  rev: main
+  rev: v0.1
   hooks:
       - id: cocogitto
-        args: [--file]
