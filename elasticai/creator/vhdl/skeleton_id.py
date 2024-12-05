@@ -6,11 +6,71 @@ import logging
 from collections.abc import Iterable
 from hashlib import blake2b, file_digest
 from importlib.metadata import version as _pypackage_version
-from itertools import filterfalse
 from pathlib import Path
 
 import tomlkit as toml
 from tomlkit.toml_file import TOMLFile
+
+
+def compute_skeleton_id_hash(files: Iterable[Path]) -> bytes:
+    logger = logging.getLogger(__name__)
+    hash = _SkeletonIdHash()
+
+    for vhd_file in files:
+        logger.debug(f"hashing {vhd_file.as_uri}")
+        hash.update(vhd_file)
+    digest = hash.digest()
+    logger.debug(f"raw_digest is {digest.hex()}")
+
+    return digest
+
+
+def replace_id_in_vhdl(code: Iterable[str], id: bytes) -> Iterable[str]:
+    """
+    Look for a line that starts with `constant SKELETON_ID` and replace it with
+    the given id.
+    """
+
+    def split_hex(hex: str):
+        for i in range(int(len(hex) / 2)):
+            yield hex[i : i + 2]
+
+    digest_as_hex_array = tuple(split_hex(id.hex()))
+
+    for line in code:
+        if _is_id(line):
+            yield _build_skeleton_id_line(digest_as_hex_array)
+            yield "\n"
+        else:
+            yield line
+
+
+def update_skeleton_id_in_build_dir(build_dir: Path) -> None:
+    logger = logging.getLogger(__name__)
+    logger.debug("updating skeleton id")
+    skeleton_pkg = None
+
+    def is_not_skeleton_pkg(f: Path) -> bool:
+        nonlocal skeleton_pkg
+        if f.name == "skeleton_pkg.vhd":
+            skeleton_pkg = f
+            return False
+        return True
+
+    files_to_hash = filter(is_not_skeleton_pkg, build_dir.glob("*/**"))
+    id = compute_skeleton_id_hash(files_to_hash)
+    logger.debug(f"computed id is {id!r}")
+    if skeleton_pkg is None:
+        raise IOError("skeleton_pkg.vhd not found in build folder")
+    with open(skeleton_pkg, "r") as f:
+        code: Iterable[str] = f.readlines()
+    logger.debug("updating skeleton_pkg.vhd")
+    code = replace_id_in_vhdl(code, id)
+    with open(skeleton_pkg, "w") as f:
+        for line in code:
+            f.write(line)
+            f.write("\n")
+    logger.debug("done")
 
 
 def _is_id(line: str):
@@ -23,20 +83,7 @@ def _build_skeleton_id_line(id: Iterable[str]) -> str:
     return f"  constant SKELETON_ID : skeleton_id_t := ({id_str});"
 
 
-def replace_id_in_code(code: Iterable[str], id: Iterable[str]) -> Iterable[str]:
-    """
-    Look for a line that starts with `constant SKELETON_ID` and replace it with
-    the given id.
-    """
-    for line in code:
-        if _is_id(line):
-            yield _build_skeleton_id_line(id)
-            yield "\n"
-        else:
-            yield line
-
-
-class SkeletonIdHash:
+class _SkeletonIdHash:
     SIZE: int = 16
 
     def __init__(self):
@@ -63,28 +110,7 @@ class SkeletonIdHash:
         return h.digest()
 
 
-def compute_skeleton_id_hash(
-    build_dir: Path, file_with_default_id: str = "skeleton_pkg.vhd"
-) -> bytes:
-    logger = logging.getLogger(__name__)
-    hash = SkeletonIdHash()
-    logger.info("writing skeleton id to skeleton_pkg.vhd")
-    all_files = build_dir.glob("**/*.vhd")
-
-    def skip_default_id_for_idempotency(file: Path) -> bool:
-        return file.name == file_with_default_id
-
-    files_to_hash = filterfalse(skip_default_id_for_idempotency, all_files)
-    for vhd_file in files_to_hash:
-        logger.debug(f"hashing {vhd_file.as_uri}")
-        hash.update(vhd_file)
-    digest = hash.digest()
-    logger.debug(f"raw_digest is {digest.hex()}")
-
-    return digest
-
-
-def get_skeleton_pkg_file(build_dir: Path) -> Path:
+def _get_skeleton_pkg_file(build_dir: Path) -> Path:
     for file in build_dir.glob("**/*.vhd"):
         if file.name == "skeleton_pkg.vhd":
             return file
@@ -98,16 +124,16 @@ class MetaFile:
         self._data = data
 
     @classmethod
-    def load(cls, build_dir: Path) -> "MetaFile":
-        with open(build_dir / "meta.toml", "r") as f:
+    def load(cls, file: Path) -> "MetaFile":
+        with open(file, "r") as f:
             data = toml.load(f)
         return cls(data)
 
     def set_skeleton_id(self, skeleton_id: bytes):
         self._data["skeleton_id"] = skeleton_id.hex()
 
-    def save(self, build_dir: Path) -> None:
-        f = TOMLFile(build_dir / "meta.toml")
+    def save(self, file: Path) -> None:
+        f = TOMLFile(file)
         f.write(self._data)
 
     @classmethod
@@ -117,30 +143,10 @@ class MetaFile:
             meta_version=cls.version,
             creator_version=creator_version,
             hw_accelerator_version="0.1",
-            skeleton_id='"<invalid"  # this should be computed and set'
+            skeleton_id='"<invalid>"  # this should be computed and set'
             " automatically",
-            name="my_network",
+            name="<your_network>",
             description="""An optional possibly very long description of what
                             your accelerator does and how to use it.""",
         )
         return cls(data)
-
-
-def write_new_skeleton_pkg_to_build_dir(build_dir: Path, skeleton_id: bytes):
-    logger = logging.getLogger(__name__)
-    digest = skeleton_id
-    skeleton_pkg = get_skeleton_pkg_file(build_dir)
-    logger.debug(f"raw_digest is {digest.hex()}")
-
-    def split_hex(hex: str):
-        for i in range(int(len(hex) / 2)):
-            yield hex[i : i + 2]
-
-    digest_as_hex_array = tuple(split_hex(digest.hex()))
-    with open(skeleton_pkg, "r") as f:
-        logger.debug("reading {skeleton_pkg}")
-        code = f.readlines()
-    with open(skeleton_pkg, "w") as f:
-        logger.debug("writing {skeleton_pkg}")
-        f.writelines(replace_id_in_code(code, digest_as_hex_array))
-    logger.info("done.")
