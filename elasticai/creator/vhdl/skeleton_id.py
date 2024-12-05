@@ -104,10 +104,3 @@ class _SkeletonIdHash:
         for d in sorted(self._digests):
             h.update(d)
         return h.digest()
-
-
-def _get_skeleton_pkg_file(build_dir: Path) -> Path:
-    for file in build_dir.glob("**/*.vhd"):
-        if file.name == "skeleton_pkg.vhd":
-            return file
-    raise IOError(f"could not find skeleton_pkg.vhd file in {build_dir}")
