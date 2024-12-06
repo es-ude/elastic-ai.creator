@@ -4,7 +4,8 @@ from typing import overload
 from pytest import fixture
 
 from elasticai.creator.ir import Lowerable, LoweringPass
-from elasticai.creator.plugin import Plugin, PluginLoader
+from elasticai.creator.plugin import Plugin
+from elasticai.creator.plugin_loader import PluginLoader
 
 
 @fixture
@@ -149,13 +150,3 @@ def test_can_load_and_run_lowering_handler(
     lowerable = make_lowerable(["some", "important", "information"])
     loader.load_generated(my_type)
     assert ("some_important_information",) == tuple(lower([lowerable]))
-
-
-def test_can_load_entire_plugin(
-    plugin: Plugin, make_lowerable: Callable[[list[str]], DummyLowerable]
-) -> None:
-    lower: LoweringPass[DummyLowerable, str] = LoweringPass()
-    loader = PluginLoader(lower)
-    lowerable = make_lowerable(["some", "important", "information"])
-    loader.load(plugin)
-    assert ("some_more_information",) == tuple(lower((lowerable,)))
