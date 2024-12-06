@@ -3,7 +3,8 @@ from collections.abc import Callable
 import pytest
 
 from elasticai.creator.ir import Lowerable, LoweringPass
-from elasticai.creator.plugin import Plugin, PluginLoader, read_plugins_from_package
+from elasticai.creator.plugin import Plugin
+from elasticai.creator.plugin_loader import PluginLoader, read_plugins_from_package
 
 
 @pytest.fixture
@@ -40,11 +41,19 @@ class DummyLowerable(Lowerable):
         return self._type
 
 
+@pytest.fixture
+def make_lowerable(plugin) -> Callable[[list[str]], DummyLowerable]:
+    def dummy(more_data: list[str]) -> DummyLowerable:
+        return DummyLowerable(plugin.generated[0], more_data)
+
+    return dummy
+
+
 def test_can_load_entire_plugin(
-    plugin: Plugin, make_lowerable: Callable[[list[str]], DummyLowerable]
+    make_lowerable: Callable[[list[str]], DummyLowerable],
 ) -> None:
     lower: LoweringPass[DummyLowerable, str] = LoweringPass()
     loader = PluginLoader(lower)
     lowerable = make_lowerable(["some", "important", "information"])
-    loader.load(plugin)
-    assert ("some_more_information",) == tuple(lower((lowerable,)))
+    loader.load_from_package("tests.integration_tests.minimal_plugin")
+    assert ("some_important_information",) == tuple(lower((lowerable,)))
