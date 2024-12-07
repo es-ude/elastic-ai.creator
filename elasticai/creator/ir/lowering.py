@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable
 from functools import wraps
 from typing import Generic, Protocol, TypeVar, overload
 
-from .function_registry import FunctionRegistry as _Registry
+from .function_registry import MultiArgDispatcher as _Registry
 
 
 class Lowerable(Protocol):
