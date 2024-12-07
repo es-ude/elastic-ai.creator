@@ -93,7 +93,7 @@ class FnRegisterer(Generic[FN]):
 FNcon = TypeVar("FNcon", contravariant=True, bound=Callable)
 
 
-class RegisterDescriptor(Generic[FNcon]):
+class RegisterDescriptor(Generic[Tin, Tout]):
     """Automatically connect the `FnRegisterer` to a callback and make it look like a method.
 
     The owning instance needs to define a callback that has the name `f"_{name}_callback"`,
@@ -105,7 +105,7 @@ class RegisterDescriptor(Generic[FNcon]):
     def __set_name__(self, instance, name):
         self._cb_name = f"_{name}_callback"
 
-    def __get__(self, instance, owner=None) -> FnRegisterer[FNcon]:
+    def __get__(self, instance, owner=None) -> FnRegisterer[Callable[[Tin], Tout]]:
         return FnRegisterer(getattr(instance, self._cb_name))
 
 
@@ -118,7 +118,7 @@ class MultiArgDispatcher(Generic[Tin, Tout]):
     to `call` to process the argument and return the result.
     """
 
-    register: RegisterDescriptor[Callable[[Tin], Tout]] = RegisterDescriptor()
+    register: RegisterDescriptor[Tin, Tout] = RegisterDescriptor()
 
     def __init__(self, dispatch_key_fn: Callable[[Tin], str]) -> None:
         self._key_fn = dispatch_key_fn
