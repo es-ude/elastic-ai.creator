@@ -15,6 +15,7 @@ torch = ">=1.11"
 numpy = "^1.23.0"
 tomlkit = "^0.13.2"
 pytest-cov = "^6.0.0"
+ruff = "^0.8.3"
 
 
 [tool.poetry.dev-dependencies]
@@ -27,6 +28,9 @@ pytest = "^7.2.2"
 setuptools = "^67.5.1"
 elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
 
+
+[tool.poetry.group.release.dependencies]
+git-cliff = "^2.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -60,34 +64,77 @@ omit = [
   "elasticai/**/__init__.py",
 ]
 source = ["elasticai/creator"]
-command_line = "-m pytest"
+command_line = "-m pytest -m 'not simulation'"
 
-
-[tool.importlinter]
-root_package = "elasticai"
-contract_types = [
-  "package_private_modules: import_contract.PackagePrivateModules",
-]
-
-
-[[tool.importlinter.contracts]]
-name = "package private"
-type = "package_private_modules"
-targets = ["elasticai.creator"]
-sources = ["elasticai.creator"]
-
-
-[tool.semantic_release]
-version_toml = ["pyproject.toml:tool.poetry.version"]
-major_on_zero = false
-repository = "pypi"
-upload_to_release = true
-build_command = "python3 -m pip install poetry && poetry build"
-branch = "main"
-parser_angular_allowed_types = "chore,docs,feat,style,fix,refactor,wip,perf,revert"
-parser_angular_minor_types = "feat"
-parser_angular_patch_types = "fix,perf"
 
 
 [tool.isort]
 profile = "black"
+
+
+
+[tool.ruff]
+include = ["pyproject.toml", "src/**/*.py", "src/**/*.pyi", "test/**/*.py"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  ".devenv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8
+target-version = "py38"
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = ["D101", "D102"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
