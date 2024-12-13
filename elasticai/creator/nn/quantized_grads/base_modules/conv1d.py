@@ -5,12 +5,16 @@ from torch.nn import Conv1d as _Conv1d
 from torch.nn.functional import conv1d
 
 from elasticai.creator.base_modules.math_operations import Quantize
+from elasticai.creator.nn.quantized_grads.quantized_parameters import (
+    QuantizationSchemeByName,
+    QuantizedParameters,
+)
 
 
 class MathOperations(Quantize, Protocol): ...
 
 
-class Conv1d(_Conv1d):
+class Conv1d(_Conv1d, QuantizedParameters):
     """This module implements a 1d convolution.
     The output of the convolution is fake quantized. The weights and bias are fake quantized during initialization.
     To keep the weights quantized use only optimizers that apply a quantized update
@@ -19,7 +23,7 @@ class Conv1d(_Conv1d):
     def __init__(
         self,
         operations: MathOperations,
-        param_quantization: Callable[[Tensor], Tensor],
+        weight_quantization: Callable[[Tensor], None],
         in_channels: int,
         out_channels: int,
         kernel_size: int | tuple[int],
@@ -28,10 +32,12 @@ class Conv1d(_Conv1d):
         dilation: int | tuple[int] = 1,
         groups: int = 1,
         bias: bool = True,
+        bias_quantization: Callable[[Tensor], None] = None,
         device: Any = None,
         dtype: Any = None,
     ) -> None:
-        super().__init__(
+        _Conv1d.__init__(
+            self,
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
@@ -44,10 +50,20 @@ class Conv1d(_Conv1d):
             device=device,
             dtype=dtype,
         )
+        if bias ^ isinstance(bias_quantization, Callable):
+            raise Exception(
+                f"if bias is True, bias_quantization can needs be set. "
+                f"If not it is not allowed to be set."
+                f"You have choosen {bias=} and {bias_quantization=}."
+            )
+
         self._operations = operations
-        self.param_quantization = param_quantization
-        self.weight.data = param_quantization(self.weight.data)
-        self.bias.data = param_quantization(self.bias.data)
+        weight_quantization(self.weight.data)
+        params = [QuantizationSchemeByName("weight", weight_quantization)]
+        if bias is not False:
+            bias_quantization(self.bias.data)
+            params.append(QuantizationSchemeByName("bias", bias_quantization))
+        QuantizedParameters.__init__(self, params)
 
     def forward(self, x: Tensor) -> Tensor:
         convolved = conv1d(
