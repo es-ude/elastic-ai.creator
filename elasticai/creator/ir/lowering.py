@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from collections.abc import Callable, Iterable
-from typing import Generic, Protocol, TypeVar
+from functools import wraps
+from typing import Generic, ParamSpec, Protocol, TypeVar
 
-from .function_registry import MultiArgDispatcher as _Registry
-from .function_registry import RegisterDescriptor, return_as_iterable
+from elasticai.creator.function_utils import KeyedFunctionDispatcher as _Registry
+from elasticai.creator.function_utils import RegisterDescriptor
 
 
 class Lowerable(Protocol):
@@ -44,3 +45,14 @@ class LoweringPass(Generic[Tin, Tout]):
     def _check_for_redefinition(self, arg):
         if arg in self._fns:
             raise ValueError(f"function for {arg} already defined in lowering pass")
+
+
+P = ParamSpec("P")
+
+
+def return_as_iterable(fn: Callable[P, Tout]) -> Callable[P, Iterable[Tout]]:
+    @wraps(fn)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Tout]:
+        yield fn(*args, **kwargs)
+
+    return wrapper
