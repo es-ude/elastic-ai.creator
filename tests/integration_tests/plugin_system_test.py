@@ -3,14 +3,18 @@ from collections.abc import Callable
 import pytest
 
 from elasticai.creator.ir import Lowerable, LoweringPass
-from elasticai.creator.plugin import Plugin
-from elasticai.creator.plugin_loader import PluginLoader, read_plugins_from_package
+from elasticai.creator.lowering_pass_plugin import Loader, Plugin, SubFolderStructure
+from elasticai.creator.plugin import read_plugins_from_package
 
 
 @pytest.fixture
 def plugin() -> Plugin:
-    p = read_plugins_from_package("tests.integration_tests.minimal_plugin")
+    p = read_plugins_from_package("tests.integration_tests.minimal_plugin", Plugin)
     return p[0]
+
+
+class PluginLoader(Loader):
+    folders = SubFolderStructure("src", "vhdl", "static")
 
 
 def test_can_read_plugin(plugin) -> None:

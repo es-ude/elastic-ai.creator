@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from .function_registry import MultiArgDispatcher
+from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from .lowering import LoweringPass
 
 """
@@ -14,7 +14,7 @@ For later in LoweringPass:
 
 
 def test_calls_a_registered_function():
-    r = MultiArgDispatcher(dispatch_key_fn=lambda x: x.type)
+    r = KeyedFunctionDispatcher(dispatch_key_fn=lambda x: x.type)
     c = SimpleNamespace(name="c0", type="convolution")
 
     @r.register
@@ -25,7 +25,7 @@ def test_calls_a_registered_function():
 
 
 def test_calling_a_function_with_custom_name():
-    r = MultiArgDispatcher(dispatch_key_fn=lambda x: x.type)
+    r = KeyedFunctionDispatcher(dispatch_key_fn=lambda x: x.type)
     c = SimpleNamespace(name="c0", type="convolution")
 
     @r.register("convolution")
