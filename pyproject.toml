@@ -14,23 +14,27 @@ python = ">= 3.10, <4.0"
 torch = ">=1.11"
 numpy = "^1.23.0"
 tomlkit = "^0.13.2"
-pytest-cov = "^6.0.0"
-ruff = "^0.8.3"
-
-
-[tool.poetry.dev-dependencies]
-python-language-server = "^0.36.2"
-mypy = "^1.13.0"
-black = ">21.12"
-pre-commit = "^3.0.0"
-pylint = "^2.16.2"
-pytest = "^7.2.2"
-setuptools = "^67.5.1"
-elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
 
 
 [tool.poetry.group.release.dependencies]
 git-cliff = "^2.7.0"
+
+[tool.poetry.group.testing.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+
+
+[tool.poetry.group.lsp.dependencies]
+python-lsp-server = "^1.12.0"
+pylsp-mypy = "^0.6.9"
+pylsp-rope = "^0.1.17"
+ruff = "^0.8.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
+setuptools = "^67.5.1"
+elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
