@@ -1,9 +1,6 @@
 name: Beautify
 on:
   workflow_call:
-  pull_request:
-    - main
-    - develop
 
 
 jobs:
@@ -15,11 +12,6 @@ jobs:
       new_sha: ${{ steps.sha.outputs.SHA }}
 
     steps:
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11.x
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
