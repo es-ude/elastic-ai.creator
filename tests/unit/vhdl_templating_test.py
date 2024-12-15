@@ -2,11 +2,11 @@ from collections.abc import Iterable
 
 import pytest
 
-from elasticai.creator.ir2vhdl import VhdlEntityIr, process_vhdl_template
+from elasticai.creator.vhdl_template import EntityTemplateDirector
 
 
 @pytest.fixture
-def dummy_vhdl_template() -> Iterable[str]:
+def dummy_vhdl_prototype() -> Iterable[str]:
     return [
         "library ieee;",
         "use ieee.std.numeric.all;",
@@ -31,12 +31,30 @@ def dummy_vhdl_template() -> Iterable[str]:
 
 
 class TestVhdlTemplating:
-    @pytest.mark.skip
-    def test_replace_entity_name(self, dummy_vhdl_template) -> None:
-        type_handler = process_vhdl_template(dummy_vhdl_template)
-        entity = VhdlEntityIr(name="my_first_hw_component", type="skeleton_v1")
-        code = list(type_handler(entity))
+    def test_replace_entity_name(self, dummy_vhdl_prototype) -> None:
+        type_handler = (
+            EntityTemplateDirector().set_prototype(dummy_vhdl_prototype).build()
+        )
+        code = type_handler.render(
+            {
+                "entity": "my_first_hw_component",
+            }
+        ).splitlines()
         assert (
             "entity my_first_hw_component is",
             "begin architecture rtl of my_first_hw_component is",
         ) == (code[5], code[16])
+
+    def test_replace_generic(self, dummy_vhdl_prototype) -> None:
+        type_handler = (
+            EntityTemplateDirector()
+            .add_generic("data_width")
+            .set_prototype("""
+generic (
+  DATA_WIDTH : natural
+);
+""")
+            .build()
+        )
+        code = type_handler.render(dict(data_width=5)).splitlines()
+        assert "  DATA_WIDTH : natural := 5" == code[2]
