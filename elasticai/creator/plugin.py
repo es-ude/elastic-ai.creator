@@ -4,21 +4,12 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from importlib import import_module
 from inspect import signature
-from typing import Protocol
+from typing import Protocol, TypeAlias
 
 import tomlkit as toml
 
 from elasticai.creator.ir import Lowerable
 from elasticai.creator.ir import LoweringPass as _LoweringPass
-
-type _Attribute = (
-    str
-    | int
-    | float
-    | list[_Attribute]
-    | tuple[_Attribute, ...]
-    | dict[str, _Attribute]
-)
 
 
 @dataclass
@@ -34,7 +25,7 @@ class Plugin:
     package: str
 
 
-type _PluginDict = dict[str, str | list[str]]
+_PluginDict: TypeAlias = dict[str, str | list[str]]
 
 
 def read_plugins_from_package(p: str) -> list[Plugin]:
@@ -55,6 +46,3 @@ def read_plugins_from_package(p: str) -> list[Plugin]:
         return Plugin(*bound.args, **bound.kwargs)
 
     return list(map(build_plugin, load_dicts_from_toml("meta")))
-
-
-type FN[_Tin, _Tout] = Callable[[_Tin], _Tout] | Callable[[_Tin], Iterable[_Tout]]

@@ -7,6 +7,11 @@ from elasticai.creator.ir import Lowerable, LoweringPass
 from elasticai.creator.plugin import Plugin
 from elasticai.creator.plugin_loader import PluginLoader
 
+from typing import TypeVar, Generic
+
+Tin = TypeVar("Tin", bound=Lowerable)
+Tout = TypeVar("Tout")
+
 
 @fixture
 def plugin() -> Plugin:
@@ -41,7 +46,7 @@ class DummyLowerable(Lowerable):
         return self._type
 
 
-class GeneratedCodeType[Tin: Lowerable, Tout]:
+class GeneratedCodeType(Generic[Tout, Tin]):
     def __init__(self, name: str, fn: Callable[[Tin], Tout]) -> None:
         self._fn = fn
         self._name = name
@@ -53,7 +58,7 @@ class GeneratedCodeType[Tin: Lowerable, Tout]:
         lower.register(self._name, self._fn)
 
 
-class GeneratedIterableCodeType[Tin: Lowerable, Tout]:
+class GeneratedIterableCodeType(Generic[Tout, Tin]):
     def __init__(self, name: str, fn: Callable[[Tin], Iterable[Tout]]) -> None:
         self._fn = fn
         self._name = name
@@ -66,20 +71,22 @@ class GeneratedIterableCodeType[Tin: Lowerable, Tout]:
 
 
 @overload
-def code_type[
-    Tin: Lowerable, Tout
-](arg: str, /,) -> Callable[[Callable[[Tin], Tout]], GeneratedCodeType[Tin, Tout]]: ...
+def code_type(
+    arg: str,
+    /,
+) -> Callable[[Callable[[Tin], Tout]], GeneratedCodeType[Tin, Tout]]: ...
 
 
 @overload
-def code_type[
-    Tin: Lowerable, Tout
-](arg: Callable[[Tin], Tout], /,) -> GeneratedCodeType[Tin, Tout]: ...
+def code_type(
+    arg: Callable[[Tin], Tout],
+    /,
+) -> GeneratedCodeType[Tin, Tout]: ...
 
 
-def code_type[
-    Tin: Lowerable, Tout
-](arg: str | Callable[[Tin], Tout], /) -> (
+def code_type(
+    arg: str | Callable[[Tin], Tout], /
+) -> (
     Callable[[Callable[[Tin], Tout]], GeneratedCodeType[Tin, Tout]]
     | GeneratedCodeType[Tin, Tout]
 ):
@@ -93,9 +100,7 @@ def code_type[
 
 
 @overload
-def iterable_code_type[
-    Tin: Lowerable, Tout
-](
+def iterable_code_type(
     arg: str,
     /,
 ) -> Callable[
@@ -104,14 +109,15 @@ def iterable_code_type[
 
 
 @overload
-def iterable_code_type[
-    Tin: Lowerable, Tout
-](arg: Callable[[Tin], Iterable[Tout]], /,) -> GeneratedIterableCodeType[Tin, Tout]: ...
+def iterable_code_type(
+    arg: Callable[[Tin], Iterable[Tout]],
+    /,
+) -> GeneratedIterableCodeType[Tin, Tout]: ...
 
 
-def iterable_code_type[
-    Tin: Lowerable, Tout
-](arg: str | Callable[[Tin], Iterable[Tout]], /) -> (
+def iterable_code_type(
+    arg: str | Callable[[Tin], Iterable[Tout]], /
+) -> (
     Callable[
         [Callable[[Tin], Iterable[Tout]]],
         GeneratedIterableCodeType[Tin, Tout],

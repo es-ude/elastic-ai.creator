@@ -1,6 +1,6 @@
 from collections import namedtuple
 from collections.abc import Callable, Iterable
-from typing import overload
+from typing import overload, TypeVar, Generic
 
 from elasticai.creator.ir import Graph, Lowerable, LoweringPass, Node
 from elasticai.creator.plugin_loader import PluginLoader
@@ -41,7 +41,11 @@ class Vhdl2Ir(LoweringPass[VhdlEntityIr, tuple[str, Iterable[str]]]):
     pass
 
 
-class _GeneratedCodeType[Tin: Lowerable, Tout]:
+Tin = TypeVar("Tin", bound=Lowerable)
+Tout = TypeVar("Tout")
+
+
+class _GeneratedCodeType(Generic[Tin, Tout]):
     def __init__(self, name: str, fn: Callable[[Tin], Tout]) -> None:
         self._fn = fn
         self._name = name
@@ -53,7 +57,7 @@ class _GeneratedCodeType[Tin: Lowerable, Tout]:
         lower.register(self._name, self._fn)
 
 
-class _GeneratedIterableCodeType[Tin: Lowerable, Tout]:
+class _GeneratedIterableCodeType(Generic[Tin, Tout]):
     def __init__(self, name: str, fn: Callable[[Tin], Iterable[Tout]]) -> None:
         self._fn = fn
         self._name = name
@@ -66,20 +70,22 @@ class _GeneratedIterableCodeType[Tin: Lowerable, Tout]:
 
 
 @overload
-def type_handler[
-    Tin: Lowerable, Tout
-](arg: str, /,) -> Callable[[Callable[[Tin], Tout]], _GeneratedCodeType[Tin, Tout]]: ...
+def type_handler(
+    arg: str,
+    /,
+) -> Callable[[Callable[[Tin], Tout]], _GeneratedCodeType[Tin, Tout]]: ...
 
 
 @overload
-def type_handler[
-    Tin: Lowerable, Tout
-](arg: Callable[[Tin], Tout], /,) -> _GeneratedCodeType[Tin, Tout]: ...
+def type_handler(
+    arg: Callable[[Tin], Tout],
+    /,
+) -> _GeneratedCodeType[Tin, Tout]: ...
 
 
-def type_handler[
-    Tin: Lowerable, Tout
-](arg: str | Callable[[Tin], Tout], /) -> (
+def type_handler(
+    arg: str | Callable[[Tin], Tout], /
+) -> (
     Callable[[Callable[[Tin], Tout]], _GeneratedCodeType[Tin, Tout]]
     | _GeneratedCodeType[Tin, Tout]
 ):
@@ -93,9 +99,7 @@ def type_handler[
 
 
 @overload
-def iterable_type_handler[
-    Tin: Lowerable, Tout
-](
+def iterable_type_handler(
     arg: str,
     /,
 ) -> Callable[
@@ -104,19 +108,15 @@ def iterable_type_handler[
 
 
 @overload
-def iterable_type_handler[
-    Tin: Lowerable, Tout
-](
+def iterable_type_handler(
     arg: Callable[[Tin], Iterable[Tout]],
     /,
-) -> _GeneratedIterableCodeType[
-    Tin, Tout
-]: ...
+) -> _GeneratedIterableCodeType[Tin, Tout]: ...
 
 
-def iterable_type_handler[
-    Tin: Lowerable, Tout
-](arg: str | Callable[[Tin], Iterable[Tout]], /) -> (
+def iterable_type_handler(
+    arg: str | Callable[[Tin], Iterable[Tout]], /
+) -> (
     Callable[
         [Callable[[Tin], Iterable[Tout]]],
         _GeneratedIterableCodeType[Tin, Tout],

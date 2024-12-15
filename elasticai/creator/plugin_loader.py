@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from importlib import import_module
 from importlib import resources as res
 from inspect import signature
-from typing import Callable, Iterable, Protocol
+from typing import Callable, Iterable, Protocol, TypeAlias, TypeVar, Generic
 
 import tomlkit as toml
 
@@ -19,7 +19,9 @@ class _SubFolderStructure:
     static_files: str
 
 
-type _PluginDict = dict[str, str | list[str]]
+_PluginDict: TypeAlias = dict[str, str | list[str]]
+Tin = TypeVar("Tin", bound=Lowerable)
+Tout = TypeVar("Tout")
 
 
 def read_plugins_from_package(p: str) -> list[Plugin]:
@@ -42,15 +44,12 @@ def read_plugins_from_package(p: str) -> list[Plugin]:
     return list(map(build_plugin, load_dicts_from_toml("meta")))
 
 
-type FN[_Tin, _Tout] = Callable[[_Tin], _Tout] | Callable[[_Tin], Iterable[_Tout]]
-
-
-class PluggableTypeHandler[Tin: Lowerable, Tout](Protocol):
+class PluggableTypeHandler(Protocol):
     @abstractmethod
     def load(self, loader: "PluginLoader[Tin, Tout]") -> None: ...
 
 
-class PluginLoader[Tin: Lowerable, Tout]:
+class PluginLoader(Generic[Tin, Tout]):
     folders = _SubFolderStructure(
         generated="src", templates="vhdl", static_files="static"
     )
