@@ -11,7 +11,13 @@ jobs:
       - name: Fetch Repository
         uses: actions/checkout@v3
       - uses: ./.github/actions/setup_test_environment
-      - run: poetry run pytest -m "not simulation"
+      - run: poetry run pytest --cov-report xml --cov elasticai.creator -m "not simulation"
+
+      - name: Publish coverage report
+        uses: orgoro/coverage@v3.1
+        with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
 
 
   lint-commit-messages:
