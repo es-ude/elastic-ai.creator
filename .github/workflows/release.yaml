@@ -2,9 +2,8 @@ name: Build and Release Python Package
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
 jobs:
 
@@ -30,7 +29,6 @@ jobs:
 
   publish-to-pypi:
     name: Publish to pypi
-    if: startsWith(github.ref, 'refs/tags/v') # only publish to PyPI on tag pushes
     needs:
       - build
     runs-on: ubuntu-latest
