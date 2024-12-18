@@ -36,8 +36,7 @@ end icapInterface;
 
 architecture Behavioral of icapInterface is
 
-type state_type is 
-	(IDLE, WAITING_FLASH,DUMMY,SYNC,CMD_0,CMD_1,CMD_2,CMD_3,WRITE_CMD,IPROG);
+type state_type is (IDLE, WAITING_FLASH, DUMMY, SYNC, CMD_0, CMD_1, CMD_2, CMD_3, WRITE_CMD, IPROG);
 attribute enum_encoding : string;
 attribute enum_encoding of state_type : type is "sequential";
 type state_type_vector is array (0 to 9) of state_type;

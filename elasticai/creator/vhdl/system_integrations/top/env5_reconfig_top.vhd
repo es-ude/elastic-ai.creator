@@ -44,7 +44,6 @@ architecture rtl of env5_top_reconfig is
     signal spi_reset_n : std_logic := '0';
 
     type buf_t is array (0 to 13) of std_logic_vector(7 downto 0);
-    signal data_buf : buf_t := (x"ee", x"dd", x"cc", x"bb", x"aa", x"99", x"88", x"77", x"66", x"55", x"44", x"33", x"22", x"11");
 
     signal sram_address : std_logic_vector(15 downto 0);
     signal sram_data_in, sram_data_out : std_logic_vector(7 downto 0);

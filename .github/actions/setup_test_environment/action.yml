@@ -4,26 +4,14 @@ description: "Install poetry, use poetry to install dependencies"
 runs:
   using: "composite"
   steps:
-    - name: create cachedir
-      run: mkdir ~/poetry-cache/
+    - name: Install poetry
+      run: pipx install poetry
       shell: bash
-    - name: Setup Caching
-      uses: actions/cache@v3
-      with:
-        path: ~/pypoetry-cache/
-        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.11.x
-    - name: Install Poetry
-      run: python3 -m pip install poetry==1.4.0 --upgrade pip
-      shell: bash
-    - name: Configure Poetry
-      run: poetry config cache-dir ~/poetry-cache/
-      shell: bash
-    - run: python --version
-      shell: bash
+        python-version: '3.10'
+        cache: 'poetry'
     - name: Install dependencies
-      run: poetry install --no-interaction
+      run: poetry install --no-interaction --without release,dev,lsp
       shell: bash

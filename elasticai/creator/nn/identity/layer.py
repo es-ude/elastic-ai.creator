@@ -1,12 +1,12 @@
 from elasticai.creator.base_modules.identity import Identity
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.vhdl.design_creator import DesignCreator
 
 from .design import BufferedIdentity as IdentityDesign
 from .design import BufferlessDesign
 
 
-class BufferedIdentity(DesignCreator, Identity):
+class BufferedIdentity(DesignCreatorModule, Identity):
     def __init__(self, num_input_features: int, total_bits: int) -> None:
         self._num_input_features = num_input_features
         self._num_input_bits = total_bits
@@ -20,7 +20,7 @@ class BufferedIdentity(DesignCreator, Identity):
         )
 
 
-class BufferlessIdentity(DesignCreator, Identity):
+class BufferlessIdentity(DesignCreatorModule, Identity):
     def __init__(self, total_bits: int) -> None:
         self._num_input_bits = total_bits
         super().__init__()

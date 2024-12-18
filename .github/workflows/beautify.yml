@@ -2,8 +2,8 @@ name: Beautify
 on:
   workflow_call:
 
+
 jobs:
-  # the jobs below are taken from the actions in https://github.com/relekang/python-semantic-release under MIT License
   beautify:
     name: Beautify
     runs-on: ubuntu-latest
@@ -12,25 +12,17 @@ jobs:
       new_sha: ${{ steps.sha.outputs.SHA }}
 
     steps:
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11.x
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Black
-        run: python -m pip install black
+      - name: make ruff available
+        uses: astral-sh/ruff-action@v2
 
-      - name: Beautify with Black
-        run: python -m black .
+      - name: lint with ruff
+        run: ruff check --fix
 
-      - name: Install isort
-        run: python -m pip install isort
-
-      - name: Sort imports
-        run: python -m isort --profile black .
+      - name: format with ruff
+        run: ruff format
 
       - name: Commit and push changes
         uses: actions-x/commit@v6

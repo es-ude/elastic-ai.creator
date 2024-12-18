@@ -5,33 +5,36 @@ description = "Design, train and compile neural networks optimized specifically 
 readme = "README.md"
 repository = "https://github.com/es-ude/elastic-ai.creator"
 authors = ["Department Embedded Systems - University Duisburg Essen"]
-packages = [
-    { include = "elasticai/" }
-]
+packages = [{ include = "elasticai/" }]
 exclude = ["elasticai/**/*_test.py", "elasticai/**/test_*.py"]
 
 
 [tool.poetry.dependencies]
-python = "~3.11"
-torch = ">=1.11 < 2.0.1" # missing libcurand.so shared object in 2.0.1 (try again with later versions)
+python = ">= 3.10, <4.0"
+torch = ">=1.11"
 numpy = "^1.23.0"
+tomlkit = "^0.13.2"
+
+
+[tool.poetry.group.release.dependencies]
+git-cliff = "^2.7.0"
+
+[tool.poetry.group.testing.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+
+
+[tool.poetry.group.lsp.dependencies]
+python-lsp-server = "^1.12.0"
+pylsp-mypy = "^0.6.9"
+pylsp-rope = "^0.1.17"
+ruff = "^0.8.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
 setuptools = "^67.5.1"
-mypy = "^1.1.1"
-pytest-cov = "^4.1.0"
-
-
-[tool.poetry.dev-dependencies]
-python-language-server = "^0.36.2"
-black = ">21.12"
-prospector = {extras = ["with_mypy"], version = "^1.7.7"}
-pre-commit = "^3.0.0"
-wily = "^1.24.0"
-import-linter = "^1.7.0"
-impulse = "^1.0"
-pylint = "^2.16.2"
-pytest = "^7.2.2"
-setuptools = "^67.5.1"
-
+elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -41,7 +44,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pylint]
 max-line-length = 88
 accept-no-raise-doc = "False"
-disable="C0115, C0116, C0114" # disable missing docstring messages as they incourage adding noise comments
+disable = "C0115, C0116, C0114" # disable missing docstring messages as they incourage adding noise comments
 
 
 [tool.black]
@@ -51,45 +54,92 @@ preview = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 markers = [
-  "simulation: possibly slow running integration tests including hw simulation"
+  "simulation: possibly slow running integration tests including hw simulation",
 ]
-testpaths = [
-    "elasticai",
-    "tests",
-]
+testpaths = ["elasticai", "tests"]
 python_files = ["*_test.py", "test_*.py"]
 
 
 [tool.coverage.run]
-omit = ["elasticai/creator/examples/*py", "elasticai/creator/tests/*py", "elasticai/creator/*Tests/*py", "elasticai/**/__init__.py"]
+omit = [
+  "elasticai/creator/examples/*py",
+  "elasticai/creator/tests/*py",
+  "elasticai/creator/*Tests/*py",
+  "elasticai/creator/**/*_test.py",
+  "elasticai/**/__init__.py",
+]
 source = ["elasticai/creator"]
-command_line = "-m unittest discover ."
+command_line = "-m pytest -m 'not simulation'"
 
-
-[tool.importlinter]
-root_package = "elasticai"
-contract_types = [
-"package_private_modules: import_contract.PackagePrivateModules"]
-
-
-[[tool.importlinter.contracts]]
-name = "package private"
-type = "package_private_modules"
-targets = ["elasticai.creator"]
-sources = ["elasticai.creator"]
-
-
-[tool.semantic_release]
-version_toml = ["pyproject.toml:tool.poetry.version"]
-major_on_zero = false
-repository = "pypi"
-upload_to_release = true
-build_command = "python3 -m pip install poetry && poetry build"
-branch = "main"
-parser_angular_allowed_types="chore,docs,feat,style,fix,refactor,wip,perf,revert"
-parser_angular_minor_types="feat"
-parser_angular_patch_types="fix,perf"
 
 
 [tool.isort]
 profile = "black"
+
+
+
+[tool.ruff]
+include = ["pyproject.toml", "src/**/*.py", "src/**/*.pyi", "test/**/*.py"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  ".devenv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8
+target-version = "py38"
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = ["D101", "D102"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

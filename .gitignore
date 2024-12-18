@@ -6,7 +6,7 @@ simulation/*
 node_modules
 .mypy_cache
 package-lock.json
-package.json
+
 .coverage
 coverage.xml
 *.onnx
@@ -247,3 +247,8 @@ Temporary Items
 /presentation/presentation.html
 /presentation/presentation.pdf
 /vhdl93-bnf.html
+.devenv/
+.direnv/
+build/
+justfile
+uv.lock

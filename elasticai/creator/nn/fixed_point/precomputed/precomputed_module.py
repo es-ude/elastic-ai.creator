@@ -2,11 +2,11 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point._math_operations import MathOperations
 from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.vhdl.design_creator import DesignCreator
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )
@@ -14,7 +14,7 @@ from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
 from .identity_step_function import IdentityStepFunction
 
 
-class PrecomputedModule(torch.nn.Module, DesignCreator):
+class PrecomputedModule(DesignCreatorModule):
     def __init__(
         self,
         base_module: torch.nn.Module,
@@ -41,7 +41,8 @@ class PrecomputedModule(torch.nn.Module, DesignCreator):
         quantized_inputs = list(map(self._config.as_integer, self._step_lut.tolist()))
         return PrecomputedScalarFunction(
             name=name,
-            width=self._config.total_bits,
+            input_width=self._config.total_bits,
+            output_width=self._config.total_bits,
             inputs=quantized_inputs,
             function=self._quantized_inference,
         )

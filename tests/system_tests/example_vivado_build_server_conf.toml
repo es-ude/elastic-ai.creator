@@ -1,0 +1,4 @@
+# Rename this file to vivado_build_server_conf.toml
+# Change ip and username accordingly
+ip = "xxx.xxx.xxx.xxx" # serverip
+username = "my_username_on_server"
