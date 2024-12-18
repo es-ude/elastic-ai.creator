@@ -65,6 +65,7 @@ omit = [
   "elasticai/creator/examples/*py",
   "elasticai/creator/tests/*py",
   "elasticai/creator/*Tests/*py",
+  "elasticai/creator/**/*_test.py",
   "elasticai/**/__init__.py",
 ]
 source = ["elasticai/creator"]
