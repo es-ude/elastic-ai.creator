@@ -2,6 +2,7 @@
 The skeleton id should be computed and set after all other code is generated.
 """
 
+from platform import python_version_tuple
 import logging
 from collections.abc import Iterable
 from hashlib import blake2b, file_digest

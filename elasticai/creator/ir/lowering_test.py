@@ -92,7 +92,7 @@ def test_can_register_and_call_iter_fn() -> None:
 
 
 def test_registering_a_name_as_iterable_and_non_iterable_yields_error() -> None:
-    p: LoweringPass[str, str] = LoweringPass()
+    p: LoweringPass = LoweringPass()
 
     @p.register
     def a(x):

@@ -44,7 +44,7 @@ def read_plugins_from_package(p: str, plugin_type: type[PluginT]) -> list[Plugin
     return list(map(build_plugin, load_dicts_from_toml("meta")))
 
 
-Loader = TypeVar("Self", bound="BasePluginLoader")
+Loader = TypeVar("Loader", bound="BasePluginLoader", contravariant=True)
 
 
 class Loadable(Protocol[Loader]):
@@ -71,8 +71,8 @@ class BasePluginLoader(ABC, Generic[Loader, PluginT]):
     @abstractmethod
     def _get_loadables(self: Loader, p: PluginT) -> dict[str, set[str]]:
         """
-        Returns a dictionary with the modules containing the loadable objects as keys and
-        a set of names of the loadable objects as values.
+        Returns a dictionary, it's keys are the modules that contain the loadable objects,
+        the values are sets of names of the objects we will want to load from these modules.
         """
         ...
 

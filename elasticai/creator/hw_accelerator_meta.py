@@ -2,7 +2,7 @@ from importlib.metadata import version as _pypackage_version
 from pathlib import Path
 
 import tomlkit as toml
-from tomlkit import TOMLFile
+from tomlkit.toml_file import TOMLFile
 
 
 class MetaFile:
