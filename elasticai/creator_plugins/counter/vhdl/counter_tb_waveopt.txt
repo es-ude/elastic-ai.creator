@@ -1,0 +1,4 @@
+/counter_tb/d_counter
+/counter_tb/enable
+/counter_tb/rst
+/counter_tb/clk
