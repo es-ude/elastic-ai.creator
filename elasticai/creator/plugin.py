@@ -18,30 +18,49 @@ class Plugin:
     package: str
 
 
-_PluginDict: TypeAlias = dict[str, str | list[str]]
+PluginDict: TypeAlias = dict[str, str | list[str]]
 
 
 PluginT = TypeVar("PluginT", bound=Plugin)
 
 
+def build_plugin(d: PluginDict, plugin_type: type[PluginT]) -> PluginT:
+    """
+    raises an `UnexpectedFieldError` in case `d` contains unexpected fields
+    """
+    args = {k: tuple(v) if not isinstance(v, str) else v for k, v in d.items()}
+    s = signature(plugin_type)
+    expected_params = set(s.parameters.keys())
+    actual_params = set(args.keys())
+    if not expected_params == actual_params:
+        if expected_params.issubset(actual_params):
+            raise UnexpectedFieldError(
+                actual_params.difference(expected_params), plugin_type
+            )
+    bound = s.bind(**args)
+    return plugin_type(*bound.args, **bound.kwargs)
+
+
 def read_plugins_from_package(p: str, plugin_type: type[PluginT]) -> list[PluginT]:
-    def load_dicts_from_toml(toml_name) -> list[_PluginDict]:
+    """
+    raises an `UnexpectedFieldError` in case any discovered config contains unexpected fields
+    """
+
+    def load_dicts_from_toml(toml_name) -> list[PluginDict]:
         t = res.files(p).joinpath(f"{toml_name}.toml")
-        parsed: list[_PluginDict] = []
+        parsed: list[PluginDict] = []
         if t.is_file():
             with t.open("rb") as f:
                 content = toml.load(f).unwrap()
                 parsed.extend(content["plugins"])
+        for d in parsed:
+            d.update(dict(package=p))
         return parsed
 
-    def build_plugin(d: _PluginDict) -> PluginT:
-        args = {k: tuple(v) if not isinstance(v, str) else v for k, v in d.items()}
-        s = signature(plugin_type)
-        args["package"] = p
-        bound = s.bind(**args)
-        return plugin_type(*bound.args, **bound.kwargs)
+    def _build(d: PluginDict) -> PluginT:
+        return build_plugin(d, plugin_type)
 
-    return list(map(build_plugin, load_dicts_from_toml("meta")))
+    return list(map(_build, load_dicts_from_toml("meta")))
 
 
 Loader = TypeVar("Loader", bound="BasePluginLoader", contravariant=True)
@@ -76,9 +95,24 @@ class BasePluginLoader(ABC, Generic[Loader, PluginT]):
         """
         ...
 
+    def _post_load_hook(self: Loader) -> None:
+        pass
+
+    def _pre_load_hook(self: Loader) -> None:
+        pass
+
     def load(self: Loader, p: PluginT) -> None:
+        self._pre_load_hook()
         for m_name, components in self._get_loadables(p).items():
             module = import_module(m_name)
             for c_name in components:
                 c: Loadable = getattr(module, c_name)
                 c.load(self)
+        self._post_load_hook()
+
+
+class UnexpectedFieldError(Exception):
+    def __init__(self, field_names: set[str], plugin_type: type[PluginT]):
+        super().__init__(
+            f"unexpected fields {field_names} for plugin '{plugin_type.__qualname__}'"  # type: ignore
+        )
