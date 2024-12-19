@@ -1,0 +1,54 @@
+v 4
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/xor_skeleton_tb.vhd" "d4daec0ae2cc639ce506ec3f8b9f6cabe79dc418" "20250122124424.507":
+  entity xor_skeleton_tb at 1( 0) + 0 on 46;
+  architecture behav of xor_skeleton_tb at 13( 240) + 0 on 47;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/buffered_network_wrapper.vhd" "0712c5aaacd4220025950889351f71b6cadf0830" "20250122124420.658":
+  entity buffered_network_wrapper at 1( 0) + 0 on 42;
+  architecture rtl of buffered_network_wrapper at 27( 700) + 0 on 43;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/conv1_lutron_filter.vhd" "1883fa223ebb1d0155e417d6656c295da7d1a80d" "20250122124420.586":
+  entity conv1_lutron_filter at 1( 0) + 0 on 38;
+  architecture rtl of conv1_lutron_filter at 10( 199) + 0 on 39;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/striding_shift_register.vhd" "0f82b22f4f1b4d6e55607bc90fe7e640b8aa408a" "20250122124420.525":
+  entity striding_shift_register at 1( 0) + 0 on 34;
+  architecture rtl of striding_shift_register at 26( 794) + 0 on 35;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/counter.vhd" "d747a719162f61beb1af1d21033d83462177311e" "20250122124420.446":
+  package counter_pkg at 1( 0) + 0 on 28 body;
+  package body counter_pkg at 10( 181) + 1 on 29;
+  entity counter at 20( 368) + 0 on 30;
+  architecture rtl of counter at 39( 770) + 0 on 31;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/lutron_2.vhd" "3e1de502c7f17dea95ab823bea0d828a7be34cf5" "20250122124420.379":
+  entity lutron_2 at 1( 0) + 0 on 24;
+  architecture rtl of lutron_2 at 10( 188) + 0 on 25;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/padding_remover.vhd" "512bcecb330f2e96be385c43bcca53cedf55da8e" "20250122124420.309":
+  entity padding_remover_per_data_point at 2( 1) + 0 on 16;
+  architecture rtl of padding_remover_per_data_point at 20( 364) + 0 on 17;
+  entity padding_remover at 44( 1218) + 0 on 18;
+  architecture rtl of padding_remover at 64( 1640) + 0 on 19;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/skeleton_pkg.vhd" "7030bb268f76375f34f47a9e206f4c03b618cd8c" "20250122124420.233":
+  package skeleton_pkg at 1( 0) + 0 on 13;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/sliding_window.vhd" "39c030e4f0c477db765b926ce4456e0d11e536f0" "20250122124420.199":
+  entity sliding_window at 1( 0) + 0 on 11;
+  architecture rtl of sliding_window at 21( 527) + 0 on 12;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/padding_pkg.vhd" "202d5a2ef92dbb9aa92fc67262291c2d7ddcbba0" "20250122124420.271":
+  package padding_pkg at 1( 0) + 0 on 14 body;
+  package body padding_pkg at 17( 380) + 0 on 15;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/padder.vhd" "886f504e75fa1a358f1ff0def56f9c8bd5ae2ead" "20250122124420.349":
+  entity padding_adder_per_data_point at 2( 1) + 0 on 20;
+  architecture rtl of padding_adder_per_data_point at 19( 355) + 0 on 21;
+  entity padder at 36( 834) + 0 on 22;
+  architecture rtl of padder at 54( 1227) + 0 on 23;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/lutron_1.vhd" "989c07987054b76ff0be59a11f2263953d952c66" "20250122124420.408":
+  entity lutron_1 at 1( 0) + 0 on 26;
+  architecture rtl of lutron_1 at 10( 188) + 0 on 27;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/shift_register.vhd" "99ee1857b88a6709fa062496d4d7e6ff56518f6b" "20250122124420.486":
+  entity shift_register at 1( 0) + 0 on 32;
+  architecture rtl of shift_register at 21( 578) + 0 on 33;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/conv2_lutron_filter.vhd" "659b7344e40053c466135ffdc424b78af2eec1e1" "20250122124420.555":
+  entity conv2_lutron_filter at 1( 0) + 0 on 36;
+  architecture rtl of conv2_lutron_filter at 10( 199) + 0 on 37;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/network.vhd" "bc13c008e9ac1fec38bb833686333b0b62501d1d" "20250122124420.616":
+  entity network at 1( 0) + 0 on 40;
+  architecture rtl of network at 14( 307) + 0 on 41;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/lutron_filter/examples/xor/build/vhdl/skeleton.vhd" "a139e20e92b601dfea60e89f1651fd0caa22b455" "20250122124420.699":
+  entity skeleton at 1( 0) + 0 on 44;
+  architecture rtl of skeleton at 36( 1202) + 0 on 45;

@@ -1,0 +1,14 @@
+= Counter
+
+The plugin provides a counter implemented in vhdl.
+
+[source, vhdl]
+--
+include:::partial$counter.vhd[lines=26..38]
+--
+1. The maximum value of the counter. After reaching this value, the counter will reset to 0.
+2. Holding the reset signal will reset the counter to 0.
+3. The counter will increment on each rising edge of the clock signal while the enable signal is high.
+4. The output of the counter as a `std_logic_vector`.
+Use `to_unsigned(0, d_out'length)` to turn this into an unsigned number again.
+

@@ -1,0 +1,12 @@
+Seed for elasticai.xor_skeleton_tb.all: bd1c4874321c77fe
+../../src/ieee2008/numeric_std-body.vhdl:3036:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+           48000 fs - default              -    INFO - input bytes 00000000 expected: 00000000
+          100000 fs - default              -    INFO - input bytes 00000001 expected: 00000001
+          152000 fs - default              -    INFO - input bytes 00000010 expected: 00000001
+          204000 fs - default              -    INFO - input bytes 00000011 expected: 00000000
+          256000 fs - default              -    INFO - input bytes 00000100 expected: 00000000
+          308000 fs - default              -    INFO - input bytes 00000101 expected: 00000001
+          360000 fs - default              -    INFO - input bytes 00000110 expected: 00000001
+          412000 fs - default              -    INFO - input bytes 00001000 expected: 00000000
+          464000 fs - default              -    INFO - input bytes 00001001 expected: 00000001
+simulation stopped @484ps with status 0
