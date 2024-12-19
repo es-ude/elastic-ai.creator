@@ -37,6 +37,55 @@ in
 
   };
 
+  scripts = {
+    new_docs_for_creator_plugin = {
+      exec = ''
+        mkdir -p elasticai/creator_plugins/$1/docs/modules/ROOT/pages
+        echo "= $1
+        " > elasticai/creator_plugins/$1/docs/modules/ROOT/pages/index.adoc
+        touch elasticai/creator_plugins/$1/docs/modules/ROOT/nav.adoc
+        echo "name: <name>
+        version: true
+        title: <title>
+        nav:
+         - modules/ROOT/nav.adoc" > elasticai/creator_plugins/$1/docs/antora.yml
+      '';
+      package = pkgs.bash;
+      description = "create new plugin including docs folder";
+    };
+
+    new_meta_for_creator_plugin = {
+      exec = ''
+        echo "
+        [[plugins]]
+        name = '$1'
+        version = '0.1'
+        api_version = 'xx.xx'
+        target_runtime = 'runtime'
+        target_platform = 'platform'
+
+        " > elasticai/creator_plugins/$1/meta.toml
+        '';
+        package = pkgs.bash;
+        description = "create a new minimal meta.toml file for a plugin";
+    };
+
+    new_creator_plugin = {
+      exec = ''
+        if [ -d elasticai/creator_plugins/$1 ]; then
+           mkdir -p elasticai/creator_plugins/$1
+           touch elasticai/creator_plugins/$1/__init__.py
+           new_meta_for_creator_plugin $1
+           new_docs_for_creator_plugin $1
+        else
+          echo "plugin already exists"
+        fi
+      '';
+      package = pkgs.bash;
+      description = "create a new creator plugin incl. meta.toml and docs";
+    };
+  };
+
   tasks = {
     "test:vhdl_plugins" = {
       exec = ''echo "running testbenches for discovered plugins"
