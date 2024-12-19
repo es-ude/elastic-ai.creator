@@ -83,7 +83,7 @@ omit = [
   "elasticai/creator/utils/_console_out.py",  # not testable
   "elasticai/creator/utils/_run.py",  # not testable
 ]
-source = ["elasticai/creator"]
+source = ["elasticai/creator", "elasticai/creator_plugins"]
 command_line = "-m pytest -m 'not simulation'"
 
 
