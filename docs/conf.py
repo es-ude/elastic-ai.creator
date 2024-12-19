@@ -10,7 +10,6 @@ from importlib.metadata import version as _version
 from pathlib import Path
 
 from tomllib import load as _load_toml
-from typing import Any
 
 project = "elastic-ai.creator"
 copyright = "2024, ies-ude (Intelligent Embedded System - University Duisburg-Essen)"
