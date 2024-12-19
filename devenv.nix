@@ -184,6 +184,13 @@ in {
       exec = "${unstablePkgs.uv}/bin/uv build";
     };
 
+    "docs:single-page" = {
+      exec = ''
+        export LC_ALL=C  # necessary to run in github action
+        ${uv_run} sphinx-build -b singlehtml docs build/docs
+      '';
+    };
+
     "docs:build" = {
       exec = ''
         export LC_ALL=C  # necessary to run in github action
