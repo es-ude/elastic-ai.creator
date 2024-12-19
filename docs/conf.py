@@ -29,7 +29,8 @@ extensions = [
     "sphinxext.opengraph",
     "sphinxcontrib.plantuml",
     "sphinxcontrib.mermaid",
-    # "sphinxcontrib.wavedrom",  # TODO: make wavedrom work to render waveforms
+    # "sphinxcontrib.kroki",
+    "sphinxcontrib.wavedrom",  # TODO: make wavedrom work to render waveforms
 ]
 
 templates_path = ["_templates"]
@@ -64,7 +65,7 @@ myst_enable_extensions = [
 ]
 
 # allow mermaid usage like on github in markdown
-myst_fence_as_directive = ["mermaid"]
+myst_fence_as_directive = ["mermaid", "wavedrom"]
 
 running_in_autobuild = os.getenv("SPHINX_AUTOBUILD", "NO") == "YES"
 
