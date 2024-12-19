@@ -1,7 +1,5 @@
 # Creator
 
-
-
 ```{include} ../../README.md
 :start-line: 2
 :end-line: 13
