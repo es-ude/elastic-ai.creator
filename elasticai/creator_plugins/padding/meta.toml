@@ -1,0 +1,14 @@
+
+[[plugins]]
+name = 'padding'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = []
+static_files = [
+  "padder.vhd",
+  "padding_pkg.vhd",
+  "padding_remover.vhd",
+]
+
