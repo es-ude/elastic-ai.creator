@@ -11,7 +11,12 @@ dependencies = [
   "torch>=1.11",
   "numpy>=1.23.0",
   "tomlkit>=0.13.2",
+  "click>=8.1.7",
 ]
+
+
+[project.scripts]
+eai-run-ghdl-tbs-for-plugins = "elasticai.creator.utils.run_ghdl_tbs_on_plugins:main"
 
 [dependency-groups]
 dev = [
