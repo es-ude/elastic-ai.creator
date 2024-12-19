@@ -54,6 +54,9 @@ jobs:
   check-docs-build:
     name: check that docs build
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
     steps:
       - name: checkout repo shallowly
         uses: actions/checkout@v3
@@ -62,7 +65,27 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run docs build check
-        run: devenv shell devenv tasks run docs:build
+        shell: devenv shell bash -- -e {0}
+        run: |
+          devenv tasks run docs:single-page
+          nix run nixpkgs#monolith -- build/docs/index.html > build/docs/single_page.html
+      - name: Upload docs preview
+        uses: actions/upload-artifact@v4
+        id: artifact-upload
+        with:
+          name: docs-preview
+          path: build/docs/single_page.html
+          retention-days: 7
+      - name: Comment on PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          comment_tag: docs-preview
+          message: |
+            📚 Documentation preview has been built and attached as an artifact.
+
+            [Download Documentation Preview](${{ steps.artifact-upload.outputs.artifact-url }})
+
+            You can also find it in the "Artifacts" section of this workflow run.
 
   check-tests:
     name: Run all tests
