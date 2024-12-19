@@ -38,10 +38,14 @@ in {
   };
 
   processes = {
-    serve_docs.exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild docs build/docs/";
+    serve_docs.exec = "serve_docs";
   };
 
   scripts = {
+    serve_docs = {
+      exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
+    };
+
     new_docs_for_creator_plugin = {
       exec = ''
         mkdir -p elasticai/creator_plugins/$1/docs/modules/ROOT/pages
@@ -118,7 +122,9 @@ in {
     };
   };
 
-  tasks = {
+  tasks = let
+    uv_run = "${unstablePkgs.uv}/bin/uv run";
+  in {
     "check:vhdl-plugins" = {
       exec = ''
         run_vhdl_tbs . "run_tbs.py"
@@ -127,25 +133,25 @@ in {
     };
 
     "check:slow-tests" = {
-      exec = "${unstablePkgs.uv}/bin/uv run pytest -m 'simulation'";
+      exec = "${uv_run} pytest -m 'simulation'";
       before = ["check:tests"];
     };
 
     "check:fast-tests" = {
       exec = ''
-        ${unstablePkgs.uv}/bin/uv run coverage run
-        ${unstablePkgs.uv}/bin/uv run coverage xml
+        ${uv_run} coverage run
+        ${uv_run} coverage xml
       '';
       before = ["check:tests"];
     };
 
     "check:types" = {
-      exec = "${unstablePkgs.uv}/bin/uv run mypy -p elasticai.creator";
+      exec = "${uv_run} mypy -p elasticai.creator";
       before = ["check:code-lint"];
     };
 
     "check:python-lint" = {
-      exec = "${unstablePkgs.uv}/bin/uv run ruff check";
+      exec = "${uv_run} ruff check";
       before = ["check:code-lint"];
     };
 
@@ -165,12 +171,12 @@ in {
     };
 
     "check:formatting" = {
-      exec = "${unstablePkgs.uv}/bin/uv run ruff format --check";
+      exec = "${uv_run} ruff format --check";
       before = ["check:code-lint"];
     };
 
     "check:architecture" = {
-      exec = "${unstablePkgs.uv}/bin/uv run tach check";
+      exec = "${uv_run} tach check";
       before = ["check:code-lint"];
     };
 
@@ -178,12 +184,10 @@ in {
       exec = "${unstablePkgs.uv}/bin/uv build";
     };
 
-    "docs:build" = let
-      uv_run = "${unstablePkgs.uv}/bin/uv run";
-    in {
+    "docs:build" = {
       exec = ''
         export LC_ALL=C  # necessary to run in github action
-        ${uv_run} sphinx-build -b html docs build/docs
+        ${uv_run} sphinx-build -j auto -b html docs build/docs
         touch build/docs/.nojekyll  # prevent github from trying to build the docs
       '';
     };

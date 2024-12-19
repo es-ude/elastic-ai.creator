@@ -39,6 +39,12 @@ docs = [
     "sphinx-autodoc2>=0.5.0",
     "sphinxext-opengraph>=0.9.1",
     "sphinxcontrib-kroki>=1.3.0",
+    "zundler>=0.2.2",
+    "sphinx-book-theme>=1.1.3",
+    "sphinx-togglebutton>=0.3.2",
+    "htmlark[http,parsers]>=1.0.0",
+    "pydata-sphinx-theme>=0.16.1",
+    "sphinx-design>=0.6.1",
 ]
 release = ["git-cliff>=2.7.0"]
 testing = [
