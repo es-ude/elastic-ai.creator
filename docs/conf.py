@@ -10,12 +10,14 @@ from importlib.metadata import version as _version
 from pathlib import Path
 
 from tomllib import load as _load_toml
+from typing import Any
 
 project = "elastic-ai.creator"
 copyright = "2024, ies-ude (Intelligent Embedded System - University Duisburg-Essen)"
 author = "es-ude"
 release = _version("elasticai.creator")
 version = ".".join(_version("elasticai.creator").split(".")[0:2])
+html_title = "Elastic-AI.creator"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -23,13 +25,18 @@ version = ".".join(_version("elasticai.creator").split(".")[0:2])
 extensions = [
     "myst_parser",
     "sphinx_copybutton",
+    "sphinx_togglebutton",
+    "sphinx_book_theme",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx.ext.todo",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.graphviz",
+    "sphinx_design",
     "autodoc2",
     "sphinxext.opengraph",
     "sphinxcontrib.plantuml",
     "sphinxcontrib.mermaid",
-    # "sphinxcontrib.kroki",
     "sphinxcontrib.wavedrom",  # TODO: make wavedrom work to render waveforms
 ]
 
@@ -39,11 +46,31 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+# Default theme configuration
+html_show_sourcelink = False
 
-html_theme = "furo"
-html_static_path = ["_static"]
 
-# options for myst
+# Configure theme based on build type
+html_theme = "pydata_sphinx_theme"
+html_theme_options = {
+    "content_footer_items": ["last-updated"],
+    "repository_url": "https://github.com/es-ude/elastic-ai.creator/",
+    "path_to_docs": "docs",
+    "navigation_depth": 4,
+    "icon_links": [
+        {
+            # Label for this link
+            "name": "GitHub",
+            # URL where the link will redirect
+            "url": "https://github.com/es-ude/elastic-ai.creator/",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
+            "icon": "fa-brands fa-square-github",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        }
+    ],
+}
+
 
 # only github flavored markdown
 myst_gfm_only = False
@@ -138,11 +165,3 @@ autodoc2_hidden_objects = {"inherited", "private"}
 
 myst_heading_anchors = 3
 myst_heading_slug = True
-
-
-html_theme_options = {
-    "source_repository": "https://github.com/es-ude/elastic-ai.creator/",
-    "source_branch": "main",
-    "source_directory": "docs",
-}
-html_title = f"{project} {release}"

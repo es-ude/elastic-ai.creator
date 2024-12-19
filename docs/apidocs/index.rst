@@ -8,7 +8,10 @@ This page contains auto-generated API reference documentation [#f1]_.
 
    elasticai.creator/elasticai.creator
    elasticai.creator_plugins.middleware/elasticai.creator_plugins.middleware
+   elasticai.creator_plugins.shift_register/elasticai.creator_plugins.shift_register
    elasticai.creator_plugins.skeleton/elasticai.creator_plugins.skeleton
+   elasticai.creator_plugins.striding_shift_register/elasticai.creator_plugins.striding_shift_register
+   elasticai.creator_plugins.sliding_window/elasticai.creator_plugins.sliding_window
    elasticai.creator_plugins.padding/elasticai.creator_plugins.padding
    elasticai.creator_plugins.counter/elasticai.creator_plugins.counter
 
