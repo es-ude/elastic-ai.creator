@@ -113,8 +113,8 @@ begin
         port map (
             clk => clock,
             rst => rst_network,
-            done => done,
-            enable => network_enable,
+            valid_out => done,
+            valid_in => network_enable,
             d_in => mw_rx_buffer_v,
             d_out => mw_tx_buffer_v
         );
