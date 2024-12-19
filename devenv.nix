@@ -20,6 +20,7 @@ in
     pkgs.gtkwave  # visualize wave forms from hw simulations
     pkgs.python312
     pkgs.python310
+    pkgs.xunit-viewer
     pkgs.hwatch  # continually rerun a command and print its output
     pkgs.jujutsu  # next generation vcs for mental sanity
     pkgs.diffedit3  # 3-pane merge editor
@@ -38,6 +39,15 @@ in
     uv.sync.enable = false;
     uv.sync.allExtras = false;
 
+  };
+
+  tasks = {
+    "bash:run_ghdl_hw_tests_for_plugins" = {
+      exec = ''echo "running testbenches for discovered plugins"
+        ${unstablePkgs.uv}/bin/uv run eai-run-ghdl-tbs-for-plugins
+        '';
+      before = [ "devenv:enterTest" ];
+    };
   };
 
   ## Commented out while we're configuring pre-commit manually

@@ -252,3 +252,7 @@ Temporary Items
 build/
 justfile
 uv.lock
+
+
+# ignore files produced by xunit-viewer
+index.html
