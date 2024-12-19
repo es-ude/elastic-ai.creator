@@ -27,13 +27,14 @@ class RequiredField(Generic[StoredT, VisibleT]):
     hold for all applicable `x`.
 
     E.g.
-
+    ```python
     >>> class A:
     ...    number: MandatoryField[str, int] = MandatoryField(set_transform=str, get_transform=int)
     >>> a = A({'number': "12"})
     >>> a.number = a.number + 3
     >>> a.data
     {'number': "15"}
+    ```
     """
 
     __slots__ = ("set_convert", "get_convert", "name")

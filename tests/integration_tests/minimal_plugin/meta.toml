@@ -5,5 +5,3 @@ target_runtime = "vhdl"
 version = "0.1"
 api_version = "0.1"
 generated = ["convolution" ]
-templates = [ "skeleton_id_pkg" ]
-static_files = [ "constraints.xdc" ]

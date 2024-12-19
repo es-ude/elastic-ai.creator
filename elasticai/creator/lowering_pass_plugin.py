@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
+from elasticai.creator.function_utils import FunctionDecoratorFactory
 from elasticai.creator.ir import Lowerable
 from elasticai.creator.ir import LoweringPass as _LoweringPass
-from elasticai.creator.function_utils import FunctionDecoratorFactory
 from elasticai.creator.plugin import (
     BasePluginLoader as _BasePluginLoader,
 )
@@ -17,21 +16,12 @@ Tin = TypeVar("Tin", bound=Lowerable)
 Tout = TypeVar("Tout")
 
 
-@dataclass(frozen=True)
-class SubFolderStructure:
-    generated: str
-    templates: str
-    static_files: str
-
-
 @dataclass
 class Plugin(_BasePlugin):
-    generated: list[str]
-    templates: list[str]
-    static_files: list[str]
+    generated: tuple[str, ...] | list[str]
 
 
-class Loader(_BasePluginLoader["Loader", Plugin], ABC, Generic[Tin, Tout]):
+class Loader(_BasePluginLoader["Loader", Plugin], Generic[Tin, Tout]):
     """Connects a LoweringPass and corresponding plugins.
 
     Plugins can provide types that will be registered at the lowering pass.
@@ -43,12 +33,8 @@ class Loader(_BasePluginLoader["Loader", Plugin], ABC, Generic[Tin, Tout]):
         super().__init__(plugin_type=Plugin)
         self._lowering = lowering
 
-    @property
-    @abstractmethod
-    def folders(self) -> SubFolderStructure: ...
-
     def _get_loadables(self, p: Plugin) -> dict[str, set[str]]:
-        module = f"{p.package}.{self.folders.generated}"
+        module = f"{p.package}.src"
         loadables: dict[str, set[str]] = {module: set()}
         for name in p.generated:
             loadables[module].add(name)
@@ -111,7 +97,7 @@ class IterableTypeHandlerDecorator(
     """Mark a function that returns an Iterable[Tout] as a type handler for a lowering pass."""
 
     def __init__(self):
-        super().__init__(_GeneratedCodeType)
+        super().__init__(_GeneratedIterableCodeType)
 
 
 type_handler: TypeHandlerDecorator = TypeHandlerDecorator()

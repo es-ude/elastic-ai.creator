@@ -3,7 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from elasticai.creator.ir import Lowerable, LoweringPass
-from elasticai.creator.lowering_pass_plugin import Loader, Plugin, SubFolderStructure
+from elasticai.creator.lowering_pass_plugin import Loader, Plugin
 from elasticai.creator.plugin import read_plugins_from_package
 
 
@@ -14,7 +14,7 @@ def plugin() -> Plugin:
 
 
 class PluginLoader(Loader):
-    folders = SubFolderStructure("src", "vhdl", "static")
+    pass
 
 
 def test_can_read_plugin(plugin) -> None:
@@ -27,8 +27,6 @@ def test_can_read_plugin(plugin) -> None:
             version="0.1",
             api_version="0.1",
             generated=("convolution",),
-            templates=("skeleton_id_pkg",),
-            static_files=("constraints.xdc",),
             package="tests.integration_tests.minimal_plugin",
         )
         == p

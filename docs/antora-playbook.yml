@@ -1,0 +1,13 @@
+site:
+  title: elasticai.creator Documentation
+  start_page: elasticai-creator::index.adoc
+content:
+  sources:
+    - url: ./../
+      branch: HEAD
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+  supplemental_files: ./supplemental-ui/
