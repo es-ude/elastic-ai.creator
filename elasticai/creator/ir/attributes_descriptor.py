@@ -4,7 +4,7 @@ from typing import Protocol
 from .attribute import Attribute
 
 
-class IrData(Protocol):
+class _IrData(Protocol):
     _fields: dict[str, type]
     data: dict[str, Attribute]
 
@@ -52,5 +52,5 @@ class AttributesDescriptor:
     NOTE: The returned Mapping is read only
     """
 
-    def __get__(self, instance: IrData, owner=type[IrData] | None):
+    def __get__(self, instance: _IrData, owner=type[_IrData] | None):
         return _ReadOnlyMappingWithHiddenFields(instance.data, instance._fields)
