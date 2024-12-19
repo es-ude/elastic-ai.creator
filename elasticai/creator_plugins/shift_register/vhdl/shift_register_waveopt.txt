@@ -1,0 +1,17 @@
+/shift_register_tb/dut_i/counter_i/enable
+/shift_register_tb/dut_i/counter_i/d_out
+/shift_register_tb/dut_i/counter_i/clk
+/shift_register_tb/dut_i/counter_i/rst
+/shift_register_tb/dut_i/valid_in
+/shift_register_tb/dut_i/valid_out
+/shift_register_tb/dut_i/d_out
+/shift_register_tb/dut_i/d_in
+/shift_register_tb/x
+/shift_register_tb/y
+/shift_register_tb/enable
+/shift_register_tb/sample_id
+/shift_register_tb/rst
+/shift_register_tb/valid_out
+/shift_register_tb/clk
+/shift_register_tb/current_expected
+/shift_register_tb/expected_id
