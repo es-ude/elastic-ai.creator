@@ -1,0 +1,5 @@
+name: Skeleton
+version: true
+title: skeleton
+nav:
+  - modules/ROOT/nav.adoc

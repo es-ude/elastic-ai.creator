@@ -1,0 +1,75 @@
+= Buffered network wrapper
+
+This component handles preparing the data for the network and providing access to the network output in the correct format.
+
+It will:
+
+. read the buffered input data from the middleware
+. remove padding from the input data
+. use a sliding window to feed the buffered data to the network
+. pad output data for the middleware
+
+
+[IMPORTANT]
+.Connecting to a neural network
+====
+The wrapper instantiates the network as
+
+[,vhdl]
+----
+network_i: entity work.network(rtl) ...
+----
+
+Make sure to define your network as such.
+====
+
+== Network interface
+
+The wrapper expects the network to define the following interface:
+
+|===
+| Name | Direction | Type | Description
+
+| `clk`
+| `in`
+| `std_logic`
+| Clock signal
+
+| `valid_in`
+| `in`
+| `std_logic`
+| `'1'` on *rising* edge signals valid input data
+
+| `valid_out`
+| `out`
+| `std_logic`
+| `'1'` on *rising* edge signals valid output data
+
+| `rst`
+| `in`
+| `std_logic`
+a| asynchronous reset
+
+* set to `'1'` to reset the network
+* set to `'0'` to release the reset and allow processing
+
+| `d_in`
+| `in`
+| `std_logic_vector`
+| input data window
+
+| `d_out`
+| `out`
+| `std_logic_vector`
+| all output data
+|===
+
+
+== Known Issues
+
+* The final shift register is always created, even in cases
+  where the network does not need it, because the result
+  can be read from the last layer directly.
+  In the future we could just check whether network output
+  dimension is the same as result dimension and skip
+  the shift register in that case.

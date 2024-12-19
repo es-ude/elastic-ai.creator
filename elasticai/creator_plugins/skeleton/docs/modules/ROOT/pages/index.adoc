@@ -1,0 +1,6 @@
+= Skeleton
+
+This skeleton implementation acts as an adapter between the middleware and the new axi-like interfaces for layers.
+It will read the input data from the middleware, store it, feed it to the network, and write the output data back to the middleware.
+Additionally, it takes care of enabling and resetting the network.
+Most of the logic that does not directly deal with the middleware lives in the xref:::buffered-network-wrapper.adoc[Buffered Network Wrapper].
