@@ -121,5 +121,9 @@ path = "elasticai.creator_plugins.skeleton"
 depends_on = ["elasticai.creator.plugin", "elasticai.creator.ir2vhdl"]
 
 [[modules ]]
+path = "elasticai.creator_plugins.lutron"
+depends_on = ["elasticai.creator.ir2vhdl"]
+
+[[modules ]]
 path = "<root>"
-depends_on = ["elasticai.creator.nn.fixed_point", "elasticai.creator.vhdl", "elasticai.creator.file_generation", "elasticai.creator.nn"]
+depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.nn", "elasticai.creator.vhdl"]
