@@ -1,0 +1,14 @@
+v 4
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/skeleton/static/skeleton_pkg.vhd" "a1410a2bc3347d4c6e800038f418a1b1022ad01e" "20241221152914.413":
+  package skeleton_pkg at 1( 0) + 0 on 4;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/skeleton/vhdl/skeleton.vhd" "41576fc0d2772d06e7a3c33f6bd2b88a87057624" "20241221152914.412":
+  entity skeleton at 1( 0) + 0 on 4;
+  architecture rtl of skeleton at 36( 1182) + 0 on 4;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/counter/vhdl/counter_tb.vhd" "ffcaa69e08cc6e483192893b862d4b5f81e351f4" "20241221152914.592":
+  entity counter_tb at 22( 468) + 0 on 15;
+  architecture behavioral of counter_tb at 42( 949) + 0 on 16;
+file / "/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/counter/vhdl/counter.vhd" "7104a6580af2fae0df68bfddb8ca92e4c8b2e348" "20241221152914.592":
+  package counter_pkg at 1( 0) + 0 on 11 body;
+  package body counter_pkg at 10( 181) + 1 on 12;
+  entity counter at 20( 368) + 0 on 13;
+  architecture rtl of counter at 39( 770) + 0 on 14;

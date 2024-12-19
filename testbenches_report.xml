@@ -1,0 +1,2 @@
+<testsuites><testsuite name="counter_tb" file="/Users/lukas/Projects/ies-ude/elasticai-new-creator/elasticai/creator_plugins/counter/vhdl/counter_tb.vhd" tests="1" failures="0" successes="1"><system-err /><system-out /><system-err /><system-out>simulation finished @410ns
+</system-out></testsuite></testsuites>
