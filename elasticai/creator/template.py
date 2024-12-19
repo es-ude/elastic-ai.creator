@@ -1,13 +1,15 @@
 from typing import TypeAlias, Protocol, runtime_checkable, AnyStr
-from collections.abc import Sequence
+from collections.abc import Sequence, Callable
 from string import Template as _pyTemplate
 from re import Match, Pattern, compile as _regex_compile
+from functools import singledispatchmethod
+
 
 TemplateParameter: TypeAlias = int | str
 
 
 class Template(Protocol):
-    def render(mapping: dict[str, TemplateParameter]) -> Sequence[str]: ...
+    def render(self, mapping: dict[str, TemplateParameter]) -> str: ...
 
 
 class _Template:
@@ -65,6 +67,9 @@ class TemplateBuilder:
     def __init__(self) -> None:
         self._prototype = ""
         self._parameters: dict[str, TemplateParameterType] = dict()
+        self._analysing_template_parameters: dict[
+            str, AnalysingTemplateParameterType
+        ] = dict()
         self._template = _pyTemplate("")
         self._cached_template_is_valid = False
 
@@ -78,9 +83,33 @@ class TemplateBuilder:
             self._prototype = "\n".join(prototype)
         return self
 
-    def add_parameter(self, name, _type: TemplateParameterType) -> "TemplateBuilder":
+    def add_parameter(
+        self, name: str, _type: TemplateParameterType
+    ) -> "TemplateBuilder":
         self._invalidate_cache()
-        self._parameters[name] = _type
+        self._parameter_type_adder(_type)(name)
+        return self
+
+    @singledispatchmethod
+    def _parameter_type_adder(
+        self, _type: TemplateParameterType | AnalysingTemplateParameterType
+    ) -> Callable[[str], None]:
+        raise NotImplementedError()
+
+    @_parameter_type_adder.register
+    def _(self, _type: TemplateParameterType) -> Callable[[str], None]:
+        def adder(name: str):
+            self._parameters[name] = _type
+
+        return adder
+
+    @_parameter_type_adder.register
+    def _(self, _type: AnalysingTemplateParameterType) -> Callable[[str], None]:
+        def adder(name: str):
+            self._parameters[name] = _type
+            self._analysing_template_parameters[name] = _type
+
+        return adder
 
     def build(self) -> Template:
         if not self._cached_template_is_valid:
@@ -91,14 +120,27 @@ class TemplateBuilder:
 
     def _replace(self, m: Match) -> str:
         type_name = m.lastgroup
-        replacement = self._parameters[type_name].replace
+        if type_name is not None:
+            replacement = self._parameters[type_name].replace
+        else:
+            raise ValueError("no match found")
         return replacement(m)
 
     def _analyse(self) -> None:
         regex = self._build_analyse_regex()
         for match in regex.finditer(self._prototype):
-            parameter = self._parameters[match.lastgroup]
-            parameter.analyse(match)
+            analyse = self._get_analyser(match.lastgroup)
+            analyse(match)
+
+    def _get_analyser(self, name: str | None) -> Callable[[Match], None]:
+        if name is not None and name in self._analysing_template_parameters:
+            return self._analysing_template_parameters[name].analyse
+        else:
+
+            def analyse(m: Match):
+                pass
+
+            return analyse
 
     def _build_analyse_regex(self) -> Pattern:
         regex = "|".join(

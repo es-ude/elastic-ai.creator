@@ -44,13 +44,12 @@ class Loader(_BasePluginLoader["Loader", Plugin], ABC, Generic[Tin, Tout]):
         self._lowering = lowering
 
     @property
-    @classmethod
     @abstractmethod
-    def folders() -> SubFolderStructure: ...
+    def folders(self) -> SubFolderStructure: ...
 
     def _get_loadables(self, p: Plugin) -> dict[str, set[str]]:
         module = f"{p.package}.{self.folders.generated}"
-        loadables = {module: set()}
+        loadables: dict[str, set[str]] = {module: set()}
         for name in p.generated:
             loadables[module].add(name)
         return loadables
