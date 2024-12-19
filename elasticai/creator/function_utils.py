@@ -11,13 +11,11 @@ class FunctionDecoratorFactory(Generic[FN, Tout]):
     IMPORTANT: if you want to use this as a decorator, do not forget to
     return the wrapped function from your callback.
 
-    Parameters
-    ----------
-    callback : will be called as `callback(name, fn)`
+    .Parameters
+    callback:: will be called as `callback(name, fn)`
 
-
-    Example
-    -------
+    .Example:
+    ```python
     >>> registry = dict()
     >>> def register_fn(name, fn):
     ...  registry[name] = fn
@@ -30,7 +28,7 @@ class FunctionDecoratorFactory(Generic[FN, Tout]):
     >>> register(my_fn)
     >>> registry["my_fn"]("hello, world!")
     "hello, world!"
-
+    ```
 
     another example could look like this
 

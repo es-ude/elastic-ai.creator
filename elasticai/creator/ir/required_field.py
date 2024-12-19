@@ -1,10 +1,11 @@
 from collections.abc import Callable
-from typing import cast, TypeVar, Generic
+from typing import Generic, TypeVar, cast
+
 from typing_extensions import TypeIs
+
 from elasticai.creator.ir.attribute import Attribute
 
 from ._has_data import HasData
-
 
 StoredT = TypeVar("StoredT", bound=Attribute)
 VisibleT = TypeVar("VisibleT")
@@ -27,13 +28,14 @@ class RequiredField(Generic[StoredT, VisibleT]):
     hold for all applicable `x`.
 
     E.g.
-
+    ```python
     >>> class A:
     ...    number: MandatoryField[str, int] = MandatoryField(set_transform=str, get_transform=int)
     >>> a = A({'number': "12"})
     >>> a.number = a.number + 3
     >>> a.data
     {'number': "15"}
+    ```
     """
 
     __slots__ = ("set_convert", "get_convert", "name")
