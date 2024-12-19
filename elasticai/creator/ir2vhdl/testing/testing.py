@@ -11,7 +11,7 @@ def run_vunit_vhdl_testbenches(deps: list[str], test_dir: Path | str):
         test_dir = Path(test_dir)
     test_dir = test_dir.absolute()
     logger.info("using test_dir {}".format(test_dir))
-    vu = VUnit.from_argv([])
+    vu = VUnit.from_argv()
     vu.add_vhdl_builtins()
     lib = vu.add_library("lib")
     for testbench in test_dir.glob("*_tb.vhd"):
