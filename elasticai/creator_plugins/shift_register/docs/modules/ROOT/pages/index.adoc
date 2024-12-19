@@ -1,0 +1,12 @@
+= Shift register plugin
+
+This plugin implements a shift register in VHDL. 
+The shift register is a digital circuit that can store and shift data.
+The plugin is parameterized by the width of the data points (`WIDTH`) and 
+the number of data points to make available for reading via the outgoing line `d_out`.
+
+
+[source]
+--
+include:::partial$shift_register.vhd[lines=5..20]
+--

@@ -1,0 +1,5 @@
+name: shift_register
+version: true
+title: Shift register
+nav:
+ - modules/ROOT/nav.adoc
