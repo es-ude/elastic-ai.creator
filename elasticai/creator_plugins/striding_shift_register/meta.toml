@@ -1,0 +1,12 @@
+
+[[plugins]]
+name = 'striding_shift_register'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = []
+static_files = [
+  "striding_shift_register.vhd",
+]
+
