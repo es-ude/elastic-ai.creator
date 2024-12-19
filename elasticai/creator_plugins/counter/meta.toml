@@ -1,0 +1,10 @@
+
+[[plugins]]
+name = 'counter'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = []
+static_files = ["counter.vhd"]
+
