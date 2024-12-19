@@ -37,7 +37,7 @@ architecture behav of padding_remover_tb is
 begin
 
 
-  clk <= not clk after clk_cycle;
+  clk <= not clk after clk_freq;
 
 
   dut_i : entity work.padding_remover(rtl)
