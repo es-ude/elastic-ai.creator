@@ -33,11 +33,7 @@ in
   languages.python = {
     enable = true;
     package = pkgs.python311;
-    poetry.enable = true;
-    poetry.activate.enable = false;
-    uv.enable = false;
-    venv.enable = false;
-    
+    uv.enable = true;
     uv.package = unstablePkgs.uv;
     uv.sync.enable = false;
     uv.sync.allExtras = false;

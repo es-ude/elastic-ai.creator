@@ -1,54 +1,60 @@
-[tool.poetry]
+[project]
 name = "elasticai.creator"
 version = "0.60.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 repository = "https://github.com/es-ude/elastic-ai.creator"
-authors = ["Department Embedded Systems - University Duisburg Essen"]
-packages = [{ include = "elasticai/" }]
-exclude = ["elasticai/**/*_test.py", "elasticai/**/test_*.py"]
+authors = [{name= "Department Embedded Systems - University Duisburg Essen"}]
+maintainers = [{name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de"}]
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=1.11",
+  "numpy>=1.23.0",
+  "tomlkit>=0.13.2",
+]
 
-
-[tool.poetry.dependencies]
-python = ">= 3.10, <4.0"
-torch = ">=1.11"
-numpy = "^1.23.0"
-tomlkit = "^0.13.2"
-
-
-[tool.poetry.group.release.dependencies]
-git-cliff = "^2.7.0"
-
-[tool.poetry.group.testing.dependencies]
-pytest = "^8.3.4"
-pytest-cov = "^6.0.0"
-
-
-[tool.poetry.group.lsp.dependencies]
-python-lsp-server = "^1.12.0"
-pylsp-mypy = "^0.6.9"
-pylsp-rope = "^0.1.17"
-ruff = "^0.8.3"
-
-
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^4.0.1"
-setuptools = "^67.5.1"
-elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
+[dependency-groups]
+dev = [
+    "build>=1.2.2.post1",
+    "pre-commit>=4.0.1"
+]
+release = ["git-cliff>=2.7.0"]
+testing = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "coverage>=7.6.9",
+]
+utils = [
+    "rust-just>=1.38.0",
+]
+versioning = [
+    "towncrier>=24.8.0",
+]
+lint = [
+    "mypy>=1.13.0",
+    "ruff>=0.8.2",
+]
+lsp = [
+    "pylsp-mypy>=0.6.9",
+    "pylsp-rope>=0.1.17",
+    "python-lsp-server>=1.12.0",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["elasticai"]
+exclude = ["*_test.py", "test_*.py"]
 
 
-[tool.pylint]
-max-line-length = 88
-accept-no-raise-doc = "False"
-disable = "C0115, C0116, C0114" # disable missing docstring messages as they incourage adding noise comments
+[tool.uv]
+default-groups = ["utils", "testing", "lint", "dev"]
 
 
-[tool.black]
-preview = true
+[tool.uv.sources]
+elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
 
 
 [tool.pytest.ini_options]
@@ -73,13 +79,8 @@ command_line = "-m pytest -m 'not simulation'"
 
 
 
-[tool.isort]
-profile = "black"
-
-
-
 [tool.ruff]
-include = ["pyproject.toml", "src/**/*.py", "src/**/*.pyi", "test/**/*.py"]
+include = ["pyproject.toml", "elasticai/**/*.py", "elasticai/**/*.pyi", "elasticai/**/*.py"]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -119,10 +120,15 @@ indent-width = 4
 # Assume Python 3.8
 target-version = "py38"
 
-[lint]
+[tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 select = ["E4", "E7", "E9", "F"]
-ignore = ["D101", "D102"]
+ignore = [
+    "D101", 
+    "D102",
+    "E741", # ambiguous variable names
+    "F401", # unused import, add symbol to __all__
+]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -131,7 +137,7 @@ unfixable = []
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-[format]
+[tool.ruff.format]
 # Like Black, use double quotes for strings.
 quote-style = "double"
 
