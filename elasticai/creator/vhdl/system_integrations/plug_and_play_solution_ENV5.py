@@ -28,11 +28,9 @@ warnings.warn(
 
 
 class _DesignAndTestbenchCreator(Protocol):
-    def create_design(self, name: str) -> Design:
-        ...
+    def create_design(self, name: str) -> Design: ...
 
-    def create_testbench(self, name: str, design: Design) -> Design:
-        ...
+    def create_testbench(self, name: str, design: Design) -> Design: ...
 
 
 class FirmwareLSTMENv5:
@@ -78,7 +76,6 @@ class FirmwareEchoServerSkeletonV2:
             skeleton = EchoSkeletonV2(self._num_inputs, bitwidth=self._bitwidth)
             self.skeleton_id = skeleton._id
             skeleton.save_to(destination.create_subpath("skeleton"))
-
 
             middleware = Middleware()
             middleware.save_to(destination.create_subpath("middleware"))

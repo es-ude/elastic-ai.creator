@@ -12,7 +12,9 @@ from .design import LinearDesign
 
 
 class DummyLinear:
-    def __init__(self, fxp_params: FXPParams, in_signal_length: int, out_signal_length: int):
+    def __init__(
+        self, fxp_params: FXPParams, in_signal_length: int, out_signal_length: int
+    ):
         self.name: str = "linear0"
         self.in_feature_num = in_signal_length
         self.out_feature_num = out_signal_length
@@ -54,36 +56,44 @@ def parameters_for_reported_content_parsing(fxp_params, input_expected_pairs):
 
 @pytest.fixture
 def create_uut() -> Callable[[FXPParams, int, int], LinearDesign]:
-    def create(fxp_params: FXPParams, in_signal_length: int, out_signal_length: int) -> LinearDesign:
-        return DummyLinear(fxp_params=fxp_params, in_signal_length=in_signal_length, out_signal_length=out_signal_length)
+    def create(
+        fxp_params: FXPParams, in_signal_length: int, out_signal_length: int
+    ) -> LinearDesign:
+        return DummyLinear(
+            fxp_params=fxp_params,
+            in_signal_length=in_signal_length,
+            out_signal_length=out_signal_length,
+        )
 
     return create
 
 
 @pytest.mark.parametrize(
-    "fxp_params, reported, y", (
+    "fxp_params, reported, y",
+    (
         parameters_for_reported_content_parsing(
             fxp_params=FXPParams(total_bits=3, frac_bits=0),
             input_expected_pairs=[
                 ([[["010"]]], [[[2.0]]]),
                 ([[["001", "010"]]], [[[1.0, 2.0]]]),
                 ([[["111", "001"]]], [[[-1.0, 1.0]]]),
-            ]
-        ) +
-        parameters_for_reported_content_parsing(
+            ],
+        )
+        + parameters_for_reported_content_parsing(
             fxp_params=FXPParams(total_bits=4, frac_bits=1),
             input_expected_pairs=[
                 ([[["0001", "1111"]]], [[[0.5, -0.5]]]),
                 ([[["0001", "0011", "1000", "1111"]]], [[[0.5, 1.5, -4.0, -0.5]]]),
-            ]
+            ],
         )
-    )
+    ),
 )
 def test_parse_reported_content_one_out_channel(fxp_params, reported, y, create_uut):
     in_signal_length = None
     out_signal_length = 1
     bench = LinearTestbench(
-        name="linear_testbench", uut=create_uut(fxp_params, in_signal_length, out_signal_length)
+        name="linear_testbench",
+        uut=create_uut(fxp_params, in_signal_length, out_signal_length),
     )
     print(f"{reported=}")
     assert y == bench.parse_reported_content(reported)
@@ -94,9 +104,9 @@ def test_input_preparation_with_one_in_channel(create_uut):
     in_signal_length = 1
     out_signal_length = None
     bench = LinearTestbench(
-        name="linear_testbench", uut=create_uut(fxp_params, in_signal_length, out_signal_length)
+        name="linear_testbench",
+        uut=create_uut(fxp_params, in_signal_length, out_signal_length),
     )
     input = torch.Tensor([[[1.0, 1.0]]])
     expected = [{"x_0_0": "001", "x_0_1": "001"}]
     assert expected == bench.prepare_inputs(input.tolist())
-

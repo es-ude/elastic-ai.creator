@@ -31,7 +31,6 @@ class Linear(torch.nn.Linear):
         self.bias.data = param_quantization(self.bias.data)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-
         if self.bias is not None:
             return self._operations.add(
                 self._operations.matmul(x, self.weight.T), self.bias

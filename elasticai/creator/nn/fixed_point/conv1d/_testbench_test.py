@@ -55,86 +55,108 @@ def parameters_for_reported_content_parsing(fxp_params, input_expected_pairs):
 @pytest.fixture
 def create_uut() -> Callable[[FXPParams, int, int], Conv1dDesign]:
     def create(fxp_params, in_channels: int, out_channels: int) -> Conv1dDesign:
-        return DummyConv1d(fxp_params, in_channels=in_channels, out_channels=out_channels)
+        return DummyConv1d(
+            fxp_params, in_channels=in_channels, out_channels=out_channels
+        )
 
     return create
 
 
 @pytest.mark.parametrize(
-    "fxp_params, reported, y", (
+    "fxp_params, reported, y",
+    (
         parameters_for_reported_content_parsing(
             fxp_params=FXPParams(total_bits=3, frac_bits=0),
             input_expected_pairs=[
                 ([[["010"]]], [[[2.0]]]),
                 ([[["001", "010"]]], [[[1.0, 2.0]]]),
                 ([[["111", "001"]]], [[[-1.0, 1.0]]]),
-            ]
-        ) +
-        parameters_for_reported_content_parsing(
+            ],
+        )
+        + parameters_for_reported_content_parsing(
             fxp_params=FXPParams(total_bits=4, frac_bits=1),
             input_expected_pairs=[
                 ([[["0001", "1111"]]], [[[0.5, -0.5]]]),
-                ([[["0001", "0011"]], [["1000", "1111"]]], [[[0.5, 1.5]], [[-4.0, -0.5]]]),
-            ]
+                (
+                    [[["0001", "0011"]], [["1000", "1111"]]],
+                    [[[0.5, 1.5]], [[-4.0, -0.5]]],
+                ),
+            ],
         )
-    )
+    ),
 )
 def test_parse_reported_content_one_out_channel(fxp_params, reported, y, create_uut):
     in_channels = None
     out_channels = 1
     bench = Conv1dTestbench(
-        name="conv1d_testbench", fxp_params=fxp_params, uut=create_uut(fxp_params, in_channels, out_channels)
+        name="conv1d_testbench",
+        fxp_params=fxp_params,
+        uut=create_uut(fxp_params, in_channels, out_channels),
     )
     print(reported)
     assert y == bench.parse_reported_content(reported)
 
 
 @pytest.mark.parametrize(
-    "fxp_params, reported, y", (
+    "fxp_params, reported, y",
+    (
         parameters_for_reported_content_parsing(
             fxp_params=FXPParams(total_bits=3, frac_bits=0),
             input_expected_pairs=[
-                ([[["010"],["010"]]], [[[2.0],[2.0]]]),
+                ([[["010"], ["010"]]], [[[2.0], [2.0]]]),
                 ([[["001", "010"], ["001", "010"]]], [[[1.0, 2.0], [1.0, 2.0]]]),
                 ([[["111", "001"], ["111", "001"]]], [[[-1.0, 1.0], [-1.0, 1.0]]]),
-            ]
-        ) +
-        parameters_for_reported_content_parsing(
+            ],
+        )
+        + parameters_for_reported_content_parsing(
             fxp_params=FXPParams(total_bits=4, frac_bits=1),
             input_expected_pairs=[
                 ([[["0001", "1111"], ["0001", "1111"]]], [[[0.5, -0.5], [0.5, -0.5]]]),
-                ([[["0001", "0011"], ["0001", "0011"]], [["1000", "1111"], ["1000", "1111"]]],
-                 [[[0.5, 1.5], [0.5, 1.5]], [[-4.0, -0.5], [-4.0, -0.5]]]),
-            ]
+                (
+                    [
+                        [["0001", "0011"], ["0001", "0011"]],
+                        [["1000", "1111"], ["1000", "1111"]],
+                    ],
+                    [[[0.5, 1.5], [0.5, 1.5]], [[-4.0, -0.5], [-4.0, -0.5]]],
+                ),
+            ],
         )
-    )
+    ),
 )
 def test_parse_reported_content_two_out_channel(fxp_params, reported, y, create_uut):
     in_channels = None
     out_channels = 2
     bench = Conv1dTestbench(
-        name="conv1d_testbench", fxp_params=fxp_params, uut=create_uut(fxp_params, in_channels, out_channels)
+        name="conv1d_testbench",
+        fxp_params=fxp_params,
+        uut=create_uut(fxp_params, in_channels, out_channels),
     )
     print(reported)
     assert y == bench.parse_reported_content(reported)
+
 
 def test_input_preparation_with_one_in_channel(create_uut):
     fxp_params = FXPParams(total_bits=3, frac_bits=0)
     in_channels = 1
     out_channels = None
     bench = Conv1dTestbench(
-        name="bench_name", fxp_params=fxp_params, uut=create_uut(fxp_params, in_channels, out_channels),
+        name="bench_name",
+        fxp_params=fxp_params,
+        uut=create_uut(fxp_params, in_channels, out_channels),
     )
     input = torch.Tensor([[[1.0, 1.0]]])
     expected = [{"x_0_0": "001", "x_0_1": "001"}]
     assert expected == bench.prepare_inputs(input.tolist())
+
 
 def test_input_preparation_with_two_in_channel(create_uut):
     fxp_params = FXPParams(total_bits=3, frac_bits=0)
     in_channels = 1
     out_channels = None
     bench = Conv1dTestbench(
-        name="bench_name", fxp_params=fxp_params, uut=create_uut(fxp_params, in_channels, out_channels),
+        name="bench_name",
+        fxp_params=fxp_params,
+        uut=create_uut(fxp_params, in_channels, out_channels),
     )
     input = torch.Tensor([[[1.0, 1.0], [1.0, 2.0]]])
     expected = [{"x_0_0": "001", "x_0_1": "001", "x_1_0": "001", "x_1_1": "010"}]
