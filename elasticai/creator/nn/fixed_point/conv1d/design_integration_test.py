@@ -1,12 +1,9 @@
 from elasticai.creator.file_generation.in_memory_path import InMemoryPath, InMemoryFile
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn.sequential import Sequential
 from elasticai.creator.nn.fixed_point.conv1d import Conv1d
-from typing import cast
 
 import pytest
 from elasticai.creator.vhdl.design.design import Design
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 
 
 @pytest.fixture
@@ -35,7 +32,7 @@ def recursive_children_extraction(
 ) -> dict[str, str | dict]:
     data = {}
     for dest in destination:
-        if type(dest) == InMemoryFile:
+        if isinstance(dest, InMemoryFile):
             data[dest.name] = "\n".join(dest.text)
         elif type(dest == InMemoryPath):
             data[dest.name] = recursive_children_extraction(dest.children.values())

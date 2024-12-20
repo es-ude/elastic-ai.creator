@@ -142,6 +142,6 @@ class Conv1dTestbench(Testbench):
         for x in results_dict.items():
             results.append(split_list(x[1]))
         print("results: ", results)
-        if len(results) is 0:
+        if len(results) == 0:
             raise Exception(content)
         return list(results)

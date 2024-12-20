@@ -1,5 +1,4 @@
 import warnings
-from types import NoneType
 from typing import Protocol
 
 from elasticai.creator.file_generation.savable import Path
@@ -11,7 +10,6 @@ from elasticai.creator.vhdl.system_integrations.middleware.middleware import Mid
 from elasticai.creator.vhdl.system_integrations.skeleton.skeleton import (
     EchoSkeletonV2,
     LSTMSkeleton,
-    Skeleton,
 )
 from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
     ENV5ReconfigTop,
