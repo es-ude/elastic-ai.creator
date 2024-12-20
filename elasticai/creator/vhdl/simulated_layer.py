@@ -1,6 +1,6 @@
 import csv
 import pathlib
-from typing import Any, Protocol
+from typing import Any
 
 from elasticai.creator.file_generation.savable import Path
 

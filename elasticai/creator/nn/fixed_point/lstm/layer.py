@@ -112,8 +112,12 @@ class FixedPointLSTMWithHardActivations(DesignCreatorModule, LSTM):
                 return list(map(float_to_signed_int, value))
             return self._config.as_integer(value)
 
-        cast_weights = lambda x: cast(list[list[list[int]]], x)
-        cast_bias = lambda x: cast(list[list[int]], x)
+        def cast_weights(x):
+            return cast(list[list[list[int]]], x)
+
+        def cast_bias(x):
+            return cast(list[list[int]], x)
+
         return FPLSTMCell(
             name=name,
             hardtanh=self.cell.tanh.create_design(f"{name}_hardtanh"),
