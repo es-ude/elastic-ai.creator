@@ -16,33 +16,27 @@ from elasticai.creator.vhdl.simulated_layer import Testbench
 class Conv1dDesignProtocol(Protocol):
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @property
     @abstractmethod
-    def input_signal_length(self) -> int:
-        ...
+    def input_signal_length(self) -> int: ...
 
     @property
     @abstractmethod
-    def port(self) -> Port:
-        ...
+    def port(self) -> Port: ...
 
     @property
     @abstractmethod
-    def kernel_size(self) -> int:
-        ...
+    def kernel_size(self) -> int: ...
 
     @property
     @abstractmethod
-    def in_channels(self) -> int:
-        ...
+    def in_channels(self) -> int: ...
 
     @property
     @abstractmethod
-    def out_channels(self) -> int:
-        ...
+    def out_channels(self) -> int: ...
 
 
 class Conv1dTestbench(Testbench):

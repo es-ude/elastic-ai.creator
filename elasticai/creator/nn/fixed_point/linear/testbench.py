@@ -16,33 +16,27 @@ from elasticai.creator.vhdl.simulated_layer import Testbench
 class LinearDesignProtocol(Protocol):
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @property
     @abstractmethod
-    def port(self) -> Port:
-        ...
+    def port(self) -> Port: ...
 
     @property
     @abstractmethod
-    def in_feature_num(self) -> int:
-        ...
+    def in_feature_num(self) -> int: ...
 
     @property
     @abstractmethod
-    def out_feature_num(self) -> int:
-        ...
+    def out_feature_num(self) -> int: ...
 
     @property
     @abstractmethod
-    def frac_width(self) -> int:
-        ...
+    def frac_width(self) -> int: ...
 
     @property
     @abstractmethod
-    def data_width(self) -> int:
-        ...
+    def data_width(self) -> int: ...
 
 
 class LinearTestbench(Testbench):

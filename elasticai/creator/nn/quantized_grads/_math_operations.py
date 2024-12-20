@@ -9,7 +9,6 @@ from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
 
 
 class MathOperations(LinearOps, LSTMOps, Conv1dOps):
-
     @abstractmethod
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
