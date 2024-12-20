@@ -58,6 +58,67 @@ Devenv will automatically give you access to all other relevant tools
 for a full list of installed tools have a look at the `devenv.nix` file.
 
 
+## Pull Requests and Commits
+Use conventional commit types especially (`feat`, `fix`) and mark `BREAKING CHANGES`
+in commit messages.
+Please try to use rebasing and squashing to make sure your commits are atomic.
+By atomic we mean, that each commit should make sense on its own.
+As an example let's assume you have been working on a new feature `A` and
+during that work you were also performing some refactoring and fixed a small
+bug that you discovered. Ideally your history would more or less like this:
+
+#### Do
+
+```
+* feat: introduce A
+
+  Adds several new modules, that enable a new
+  workflow using feature A.
+
+  This was necessary because, ...
+  This improves ....
+
+
+* fix: fix a bug where call to function b() would not return
+
+  We only found that now, because there was no test for this
+  bug. This commit also adds a new corresponding test.
+
+
+* refactor: use an adapter to decouple C and D
+
+  This is necessary to allow easier introduction of
+  feature A in a later commit.
+```
+
+What we want to avoid is a commit history like that one
+
+#### Don't
+```
+* feat: realize changes requested by reviewer
+
+* feat: finish feature A
+
+* refactor: adjust adapter
+
+* wip: working on feature A
+
+* fix: fix a bug (this time for real)
+
+* fix: fix a bug
+
+* refactor: had to add an adapter
+
+* fix: fix some typos as requested by reviewer
+
+```
+
+If a commit introduces a new feature, 
+it should ideally also contain the test coverage, documentation, etc.
+If there are changes that are not directly related to that feature, 
+they should go into a different commit.
+
+
 ## Concepts
 The `elasticai.creator` aims to support
     1. the design and training of hardware optimization aware neural networks
