@@ -1,5 +1,38 @@
 # Contribution Guide
 ## Development Environment
+
+### uv
+
+We rely on [uv](https://docs.astral.sh/uv/) to manage the venv and dependencies.
+Install uv by following their [install guide](https://docs.astral.sh/uv/getting-started/installation/).
+Git clone our repository
+
+```bash
+$ git clone https://github.com/es-ude/elastic-ai.creator.git
+```
+
+or
+
+```bash
+$ git clone git@github.com:es-ude/elastic-ai.creator.git
+```
+
+move into the just cloned repository and run
+
+```bash
+$ uv sync
+```
+
+This install all runtime as well as most of the
+development dependencies. There are more (optional)
+development dependency groups that you can install,
+e.g., the `lsp` group containing 
+python-language-server and pylsp-mypy
+
+```bash
+$ uv sync --group lsp
+```
+
 ### devenv
 
 To share not only python packages for the development environment, but also
