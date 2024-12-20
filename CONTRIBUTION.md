@@ -1,4 +1,30 @@
 # Contribution Guide
+## Development Environment
+### devenv
+
+To share not only python packages for the development environment, but also
+other tools we offer a [devenv](https://devenv.sh) configuration.
+After installing the nix package manager and [nix](https://nix.dev/install-nix)
+and [installing devenv](https://devenv.sh/getting-started/#2-install-devenv) you
+can startup a development environment with
+```bash
+$ devenv shell
+```
+For more convenience we recommend combining this workflow with direnv for
+automatica shell activation as explained [here](https://devenv.sh/automatic-shell-activation/).
+
+Devenv will automatically give you access to all other relevant tools
+
+ * git
+ * uv
+ * ghdl for hw simulations (run via rosetta on apple silicon)
+ * gtkwave for visualizing waveforms produced by ghdl
+ * act for testing github workflows locally
+ * and more...
+
+for a full list of installed tools have a look at the `devenv.nix` file.
+
+
 ## Concepts
 The `elasticai.creator` aims to support
     1. the design and training of hardware optimization aware neural networks
