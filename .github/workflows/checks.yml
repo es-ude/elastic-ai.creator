@@ -9,15 +9,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Repository
-        uses: actions/checkout@v3
-      - uses: ./.github/actions/setup_test_environment
-      - run: poetry run pytest --cov-report xml --cov elasticai.creator -m "not simulation"
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: install python
+        run: uv python install  # version as defined in .python-version
+      - name: install project
+        run: uv sync --all-extras
+      - name: run tests/coverage
+        run: uv run coverage run  # exact command defined in pyproject
+      - name: generate coverage report
+        run: uv run coverage xml
 
       - name: Publish coverage report
         uses: orgoro/coverage@v3.1
         with:
           coverageFile: coverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  lint-python-code:
+    name: Lint python code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+      - name: Install ruff
+        uses: astral-sh/ruff-action@v2
+      - name: Run ruff linter
+        run: ruff check 
+      - name: 
+        run: ruff format --check  # don't touch files, but fail with error in case of necessary changes
 
 
   lint-commit-messages:

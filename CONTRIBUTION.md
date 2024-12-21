@@ -1,4 +1,63 @@
 # Contribution Guide
+## Development Environment
+
+### uv
+
+We rely on [uv](https://docs.astral.sh/uv/) to manage the venv and dependencies.
+Install uv by following their [install guide](https://docs.astral.sh/uv/getting-started/installation/).
+Git clone our repository
+
+```bash
+$ git clone https://github.com/es-ude/elastic-ai.creator.git
+```
+
+or
+
+```bash
+$ git clone git@github.com:es-ude/elastic-ai.creator.git
+```
+
+move into the just cloned repository and run
+
+```bash
+$ uv sync
+```
+
+This install all runtime as well as most of the
+development dependencies. There are more (optional)
+development dependency groups that you can install,
+e.g., the `lsp` group containing 
+python-language-server and pylsp-mypy
+
+```bash
+$ uv sync --group lsp
+```
+
+### devenv
+
+To share not only python packages for the development environment, but also
+other tools we offer a [devenv](https://devenv.sh) configuration.
+After installing the nix package manager and [nix](https://nix.dev/install-nix)
+and [installing devenv](https://devenv.sh/getting-started/#2-install-devenv) you
+can startup a development environment with
+```bash
+$ devenv shell
+```
+For more convenience we recommend combining this workflow with direnv for
+automatica shell activation as explained [here](https://devenv.sh/automatic-shell-activation/).
+
+Devenv will automatically give you access to all other relevant tools
+
+ * git
+ * uv
+ * ghdl for hw simulations (run via rosetta on apple silicon)
+ * gtkwave for visualizing waveforms produced by ghdl
+ * act for testing github workflows locally
+ * and more...
+
+for a full list of installed tools have a look at the `devenv.nix` file.
+
+
 ## Concepts
 The `elasticai.creator` aims to support
     1. the design and training of hardware optimization aware neural networks

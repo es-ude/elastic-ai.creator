@@ -7,7 +7,7 @@ from elasticai.creator.vhdl.design.signal import Signal
 
 def signal_string(name: str, direction: str, width: int | str) -> str:
     if isinstance(width, int) and width > 0:
-        data_type = f"std_logic"
+        data_type = "std_logic"
     else:
         data_type = f"std_logic_vector({width} - 1 downto 0)"
     return f"{name} : {direction} {data_type}"

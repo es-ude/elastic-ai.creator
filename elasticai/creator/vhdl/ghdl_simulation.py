@@ -24,7 +24,7 @@ class GHDLSimulator:
     def __init__(self, workdir, top_design_name) -> None:
         self._root = workdir
         self._ghdl_dir = "ghdl_build"
-        self._files = list(glob.glob(f"**/*.vhd", root_dir=self._root, recursive=True))
+        self._files = list(glob.glob("**/*.vhd", root_dir=self._root, recursive=True))
         self._standard = "08"
         self._test_bench_name = top_design_name
         self._generics: dict[str, str] = {}
