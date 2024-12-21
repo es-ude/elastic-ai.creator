@@ -1,0 +1,24 @@
+== Utils
+
+=== Test Plugin VHDL code with GHDL
+After installing the `elasticai.creator` the command `eai-run-ghdl-tbs-for-plugins`
+will be available. That program will run over all plugin packages and
+
+* import all `*.vhd` files with `ghdl`
+* interpret each `*_tb.vhd` file as a testbench
+* analyze and run a testbench unit of the corresponding name 
+  for each found testbench file using ghdl
+* log the results into a junitXml file
+
+To make this work, your `<name>_tb.vhd` files need to define a testbench entity
+of name `<name>_tb` each.
+
+==== Missing Features
+
+Features that might be added in the future are
+
+- [ ] specify a basic format that testbenches should use to print results
+      so that the runner can interpret and log those
+- [ ] log line/file for each failed assertion from a testbench
+- [ ] read dependencies from plugin configs (if present)
+- [ ] automatically create waveform files

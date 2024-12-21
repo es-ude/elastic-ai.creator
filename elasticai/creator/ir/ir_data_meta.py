@@ -1,4 +1,4 @@
-from .required_field import SimpleRequiredField, RequiredField, is_required_field
+from .required_field import SimpleRequiredField, is_required_field
 from typing import Any, cast
 from types import GenericAlias, resolve_bases, MappingProxyType
 

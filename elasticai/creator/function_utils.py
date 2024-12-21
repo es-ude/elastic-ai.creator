@@ -72,7 +72,7 @@ class FunctionDecoratorFactory(Generic[FN, Tout]):
         return self.__reg(arg)
 
     def __reg_by_name(self, name: str) -> Callable[[FN], Tout]:
-        def reg(fn: FN) -> FN:
+        def reg(fn: FN) -> Tout:
             return self._cb(name, fn)
 
         return reg
@@ -98,7 +98,7 @@ class RegisterDescriptor(Generic[Tin, Tout]):
     ) -> FunctionDecoratorFactory[Callable[[Tin], Tout], Callable[[Tin], Tout]]:
         cb = getattr(instance, self._cb_name)
 
-        def wrapped(name, fn):
+        def wrapped(name: str, fn: Callable[[Tin], Tout]) -> Callable[[Tin], Tout]:
             cb(name, fn)
             return fn
 
@@ -120,9 +120,7 @@ class KeyedFunctionDispatcher(Generic[Tin, Tout]):
         self._key_fn = dispatch_key_fn
         self._fns: dict[str, Callable[[Tin], Tout]] = dict()
 
-    def _register_callback(
-        self, name: str, fn: Callable[[Tin], Tout]
-    ) -> Callable[[Tin], Tout]:
+    def _register_callback(self, name: str, fn: Callable[[Tin], Tout]) -> None:
         self._fns[name] = fn
 
     def __contains__(self, item: str | Callable[[Tin], Tout]) -> bool:

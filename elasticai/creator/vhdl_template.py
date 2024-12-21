@@ -27,6 +27,8 @@ class EntityTemplateParameter(AnalysingTemplateParameterType):
         self.regex = "<none>"
 
     def analyse(self, m: Match) -> None:
+        if m.lastgroup is None:
+            raise ValueError()
         original_name = m.group(m.lastgroup)
         self.regex = r"(?P<{{value}}>\b{}\b)".format(original_name)
 
@@ -44,11 +46,10 @@ class ValueTemplateParameter(TemplateParameterType):
     """
 
     def __init__(self):
-        def replace(m: Match):
-            return f"{m.group(0)} := ${m.lastgroup}"
-
         self.regex = r"(?i:{value}\s*:\s*(natural|integer))(?P<{value}>\b)"
-        self.replace = replace
+
+    def replace(self, m: Match) -> str:
+        return f"{m.group(0)} := ${m.lastgroup}"
 
 
 class EntityTemplateDirector:

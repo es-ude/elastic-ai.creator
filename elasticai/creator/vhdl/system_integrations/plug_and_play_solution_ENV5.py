@@ -1,5 +1,4 @@
 import warnings
-from types import NoneType
 from typing import Protocol
 
 from elasticai.creator.file_generation.savable import Path
@@ -11,7 +10,6 @@ from elasticai.creator.vhdl.system_integrations.middleware.middleware import Mid
 from elasticai.creator.vhdl.system_integrations.skeleton.skeleton import (
     EchoSkeletonV2,
     LSTMSkeleton,
-    Skeleton,
 )
 from elasticai.creator.vhdl.system_integrations.top.env5_reconfig_top import (
     ENV5ReconfigTop,
@@ -28,11 +26,9 @@ warnings.warn(
 
 
 class _DesignAndTestbenchCreator(Protocol):
-    def create_design(self, name: str) -> Design:
-        ...
+    def create_design(self, name: str) -> Design: ...
 
-    def create_testbench(self, name: str, design: Design) -> Design:
-        ...
+    def create_testbench(self, name: str, design: Design) -> Design: ...
 
 
 class FirmwareLSTMENv5:
@@ -78,7 +74,6 @@ class FirmwareEchoServerSkeletonV2:
             skeleton = EchoSkeletonV2(self._num_inputs, bitwidth=self._bitwidth)
             self.skeleton_id = skeleton._id
             skeleton.save_to(destination.create_subpath("skeleton"))
-
 
             middleware = Middleware()
             middleware.save_to(destination.create_subpath("middleware"))

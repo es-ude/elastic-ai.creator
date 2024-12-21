@@ -1,0 +1,12 @@
+inputs:
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+  nixpkgs-python:
+    url: github:cachix/nixpkgs-python
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
+  nixpkgs-unstable:
+    url: github:nixos/nixpkgs/nixpkgs-unstable
+imports:
+  - ./devenv_modules/ghdl/

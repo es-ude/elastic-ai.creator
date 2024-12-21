@@ -32,7 +32,13 @@ def save_design(design: Conv1dDesign) -> dict[str, str]:
 def test_saved_design_contains_needed_files(conv1d_design: Conv1dDesign) -> None:
     saved_files = save_design(conv1d_design)
 
-    expected_files = {"conv1d_w_rom.vhd", "conv1d_b_rom.vhd", "conv1d.vhd", "conv1d_fxp_MAC_RoundToZero.vhd", "fxp_mac.vhd"}
+    expected_files = {
+        "conv1d_w_rom.vhd",
+        "conv1d_b_rom.vhd",
+        "conv1d.vhd",
+        "conv1d_fxp_MAC_RoundToZero.vhd",
+        "fxp_mac.vhd",
+    }
     actual_files = set(saved_files.keys())
 
     assert expected_files == actual_files
@@ -100,4 +106,3 @@ end architecture rtl;"""
     saved_files = save_design(conv1d_design)
     actual_code = saved_files["conv1d_b_rom.vhd"]
     assert expected_code == actual_code
-
