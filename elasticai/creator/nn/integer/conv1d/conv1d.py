@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.conv1d.design import Conv1d as Conv1dDesign
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
@@ -19,24 +19,27 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
 )
 
 
-class Linear(DesignCreatorModule, nn.Linear):
+class Conv1d(DesignCreatorModule, nn.Conv1d):
     def __init__(self, **kwargs):
         super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
+            kwargs.get("in_channels"),
+            kwargs.get("out_channels"),
+            kwargs.get("kernel_size"),
+            kwargs.get("padding"),
         )
+
+        self.seq_len = kwargs.get("seq_len")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
         self.device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(self.device)
-        if kwargs.get("bias"):
-            self.bias_QParams = SymmetricSignedQParams(
-                quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-            ).to(self.device)
+        self.bias_QParams = SymmetricSignedQParams(
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+        ).to(self.device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(self.device)
@@ -47,12 +50,16 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.math_ops = MathOperations()
         self.precomputed = False
 
-    def create_design(self, name: str) -> LinearDesign:
-        return LinearDesign(
+    def create_design(self, name: str) -> Conv1dDesign:
+        return None
+        return Conv1dDesign(
             name=name,
             data_width=self.quant_bits,
-            in_features=self.in_features,
-            out_features=self.out_features,
+            in_channels=self.in_channels,
+            out_channels=self.out_channels,
+            kernel_size=self.kernel_size[0],
+            stride=self.stride[0],
+            padding=self.padding[0],
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
@@ -117,29 +124,20 @@ class Linear(DesignCreatorModule, nn.Linear):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
-        # TODO: solve the problem of using F.linear and self.math_ops.intmatmul
-        if self.bias is not None:
-            tmp = F.linear(q_inputs, self.q_weights, self.q_bias)
-        else:
-            tmp = F.linear(q_inputs, self.q_weights)
+        # TODO: Implement intmatmul or F.conv1d
 
-        # if self.bias is not None:
-        #     tmp = self.math_ops.intmatmul(
-        #         q_inputs,
-        #         self.q_weights.t(),
-        #         self.bias_QParams.quant_bits,  # TODO further +1 or not
-        #     )
-        #     tmp = self.math_ops.intadd(
-        #         tmp, self.q_bias, self.bias_QParams.quant_bits + 1
-        #     )
-        # else:
-        #     tmp = self.math_ops.intmatmul(
-        #         q_inputs, self.q_weights.t(), self.outputs_QParams.quant_bits
-        #     )
+        tmp = F.conv1d(
+            q_inputs,
+            self.q_weights,
+            self.q_bias,
+            padding=self.padding,
+        )
+
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
@@ -169,9 +167,9 @@ class Linear(DesignCreatorModule, nn.Linear):
             bias = SimQuant.apply(self.bias, self.bias_QParams)
 
         if self.bias is not None:
-            outputs = F.linear(inputs, weight, bias)
+            outputs = F.conv1d(inputs, weight, bias, padding=self.padding)
         else:
-            outputs = F.linear(inputs, weight)
+            outputs = F.conv1d(inputs, weight, padding=self.padding)
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)

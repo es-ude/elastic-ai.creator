@@ -5,8 +5,10 @@ from torch import nn
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
+from elasticai.creator.nn.integer.pointconv1d.design import (
+    PointConv1d as PointConv1dDesign,
+)
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
@@ -19,24 +21,28 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
 )
 
 
-class Linear(DesignCreatorModule, nn.Linear):
+class PointConv1d(DesignCreatorModule, nn.Conv1d):
     def __init__(self, **kwargs):
         super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
+            in_channels=kwargs.get("in_channels"),
+            out_channels=kwargs.get("out_channels"),
+            kernel_size=1,
+            padding=0,
+            bias=True,
         )
+
+        self.seq_len = kwargs.get("seq_len")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
         self.device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(self.device)
-        if kwargs.get("bias"):
-            self.bias_QParams = SymmetricSignedQParams(
-                quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-            ).to(self.device)
+        self.bias_QParams = SymmetricSignedQParams(
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+        ).to(self.device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(self.device)
@@ -47,12 +53,16 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.math_ops = MathOperations()
         self.precomputed = False
 
-    def create_design(self, name: str) -> LinearDesign:
-        return LinearDesign(
+    def create_design(self, name: str) -> PointConv1dDesign:
+        return None
+        return PointConv1dDesign(
             name=name,
             data_width=self.quant_bits,
-            in_features=self.in_features,
-            out_features=self.out_features,
+            in_channels=self.in_channels,
+            out_channels=self.out_channels,
+            kernel_size=self.kernel_size[0],
+            stride=self.stride[0],
+            padding=self.padding[0],
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
@@ -65,9 +75,9 @@ class Linear(DesignCreatorModule, nn.Linear):
             resource_option="auto",
         )
 
-    def _get_quantized_weights(self) -> torch.IntTensor:
+    def _get_quantized_weights(self, weight) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
+        q_weights = self.weight_QParams.quantize(weight).to("cpu")
 
         if not self.weight_QParams.is_symmetric:
             q_weights = self.math_ops.intsub(
@@ -77,7 +87,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.IntTensor:
+    def _get_quantized_bias(self, bias) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -89,7 +99,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
         self.bias_QParams.set_quant_range(new_bias_quant_bits)
-        q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
+        q_bias = self.bias_QParams.quantize(bias).to("cpu")
         if not self.bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
                 q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
@@ -117,29 +127,24 @@ class Linear(DesignCreatorModule, nn.Linear):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
-        # TODO: solve the problem of using F.linear and self.math_ops.intmatmul
         if self.bias is not None:
-            tmp = F.linear(q_inputs, self.q_weights, self.q_bias)
+            tmp = self.math_ops.intmatmul(
+                q_inputs,
+                self.q_weights.t(),
+                self.bias_QParams.quant_bits,  # TODO further +1 or not
+            )
+            tmp = self.math_ops.intadd(
+                tmp, self.q_bias, self.bias_QParams.quant_bits + 1
+            )
         else:
-            tmp = F.linear(q_inputs, self.q_weights)
-
-        # if self.bias is not None:
-        #     tmp = self.math_ops.intmatmul(
-        #         q_inputs,
-        #         self.q_weights.t(),
-        #         self.bias_QParams.quant_bits,  # TODO further +1 or not
-        #     )
-        #     tmp = self.math_ops.intadd(
-        #         tmp, self.q_bias, self.bias_QParams.quant_bits + 1
-        #     )
-        # else:
-        #     tmp = self.math_ops.intmatmul(
-        #         q_inputs, self.q_weights.t(), self.outputs_QParams.quant_bits
-        #     )
+            tmp = self.math_ops.intmatmul(
+                q_inputs, self.q_weights.t(), self.outputs_QParams.quant_bits
+            )
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
@@ -169,9 +174,9 @@ class Linear(DesignCreatorModule, nn.Linear):
             bias = SimQuant.apply(self.bias, self.bias_QParams)
 
         if self.bias is not None:
-            outputs = F.linear(inputs, weight, bias)
+            outputs = F.conv1d(inputs, weight, bias, padding=self.padding)
         else:
-            outputs = F.linear(inputs, weight)
+            outputs = F.conv1d(inputs, weight, padding=self.padding)
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)

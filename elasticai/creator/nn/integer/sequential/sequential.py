@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+import torch.nn as nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.sequential.layer import Sequential as _SequentialBase
@@ -28,6 +29,7 @@ class Sequential(_SequentialBase):
     ) -> torch.FloatTensor:
         outputs = inputs
         for submodule in self.submodules:
+            # outputs = submodule(outputs)
             outputs = submodule(outputs, given_inputs_QParams=given_inputs_QParams)
             given_inputs_QParams = submodule.outputs_QParams
         return outputs
@@ -38,25 +40,43 @@ class Sequential(_SequentialBase):
     def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
         return self.submodules[-1].outputs_QParams.dequantize(q_outputs)
 
+    # def precompute(self):
+    #     for submodule in self.submodules:
+    #         if hasattr(submodule, "precompute"):
+    #             submodule.precompute()
+
     def precompute(self):
         for submodule in self.submodules:
             if hasattr(submodule, "precompute"):
                 submodule.precompute()
+            elif isinstance(submodule, nn.Sequential):
+                for nested_submodule in submodule:
+                    if hasattr(nested_submodule, "precompute"):
+                        nested_submodule.precompute()
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
         if self.quant_data_file_dir is not None:
+            # print("self.name", self.name)
             self._save_quant_data(
                 q_inputs, self.quant_data_file_dir, f"{self.name}_q_x"
             )
+        # ------------special case for leer submodule QShortcut----------------
+        if len(self.submodules) == 0:
+            return q_inputs
+        q_outputs = q_inputs
+        # ------------special case for leer submodule QShortcut----------------
 
         for submodule in self.submodules:
             if self.quant_data_file_dir is not None:
+                # print("submodule.name", submodule.name)
                 self._save_quant_data(
                     q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
                 )
-
-            q_outputs = submodule.int_forward(q_inputs)
+            # print("shape of input", q_outputs.shape)
+            q_outputs = submodule.int_forward(q_outputs)
+            # print("shape of output", q_outputs.shape)
+            # print("--------------------------------")
 
             if self.quant_data_file_dir is not None:
                 self._save_quant_data(

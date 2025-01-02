@@ -44,3 +44,18 @@ class MathOperations:
                     c_cpu[i, j] += a_cpu[i, p].item() * b_cpu[p, j].item()
         c = c_cpu.to(a.device)
         return self.clamp_result(c, c_quant_bits)
+
+    def inthadamardproduct(
+        self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
+    ) -> torch.IntTensor:
+        assert a.dtype == torch.int32
+        assert b.dtype == torch.int32
+        assert a.shape == b.shape
+
+        a_cpu = a.cpu().to(torch.int32)
+        b_cpu = b.cpu().to(torch.int32)
+
+        dot_product = a_cpu * b_cpu
+
+        dot_product = dot_product.to(a.device)
+        return self.clamp_result(dot_product, c_quant_bits)

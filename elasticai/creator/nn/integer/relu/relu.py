@@ -2,7 +2,6 @@ import logging
 
 import torch
 import torch.nn.functional as F
-from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
@@ -21,12 +20,12 @@ class ReLU(DesignCreatorModule):
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=kwargs.get("quant_bits"),
+            quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
 
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=kwargs.get("quant_bits"),
+            quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
 
