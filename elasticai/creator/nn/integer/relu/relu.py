@@ -43,6 +43,11 @@ class ReLU(DesignCreatorModule):
         q_outputs = torch.maximum(q_inputs, zero_point.clone().detach())
         return q_outputs
 
+        # dq_inputs = self.inputs_QParams.dequantize(q_inputs)
+        # dq_outputs = F.relu(dq_inputs)
+        # q_outputs = self.outputs_QParams.quantize(dq_outputs)
+        # return q_outputs
+
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:

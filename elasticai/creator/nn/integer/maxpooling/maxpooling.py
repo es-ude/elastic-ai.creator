@@ -87,7 +87,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         # --------------- int maxpooling ----------------
         batch_size, channels, seq_len = q_inputs.shape
         kernel_size = self.kernel_size
-        stride = kernel_size
+        stride = self.kernel_size
 
         output_length = (seq_len - kernel_size) // stride + 1
         tmp = torch.zeros((batch_size, channels, output_length), dtype=torch.int32)
@@ -106,6 +106,13 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
+        return q_outputs
+        # dq_inputs = self.inputs_QParams.dequantize(q_inputs)
+        # outputs = F.max_pool1d(
+        #     dq_inputs,
+        #     kernel_size=self.kernel_size,
+        # )
+        # q_outputs = self.outputs_QParams.quantize(outputs)
         return q_outputs
 
     def forward(

@@ -18,6 +18,7 @@ class Sequential(_SequentialBase):
         self.submodules = submodules
         self.name = name
         self.quant_data_file_dir = quant_data_file_dir
+        self.precomputed = False
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
         file_path = file_dir / f"{file_name}.txt"
@@ -40,54 +41,34 @@ class Sequential(_SequentialBase):
     def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
         return self.submodules[-1].outputs_QParams.dequantize(q_outputs)
 
-    # def precompute(self):
-    #     for submodule in self.submodules:
-    #         if hasattr(submodule, "precompute"):
-    #             submodule.precompute()
-
     def precompute(self):
         for submodule in self.submodules:
             if hasattr(submodule, "precompute"):
                 submodule.precompute()
-            elif isinstance(submodule, nn.Sequential):
-                for nested_submodule in submodule:
-                    if hasattr(nested_submodule, "precompute"):
-                        nested_submodule.precompute()
+        self.precomputed = True
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
-        if self.quant_data_file_dir is not None:
-            # print("self.name", self.name)
-            self._save_quant_data(
-                q_inputs, self.quant_data_file_dir, f"{self.name}_q_x"
-            )
-        # ------------special case for leer submodule QShortcut----------------
-        if len(self.submodules) == 0:
-            return q_inputs
-        q_outputs = q_inputs
-        # ------------special case for leer submodule QShortcut----------------
+        assert self.precomputed, "precompute() should be called before int_forward()"
 
-        for submodule in self.submodules:
-            if self.quant_data_file_dir is not None:
-                # print("submodule.name", submodule.name)
+        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
+        if len(self.submodules) > 0:
+            for submodule in self.submodules:
                 self._save_quant_data(
                     q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
                 )
-            # print("shape of input", q_outputs.shape)
-            q_outputs = submodule.int_forward(q_outputs)
-            # print("shape of output", q_outputs.shape)
-            # print("--------------------------------")
 
-            if self.quant_data_file_dir is not None:
+                q_outputs = submodule.int_forward(q_inputs)
+                q_inputs = q_outputs
+
                 self._save_quant_data(
                     q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
                 )
-            q_inputs = q_outputs
-        if self.quant_data_file_dir is not None:
-            self._save_quant_data(
-                q_outputs, self.quant_data_file_dir, f"{self.name}_q_y"
-            )
 
+        else:  # special case for leer submodule QShortcut
+            q_outputs = q_inputs
+
+        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
         return q_outputs
 
     def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:

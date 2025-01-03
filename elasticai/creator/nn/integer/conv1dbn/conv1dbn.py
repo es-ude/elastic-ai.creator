@@ -154,6 +154,13 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         )
 
         return q_outputs
+        # dq_inputs = self.inputs_QParams.dequantize(q_inputs).to("cuda")
+        # dq_inputs = F.conv1d(
+        #     dq_inputs, self.conv1d.weight, self.conv1d.bias, padding=self.conv1d.padding
+        # )
+        # dq_inputs = self.bn1d(dq_inputs)
+        # q_inputs = self.outputs_QParams.quantize(dq_inputs)
+        # return q_inputs
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None

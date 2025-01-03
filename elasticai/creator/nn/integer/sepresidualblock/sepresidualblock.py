@@ -7,10 +7,14 @@ import torch.nn as nn
 from elasticai.creator.nn.integer.addition import Addition
 from elasticai.creator.nn.integer.conv1d import Conv1d
 from elasticai.creator.nn.integer.depthconv1d import DepthConv1d
+from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.pointconv1dbn import PointConv1dBN
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.relu import ReLU
+from elasticai.creator.nn.integer.sepresidualblock.design import (
+    SeparableResidualBlock as SeparableResidualBlockDesign,
+)
 from elasticai.creator.nn.integer.sequential import Sequential
 
 
@@ -109,6 +113,9 @@ class SeparableResidualBlock(nn.Module):
         ).to(device)
         self.precomputed = False
 
+    def create_design(self, name: str) -> SeparableResidualBlockDesign:
+        pass
+
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         self.sequential.precompute()
@@ -116,12 +123,12 @@ class SeparableResidualBlock(nn.Module):
         self.add.precompute()
 
         residual = q_inputs
-        q_outputs = self.sequential.int_forward(q_inputs)
+        q_sequential_outputs = self.sequential.int_forward(q_inputs)
         q_shortcut_outputs = self.shortcut.int_forward(residual)
-        q_outputs = self.add.int_forward(
-            q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs
+        q_add_outputs = self.add.int_forward(
+            q_inputs1=q_shortcut_outputs, q_inputs2=q_sequential_outputs
         )
-        q_outputs = self.relu.int_forward(q_inputs=q_outputs)
+        q_outputs = self.relu.int_forward(q_inputs=q_add_outputs)
 
         return q_outputs
 
