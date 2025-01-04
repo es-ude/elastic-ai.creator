@@ -88,17 +88,10 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_M
         )
-
         q_outputs = self.scale_factor_Math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
-
         return q_outputs.squeeze(2)
-
-        # dq_inputs = self.inputs_QParams.dequantize(q_inputs)
-        # dq_outputs = F.avg_pool1d(dq_inputs, kernel_size=dq_inputs.size(2))
-        # q_outputs = self.outputs_QParams.quantize(dq_outputs)
-        # return q_outputs.squeeze(2)
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None

@@ -9,12 +9,10 @@ from elasticai.creator.nn.integer.conv1dbn import Conv1dBN
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 from elasticai.creator.nn.integer.relu import ReLU
 from elasticai.creator.nn.integer.residualblock.design import (
     ResidualBlock as ResidualBlockDesign,
 )
-from elasticai.creator.nn.integer.sequential import Sequential
 
 
 class ResidualBlock(DesignCreatorModule, nn.Module):
@@ -116,6 +114,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
 
         q_residual = q_inputs
+
         self._save_quant_data(
             q_inputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_q_x"
         )
@@ -123,6 +122,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_q_y"
         )
+
         self._save_quant_data(
             q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_relu_q_x"
         )
@@ -146,6 +146,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             for submodule in self.shortcut:
                 q_shortcut_outputs = submodule.int_forward(q_residual)
                 q_residual = q_shortcut_outputs
+
         else:
             q_shortcut_outputs = q_residual
 

@@ -154,13 +154,6 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         )
 
         return q_outputs
-        # dq_inputs = self.inputs_QParams.dequantize(q_inputs).to("cuda")
-        # dq_inputs = F.conv1d(
-        #     dq_inputs, self.conv1d.weight, self.conv1d.bias, padding=self.conv1d.padding
-        # )
-        # dq_inputs = self.bn1d(dq_inputs)
-        # q_inputs = self.outputs_QParams.quantize(dq_inputs)
-        # return q_inputs
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
@@ -179,6 +172,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
                 self.conv1d.bias,
                 padding=self.conv1d.padding,
             )
+
             mean = tmp_outputs.mean(dim=(0, 2))  # [batch_size, out_channels, seq_len]
             var = tmp_outputs.var(dim=(0, 2))
             self.bn1d.running_mean = (
@@ -194,17 +188,20 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         std = torch.sqrt(var + self.bn1d.eps)
 
         gamma_ = self.bn1d.weight / std
-        weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
-        bias = gamma_ * self.conv1d.bias - gamma_ * mean + self.bn1d.bias
+
+        fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
+        fused_bias = gamma_ * self.conv1d.bias - gamma_ * mean + self.bn1d.bias
 
         if self.training:
-            self.weight_QParams.update_quant_params(weight)
-            self.bias_QParams.update_quant_params(bias)
+            self.weight_QParams.update_quant_params(fused_weight)
+            self.bias_QParams.update_quant_params(fused_bias)
 
-        weight = SimQuant.apply(weight, self.weight_QParams)
-        bias = SimQuant.apply(bias, self.bias_QParams)
+        fused_weight = SimQuant.apply(fused_weight, self.weight_QParams)
+        fused_bias = SimQuant.apply(fused_bias, self.bias_QParams)
 
-        outputs = F.conv1d(inputs, weight, bias, padding=self.conv1d.padding)
+        outputs = F.conv1d(
+            inputs, fused_weight, fused_bias, padding=self.conv1d.padding
+        )
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)

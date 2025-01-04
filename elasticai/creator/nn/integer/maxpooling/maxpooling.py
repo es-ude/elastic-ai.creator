@@ -80,39 +80,36 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+
         q_inputs = self.scale_factor_Math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
-        # --------------- int maxpooling ----------------
         batch_size, channels, seq_len = q_inputs.shape
         kernel_size = self.kernel_size
         stride = self.kernel_size
 
         output_length = (seq_len - kernel_size) // stride + 1
-        tmp = torch.zeros((batch_size, channels, output_length), dtype=torch.int32)
+
+        tmp = torch.empty(
+            (batch_size, channels, output_length),
+            dtype=torch.int32,
+            device=q_inputs.device,
+        )
 
         for i in range(output_length):
             start = i * stride
             end = start + kernel_size
             tmp[:, :, i] = q_inputs[:, :, start:end].max(dim=2)[0]
 
-            tmp = simulate_bitshifting(
-                tmp, self.scale_factor_m_q_shift, self.scale_factor_M
-            )
-        # --------------- int maxpooling ----------------
+        tmp = simulate_bitshifting(
+            tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
+        )
 
         q_outputs = self.scale_factor_Math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
-        return q_outputs
-        # dq_inputs = self.inputs_QParams.dequantize(q_inputs)
-        # outputs = F.max_pool1d(
-        #     dq_inputs,
-        #     kernel_size=self.kernel_size,
-        # )
-        # q_outputs = self.outputs_QParams.quantize(outputs)
         return q_outputs
 
     def forward(
@@ -123,6 +120,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
                 self.inputs_QParams.update_quant_params(inputs)
             else:
                 self.inputs_QParams = given_inputs_QParams
+
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         outputs = F.max_pool1d(
