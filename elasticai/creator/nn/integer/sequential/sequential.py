@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.sequential.layer import Sequential as _SequentialBase

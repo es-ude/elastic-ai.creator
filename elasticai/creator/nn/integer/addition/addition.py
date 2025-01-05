@@ -109,11 +109,6 @@ class Addition(DesignCreatorModule, nn.Module):
         )
 
         return q_outputs
-        # dq_inputs1 = self.inputs1_QParams.dequantize(q_inputs1)
-        # dq_inputs2 = self.inputs2_QParams.dequantize(q_inputs2)
-        # dq_outputs = dq_inputs1 + dq_inputs2
-        # q_outputs = self.outputs_QParams.quantize(dq_outputs)
-        # return q_outputs
 
     def forward(
         self,

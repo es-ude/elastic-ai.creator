@@ -31,14 +31,17 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         self.device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        self.in_channels = kwargs.get("in_channels")
+        self.out_channels = kwargs.get("out_channels")
+
         self.conv1d = nn.Conv1d(
-            in_channels=kwargs.get("in_channels"),
-            out_channels=kwargs.get("out_channels"),
+            in_channels=self.in_channels,
+            out_channels=self.out_channels,
             kernel_size=1,
             padding=0,
             bias=True,
         )
-        self.bn1d = nn.BatchNorm1d(num_features=kwargs.get("out_channels"))
+        self.bn1d = nn.BatchNorm1d(num_features=self.out_channels)
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -57,17 +60,16 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> PointConv1dBNDesign:
-        return None
         return PointConv1dBNDesign(
             name=name,
             data_width=self.quant_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
-            kernel_size=self.kernel_size[0],
-            stride=self.stride[0],
-            padding=self.padding[0],
-            weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist(),
+            kernel_size=self.conv1d.kernel_size,
+            stride=self.conv1d.stride,
+            padding=self.conv1d.padding,
+            weights=self.q_fused_weights.tolist(),
+            bias=self.q_fused_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),

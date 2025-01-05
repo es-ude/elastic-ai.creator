@@ -51,15 +51,14 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         self.precomputed = False
 
     def create_design(self, name: str) -> Conv1dDesign:
-        return None
         return Conv1dDesign(
             name=name,
             data_width=self.quant_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
-            kernel_size=self.kernel_size[0],
-            stride=self.stride[0],
-            padding=self.padding[0],
+            kernel_size=self.kernel_size,
+            stride=self.stride,
+            padding=self.padding,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),

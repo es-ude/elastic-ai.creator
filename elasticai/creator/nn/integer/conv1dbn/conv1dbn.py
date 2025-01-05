@@ -29,11 +29,16 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        self.in_channels = kwargs.get("in_channels")
+        self.out_channels = kwargs.get("out_channels")
+        self.kernel_size = kwargs.get("kernel_size")
+        self.padding = kwargs.get("padding")
+
         self.conv1d = nn.Conv1d(
-            in_channels=kwargs.get("in_channels"),
-            out_channels=kwargs.get("out_channels"),
-            kernel_size=kwargs.get("kernel_size"),
-            padding=kwargs.get("padding"),
+            in_channels=self.in_channels,
+            out_channels=self.out_channels,
+            kernel_size=self.kernel_size,
+            padding=self.padding,
         )
         self.bn1d = nn.BatchNorm1d(num_features=kwargs.get("out_channels"))
 
@@ -54,17 +59,16 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> Conv1dBNDesign:
-        return None
         return Conv1dBNDesign(
             name=name,
             data_width=self.quant_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
-            kernel_size=self.kernel_size[0],
-            stride=self.stride[0],
-            padding=self.padding[0],
-            weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist(),
+            kernel_size=self.kernel_size,
+            stride=self.conv1d.stride,
+            padding=self.padding,
+            weights=self.q_fused_weights.tolist(),
+            bias=self.q_fused_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -112,13 +116,13 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)
 
         gamma_ = self.bn1d.weight / std
-        weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
-        bias = (
+        fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
+        fused_bias = (
             gamma_ * self.conv1d.bias - gamma_ * self.bn1d.running_mean + self.bn1d.bias
         )
 
-        self.q_weights = self._get_quantized_weights(weight)
-        self.q_bias = self._get_quantized_bias(bias)
+        self.q_fused_weights = self._get_quantized_weights(fused_weight)
+        self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -142,7 +146,10 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
         # TODO: Implement intmatmul or F.conv1d
         tmp = F.conv1d(
-            q_inputs, self.q_weights, self.q_bias, padding=self.conv1d.padding
+            q_inputs,
+            self.q_fused_weights,
+            self.q_fused_bias,
+            padding=self.conv1d.padding,
         )
 
         tmp = simulate_bitshifting(

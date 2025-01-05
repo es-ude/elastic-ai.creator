@@ -149,10 +149,6 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
         return q_outputs
-        # dq_inputs = self.inputs_QParams.dequantize(q_inputs).to("cuda")
-        # outputs = F.linear(dq_inputs, self.weight, self.bias)
-        # q_outputs = self.outputs_QParams.quantize(outputs)
-        # return q_outputs
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
