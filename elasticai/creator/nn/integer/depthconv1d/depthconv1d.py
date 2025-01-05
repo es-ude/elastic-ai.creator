@@ -134,7 +134,6 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         )
 
         # TODO: Implement intmatmul or F.conv1d
-
         tmp = F.conv1d(
             q_inputs,
             self.q_weights,

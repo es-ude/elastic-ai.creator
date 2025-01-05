@@ -115,13 +115,13 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)
 
         gamma_ = self.bn1d.weight / std
-        weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
-        bias = (
+        fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
+        fused_bias = (
             gamma_ * self.conv1d.bias - gamma_ * self.bn1d.running_mean + self.bn1d.bias
         )
 
-        self.q_weights = self._get_quantized_weights(weight)
-        self.q_bias = self._get_quantized_bias(bias)
+        self.q_fused_weights = self._get_quantized_weights(fused_weight)
+        self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -144,9 +144,11 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         )
 
         # TODO: Implement intmatmul or F.conv1d
-
         tmp = F.conv1d(
-            q_inputs, self.q_weights, self.q_bias, padding=self.conv1d.padding
+            q_inputs,
+            self.q_fused_weights,
+            self.q_fused_bias,
+            padding=self.conv1d.padding,
         )
 
         tmp = simulate_bitshifting(
@@ -191,17 +193,19 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         std = torch.sqrt(var + self.bn1d.eps)
 
         gamma_ = self.bn1d.weight / std
-        weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
-        bias = gamma_ * self.conv1d.bias - gamma_ * mean + self.bn1d.bias
+        fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
+        fused_bias = gamma_ * self.conv1d.bias - gamma_ * mean + self.bn1d.bias
 
         if self.training:
-            self.weight_QParams.update_quant_params(weight)
-            self.bias_QParams.update_quant_params(bias)
+            self.weight_QParams.update_quant_params(fused_weight)
+            self.bias_QParams.update_quant_params(fused_bias)
 
-        weight = SimQuant.apply(weight, self.weight_QParams)
-        bias = SimQuant.apply(bias, self.bias_QParams)
+        fused_weight = SimQuant.apply(fused_weight, self.weight_QParams)
+        fused_bias = SimQuant.apply(fused_bias, self.bias_QParams)
 
-        outputs = F.conv1d(inputs, weight, bias, padding=self.conv1d.padding)
+        outputs = F.conv1d(
+            inputs, fused_weight, fused_bias, padding=self.conv1d.padding
+        )
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)

@@ -130,7 +130,6 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         )
 
         # TODO: Implement intmatmul or F.conv1d
-
         tmp = F.conv1d(
             q_inputs,
             self.q_weights,
@@ -145,7 +144,6 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
-
         return q_outputs
 
     def forward(
@@ -173,6 +171,5 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)
-
         outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs
