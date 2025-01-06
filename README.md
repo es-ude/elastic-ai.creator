@@ -14,11 +14,13 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 ## Table of contents
 
-- [Users Guide](#users-guide)
-  - [Install](#install)
-  - [Minimal Example](#minimal-example)
-  - [General Limitations](#general-limitations)
-- [Structure of the Project](#structure-of-the-project)
+- [ElasticAI.creator](#elasticaicreator)
+  - [Table of contents](#table-of-contents)
+  - [Users Guide](#users-guide)
+    - [Install](#install)
+    - [Minimal Example](#minimal-example)
+    - [General Limitations](#general-limitations)
+  - [Structure of the Project](#structure-of-the-project)
 
 
 
@@ -75,6 +77,3 @@ The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
 It also includes the supported target representations, like the subfolder [nn](elasticai/creator/nn) is for the translation to vhdl.
 Additionally, we have unit and integration tests in the [tests](tests) folder.
-
-
-

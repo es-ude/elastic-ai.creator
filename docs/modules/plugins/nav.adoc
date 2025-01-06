@@ -1,0 +1,5 @@
+* Plugins API
++
+--
+include:::partial$nav.adoc[]
+--

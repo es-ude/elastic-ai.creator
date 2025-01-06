@@ -3,15 +3,14 @@ name = "elasticai.creator"
 version = "0.60.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
-repository = "https://github.com/es-ude/elastic-ai.creator"
-authors = [{name= "Department Embedded Systems - University Duisburg Essen"}]
-maintainers = [{name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de"}]
+authors = [{ name = "Department Embedded Systems - University Duisburg Essen" }]
+maintainers = [{ name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de" }]
 requires-python = ">=3.10"
 dependencies = [
-  "torch>=1.11",
-  "numpy>=1.23.0",
-  "tomlkit>=0.13.2",
-  "click>=8.1.7",
+    "torch>=1.11",
+    "numpy>=1.23.0",
+    "tomlkit>=0.13.2",
+    "click>=8.1.7",
 ]
 
 
@@ -21,29 +20,16 @@ eai-run-ghdl-tbs-for-plugins = "elasticai.creator.utils.run_ghdl_tbs_for_plugins
 [dependency-groups]
 dev = [
     "build>=1.2.2.post1",
-    "pre-commit>=4.0.1"
+    "ipykernel>=6.29.5",
+    "pre-commit>=4.0.1",
+    "pysciidoc>=0.3.3",
 ]
 release = ["git-cliff>=2.7.0"]
-testing = [
-    "pytest>=8.3.4",
-    "pytest-cov>=6.0.0",
-    "coverage>=7.6.9",
-]
-utils = [
-    "rust-just>=1.38.0",
-]
-versioning = [
-    "towncrier>=24.8.0",
-]
-lint = [
-    "mypy>=1.13.0",
-    "ruff>=0.9.0",
-]
-lsp = [
-    "pylsp-mypy>=0.6.9",
-    "pylsp-rope>=0.1.17",
-    "python-lsp-server>=1.12.0",
-]
+testing = ["pytest>=8.3.4", "pytest-cov>=6.0.0", "coverage>=7.6.9"]
+utils = ["rust-just>=1.38.0"]
+versioning = ["towncrier>=24.8.0"]
+lint = ["mypy>=1.13.0", "ruff>=0.8.2"]
+lsp = ["pylsp-mypy>=0.6.9", "pylsp-rope>=0.1.17", "python-lsp-server>=1.12.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -59,7 +45,7 @@ default-groups = ["utils", "testing", "lint", "dev"]
 
 
 [tool.uv.sources]
-elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
+elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61" }
 
 
 [tool.pytest.ini_options]
@@ -67,7 +53,7 @@ minversion = "6.0"
 markers = [
   "simulation: possibly slow running integration tests including hw simulation",
 ]
-testpaths = ["elasticai/creator/", "tests"]
+testpaths = ["elasticai/creator/", "tests", "elasticai/creator_plugins"]
 python_files = ["*_test.py", "test_*.py"]
 
 
@@ -85,37 +71,42 @@ command_line = "-m pytest -m 'not simulation'"
 
 
 [tool.ruff]
-include = ["pyproject.toml", "elasticai/**/*.py", "elasticai/**/*.pyi", "elasticai/**/*.py"]
+include = [
+    "pyproject.toml",
+    "elasticai/**/*.py",
+    "elasticai/**/*.pyi",
+    "elasticai/**/*.py",
+]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
-  ".bzr",
-  ".direnv",
-  ".eggs",
-  ".git",
-  ".git-rewrite",
-  ".hg",
-  ".ipynb_checkpoints",
-  ".mypy_cache",
-  ".nox",
-  ".pants.d",
-  ".pyenv",
-  ".pytest_cache",
-  ".pytype",
-  ".ruff_cache",
-  ".svn",
-  ".tox",
-  ".venv",
-  ".vscode",
-  "__pypackages__",
-  "_build",
-  "buck-out",
-  "build",
-  "dist",
-  "node_modules",
-  "site-packages",
-  "venv",
-  ".devenv",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    ".devenv",
 ]
 
 # Same as Black.
@@ -127,12 +118,17 @@ target-version = "py38"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-select = ["E4", "E7", "E9", "F"]
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+]
 ignore = [
-    "D101", 
+    "D101",
     "D102",
     "E741", # ambiguous variable names
-    "F401", # unused import, add symbol to __all__
+    "F401", # unused import until we added every symbol to __all__ where necessary
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -213,9 +209,9 @@ body = """
 conventional_commits = true
 filter_unconventional = true
 commit_preprocessors = [
-  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/es-ude/elastic-ai.creator/issues/${1}))"},  # replace #NR by link to issue
-  { pattern = "([ \\n])(([a-f0-9]{7})[a-f0-9]*)", replace = "${1}commit # [${3}](https://github.com/es-ude/elastic-ai.creator/commit/${2})"}  # replace commit hash by link to commit
+    { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/es-ude/elastic-ai.creator/issues/${1}))" },                            # replace #NR by link to issue
+    { pattern = "([ \\n])(([a-f0-9]{7})[a-f0-9]*)", replace = "${1}commit # [${3}](https://github.com/es-ude/elastic-ai.creator/commit/${2})" }, # replace commit hash by link to commit
 ]
 commit_parsers = [
-  { message = "^wip", skip = true },  # ignore commits of type wip
+    { message = "^wip", skip = true }, # ignore commits of type wip
 ]
