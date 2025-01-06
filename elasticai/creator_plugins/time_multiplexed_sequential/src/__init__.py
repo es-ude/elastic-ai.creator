@@ -2,8 +2,9 @@ from collections.abc import Callable, Iterable
 from typing import ParamSpec
 
 import elasticai.creator.plugin as _pl
-from elasticai.creator.ir import RequiredField
 from elasticai.creator.function_utils import FunctionDecorator
+from elasticai.creator.ir import RequiredField
+
 from ._imports import (
     Edge,
     FilterParameters,

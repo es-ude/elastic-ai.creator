@@ -19,6 +19,7 @@ do_not_commit/*
 # python build output
 dist/
 
+.zed
 # Created by .ignore support plugin (hsz.mobi)
 
 .vscode
@@ -252,10 +253,16 @@ Temporary Items
 /vhdl93-bnf.html
 .devenv/
 .direnv/
+.devenv.flake.nix
 build/
 justfile
 .zed/
+.lsp/
+.clj-kondo/
 
+.ropeproject
+.pytest_cache
+.ruff_cache
 
 .clj-kondo/
 .lsp/

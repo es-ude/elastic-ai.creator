@@ -1,8 +1,7 @@
-name: elasticai-creator
-version: true
 title: elasticai.creator
 nav:
   - modules/ROOT/nav.adoc
   - modules/utils/nav.adoc
   - modules/api/nav.adoc
   - modules/plugins/nav.adoc
+  - modules/ir/nav.adoc

@@ -88,7 +88,7 @@ let
 
     new_creator_plugin = {
       exec = ''
-        if [ -d elasticai/creator_plugins/$1 ]; then
+        if ! [ -d elasticai/creator_plugins/$1 ]; then
            mkdir -p elasticai/creator_plugins/$1
            touch elasticai/creator_plugins/$1/__init__.py
            new_meta_for_creator_plugin $1
