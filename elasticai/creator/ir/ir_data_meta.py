@@ -1,3 +1,4 @@
+from collections.abc import MutableMapping
 from types import GenericAlias, MappingProxyType, resolve_bases
 from typing import Any, cast
 
@@ -104,12 +105,14 @@ class IrDataMeta(type):
         inherited_fields = {}
         for o in resolve_bases(bases):
             if isinstance(o, IrDataMeta):
-                inherited_fields.update(o._fields)
+                inherited_fields.update(o._fields)  # type: ignore
         return inherited_fields
 
     @staticmethod
-    def __add_data_slot(namespace: dict[str, Any]) -> None:
-        namespace["__slots__"] = ("data",) + namespace.get("__slots__", tuple())
+    def __add_data_slot(namespace: MutableMapping[str, object]) -> None:
+        namespace["__slots__"] = ("data",) + cast(
+            tuple, namespace.get("__slots__", tuple())
+        )
 
     @staticmethod
     def __get_user_defined_fields_from_annotations(

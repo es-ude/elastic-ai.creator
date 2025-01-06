@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from functools import wraps
 from typing import Generic, ParamSpec, Protocol, TypeVar
 
@@ -38,7 +38,7 @@ class LoweringPass(Generic[Tin, Tout]):
         self._check_for_redefinition(name)
         self._fns.register(name)(fn)
 
-    def __call__(self, args: Iterable[Tin]) -> Iterable[Tout]:
+    def __call__(self, args: Iterable[Tin]) -> Iterator[Tout]:
         for arg in args:
             yield from self._fns(arg)
 
