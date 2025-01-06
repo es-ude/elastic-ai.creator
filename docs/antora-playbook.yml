@@ -1,0 +1,17 @@
+site:
+  title: elasticai.creator Documentation
+  start_page: elasticai-creator::index.adoc
+content:
+  sources:
+    - url: ./../
+      branches: HEAD
+      tags: ['v0.@({6,7,8,9})*({0..9}).*({0..9})?(.*)']
+      start_paths:
+      - docs
+      - elasticai/creator_plugins/*/docs
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+  supplemental_files: ./supplemental-ui/
