@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from elasticai.creator.test_utils.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 from .lstm_cell import LSTMCell, MathOperations
 from .torch_math_operations import TorchMathOperations

@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.test_utils.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 from ._math_operations import MathOperations
 from ._two_complement_fixed_point_config import FixedPointConfig

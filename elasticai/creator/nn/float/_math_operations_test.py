@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.test_utils.tensor_test_case import assertTensorEqual
+from tests.tensor_test_case import assertTensorEqual
 
 from ._math_operations import MathOperations
 

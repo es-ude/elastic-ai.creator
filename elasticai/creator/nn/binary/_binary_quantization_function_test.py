@@ -4,7 +4,7 @@ from typing import cast
 import torch
 from torch import Tensor, tensor
 
-from elasticai.creator.test_utils.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 from ._binary_quantization_function import Binarize
 

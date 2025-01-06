@@ -3,7 +3,7 @@ from typing import Any, Optional, cast
 
 import torch
 
-from elasticai.creator.test_utils.tensor_test_case import TensorTestCase
+from tests.tensor_test_case import TensorTestCase
 
 from .lstm import LSTM
 from .lstm_cell import LSTMCell
