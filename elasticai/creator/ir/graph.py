@@ -6,12 +6,11 @@ from .graph_delegate import GraphDelegate
 
 N = TypeVar("N", bound=Node)
 E = TypeVar("E", bound=Edge)
-Self = TypeVar("Self", bound="Graph")
 
 
 class Graph(Generic[N, E]):
     def __init__(
-        self: Self, nodes: Iterable[N] = tuple(), edges: Iterable[E] = tuple()
+        self, nodes: Iterable[N] = tuple(), edges: Iterable[E] = tuple()
     ) -> None:
         self._g: GraphDelegate[str] = GraphDelegate()
         self._edge_data: dict[tuple[str, str], E] = dict()
@@ -19,23 +18,23 @@ class Graph(Generic[N, E]):
         self.add_edges(edges)
         self.add_nodes(nodes)
 
-    def add_node(self: Self, n: N) -> None:
+    def add_node(self, n: N) -> None:
         self._g.add_node(n.name)
         self._node_data[n.name] = n
 
-    def add_nodes(self: Self, ns: Iterable[N]) -> None:
+    def add_nodes(self, ns: Iterable[N]) -> None:
         for n in ns:
             self.add_node(n)
 
-    def add_edges(self: Self, es: Iterable[E]) -> None:
+    def add_edges(self, es: Iterable[E]) -> None:
         for e in es:
             self.add_edge(e)
 
-    def add_edge(self: Self, e: Edge) -> None:
+    def add_edge(self, e: E) -> None:
         self._g.add_edge(e.src, e.sink)
         self._edge_data[(e.src, e.sink)] = e
 
-    def successors(self: Self, node: str | N) -> Mapping[str, N]:
+    def successors(self, node: str | N) -> Mapping[str, N]:
         if not isinstance(node, str):
             node = node.name
 
@@ -44,7 +43,7 @@ class Graph(Generic[N, E]):
 
         return _ReadOnlyMappingInOrderAsIterable(_successors, self._node_data)
 
-    def predecessors(self: Self, node: str | N) -> Mapping[str, N]:
+    def predecessors(self, node: str | N) -> Mapping[str, N]:
         if not isinstance(node, str):
             node = node.name
 
@@ -54,11 +53,11 @@ class Graph(Generic[N, E]):
         return _ReadOnlyMappingInOrderAsIterable(_predecessors, self._node_data)
 
     @property
-    def nodes(self: Self) -> Mapping[str, N]:
+    def nodes(self) -> Mapping[str, N]:
         return _ReadOnlyMappingInOrderAsIterable(self._g.iter_nodes, self._node_data)
 
     @property
-    def edges(self: Self) -> Mapping[tuple[str, str], E]:
+    def edges(self) -> Mapping[tuple[str, str], E]:
         return _ReadOnlyMappingInOrderAsIterable(self._g.get_edges, self._edge_data)
 
 
