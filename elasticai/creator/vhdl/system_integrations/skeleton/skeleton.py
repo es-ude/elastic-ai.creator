@@ -33,8 +33,8 @@ class Skeleton:
         if skeleton_version == "v1":
             warnings.warn(
                 (
-                    f"Skeleton V1 might be deprecated in the future. Consider using"
-                    f" Skeleton V2 instead."
+                    "Skeleton V1 might be deprecated in the future. Consider using"
+                    " Skeleton V2 instead."
                 ),
                 FutureWarning,
             )
@@ -114,6 +114,36 @@ class LSTMSkeleton:
             package=module_to_package(self.__module__),
             file_name="lstm_network_skeleton.tpl.vhd",
             parameters=dict(name=self.name, network_name=self._network_name),
+        )
+        file = destination.as_file(".vhd")
+        file.write(template)
+
+
+class EchoSkeletonV2:
+    def __init__(self, num_values: int, bitwidth: int):
+        self._num_values = num_values
+        self._bitwidth = bitwidth
+        self._name = "skeleton"
+        if bitwidth > 8:
+            raise Exception(
+                "Not more than 8 bit supported by middleware. You assigned"
+                f" {bitwidth} bits"
+            )
+        self._template_file_name = "network_skeleton_v2_echo.tpl.vhd"
+        self._id = [50, 52, 48, 56, 50, 51, 69, 67, 72, 79, 83, 69, 82, 86, 69, 82]
+
+    def save_to(self, destination: Path):
+        template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name=self._template_file_name,
+            parameters=dict(
+                name=self._name,
+                data_width=str(self._bitwidth),
+                num_values=str(self._num_values),
+                id=", ".join(
+                    map(partial(to_vhdl_binary_string, number_of_bits=8), self._id)
+                ),
+            ),
         )
         file = destination.as_file(".vhd")
         file.write(template)

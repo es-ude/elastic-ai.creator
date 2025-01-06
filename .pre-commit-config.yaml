@@ -3,26 +3,26 @@
 default_install_hook_types: [pre-commit, commit-msg]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
     -   id: trailing-whitespace
-        stages: [commit, manual ]
+        stages: [pre-commit, manual ]
     -   id: end-of-file-fixer
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
     -   id: check-yaml
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
     -   id: check-added-large-files
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
     -   id: check-merge-conflict
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
     -   id: check-toml
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
     -   id: check-vcs-permalinks
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
     -   id: no-commit-to-branch
-        stages: [ commit, manual ]
+        stages: [ pre-commit, manual ]
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.13.0
     hooks:
     -   id: mypy
         stages: [ manual ]
@@ -31,19 +31,20 @@ repos:
     hooks:
     -   id: dead
         stages: [ manual ]
-- repo: https://github.com/PyCQA/isort
-  rev: 5.12.0
-  hooks:
-      - id: isort
-        stages: [ commit, manual ]
-        args: ["--profile=black"]
-- repo: https://github.com/psf/black
-  rev: 23.1.0
-  hooks:
-      - id: black
-        stages: [ commit, manual ]
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
-  rev: v9.5.0
+  rev: v9.19.0
   hooks:
       - id: commitlint
         stages: [commit-msg, manual]
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.8.2
+  hooks:
+    # Run the linter.
+    - id: ruff
+      types_or: [ python, pyi ]
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+      types_or: [ python, pyi ]

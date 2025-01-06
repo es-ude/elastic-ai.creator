@@ -6,7 +6,11 @@ from elasticai.creator.vhdl.design.ports import Port
 
 class Design(Savable, ABC):
     def __init__(self, name: str):
-        self.name = name
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     @abstractmethod

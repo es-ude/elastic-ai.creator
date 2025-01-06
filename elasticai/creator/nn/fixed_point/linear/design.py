@@ -10,8 +10,10 @@ from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
+from .testbench import LinearDesignProtocol
 
-class Linear(Design):
+
+class LinearDesign(Design, LinearDesignProtocol):
     def __init__(
         self,
         *,
@@ -26,16 +28,37 @@ class Linear(Design):
         resource_option: str = "auto",
     ) -> None:
         super().__init__(name=name)
+        self._name = name
         self.weights = weights
         self.bias = bias
-        self.in_feature_num = in_feature_num
-        self.out_feature_num = out_feature_num
+        self._in_feature_num = in_feature_num
+        self._out_feature_num = out_feature_num
         self.work_library_name = work_library_name
         self.resource_option = resource_option
-        self.frac_width = frac_bits
-        self.data_width = total_bits
+        self._frac_width = frac_bits
+        self._data_width = total_bits
         self.x_addr_width = self.port["x_address"].width
         self.y_addr_width = self.port["y_address"].width
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def in_feature_num(self) -> int:
+        return self._in_feature_num
+
+    @property
+    def out_feature_num(self) -> int:
+        return self._out_feature_num
+
+    @property
+    def frac_width(self) -> int:
+        return self._frac_width
+
+    @property
+    def data_width(self) -> int:
+        return self._data_width
 
     @property
     def port(self) -> Port:
@@ -75,6 +98,7 @@ class Linear(Design):
                 bias_rom_name=rom_name["bias"],
                 work_library_name=self.work_library_name,
                 resource_option=f'"{self.resource_option}"',
+                log2_max_value="31",
                 **self._template_parameters(),
             ),
         )

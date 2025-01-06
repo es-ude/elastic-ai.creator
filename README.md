@@ -32,7 +32,7 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 You can install the ElasticAI.creator as a dependency using pip:
 ```bash
-python3 -m pip install elasticai-creator
+python3 -m pip install "elasticai.creator"
 ```
 
 The latest version published on PyPi is the one tagged with:

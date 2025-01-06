@@ -1,53 +1,56 @@
-from typing import Any, Protocol
+import csv
+import pathlib
+from typing import Any
 
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.file_generation.savable import Path
-from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 
 
-class Design(Protocol):
-    def save_to(self, destination: Path): ...
-
-
-class Layer(Design, Protocol):
+class Testbench:
     @property
-    def name(self) -> str: ...
+    def name(self) -> str:
+        raise NotImplementedError
 
-    def create_testbench(self, name: str) -> "TestBench": ...
+    def save_to(self, destination: Path) -> None:
+        raise NotImplementedError
 
+    def prepare_inputs(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError
 
-class TestBench(Design, Protocol):
-    def set_inputs(self, *inputs) -> None: ...
-
-    def parse_reported_content(self, content: Any) -> Any: ...
-
-
-class SimulationConstructor(Protocol):
-    def __call__(self, workdir: str, top_design_name: str) -> GHDLSimulator: ...
+    def parse_reported_content(self, *args, **kwargs: Any) -> Any:
+        raise NotImplementedError
 
 
 class SimulatedLayer:
-    def __init__(
-        self,
-        layer_under_test: Layer,
-        simulation_constructor: SimulationConstructor,
-        working_dir: str,
-    ):
-        self._layer_under_test = layer_under_test
-        self._simulation_constructor = simulation_constructor
+    def __init__(self, testbench: Testbench, simulator_constructor, working_dir):
+        self._testbench = testbench
+        self._simulator_constructor = simulator_constructor
         self._working_dir = working_dir
-        self._inputs = None
+        self._inputs_file_path = (
+            f"{self._working_dir}/{self._testbench.name}_inputs.csv"
+        )
 
-    def __call__(self, *inputs):
-        root = OnDiskPath("main", parent=self._working_dir)
-        testbench_name = f"testbench_{self._layer_under_test.name}"
-        testbench = self._layer_under_test.create_testbench(testbench_name)
-        testbench.set_inputs(*inputs)
-        testbench.save_to(root)
-        runner = self._simulation_constructor(
-            workdir=f"{self._working_dir}", top_design_name=testbench.name
+    def __call__(self, inputs: Any) -> Any:
+        runner = self._simulator_constructor(
+            workdir=f"{self._working_dir}", top_design_name=self._testbench.name
+        )
+        inputs = self._testbench.prepare_inputs(inputs)
+        self._write_csv(inputs)
+        runner.add_generic(
+            INPUTS_FILE_PATH=str(pathlib.Path(self._inputs_file_path).absolute())
         )
         runner.initialize()
         runner.run()
-        actual = testbench.parse_reported_content(runner.getReportedContent())
+        actual = self._testbench.parse_reported_content(runner.getReportedContent())
         return actual
+
+    def _write_csv(self, inputs):
+        with open(self._inputs_file_path, "w") as f:
+            header = [x for x in inputs[0].keys()]
+            writer = csv.DictWriter(
+                f,
+                fieldnames=header,
+                lineterminator="\n",
+                delimiter=" ",
+            )
+            writer.writeheader()
+            writer.writerows(inputs)
