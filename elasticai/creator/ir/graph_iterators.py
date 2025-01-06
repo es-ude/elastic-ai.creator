@@ -1,9 +1,11 @@
-from collections.abc import Callable, Iterable, Iterator
-from typing import Hashable, TypeAlias, TypeVar
+from collections.abc import Hashable, Iterable, Iterator
+from typing import Protocol, TypeVar
 
 HashableT = TypeVar("HashableT", bound=Hashable)
 
-NodeNeighbourFn: TypeAlias = Callable[[HashableT], Iterable[HashableT]]
+
+class NodeNeighbourFn(Protocol[HashableT]):
+    def __call__(self, node: HashableT) -> Iterable[HashableT]: ...
 
 
 def dfs_pre_order(successors: NodeNeighbourFn, start: HashableT) -> Iterator[HashableT]:
@@ -35,6 +37,8 @@ def bfs_iter_down(
 
 
 def bfs_iter_up(
-    predecessors: NodeNeighbourFn, successors: NodeNeighbourFn, start: HashableT
+    predecessors: NodeNeighbourFn[HashableT],
+    successors: NodeNeighbourFn[HashableT],
+    start: HashableT,
 ) -> Iterator[HashableT]:
     return bfs_iter_down(predecessors, successors, start)
