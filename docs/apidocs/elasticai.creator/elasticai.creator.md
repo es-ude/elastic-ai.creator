@@ -27,6 +27,7 @@ elasticai.creator.file_generation
 :titlesonly:
 :maxdepth: 1
 
+elasticai.creator.hw_function_id
 elasticai.creator.hw_accelerator_meta
 elasticai.creator.plugin
 elasticai.creator.template
