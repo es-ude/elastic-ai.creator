@@ -97,6 +97,7 @@ include = [
     "elasticai/**/*.py",
     "elasticai/**/*.pyi",
     "elasticai/**/*.py",
+    "tests/**/*.py"
 ]
 
 # Exclude a variety of commonly ignored directories.
