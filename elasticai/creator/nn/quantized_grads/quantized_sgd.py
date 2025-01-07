@@ -6,7 +6,6 @@ from torch.nn import Sequential
 
 from elasticai.creator.nn.quantized_grads.quantized_parameters import (
     QuantizationParameter,
-    QuantizationSchemeByName,
     QuantizedParameters,
 )
 
@@ -60,11 +59,16 @@ def single_tensor_sgd(
     lr: float,
     momentum: float,
     weight_decay: float,
-    quantization: Callable[[Tensor], Tensor],
+    quantization: Callable[[Tensor], None],
 ) -> None:
     """
     First Version of SGD. Momentum+buffer needs to be implemented soon. Weight decay will likely be implemented too.
     """
     with torch.no_grad():
+        print()
+        print(f"{p=}")
+        print(f"{d_p=}")
         p.add_(-d_p, alpha=lr)
+        print(f"After add {p=}")
         quantization(p)
+        print(f"After quantize {p=}")

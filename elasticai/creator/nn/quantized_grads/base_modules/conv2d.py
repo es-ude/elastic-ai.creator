@@ -1,7 +1,7 @@
 from typing import Any, Callable, Protocol
 
 from torch import Tensor
-from torch.nn import Conv2d as _Conv2d
+from torch.nn import Conv2d as __Conv2d
 from torch.nn.functional import conv2d
 
 from elasticai.creator.base_modules.math_operations import Quantize
@@ -11,13 +11,49 @@ from elasticai.creator.nn.quantized_grads.quantized_parameters import (
 )
 
 
+class _Conv2d(__Conv2d):
+    """
+    This class is a facade for Conv2d to allow clean multiple inheritance for Conv2d.
+    """
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int | tuple[int],
+        stride: int | tuple[int] = 1,
+        padding: int | tuple[int] | str = 0,
+        dilation: int | tuple[int] = 1,
+        groups: int = 1,
+        bias: bool = True,
+        device: Any = None,
+        dtype: Any = None,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+            padding_mode="zeros",
+            device=device,
+            dtype=dtype,
+        )
+
+
 class MathOperations(Quantize, Protocol): ...
 
 
 class Conv2d(_Conv2d, QuantizedParameters):
     """This module implements a 2d convolution.
     The output of the convolution is fake quantized. The weights and bias are fake quantized during initialization.
-    To keep the weights quantized use only optimizers that apply a quantized update
+    To keep the weights quantized use only optimizers that apply a quantized update.
+    IMPORTANT: use only in-place operators for your quantize implementations
     """
 
     def __init__(
@@ -36,8 +72,19 @@ class Conv2d(_Conv2d, QuantizedParameters):
         device: Any = None,
         dtype: Any = None,
     ) -> None:
-        _Conv2d.__init__(
-            self,
+        if bias ^ isinstance(bias_quantization, Callable):
+            raise Exception(
+                f"if bias is True, bias_quantization can needs be set. "
+                f"If not it is not allowed to be set."
+                f"You have choosen {bias=} and {bias_quantization=}."
+            )
+
+        params = [QuantizationSchemeByName("weight", weight_quantization)]
+
+        if bias is not False:
+            params.append(QuantizationSchemeByName("bias", bias_quantization))
+
+        super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
@@ -50,20 +97,11 @@ class Conv2d(_Conv2d, QuantizedParameters):
             device=device,
             dtype=dtype,
         )
-        if bias ^ isinstance(bias_quantization, Callable):
-            raise Exception(
-                f"if bias is True, bias_quantization can needs be set. "
-                f"If not it is not allowed to be set."
-                f"You have choosen {bias=} and {bias_quantization=}."
-            )
+        self.qparams = params
         self._operations = operations
         weight_quantization(self.weight.data)
-
-        params = [QuantizationSchemeByName("weight", weight_quantization)]
         if bias is not False:
             bias_quantization(self.bias.data)
-            params.append(QuantizationSchemeByName("bias", bias_quantization))
-        QuantizedParameters.__init__(self, params)
 
     def forward(self, x: Tensor) -> Tensor:
         convolved = conv2d(

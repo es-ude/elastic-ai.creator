@@ -3,6 +3,7 @@ import torch
 from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2
 from elasticai.creator.nn.quantized_grads.fixed_point.quantize_to_fixed_point import (
     _clamp,
+    _clamp_,
     _round_to_fixed_point_hte,
     _round_to_fixed_point_hte_,
     quantize_to_fxp_hte,
@@ -123,6 +124,15 @@ def test_clamp_to_fixed_point():
     actual = _clamp(x, conf)
     expected = torch.Tensor([-2.0, -2.0, -1.0, 0.0, 1.0, 1.75, 1.75])
     assert torch.equal(actual, expected)
+
+
+def test_clamp_to_fixed_point_inplace():
+    conf = FixedPointConfigV2(total_bits=4, frac_bits=2)
+    x = torch.range(-3, 3, step=1, dtype=torch.float32)
+
+    _clamp_(x, conf)
+    expected = torch.Tensor([-2.0, -2.0, -1.0, 0.0, 1.0, 1.75, 1.75])
+    assert torch.equal(x, expected)
 
 
 def test_quantize_determinstic_to_fixed_point():

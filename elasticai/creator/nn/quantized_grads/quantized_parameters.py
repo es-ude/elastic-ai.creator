@@ -30,5 +30,6 @@ class QuantizationParameter:
 class QuantizedParameters:
     __slots__ = "qparams"
 
-    def __init__(self, qparams: list[QuantizationSchemeByName]):
+    def __init__(self, qparams: list[QuantizationSchemeByName], *args, **kwargs):
         self.qparams: list[QuantizationSchemeByName] = qparams
+        print("INIT DONE")

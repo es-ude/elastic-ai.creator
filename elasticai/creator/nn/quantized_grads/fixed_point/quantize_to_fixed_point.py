@@ -50,6 +50,20 @@ def quantize_to_fxp_stochastic(
     )
 
 
+def quantize_to_fxp_stochastic_(
+    number: torch.Tensor, fxp_conf: FixedPointConfigV2
+) -> None:
+    """
+    Inplace operation of quantize_to_fxp_stochastic.
+    Round fixed point stochastic adds a noise of [-0.5/2**fracbits to 0.5/2**fracbits] on the input tensor.
+    The tensor is clamped and rounded to a fixed point number.
+    """
+    noise = (torch.rand_like(number) - 0.5) / (2**fxp_conf.frac_bits)
+    _clamp_(number, fxp_conf)
+    number.add_(noise)
+    _round_to_fixed_point_hte_(number, fxp_conf.frac_bits)
+
+
 def quantize_to_fxp_hte(
     number: torch.Tensor, fxp_conf: FixedPointConfigV2
 ) -> torch.Tensor:
@@ -62,8 +76,9 @@ def quantize_to_fxp_hte(
 
 def quantize_to_fxp_hte_(number: torch.Tensor, fxp_conf: FixedPointConfigV2) -> None:
     """
-    Round fixed point half to even. Inplace operation
+    Inplace operation of quantize_to_fxp_hte.
+    Round fixed point half to even.
     The tensor is clamped and rounded to a fixed point number.
     """
     _round_to_fixed_point_hte_(number, fxp_conf.frac_bits)
-    _clamp(number, fxp_conf)
+    _clamp_(number, fxp_conf)
