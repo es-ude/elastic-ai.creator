@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 import torch
 
@@ -33,7 +35,7 @@ def build_5_total_1_frac_conv1d():
 
 
 @pytest.fixture
-def to_1d_input_tensor():
+def to_1d_input_tensor() -> Callable[[list], torch.Tensor]:
     def get_list_nesting_depth(l):
         level = 0
         while isinstance(l, list):
@@ -175,7 +177,7 @@ def test_fxp_operations_additive_over_and_underflow(
 ) -> None:
     conv = conv_with_4_total_1_frac_and_kernel_size_2
     conv.weight.data = torch.ones_like(conv.weight)
-    input_tensor = torch.tensor(to_1d_input_tensor(inputs))
+    input_tensor = to_1d_input_tensor(inputs)
     prediction = conv(input_tensor)
     expected = to_1d_input_tensor(expected).tolist()
     assert expected == prediction.tolist()
