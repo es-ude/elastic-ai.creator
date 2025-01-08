@@ -87,40 +87,14 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name) -> ResidualBlockDesign:
-        # Flatten weights and biases for the designs
-        weights1 = self.conv1dbn_1.q_fused_weights.tolist()
-        biases1 = self.conv1dbn_1.q_fused_bias.tolist()
-
-        weights2 = self.conv1dbn_2.q_fused_weights.tolist()
-        biases2 = self.conv1dbn_2.q_fused_bias.tolist()
-
-        shortcut_weights = []
-        shortcut_biases = []
-        if len(self.shortcut) > 0:
-            for module in self.shortcut:
-                shortcut_weights.append(module.q_fused_weights.tolist())
-                shortcut_biases.append(module.q_fused_bias.tolist())
-
         return ResidualBlockDesign(
             name=name,
-            data_width=self.conv1dbn_1.quant_bits,
-            in_channels=self.conv1dbn_1.conv1d.in_channels,
-            out_channels=self.conv1dbn_1.conv1d.out_channels,
-            kernel_size=self.conv1dbn_1.conv1d.kernel_size[0],  # Assuming 1D kernel
-            weights1=weights1,
-            weights2=weights2,
-            shortcut_weights=shortcut_weights,
-            biases1=biases1,
-            biases2=biases2,
-            shortcut_biases=shortcut_biases,
-            m_q=self.conv1dbn_1.scale_factor_m_q.item(),
-            m_q_shift=self.conv1dbn_1.scale_factor_m_q_shift.item(),
-            z_x=self.conv1dbn_1.inputs_QParams.zero_point.item(),
-            z_w=self.conv1dbn_1.weight_QParams.zero_point.item(),
-            z_b=self.conv1dbn_1.bias_QParams.zero_point.item(),
-            z_y=self.conv1dbn_1.outputs_QParams.zero_point.item(),
+            data_width=self.inputs_QParams.quant_bits,
+            in_channels=self.conv1dbn_1.in_channels,
+            out_channels=self.conv1dbn_1.out_channels,
+            kernel_size=self.conv1dbn_1.kernel_size,
+            seq_len=self.conv1dbn_1.seq_len,
             work_library_name="work",
-            resource_option="auto",
         )
 
     def precompute(self) -> None:

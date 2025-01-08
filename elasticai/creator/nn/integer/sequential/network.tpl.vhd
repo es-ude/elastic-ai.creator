@@ -1,8 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-library work;
-use work.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 entity $layer_name is
     port (
         enable: in std_logic;

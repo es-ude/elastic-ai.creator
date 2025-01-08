@@ -1,8 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-library work;
-use work.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 entity ${name} is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
@@ -12,6 +12,11 @@ entity ${name} is
         OUT_FEATURES : integer := ${out_features};
         IN_NUM_DIMENSIONS : integer := ${in_num_dimensions};
         OUT_NUM_DIMENSIONS : integer := ${out_num_dimensions};
+        M_Q : integer := ${m_q};
+        M_Q_SHIFT : integer := ${m_q_shift};
+        Z_X : integer := ${z_x};
+        Z_Y : integer := ${z_y};
+        M_Q_DATA_WIDTH : integer := ${m_q_data_width};
         Y_RESOURCE_OPTION : string := "${resource_option}"
     );
     port (
@@ -123,7 +128,7 @@ begin
         end if;
     end process;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
-    ram_y : entity work.dual_port_2_clock_ram(rtl)
+        ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,

@@ -22,6 +22,7 @@ class Conv1dBN(Design):
         data_width: int,
         in_channels: int,
         out_channels: int,
+        seq_len: int,
         kernel_size: int,
         stride: int,
         padding: int,
@@ -41,8 +42,8 @@ class Conv1dBN(Design):
         self._data_width = data_width
         self._in_channels = in_channels
         self._out_channels = out_channels
+        self._seq_len = seq_len
         self._kernel_size = kernel_size
-        self._stride = stride
         self._padding = padding
 
         self._m_q = m_q
@@ -60,16 +61,24 @@ class Conv1dBN(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_addr_width = calculate_address_width(self._in_channels)
-        self._y_addr_width = calculate_address_width(self._out_channels)
+        self._x_count = self._in_channels * self._seq_len
+        if self._padding == 0 or self._padding == "same":
+            self._y_count = self._in_channels * (self._seq_len - self._kernel_size + 1)
+        elif self._padding == 1:  # padding zero and padding to same
+            self._y_count = self._x_count
+        else:
+            raise ValueError("Padding value not supported")
+
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self._in_channels * self._kernel_size,
-            y_count=self._out_channels,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
@@ -137,5 +146,11 @@ class Conv1dBN(Design):
         )
 
 
-def _flatten_params(params: list[list[int]]) -> list[int]:
-    return list(chain(*params))
+def _flatten_params(params):
+    flat_list = []
+    for p in params:
+        if isinstance(p, list):
+            flat_list.extend(_flatten_params(p))
+        else:
+            flat_list.append(p)
+    return flat_list

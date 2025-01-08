@@ -1,10 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
 library ${work_library_name};
 use ${work_library_name}.all;
-
 entity ${name} is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};

@@ -66,6 +66,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             out_channels=self.out_channels,
             kernel_size=self.kernel_size,
             stride=self.conv1d.stride,
+            seq_len=self.seq_len,
             padding=self.padding,
             weights=self.q_fused_weights.tolist(),
             bias=self.q_fused_bias.tolist(),

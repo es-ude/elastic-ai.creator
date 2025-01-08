@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
-
+library ${work_library_name};
+use ${work_library_name}.all;
 entity ${name}_tb is
 end ${name}_tb;
-
 architecture testbench of ${name}_tb is
     signal clock : std_logic := '0';
     signal enable : std_logic := '0';

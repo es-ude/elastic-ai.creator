@@ -47,20 +47,19 @@ class MaxPooling1d(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_addr_width = calculate_address_width(
-            self._in_features * self._in_num_dimensions
-        )
-        self._y_addr_width = calculate_address_width(
-            self._out_features * self._out_num_dimensions
-        )
+        self._x_count = self._in_features * self._in_num_dimensions
+        self._y_count = self._out_features * self._out_num_dimensions
+
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self._in_features * self._in_num_dimensions,
-            y_count=self._out_features * self._out_num_dimensions,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
@@ -100,7 +99,6 @@ class MaxPooling1d(Design):
                 in_num_dimensions=str(self._in_num_dimensions),
                 out_num_dimensions=str(self._out_num_dimensions),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(

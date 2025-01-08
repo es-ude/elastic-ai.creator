@@ -51,20 +51,20 @@ class Addition(Design):
         self._resource_option = resource_option
 
         self._m_q_data_width = max(self._m_q_1_data_width, self._m_q_2_data_width)
-        self._x_addr_width = calculate_address_width(
-            self._num_features * self._num_dimensions
-        )
-        self._y_addr_width = calculate_address_width(
-            self._num_features * self._num_dimensions
-        )
+
+        self._x_count = self._num_features * self._num_dimensions
+        self._y_count = self._x_count
+
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self._num_features * self._num_dimensions,
-            y_count=self._num_features * self._num_dimensions,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:

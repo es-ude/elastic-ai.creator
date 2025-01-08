@@ -3,15 +3,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
-library work;
-use work.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
         X_ADDR_WIDTH : integer := ${x_address_width};
         Y_ADDR_WIDTH : integer := ${y_address_width};
         DATA_WIDTH : integer := ${data_width};
-        IN_FEATURES : integer := ${in_features};
-        OUT_FEATURES : integer := ${out_features}
+        X_COUNT : integer := ${x_count};
+        Y_COUNT : integer := ${y_count}
     );
 port(
     clk : out std_logic
@@ -27,7 +27,7 @@ architecture rtl of ${name}_tb is
     signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
-    type t_array_x is array (0 to IN_FEATURES - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to X_COUNT - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process
@@ -88,7 +88,7 @@ begin
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < IN_FEATURES loop
+            while input_rd_cnt < X_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -101,7 +101,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<OUT_FEATURES loop
+            while output_rd_cnt<Y_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
@@ -122,7 +122,7 @@ begin
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
-    uut: entity work.${name}(rtl)
+    uut: entity ${work_library_name}.${name}(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,

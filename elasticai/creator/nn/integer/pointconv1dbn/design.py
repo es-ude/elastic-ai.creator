@@ -21,7 +21,7 @@ class PointConv1dBN(Design):
         data_width: int,
         in_channels: int,
         out_channels: int,
-        kernel_size: int,
+        seq_len: int,
         weights: list[list[int]],
         bias: list[int],
         m_q: int,
@@ -38,7 +38,7 @@ class PointConv1dBN(Design):
         self._data_width = data_width
         self._in_channels = in_channels
         self._out_channels = out_channels
-        self._kernel_size = kernel_size
+        self._seq_len = seq_len
 
         self._weights = [[w + z_w for w in row] for row in weights]
         self._bias = [b + z_b for b in bias]
@@ -48,21 +48,26 @@ class PointConv1dBN(Design):
         self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
 
         self._z_x = z_x
+        self._z_w = z_w
+        self._z_b = z_b
         self._z_y = z_y
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_addr_width = calculate_address_width(in_channels)
-        self._y_addr_width = calculate_address_width(out_channels)
+        self._x_count = self._in_channels * self._seq_len
+        self._y_count = self._out_channels * self._seq_len
+
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self):
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self._in_channels,
-            y_count=self._out_channels,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
@@ -78,12 +83,12 @@ class PointConv1dBN(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
-                kernel_size=str(self._kernel_size),
+                in_seq_len=str(self._seq_len),
                 m_q=str(self._m_q),
                 m_q_shift=str(self._m_q_shift),
                 z_x=str(self._z_x),
-                z_w=str(self._weights[0][0]),
-                z_b=str(self._bias[0]),
+                z_w=str(self._z_w),
+                z_b=str(self._z_b),
                 z_y=str(self._z_y),
                 m_q_data_width=str(self._m_q_data_width),
                 weights_rom_name=rom_name["weights"],
@@ -121,7 +126,7 @@ class PointConv1dBN(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
-                kernel_size=str(self._kernel_size),
+                in_seq_len=str(self._seq_len),
                 work_library_name=self._work_library_name,
             ),
         )

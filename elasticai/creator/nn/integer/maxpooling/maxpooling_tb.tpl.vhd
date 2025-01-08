@@ -3,8 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
-library work;
-use work.all;
+library ${work_library_name};
+use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
@@ -119,7 +119,7 @@ begin
             report "Simulation completed. The assertion failure is intended to stop this simulation."
             severity FAILURE;
     end process;
-    uut: entity work.${name}(rtl)
+    uut: entity ${work_library_name}.${name}(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,

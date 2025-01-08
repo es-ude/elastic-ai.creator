@@ -32,12 +32,17 @@ class Sequential(_SequentialDesign):
                 x_width=str(self._x_width),
                 y_width=str(self._y_width),
                 layer_name=self.name,
+                work_library_name="work",
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(network_template)
 
-        in_features = cast(Linear, self._subdesigns[0])._in_features
-        out_features = cast(Linear, self._subdesigns[-1])._out_features
+        # ------------  for MLP ------------
+        # in_features = cast(Linear, self._subdesigns[0])._in_features
+        # out_features = cast(Linear, self._subdesigns[-1])._out_features
+
+        x_count = cast(Linear, self._subdesigns[0])._x_count
+        y_count = cast(Linear, self._subdesigns[-1])._y_count
 
         network_template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -46,9 +51,10 @@ class Sequential(_SequentialDesign):
                 x_address_width=str(self._x_address_width),
                 y_address_width=str(self._y_address_width),
                 data_width=str(self._x_width),
-                in_features=str(in_features),
-                out_features=str(out_features),
+                x_count=str(x_count),
+                y_count=str(y_count),
                 name=self.name,
+                work_library_name="work",
             ),
         )
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(

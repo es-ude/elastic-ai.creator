@@ -54,16 +54,19 @@ class Linear(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_addr_width = calculate_address_width(self._in_features)
-        self._y_addr_width = calculate_address_width(self._out_features)
+        self._x_count = self._in_features
+        self._y_count = self._out_features
+
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self._in_features,
-            y_count=self._out_features,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:

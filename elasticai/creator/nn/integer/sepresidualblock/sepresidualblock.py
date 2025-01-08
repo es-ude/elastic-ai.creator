@@ -76,17 +76,15 @@ class SeparableResidualBlock(nn.Module):
             kernel_size=1,
             padding="same",
             seq_len=seq_len,
-            name=self.name + "_shortcut_conv1d",
+            name=self.name + "_shortcut",
             quant_bits=quant_bits,
             device=device,
         )
 
         self.add = Addition(
-            name=self.name + "_shortcut_add", quant_bits=quant_bits, device=device
+            name=self.name + "_add", quant_bits=quant_bits, device=device
         )
-        self.relu = ReLU(
-            name=self.name + "_shortcut_relu", quant_bits=quant_bits, device=device
-        )
+        self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
