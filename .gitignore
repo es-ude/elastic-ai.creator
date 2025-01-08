@@ -251,7 +251,7 @@ Temporary Items
 .direnv/
 build/
 justfile
-uv.lock
+.zed/
 
 
 # ignore files produced by xunit-viewer
