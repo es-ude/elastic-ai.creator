@@ -1,10 +1,17 @@
-import click
-from .hw_test_runner import TestBenchReport, VhdlTestBenchRunner
-import xml.etree.ElementTree as ET
 import logging
-from io import BytesIO
 import sys
+import xml.etree.ElementTree as ET
+from io import BytesIO
 
+import click
+
+from .hw_test_runner import TestBenchReport, VhdlTestBenchRunner
+
+
+def check_python_version():
+    if sys.version_info < (3, 11):
+        logging.error("Python 3.11 or higher is required for this script, but found Python {}.{}".format(sys.version_info.major, sys.version_info.minor))
+        sys.exit(1)
 
 @click.command()
 @click.option(
@@ -19,6 +26,9 @@ import sys
 def main(verbose, output_file: BytesIO | None):
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
+    
+    check_python_version()
+
     report = TestBenchReport()
     test_benches = VhdlTestBenchRunner(report)
     test_benches.run()
