@@ -5,4 +5,9 @@ from .math_operations import (
     MathOperationsForwHTE,
     MathOperationsForwStoch,
 )
-from .quantize_to_fixed_point import quantize_to_fxp_hte, quantize_to_fxp_stochastic
+from .quantize_to_fixed_point import (
+    quantize_to_fxp_hte,
+    quantize_to_fxp_hte_,
+    quantize_to_fxp_stochastic,
+    quantize_to_fxp_stochastic_,
+)
