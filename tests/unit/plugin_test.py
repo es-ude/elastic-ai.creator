@@ -1,3 +1,8 @@
+from abc import abstractmethod
+from collections.abc import Iterable, Iterator
+from importlib import import_module
+from typing import Generic, NamedTuple, Protocol, TypeVar, cast
+
 import pytest
 
 import elasticai.creator.plugin as p
@@ -15,6 +20,33 @@ def test_importing_plugin_with_unkown_fields_raises_meaningful_error():
     }
     with pytest.raises(
         p.UnexpectedFieldError,
-        match="unexpected fields {'new_unknown_field'} for plugin 'Plugin'",
+        match="unexpected fields {'new_unknown_field'} for plugin 'PluginSpec'",
     ):
-        p.build_plugin(config_from_file, p.Plugin)
+        p.build_plugin_spec(config_from_file, p.PluginSpec)
+
+
+class MinimalPluginLoader(p.PluginLoader):
+    def __init__(self, extract_fn: p.SymbolResolver):
+        super().__init__(extract_fn, self)
+
+    def _get_plugin_dicts(self, package: str) -> Iterable[p.PluginDict]:
+        dummy_dicts: list[p.PluginDict] = []
+        return dummy_dicts
+
+
+class DummyLoadable(p.PluginSymbol[p.PluginLoader]):
+    loaded = False
+
+    @classmethod
+    def load_into(cls, loader: p.PluginLoader) -> None:
+        cls.loaded = True
+
+
+def test_plugin_loader_loads_plugins():
+    def extract_fn(data: Iterable[p.PluginDict]) -> Iterator[tuple[str, set[str]]]:
+        yield "tests.unit.plugin_test", {"DummyLoadable"}
+
+    DummyLoadable.loaded = False
+    loader = MinimalPluginLoader(extract_fn)
+    loader.load_from_package("")
+    assert DummyLoadable.loaded
