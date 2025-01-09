@@ -65,7 +65,7 @@ def test_round_determinstic_to_fixed_point():
 
 def test_round_determinstic_to_fixed_point_inplace():
     conf = FixedPointConfigV2(total_bits=8, frac_bits=2)
-    x = torch.range(-2, 2, step=0.1, dtype=torch.float32)
+    x = torch.arange(-2, 2.1, step=0.1, dtype=torch.float32)
 
     _round_to_fixed_point_hte_(x, conf.frac_bits)
     actual = x
@@ -128,7 +128,7 @@ def test_clamp_to_fixed_point():
 
 def test_clamp_to_fixed_point_inplace():
     conf = FixedPointConfigV2(total_bits=4, frac_bits=2)
-    x = torch.range(-3, 3, step=1, dtype=torch.float32)
+    x = torch.arange(-3, 4, dtype=torch.float32)
 
     _clamp_(x, conf)
     expected = torch.Tensor([-2.0, -2.0, -1.0, 0.0, 1.0, 1.75, 1.75])
