@@ -1,7 +1,7 @@
 import torch
 from torch.nn import Sigmoid as _Sigmoid
 
-from elasticai.creator.nn.quantized_grads._math_operations import MathOperations
+from .. import MathOperations
 
 
 class Sigmoid(_Sigmoid):

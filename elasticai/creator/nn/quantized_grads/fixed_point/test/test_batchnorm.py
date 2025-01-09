@@ -1,10 +1,10 @@
 import torch
 
+from elasticai.creator.nn.quantized_grads import MathOperationsForw
 from elasticai.creator.nn.quantized_grads.base_modules import BatchNorm2d
 from elasticai.creator.nn.quantized_grads.fixed_point import (
     FixedPointConfigV2,
-    MathOperationsForwHTE,
-    quantize_to_fxp_stochastic_,
+    quantize_to_fxp_stochastic_, quantize_to_fxp_stochastic,
 )
 
 
@@ -17,7 +17,10 @@ def test_batchnorm_fxp_init():
     def quantize_bias(tensor: torch.Tensor) -> None:
         quantize_to_fxp_stochastic_(tensor, conf)
 
-    ops = MathOperationsForwHTE(conf)
+    def quantize_forward(tensor: torch.Tensor) -> torch.Tensor:
+        return quantize_to_fxp_stochastic(tensor, conf)
+
+    ops = MathOperationsForw(quantize_forward)
     l = BatchNorm2d(
         operations=ops,
         weight_quantization=quantize_weight,
