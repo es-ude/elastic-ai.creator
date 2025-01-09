@@ -33,6 +33,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
         self.in_channels = kwargs.get("in_channels")
         self.out_channels = kwargs.get("out_channels")
+        self.seq_len = kwargs.get("seq_len")
 
         self.conv1d = nn.Conv1d(
             in_channels=self.in_channels,
@@ -65,7 +66,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             data_width=self.quant_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
-            in_seq_len=self.seq_len,
+            seq_len=self.seq_len,
             weights=self.q_fused_weights.tolist(),
             bias=self.q_fused_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),

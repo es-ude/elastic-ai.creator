@@ -61,9 +61,9 @@ class Conv1dBN(Design):
         self._resource_option = resource_option
 
         self._x_count = self._in_channels * self._seq_len
-        if self._padding == 0 or self._padding == "same":
+        if self._padding == 0:
             self._y_count = self._in_channels * (self._seq_len - self._kernel_size + 1)
-        elif self._padding == 1:  # padding zero and padding to same
+        elif self._padding == 1 or self._padding == "same":
             self._y_count = self._x_count
         else:
             raise ValueError("Padding value not supported")
@@ -104,15 +104,17 @@ class Conv1dBN(Design):
             work_library_name=self._work_library_name,
             resource_option=self._resource_option,
         )
-        if self._padding == 0 or self._padding == "same":
+        if self._padding == 0:
             template_file_name = "conv1dbn_not_padding.tpl.vhd"
             test_template_file_name = "conv1dbn_not_padding_tb.tpl.vhd"
-        elif self._padding == 1:
+        elif self._padding == 1 or self._padding == "same":
             template_file_name = "conv1dbn_zero_padding.tpl.vhd"
             test_template_file_name = "conv1dbn_zero_padding_tb.tpl.vhd"
-            template_parameters["padding"] = int(self._padding)
+            if self._padding == "same":
+                self._padding = 1
+            template_parameters["padding_len"] = str(self._padding)
         else:
-            raise ValueError("padding must be 0 or 1")
+            raise ValueError("padding must be 0 or 1 or same")
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

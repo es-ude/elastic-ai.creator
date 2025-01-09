@@ -34,6 +34,7 @@ class SeparableResidualBlock(nn.Module):
         self.depthwise_conv1d_1 = DepthConv1d(
             in_channels=kwargs.get("in_channels"),
             kernel_size=kwargs.get("kernel_size"),
+            seq_len=seq_len,
             padding=1,
             groups=kwargs.get("in_channels"),
             name=self.name + "_1_depthwise_conv1d",
@@ -43,6 +44,7 @@ class SeparableResidualBlock(nn.Module):
         self.pointwise_conv1dbn_1 = PointConv1dBN(
             in_channels=kwargs.get("in_channels"),
             out_channels=kwargs.get("out_channels"),
+            seq_len=seq_len,
             name=self.name + "_1_pointwise_conv1dbn",
             quant_bits=quant_bits,
             device=device,
@@ -56,6 +58,7 @@ class SeparableResidualBlock(nn.Module):
         self.depthwise_conv1d_2 = DepthConv1d(
             in_channels=out_channels,
             kernel_size=kernel_size,
+            seq_len=seq_len,
             padding=1,
             groups=kwargs.get("in_channels"),
             name=self.name + "_2_depthwise_conv1d",
@@ -65,6 +68,7 @@ class SeparableResidualBlock(nn.Module):
         self.pointwise_conv1dbn_2 = PointConv1dBN(
             in_channels=out_channels,
             out_channels=out_channels,
+            seq_len=seq_len,
             name=self.name + "_2_pointwise_conv1dbn",
             quant_bits=quant_bits,
             device=device,
@@ -73,16 +77,20 @@ class SeparableResidualBlock(nn.Module):
         self.shortcut = Conv1d(
             in_channels=in_channels,
             out_channels=out_channels,
+            seq_len=seq_len,
             kernel_size=1,
             padding="same",
-            seq_len=seq_len,
             name=self.name + "_shortcut",
             quant_bits=quant_bits,
             device=device,
         )
 
         self.add = Addition(
-            name=self.name + "_add", quant_bits=quant_bits, device=device
+            name=self.name + "_add",
+            num_features=out_channels,
+            num_dimensions=seq_len,
+            quant_bits=quant_bits,
+            device=device,
         )
         self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
 
@@ -95,7 +103,23 @@ class SeparableResidualBlock(nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> SeparableResidualBlockDesign:
-        pass
+        return SeparableResidualBlockDesign(
+            name=name,
+            data_width=self.inputs_QParams.quant_bits,
+            in_channels=self.depthwise_conv1d_1.in_channels,
+            out_channels=self.depthwise_conv1d_1.out_channels,
+            kernel_size=self.depthwise_conv1d_1.kernel_size[0],
+            seq_len=self.depthwise_conv1d_1.seq_len,
+            depthwise_conv1d_1=self.depthwise_conv1d_1,
+            pointwise_conv1dbn_1=self.pointwise_conv1dbn_1,
+            pointwise_conv1dbn_1_relu=self.pointwise_conv1dbn_1_relu,
+            depthwise_conv1d_2=self.depthwise_conv1d_2,
+            pointwise_conv1dbn_2=self.pointwise_conv1dbn_2,
+            shortcut=self.shortcut,
+            add=self.add,
+            relu=self.relu,
+            work_library_name="work",
+        )
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"

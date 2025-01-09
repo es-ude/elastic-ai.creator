@@ -40,8 +40,8 @@ class PointConv1dBN(Design):
         self._out_channels = out_channels
         self._seq_len = seq_len
 
-        self._weights = [[w + z_w for w in row] for row in weights]
-        self._bias = [b + z_b for b in bias]
+        self._weights = weights
+        self._bias = bias
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -83,7 +83,7 @@ class PointConv1dBN(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
-                in_seq_len=str(self._seq_len),
+                seq_len=str(self._seq_len),
                 m_q=str(self._m_q),
                 m_q_shift=str(self._m_q_shift),
                 z_x=str(self._z_x),
@@ -126,7 +126,7 @@ class PointConv1dBN(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
-                in_seq_len=str(self._seq_len),
+                seq_len=str(self._seq_len),
                 work_library_name=self._work_library_name,
             ),
         )
@@ -135,5 +135,11 @@ class PointConv1dBN(Design):
         )
 
 
-def _flatten_params(params: list[list[int]]) -> list[int]:
-    return list(chain(*params))
+def _flatten_params(params):
+    flat_list = []
+    for p in params:
+        if isinstance(p, list):
+            flat_list.extend(_flatten_params(p))
+        else:
+            flat_list.append(p)
+    return flat_list

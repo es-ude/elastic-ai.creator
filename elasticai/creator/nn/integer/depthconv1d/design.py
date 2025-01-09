@@ -42,8 +42,8 @@ class DepthConv1d(Design):
         self._kernel_size = kernel_size
         self._padding = padding
 
-        self._weights = [[w + z_w for w in row] for row in weights]
-        self._bias = [b + z_b for b in bias]
+        self._weights = weights
+        self._bias = bias
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -60,8 +60,10 @@ class DepthConv1d(Design):
         self._x_count = self._in_channels * self._seq_len
         if self._padding == 0:
             self._y_count = self._in_channels * (self._seq_len - self._kernel_size + 1)
-        elif self._padding == 1:  # padding zero and padding to same
+        elif self._padding == 1 or self._padding == "same":
             self._y_count = self._x_count
+        else:
+            raise ValueError("padding must be 0 or 1 or same")
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
@@ -84,7 +86,7 @@ class DepthConv1d(Design):
             y_addr_width=str(self._y_addr_width),
             data_width=str(self._data_width),
             in_channels=str(self._in_channels),
-            sef_len=str(self._seq_len),
+            seq_len=str(self._seq_len),
             kernel_size=str(self._kernel_size),
             m_q=str(self._m_q),
             m_q_shift=str(self._m_q_shift),
@@ -99,15 +101,17 @@ class DepthConv1d(Design):
             resource_option=self._resource_option,
         )
 
-        if self._padding == 0 or self._padding == "same":
+        if self._padding == 0:
             template_file_name = "depthconv1d_not_padding.tpl.vhd"
             test_template_file_name = "depthconv1d_not_padding_tb.tpl.vhd"
-        elif self._padding == 1:
+        elif self._padding == 1 or self._padding == "same":
             template_file_name = "depthconv1d_zero_padding.tpl.vhd"
             test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
-            template_parameters["padding"] = int(self._padding)
+            if self._padding == "same":
+                self._padding = 1
+            template_parameters["padding_len"] = str(self._padding)
         else:
-            raise ValueError("padding must be 0 or 1")
+            raise ValueError("padding must be 0 or 1 or same")
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -142,7 +146,7 @@ class DepthConv1d(Design):
                 y_addr_width=str(self._y_addr_width),
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
-                sef_len=str(self._seq_len),
+                seq_len=str(self._seq_len),
                 kernel_size=str(self._kernel_size),
                 work_library_name=self._work_library_name,
             ),
@@ -152,5 +156,15 @@ class DepthConv1d(Design):
         )
 
 
-def _flatten_params(params: list[list[int]]) -> list[int]:
-    return list(chain(*params))
+# def _flatten_params(params: list[list[int]]) -> list[int]:
+#     return list(chain(*params))
+
+
+def _flatten_params(params):
+    flat_list = []
+    for p in params:
+        if isinstance(p, list):
+            flat_list.extend(_flatten_params(p))
+        else:
+            flat_list.append(p)
+    return flat_list

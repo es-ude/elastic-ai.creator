@@ -7,30 +7,30 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
-        DATA_WIDTH : integer := ${data_width};
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
+        DATA_WIDTH : integer := ${data_width};
         IN_CHANNELS : integer := ${in_channels};
         OUT_CHANNELS : integer := ${out_channels};
-        SEQ_LEN : integer := ${seq_len}
-
+        IN_SEQ_LEN : integer := ${seq_len}
     );
-    port(
-        clk : out std_logic
-        );
+port(
+    clk : out std_logic
+    );
 end entity;
 architecture rtl of ${name}_tb is
     constant C_CLK_PERIOD : time := 10 ns;
+    constant OUT_SEQ_LEN : integer := IN_SEQ_LEN;
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
     signal x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x is array (0 to IN_CHANNELS * SEQ_LEN - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal x_arr : t_array_x := (others=>(others=>'0'));
     signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
+    type t_array_x is array (0 to 31) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process
     begin
@@ -88,10 +88,9 @@ begin
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
-
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < SEQ_LEN * IN_CHANNELS loop
+            while input_rd_cnt < IN_CHANNELS * IN_SEQ_LEN loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -104,7 +103,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt< SEQ_LEN * OUT_CHANNELS loop
+            while output_rd_cnt<OUT_SEQ_LEN loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
@@ -125,7 +124,7 @@ begin
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
-    uut: entity work.${name}(rtl)
+    uut: entity ${work_library_name}.${name}(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,

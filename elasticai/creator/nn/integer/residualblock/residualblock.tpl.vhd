@@ -100,7 +100,7 @@ architecture rtl of ${name} is
     relu_x <= add_y_out;
     y_out <= relu_y;
     done <= relu_done;
-    inst_${name}_1_conv1dbn: ${work_library_name},${name}_1_conv1dbn(rtl)
+    inst_${name}_conv1dbn_1: ${work_library_name},${name}_conv1dbn_1(rtl)
     port map (
         enable => conv1dbn_1_enable,
         clock  => conv1dbn_1_clock,
@@ -110,14 +110,14 @@ architecture rtl of ${name} is
         y_out => conv1dbn_1_y_out,
         done  => conv1dbn_1_done
     );
-    inst_${name}_1_conv1dbn_relu: ${work_library_name},${name}_1_conv1dbn_relu(rtl)
+    inst_${name}_conv1dbn_1_relu: ${work_library_name},${name}_conv1dbn_1_relu(rtl)
     port map (
         enable => conv1dbn_1_relu_enable,
         clock  => conv1dbn_1_relu_clock,
         x  => conv1dbn_1_relu_x_in,
         y => conv1dbn_1_relu_y_out
     );
-    inst_${name}_2_conv1dbn: ${work_library_name},${name}_2_conv1dbn(rtl)
+    inst_${name}_conv1dbn_2: ${work_library_name},${name}_conv1dbn_2(rtl)
     port map (
         enable => conv1dbn_2_enable,
         clock  => conv1dbn_2_clock,

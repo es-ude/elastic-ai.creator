@@ -22,6 +22,12 @@ class ResidualBlock(Design):
         out_channels: int,
         kernel_size: int,
         seq_len: int,
+        conv1dbn_1: object,
+        conv1dbn_1_relu: object,
+        conv1dbn_2: object,
+        shortcut: object,
+        add: object,
+        relu: object,
         work_library_name: str,
     ):
         super().__init__(name=name)
@@ -32,6 +38,13 @@ class ResidualBlock(Design):
         self._seq_len = seq_len
         self._kernel_size = kernel_size
         self._work_library_name = work_library_name
+
+        self._conv1dbn_1 = conv1dbn_1
+        self._conv1dbn_1_relu = conv1dbn_1_relu
+        self._conv1dbn_2 = conv1dbn_2
+        self._shortcut = shortcut
+        self._add = add
+        self._relu = relu
 
         self._x_count = self._in_channels * self._seq_len
         self._y_count = self._out_channels * (self._seq_len - self._kernel_size + 1)
@@ -49,6 +62,28 @@ class ResidualBlock(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        conv1dbn_1_deisgn = self._conv1dbn_1.create_design(name=self._conv1dbn_1.name)
+        conv1dbn_1_deisgn.save_to(destination)
+
+        conv1dbn_1_relu_deisgn = self._conv1dbn_1_relu.create_design(
+            name=self._conv1dbn_1_relu.name
+        )
+        conv1dbn_1_relu_deisgn.save_to(destination)
+
+        conv1dbn_2_deisgn = self._conv1dbn_2.create_design(name=self._conv1dbn_2.name)
+        conv1dbn_2_deisgn.save_to(destination)
+
+        if len(self._shortcut) > 0:
+            for submodule in self._shortcut:
+                submodule_design = submodule.create_design(name=submodule.name)
+                submodule_design.save_to(destination)
+
+        add_design = self._add.create_design(name=self._add.name)
+        add_design.save_to(destination)
+
+        relu_design = self._relu.create_design(name=self._relu.name)
+        relu_design.save_to(destination)
+
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="residualblock.tpl.vhd",

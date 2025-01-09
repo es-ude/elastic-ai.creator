@@ -76,9 +76,9 @@ architecture rtl of ${name} is
             return resize(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
-    constant KERNEL_CH_NUM : integer := IN_CHANNELS;
-    constant W_ADDR_WIDTH : integer :=  log2(IN_SEQ_LEN * KERNEL_CH_NUM);
-    constant B_ADDR_WIDTH : integer :=  log2(IN_SEQ_LEN);
+    constant KERNEL_CH_NUM : integer := IN_CH_NUM;
+    constant W_ADDR_WIDTH : integer :=  log2(IN_SEQ_LEN * KERNEL_CH_NUM * OUT_CHANNELS);
+    constant B_ADDR_WIDTH : integer :=  log2(IN_SEQ_LEN * OUT_CHANNELS);
     constant OUT_SEQ_LEN : integer := IN_SEQ_LEN;
     signal M_Q_SIGNED : signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
@@ -127,23 +127,30 @@ begin
     MAIN_PROC : process(clock, layer_state)
         variable offset_x_idx : integer range 0 to IN_SEQ_LEN * KERNEL_CH_NUM := 0;
         variable x_idx : integer range 0 to IN_SEQ_LEN * KERNEL_CH_NUM := 0;
+        variable offset_w_idx : integer range 0 to IN_SEQ_LEN * KERNEL_CH_NUM * OUT_CHANNELS := 0;
+        variable w_idx : integer range 0 to IN_SEQ_LEN * KERNEL_CH_NUM * OUT_CHANNELS := 0;
         variable cnt_in_kernel : integer range 0 to KERNEL_CH_NUM := 0;
         variable cnt_in_row : integer range 0 to IN_SEQ_LEN := 0;
-        variable y_idx : integer range 0 to IN_CHANNELS * OUT_SEQ_LEN := 0;
+        variable cnt_in_out_ch : integer range 0 to OUT_CHANNELS := 0;
+        variable y_idx : integer range 0 to IN_SEQ_LEN * OUT_CHANNELS := 0;
         variable var_b_add_z_b : integer range 0 to 2**DATA_WIDTH := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
     begin
         if rising_edge(clock) then
             if layer_state = s_stop then
                 mac_state <= s_init;
-                offset_x_idx := 0;
                 y_store_en <= '0';
+                offset_x_idx := 0;
                 cnt_in_row := 0;
+                cnt_in_out_ch := 0;
+                offset_w_idx := 0;
+                w_idx := 0;
             else
                 case mac_state is
                     when s_init =>
                         cnt_in_kernel := 0;
                         x_idx := offset_x_idx;
+                        w_idx := offset_w_idx;
                         mac_state <= s_preload;
                     when s_preload =>
                         var_b_add_z_b := to_integer(s_b) + Z_B;
@@ -152,6 +159,7 @@ begin
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         w_sub_z <= to_signed(0, w_sub_z'length);
                         x_idx := x_idx + OUT_SEQ_LEN;
+                        w_idx := w_idx + OUT_SEQ_LEN;
                     when s_accumulate =>
                         y_store_en <= '0';
                         x_sub_z <= s_x - to_signed(Z_X, x_sub_z'length);
@@ -159,8 +167,9 @@ begin
                         macc_sum <= multiply_accumulate(w_sub_z, x_sub_z, macc_sum);
                         if cnt_in_kernel < KERNEL_CH_NUM then
                             cnt_in_kernel := cnt_in_kernel + 1;
-                            if cnt_in_kernel < KERNEL_CH_NUM-1 then
+                            if cnt_in_kernel < KERNEL_CH_NUM - 1 then
                                 x_idx := x_idx + OUT_SEQ_LEN;
+                                w_idx := w_idx + OUT_SEQ_LEN;
                             end if;
                             mac_state <= s_accumulate;
                         else
@@ -179,17 +188,26 @@ begin
                         if cnt_in_row < OUT_SEQ_LEN-1 then
                             cnt_in_row := cnt_in_row + 1;
                             offset_x_idx := offset_x_idx + 1;
+                            offset_w_idx := offset_w_idx + 1;
                             mac_state <= s_init;
                         else
                             cnt_in_row := 0;
-                            mac_state <= s_done;
+                            cnt_in_out_ch := cnt_in_out_ch + 1;
+                            if cnt_in_out_ch < OUT_CHANNELS then
+                                mac_state <= s_init;
+                                offset_x_idx := 0;
+                                offset_w_idx := offset_w_idx + IN_SEQ_LEN * (KERNEL_CH_NUM - 1) + 1;
+                                cnt_in_row := 0;
+                            else
+                                mac_state <= s_done;
+                            end if;
                         end if;
                     when s_done =>
                         mac_state <= s_done;
                     when others =>
                         mac_state <= s_done;
                 end case;
-                s_w_addr <= std_logic_vector(to_unsigned(x_idx, s_w_addr'length));
+                s_w_addr <= std_logic_vector(to_unsigned(w_idx, s_w_addr'length));
                 s_x_addr <= std_logic_vector(to_unsigned(x_idx, s_x_addr'length));
                 s_b_addr <= std_logic_vector(to_unsigned(cnt_in_row, s_b_addr'length));
             end if;

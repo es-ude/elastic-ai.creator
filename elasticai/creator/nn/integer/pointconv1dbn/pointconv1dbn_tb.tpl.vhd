@@ -20,10 +20,10 @@ port(
 end entity;
 architecture rtl of ${name}_tb is
     constant C_CLK_PERIOD : time := 10 ns;
-    constant OUT_SEQ_LEN : integer := IN_SEQ_LEN;
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
+
     signal x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
@@ -88,9 +88,10 @@ begin
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
+
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < IN_CHANNELS * IN_SEQ_LEN loop
+            while input_rd_cnt < IN_CH_NUM * IN_SEQ_LEN loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -103,7 +104,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<OUT_SEQ_LEN loop
+            while output_rd_cnt<IN_SEQ_LEN*OUT_CHANNELS loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));

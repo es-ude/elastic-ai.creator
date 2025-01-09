@@ -5,8 +5,8 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name} is
     generic (
-        X_ADDR_WIDTH : integer := ${x_address_width};
-        Y_ADDR_WIDTH : integer := ${y_address_width};
+        X_ADDR_WIDTH : integer := ${x_addr_width};
+        Y_ADDR_WIDTH : integer := ${y_addr_width};
         DATA_WIDTH : integer := ${data_width};
     ) ;
     port (

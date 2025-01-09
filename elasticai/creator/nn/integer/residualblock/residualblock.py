@@ -36,13 +36,13 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             kernel_size=kernel_size,
             padding="same",
             seq_len=seq_len,
-            name=self.name + "_1_conv1dbn",
+            name=self.name + "_conv1dbn_1",
             quant_bits=quant_bits,
             device=device,
         )
 
         self.conv1dbn_1_relu = ReLU(
-            name=self.name + "_1_conv1dbn_relu",
+            name=self.name + "_conv1dbn_1_relu",
             quant_bits=quant_bits,
             device=device,
         )
@@ -53,7 +53,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             kernel_size=kernel_size,
             padding="same",
             seq_len=seq_len,
-            name=self.name + "_2_conv1dbn",
+            name=self.name + "_conv1dbn_2",
             quant_bits=quant_bits,
             device=device,
         )
@@ -74,7 +74,11 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             )
 
         self.add = Addition(
-            name=self.name + "_add", quant_bits=quant_bits, device=device
+            name=self.name + "_add",
+            num_features=out_channels,  # might be seq_len, check later
+            num_dimensions=seq_len,
+            quant_bits=quant_bits,
+            device=device,
         )
         self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
 
@@ -94,6 +98,12 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             out_channels=self.conv1dbn_1.out_channels,
             kernel_size=self.conv1dbn_1.kernel_size,
             seq_len=self.conv1dbn_1.seq_len,
+            conv1dbn_1=self.conv1dbn_1,
+            conv1dbn_1_relu=self.conv1dbn_1_relu,
+            conv1dbn_2=self.conv1dbn_2,
+            shortcut=self.shortcut,
+            add=self.add,
+            relu=self.relu,
             work_library_name="work",
         )
 
