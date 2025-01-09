@@ -14,6 +14,7 @@ from typing import Any, AsyncIterable, Callable, Coroutine, Iterator, Literal, T
 
 from ._console_out import Printer
 from ._run import run_and_process_pipes, run_and_wait
+from .ghdl_msg import GhdlMsg, parse_ghdl_msg
 
 CREATOR_PLUGIN_NAMESPACE = "elasticai.creator_plugins"
 
@@ -42,6 +43,35 @@ def ghdl_command(command: str, *args: str) -> tuple[str, ...]:
 
 def ghdl_import(*files: Path) -> None:
     run_and_wait(*ghdl_command("-i", *tuple(str(f.absolute()) for f in files)))
+
+
+@dataclass
+class _CondensedGhdlMsg:
+    type: Literal["assertion error", "simulation finished"]
+    file: str
+    line: int
+    column: int
+    times: list[str]
+    msg: str
+
+    def render(self) -> str:
+        return (
+            "ghdl output:\n"
+            f"\ttype: {self.type}\n"
+            f"\tfile: {self.file}:{self.line}:{self.column}\n"
+            f"\ttimes: {', '.join(self.times)}\n"
+            f"\tmsg: {self.msg}"
+        )
+
+    @classmethod
+    def from_msg(cls, m: GhdlMsg) -> "_CondensedGhdlMsg":
+        return cls(m.type, m.file, m.line, m.column, [m.time], m.msg)
+
+    def key(self) -> int:
+        return hash((self.type, self.file, self.line, self.column, self.msg))
+
+    def merge(self, other: "_CondensedGhdlMsg") -> None:
+        self.times.extend(other.times)
 
 
 class TestBenchReport:
@@ -150,85 +180,6 @@ class TestBench:
     def __repr__(self) -> str:
         file, name = self.file, self.name
         return f"TestBench({file=}, {name=})"
-
-
-@dataclass
-class GhdlMsg:
-    type: Literal["assertion error", "simulation finished"]
-    file: str
-    line: int
-    column: int
-    time: str
-    msg: str
-
-    def render(self) -> str:
-        return (
-            "ghdl output:\n"
-            f"\ttype: {self.type}\n"
-            f"\tfile: {self.file}:{self.line}:{self.column}\n"
-            f"\ttime: {self.time}\n"
-            f"\tmsg: {self.msg}"
-        )
-
-
-@dataclass
-class _CondensedGhdlMsg:
-    type: Literal["assertion error", "simulation finished"]
-    file: str
-    line: int
-    column: int
-    times: list[str]
-    msg: str
-
-    def render(self) -> str:
-        return (
-            "ghdl output:\n"
-            f"\ttype: {self.type}\n"
-            f"\tfile: {self.file}:{self.line}:{self.column}\n"
-            f"\ttimes: {', '.join(self.times)}\n"
-            f"\tmsg: {self.msg}"
-        )
-
-    @classmethod
-    def from_msg(cls, m: GhdlMsg) -> "_CondensedGhdlMsg":
-        return cls(m.type, m.file, m.line, m.column, [m.time], m.msg)
-
-    def key(self) -> int:
-        return hash((self.type, self.file, self.line, self.column, self.msg))
-
-    def merge(self, other: "_CondensedGhdlMsg") -> None:
-        self.times.extend(other.times)
-
-
-def parse_ghdl_msg(txt: str) -> list[GhdlMsg]:
-    msgs = []
-    for line in txt.splitlines():
-        parts = line.split(":", maxsplit=5)
-        if len(parts) == 6:
-            msg = GhdlMsg(
-                type="assertion error",
-                msg=parts[5].strip(),
-                file=parts[0],
-                line=int(parts[1]),
-                column=int(parts[2]),
-                time=parts[3][1:],
-            )
-            msgs.append(msg)
-        elif line.startswith("simulation finished"):
-            msgs.append(
-                GhdlMsg(
-                    type="simulation finished",
-                    file=".",
-                    line=-1,
-                    column=-1,
-                    time=line.strip("simulation finished @"),
-                    msg="",
-                )
-            )
-        elif len(msgs) > 1:
-            msgs[-1].msg += line
-
-    return msgs
 
 
 class VhdlTestBenchRunner:

@@ -1,6 +1,8 @@
 import re
-from elasticai.creator.utils.hw_test_runner import parse_ghdl_msg, GhdlMsg
+
 from pytest import fixture
+
+from elasticai.creator.utils.ghdl_msg import GhdlMsg, parse_ghdl_msg
 
 
 def test_re_matches_filename():
@@ -10,7 +12,7 @@ def test_re_matches_filename():
 
 class GhdlMsgParsingBase:
     @fixture
-    def parsed(self) -> str:
+    def parsed(self) -> list[GhdlMsg]:
         return parse_ghdl_msg(
             "elastic-ai.creator/elasticai/creator_plugins/padding/vhdl/padding_remover_tb.vhd:84:11:@380ps:(assertion error): expected single bit padded to 01000AAA but was 01000100\n"
             "some/other/path_tb.vhd:10:12:@24ps:(assertion error): expected a but was b"
