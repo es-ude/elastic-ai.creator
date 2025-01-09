@@ -42,6 +42,14 @@ class Test:
         actual_new_bias = model[0].bias
         assert torch.equal(actual_new_bias, expected_new_bias)
 
+    def test_momentum_buffers(self, model, optimizer):
+        qparams = optimizer._get_all_params_from_sequential(model)
+        for i, qparam in enumerate(qparams):
+            buf = optimizer.momentum_buffers[i]
+            assert torch.equal(buf, qparam.gradient)
+
+    def test_weight_decay(self, model, optimizer): ...
+
     @pytest.fixture(scope="class")
     def in_features(self) -> int:
         in_features = 3
@@ -112,8 +120,6 @@ class Test:
                 shape=nn[0].bias.shape,
             )
         )
-        print(f"{nn[0].weight=}")
-        print(f"{nn[0].bias=}")
         return nn
 
     @pytest.fixture(scope="class")
@@ -140,7 +146,7 @@ class Test:
         optimizer = QuantizedSGD(
             model,
             lr=0.1,
-            momentum=0,
+            momentum=0.9,
         )
         optimizer.step()
         return optimizer
