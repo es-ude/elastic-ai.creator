@@ -99,7 +99,7 @@ class DepthConv1d(Design):
             resource_option=self._resource_option,
         )
 
-        if self._padding == 0:
+        if self._padding == 0 or self._padding == "same":
             template_file_name = "depthconv1d_not_padding.tpl.vhd"
             test_template_file_name = "depthconv1d_not_padding_tb.tpl.vhd"
         elif self._padding == 1:

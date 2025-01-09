@@ -24,7 +24,6 @@ class Conv1dBN(Design):
         out_channels: int,
         seq_len: int,
         kernel_size: int,
-        stride: int,
         padding: int,
         weights: list[list[int]],
         bias: list[int],
@@ -84,29 +83,41 @@ class Conv1dBN(Design):
     def save_to(self, destination: Path) -> None:
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
+        template_parameters = dict(
+            name=self.name,
+            x_addr_width=str(self._x_addr_width),
+            y_addr_width=str(self._y_addr_width),
+            data_width=str(self._data_width),
+            kernel_size=str(self._kernel_size),
+            in_channels=str(self._in_channels),
+            out_channels=str(self._out_channels),
+            seq_len=str(self._seq_len),
+            m_q_data_width=str(self._m_q_data_width),
+            z_x=str(self._z_x),
+            z_w=str(self._z_w),
+            z_b=str(self._z_b),
+            z_y=str(self._z_y),
+            m_q=str(self._m_q),
+            m_q_shift=str(self._m_q_shift),
+            weights_rom_name=rom_name["weights"],
+            bias_rom_name=rom_name["bias"],
+            work_library_name=self._work_library_name,
+            resource_option=self._resource_option,
+        )
+        if self._padding == 0 or self._padding == "same":
+            template_file_name = "conv1dbn_not_padding.tpl.vhd"
+            test_template_file_name = "conv1dbn_not_padding_tb.tpl.vhd"
+        elif self._padding == 1:
+            template_file_name = "conv1dbn_zero_padding.tpl.vhd"
+            test_template_file_name = "conv1dbn_zero_padding_tb.tpl.vhd"
+            template_parameters["padding"] = int(self._padding)
+        else:
+            raise ValueError("padding must be 0 or 1")
+
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="conv1dbn.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                kernel_size=str(self._kernel_size),
-                in_channels=str(self._in_channels),
-                out_channels=str(self._out_channels),
-                m_q_data_width=str(self._m_q_data_width),
-                z_x=str(self._z_x),
-                z_w=str(self._z_w),
-                z_b=str(self._z_b),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-            ),
+            file_name=template_file_name,
+            parameters=template_parameters,
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
@@ -129,7 +140,7 @@ class Conv1dBN(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="conv1dbn_tb.tpl.vhd",
+            file_name=test_template_file_name,
             parameters=dict(
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
@@ -137,7 +148,7 @@ class Conv1dBN(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
-                kernel_size=str(self._kernel_size),
+                seq_len=str(self._seq_len),
                 work_library_name=self._work_library_name,
             ),
         )
