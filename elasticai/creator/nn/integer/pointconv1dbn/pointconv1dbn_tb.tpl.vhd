@@ -91,7 +91,7 @@ begin
 
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < IN_CH_NUM * IN_SEQ_LEN loop
+            while input_rd_cnt < IN_CHANNELS * IN_SEQ_LEN loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));

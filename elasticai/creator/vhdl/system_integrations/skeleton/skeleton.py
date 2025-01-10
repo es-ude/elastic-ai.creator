@@ -43,9 +43,9 @@ class Skeleton:
                 raise Exception(
                     f"should give an id of 1 byte. Actual length is {len(id)}"
                 )
-            if x_num_values > 100:
+            if x_num_values > 500:
                 raise Exception(
-                    "Not more than 100 input values allowed. Actual num of inputs"
+                    "Not more than 500 input values allowed. Actual num of inputs"
                     f" {x_num_values} ."
                 )
             if y_num_values > 100:

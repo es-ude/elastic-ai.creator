@@ -143,7 +143,6 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
-
         # TODO: Implement intmatmul or F.conv1d
         tmp = F.conv1d(
             q_inputs,

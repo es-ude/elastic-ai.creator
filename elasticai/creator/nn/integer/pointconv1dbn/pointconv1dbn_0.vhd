@@ -1,24 +1,24 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-library ${work_library_name};
-use ${work_library_name}.all;
-entity ${name} is
+library work;
+use work.all;
+entity pointconv1dbn_0 is
     generic (
-        X_ADDR_WIDTH : integer := ${x_addr_width};
-        Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
-        IN_CHANNELS : integer := ${in_channels};
-        OUT_CHANNELS : integer := ${out_channels};
-        IN_SEQ_LEN : integer := ${seq_len};
-        M_Q : integer := ${m_q};
-        M_Q_SHIFT : integer := ${m_q_shift};
-        Z_X : integer := ${z_x};
-        Z_W : integer := ${z_w};
-        Z_B : integer := ${z_b};
-        Z_Y : integer := ${z_y};
-        M_Q_DATA_WIDTH : integer := ${m_q_data_width};
-        Y_RESOURCE_OPTION : string := "${resource_option}"
+        X_ADDR_WIDTH : integer := 9;
+        Y_ADDR_WIDTH : integer := 15;
+        DATA_WIDTH : integer := 8;
+        IN_CHANNELS : integer := 1;
+        OUT_CHANNELS : integer := 64;
+        IN_SEQ_LEN : integer := 284;
+        M_Q : integer := 4147;
+        M_Q_SHIFT : integer := 19;
+        Z_X : integer := -5;
+        Z_W : integer := 0;
+        Z_B : integer := 0;
+        Z_Y : integer := -1;
+        M_Q_DATA_WIDTH : integer := 14;
+        Y_RESOURCE_OPTION : string := "auto"
     );
     port (
         enable: in std_logic;
@@ -29,8 +29,8 @@ entity ${name} is
         y_out: out std_logic_vector(DATA_WIDTH-1 downto 0);
         done: out std_logic
     );
-end entity ${name};
-architecture rtl of ${name} is
+end entity pointconv1dbn_0;
+architecture rtl of pointconv1dbn_0 is
     function log2(val : INTEGER) return natural is
         variable result : natural;
     begin
@@ -83,7 +83,7 @@ architecture rtl of ${name} is
     signal M_Q_SIGNED : signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_mac_state is (s_stop, s_init, s_preload_b, s_preload, s_accumulate, s_scaling, s_output, s_done);
+    type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling, s_output, s_done);
     signal mac_state : t_mac_state;
     signal s_x_addr : std_logic_vector(X_ADDR_WIDTH-1 downto 0) := (others=>'0');
     signal s_w_addr : std_logic_vector(W_ADDR_WIDTH-1 downto 0) := (others=>'0');
@@ -135,6 +135,7 @@ begin
         variable y_idx : integer range 0 to IN_SEQ_LEN * OUT_CHANNELS := 0;
         variable var_b_add_z_b : integer range -2**(2*(DATA_WIDTH+1)-1) to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
+        variable counter :integer :=0;
     begin
         if rising_edge(clock) then
             if layer_state = s_stop then
@@ -147,27 +148,30 @@ begin
                 w_idx := 0;
                 y_idx :=0;
                 cnt_in_kernel :=0;
+
             else
                 case mac_state is
                     when s_init =>
                         cnt_in_kernel := 0;
                         x_idx := offset_x_idx;
                         w_idx := offset_w_idx;
-                        mac_state <= s_preload_b;
-                    when s_preload_b =>
-                        var_b_add_z_b := to_integer(s_b) + Z_B;
-                        macc_sum <= to_signed(var_b_add_z_b, macc_sum'length);
                         mac_state <= s_preload;
                     when s_preload =>
                         var_b_add_z_b := to_integer(s_b) + Z_B;
+                        -- report "var_b_add_z_b: " & integer'image(var_b_add_z_b);
+                        -- report "cnt_in_row"  & integer'image(cnt_in_row);
                         macc_sum <= to_signed(var_b_add_z_b, macc_sum'length);
+                        mac_state <= s_accumulate;
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         w_sub_z <= to_signed(0, w_sub_z'length);
-                        x_idx := x_idx + OUT_SEQ_LEN;
-                        w_idx := w_idx + 1;
-                        mac_state <= s_accumulate;
+
+
+                        -- x_idx := x_idx + OUT_SEQ_LEN;
+                        -- w_idx := w_idx + 1;
                     when s_accumulate =>
                         y_store_en <= '0';
+                        -- report "x_idx: " & integer'image(x_idx);
+                        -- report "w_idx: " & integer'image(w_idx);
                         x_sub_z <= s_x - to_signed(Z_X, x_sub_z'length);
                         w_sub_z <= s_w - to_signed(Z_W, w_sub_z'length);
                         macc_sum <= multiply_accumulate(w_sub_z, x_sub_z, macc_sum);
@@ -183,6 +187,7 @@ begin
                             cnt_in_kernel := 0;
                         end if;
                     when s_scaling =>
+
                         y_scaled <= scaling(macc_sum, M_Q_SIGNED, M_Q_SHIFT);
                         mac_state <= s_output;
                     when s_output =>
@@ -191,9 +196,13 @@ begin
                         y_store_en <= '1';
                         y_store_addr <= to_unsigned(y_idx, y_store_addr'length);
                         y_idx := y_idx + 1;
+                        -- report "var_y_store: " & integer'image(to_integer(var_y_store));
+                        -- report "finished 1 convolution==============";
+                        -- assert y_idx<10 report "terminate simulation." severity FAILURE;
                         if cnt_in_row < OUT_SEQ_LEN-1 then
                             cnt_in_row := cnt_in_row + 1;
                             offset_x_idx := offset_x_idx + 1;
+                            -- offset_w_idx := offset_w_idx + 1;
                             mac_state <= s_init;
                         else
                             cnt_in_row := 0;
@@ -205,6 +214,9 @@ begin
                                 cnt_in_row := 0;
                             else
                                 mac_state <= s_done;
+                                counter := counter+1;
+
+                                -- assert false report "terminate simulation." severity FAILURE;
                             end if;
                         end if;
                     when s_done =>
@@ -212,11 +224,11 @@ begin
                     when others =>
                         mac_state <= s_done;
                 end case;
-                if w_idx < 2**(W_ADDR_WIDTH) then
+                if w_idx < 2**(W_ADDR_WIDTH)-1 then
                     s_w_addr <= std_logic_vector(to_unsigned(w_idx, s_w_addr'length));
                 end if;
                 s_x_addr <= std_logic_vector(to_unsigned(x_idx, s_x_addr'length));
-                if cnt_in_out_ch < 2**(B_ADDR_WIDTH) then
+                if cnt_in_out_ch < 2**(B_ADDR_WIDTH)-1 then
                     s_b_addr <= std_logic_vector(to_unsigned(cnt_in_out_ch, s_b_addr'length));
                 end if;
             end if;
@@ -224,7 +236,7 @@ begin
     end process;
     x_addr <= s_x_addr;
     y_store_addr_std <= std_logic_vector(y_store_addr);
-    ram_y : entity ${work_library_name}.${name}_ram(rtl)
+    ram_y : entity work.pointconv1dbn_0_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
@@ -244,7 +256,7 @@ begin
         regceb => '1',
         doutb  => y_out
     );
-    rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
+    rom_w : entity work.pointconv1dbn_0_w_rom(rtl)
         port map (
             clk => clock,
             en => enable,
@@ -252,7 +264,7 @@ begin
             data => s_w_std
         );
     s_w <= signed(s_w_std);
-    rom_b : entity ${work_library_name}.${bias_rom_name}(rtl)
+    rom_b : entity work.pointconv1dbn_0_b_rom(rtl)
     port map (
         clk => clock,
         en => enable,

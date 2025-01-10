@@ -73,9 +73,14 @@ class PointConv1dBN(Design):
     def save_to(self, destination: Path) -> None:
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
+        if self._in_channels == 1:
+            template_filename = "pointconv1dbn_1_IN_CH.tpl.vhd"
+        else:
+            template_filename = "pointconv1dbn.tpl.vhd"
+
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="pointconv1dbn.tpl.vhd",
+            file_name=template_filename,
             parameters=dict(
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
