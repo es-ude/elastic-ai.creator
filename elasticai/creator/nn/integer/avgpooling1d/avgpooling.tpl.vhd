@@ -30,19 +30,19 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function scaling(x : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable is_negative : boolean := x(x'left) = '1';
+    variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
-            TMP_1 := -x * scaler_m;
+            TMP_1 := -x_to_scale * scaler_m;
         else
-            TMP_1 := x * scaler_m;
+            TMP_1 := x_to_scale * scaler_m;
         end if;
         TMP_2 := shift_right(TMP_1, scaler_m_shift);
         TMP_3 := TMP_2;

@@ -134,7 +134,7 @@ begin
         file_close (fp_inputs_2);
         file_close (fp_labels);
         file_close (fp_pred);
-        report  "all files closed.";
+        report "All files closed.";
         report "Time taken for processing = " & time'image(v_TIME);
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;

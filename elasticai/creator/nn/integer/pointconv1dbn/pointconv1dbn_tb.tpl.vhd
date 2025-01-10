@@ -29,7 +29,7 @@ architecture rtl of ${name}_tb is
     signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
-    type t_array_x is array (0 to 31) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to IN_CHANNELS * IN_SEQ_LEN)of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process

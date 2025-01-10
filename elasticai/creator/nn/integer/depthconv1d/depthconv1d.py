@@ -1,4 +1,5 @@
 import logging
+import math
 
 import torch
 from torch import nn
@@ -60,8 +61,8 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             data_width=self.quant_bits,
             in_channels=self.in_channels,
             seq_len=self.seq_len,
-            kernel_size=self.kernel_size,
-            padding=self.padding[0],
+            kernel_size=self.kernel_size[0],
+            padding=self.padding,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
@@ -127,27 +128,52 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
+        print(f"----------------------{self.name}----------------------")
+        print("q_inputs", q_inputs)
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
+        print("q_inputs -z_x ", q_inputs)
+
+        if self.padding != 0:
+            if self.padding == "same":
+                padding_len = self.kernel_size // 2
+            else:
+                padding_len = self.padding[0]
+
+            q_inputs = F.pad(
+                input=q_inputs,
+                pad=(padding_len, padding_len),
+                mode="constant",
+                value=self.inputs_QParams.zero_point.item(),
+            )
+
+        print("q_inputs after padding", q_inputs)
+
+        print("q_weights", self.q_weights)
+        print("q_bias", self.q_bias)
 
         # TODO: Implement intmatmul or F.conv1d
         tmp = F.conv1d(
             q_inputs,
             self.q_weights,
             self.q_bias,
-            padding=self.padding,
+            padding=0,
             groups=self.groups,
         )
+        print("tmp", tmp)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
+        print("tmp after bitshifting", tmp)
 
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
-
+        print("q_outputs", q_outputs)
+        print("shape of q_outputs", q_outputs.shape)
         return q_outputs
 
     def forward(

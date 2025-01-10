@@ -21,7 +21,7 @@ class DepthConv1d(Design):
         data_width: int,
         in_channels: int,
         seq_len: int,
-        padding: int,
+        padding: int or str,
         kernel_size: int,
         weights: list[list[int]],
         bias: list[int],
@@ -42,28 +42,39 @@ class DepthConv1d(Design):
         self._kernel_size = kernel_size
         self._padding = padding
 
-        self._weights = weights
-        self._bias = bias
-
-        self._m_q = m_q
-        self._m_q_shift = m_q_shift
-        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
-
         self._z_x = z_x
         self._z_w = z_w
         self._z_b = z_b
         self._z_y = z_y
 
+        self._weights = [
+            [[w + self._z_w for w in column] for column in row] for row in weights
+        ]
+        self._bias = [b + self._z_b for b in bias]
+
+        self._m_q = m_q
+        self._m_q_shift = m_q_shift
+        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
+
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
         self._x_count = self._in_channels * self._seq_len
-        if self._padding == 0:
-            self._y_count = self._in_channels * (self._seq_len - self._kernel_size + 1)
-        elif self._padding == 1 or self._padding == "same":
-            self._y_count = self._x_count
+
+        if isinstance(self._padding, tuple):
+            if self._padding[0] == 0:
+                self._y_count = self._in_channels * (
+                    self._seq_len - self._kernel_size + 1
+                )
+            else:
+                self._y_count = (
+                    self._x_count + self._padding[0] * 2 - self._kernel_size + 1
+                )
         else:
-            raise ValueError("padding must be 0 or 1 or same")
+            if self._padding == "same":
+                self._y_count = self._x_count
+            else:
+                raise ValueError("Invalid padding value")
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
@@ -104,14 +115,15 @@ class DepthConv1d(Design):
         if self._padding == 0:
             template_file_name = "depthconv1d_not_padding.tpl.vhd"
             test_template_file_name = "depthconv1d_not_padding_tb.tpl.vhd"
-        elif self._padding == 1 or self._padding == "same":
+        else:
             template_file_name = "depthconv1d_zero_padding.tpl.vhd"
             test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
+
             if self._padding == "same":
-                self._padding = 1
-            template_parameters["padding_len"] = str(self._padding)
-        else:
-            raise ValueError("padding must be 0 or 1 or same")
+                padding_len = self._kernel_size // 2
+            else:
+                padding_len = self._padding
+            template_parameters["padding_len"] = padding_len
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -154,10 +166,6 @@ class DepthConv1d(Design):
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             template_test
         )
-
-
-# def _flatten_params(params: list[list[int]]) -> list[int]:
-#     return list(chain(*params))
 
 
 def _flatten_params(params):

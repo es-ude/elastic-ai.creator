@@ -23,9 +23,9 @@ entity ${name} is
         enable : in std_logic;
         clock  : in std_logic;
         x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x_in   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y_out  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
@@ -40,19 +40,19 @@ architecture rtl of ${name} is
         TMP := w * x_in;
         return TMP + y_0;
     end function;
-    function scaling(x_in : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
     variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable is_negative : boolean := x_in(x_in'left) = '1';
+    variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
-            TMP_1 := -x_in * scaler_m;
+            TMP_1 := -x_to_scale * scaler_m;
         else
-            TMP_1 := x_in * scaler_m;
+            TMP_1 := x_to_scale * scaler_m;
         end if;
         TMP_2 := shift_right(TMP_1, scaler_m_shift);
         TMP_3 := TMP_2;
@@ -101,7 +101,7 @@ architecture rtl of ${name} is
 begin
     n_clock <= not clock;
     w_int <= signed(w_in);
-    x_int <= signed(x);
+    x_int <= signed(x_in);
     b_int <= signed(b_in);
     reset <= not enable;
     fsm : process (clock, reset)
@@ -225,7 +225,7 @@ begin
         enb    => '1',
         rstb   => '0',
         regceb => '0',
-        doutb  => y
+        doutb  => y_out
     );
     rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
     port map  (

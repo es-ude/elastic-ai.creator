@@ -37,7 +37,8 @@ endif
 \t@$(GHDL_CMD) -m $(GHDL_FLAGS) --workdir=$(SIMDIR) --work=work $(TESTBENCHFILE) > $(SIMDIR)/make_output.txt
 
 run:
-\t@$(GHDL_CMD) -r $(GHDL_FLAGS) --workdir=$(SIMDIR) $(TESTBENCHFILE) --vcd=$(SIMDIR)/$(TESTBENCHFILE).vcd $(GHDL_SIM_OPT) > $(SIMDIR)/make_output.txt
+\t@$(GHDL_CMD) -r $(GHDL_FLAGS) --workdir=$(SIMDIR) $(TESTBENCHFILE) --vcd=$(SIMDIR)/$(TESTBENCHFILE).vcd $(GHDL_SIM_OPT)
+#> $(SIMDIR)/make_output.txt
 
 view:
 \t@$(WAVEFORM_VIEWER) $(SIMDIR)/$(TESTBENCHFILE).vcd > /dev/null 2>&1 &

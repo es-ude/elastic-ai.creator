@@ -87,7 +87,7 @@ begin
         file_close (fp_inputs);
         file_close (fp_labels);
         file_close (fp_pred);
-        report  "all files closed.";
+        report "All files closed.";
         wait;
     end process ;
     uut: entity ${work_library_name}.${name}(rtl)

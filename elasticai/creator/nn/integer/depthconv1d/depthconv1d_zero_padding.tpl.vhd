@@ -52,19 +52,19 @@ architecture rtl of ${name} is
         temp := w * x;
         return temp + y_0;
     end function;
-    function scaling(x_in : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
     variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable is_negative : boolean := x_in(x_in'left) = '1';
+    variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
-            TMP_1 := -x_in * scaler_m;
+            TMP_1 := -x_to_scale * scaler_m;
         else
-            TMP_1 := x_in * scaler_m;
+            TMP_1 := x_to_scale * scaler_m;
         end if;
         TMP_2 := shift_right(TMP_1, scaler_m_shift);
         TMP_3 := TMP_2;
@@ -93,8 +93,8 @@ architecture rtl of ${name} is
     signal w_sub_z : signed(DATA_WIDTH downto 0);
     signal macc_sum : signed((((DATA_WIDTH + 1) + (DATA_WIDTH + 1)) - 1) downto 0) := (others=>'0');
     signal s_b_addr : std_logic_vector(B_ADDR_WIDTH-1 downto 0) := (others=>'0');
-    signal s_b_std : std_logic_vector(8-1 downto 0);
-    signal s_b : signed(8-1 downto 0);
+    signal s_b_std : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    signal s_b : signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_data : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal y_store_addr : unsigned(Y_ADDR_WIDTH-1 downto 0);
@@ -103,7 +103,7 @@ architecture rtl of ${name} is
     signal zero_padding_en : std_logic := '1';
 begin
     done <= '1' when layer_state = s_finished else '0';
-    s_x <= (others=>'0') when zero_padding_en = '1' else signed(x_in);
+    s_x <= to_signed(Z_X+Z_X, s_x'length) when zero_padding_en = '1' else signed(x_in);
     FSM_PROC : process(clock, enable)
     begin
         if rising_edge(clock) then
@@ -133,7 +133,7 @@ begin
         variable cnt_in_row : integer range 0 to IN_SEQ_LEN := 0;
         variable cnt_channel : integer range 0 to IN_CHANNELS := 0;
         variable y_idx : integer range 0 to IN_CHANNELS * OUT_SEQ_LEN := 0;
-        variable var_b_add_z_b : integer range 0 to 2**DATA_WIDTH := 0;
+        variable var_b_add_z_b : integer range 0 to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
     begin
         if rising_edge(clock) then
@@ -145,6 +145,7 @@ begin
                 y_store_en <= '0';
                 cnt_in_row := 0;
                 zero_padding_en <= '1';
+                y_idx := 0;
             else
                 case mac_state is
                     when s_init =>
@@ -178,7 +179,7 @@ begin
                             cnt_in_kernel := 0;
                         end if;
                     when s_scaling =>
-                        y_scaled <= scaling(macc_sum, M_Q_SIGNED, SHIFT);
+                        y_scaled <= scaling(macc_sum, M_Q_SIGNED, M_Q_SHIFT);
                         mac_state <= s_output;
                     when s_output =>
                         var_y_store := y_scaled + to_signed(Z_Y, y_scaled'length);
