@@ -22,11 +22,11 @@ class SeparableResidualBlock(Design):
         out_channels: int,
         kernel_size: int,
         seq_len: int,
+        depthwise_conv1d_0: object,
+        pointwise_conv1dbn_0: object,
+        pointwise_conv1dbn_0_relu: object,
         depthwise_conv1d_1: object,
         pointwise_conv1dbn_1: object,
-        pointwise_conv1dbn_1_relu: object,
-        depthwise_conv1d_2: object,
-        pointwise_conv1dbn_2: object,
         shortcut: object,
         add: object,
         relu: object,
@@ -41,11 +41,11 @@ class SeparableResidualBlock(Design):
         self._kernel_size = kernel_size
         self._work_library_name = work_library_name
 
+        self._depthwise_conv1d_0 = depthwise_conv1d_0
+        self._pointwise_conv1dbn_0 = pointwise_conv1dbn_0
+        self._pointwise_conv1dbn_0_relu = pointwise_conv1dbn_0_relu
         self._depthwise_conv1d_1 = depthwise_conv1d_1
         self._pointwise_conv1dbn_1 = pointwise_conv1dbn_1
-        self._pointwise_conv1dbn_1_relu = pointwise_conv1dbn_1_relu
-        self._depthwise_conv1d_2 = depthwise_conv1d_2
-        self._pointwise_conv1dbn_2 = pointwise_conv1dbn_2
         self._shortcut = shortcut
         self._add = add
         self._relu = relu
@@ -66,41 +66,51 @@ class SeparableResidualBlock(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        depthwise_conv1d_0_deisgn = self._depthwise_conv1d_0.create_design(
+            name=self._depthwise_conv1d_0.name
+        )
+        depthwise_conv1d_0_deisgn.save_to(
+            destination.create_subpath(self._depthwise_conv1d_0.name)
+        )
+
+        pointwise_conv1dbn_0_deisgn = self._pointwise_conv1dbn_0.create_design(
+            name=self._pointwise_conv1dbn_0.name
+        )
+        pointwise_conv1dbn_0_deisgn.save_to(
+            destination.create_subpath(self._pointwise_conv1dbn_0.name)
+        )
+
+        pointwise_conv1dbn_0_relu_deisgn = (
+            self._pointwise_conv1dbn_0_relu.create_design(
+                name=self._pointwise_conv1dbn_0_relu.name
+            )
+        )
+        pointwise_conv1dbn_0_relu_deisgn.save_to(
+            destination.create_subpath(self._pointwise_conv1dbn_0_relu.name)
+        )
+
         depthwise_conv1d_1_deisgn = self._depthwise_conv1d_1.create_design(
             name=self._depthwise_conv1d_1.name
         )
-        depthwise_conv1d_1_deisgn.save_to(destination)
+        depthwise_conv1d_1_deisgn.save_to(
+            destination.create_subpath(self._depthwise_conv1d_1.name)
+        )
 
         pointwise_conv1dbn_1_deisgn = self._pointwise_conv1dbn_1.create_design(
             name=self._pointwise_conv1dbn_1.name
         )
-        pointwise_conv1dbn_1_deisgn.save_to(destination)
-
-        pointwise_conv1dbn_1_relu_deisgn = (
-            self._pointwise_conv1dbn_1_relu.create_design(
-                name=self._pointwise_conv1dbn_1_relu.name
-            )
+        pointwise_conv1dbn_1_deisgn.save_to(
+            destination.create_subpath(self._pointwise_conv1dbn_1.name)
         )
-        pointwise_conv1dbn_1_relu_deisgn.save_to(destination)
-
-        depthwise_conv1d_2_deisgn = self._depthwise_conv1d_2.create_design(
-            name=self._depthwise_conv1d_2.name
-        )
-        depthwise_conv1d_2_deisgn.save_to(destination)
-
-        pointwise_conv1dbn_2_deisgn = self._pointwise_conv1dbn_2.create_design(
-            name=self._pointwise_conv1dbn_2.name
-        )
-        pointwise_conv1dbn_2_deisgn.save_to(destination)
 
         shortcut_deisgn = self._shortcut.create_design(name=self._shortcut.name)
-        shortcut_deisgn.save_to(destination)
+        shortcut_deisgn.save_to(destination.create_subpath(self._shortcut.name))
 
         add_deisgn = self._add.create_design(name=self._add.name)
-        add_deisgn.save_to(destination)
+        add_deisgn.save_to(destination.create_subpath(self._add.name))
 
         relu_deisgn = self._relu.create_design(name=self._relu.name)
-        relu_deisgn.save_to(destination)
+        relu_deisgn.save_to(destination.create_subpath(self._relu.name))
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

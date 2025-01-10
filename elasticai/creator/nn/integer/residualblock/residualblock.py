@@ -30,30 +30,30 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.conv1dbn_1 = Conv1dBN(
+        self.conv1dbn_0 = Conv1dBN(
             in_channels=in_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
             padding="same",
             seq_len=seq_len,
-            name=self.name + "_conv1dbn_1",
+            name=self.name + "_conv1dbn_0",
             quant_bits=quant_bits,
             device=device,
         )
 
-        self.conv1dbn_1_relu = ReLU(
-            name=self.name + "_conv1dbn_1_relu",
+        self.conv1dbn_0_relu = ReLU(
+            name=self.name + "_conv1dbn_0_relu",
             quant_bits=quant_bits,
             device=device,
         )
 
-        self.conv1dbn_2 = Conv1dBN(
+        self.conv1dbn_1 = Conv1dBN(
             in_channels=out_channels,
             out_channels=out_channels,
             kernel_size=kernel_size,
             padding="same",
             seq_len=seq_len,
-            name=self.name + "_conv1dbn_2",
+            name=self.name + "_conv1dbn_1",
             quant_bits=quant_bits,
             device=device,
         )
@@ -67,20 +67,22 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                     kernel_size=1,
                     padding="same",
                     seq_len=seq_len,
-                    name=self.name + "_shortcut",
+                    name=self.name + "_shortcut_0",
                     quant_bits=quant_bits,
                     device=device,
                 )
             )
 
         self.add = Addition(
-            name=self.name + "_add",
+            name=self.name + "_add_0",
             num_features=out_channels,  # might be seq_len, check later
             num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
         )
-        self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
+        self.relu = ReLU(
+            name=self.name + "_relu_0", quant_bits=quant_bits, device=device
+        )
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
@@ -94,13 +96,13 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         return ResidualBlockDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
-            in_channels=self.conv1dbn_1.in_channels,
-            out_channels=self.conv1dbn_1.out_channels,
-            kernel_size=self.conv1dbn_1.kernel_size,
-            seq_len=self.conv1dbn_1.seq_len,
+            in_channels=self.conv1dbn_0.in_channels,
+            out_channels=self.conv1dbn_0.out_channels,
+            kernel_size=self.conv1dbn_0.kernel_size,
+            seq_len=self.conv1dbn_0.seq_len,
+            conv1dbn_0=self.conv1dbn_0,
+            conv1dbn_0_relu=self.conv1dbn_0_relu,
             conv1dbn_1=self.conv1dbn_1,
-            conv1dbn_1_relu=self.conv1dbn_1_relu,
-            conv1dbn_2=self.conv1dbn_2,
             shortcut=self.shortcut,
             add=self.add,
             relu=self.relu,
@@ -110,8 +112,8 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
 
+        self.conv1dbn_0.precompute()
         self.conv1dbn_1.precompute()
-        self.conv1dbn_2.precompute()
         if len(self.shortcut) > 0:
             for submodule in self.shortcut:
                 if hasattr(submodule, "precompute"):
@@ -134,31 +136,33 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         q_residual = q_inputs
 
         self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_q_x"
+            q_inputs, self.quant_data_file_dir, self.conv1dbn_0.name + "_q_x"
         )
-        q_outputs = self.conv1dbn_1.int_forward(q_inputs)
+        q_outputs = self.conv1dbn_0.int_forward(q_inputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_q_y"
-        )
-
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_relu_q_x"
-        )
-        q_outputs = self.conv1dbn_1_relu.int_forward(q_outputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_1_relu_q_y"
+            q_outputs, self.quant_data_file_dir, self.conv1dbn_0.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_2_q_x"
+            q_outputs, self.quant_data_file_dir, self.conv1dbn_0_relu.name + "_q_x"
         )
-        q_outputs = self.conv1dbn_2.int_forward(q_outputs)
+        q_outputs = self.conv1dbn_0_relu.int_forward(q_outputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_conv1dbn_2_q_y"
+            q_outputs, self.quant_data_file_dir, self.conv1dbn_0_relu.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_residual, self.quant_data_file_dir, f"{self.name}_shortcut_q_x"
+            q_outputs, self.quant_data_file_dir, self.conv1dbn_1.name + "_q_x"
+        )
+        q_outputs = self.conv1dbn_1.int_forward(q_outputs)
+        self._save_quant_data(
+            q_outputs, self.quant_data_file_dir, self.conv1dbn_1.name + "_q_y"
+        )
+
+        self._save_quant_data(
+            q_residual,
+            self.quant_data_file_dir,
+            self.name + "_shortcut_0_q_x",
         )
         if len(self.shortcut) > 0:
             for submodule in self.shortcut:
@@ -171,27 +175,27 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_shortcut_outputs,
             self.quant_data_file_dir,
-            f"{self.name}_shortcut_q_y",
+            self.name + "_shortcut_0_q_y",
         )
 
         self._save_quant_data(
             q_shortcut_outputs,
             self.quant_data_file_dir,
-            f"{self.name}_shortcut_add_q_x",
+            self.add.name + "_q_x",
         )
         q_add_outputs = self.add.int_forward(
             q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs
         )
         self._save_quant_data(
-            q_add_outputs, self.quant_data_file_dir, f"{self.name}_shortcut_add_q_y"
+            q_add_outputs, self.quant_data_file_dir, self.add.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_add_outputs, self.quant_data_file_dir, f"{self.name}_shortcut_relu_q_x"
+            q_add_outputs, self.quant_data_file_dir, self.relu.name + "_q_x"
         )
         q_outputs = self.relu.int_forward(q_add_outputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_shortcut_relu_q_y"
+            q_outputs, self.quant_data_file_dir, self.relu.name + "_q_y"
         )
 
         self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
@@ -208,15 +212,15 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
 
         residual = inputs
 
-        outputs = self.conv1dbn_1.forward(
+        outputs = self.conv1dbn_0.forward(
             inputs=inputs, given_inputs_QParams=self.inputs_QParams
         )
-        outputs = self.conv1dbn_1_relu.forward(
-            inputs=outputs, given_inputs_QParams=self.conv1dbn_1.outputs_QParams
+        outputs = self.conv1dbn_0_relu.forward(
+            inputs=outputs, given_inputs_QParams=self.conv1dbn_0.outputs_QParams
         )
 
-        outputs = self.conv1dbn_2.forward(
-            inputs=outputs, given_inputs_QParams=self.conv1dbn_1_relu.outputs_QParams
+        outputs = self.conv1dbn_1.forward(
+            inputs=outputs, given_inputs_QParams=self.conv1dbn_0_relu.outputs_QParams
         )
 
         shortcut_given_inputs_QParams = self.inputs_QParams
@@ -240,7 +244,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                 else self.inputs_QParams
             ),
             inputs2=outputs,
-            given_inputs2_QParams=self.conv1dbn_2.outputs_QParams,
+            given_inputs2_QParams=self.conv1dbn_1.outputs_QParams,
         )
 
         outputs = self.relu.forward(

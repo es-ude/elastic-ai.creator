@@ -31,45 +31,45 @@ class SeparableResidualBlock(nn.Module):
         device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.depthwise_conv1d_1 = DepthConv1d(
+        self.depthwise_conv1d_0 = DepthConv1d(
             in_channels=kwargs.get("in_channels"),
             kernel_size=kwargs.get("kernel_size"),
             seq_len=seq_len,
             padding=1,
             groups=kwargs.get("in_channels"),
-            name=self.name + "_1_depthwise_conv1d",
+            name=self.name + "_depthwise_conv1d_0",
             quant_bits=quant_bits,
             device=device,
         )
-        self.pointwise_conv1dbn_1 = PointConv1dBN(
+        self.pointwise_conv1dbn_0 = PointConv1dBN(
             in_channels=kwargs.get("in_channels"),
             out_channels=kwargs.get("out_channels"),
             seq_len=seq_len,
-            name=self.name + "_1_pointwise_conv1dbn",
+            name=self.name + "_pointwise_conv1dbn_0",
             quant_bits=quant_bits,
             device=device,
         )
-        self.pointwise_conv1dbn_1_relu = ReLU(
-            name=self.name + "_1_pointwise_conv1dbn_relu",
+        self.pointwise_conv1dbn_0_relu = ReLU(
+            name=self.name + "_pointwise_conv1dbn_0_relu",
             quant_bits=quant_bits,
             device=device,
         )
 
-        self.depthwise_conv1d_2 = DepthConv1d(
+        self.depthwise_conv1d_1 = DepthConv1d(
             in_channels=out_channels,
             kernel_size=kernel_size,
             seq_len=seq_len,
             padding=1,
             groups=kwargs.get("in_channels"),
-            name=self.name + "_2_depthwise_conv1d",
+            name=self.name + "_depthwise_conv1d_0",
             quant_bits=quant_bits,
             device=device,
         )
-        self.pointwise_conv1dbn_2 = PointConv1dBN(
+        self.pointwise_conv1dbn_1 = PointConv1dBN(
             in_channels=out_channels,
             out_channels=out_channels,
             seq_len=seq_len,
-            name=self.name + "_2_pointwise_conv1dbn",
+            name=self.name + "_pointwise_conv1dbn_0",
             quant_bits=quant_bits,
             device=device,
         )
@@ -80,19 +80,21 @@ class SeparableResidualBlock(nn.Module):
             seq_len=seq_len,
             kernel_size=1,
             padding="same",
-            name=self.name + "_shortcut",
+            name=self.name + "_shortcut_0",
             quant_bits=quant_bits,
             device=device,
         )
 
         self.add = Addition(
-            name=self.name + "_add",
+            name=self.name + "_add_0",
             num_features=out_channels,
             num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
         )
-        self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
+        self.relu = ReLU(
+            name=self.name + "_relu_0", quant_bits=quant_bits, device=device
+        )
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
@@ -106,15 +108,15 @@ class SeparableResidualBlock(nn.Module):
         return SeparableResidualBlockDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
-            in_channels=self.depthwise_conv1d_1.in_channels,
-            out_channels=self.depthwise_conv1d_1.out_channels,
-            kernel_size=self.depthwise_conv1d_1.kernel_size[0],
-            seq_len=self.depthwise_conv1d_1.seq_len,
+            in_channels=self.depthwise_conv1d_0.in_channels,
+            out_channels=self.depthwise_conv1d_0.out_channels,
+            kernel_size=self.depthwise_conv1d_0.kernel_size[0],
+            seq_len=self.depthwise_conv1d_0.seq_len,
+            depthwise_conv1d_0=self.depthwise_conv1d_0,
+            pointwise_conv1dbn_0=self.pointwise_conv1dbn_0,
+            pointwise_conv1dbn_0_relu=self.pointwise_conv1dbn_0_relu,
             depthwise_conv1d_1=self.depthwise_conv1d_1,
             pointwise_conv1dbn_1=self.pointwise_conv1dbn_1,
-            pointwise_conv1dbn_1_relu=self.pointwise_conv1dbn_1_relu,
-            depthwise_conv1d_2=self.depthwise_conv1d_2,
-            pointwise_conv1dbn_2=self.pointwise_conv1dbn_2,
             shortcut=self.shortcut,
             add=self.add,
             relu=self.relu,
@@ -123,11 +125,11 @@ class SeparableResidualBlock(nn.Module):
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
+        self.depthwise_conv1d_0.precompute()
+        self.pointwise_conv1dbn_0.precompute()
+
         self.depthwise_conv1d_1.precompute()
         self.pointwise_conv1dbn_1.precompute()
-
-        self.depthwise_conv1d_2.precompute()
-        self.pointwise_conv1dbn_2.precompute()
 
         self.shortcut.precompute()
         self.add.precompute()
@@ -148,79 +150,79 @@ class SeparableResidualBlock(nn.Module):
         q_residual = q_inputs
 
         self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, f"{self.name}_1_depthwise_conv1d_q_x"
+            q_inputs, self.quant_data_file_dir, self.depthwise_conv1d_0.name + "_q_x"
         )
-        q_outputs = self.depthwise_conv1d_1.int_forward(q_inputs)
+        q_outputs = self.depthwise_conv1d_0.int_forward(q_inputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_1_depthwise_conv1d_q_y"
+            q_outputs, self.quant_data_file_dir, self.depthwise_conv1d_0.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_1_pointwise_conv1dbn_q_x"
+            q_outputs, self.quant_data_file_dir, self.pointwise_conv1dbn_0.name + "_q_x"
+        )
+        q_outputs = self.pointwise_conv1dbn_0.int_forward(q_outputs)
+        self._save_quant_data(
+            q_outputs, self.quant_data_file_dir, self.pointwise_conv1dbn_0.name + "_q_y"
+        )
+
+        self._save_quant_data(
+            q_outputs,
+            self.quant_data_file_dir,
+            self.pointwise_conv1dbn_0_relu.name + "_q_x",
+        )
+        q_outputs = self.pointwise_conv1dbn_0_relu.int_forward(q_outputs)
+        self._save_quant_data(
+            q_outputs,
+            self.quant_data_file_dir,
+            self.pointwise_conv1dbn_0_relu.name + "_q_y",
+        )
+
+        self._save_quant_data(
+            q_outputs, self.quant_data_file_dir, self.depthwise_conv1d_1.name + "_q_x"
+        )
+        q_outputs = self.depthwise_conv1d_1.int_forward(q_outputs)
+        self._save_quant_data(
+            q_outputs, self.quant_data_file_dir, self.depthwise_conv1d_1.name + "_q_y"
+        )
+
+        self._save_quant_data(
+            q_outputs, self.quant_data_file_dir, self.pointwise_conv1dbn_1.name + "_q_x"
         )
         q_outputs = self.pointwise_conv1dbn_1.int_forward(q_outputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_1_pointwise_conv1dbn_q_y"
+            q_outputs, self.quant_data_file_dir, self.pointwise_conv1dbn_1.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_outputs,
-            self.quant_data_file_dir,
-            f"{self.name}_1_pointwise_conv1dbn_relu_q_x",
-        )
-        q_outputs = self.pointwise_conv1dbn_1_relu.int_forward(q_outputs)
-        self._save_quant_data(
-            q_outputs,
-            self.quant_data_file_dir,
-            f"{self.name}_1_pointwise_conv1dbn_relu_q_y",
-        )
-
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_2_depthwise_conv1d_q_x"
-        )
-        q_outputs = self.depthwise_conv1d_2.int_forward(q_outputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_2_depthwise_conv1d_q_y"
-        )
-
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_2_pointwise_conv1dbn_q_x"
-        )
-        q_outputs = self.pointwise_conv1dbn_2.int_forward(q_outputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_2_pointwise_conv1dbn_q_y"
-        )
-
-        self._save_quant_data(
-            q_residual, self.quant_data_file_dir, f"{self.name}_shortcut_q_x"
+            q_residual, self.quant_data_file_dir, self.shortcut.name + "_q_x"
         )
         q_shortcut_outputs = self.shortcut.int_forward(q_residual)
         self._save_quant_data(
             q_shortcut_outputs,
             self.quant_data_file_dir,
-            f"{self.name}_shortcut_q_y",
+            self.shortcut.name + "_q_y",
         )
 
         self._save_quant_data(
             q_shortcut_outputs,
             self.quant_data_file_dir,
-            f"{self.name}_shortcut_add_q_x",
+            self.add.name + "_q_x",
         )
         q_add_outputs = self.add.int_forward(
             q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs
         )
         self._save_quant_data(
-            q_add_outputs, self.quant_data_file_dir, f"{self.name}_shortcut_add_q_y"
+            q_add_outputs, self.quant_data_file_dir, self.add.name + "_q_y"
         )
 
         self._save_quant_data(
             q_add_outputs,
             self.quant_data_file_dir,
-            f"{self.name}_shortcut_relu_q_x",
+            self.relu.name + "_q_x",
         )
         q_outputs = self.relu.int_forward(q_add_outputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_shortcut_relu_q_y"
+            q_outputs, self.quant_data_file_dir, self.relu.name + "_q_y"
         )
 
         self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
@@ -236,26 +238,26 @@ class SeparableResidualBlock(nn.Module):
                 self.inputs_QParams = given_inputs_QParams
 
         residual = inputs
-        outputs = self.depthwise_conv1d_1.forward(
+        outputs = self.depthwise_conv1d_0.forward(
             inputs=inputs, given_inputs_QParams=self.inputs_QParams
+        )
+
+        outputs = self.pointwise_conv1dbn_0.forward(
+            inputs=outputs, given_inputs_QParams=self.depthwise_conv1d_0.outputs_QParams
+        )
+
+        outputs = self.pointwise_conv1dbn_0_relu.forward(
+            inputs=outputs,
+            given_inputs_QParams=self.pointwise_conv1dbn_0.outputs_QParams,
+        )
+
+        outputs = self.depthwise_conv1d_1.forward(
+            inputs=outputs,
+            given_inputs_QParams=self.pointwise_conv1dbn_0_relu.outputs_QParams,
         )
 
         outputs = self.pointwise_conv1dbn_1.forward(
             inputs=outputs, given_inputs_QParams=self.depthwise_conv1d_1.outputs_QParams
-        )
-
-        outputs = self.pointwise_conv1dbn_1_relu.forward(
-            inputs=outputs,
-            given_inputs_QParams=self.pointwise_conv1dbn_1.outputs_QParams,
-        )
-
-        outputs = self.depthwise_conv1d_2.forward(
-            inputs=outputs,
-            given_inputs_QParams=self.pointwise_conv1dbn_1_relu.outputs_QParams,
-        )
-
-        outputs = self.pointwise_conv1dbn_2.forward(
-            inputs=outputs, given_inputs_QParams=self.depthwise_conv1d_2.outputs_QParams
         )
 
         shortcut_outputs = self.shortcut.forward(
@@ -266,7 +268,7 @@ class SeparableResidualBlock(nn.Module):
             inputs1=shortcut_outputs,
             inputs2=outputs,
             given_inputs1_QParams=self.shortcut.outputs_QParams,
-            given_inputs2_QParams=self.pointwise_conv1dbn_2.outputs_QParams,
+            given_inputs2_QParams=self.pointwise_conv1dbn_1.outputs_QParams,
         )
 
         outputs = self.relu.forward(
