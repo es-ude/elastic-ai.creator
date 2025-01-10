@@ -33,13 +33,13 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(DATA_WIDTH downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
+    variable TMP_2 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
+    variable TMP_3 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
     variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
@@ -58,8 +58,8 @@ architecture rtl of ${name} is
             return resize(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
-    signal M_Q_1_SIGNED:signed(SCLAER_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_1, SCLAER_DATA_WIDTH);
-    signal M_Q_2_SIGNED:signed(SCLAER_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, SCLAER_DATA_WIDTH);
+    signal M_Q_1_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_1, M_Q_DATA_WIDTH);
+    signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
     type t_layer_state is (s_stop, s_forward, s_finished);

@@ -32,12 +32,12 @@ end ${name};
 architecture rtl of ${name} is
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
-                    x_in : in signed(DATA_WIDTH downto 0);
+                    x_to_mac : in signed(DATA_WIDTH downto 0);
                     y_0 : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0)
             ) return signed is
         variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
-        TMP := w * x_in;
+        TMP := w * x_to_mac;
         return TMP + y_0;
     end function;
     function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);

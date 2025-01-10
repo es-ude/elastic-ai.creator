@@ -7,6 +7,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
@@ -91,6 +92,9 @@ class Addition(Design):
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        ram = Ram(name=f"{self.name}_ram")
+        ram.save_to(destination)
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),

@@ -181,7 +181,12 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_shortcut_outputs,
             self.quant_data_file_dir,
-            self.add.name + "_q_x",
+            self.add.name + "_q_x_1",
+        )
+        self._save_quant_data(
+            q_outputs,
+            self.quant_data_file_dir,
+            self.add.name + "_q_x_2",
         )
         q_add_outputs = self.add.int_forward(
             q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs

@@ -128,8 +128,8 @@ begin
         clock  => clock,
         x_address => x_addr,
         y_address => y_addr,
-        x   => x_in,
-        y   => y_out,
+        x_in   => x_in,
+        y_out   => y_out,
         done   => done
     );
 end architecture;
