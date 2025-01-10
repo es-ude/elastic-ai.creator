@@ -31,8 +31,7 @@ class MetaFile:
             meta_version=cls.version,
             creator_version=creator_version,
             hw_accelerator_version="0.1",
-            skeleton_id='"<invalid>"  # this should be computed and set'
-            " automatically",
+            skeleton_id='"<invalid>"  # this should be computed and set automatically',
             name="<your_network>",
             description="""An optional possibly very long description of what
                             your accelerator does and how to use it.""",

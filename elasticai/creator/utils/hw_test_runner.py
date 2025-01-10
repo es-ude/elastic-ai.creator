@@ -1,20 +1,19 @@
-import logging as _logger
-import importlib.resources as res
-from typing import Iterator
-from pathlib import Path
-import logging
-import xml.etree.ElementTree as ET
 import asyncio as a
-from asyncio.subprocess import Process
-from typing import Coroutine, Any, TypeVar, Callable, AsyncIterable, Literal
+import importlib.resources as res
+import logging
+import logging as _logger
 import re
 import sys
-from ._run import run_and_wait, run_and_process_pipes
-from ._console_out import Printer
-from io import BytesIO
+import xml.etree.ElementTree as ET
+from asyncio.subprocess import Process
 from collections.abc import Iterable
 from dataclasses import dataclass
+from io import BytesIO
+from pathlib import Path
+from typing import Any, AsyncIterable, Callable, Coroutine, Iterator, Literal, TypeVar
 
+from ._console_out import Printer
+from ._run import run_and_process_pipes, run_and_wait
 
 CREATOR_PLUGIN_NAMESPACE = "elasticai.creator_plugins"
 
@@ -133,7 +132,7 @@ class TestBenchReport:
 
         total = ", ".join(totals)
         yield ""
-        yield f"{'=' * 20} {total} {'='*20}"
+        yield f"{'=' * 20} {total} {'=' * 20}"
 
     def pretty_print(self) -> Iterable[str]:
         p = Printer()
