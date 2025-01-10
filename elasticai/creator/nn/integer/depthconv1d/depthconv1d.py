@@ -128,13 +128,9 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        print(f"----------------------{self.name}----------------------")
-        print("q_inputs", q_inputs)
-
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
-        print("q_inputs -z_x ", q_inputs)
 
         if self.padding != 0:
             if self.padding == "same":
@@ -149,11 +145,6 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
                 value=self.inputs_QParams.zero_point.item(),
             )
 
-        print("q_inputs after padding", q_inputs)
-
-        print("q_weights", self.q_weights)
-        print("q_bias", self.q_bias)
-
         # TODO: Implement intmatmul or F.conv1d
         tmp = F.conv1d(
             q_inputs,
@@ -162,18 +153,14 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             padding=0,
             groups=self.groups,
         )
-        print("tmp", tmp)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
-        print("tmp after bitshifting", tmp)
 
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
-        print("q_outputs", q_outputs)
-        print("shape of q_outputs", q_outputs.shape)
         return q_outputs
 
     def forward(

@@ -134,7 +134,7 @@ begin
         variable in_cnt_channel : integer range 0 to IN_CHANNELS := 0;
         variable out_cnt_channel : integer range 0 to OUT_CHANNELS := 0;
         variable y_idx : integer range 0 to IN_CHANNELS * OUT_SEQ_LEN := 0;
-        variable var_b_add_z_b : integer range 0 to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
+        variable var_b_add_z_b : integer range -2**(2*(DATA_WIDTH+1)-1) to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
         variable x_idx_addr : integer range 0 to IN_CHANNELS * IN_SEQ_LEN-1 := 0;
     begin

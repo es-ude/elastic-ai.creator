@@ -51,6 +51,7 @@ class Sequential(_SequentialBase):
         assert self.precomputed, "precompute() should be called before int_forward()"
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
 
+        i = 0
         for submodule in self.submodules:
             self._save_quant_data(
                 q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
@@ -61,7 +62,9 @@ class Sequential(_SequentialBase):
             self._save_quant_data(
                 q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
             )
-            break
+            i += 1
+            # if i == 3:
+            #     break
         self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
         return q_outputs
 
