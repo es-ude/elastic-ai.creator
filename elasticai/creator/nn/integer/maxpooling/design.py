@@ -7,6 +7,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
@@ -22,10 +23,7 @@ class MaxPooling1d(Design):
         out_features: int,
         in_num_dimensions: int,
         out_num_dimensions: int,
-        m_q: int,
-        m_q_shift: int,
-        z_x: int,
-        z_y: int,
+        kernel_size: int,
         work_library_name: str,
         resource_option: str,
     ) -> None:
@@ -36,13 +34,7 @@ class MaxPooling1d(Design):
         self._out_features = out_features
         self._in_num_dimensions = in_num_dimensions
         self._out_num_dimensions = out_num_dimensions
-
-        self._m_q = m_q
-        self._m_q_shift = m_q_shift
-        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
-
-        self._z_x = z_x
-        self._z_y = z_y
+        self._kernel_size = kernel_size
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
@@ -75,16 +67,15 @@ class MaxPooling1d(Design):
                 out_features=str(self._out_features),
                 in_num_dimensions=str(self._in_num_dimensions),
                 out_num_dimensions=str(self._out_num_dimensions),
-                m_q_data_width=str(self._m_q_data_width),
-                z_x=str(self._z_x),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
+                kernel_size=str(self._kernel_size),
                 work_library_name=self._work_library_name,
                 resource_option=self._resource_option,
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        ram = Ram(name=f"{self.name}_ram")
+        ram.save_to(destination)
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),

@@ -14,11 +14,7 @@ from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     SymmetricSignedQParams,
 )
-from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
-    simulate_bitshifting,
-)
 
 
 class MaxPooling1d(DesignCreatorModule, nn.Module):
@@ -44,7 +40,6 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         ).to(self.device)
 
         self.scale_factor_Math_ops = MathOperations()
-        self.precomputed = False
 
     def create_design(self, name: str) -> MaxPooling1dDesign:
         return MaxPooling1dDesign(
@@ -54,36 +49,16 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,
             out_num_dimensions=self.out_num_dimensions,
-            m_q=self.scale_factor_m_q.item(),
-            m_q_shift=self.scale_factor_m_q_shift.item(),
-            z_x=self.inputs_QParams.zero_point.item(),
-            z_y=self.outputs_QParams.zero_point.item(),
+            kernel_size=self.kernel_size,
             work_library_name="work",
             resource_option="auto",
         )
-
-    def precompute(self) -> None:
-        assert not self.training, "int_forward should be called in eval mode"
-
-        self.scale_factor_M = torch.tensor(
-            self.inputs_QParams.scale_factor.item()
-            / self.outputs_QParams.scale_factor.item()
-        )
-        self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
-            self.scale_factor_M.clone().detach()
-        )
-        self.precomputed = True
 
     def int_forward(
         self,
         q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        assert self.precomputed, "precompute should be called before int_forward"
-
-        q_inputs = self.scale_factor_Math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
-        )
 
         batch_size, channels, seq_len = q_inputs.shape
         kernel_size = self.kernel_size
@@ -91,7 +66,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
 
         output_length = (seq_len - kernel_size) // stride + 1
 
-        tmp = torch.empty(
+        q_outputs = torch.empty(
             (batch_size, channels, output_length),
             dtype=torch.int32,
             device=q_inputs.device,
@@ -100,15 +75,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         for i in range(output_length):
             start = i * stride
             end = start + kernel_size
-            tmp[:, :, i] = q_inputs[:, :, start:end].max(dim=2)[0]
-
-        tmp = simulate_bitshifting(
-            tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
-        )
-
-        q_outputs = self.scale_factor_Math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
-        )
+            q_outputs[:, :, i] = q_inputs[:, :, start:end].max(dim=2)[0]
 
         return q_outputs
 
@@ -127,8 +94,6 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
             inputs, kernel_size=self.kernel_size, stride=self.kernel_size
         )
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
-
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+        self.outputs_QParams = self.inputs_QParams
+        # outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs
