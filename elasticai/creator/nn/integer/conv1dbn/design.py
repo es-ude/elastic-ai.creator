@@ -15,7 +15,7 @@ from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
-class conv1dbnBN(Design):
+class Conv1dBN(Design):
     def __init__(
         self,
         name: str,
