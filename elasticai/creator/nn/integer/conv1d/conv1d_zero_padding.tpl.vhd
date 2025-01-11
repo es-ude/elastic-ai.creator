@@ -25,9 +25,9 @@ entity ${name} is
     port (
         enable: in std_logic;
         clock: in std_logic;
-        x_address: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+        x_addr: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
         x_in: in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y_address: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        y_addr: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
         y_out: out std_logic_vector(DATA_WIDTH-1 downto 0);
         done: out std_logic
     );
@@ -79,7 +79,7 @@ architecture rtl of ${name} is
         end if;
     end function;
     constant W_ADDR_WIDTH : integer :=  log2(IN_CHANNELS * KERNEL_SIZE * OUT_CHANNELS);
-    constant B_ADDR_WIDTH : integer :=  log2(IN_CHANNELS);
+    constant B_ADDR_WIDTH : integer :=  log2(OUT_CHANNELS);
     constant OUT_SEQ_LEN : integer := IN_SEQ_LEN;
     signal M_Q_SIGNED : signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
@@ -241,7 +241,7 @@ begin
             end if;
         end if;
     end process;
-    x_address <= s_x_addr;
+    x_addr <= s_x_addr;
     y_store_addr_std <= std_logic_vector(y_store_addr);
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
@@ -253,7 +253,7 @@ begin
     )
     port map  (
         addra  => y_store_addr_std,
-        addrb  => y_address,
+        addrb  => y_addr,
         dina   => y_store_data,
         clka   => clock,
         clkb   => clock,

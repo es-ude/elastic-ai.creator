@@ -1,38 +1,37 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-library ${work_library_name};
-use ${work_library_name}.all;
-entity ${name} is
+library work;
+use work.all;
+entity separableresidualblock_0_shortcut_conv1d_0 is
     generic (
-        X_ADDR_WIDTH : integer := ${x_addr_width};
-        Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
-        IN_CHANNELS : integer := ${in_channels};
-        OUT_CHANNELS : integer := ${out_channels};
-        IN_SEQ_LEN : integer := ${seq_len};
-        KERNEL_SIZE : integer := ${kernel_size};
-        PADDING_LEN : integer := ${padding_len};
-        M_Q : integer := ${m_q};
-        M_Q_SHIFT : integer := ${m_q_shift};
-        Z_X : integer := ${z_x};
-        Z_W : integer := ${z_w};
-        Z_B : integer := ${z_b};
-        Z_Y : integer := ${z_y};
-        M_Q_DATA_WIDTH : integer := ${m_q_data_width};
-        Y_RESOURCE_OPTION : string := "${resource_option}"
+        X_ADDR_WIDTH : integer := 13;
+        Y_ADDR_WIDTH : integer := 15;
+        DATA_WIDTH : integer := 8;
+        IN_CHANNELS : integer := 16;
+        OUT_CHANNELS : integer := 64;
+        IN_SEQ_LEN : integer := 284;
+        KERNEL_SIZE : integer := 1;
+        M_Q : integer := 6627;
+        M_Q_SHIFT : integer := 22;
+        Z_X : integer := -3;
+        Z_W : integer := -1;
+        Z_B : integer := 0;
+        Z_Y : integer := -12;
+        M_Q_DATA_WIDTH : integer := 14;
+        Y_RESOURCE_OPTION : string := "auto"
     );
     port (
         enable: in std_logic;
         clock: in std_logic;
-        x_address: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+        x_addr: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
         x_in: in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y_address: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        y_addr: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
         y_out: out std_logic_vector(DATA_WIDTH-1 downto 0);
         done: out std_logic
     );
-end entity ${name};
-architecture rtl of ${name} is
+end entity separableresidualblock_0_shortcut_conv1d_0;
+architecture rtl of separableresidualblock_0_shortcut_conv1d_0 is
     function log2(val : INTEGER) return natural is
         variable result : natural;
     begin
@@ -79,8 +78,8 @@ architecture rtl of ${name} is
         end if;
     end function;
     constant W_ADDR_WIDTH : integer :=  log2(IN_CHANNELS * KERNEL_SIZE * OUT_CHANNELS);
-    constant B_ADDR_WIDTH : integer :=  log2(IN_CHANNELS);
-    constant OUT_SEQ_LEN : integer := IN_SEQ_LEN;
+    constant B_ADDR_WIDTH : integer :=  log2(OUT_CHANNELS);
+    constant OUT_SEQ_LEN : integer := IN_SEQ_LEN - KERNEL_SIZE + 1; -- Note: no padding
     signal M_Q_SIGNED : signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
@@ -101,10 +100,9 @@ architecture rtl of ${name} is
     signal y_store_addr : unsigned(Y_ADDR_WIDTH-1 downto 0);
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
     signal y_store_en : std_logic;
-    signal zero_padding_en : std_logic := '1';
 begin
     done <= '1' when layer_state = s_finished else '0';
-    s_x <= (others=>'0') when zero_padding_en = '1' else signed(x_in);
+    s_x <= signed(x_in);
     FSM_PROC : process(clock, enable)
     begin
         if rising_edge(clock) then
@@ -128,15 +126,14 @@ begin
     end process;
     MAIN_PROC : process(clock, layer_state)
         variable offset_kernel_weight, weight_idx : integer range 0 to IN_CHANNELS * KERNEL_SIZE * OUT_CHANNELS := 0;
-        variable offset_x_idx, x_idx : integer range 0-PADDING_LEN to IN_CHANNELS * IN_SEQ_LEN + PADDING_LEN+2 := 0;
+        variable offset_x_idx, x_idx : integer range 0 to IN_CHANNELS * IN_SEQ_LEN := 0;
         variable cnt_in_kernel : integer range 0 to KERNEL_SIZE := 0;
         variable cnt_in_row : integer range 0 to IN_SEQ_LEN := 0;
         variable in_cnt_channel : integer range 0 to IN_CHANNELS := 0;
         variable out_cnt_channel : integer range 0 to OUT_CHANNELS := 0;
-        variable y_idx : integer range 0 to IN_CHANNELS * OUT_SEQ_LEN := 0;
+        variable y_idx : integer range 0 to OUT_CHANNELS * OUT_SEQ_LEN := 0;
         variable var_b_add_z_b : integer range -2**(2*(DATA_WIDTH+1)-1) to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
-        variable x_idx_addr : integer range 0 to IN_CHANNELS * IN_SEQ_LEN-1 := 0;
     begin
         if rising_edge(clock) then
             if layer_state = s_stop then
@@ -148,13 +145,14 @@ begin
                 cnt_in_row := 0;
                 in_cnt_channel := 0;
                 out_cnt_channel := 0;
-                zero_padding_en <= '1';
+                y_idx := 0;
+                cnt_in_kernel:=0;
             else
                 case mac_state is
                     when s_init =>
                         cnt_in_kernel := 0;
                         weight_idx := offset_kernel_weight;
-                        x_idx := offset_x_idx - PADDING_LEN;
+                        x_idx := offset_x_idx;
                         mac_state <= s_preload_b;
                     when s_preload_b =>
                         var_b_add_z_b := to_integer(s_b) + Z_B;
@@ -164,12 +162,12 @@ begin
                         mac_state <= s_accumulate;
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         w_sub_z <= to_signed(0, w_sub_z'length);
-                        weight_idx := weight_idx + 1;
-                        x_idx := x_idx + 1;
+                        if cnt_in_kernel < KERNEL_SIZE-1 then
+                            weight_idx := weight_idx + 1;
+                            x_idx := x_idx + 1;
+                        end if;
                     when s_accumulate =>
                         y_store_en <= '0';
-                        report "s_x: " & integer'image(to_integer(s_x)) severity note;
-                        report "s_w: " & integer'image(to_integer(s_w)) severity note;
                         x_sub_z <= s_x - to_signed(Z_X, x_sub_z'length);
                         w_sub_z <= s_w - to_signed(Z_W, w_sub_z'length);
                         macc_sum <= multiply_accumulate(w_sub_z, x_sub_z, macc_sum);
@@ -184,7 +182,11 @@ begin
                             if in_cnt_channel < IN_CHANNELS-1 then
                                 in_cnt_channel := in_cnt_channel + 1;
                                 cnt_in_kernel := 0;
-                                x_idx := x_idx + IN_SEQ_LEN-2;
+                                if KERNEL_SIZE > 1 then
+                                    x_idx := x_idx + IN_SEQ_LEN-2;
+                                else
+                                    x_idx := x_idx + IN_SEQ_LEN;
+                                end if;
                                 weight_idx := weight_idx+1;
                                 mac_state <= s_preload;
                             else
@@ -192,7 +194,6 @@ begin
                                 weight_idx := offset_kernel_weight;
                                 cnt_in_kernel := 0;
                                 in_cnt_channel := 0;
-                                report "======finished one kernel=====" severity note;
                             end if;
                         end if;
                     when s_scaling =>
@@ -210,8 +211,8 @@ begin
                             mac_state <= s_init;
                         else
                             cnt_in_row := 0;
-                            offset_x_idx := 0;
-                            offset_kernel_weight := offset_kernel_weight + KERNEL_SIZE * OUT_CHANNELS;
+                            offset_x_idx := 0; --
+                            offset_kernel_weight := offset_kernel_weight + KERNEL_SIZE * IN_CHANNELS;
                             out_cnt_channel := out_cnt_channel + 1;
                             if out_cnt_channel < OUT_CHANNELS then
                                 mac_state <= s_init;
@@ -226,24 +227,21 @@ begin
                     when others =>
                         mac_state <= s_done;
                 end case;
-                s_w_addr <= std_logic_vector(to_unsigned(weight_idx, s_w_addr'length));
-                if x_idx >= 0 and x_idx < IN_CHANNELS * IN_SEQ_LEN then
-                    x_idx_addr := x_idx;
-                    s_x_addr <= std_logic_vector(to_unsigned(x_idx_addr, s_x_addr'length));
+                if weight_idx < 2**(W_ADDR_WIDTH) then
+                    s_w_addr <= std_logic_vector(to_unsigned(weight_idx, s_w_addr'length));
                 end if;
-                s_b_addr <= std_logic_vector(to_unsigned(out_cnt_channel, s_b_addr'length));
-                if (cnt_in_row = 0 and cnt_in_kernel < PADDING_LEN) or (cnt_in_row=OUT_SEQ_LEN-1 and cnt_in_kernel >= KERNEL_SIZE-PADDING_LEN) then
-                    zero_padding_en <= '1';
-                else
-                    zero_padding_en <= '0';
+                if x_idx < 2**(x_ADDR_WIDTH) then
+                    s_x_addr <= std_logic_vector(to_unsigned(x_idx, s_x_addr'length));
                 end if;
-
+                if out_cnt_channel < 2**(B_ADDR_WIDTH) then
+                    s_b_addr <= std_logic_vector(to_unsigned(out_cnt_channel, s_b_addr'length));
+                end if;
             end if;
         end if;
     end process;
-    x_address <= s_x_addr;
+    x_addr <= s_x_addr;
     y_store_addr_std <= std_logic_vector(y_store_addr);
-    ram_y : entity ${work_library_name}.${name}_ram(rtl)
+    ram_y : entity work.separableresidualblock_0_shortcut_conv1d_0_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
@@ -253,7 +251,7 @@ begin
     )
     port map  (
         addra  => y_store_addr_std,
-        addrb  => y_address,
+        addrb  => y_addr,
         dina   => y_store_data,
         clka   => clock,
         clkb   => clock,
@@ -263,7 +261,7 @@ begin
         regceb => '1',
         doutb  => y_out
     );
-    rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
+    rom_w : entity work.separableresidualblock_0_shortcut_conv1d_0_w_rom(rtl)
         port map (
             clk => clock,
             en => enable,
@@ -271,7 +269,7 @@ begin
             data => s_w_std
         );
     s_w <= signed(s_w_std);
-    rom_b : entity ${work_library_name}.${bias_rom_name}(rtl)
+    rom_b : entity work.separableresidualblock_0_shortcut_conv1d_0_b_rom(rtl)
     port map (
         clk => clock,
         en => enable,

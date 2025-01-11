@@ -3,24 +3,25 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
-library ${work_library_name};
-use ${work_library_name}.all;
-entity ${name}_tb is
+library work;
+use work.all;
+entity separableresidualblock_0_shortcut_conv1d_0_tb is
     generic (
-        X_ADDR_WIDTH : integer := ${x_addr_width};
-        Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
-        IN_CHANNELS : integer := ${in_channels};
-        OUT_CHANNELS : integer := ${out_channels};
-        IN_SEQ_LEN : integer := ${seq_len}
-        -- ToDo: padding flag
+        X_ADDR_WIDTH : integer := 13;
+        Y_ADDR_WIDTH : integer := 15;
+        DATA_WIDTH : integer := 8;
+        IN_CHANNELS : integer := 16;
+        OUT_CHANNELS : integer := 64;
+        IN_SEQ_LEN : integer := 284;
+        KERNEL_SIZE : integer := 1
     );
 port(
     clk : out std_logic
     );
 end entity;
-architecture rtl of ${name}_tb is
+architecture rtl of separableresidualblock_0_shortcut_conv1d_0_tb is
     constant C_CLK_PERIOD : time := 10 ns;
+    constant OUT_SEQ_LEN : integer := IN_SEQ_LEN - KERNEL_SIZE + 1;
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
@@ -53,9 +54,9 @@ begin
         end if;
     end process ;
     test_main : process
-        constant file_inputs:      string := "./data/${name}_q_x.txt";
-        constant file_labels:      string := "./data/${name}_q_y.txt";
-        constant file_pred:      string := "./data/${name}_out.txt";
+        constant file_inputs:      string := "./data/separableresidualblock_0_shortcut_conv1d_0_q_x.txt";
+        constant file_labels:      string := "./data/separableresidualblock_0_shortcut_conv1d_0_q_y.txt";
+        constant file_pred:      string := "./data/separableresidualblock_0_shortcut_conv1d_0_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -103,7 +104,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<OUT_CHANNELS*IN_SEQ_LEN loop
+            while output_rd_cnt<OUT_CHANNELS*OUT_SEQ_LEN loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
@@ -114,6 +115,7 @@ begin
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
             uut_enable <= '0';
+            wait for C_CLK_PERIOD;
         end loop;
         wait until falling_edge(clock);
         file_close (fp_inputs);
@@ -124,12 +126,12 @@ begin
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
-    uut: entity ${work_library_name}.${name}(rtl)
+    uut: entity work.separableresidualblock_0_shortcut_conv1d_0(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_address => x_addr,
-        y_address => y_addr,
+        x_addr => x_addr,
+        y_addr => y_addr,
         x_in   => x_in,
         y_out  => y_out,
         done   => done

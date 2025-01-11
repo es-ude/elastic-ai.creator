@@ -24,7 +24,7 @@ class Conv1d(Design):
         out_channels: int,
         seq_len: int,
         kernel_size: int,
-        padding: int,
+        padding: tuple[int, int] or str,
         weights: list[list[int]],
         bias: list[int],
         m_q: int,
@@ -54,19 +54,29 @@ class Conv1d(Design):
         self._z_b = z_b
         self._z_y = z_y
 
-        self._weights = weights
-        self._bias = bias
+        self._weights = [
+            [[w + self._z_w for w in column] for column in row] for row in weights
+        ]
+        self._bias = [b + self._z_b for b in bias]
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
         self._x_count = self._in_channels * self._seq_len
-        if self._padding == 0:
-            self._y_count = self._in_channels * (self._seq_len - self._kernel_size + 1)
-        elif self._padding == 1 or self._padding == "same":
-            self._y_count = self._x_count
+        if isinstance(self._padding, tuple):
+            if self._padding[0] == 0:
+                self._y_count = self._out_channels * (
+                    self._seq_len - self._kernel_size + 1
+                )
+            else:
+                self._y_count = (
+                    self._seq_len + self._padding[0] * 2 - self._kernel_size + 1
+                ) * self._out_channels
         else:
-            raise ValueError("Padding value not supported")
+            if self._padding == "same":
+                self._y_count = self._x_count
+            else:
+                raise ValueError("Padding value not supported")
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
@@ -104,17 +114,22 @@ class Conv1d(Design):
             work_library_name=self._work_library_name,
             resource_option=self._resource_option,
         )
-        if self._padding == 0:
-            template_file_name = "conv1d_not_padding.tpl.vhd"
-            test_template_file_name = "conv1d_not_padding_tb.tpl.vhd"
-        elif self._padding == 1 or self._padding == "same":
-            template_file_name = "conv1d_zero_padding.tpl.vhd"
-            test_template_file_name = "conv1d_zero_padding_tb.tpl.vhd"
-            if self._padding == "same":
-                self._padding = 1
-            template_parameters["padding_len"] = str(self._padding)
+
+        if isinstance(self._padding, tuple):
+            if self._padding[0] == 0:
+                template_file_name = "conv1d_not_padding.tpl.vhd"
+                test_template_file_name = "conv1d_not_padding_tb.tpl.vhd"
+            else:
+                template_file_name = "conv1d_zero_padding.tpl.vhd"
+                test_template_file_name = "conv1d_zero_padding_tb.tpl.vhd"
+                template_parameters["padding_len"] = str(self._padding[0])
         else:
-            raise ValueError("padding must be 0 or 1 or same")
+            if self._padding == "same":
+                template_file_name = "conv1d_zero_padding.tpl.vhd"
+                test_template_file_name = "conv1d_zero_padding_tb.tpl.vhd"
+                template_parameters["padding_len"] = str(self._kernel_size // 2)
+            else:
+                raise ValueError("Invalid padding value")
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -150,6 +165,7 @@ class Conv1d(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
+                kernel_size=str(self._kernel_size),
                 seq_len=str(self._seq_len),
                 work_library_name=self._work_library_name,
             ),

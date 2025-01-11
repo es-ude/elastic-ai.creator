@@ -21,7 +21,7 @@ class DepthConv1d(Design):
         data_width: int,
         in_channels: int,
         seq_len: int,
-        padding: int or str,
+        padding: tuple[int, int] or str,
         kernel_size: int,
         weights: list[list[int]],
         bias: list[int],
@@ -68,8 +68,8 @@ class DepthConv1d(Design):
                 )
             else:
                 self._y_count = (
-                    self._x_count + self._padding[0] * 2 - self._kernel_size + 1
-                )
+                    self._seq_len + self._padding[0] * 2 - self._kernel_size + 1
+                ) * self._in_channels
         else:
             if self._padding == "same":
                 self._y_count = self._x_count
@@ -112,18 +112,21 @@ class DepthConv1d(Design):
             resource_option=self._resource_option,
         )
 
-        if self._padding == 0:
-            template_file_name = "depthconv1d_not_padding.tpl.vhd"
-            test_template_file_name = "depthconv1d_not_padding_tb.tpl.vhd"
-        else:
-            template_file_name = "depthconv1d_zero_padding.tpl.vhd"
-            test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
-
-            if self._padding == "same":
-                padding_len = self._kernel_size // 2
+        if isinstance(self._padding, tuple):
+            if self._padding[0] == 0:
+                template_file_name = "depthconv1d_not_padding.tpl.vhd"
+                test_template_file_name = "depthconv1d_not_padding_tb.tpl.vhd"
             else:
-                padding_len = self._padding
-            template_parameters["padding_len"] = padding_len
+                template_file_name = "depthconv1d_zero_padding.tpl.vhd"
+                test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
+                template_parameters["padding_len"] = str(self._padding[0])
+        else:
+            if self._padding == "same":
+                template_file_name = "depthconv1d_zero_padding.tpl.vhd"
+                test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
+                template_parameters["padding_len"] = str(self._kernel_size // 2)
+            else:
+                raise ValueError("Invalid padding value")
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

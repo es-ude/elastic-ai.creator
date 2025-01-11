@@ -12,7 +12,8 @@ entity ${name}_tb is
         DATA_WIDTH : integer := ${data_width};
         IN_CHANNELS : integer := ${in_channels};
         OUT_CHANNELS : integer := ${out_channels};
-        IN_SEQ_LEN : integer := ${seq_len}
+        IN_SEQ_LEN : integer := ${seq_len};
+        KERNEL_SIZE : integer := ${kernel_size}
     );
 port(
     clk : out std_logic
@@ -20,6 +21,7 @@ port(
 end entity;
 architecture rtl of ${name}_tb is
     constant C_CLK_PERIOD : time := 10 ns;
+    constant OUT_SEQ_LEN : integer := IN_SEQ_LEN - KERNEL_SIZE + 1;
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
@@ -89,7 +91,7 @@ begin
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < IN_CH_NUM * IN_SEQ_LEN loop
+            while input_rd_cnt < IN_CHANNELS * IN_SEQ_LEN loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -102,7 +104,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<IN_CH_NUM*OUT_FEATURES loop
+            while output_rd_cnt<OUT_CHANNELS*OUT_SEQ_LEN loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));

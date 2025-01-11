@@ -67,22 +67,20 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                     kernel_size=1,
                     padding="same",
                     seq_len=seq_len,
-                    name=self.name + "_shortcut_0",
+                    name=self.name + "_shortcut_conv1dbn_0",
                     quant_bits=quant_bits,
                     device=device,
                 )
             )
 
         self.add = Addition(
-            name=self.name + "_add_0",
+            name=self.name + "_add",
             num_features=out_channels,  # might be seq_len, check later
             num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
         )
-        self.relu = ReLU(
-            name=self.name + "_relu_0", quant_bits=quant_bits, device=device
-        )
+        self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
@@ -162,7 +160,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_residual,
             self.quant_data_file_dir,
-            self.name + "_shortcut_0_q_x",
+            self.name + "_shortcut_q_x",
         )
         if len(self.shortcut) > 0:
             for submodule in self.shortcut:
@@ -175,7 +173,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_shortcut_outputs,
             self.quant_data_file_dir,
-            self.name + "_shortcut_0_q_y",
+            self.name + "_shortcut_q_y",
         )
 
         self._save_quant_data(

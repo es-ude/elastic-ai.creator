@@ -24,9 +24,9 @@ entity ${name} is
     port (
         enable: in std_logic;
         clock: in std_logic;
-        x_address: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+        x_addr: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
         x_in: in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y_address: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        y_addr: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
         y_out: out std_logic_vector(DATA_WIDTH-1 downto 0);
         done: out std_logic
     );
@@ -78,7 +78,7 @@ architecture rtl of ${name} is
         end if;
     end function;
     constant W_ADDR_WIDTH : integer :=  log2(IN_CHANNELS * KERNEL_SIZE * OUT_CHANNELS);
-    constant B_ADDR_WIDTH : integer :=  log2(IN_CHANNELS);
+    constant B_ADDR_WIDTH : integer :=  log2(OUT_CHANNELS);
     constant OUT_SEQ_LEN : integer := IN_SEQ_LEN - KERNEL_SIZE + 1; -- Note: no padding
     signal M_Q_SIGNED : signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
@@ -131,7 +131,7 @@ begin
         variable cnt_in_row : integer range 0 to IN_SEQ_LEN := 0;
         variable in_cnt_channel : integer range 0 to IN_CHANNELS := 0;
         variable out_cnt_channel : integer range 0 to OUT_CHANNELS := 0;
-        variable y_idx : integer range 0 to IN_CHANNELS * OUT_SEQ_LEN := 0;
+        variable y_idx : integer range 0 to OUT_CHANNELS * OUT_SEQ_LEN := 0;
         variable var_b_add_z_b : integer range -2**(2*(DATA_WIDTH+1)-1) to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
     begin
@@ -145,6 +145,8 @@ begin
                 cnt_in_row := 0;
                 in_cnt_channel := 0;
                 out_cnt_channel := 0;
+                y_idx := 0;
+                cnt_in_kernel:=0;
             else
                 case mac_state is
                     when s_init =>
@@ -160,8 +162,10 @@ begin
                         mac_state <= s_accumulate;
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         w_sub_z <= to_signed(0, w_sub_z'length);
-                        weight_idx := weight_idx + 1;
-                        x_idx := x_idx + 1;
+                        if cnt_in_kernel < KERNEL_SIZE-1 then
+                            weight_idx := weight_idx + 1;
+                            x_idx := x_idx + 1;
+                        end if;
                     when s_accumulate =>
                         y_store_en <= '0';
                         x_sub_z <= s_x - to_signed(Z_X, x_sub_z'length);
@@ -178,7 +182,11 @@ begin
                             if in_cnt_channel < IN_CHANNELS-1 then
                                 in_cnt_channel := in_cnt_channel + 1;
                                 cnt_in_kernel := 0;
-                                x_idx := x_idx + IN_SEQ_LEN-2;
+                                if KERNEL_SIZE > 1 then
+                                    x_idx := x_idx + IN_SEQ_LEN-2;
+                                else
+                                    x_idx := x_idx + IN_SEQ_LEN;
+                                end if;
                                 weight_idx := weight_idx+1;
                                 mac_state <= s_preload;
                             else
@@ -204,7 +212,7 @@ begin
                         else
                             cnt_in_row := 0;
                             offset_x_idx := 0; --
-                            offset_kernel_weight := offset_kernel_weight + KERNEL_SIZE * OUT_CHANNELS;
+                            offset_kernel_weight := offset_kernel_weight + KERNEL_SIZE * IN_CHANNELS;
                             out_cnt_channel := out_cnt_channel + 1;
                             if out_cnt_channel < OUT_CHANNELS then
                                 mac_state <= s_init;
@@ -219,9 +227,15 @@ begin
                     when others =>
                         mac_state <= s_done;
                 end case;
-                s_w_addr <= std_logic_vector(to_unsigned(weight_idx, s_w_addr'length));
-                s_x_addr <= std_logic_vector(to_unsigned(x_idx, s_x_addr'length));
-                s_b_addr <= std_logic_vector(to_unsigned(out_cnt_channel, s_b_addr'length));
+                if weight_idx < 2**(W_ADDR_WIDTH) then
+                    s_w_addr <= std_logic_vector(to_unsigned(weight_idx, s_w_addr'length));
+                end if;
+                if x_idx < 2**(x_ADDR_WIDTH) then
+                    s_x_addr <= std_logic_vector(to_unsigned(x_idx, s_x_addr'length));
+                end if;
+                if out_cnt_channel < 2**(B_ADDR_WIDTH) then
+                    s_b_addr <= std_logic_vector(to_unsigned(out_cnt_channel, s_b_addr'length));
+                end if;
             end if;
         end if;
     end process;

@@ -94,7 +94,7 @@ begin
     port map (
         enable => uut_enable,
         clock  => clock,
-        x  => x_in,
-        y  => y_out
+        x_in  => x_in,
+        y_out  => y_out
     );
 end architecture;

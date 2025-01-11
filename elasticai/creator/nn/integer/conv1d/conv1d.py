@@ -58,7 +58,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             out_channels=self.out_channels,
             kernel_size=self.kernel_size[0],
             seq_len=self.seq_len,
-            padding=self.padding[0],
+            padding=self.padding,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
