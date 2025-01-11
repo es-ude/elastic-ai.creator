@@ -20,6 +20,8 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
     simulate_bitshifting,
 )
 
+# torch.set_printoptions(threshold=torch.inf)
+
 
 class PointConv1dBN(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
@@ -139,7 +141,6 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
@@ -150,15 +151,12 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             self.q_fused_bias,
             padding=self.conv1d.padding,
         )
-
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
-
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
-
         return q_outputs
 
     def forward(

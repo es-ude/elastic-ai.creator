@@ -40,17 +40,19 @@ class PointConv1dBN(Design):
         self._out_channels = out_channels
         self._seq_len = seq_len
 
-        self._weights = weights
-        self._bias = bias
-
-        self._m_q = m_q
-        self._m_q_shift = m_q_shift
-        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
-
         self._z_x = z_x
         self._z_w = z_w
         self._z_b = z_b
         self._z_y = z_y
+
+        self._weights = [
+            [[w + self._z_w for w in column] for column in row] for row in weights
+        ]
+        self._bias = [b + self._z_b for b in bias]
+
+        self._m_q = m_q
+        self._m_q_shift = m_q_shift
+        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option

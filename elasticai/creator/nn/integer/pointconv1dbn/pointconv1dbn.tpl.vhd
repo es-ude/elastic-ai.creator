@@ -159,8 +159,6 @@ begin
                         macc_sum <= to_signed(var_b_add_z_b, macc_sum'length);
                         mac_state <= s_preload;
                     when s_preload =>
-                        var_b_add_z_b := to_integer(s_b) + Z_B;
-                        macc_sum <= to_signed(var_b_add_z_b, macc_sum'length);
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         w_sub_z <= to_signed(0, w_sub_z'length);
                         x_idx := x_idx + OUT_SEQ_LEN;
