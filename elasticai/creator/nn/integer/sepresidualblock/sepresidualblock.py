@@ -61,7 +61,7 @@ class SeparableResidualBlock(nn.Module):
             seq_len=seq_len,
             padding=1,
             groups=kwargs.get("in_channels"),
-            name=self.name + "_depthwise_conv1d_0",
+            name=self.name + "_depthwise_conv1d_1",
             quant_bits=quant_bits,
             device=device,
         )
@@ -69,7 +69,7 @@ class SeparableResidualBlock(nn.Module):
             in_channels=out_channels,
             out_channels=out_channels,
             seq_len=seq_len,
-            name=self.name + "_pointwise_conv1dbn_0",
+            name=self.name + "_pointwise_conv1dbn_1",
             quant_bits=quant_bits,
             device=device,
         )
@@ -80,7 +80,7 @@ class SeparableResidualBlock(nn.Module):
             seq_len=seq_len,
             kernel_size=1,
             padding="same",
-            name=self.name + "_shortcut_conv1d_0",
+            name=self.name + "_shortcut_conv1d",
             quant_bits=quant_bits,
             device=device,
         )
@@ -106,10 +106,6 @@ class SeparableResidualBlock(nn.Module):
         return SeparableResidualBlockDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
-            in_channels=self.depthwise_conv1d_0.in_channels,
-            out_channels=self.depthwise_conv1d_0.out_channels,
-            kernel_size=self.depthwise_conv1d_0.kernel_size[0],
-            seq_len=self.depthwise_conv1d_0.seq_len,
             depthwise_conv1d_0=self.depthwise_conv1d_0,
             pointwise_conv1dbn_0=self.pointwise_conv1dbn_0,
             pointwise_conv1dbn_0_relu=self.pointwise_conv1dbn_0_relu,

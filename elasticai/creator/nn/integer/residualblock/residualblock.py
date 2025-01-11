@@ -67,7 +67,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                     kernel_size=1,
                     padding="same",
                     seq_len=seq_len,
-                    name=self.name + "_shortcut_conv1dbn_0",
+                    name=self.name + "_shortcut_conv1dbn",
                     quant_bits=quant_bits,
                     device=device,
                 )

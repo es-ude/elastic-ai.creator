@@ -12,9 +12,9 @@ entity ${name} is
     port (
         enable : in std_logic;
         clock : in std_logic;
-        x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+        x_addr : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
         x_in : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+        y_addr : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
         y_out : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done : out std_logic
     ) ;
@@ -33,9 +33,9 @@ architecture rtl of ${name} is
     end function log2;
     signal conv1dbn_0_enable : std_logic;
     signal conv1dbn_0_clock : std_logic;
-    signal conv1dbn_0_x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+    signal conv1dbn_0_x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal conv1dbn_0_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal conv1dbn_0_y_address : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+    signal conv1dbn_0_y_addr : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
     signal conv1dbn_0_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal conv1dbn_0_done : std_logic;
     signal conv1dbn_0_relu_enable : std_logic;
@@ -44,16 +44,16 @@ architecture rtl of ${name} is
     signal conv1dbn_0_relu_y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal conv1dbn_1_enable : std_logic;
     signal conv1dbn_1_clock : std_logic;
-    signal conv1dbn_1_x_address : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+    signal conv1dbn_1_x_addr : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
     signal conv1dbn_1_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal conv1dbn_1_y_address : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+    signal conv1dbn_1_y_addr : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
     signal conv1dbn_1_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal conv1dbn_1_done : std_logic;
     signal shortcut_enable : std_logic;
     signal shortcut_clock : std_logic;
-    signal shortcut_x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+    signal shortcut_x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal shortcut_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+    signal shortcut_y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal shortcut_y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal shortcut_done : std_logic;
     signal add_enable : std_logic;
@@ -83,14 +83,14 @@ architecture rtl of ${name} is
     shortcut_clock <= clock;
     add_clock <= clock;
     relu_clock <= clock;
-    x_address <= conv1dbn_0_x_address;
-    x_address <= shortcut_x_address;
-    conv1dbn_0_y_address <= conv1dbn_0_relu_x_address;
-    conv1dbn_0_relu_y_address <= conv1dbn_1_x_address;
-    shortcut_y_address <= add_x_1_addr;
-    conv1dbn_1_y_address <= add_x_2_addr;
-    add_y_addr <= relu_x_address;
-    relu_y_address <= y_address;
+    x_addr <= conv1dbn_0_x_addr;
+    x_addr <= shortcut_x_addr;
+    conv1dbn_0_y_addr <= conv1dbn_0_relu_x_addr;
+    conv1dbn_0_relu_y_addr <= conv1dbn_1_x_addr;
+    shortcut_y_addr <= add_x_1_addr;
+    conv1dbn_1_y_addr <= add_x_2_addr;
+    add_y_addr <= relu_x_addr;
+    relu_y_addr <= y_addr;
     conv1dbn_0_x_in <= x_in;
     shortcut_x_in <= x_in;
     conv1dbn_0_relu_x_in <= conv1dbn_0_y_out;
@@ -104,8 +104,8 @@ architecture rtl of ${name} is
     port map (
         enable => conv1dbn_0_enable,
         clock  => conv1dbn_0_clock,
-        x_address  => conv1dbn_0_x_address,
-        y_address  => conv1dbn_0_y_address,
+        x_addr  => conv1dbn_0_x_addr,
+        y_addr  => conv1dbn_0_y_addr,
         x_in  => conv1dbn_0_x_in,
         y_out => conv1dbn_0_y_out,
         done  => conv1dbn_0_done
@@ -121,8 +121,8 @@ architecture rtl of ${name} is
     port map (
         enable => conv1dbn_1_enable,
         clock  => conv1dbn_1_clock,
-        x_address  => conv1dbn_1_x_address,
-        y_address  => conv1dbn_1_y_address,
+        x_addr  => conv1dbn_1_x_addr,
+        y_addr  => conv1dbn_1_y_addr,
         x_in  => conv1dbn_1_x_in,
         y_out => conv1dbn_1_y_out,
         done  => conv1dbn_1_done
@@ -131,8 +131,8 @@ architecture rtl of ${name} is
     port map (
         enable => shortcut_enable,
         clock  => shortcut_clock,
-        x_address  => shortcut_x_address,
-        y_address  => shortcut_y_address,
+        x_addr  => shortcut_x_addr,
+        y_addr  => shortcut_y_addr,
         x_in  => shortcut_x_in,
         y_out => shortcut_y_out,
         done  => shortcut_done

@@ -26,7 +26,7 @@ architecture rtl of ${name}_tb is
     signal uut_enable : std_logic := '0';
     signal x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x is array (0 to IN_CHANNELS * SEQ_LEN - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to 2**X_ADDR_WIDTH-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
     signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
