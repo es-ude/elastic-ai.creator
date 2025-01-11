@@ -20,8 +20,6 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
     simulate_bitshifting,
 )
 
-# torch.set_printoptions(threshold=torch.inf)
-
 
 class PointConv1dBN(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):

@@ -62,14 +62,15 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
-
+        L = self.in_features  # e.g., seq_len
         self.scale_factor_M = torch.tensor(
             self.inputs_QParams.scale_factor.item()
-            / self.outputs_QParams.scale_factor.item()
+            / (self.outputs_QParams.scale_factor.item() * L),
         )
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M.clone().detach()
         )
+
         self.precomputed = True
 
     def int_forward(
@@ -85,12 +86,15 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
         tmp = torch.sum(q_inputs, dim=2, keepdim=True).to(
             torch.int32
         )  # dim=1 for Transformer
+
         tmp = simulate_bitshifting(
-            tmp, self.scale_factor_m_q_shift, self.scale_factor_M
+            tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
+
         q_outputs = self.scale_factor_Math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+
         return q_outputs.squeeze(2)
 
     def forward(
