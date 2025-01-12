@@ -20,8 +20,8 @@ architecture rtl of ${name}_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
 begin
     CLK_GEN : process
     begin
@@ -40,7 +40,7 @@ begin
     test_main : process
         constant file_inputs:      string := "./data/${name}_q_x.txt";
         constant file_labels:      string := "./data/${name}_q_y.txt";
-        constant file_pred:      string := "./data/${name}_out.txt";
+        constant file_pred:      string := "./data/${name}_q_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -75,12 +75,12 @@ begin
         while not ENDFILE (fp_inputs) loop
             readline (fp_inputs, line_num);
             read (line_num, line_content);
-            x_in <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+            x <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
             wait for 2*C_CLK_PERIOD;
             readline (fp_labels, line_num);
             read (line_num, line_content);
-            report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-            write (line_num, to_integer(signed(y_out)));
+            report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+            write (line_num, to_integer(signed(y)));
             writeline(fp_pred, line_num);
         end loop;
         wait until falling_edge(clock);
@@ -88,13 +88,14 @@ begin
         file_close (fp_labels);
         file_close (fp_pred);
         report "All files closed.";
-        wait;
+        report "Simulation done.";
+        assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
     uut: entity ${work_library_name}.${name}(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_in  => x_in,
-        y_out  => y_out
+        x  => x,
+        y  => y
     );
 end architecture;

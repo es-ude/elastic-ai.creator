@@ -10,16 +10,16 @@ generic (
 port (
     enable : in std_logic;
 	clock  : in std_logic;
-	x_in  : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-	y_out : out std_logic_vector(DATA_WIDTH - 1 downto 0)
+	x  : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+	y : out std_logic_vector(DATA_WIDTH - 1 downto 0)
 );
 end entity ${name};
 architecture rtl of ${name} is
     signal signed_x : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal signed_y : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
 begin
-    signed_x <= signed(x_in);
-    y_out <= std_logic_vector(signed_y);
+    signed_x <= signed(x);
+    y <= std_logic_vector(signed_y);
     clocked: if CLOCK_OPTION generate
         main_process : process (enable, clock)
         begin

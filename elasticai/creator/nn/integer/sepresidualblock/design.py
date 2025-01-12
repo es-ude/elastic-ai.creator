@@ -8,21 +8,20 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
-from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 
 
-class SeparableResidualBlock(Design):
+class SepResidualBlock(Design):
     def __init__(
         self,
         name: str,
         data_width: int,
-        depthwise_conv1d_0: object,
-        pointwise_conv1dbn_0: object,
-        pointwise_conv1dbn_0_relu: object,
-        depthwise_conv1d_1: object,
-        pointwise_conv1dbn_1: object,
+        depthconv1d_0: object,
+        pointconv1dbn_0: object,
+        pointconv1dbn_0_relu: object,
+        depthconv1d_1: object,
+        pointconv1dbn_1: object,
         shortcut: object,
         add: object,
         relu: object,
@@ -33,31 +32,29 @@ class SeparableResidualBlock(Design):
         self._data_width = data_width
         self._work_library_name = work_library_name
 
-        self._depthwise_conv1d_0 = depthwise_conv1d_0
-        self._pointwise_conv1dbn_0 = pointwise_conv1dbn_0
-        self._pointwise_conv1dbn_0_relu = pointwise_conv1dbn_0_relu
-        self._depthwise_conv1d_1 = depthwise_conv1d_1
-        self._pointwise_conv1dbn_1 = pointwise_conv1dbn_1
+        self._depthconv1d_0 = depthconv1d_0
+        self._pointconv1dbn_0 = pointconv1dbn_0
+        self._pointconv1dbn_0_relu = pointconv1dbn_0_relu
+        self._depthconv1d_1 = depthconv1d_1
+        self._pointconv1dbn_1 = pointconv1dbn_1
         self._shortcut = shortcut
         self._add = add
         self._relu = relu
 
-        self.depthwise_conv1d_0_deisgn = self._depthwise_conv1d_0.create_design(
-            name=self._depthwise_conv1d_0.name
+        self.depthconv1d_0_deisgn = self._depthconv1d_0.create_design(
+            name=self._depthconv1d_0.name
         )
-        self.pointwise_conv1dbn_0_deisgn = self._pointwise_conv1dbn_0.create_design(
-            name=self._pointwise_conv1dbn_0.name
+        self.pointconv1dbn_0_deisgn = self._pointconv1dbn_0.create_design(
+            name=self._pointconv1dbn_0.name
         )
-        self.pointwise_conv1dbn_0_relu_deisgn = (
-            self._pointwise_conv1dbn_0_relu.create_design(
-                name=self._pointwise_conv1dbn_0_relu.name
-            )
+        self.pointconv1dbn_0_relu_deisgn = self._pointconv1dbn_0_relu.create_design(
+            name=self._pointconv1dbn_0_relu.name
         )
-        self.depthwise_conv1d_1_deisgn = self._depthwise_conv1d_1.create_design(
-            name=self._depthwise_conv1d_1.name
+        self.depthconv1d_1_deisgn = self._depthconv1d_1.create_design(
+            name=self._depthconv1d_1.name
         )
-        self.pointwise_conv1dbn_1_deisgn = self._pointwise_conv1dbn_1.create_design(
-            name=self._pointwise_conv1dbn_1.name
+        self.pointconv1dbn_1_deisgn = self._pointconv1dbn_1.create_design(
+            name=self._pointconv1dbn_1.name
         )
         self.shortcut_deisgn = self._shortcut.create_design(name=self._shortcut.name)
         self.add_deisgn = self._add.create_design(name=self._add.name)
@@ -68,25 +65,25 @@ class SeparableResidualBlock(Design):
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self.depthwise_conv1d_0_deisgn._x_count,
+            x_count=self.depthconv1d_0_deisgn._x_count,
             y_count=self.add_deisgn._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
-        self.depthwise_conv1d_0_deisgn.save_to(
-            destination.create_subpath(self._depthwise_conv1d_0.name)
+        self.depthconv1d_0_deisgn.save_to(
+            destination.create_subpath(self._depthconv1d_0.name)
         )
-        self.pointwise_conv1dbn_0_deisgn.save_to(
-            destination.create_subpath(self._pointwise_conv1dbn_0.name)
+        self.pointconv1dbn_0_deisgn.save_to(
+            destination.create_subpath(self._pointconv1dbn_0.name)
         )
-        self.pointwise_conv1dbn_0_relu_deisgn.save_to(
-            destination.create_subpath(self._pointwise_conv1dbn_0_relu.name)
+        self.pointconv1dbn_0_relu_deisgn.save_to(
+            destination.create_subpath(self._pointconv1dbn_0_relu.name)
         )
-        self.depthwise_conv1d_1_deisgn.save_to(
-            destination.create_subpath(self._depthwise_conv1d_1.name)
+        self.depthconv1d_1_deisgn.save_to(
+            destination.create_subpath(self._depthconv1d_1.name)
         )
-        self.pointwise_conv1dbn_1_deisgn.save_to(
-            destination.create_subpath(self._pointwise_conv1dbn_1.name)
+        self.pointconv1dbn_1_deisgn.save_to(
+            destination.create_subpath(self._pointconv1dbn_1.name)
         )
         self.shortcut_deisgn.save_to(destination.create_subpath(self._shortcut.name))
         self.add_deisgn.save_to(destination.create_subpath(self._add.name))
@@ -98,29 +95,21 @@ class SeparableResidualBlock(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                depthwise_conv1d_0_x_addr_width=str(
-                    self.depthwise_conv1d_0_deisgn._x_addr_width
+                depthconv1d_0_x_addr_width=str(self.depthconv1d_0_deisgn._x_addr_width),
+                depthconv1d_0_y_addr_width=str(self.depthconv1d_0_deisgn._y_addr_width),
+                pointconv1dbn_0_x_addr_width=str(
+                    self.pointconv1dbn_0_deisgn._x_addr_width
                 ),
-                depthwise_conv1d_0_y_addr_width=str(
-                    self.depthwise_conv1d_0_deisgn._y_addr_width
+                pointconv1dbn_0_y_addr_width=str(
+                    self.pointconv1dbn_0_deisgn._y_addr_width
                 ),
-                pointwise_conv1dbn_0_x_addr_width=str(
-                    self.pointwise_conv1dbn_0_deisgn._x_addr_width
+                depthconv1d_1_x_addr_width=str(self.depthconv1d_1_deisgn._x_addr_width),
+                depthconv1d_1_y_addr_width=str(self.depthconv1d_1_deisgn._y_addr_width),
+                pointconv1dbn_1_x_addr_width=str(
+                    self.pointconv1dbn_1_deisgn._x_addr_width
                 ),
-                pointwise_conv1dbn_0_y_addr_width=str(
-                    self.pointwise_conv1dbn_0_deisgn._y_addr_width
-                ),
-                depthwise_conv1d_1_x_addr_width=str(
-                    self.depthwise_conv1d_1_deisgn._x_addr_width
-                ),
-                depthwise_conv1d_1_y_addr_width=str(
-                    self.depthwise_conv1d_1_deisgn._y_addr_width
-                ),
-                pointwise_conv1dbn_1_x_addr_width=str(
-                    self.pointwise_conv1dbn_1_deisgn._x_addr_width
-                ),
-                pointwise_conv1dbn_1_y_addr_width=str(
-                    self.pointwise_conv1dbn_1_deisgn._y_addr_width
+                pointconv1dbn_1_y_addr_width=str(
+                    self.pointconv1dbn_1_deisgn._y_addr_width
                 ),
                 shortcut_conv1d_x_addr_width=str(self.shortcut_deisgn._x_addr_width),
                 shortcut_conv1d_y_addr_width=str(self.shortcut_deisgn._y_addr_width),
@@ -137,11 +126,11 @@ class SeparableResidualBlock(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                x_addr_width=str(self.depthwise_conv1d_0_deisgn._x_addr_width),
+                x_addr_width=str(self.depthconv1d_0_deisgn._x_addr_width),
                 y_addr_width=str(self.add_deisgn._y_addr_width),
-                in_channels=str(self._depthwise_conv1d_0.in_channels),
-                out_channels=str(self._add.out_channels),
-                seq_len=str(self._depthwise_conv1d_0.seq_len),
+                in_channels=str(self._depthconv1d_0.in_channels),
+                out_channels=str(self._add.num_dimensions),
+                seq_len=str(self._depthconv1d_0.seq_len),
                 work_library_name=self._work_library_name,
             ),
         )

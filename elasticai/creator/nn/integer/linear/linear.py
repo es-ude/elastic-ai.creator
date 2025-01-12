@@ -117,6 +117,7 @@ class Linear(DesignCreatorModule, nn.Linear):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
@@ -126,6 +127,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             tmp = F.linear(q_inputs, self.q_weights, self.q_bias)
         else:
             tmp = F.linear(q_inputs, self.q_weights)
+        # TODO: WARNING there is no bound check for tmp
 
         # if self.bias is not None:
         #     tmp = self.math_ops.intmatmul(
@@ -147,7 +149,6 @@ class Linear(DesignCreatorModule, nn.Linear):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
-
         return q_outputs
 
     def forward(

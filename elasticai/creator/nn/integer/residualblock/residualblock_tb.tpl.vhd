@@ -55,7 +55,7 @@ begin
     test_main : process
         constant file_inputs:      string := "./data/${name}_q_x.txt";
         constant file_labels:      string := "./data/${name}_q_y.txt";
-        constant file_pred:      string := "./data/${name}_out.txt";
+        constant file_pred:      string := "./data/${name}_q_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;

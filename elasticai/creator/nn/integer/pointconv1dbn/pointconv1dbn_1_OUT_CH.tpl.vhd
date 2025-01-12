@@ -23,10 +23,10 @@ entity ${name} is
     port (
         enable: in std_logic;
         clock: in std_logic;
-        x_addr: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
-        x_in: in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y_addr: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
-        y_out: out std_logic_vector(DATA_WIDTH-1 downto 0);
+        x_address: out std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+        x: in std_logic_vector(DATA_WIDTH-1 downto 0);
+        y_address: in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        y: out std_logic_vector(DATA_WIDTH-1 downto 0);
         done: out std_logic
     );
 end entity ${name};
@@ -43,13 +43,13 @@ architecture rtl of ${name} is
         return result;
     end function log2;
     function multiply_accumulate(w : in signed(DATA_WIDTH downto 0);
-                                x : in signed(DATA_WIDTH downto 0);
-                                y_0 : in signed(2*(DATA_WIDTH+1)-1 downto 0)
+                                x_in : in signed(DATA_WIDTH downto 0);
+                                y_out : in signed(2*(DATA_WIDTH+1)-1 downto 0)
             ) return signed is
         variable temp : signed(2*(DATA_WIDTH+1)-1 downto 0) := (others=>'0');
     begin
-        temp := w * x;
-        return temp + y_0;
+        temp := w * x_in;
+        return temp + y_out;
     end function;
     function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
@@ -102,7 +102,7 @@ architecture rtl of ${name} is
     signal y_store_en : std_logic;
 begin
     done <= '1' when layer_state = s_finished else '0';
-    s_x <= signed(x_in);
+    s_x <= signed(x);
     FSM_PROC : process(clock, enable)
     begin
         if rising_edge(clock) then
@@ -195,7 +195,7 @@ begin
             end if;
         end if;
     end process;
-    x_addr <= s_x_addr;
+    x_address <= s_x_addr;
     y_store_addr_std <= std_logic_vector(y_store_addr);
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
@@ -207,7 +207,7 @@ begin
     )
     port map  (
         addra  => y_store_addr_std,
-        addrb  => y_addr,
+        addrb  => y_address,
         dina   => y_store_data,
         clka   => clock,
         clkb   => clock,
@@ -215,7 +215,7 @@ begin
         enb    => '1',
         rstb   => '0',
         regceb => '1',
-        doutb  => y_out
+        doutb  => y
     );
     rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
         port map (

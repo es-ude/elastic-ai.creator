@@ -22,15 +22,15 @@ architecture rtl of ${name}_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_1_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x_2_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x_1_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal x_2_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_1_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+    signal x_2_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+    signal x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     type t_array_x is array (0 to NUM_FEATURES * NUM_DIMENSIONS-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_1_arr : t_array_x := (others=>(others=>'0'));
     signal x_2_arr : t_array_x := (others=>(others=>'0'));
-    signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal n_clk_cycles : integer := 0;
     signal done : std_logic;
 begin
@@ -51,15 +51,15 @@ begin
     data_read : process( clock )
     begin
         if rising_edge(clock) then
-            x_1_in <= x_1_arr(to_integer(unsigned(x_1_addr)));
-            x_2_in <= x_2_arr(to_integer(unsigned(x_2_addr)));
+            x_1 <= x_1_arr(to_integer(unsigned(x_1_address)));
+            x_2 <= x_2_arr(to_integer(unsigned(x_2_address)));
         end if;
     end process ;
     test_main : process
         constant file_1_inputs:      string := "./data/${name}_q_x_1.txt";
         constant file_2_inputs:      string := "./data/${name}_q_x_2.txt";
         constant file_labels:      string := "./data/${name}_q_y.txt";
-        constant file_pred:      string := "./data/${name}_out.txt";
+        constant file_pred:      string := "./data/${name}_q_out.txt";
         file fp_inputs_1:      text;
         file fp_inputs_2:      text;
         file fp_labels:      text;
@@ -95,7 +95,7 @@ begin
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        y_addr <= (others=>'0');
+        y_address <= (others=>'0');
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
@@ -120,10 +120,10 @@ begin
             while output_rd_cnt<NUM_DIMENSIONS*NUM_FEATURES loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
-                y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
+                y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
                 wait for 3*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-                write (line_num, to_integer(signed(y_out)));
+                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+                write (line_num, to_integer(signed(y)));
                 writeline(fp_pred, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
@@ -143,12 +143,12 @@ begin
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_1_addr => x_1_addr,
-        x_2_addr => x_2_addr,
-        y_addr => y_addr,
-        x_1_in   => x_1_in,
-        x_2_in   => x_2_in,
-        y_out  => y_out,
+        x_1_address => x_1_address,
+        x_2_address => x_2_address,
+        y_address => y_address,
+        x_1   => x_1,
+        x_2   => x_2,
+        y  => y,
         done   => done
     );
 end architecture;

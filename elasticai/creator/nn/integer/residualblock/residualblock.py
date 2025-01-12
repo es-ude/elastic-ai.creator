@@ -67,7 +67,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                     kernel_size=1,
                     padding="same",
                     seq_len=seq_len,
-                    name=self.name + "_shortcut_conv1dbn",
+                    name=self.name + "_shortcut",
                     quant_bits=quant_bits,
                     device=device,
                 )
@@ -75,8 +75,8 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
 
         self.add = Addition(
             name=self.name + "_add",
-            num_features=out_channels,  # might be seq_len, check later
-            num_dimensions=seq_len,
+            num_features=seq_len,
+            num_dimensions=out_channels,
             quant_bits=quant_bits,
             device=device,
         )
@@ -94,10 +94,6 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         return ResidualBlockDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
-            in_channels=self.conv1dbn_0.in_channels,
-            out_channels=self.conv1dbn_0.out_channels,
-            kernel_size=self.conv1dbn_0.kernel_size,
-            seq_len=self.conv1dbn_0.seq_len,
             conv1dbn_0=self.conv1dbn_0,
             conv1dbn_0_relu=self.conv1dbn_0_relu,
             conv1dbn_1=self.conv1dbn_1,

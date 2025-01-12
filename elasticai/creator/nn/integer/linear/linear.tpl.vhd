@@ -23,30 +23,31 @@ entity ${name} is
         enable : in std_logic;
         clock  : in std_logic;
         x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x_in   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y_out  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
+    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1)+1;
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
-                    x_to_mac : in signed(DATA_WIDTH downto 0);
-                    y_0 : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0)
+                    x_in : in signed(DATA_WIDTH downto 0);
+                    y_out : in signed(MACC_OUT_WIDTH - 1 downto 0)
             ) return signed is
         variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
-        TMP := w * x_to_mac;
-        return TMP + y_0;
+        TMP := w * x_in;
+        return TMP + y_out;
     end function;
-    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_2 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_3 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
@@ -91,18 +92,18 @@ architecture rtl of ${name} is
     signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(OUT_FEATURES) - 1 downto 0) := (others=>'0');
-    signal b_int : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal b_int : signed(MACC_OUT_WIDTH - 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal macc_sum : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal macc_sum : signed(MACC_OUT_WIDTH - 1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     w_int <= signed(w_in);
-    x_int <= signed(x_in);
-    b_int <= signed(b_in);
+    x_int <= signed(x);
+    b_int <= resize(signed(b_in), b_int'length);
     reset <= not enable;
     fsm : process (clock, reset)
     begin
@@ -225,7 +226,7 @@ begin
         enb    => '1',
         rstb   => '0',
         regceb => '0',
-        doutb  => y_out
+        doutb  => y
     );
     rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
     port map  (

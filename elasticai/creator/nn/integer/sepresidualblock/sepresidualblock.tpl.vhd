@@ -6,14 +6,14 @@ use ${work_library_name}.all;
 entity ${name} is
     generic (
         DATA_WIDTH : integer := ${data_width};
-        DEPTHWISE_CONV1D_0_X_ADDR_WIDTH : integer := ${depthwise_conv1d_0_x_addr_width};
-        DEPTHWISE_CONV1D_0_Y_ADDR_WIDTH : integer := ${depthwise_conv1d_0_y_addr_width};
-        POINTWISE_CONV1DBN_0_X_ADDR_WIDTH : integer := ${pointwise_conv1dbn_0_x_addr_width};
-        POINTWISE_CONV1DBN_0_Y_ADDR_WIDTH : integer := ${pointwise_conv1dbn_0_y_addr_width};
-        DEPTHWISE_CONV1D_1_X_ADDR_WIDTH : integer := ${depthwise_conv1d_1_x_addr_width};
-        DEPTHWISE_CONV1D_1_Y_ADDR_WIDTH : integer := ${depthwise_conv1d_1_y_addr_width};
-        POINTWISE_CONV1DBN_1_X_ADDR_WIDTH : integer := ${pointwise_conv1dbn_1_x_addr_width};
-        POINTWISE_CONV1DBN_1_Y_ADDR_WIDTH : integer := ${pointwise_conv1dbn_1_y_addr_width};
+        DEPTHCONV1D_0_X_ADDR_WIDTH : integer := ${depthconv1d_0_x_addr_width};
+        DEPTHCONV1D_0_Y_ADDR_WIDTH : integer := ${depthconv1d_0_y_addr_width};
+        POINTCONV1DBN_0_X_ADDR_WIDTH : integer := ${pointconv1dbn_0_x_addr_width};
+        POINTCONV1DBN_0_Y_ADDR_WIDTH : integer := ${pointconv1dbn_0_y_addr_width};
+        DEPTHCONV1D_1_X_ADDR_WIDTH : integer := ${depthconv1d_1_x_addr_width};
+        DEPTHCONV1D_1_Y_ADDR_WIDTH : integer := ${depthconv1d_1_y_addr_width};
+        POINTCONV1DBN_1_X_ADDR_WIDTH : integer := ${pointconv1dbn_1_x_addr_width};
+        POINTCONV1DBN_1_Y_ADDR_WIDTH : integer := ${pointconv1dbn_1_y_addr_width};
         SHORTCUT_CONV1D_X_ADDR_WIDTH : integer := ${shortcut_conv1d_x_addr_width};
         SHORTCUT_CONV1D_Y_ADDR_WIDTH : integer := ${shortcut_conv1d_y_addr_width};
         ADD_X_ADDR_WIDTH : integer := ${add_x_addr_width};
@@ -22,10 +22,10 @@ entity ${name} is
     port (
         enable : in std_logic;
         clock : in std_logic;
-        x_addr : out std_logic_vector(DEPTHWISE_CONV1D_0_X_ADDR_WIDTH - 1 downto 0);
-        x_in : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        y_addr : in std_logic_vector(ADD_Y_ADDR_WIDTH - 1 downto 0);
-        y_out : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x_address : out std_logic_vector(DEPTHCONV1D_0_X_ADDR_WIDTH - 1 downto 0);
+        x : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y_address : in std_logic_vector(ADD_Y_ADDR_WIDTH - 1 downto 0);
+        y : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done : out std_logic
     ) ;
 end ${name};
@@ -41,39 +41,39 @@ architecture rtl of ${name} is
         end loop;
         return result;
     end function log2;
-    signal depthwise_conv1d_0_enable : std_logic;
-    signal depthwise_conv1d_0_clock : std_logic;
-    signal depthwise_conv1d_0_x_addr : std_logic_vector(DEPTHWISE_CONV1D_0_X_ADDR_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_0_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_0_y_addr : std_logic_vector(DEPTHWISE_CONV1D_0_Y_ADDR_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_0_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_0_done : std_logic;
-    signal pointwise_conv1dbn_0_enable : std_logic;
-    signal pointwise_conv1dbn_0_clock : std_logic;
-    signal pointwise_conv1dbn_0_x_addr : std_logic_vector(POINTWISE_CONV1DBN_0_X_ADDR_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_0_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_0_y_addr : std_logic_vector(POINTWISE_CONV1DBN_0_Y_ADDR_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_0_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_0_done : std_logic;
-    signal pointwise_conv1dbn_0_relu_enable : std_logic;
-    signal pointwise_conv1dbn_0_relu_clock : std_logic;
-    signal pointwise_conv1dbn_0_relu_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_0_relu_y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_0_relu_done : std_logic;
-    signal depthwise_conv1d_1_enable : std_logic;
-    signal depthwise_conv1d_1_clock : std_logic;
-    signal depthwise_conv1d_1_x_addr : std_logic_vector(DEPTHWISE_CONV1D_1_X_ADDR_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_1_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_1_y_addr : std_logic_vector(DEPTHWISE_CONV1D_1_Y_ADDR_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_1_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal depthwise_conv1d_1_done : std_logic;
-    signal pointwise_conv1dbn_1_enable : std_logic;
-    signal pointwise_conv1dbn_1_clock : std_logic;
-    signal pointwise_conv1dbn_1_x_addr : std_logic_vector(POINTWISE_CONV1DBN_1_X_ADDR_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_1_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_1_y_addr : std_logic_vector(POINTWISE_CONV1DBN_1_Y_ADDR_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_1_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointwise_conv1dbn_1_done : std_logic;
+    signal depthconv1d_0_enable : std_logic;
+    signal depthconv1d_0_clock : std_logic;
+    signal depthconv1d_0_x_addr : std_logic_vector(DEPTHCONV1D_0_X_ADDR_WIDTH - 1 downto 0);
+    signal depthconv1d_0_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal depthconv1d_0_y_addr : std_logic_vector(DEPTHCONV1D_0_Y_ADDR_WIDTH - 1 downto 0);
+    signal depthconv1d_0_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal depthconv1d_0_done : std_logic;
+    signal pointconv1dbn_0_enable : std_logic;
+    signal pointconv1dbn_0_clock : std_logic;
+    signal pointconv1dbn_0_x_addr : std_logic_vector(POINTCONV1DBN_0_X_ADDR_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_y_addr : std_logic_vector(POINTCONV1DBN_0_Y_ADDR_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_done : std_logic;
+    signal pointconv1dbn_0_relu_enable : std_logic;
+    signal pointconv1dbn_0_relu_clock : std_logic;
+    signal pointconv1dbn_0_relu_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_relu_y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_relu_done : std_logic;
+    signal depthconv1d_1_enable : std_logic;
+    signal depthconv1d_1_clock : std_logic;
+    signal depthconv1d_1_x_addr : std_logic_vector(DEPTHCONV1D_1_X_ADDR_WIDTH - 1 downto 0);
+    signal depthconv1d_1_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal depthconv1d_1_y_addr : std_logic_vector(DEPTHCONV1D_1_Y_ADDR_WIDTH - 1 downto 0);
+    signal depthconv1d_1_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal depthconv1d_1_done : std_logic;
+    signal pointconv1dbn_1_enable : std_logic;
+    signal pointconv1dbn_1_clock : std_logic;
+    signal pointconv1dbn_1_x_addr : std_logic_vector(POINTCONV1DBN_1_X_ADDR_WIDTH - 1 downto 0);
+    signal pointconv1dbn_1_x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_1_y_addr : std_logic_vector(POINTCONV1DBN_1_Y_ADDR_WIDTH - 1 downto 0);
+    signal pointconv1dbn_1_y_out: std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_1_done : std_logic;
     signal shortcut_conv1d_enable : std_logic;
     signal shortcut_conv1d_clock : std_logic;
     signal shortcut_conv1d_x_addr : std_logic_vector(SHORTCUT_CONV1D_X_ADDR_WIDTH - 1 downto 0);
@@ -83,8 +83,8 @@ architecture rtl of ${name} is
     signal shortcut_conv1d_done : std_logic;
     signal add_enable : std_logic;
     signal add_clock : std_logic;
-    signal add_x_1_addr : std_logic_vector(ADD_X_ADDR_WIDTH - 1 downto 0);
-    signal add_x_2_addr : std_logic_vector(ADD_X_ADDR_WIDTH - 1 downto 0);
+    signal add_x_1_address : std_logic_vector(ADD_X_ADDR_WIDTH - 1 downto 0);
+    signal add_x_2_address : std_logic_vector(ADD_X_ADDR_WIDTH - 1 downto 0);
     signal add_x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal add_x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal add_y_addr : std_logic_vector(ADD_Y_ADDR_WIDTH - 1 downto 0);
@@ -96,122 +96,114 @@ architecture rtl of ${name} is
     signal relu_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal relu_done : std_logic;
     begin
-
-    --depthwise_conv1d_0 - > pointwise_conv1dbn_0 - > pointwise_conv1dbn_0_relu - > depthwise_conv1d_1 - > pointwise_conv1dbn_1 - > add_x2
-    --shortcut_conv1d -> add_x1
-    --- relu
-
-    -- shared resources
-    depthwise_conv1d_0_enable <= enable;
-    shortcut_conv1d_enable <= depthwise_conv1d_0_done; -- enable and
-    x_addr <= shortcut_conv1d_x_addr when depthwise_conv1d_0_done='1' else depthwise_conv1d_0_x_addr;
-    -- shared resources
-
-    depthwise_conv1d_0_clock <= clock;
-    depthwise_conv1d_0_x_in <= x_in;
-    inst_${name}_depthwise_conv1d_0: entity ${work_library_name}.${name}_depthwise_conv1d_0(rtl)
+    depthconv1d_0_enable <= enable;
+    shortcut_conv1d_enable <= depthconv1d_0_done;
+    x_address <= shortcut_conv1d_x_addr when depthconv1d_0_done='1' else depthconv1d_0_x_addr;
+    depthconv1d_0_clock <= clock;
+    depthconv1d_0_x_in <= x;
+    inst_${name}_depthconv1d_0: entity ${work_library_name}.${name}_depthconv1d_0(rtl)
     port map (
-        enable => depthwise_conv1d_0_enable,
-        clock  => depthwise_conv1d_0_clock,
-        x_addr  => depthwise_conv1d_0_x_addr,
-        y_addr  => depthwise_conv1d_0_y_addr,
-        x_in  => depthwise_conv1d_0_x_in,
-        y_out => depthwise_conv1d_0_y_out,
-        done  => depthwise_conv1d_0_done
+        enable => depthconv1d_0_enable,
+        clock  => depthconv1d_0_clock,
+        x_address  => depthconv1d_0_x_addr,
+        y_address  => depthconv1d_0_y_addr,
+        x  => depthconv1d_0_x_in,
+        y => depthconv1d_0_y_out,
+        done  => depthconv1d_0_done
     );
-    depthwise_conv1d_0_y_addr <= pointwise_conv1dbn_0_x_addr;
-    pointwise_conv1dbn_0_x_in <= depthwise_conv1d_0_y_out;
-    pointwise_conv1dbn_0_enable <= depthwise_conv1d_0_done;
+    depthconv1d_0_y_addr <= pointconv1dbn_0_x_addr;
+    pointconv1dbn_0_x_in <= depthconv1d_0_y_out;
+    pointconv1dbn_0_enable <= depthconv1d_0_done;
 
     shortcut_conv1d_clock <= clock;
     inst_${name}_shortcut_conv1d: entity ${work_library_name}.${name}_shortcut_conv1d(rtl)
     port map (
         enable => shortcut_conv1d_enable,
         clock  => shortcut_conv1d_clock,
-        x_addr  => shortcut_conv1d_x_addr,
-        y_addr  => shortcut_conv1d_y_addr,
-        x_in  => shortcut_conv1d_x_in,
-        y_out => shortcut_conv1d_y_out,
+        x_address  => shortcut_conv1d_x_addr,
+        y_address  => shortcut_conv1d_y_addr,
+        x  => shortcut_conv1d_x_in,
+        y => shortcut_conv1d_y_out,
         done  => shortcut_conv1d_done
     );
-    shortcut_conv1d_y_addr <= add_x_1_addr;
+    shortcut_conv1d_y_addr <= add_x_1_address;
     add_x_1 <= shortcut_conv1d_y_out;
-    shortcut_conv1d_x_in <= x_in;
+    shortcut_conv1d_x_in <= x;
 
-    pointwise_conv1dbn_0_clock <= clock;
-    inst_${name}_pointwise_conv1dbn_0: entity ${work_library_name}.${name}_pointwise_conv1dbn_0(rtl)
+    pointconv1dbn_0_clock <= clock;
+    inst_${name}_pointconv1dbn_0: entity ${work_library_name}.${name}_pointconv1dbn_0(rtl)
     port map (
-        enable => pointwise_conv1dbn_0_enable,
-        clock  => pointwise_conv1dbn_0_clock,
-        x_addr  => pointwise_conv1dbn_0_x_addr,
-        y_addr  => pointwise_conv1dbn_0_y_addr,
-        x_in  => pointwise_conv1dbn_0_x_in,
-        y_out => pointwise_conv1dbn_0_y_out,
-        done  => pointwise_conv1dbn_0_done
+        enable => pointconv1dbn_0_enable,
+        clock  => pointconv1dbn_0_clock,
+        x_address  => pointconv1dbn_0_x_addr,
+        y_address  => pointconv1dbn_0_y_addr,
+        x  => pointconv1dbn_0_x_in,
+        y => pointconv1dbn_0_y_out,
+        done  => pointconv1dbn_0_done
     );
-    pointwise_conv1dbn_0_y_addr <= depthwise_conv1d_1_x_addr;
-    pointwise_conv1dbn_0_relu_x_in <= pointwise_conv1dbn_0_y_out;
-    pointwise_conv1dbn_0_relu_enable <= pointwise_conv1dbn_0_done;
+    pointconv1dbn_0_y_addr <= depthconv1d_1_x_addr;
+    pointconv1dbn_0_relu_x_in <= pointconv1dbn_0_y_out;
+    pointconv1dbn_0_relu_enable <= pointconv1dbn_0_done;
 
-    pointwise_conv1dbn_0_relu_clock <= clock;
-    inst_${name}_pointwise_conv1dbn_0_relu: entity ${work_library_name}.${name}_pointwise_conv1dbn_0_relu(rtl)
+    pointconv1dbn_0_relu_clock <= clock;
+    inst_${name}_pointconv1dbn_0_relu: entity ${work_library_name}.${name}_pointconv1dbn_0_relu(rtl)
     port map (
-        enable => pointwise_conv1dbn_0_relu_enable,
-        clock  => pointwise_conv1dbn_0_relu_clock,
-        x_in  => pointwise_conv1dbn_0_relu_x_in,
-        y_out  => pointwise_conv1dbn_0_relu_y_out
-    );
-
-    depthwise_conv1d_1_x_in <= pointwise_conv1dbn_0_relu_y_out;
-
-    depthwise_conv1d_1_clock <= clock;
-    depthwise_conv1d_1_enable <= pointwise_conv1dbn_0_done;
-    inst_${name}_depthwise_conv1d_1: entity ${work_library_name}.${name}_depthwise_conv1d_1(rtl)
-    port map (
-        enable => depthwise_conv1d_1_enable,
-        clock  => depthwise_conv1d_1_clock,
-        x_addr  => depthwise_conv1d_1_x_addr,
-        y_addr  => depthwise_conv1d_1_y_addr,
-        x_in  => depthwise_conv1d_1_x_in,
-        y_out => depthwise_conv1d_1_y_out,
-        done  => depthwise_conv1d_1_done
+        enable => pointconv1dbn_0_relu_enable,
+        clock  => pointconv1dbn_0_relu_clock,
+        x  => pointconv1dbn_0_relu_x_in,
+        y  => pointconv1dbn_0_relu_y_out
     );
 
-    depthwise_conv1d_1_y_addr <= pointwise_conv1dbn_1_x_addr;
-    pointwise_conv1dbn_1_x_in <= depthwise_conv1d_1_y_out;
-    pointwise_conv1dbn_1_enable <= depthwise_conv1d_1_done;
+    depthconv1d_1_x_in <= pointconv1dbn_0_relu_y_out;
 
-    pointwise_conv1dbn_1_clock <= clock;
-    inst_${name}_pointwise_conv1dbn_1: entity ${work_library_name}.${name}_pointwise_conv1dbn_1(rtl)
+    depthconv1d_1_clock <= clock;
+    depthconv1d_1_enable <= pointconv1dbn_0_done;
+    inst_${name}_depthconv1d_1: entity ${work_library_name}.${name}_depthconv1d_1(rtl)
     port map (
-        enable => pointwise_conv1dbn_1_enable,
-        clock  => pointwise_conv1dbn_1_clock,
-        x_addr  => pointwise_conv1dbn_1_x_addr,
-        y_addr  => pointwise_conv1dbn_1_y_addr,
-        x_in  => pointwise_conv1dbn_1_x_in,
-        y_out => pointwise_conv1dbn_1_y_out,
-        done  => pointwise_conv1dbn_1_done
+        enable => depthconv1d_1_enable,
+        clock  => depthconv1d_1_clock,
+        x_address  => depthconv1d_1_x_addr,
+        y_address  => depthconv1d_1_y_addr,
+        x  => depthconv1d_1_x_in,
+        y => depthconv1d_1_y_out,
+        done  => depthconv1d_1_done
     );
 
-    pointwise_conv1dbn_1_y_addr <= add_x_2_addr;
-    add_x_2 <= pointwise_conv1dbn_1_y_out;
+    depthconv1d_1_y_addr <= pointconv1dbn_1_x_addr;
+    pointconv1dbn_1_x_in <= depthconv1d_1_y_out;
+    pointconv1dbn_1_enable <= depthconv1d_1_done;
+
+    pointconv1dbn_1_clock <= clock;
+    inst_${name}_pointconv1dbn_1: entity ${work_library_name}.${name}_pointconv1dbn_1(rtl)
+    port map (
+        enable => pointconv1dbn_1_enable,
+        clock  => pointconv1dbn_1_clock,
+        x_address  => pointconv1dbn_1_x_addr,
+        y_address  => pointconv1dbn_1_y_addr,
+        x  => pointconv1dbn_1_x_in,
+        y => pointconv1dbn_1_y_out,
+        done  => pointconv1dbn_1_done
+    );
+
+    pointconv1dbn_1_y_addr <= add_x_2_address;
+    add_x_2 <= pointconv1dbn_1_y_out;
 
 
-    add_enable <= pointwise_conv1dbn_1_done and shortcut_conv1d_done;
+    add_enable <= pointconv1dbn_1_done and shortcut_conv1d_done;
     add_clock <= clock;
     inst_${name}_add: entity ${work_library_name}.${name}_add(rtl)
     port map (
         enable => add_enable,
         clock  => add_clock,
-        x_1_addr  => add_x_1_addr,
-        x_1_in  => add_x_1,
-        x_2_addr  => add_x_2_addr,
-        x_2_in  => add_x_2,
-        y_addr  => add_y_addr,
-        y_out => add_y_out,
+        x_1_address  => add_x_1_address,
+        x_1  => add_x_1,
+        x_2_address  => add_x_2_address,
+        x_2  => add_x_2,
+        y_address  => add_y_addr,
+        y => add_y_out,
         done  => add_done
     );
-    add_y_addr <= y_addr;
+    add_y_addr <= y_address;
     relu_x <= add_y_out;
 
 
@@ -221,10 +213,9 @@ architecture rtl of ${name} is
     port map (
         enable => relu_enable,
         clock  => relu_clock,
-        x_in  => relu_x,
-        y_out  => relu_y
+        x  => relu_x,
+        y  => relu_y
     );
-    y_out <= relu_y;
+    y <= relu_y;
     done <= add_done;
-
 end architecture;

@@ -18,10 +18,10 @@ entity ${name} is
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x_addr : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x_in   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        y_addr : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y_out  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
@@ -53,7 +53,7 @@ architecture rtl of ${name} is
     signal seq_end : integer range 0 to IN_FEATURES*IN_NUM_DIMENSIONS := 0;
 begin
     n_clock <= not clock;
-    x_int <= signed(x_in);
+    x_int <= signed(x);
     reset <= not enable;
     fsm : process (clock, reset)
     begin
@@ -143,7 +143,7 @@ begin
                 mac_state <= s_done;
                 y_store_en <= '0';
             end if;
-            x_addr <= std_logic_vector(to_unsigned(seq_idx, x_addr'length));
+            x_address <= std_logic_vector(to_unsigned(seq_idx, x_address'length));
         end if;
     end process ;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
@@ -157,7 +157,7 @@ begin
     )
     port map  (
         addra  => y_store_addr_std,
-        addrb  => y_addr,
+        addrb  => y_address,
         dina   => y_store_data,
         clka   => clock,
         clkb   => clock,
@@ -165,6 +165,6 @@ begin
         enb    => '1',
         rstb   => '0',
         regceb => '1',
-        doutb  => y_out
+        doutb  => y
     );
 end architecture;
