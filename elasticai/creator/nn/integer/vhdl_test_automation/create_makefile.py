@@ -3,7 +3,7 @@ import os
 
 def create_makefile(destination_dir, stop_time="4000ns"):
     makefile_content = f"""# vhdl files
-FILES = ./source/*/*.vhd
+FILES = ./source/*/*.vhd ./source/*/*/*.vhd
 VHDLEX = .vhd
 
 # testbench
