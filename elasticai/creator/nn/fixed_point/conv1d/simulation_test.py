@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 import torch
 
@@ -18,7 +19,9 @@ def create_ones_conv1d_input_list(
 @pytest.mark.parametrize(
     "x", ([[[0.0, 1.0, 1.0]]], [[[1.0, 1.0, 1.0]]], [[[2.0, 1.0, 0.0]]])
 )
-def test_verify_hw_sw_equivalence_3_inputs(x):
+def test_verify_hw_sw_equivalence_3_inputs(
+    x: list[list[list[float]]], tmp_path: Path
+) -> None:
     input_data = torch.Tensor(x)
     sw_conv = Conv1d(
         total_bits=4,
@@ -31,14 +34,19 @@ def test_verify_hw_sw_equivalence_3_inputs(x):
     )
     sw_conv.weight.data = torch.ones_like(sw_conv.weight)
     sw_conv.bias.data = torch.ones_like(sw_conv.bias)
+
     sw_output = sw_conv(input_data)
+
     design = sw_conv.create_design("conv1d")
     testbench = sw_conv.create_testbench("conv1d_testbench", design)
-    build_dir = OnDiskPath("build")
+
+    build_dir = OnDiskPath(name=tmp_path.name, parent=str(tmp_path.parent))
     design.save_to(build_dir.create_subpath("srcs"))
     testbench.save_to(build_dir.create_subpath("testbenches"))
-    sim_layer = SimulatedLayer(testbench, GHDLSimulator, working_dir="build")
+
+    sim_layer = SimulatedLayer(testbench, GHDLSimulator, working_dir=tmp_path)
     sim_output = sim_layer(input_data)
+
     assert sw_output.tolist() == sim_output
 
 
@@ -51,7 +59,9 @@ def test_verify_hw_sw_equivalence_3_inputs(x):
         [[[0.0, 1.0, 1.0, 0.0], [-1.0, 1.0, -1.0, 1.0]]],
     ),
 )
-def test_verify_hw_sw_equivalence_4_inputs(x):
+def test_verify_hw_sw_equivalence_4_inputs(
+    x: list[list[list[float]]], tmp_path: Path
+) -> None:
     input_data = torch.Tensor(x)
     sw_conv = Conv1d(
         total_bits=5,
@@ -64,12 +74,17 @@ def test_verify_hw_sw_equivalence_4_inputs(x):
     )
     sw_conv.weight.data = torch.ones_like(sw_conv.weight)
     sw_conv.bias.data = torch.ones_like(sw_conv.bias)
+
     sw_output = sw_conv(input_data)
+
     design = sw_conv.create_design("conv1d")
     testbench = sw_conv.create_testbench("conv1d_testbench", design)
-    build_dir = OnDiskPath("build")
+
+    build_dir = OnDiskPath(name=tmp_path.name, parent=str(tmp_path.parent))
     design.save_to(build_dir.create_subpath("srcs"))
     testbench.save_to(build_dir.create_subpath("testbenches"))
-    sim_layer = SimulatedLayer(testbench, GHDLSimulator, working_dir="build")
+
+    sim_layer = SimulatedLayer(testbench, GHDLSimulator, working_dir=tmp_path)
     sim_output = sim_layer(input_data)
+
     assert sw_output.tolist() == sim_output
