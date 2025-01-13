@@ -1,4 +1,4 @@
-== Test Plugin VHDL code with GHDL
+= Test Plugin VHDL code with GHDL
 After installing the `elasticai.creator` the command `eai-run-ghdl-tbs-for-plugins`
 will be available. That program will run over all plugin packages and
 
@@ -11,7 +11,7 @@ will be available. That program will run over all plugin packages and
 To make this work, your `<name>_tb.vhd` files need to define a testbench entity
 of name `<name>_tb` each.
 
-=== Missing Features
+== Missing Features
 
 Features that might be added in the future are
 
@@ -20,3 +20,8 @@ Features that might be added in the future are
 	* currently that format is mostly implicit
 - [ ] read dependencies from plugin configs (if present)
 - [ ] automatically create waveform files
+
+
+== Limitations
+
+* The runner needs at least python3.11 currently

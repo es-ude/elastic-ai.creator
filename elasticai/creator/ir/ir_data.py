@@ -11,9 +11,9 @@ class IrData(metaclass=IrDataMeta, create_init=False):
     To create a new Ir data class, inherit from `IrData` and define your required fields.
     Supported field types are
 
-    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.RequiredField[`RequiredField`]
-    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.ReadOnlyField[`ReadOnlyField`]
-    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.SimpleField[`SimpleField`]
+    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.adoc#RequiredField[`RequiredField`]
+    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.adoc#ReadOnlyField[`ReadOnlyField`]
+    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.adoc#SimpleField[`SimpleField`]
 
     Examples:
 

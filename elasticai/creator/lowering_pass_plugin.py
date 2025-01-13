@@ -3,35 +3,25 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
+from elasticai.creator.function_utils import FunctionDecoratorFactory
 from elasticai.creator.ir import Lowerable
 from elasticai.creator.ir import LoweringPass as _LoweringPass
-from elasticai.creator.function_utils import FunctionDecoratorFactory
-from elasticai.creator.plugin import (
-    BasePluginLoader as _BasePluginLoader,
-)
-from elasticai.creator.plugin import (
-    Plugin as _BasePlugin,
-)
+from elasticai.creator.plugin import PluginLoader as _PluginLoader
+from elasticai.creator.plugin import PluginSpec as _BasePluginSpec
+from elasticai.creator.plugin import PluginSymbol, make_symbol_resolver
 
 Tin = TypeVar("Tin", bound=Lowerable)
 Tout = TypeVar("Tout")
 
 
-@dataclass(frozen=True)
-class SubFolderStructure:
-    generated: str
-    templates: str
-    static_files: str
-
-
 @dataclass
-class Plugin(_BasePlugin):
-    generated: list[str]
-    templates: list[str]
-    static_files: list[str]
+class PluginSpec(_BasePluginSpec):
+    generated: tuple[str, ...]
+    templates: tuple[str, ...]
+    static_files: tuple[str, ...]
 
 
-class Loader(_BasePluginLoader["Loader", Plugin], ABC, Generic[Tin, Tout]):
+class PluginLoader(_PluginLoader, Generic[Tin, Tout]):
     """Connects a LoweringPass and corresponding plugins.
 
     Plugins can provide types that will be registered at the lowering pass.
@@ -39,20 +29,21 @@ class Loader(_BasePluginLoader["Loader", Plugin], ABC, Generic[Tin, Tout]):
     to lower `Tin` to `Tout`.
     """
 
-    def __init__(self, lowering: _LoweringPass[Tin, Tout]):
-        super().__init__(plugin_type=Plugin)
+    def __init__(self, target_runtime: str, lowering: _LoweringPass[Tin, Tout]):
+        super().__init__(
+            extract_fn=make_symbol_resolver(self._extract_symbols, PluginSpec),
+            plugin_receiver=self,
+        )
         self._lowering = lowering
+        self.target_runtime = target_runtime
 
-    @property
-    @abstractmethod
-    def folders(self) -> SubFolderStructure: ...
-
-    def _get_loadables(self, p: Plugin) -> dict[str, set[str]]:
-        module = f"{p.package}.{self.folders.generated}"
-        loadables: dict[str, set[str]] = {module: set()}
-        for name in p.generated:
-            loadables[module].add(name)
-        return loadables
+    def _extract_symbols(
+        self, data: Iterable[PluginSpec]
+    ) -> Iterable[tuple[str, set[str]]]:
+        for p in data:
+            if p.target_runtime == self.target_runtime:
+                module = f"{p.package}.src"
+                yield module, set(p.generated)
 
     def register_iterable(self, name: str, fn: Callable[[Tin], Iterable[Tout]]) -> None:
         self._lowering.register_iterable(name)(fn)
@@ -61,7 +52,7 @@ class Loader(_BasePluginLoader["Loader", Plugin], ABC, Generic[Tin, Tout]):
         self._lowering.register(name)(fn)
 
 
-class _GeneratedCodeType(Generic[Tin, Tout]):
+class _GeneratedCodeType(PluginSymbol, Generic[Tin, Tout]):
     """
     Acts as a thin wrapper around a given function
     `fn`. It is used to provide an easy to use
@@ -76,11 +67,11 @@ class _GeneratedCodeType(Generic[Tin, Tout]):
     def __call__(self, arg: Tin, /) -> Tout:
         return self._fn(arg)
 
-    def load(self, lower: Loader[Tin, Tout]) -> None:
+    def load_into(self, lower: PluginLoader[Tin, Tout]) -> None:
         lower.register(self._name, self._fn)
 
 
-class _GeneratedIterableCodeType(Generic[Tin, Tout]):
+class _GeneratedIterableCodeType(PluginSymbol, Generic[Tin, Tout]):
     def __init__(self, name: str, fn: Callable[[Tin], Iterable[Tout]]) -> None:
         self._fn = fn
         self._name = name
@@ -88,7 +79,7 @@ class _GeneratedIterableCodeType(Generic[Tin, Tout]):
     def __call__(self, arg: Tin, /) -> Iterable[Tout]:
         return self._fn(arg)
 
-    def load(self, lower: Loader[Tin, Tout]) -> None:
+    def load(self, lower: PluginLoader[Tin, Tout]) -> None:
         lower.register_iterable(self._name, self._fn)
 
 
