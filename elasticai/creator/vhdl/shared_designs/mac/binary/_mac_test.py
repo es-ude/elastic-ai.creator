@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 import torch
 
@@ -42,27 +43,24 @@ def test_sw_function(data):
     "x",
     (
         # 00010 * 00010 -> 00000 00100 -> 000(00 001)00 -> 00001
-        [
-            [[1, 1, 1], [1, 1, 1]],
-            [[1, 1, 1], [1, 1, -1]],
-        ],
+        [[[1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, -1]]],
         # 00010 * 01000 -> 00000 10000 -> 000(00 100)00 -> 00100
-        [
-            [[-1, 1], [-1, -1]],
-        ],
+        [[[-1, 1], [-1, -1]]],
         [[[-1, -1, 1], [1, 1, 1]]],
     ),
 )
-def test_mac_hw_for_integers(x):
+def test_mac_hw_for_integers(x: list[list[list[float]]], tmp_path: Path):
     sw_mac = MacLayer(vector_width=1)
-    design: MacDesign = sw_mac.create_design("mac")
+    design = sw_mac.create_design("mac")
     testbench = sw_mac.create_testbench("mac_testbench", design)
-    build_dir = OnDiskPath("build")
+
+    build_dir = OnDiskPath(name=tmp_path.name, parent=str(tmp_path.parent))
     design.save_to(build_dir.create_subpath("srcs"))
     testbench.save_to(build_dir.create_subpath("testbenches"))
-    sim = SimulatedLayer(testbench, GHDLSimulator, working_dir="build")
-    print(f"{x=}")
+
+    sim = SimulatedLayer(testbench, GHDLSimulator, working_dir=tmp_path)
     actual = sim(x)
+
     for i, (x1, x2) in enumerate(x):
         y = sw_mac(
             torch.tensor(x1, dtype=torch.float32), torch.tensor(x2, dtype=torch.float32)
