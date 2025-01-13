@@ -14,7 +14,7 @@ class MacLayer:
     def __call__(self, a, b):
         return self.ops.matmul(a, b)
 
-    def create_design(self, name: str) -> Savable:
+    def create_design(self, name: str) -> MacDesign:
         return MacDesign(vector_width=self._vector_width, name=name)
 
     def create_testbench(self, name: str, design: MacDesign) -> MacTestBench:
