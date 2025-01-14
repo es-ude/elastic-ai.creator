@@ -131,7 +131,7 @@ begin
         clock  => clock,
         x_address => x_address,
         y_address => y_address,
-        x   => x,
+        x  => x,
         y  => y,
         done   => done
     );

@@ -7,6 +7,10 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.math_operations import (
+    get_padded_count,
+    get_vhdl_templates,
+)
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
@@ -25,6 +29,7 @@ class Conv1dBN(Design):
         seq_len: int,
         kernel_size: int,
         padding: tuple[int, int] or str,
+        padding_len: int,
         weights: list[list[int]],
         bias: list[int],
         m_q: int,
@@ -44,6 +49,7 @@ class Conv1dBN(Design):
         self._seq_len = seq_len
         self._kernel_size = kernel_size
         self._padding = padding
+        self._padding_len = padding_len
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -62,22 +68,13 @@ class Conv1dBN(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_count = self._in_channels * self._seq_len
-        if isinstance(self._padding, tuple):
-            if self._padding[0] == 0:
-                self._y_count = self._out_channels * (
-                    self._seq_len - self._kernel_size + 1
-                )
-            else:
-                self._y_count = (
-                    self._seq_len + self._padding[0] * 2 - self._kernel_size + 1
-                ) * self._out_channels
-        else:
-            if self._padding == "same":
-                self._y_count = self._x_count
-            else:
-                raise ValueError("Padding value not supported")
-
+        self._x_count, self._y_count = get_padded_count(
+            padding=self._padding,
+            kernel_size=self._kernel_size,
+            in_channels=self._in_channels,
+            out_channels=self._out_channels,
+            seq_len=self._seq_len,
+        )
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
 
@@ -115,21 +112,11 @@ class Conv1dBN(Design):
             resource_option=self._resource_option,
         )
 
-        if isinstance(self._padding, tuple):
-            if self._padding[0] == 0:
-                template_file_name = "conv1dbn_not_padding.tpl.vhd"
-                test_template_file_name = "conv1dbn_not_padding_tb.tpl.vhd"
-            else:
-                template_file_name = "conv1dbn_zero_padding.tpl.vhd"
-                test_template_file_name = "conv1dbn_zero_padding_tb.tpl.vhd"
-                template_parameters["padding_len"] = str(self._padding[0])
-        else:
-            if self._padding == "same":
-                template_file_name = "conv1dbn_zero_padding.tpl.vhd"
-                test_template_file_name = "conv1dbn_zero_padding_tb.tpl.vhd"
-                template_parameters["padding_len"] = str(self._kernel_size // 2)
-            else:
-                raise ValueError("Invalid padding value")
+        template_file_name, test_template_file_name = get_vhdl_templates(
+            self._padding_len, "conv1dbn"
+        )
+        if self._padding_len != 0:
+            template_parameters["padding_len"] = str(self._padding_len)
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -165,8 +152,8 @@ class Conv1dBN(Design):
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
                 out_channels=str(self._out_channels),
-                kernel_size=str(self._kernel_size),
                 seq_len=str(self._seq_len),
+                kernel_size=str(self._kernel_size),
                 work_library_name=self._work_library_name,
             ),
         )

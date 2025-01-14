@@ -9,6 +9,10 @@ from elasticai.creator.nn.integer.depthconv1d.design import (
     DepthConv1d as DepthConv1dDesign,
 )
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
+from elasticai.creator.nn.integer.math_operations import (
+    get_padded_q_inputs,
+    get_padding_len,
+)
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
@@ -63,6 +67,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             seq_len=self.seq_len,
             kernel_size=self.kernel_size[0],
             padding=self.padding,
+            padding_len=self.padding_len,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
@@ -132,18 +137,12 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
-        if self.padding != 0:
-            if self.padding == "same":
-                padding_len = self.kernel_size // 2
-            else:
-                padding_len = self.padding[0]
-
-            q_inputs = F.pad(
-                input=q_inputs,
-                pad=(padding_len, padding_len),
-                mode="constant",
-                value=self.inputs_QParams.zero_point.item(),
-            )
+        self.padding_len = get_padding_len(self.padding, self.kernel_size)
+        q_inputs = get_padded_q_inputs(
+            padding_len=self.padding_len,
+            q_inputs=q_inputs,
+            inputs_QParams=self.inputs_QParams,
+        )
 
         # TODO: Implement intmatmul or F.conv1d
         tmp = F.conv1d(

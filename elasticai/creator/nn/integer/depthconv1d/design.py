@@ -7,6 +7,10 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.math_operations import (
+    get_padded_count,
+    get_vhdl_templates,
+)
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
@@ -22,6 +26,7 @@ class DepthConv1d(Design):
         in_channels: int,
         seq_len: int,
         padding: tuple[int, int] or str,
+        padding_len: int,
         kernel_size: int,
         weights: list[list[int]],
         bias: list[int],
@@ -41,6 +46,7 @@ class DepthConv1d(Design):
         self._seq_len = seq_len
         self._kernel_size = kernel_size
         self._padding = padding
+        self._padding_len = padding_len
 
         self._z_x = z_x
         self._z_w = z_w
@@ -59,22 +65,13 @@ class DepthConv1d(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_count = self._in_channels * self._seq_len
-
-        if isinstance(self._padding, tuple):
-            if self._padding[0] == 0:
-                self._y_count = self._in_channels * (
-                    self._seq_len - self._kernel_size + 1
-                )
-            else:
-                self._y_count = (
-                    self._seq_len + self._padding[0] * 2 - self._kernel_size + 1
-                ) * self._in_channels
-        else:
-            if self._padding == "same":
-                self._y_count = self._x_count
-            else:
-                raise ValueError("Invalid padding value")
+        self._x_count, self._y_count = get_padded_count(
+            padding=self._padding,
+            kernel_size=self._kernel_size,
+            in_channels=self._in_channels,
+            out_channels=self._in_channels,
+            seq_len=self._seq_len,
+        )
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
@@ -112,21 +109,11 @@ class DepthConv1d(Design):
             resource_option=self._resource_option,
         )
 
-        if isinstance(self._padding, tuple):
-            if self._padding[0] == 0:
-                template_file_name = "depthconv1d_not_padding.tpl.vhd"
-                test_template_file_name = "depthconv1d_not_padding_tb.tpl.vhd"
-            else:
-                template_file_name = "depthconv1d_zero_padding.tpl.vhd"
-                test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
-                template_parameters["padding_len"] = str(self._padding[0])
-        else:
-            if self._padding == "same":
-                template_file_name = "depthconv1d_zero_padding.tpl.vhd"
-                test_template_file_name = "depthconv1d_zero_padding_tb.tpl.vhd"
-                template_parameters["padding_len"] = str(self._kernel_size // 2)
-            else:
-                raise ValueError("Invalid padding value")
+        template_file_name, test_template_file_name = get_vhdl_templates(
+            self._padding_len, "depthconv1d"
+        )
+        if self._padding_len != 0:
+            template_parameters["padding_len"] = str(self._padding_len)
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

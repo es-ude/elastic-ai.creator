@@ -6,6 +6,10 @@ from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.conv1d.design import Conv1d as Conv1dDesign
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
+from elasticai.creator.nn.integer.math_operations import (
+    get_padded_q_inputs,
+    get_padding_len,
+)
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import (
@@ -59,6 +63,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             kernel_size=self.kernel_size[0],
             seq_len=self.seq_len,
             padding=self.padding,
+            padding_len=self.padding_len,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
@@ -128,12 +133,19 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
+        self.padding_len = get_padding_len(self.padding, self.kernel_size)
+        q_inputs = get_padded_q_inputs(
+            padding_len=self.padding_len,
+            q_inputs=q_inputs,
+            inputs_QParams=self.inputs_QParams,
+        )
+
         # TODO: Implement intmatmul or F.conv1d
         tmp = F.conv1d(
             q_inputs,
             self.q_weights,
             self.q_bias,
-            padding=self.padding,
+            padding=0,
         )
 
         tmp = simulate_bitshifting(
