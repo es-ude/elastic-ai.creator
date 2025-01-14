@@ -34,6 +34,12 @@ class _ReadOnlyMappingWithHiddenFields(Mapping[str, Attribute]):
             raise KeyError(f"key not found '{k}'.")
         return self._mapping[k]
 
+    def __or__(self, other: Mapping[str, Attribute]) -> Mapping[str, Attribute]:
+        return dict(self) | other
+
+    def __ror__(self, other: Mapping[str, Attribute]) -> Mapping[str, Attribute]:
+        return other | dict(self)
+
 
 class AttributesDescriptor:
     """Read values from the `data` dict, while hiding key, value that show up

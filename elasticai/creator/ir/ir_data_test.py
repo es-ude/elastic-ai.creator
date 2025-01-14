@@ -1,7 +1,8 @@
-from .ir_data_meta import IrDataMeta
-from .required_field import RequiredField, ReadOnlyField
-from .ir_data import IrData
 import pytest
+
+from .ir_data import IrData
+from .ir_data_meta import IrDataMeta
+from .required_field import ReadOnlyField, RequiredField
 
 
 def test_using_metaclass() -> None:
@@ -124,3 +125,34 @@ def test_read_only_field_is_detected() -> None:
         name: ReadOnlyField[str, str] = ReadOnlyField(lambda x: x)
 
     assert "name" in Node.required_fields
+
+
+def test_attribute_is_read_only() -> None:
+    class Node(IrData):
+        name: ReadOnlyField[str, str] = ReadOnlyField(lambda x: x)
+
+    n = Node(dict(name="x"))
+    with pytest.raises(AttributeError):
+        n.name = "y"
+
+
+def test_right_oring_dict_with_attribute_does_not_add_hidden_fields():
+    class Node(IrData):
+        name: str
+        type: str
+
+    d = dict()
+    n = Node(dict(name="x", type="y", counter=1))
+    d = d | n.attributes
+    assert d == dict(counter=1)
+
+
+def test_left_oring_dict_with_attribute_does_not_add_hidden_fields():
+    class Node(IrData):
+        name: str
+        type: str
+
+    d = dict()
+    n = Node(dict(name="x", type="y", counter=1))
+    d = n.attributes | d
+    assert d == dict(counter=1)
