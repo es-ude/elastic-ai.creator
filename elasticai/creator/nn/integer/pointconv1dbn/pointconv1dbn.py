@@ -96,17 +96,14 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
-            self.weight_QParams.quant_bits + 1
-        )
 
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(new_bias_quant_bits)
+        self.bias_QParams.set_quant_range(self.tmp_quant_bits)
         q_bias = self.bias_QParams.quantize(bias).to("cpu")
         if not self.bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
+                q_bias, self.bias_QParams.zero_point, self.tmp_quant_bits + 1
             )
         return q_bias
 
@@ -122,6 +119,9 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         )
 
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
+        self.tmp_quant_bits = (
+            self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1
+        )
         self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
@@ -142,13 +142,23 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
-        # TODO: Implement intmatmul or F.conv1d
-        tmp = F.conv1d(
-            q_inputs,
-            self.q_fused_weights,
-            self.q_fused_bias,
-            padding=self.conv1d.padding,
-        )
+
+        if self.q_fused_bias is not None:
+            tmp = F.conv1d(
+                q_inputs,
+                self.q_fused_weights,
+                self.q_fused_bias,
+                padding=self.conv1d.padding,
+            )
+            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits + 1)
+        else:
+            tmp = F.conv1d(
+                q_inputs,
+                self.q_fused_weights,
+                padding=self.conv1d.padding,
+            )
+            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
+
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )

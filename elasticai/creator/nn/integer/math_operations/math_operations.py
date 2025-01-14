@@ -46,24 +46,28 @@ class MathOperations:
         c = c_cpu.to(a.device)
         return self.clamp_result(c, c_quant_bits)
 
-    def intconv1d(
+    def int_mac(
         self,
         x: torch.IntTensor,
         w: torch.IntTensor,
-        b: torch.IntTensor,
-        padding: tuple[int, int] or str,
-        tmp_quant_bits: int,
+        x_quant_bits: int,
+        w_quant_bits: int,
+        b: torch.IntTensor = None,
     ) -> torch.IntTensor:
         assert x.dtype == torch.int32
         assert w.dtype == torch.int32
-        assert b.dtype == torch.int32
+
+        tmp = F.linear(x, w)
+        # tmp = x.matmul(w.t())
+
+        tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
+        self.clamp_result(tmp, tmp_quant_bits)
 
         if b is not None:
             assert b.dtype == torch.int32
-            tmp = F.conv1d(x, w, b, padding=padding)
-        else:
-            tmp = F.conv1d(x, w, padding=padding)
-        return self.clamp_result(tmp, tmp_quant_bits)
+            tmp = self.intadd(tmp, b, tmp_quant_bits + 1)
+
+        return tmp
 
     def inthadamardproduct(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int

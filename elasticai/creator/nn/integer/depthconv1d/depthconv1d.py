@@ -97,25 +97,26 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
-            self.weight_QParams.quant_bits + 1
-        )
 
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(new_bias_quant_bits)
+        self.bias_QParams.set_quant_range(self.tmp_quant_bits)
         q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
         if not self.bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
+                q_bias, self.bias_QParams.zero_point, self.tmp_quant_bits + 1
             )
         return q_bias
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
+        self.tmp_quant_bits = (
+            self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1
+        )
         if self.bias is not None:
             self.q_bias = self._get_quantized_bias()
+            self.tmp_quant_bits += 1
 
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -144,14 +145,23 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             inputs_QParams=self.inputs_QParams,
         )
 
-        # TODO: Implement intmatmul or F.conv1d
-        tmp = F.conv1d(
-            q_inputs,
-            self.q_weights,
-            self.q_bias,
-            padding=0,
-            groups=self.groups,
-        )
+        if self.q_bias is not None:
+            tmp = F.conv1d(
+                q_inputs,
+                self.q_weights,
+                self.q_bias,
+                padding=0,
+                groups=self.groups,
+            )
+            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits + 1)
+        else:
+            tmp = F.conv1d(
+                q_inputs,
+                self.q_weights,
+                padding=0,
+                groups=self.groups,
+            )
+            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q

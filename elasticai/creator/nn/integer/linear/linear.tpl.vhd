@@ -30,7 +30,7 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1)+1;
+    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);

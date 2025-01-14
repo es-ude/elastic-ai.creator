@@ -85,7 +85,6 @@ class Linear(DesignCreatorModule, nn.Linear):
         new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
-
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
         self.bias_QParams.set_quant_range(new_bias_quant_bits)
@@ -101,6 +100,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.q_weights = self._get_quantized_weights()
         if self.bias is not None:
             self.q_bias = self._get_quantized_bias()
+        else:
+            self.q_bias = None
 
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -122,26 +123,14 @@ class Linear(DesignCreatorModule, nn.Linear):
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
-        # TODO: solve the problem of using F.linear and self.math_ops.intmatmul
-        if self.bias is not None:
-            tmp = F.linear(q_inputs, self.q_weights, self.q_bias)
-        else:
-            tmp = F.linear(q_inputs, self.q_weights)
-        # TODO: WARNING there is no bound check for tmp
+        tmp = self.math_ops.int_mac(
+            x=q_inputs,
+            w=self.q_weights,
+            b=self.q_bias,
+            x_quant_bits=self.inputs_QParams.quant_bits,
+            w_quant_bits=self.weight_QParams.quant_bits,
+        )
 
-        # if self.bias is not None:
-        #     tmp = self.math_ops.intmatmul(
-        #         q_inputs,
-        #         self.q_weights.t(),
-        #         self.bias_QParams.quant_bits,  # TODO further +1 or not
-        #     )
-        #     tmp = self.math_ops.intadd(
-        #         tmp, self.q_bias, self.bias_QParams.quant_bits + 1
-        #     )
-        # else:
-        #     tmp = self.math_ops.intmatmul(
-        #         q_inputs, self.q_weights.t(), self.outputs_QParams.quant_bits
-        #     )
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
@@ -149,6 +138,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+
         return q_outputs
 
     def forward(
