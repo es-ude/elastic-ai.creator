@@ -13,7 +13,6 @@ entity ${name}_tb is
         IN_CHANNELS : integer := ${in_channels};
         OUT_CHANNELS : integer := ${out_channels};
         SEQ_LEN : integer := ${seq_len}
-
     );
     port(
         clk : out std_logic
@@ -88,7 +87,6 @@ begin
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
-
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
             while input_rd_cnt < SEQ_LEN * IN_CHANNELS loop
