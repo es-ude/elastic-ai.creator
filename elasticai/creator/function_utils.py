@@ -5,7 +5,7 @@ Tout = TypeVar("Tout")
 FN = TypeVar("FN", bound=Callable)
 
 
-class FunctionDecoratorFactory(Generic[FN, Tout]):
+class FunctionDecorator(Generic[FN, Tout]):
     """Apply a callback to functions and either their own or custom names.
 
     IMPORTANT: if you want to use this as a decorator, do not forget to
@@ -93,14 +93,14 @@ class RegisterDescriptor(Generic[Tin, Tout]):
 
     def __get__(
         self, instance, owner=None
-    ) -> FunctionDecoratorFactory[Callable[[Tin], Tout], Callable[[Tin], Tout]]:
+    ) -> FunctionDecorator[Callable[[Tin], Tout], Callable[[Tin], Tout]]:
         cb = getattr(instance, self._cb_name)
 
         def wrapped(name: str, fn: Callable[[Tin], Tout]) -> Callable[[Tin], Tout]:
             cb(name, fn)
             return fn
 
-        return FunctionDecoratorFactory(wrapped)
+        return FunctionDecorator(wrapped)
 
 
 class KeyedFunctionDispatcher(Generic[Tin, Tout]):
