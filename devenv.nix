@@ -22,6 +22,7 @@ in
     unstablePkgs.vale  # syntax aware linter for prose
     unstablePkgs.act  # run github workflows locally
   ];
+  languages.nix.enable = true;
   languages.c.enable = true;
   languages.python = {
     enable = true;
