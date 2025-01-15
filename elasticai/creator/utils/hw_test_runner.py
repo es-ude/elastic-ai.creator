@@ -1,4 +1,4 @@
-import importlib.resources as res
+import importlib.resources as _res
 import logging as _logger
 import re
 import xml.etree.ElementTree as ET
@@ -20,8 +20,8 @@ def _get_logger() -> _logger.Logger:
 
 
 def get_paths_from_package(package: str) -> Iterator[Path]:
-    for item in res.files(package).iterdir():
-        with res.as_file(item) as f:
+    for item in _res.files(package).iterdir():
+        with _res.as_file(item) as f:
             yield f
 
 

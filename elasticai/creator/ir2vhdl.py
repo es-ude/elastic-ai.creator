@@ -1,18 +1,26 @@
 import re
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from dataclasses import dataclass
 from typing import Any, Iterator, TypeAlias, TypeVar
 
+import elasticai.creator.function_utils as F
+import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from elasticai.creator.ir import Edge as _Edge
 from elasticai.creator.ir import Graph, Lowerable, LoweringPass, RequiredField
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.ir.graph_iterators import bfs_iter_up
 from elasticai.creator.ir.helpers import Shape, ShapeTuple
-from elasticai.creator.lowering_pass_plugin import (
-    IterableTypeHandlerDecorator,
-    TypeHandlerDecorator,
-)
+from elasticai.creator.plugin import PluginLoader as _Loader
+from elasticai.creator.plugin import PluginSpec as _PluginSpec
+from elasticai.creator.plugin import PluginSymbol as _PluginSymbol
+
+
+@dataclass
+class PluginSpec(_PluginSpec):
+    generated: tuple[str, ...]
+    static_files: tuple[str, ...]
 
 
 class ShapeField(RequiredField[ShapeTuple, Shape]):
@@ -143,14 +151,18 @@ Code: TypeAlias = tuple[str, Sequence[str]]
 
 
 class Ir2Vhdl(LoweringPass[Implementation, Code]):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.__static_files: dict[str, Callable[[], str]] = {}
 
+    def register_static(self, name: str, fn: Callable[[], str]) -> None:
+        self.__static_files[name] = fn
 
-type_handler: TypeHandlerDecorator[Implementation, Code] = TypeHandlerDecorator()
-
-iterable_type_handler: IterableTypeHandlerDecorator[Implementation, Code] = (
-    IterableTypeHandlerDecorator()
-)
+    def __call__(self, args: Iterable[Implementation]) -> Iterator[Code]:
+        for name, content in super().__call__(args):
+            yield f"{name}.vhd", content
+        for name, fn in self.__static_files.items():
+            yield name, fn()
 
 
 class Signal(ABC):
@@ -387,3 +399,49 @@ class InstanceFactory(KeyedFunctionDispatcher[VhdlNode, Instance]):
             return node.type
 
         super().__init__(dispatch_key_fn=dispatch_key_fn)
+
+
+PluginSymbol: TypeAlias = _PluginSymbol[Ir2Vhdl]
+
+
+class PluginLoader(_Loader[Ir2Vhdl]):
+    """Plugin loader for ir2vhdl translation."""
+
+    def __init__(self, lowering: Ir2Vhdl):
+        fetcher = (
+            _pl.SymbolFetcherBuilder(PluginSpec).add_fn(self.__get_generated).build()
+        )
+        super().__init__(
+            extract_fn=fetcher,
+            plugin_receiver=lowering,
+        )
+
+    @staticmethod
+    def __get_generated(plugin: PluginSpec) -> Iterator[PluginSymbol]:
+        if plugin.target_runtime == "vhdl":
+            yield from _pl.import_symbol(plugin.package, plugin.generated)
+
+
+_Tcontra = TypeVar("_Tcontra", contravariant=True)
+
+TypeHandlerFn: TypeAlias = Callable[[Implementation], Code]
+
+
+def _type_handler(name: str, fn: TypeHandlerFn) -> PluginSymbol:
+    def load_into(lower: Ir2Vhdl) -> None:
+        lower.register(name)(fn)
+
+    return _pl.make_plugin_symbol(load_into, fn)
+
+
+def _type_handler_for_iterable(
+    name: str, fn: Callable[[Implementation], Iterable[Code]]
+) -> PluginSymbol:
+    def load_into(lower: Ir2Vhdl) -> None:
+        lower.register_iterable(name)(fn)
+
+    return _pl.make_plugin_symbol(load_into, fn)
+
+
+type_handler = F.FunctionDecorator(_type_handler)
+type_handler_iterable = F.FunctionDecorator(_type_handler_for_iterable)
