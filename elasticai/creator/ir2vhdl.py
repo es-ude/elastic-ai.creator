@@ -1,3 +1,4 @@
+import importlib.resources as res
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
@@ -409,17 +410,43 @@ class PluginLoader(_Loader[Ir2Vhdl]):
 
     def __init__(self, lowering: Ir2Vhdl):
         fetcher = (
-            _pl.SymbolFetcherBuilder(PluginSpec).add_fn(self.__get_generated).build()
+            _pl.SymbolFetcherBuilder(PluginSpec)
+            .add_fn(self.__get_generated)
+            .add_fn(_StaticFile.make_symbols)
+            .build()
         )
         super().__init__(
-            extract_fn=fetcher,
+            fetch=fetcher,
             plugin_receiver=lowering,
         )
 
     @staticmethod
     def __get_generated(plugin: PluginSpec) -> Iterator[PluginSymbol]:
         if plugin.target_runtime == "vhdl":
-            yield from _pl.import_symbol(plugin.package, plugin.generated)
+            yield from _pl.import_symbols(plugin.package, plugin.generated)
+
+
+class _StaticFile(_PluginSymbol[PluginLoader]):
+    def __init__(self, name: str, package: str):
+        self._name = name
+        self._package = package
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def load_into(self, receiver: Ir2Vhdl):
+        receiver.register_static(self.name, self)
+
+    @classmethod
+    def make_symbols(cls, p: PluginSpec) -> Iterator[PluginSymbol]:
+        if p.target_runtime == "vhdl":
+            for name in p.static_files:
+                yield cls(name=name, package=p.package)
+
+    def __call__(self) -> Iterator[str]:
+        file = res.files(self._package).joinpath(f"vhdl/{self.name}")
+        yield file.read_text()
 
 
 _Tcontra = TypeVar("_Tcontra", contravariant=True)
