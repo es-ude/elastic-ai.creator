@@ -1,10 +1,11 @@
 import torch
 
+from elasticai.creator.nn.quantized_grads import MathOperationsForw
 from elasticai.creator.nn.quantized_grads.base_modules import Linear
 from elasticai.creator.nn.quantized_grads.fixed_point import (
     FixedPointConfigV2,
-    MathOperationsForwHTE,
     quantize_to_fxp_stochastic_,
+    quantize_to_fxp_stochastic,
 )
 
 
@@ -17,7 +18,10 @@ def test_linear_fxp_init():
     def quantize_bias(tensor: torch.Tensor) -> None:
         quantize_to_fxp_stochastic_(tensor, conf)
 
-    ops = MathOperationsForwHTE(conf)
+    def quantize_forward(tensor: torch.Tensor) -> torch.Tensor:
+        return quantize_to_fxp_stochastic(tensor, conf)
+
+    ops = MathOperationsForw(quantize_forward)
     l = Linear(3, 2, ops, quantize_weight, bias=True, bias_quantization=quantize_bias)
 
     for qparam in l.qparams:

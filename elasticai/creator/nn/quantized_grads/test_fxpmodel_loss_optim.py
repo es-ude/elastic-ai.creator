@@ -2,13 +2,14 @@ import pytest
 import torch
 from torch.nn import Sequential
 
+from elasticai.creator.nn.quantized_grads import MathOperationsForwBackw
 from elasticai.creator.nn.quantized_grads.base_modules import Linear
 from elasticai.creator.nn.quantized_grads.fixed_point import (
     FixedPointConfigV2,
-    MathOperationsForwBackwHTE,
 )
 from elasticai.creator.nn.quantized_grads.fixed_point.quantize_to_fixed_point import (
     quantize_to_fxp_hte_,
+    quantize_to_fxp_hte,
 )
 from elasticai.creator.nn.quantized_grads.quantized_sgd import QuantizedSGD
 
@@ -85,12 +86,19 @@ class Test:
         def round_params(params: torch.Tensor) -> None:
             quantize_to_fxp_hte_(params, params_conf)
 
+        def quantize_forward(x: torch.Tensor) -> torch.Tensor:
+            return quantize_to_fxp_hte(x, forward_conf)
+
+        def quantize_backward(x: torch.Tensor) -> torch.Tensor:
+            return quantize_to_fxp_hte(x, backward_conf)
+
         nn = Sequential(
             Linear(
                 in_features=in_features,
                 out_features=out_features,
-                operations=MathOperationsForwBackwHTE(
-                    forward=forward_conf, backward=backward_conf
+                operations=MathOperationsForwBackw(
+                    forward_quantize=quantize_forward,
+                    backward_quantize=quantize_backward,
                 ),
                 weight_quantization=round_params,
                 bias_quantization=round_params,
