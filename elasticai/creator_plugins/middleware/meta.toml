@@ -1,0 +1,18 @@
+
+[[plugins]]
+name = 'middleware'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = []
+static_files = [
+  "env5_constraints.xdc",
+  "env5_reconfig_top.vhd",
+  "icapInterface.vhd",
+  "InterfaceStateMachine.vhd",
+  "middleware.vhd",
+  "spi_slave.vhd",
+  "UserLogicInterface.vhd"
+]
+
