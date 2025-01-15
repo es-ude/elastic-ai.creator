@@ -120,12 +120,17 @@ target-version = "py38"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-select = ["E4", "E7", "E9", "F"]
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "I"
+]
 ignore = [
     "D101",
     "D102",
     "E741", # ambiguous variable names
-    "F401", # unused import until we added every symbol to __all__ where necessary
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
