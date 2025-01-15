@@ -65,23 +65,32 @@ class ResidualBlock(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        self.conv1dbn_0_deisgn.save_to(
-            destination.create_subpath(self._conv1dbn_0.name)
-        )
-        self.conv1dbn_0_relu_deisgn.save_to(
-            destination.create_subpath(self._conv1dbn_0_relu.name)
-        )
-        self.conv1dbn_1_deisgn.save_to(
-            destination.create_subpath(self._conv1dbn_1.name)
-        )
+        # self.conv1dbn_0_deisgn.save_to(
+        #     destination.create_subpath(self._conv1dbn_0.name)
+        # )
+        # self.conv1dbn_0_relu_deisgn.save_to(
+        #     destination.create_subpath(self._conv1dbn_0_relu.name)
+        # )
+        # self.conv1dbn_1_deisgn.save_to(
+        #     destination.create_subpath(self._conv1dbn_1.name)
+        # )
+        # if len(self._shortcut) > 0:
+        #     for i, submodule in enumerate(self._shortcut):
+        #         self.shortcut_design[i].save_to(
+        #             destination.create_subpath(submodule.name)
+        #         )
+
+        # self.add_design.save_to(destination.create_subpath(self._add.name))
+        # self.relu_design.save_to(destination.create_subpath(self._relu.name))
+
+        self.conv1dbn_0_deisgn.save_to(destination)
+        self.conv1dbn_0_relu_deisgn.save_to(destination)
+        self.conv1dbn_1_deisgn.save_to(destination)
         if len(self._shortcut) > 0:
             for i, submodule in enumerate(self._shortcut):
-                self.shortcut_design[i].save_to(
-                    destination.create_subpath(submodule.name)
-                )
-
-        self.add_design.save_to(destination.create_subpath(self._add.name))
-        self.relu_design.save_to(destination.create_subpath(self._relu.name))
+                self.shortcut_design[i].save_to(destination)
+        self.add_design.save_to(destination)
+        self.relu_design.save_to(destination)
 
         template_parameters = dict(
             name=self.name,

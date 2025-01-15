@@ -66,24 +66,33 @@ class SepResidualBlock(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        self.depthconv1d_0_deisgn.save_to(
-            destination.create_subpath(self._depthconv1d_0.name)
-        )
-        self.pointconv1dbn_0_deisgn.save_to(
-            destination.create_subpath(self._pointconv1dbn_0.name)
-        )
-        self.pointconv1dbn_0_relu_deisgn.save_to(
-            destination.create_subpath(self._pointconv1dbn_0_relu.name)
-        )
-        self.depthconv1d_1_deisgn.save_to(
-            destination.create_subpath(self._depthconv1d_1.name)
-        )
-        self.pointconv1dbn_1_deisgn.save_to(
-            destination.create_subpath(self._pointconv1dbn_1.name)
-        )
-        self.shortcut_deisgn.save_to(destination.create_subpath(self._shortcut.name))
-        self.add_deisgn.save_to(destination.create_subpath(self._add.name))
-        self.relu_deisgn.save_to(destination.create_subpath(self._relu.name))
+        # self.depthconv1d_0_deisgn.save_to(
+        #     destination.create_subpath(self._depthconv1d_0.name)
+        # )
+        # self.pointconv1dbn_0_deisgn.save_to(
+        #     destination.create_subpath(self._pointconv1dbn_0.name)
+        # )
+        # self.pointconv1dbn_0_relu_deisgn.save_to(
+        #     destination.create_subpath(self._pointconv1dbn_0_relu.name)
+        # )
+        # self.depthconv1d_1_deisgn.save_to(
+        #     destination.create_subpath(self._depthconv1d_1.name)
+        # )
+        # self.pointconv1dbn_1_deisgn.save_to(
+        #     destination.create_subpath(self._pointconv1dbn_1.name)
+        # )
+        # self.shortcut_deisgn.save_to(destination.create_subpath(self._shortcut.name))
+        # self.add_deisgn.save_to(destination.create_subpath(self._add.name))
+        # self.relu_deisgn.save_to(destination.create_subpath(self._relu.name))
+
+        self.depthconv1d_0_deisgn.save_to(destination)
+        self.pointconv1dbn_0_deisgn.save_to(destination)
+        self.pointconv1dbn_0_relu_deisgn.save_to(destination)
+        self.depthconv1d_1_deisgn.save_to(destination)
+        self.pointconv1dbn_1_deisgn.save_to(destination)
+        self.shortcut_deisgn.save_to(destination)
+        self.add_deisgn.save_to(destination)
+        self.relu_deisgn.save_to(destination)
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
