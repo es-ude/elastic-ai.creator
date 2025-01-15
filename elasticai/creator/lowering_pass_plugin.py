@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-from elasticai.creator.function_utils import FunctionDecoratorFactory
+from elasticai.creator.function_utils import FunctionDecorator
 from elasticai.creator.ir import Lowerable
 from elasticai.creator.ir import LoweringPass as _LoweringPass
 from elasticai.creator.plugin import PluginLoader as _PluginLoader
@@ -83,7 +83,7 @@ class _GeneratedIterableCodeType(PluginSymbol, Generic[Tin, Tout]):
 
 
 class TypeHandlerDecorator(
-    FunctionDecoratorFactory[Callable[[Tin], Tout], _GeneratedCodeType[Tin, Tout]],
+    FunctionDecorator[Callable[[Tin], Tout], _GeneratedCodeType[Tin, Tout]],
     Generic[Tin, Tout],
 ):
     """Mark a function as a type handler for a lowering pass."""
@@ -93,7 +93,7 @@ class TypeHandlerDecorator(
 
 
 class IterableTypeHandlerDecorator(
-    FunctionDecoratorFactory[
+    FunctionDecorator[
         Callable[[Tin], Iterable[Tout]], _GeneratedIterableCodeType[Tin, Tout]
     ],
     Generic[Tin, Tout],
