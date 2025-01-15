@@ -14,7 +14,7 @@ def test_round_determinstic_to_fixed_point():
     conf = FixedPointConfigV2(total_bits=8, frac_bits=2)
     x = torch.arange(-2, 2.1, step=0.1, dtype=torch.float32)
 
-    actual = _round_to_fixed_point_hte(x, conf.frac_bits)
+    actual = _round_to_fixed_point_hte(x, conf.resolution_per_int)
     expected = torch.Tensor(
         [
             -2.0,
@@ -67,7 +67,7 @@ def test_round_determinstic_to_fixed_point_inplace():
     conf = FixedPointConfigV2(total_bits=8, frac_bits=2)
     x = torch.arange(-2, 2.1, step=0.1, dtype=torch.float32)
 
-    _round_to_fixed_point_hte_(x, conf.frac_bits)
+    _round_to_fixed_point_hte_(x, conf.resolution_per_int)
     actual = x
     expected = torch.Tensor(
         [
