@@ -5,8 +5,6 @@ target_runtime = "vhdl"
 version = "0.1"
 api_version = "0.1"
 generated = ["convolution" ]
-templates = [ "skeleton_id_pkg" ]
-static_files = [ "constraints.xdc" ]
 
 [[plugins]]
 name = "lowering_pass_plugin"
@@ -15,5 +13,3 @@ target_runtime = "lowering_pass_test"
 version = "0.1"
 api_version = "0.1"
 generated = ["lowering_pass_conv" ]
-templates = [  ]
-static_files = [ ]

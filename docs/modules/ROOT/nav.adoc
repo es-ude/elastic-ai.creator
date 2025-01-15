@@ -1,1 +1,3 @@
 * xref::contribution.adoc[Contribution]
+* Concepts
+** xref::plugin-system.adoc[Plugin System]
