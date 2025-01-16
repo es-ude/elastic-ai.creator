@@ -174,7 +174,7 @@ def vhdl_node(
 
 
 class Edge(_Edge):
-    src_sink_indices: tuple[tuple[int, int], ...]
+    src_sink_indices: tuple[tuple[int, int] | tuple[str, str], ...]
 
     def __hash__(self) -> int:
         return hash((self.src, self.sink, self.src_sink_indices))
