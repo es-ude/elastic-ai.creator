@@ -1,1 +1,1 @@
-from .design import Rom
+from .design import Rom as Rom

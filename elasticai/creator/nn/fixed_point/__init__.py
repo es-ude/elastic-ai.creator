@@ -1,7 +1,11 @@
-from .conv1d import BatchNormedConv1d, Conv1d
-from .hard_sigmoid import HardSigmoid
-from .hard_tanh import HardTanh
-from .linear import BatchNormedLinear, Linear
-from .precomputed import AdaptableSiLU, Sigmoid, Tanh
-from .quantization import quantize
-from .relu import ReLU
+from .conv1d import BatchNormedConv1d as BatchNormedConv1d
+from .conv1d import Conv1d as Conv1d
+from .hard_sigmoid import HardSigmoid as HardSigmoid
+from .hard_tanh import HardTanh as HardTanh
+from .linear import BatchNormedLinear as BatchNormedLinear
+from .linear import Linear as Linear
+from .precomputed import AdaptableSiLU as AdaptableSiLU
+from .precomputed import Sigmoid as Sigmoid
+from .precomputed import Tanh as Tanh
+from .quantization import quantize as quantize
+from .relu import ReLU as ReLU

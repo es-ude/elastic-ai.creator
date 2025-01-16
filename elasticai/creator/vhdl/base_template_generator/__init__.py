@@ -1,1 +1,1 @@
-from .base_template_generator import BaseTemplateGenerator
+from .base_template_generator import BaseTemplateGenerator as BaseTemplateGenerator
