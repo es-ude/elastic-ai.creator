@@ -60,7 +60,7 @@ you should usually increase the minor version.
 | The version of the plugin API (plugin system) that this plugin was
 developed against. This is used to check if the plugin is compatible
 with the current system.
-----
+|===
 
 The `PluginLoader` will read that description from the `meta.toml` file
 in a given package and use a user provided function to decide which
