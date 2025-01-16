@@ -74,7 +74,7 @@ Most other classes defined in this module are supposed to increase usability and
 """
 
 import importlib.resources as res
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from functools import partial

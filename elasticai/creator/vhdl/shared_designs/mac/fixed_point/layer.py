@@ -1,9 +1,9 @@
 from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
+from elasticai.creator.nn.fixed_point.number_converter import FXPParams
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.number_converter import FXPParams
 from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 from .design import MacDesign

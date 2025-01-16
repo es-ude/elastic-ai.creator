@@ -1,16 +1,12 @@
-import asyncio as a
 import importlib.resources as res
-import logging
 import logging as _logger
 import re
-import sys
 import xml.etree.ElementTree as ET
-from asyncio.subprocess import Process
 from collections.abc import Iterable
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import Any, AsyncIterable, Callable, Coroutine, Iterator, Literal, TypeVar
+from typing import AsyncIterable, Iterator, Literal
 
 from ._console_out import Printer
 from ._run import run_and_process_pipes, run_and_wait

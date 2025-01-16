@@ -6,13 +6,13 @@ import torch
 from elasticai.creator.base_modules.lstm import LSTM
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.nn.fixed_point.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.fixed_point.hard_tanh import HardTanh
 from elasticai.creator.nn.fixed_point.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.fixed_point.lstm.design.lstm import LSTMNetworkDesign
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 from elasticai.creator.vhdl.design.design import Design
 
 from ..math_operations import MathOperations

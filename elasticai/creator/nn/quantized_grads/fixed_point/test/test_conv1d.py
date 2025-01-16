@@ -4,8 +4,8 @@ from elasticai.creator.nn.quantized_grads import MathOperationsForw
 from elasticai.creator.nn.quantized_grads.base_modules import Conv1d
 from elasticai.creator.nn.quantized_grads.fixed_point import (
     FixedPointConfigV2,
-    quantize_to_fxp_stochastic_,
     quantize_to_fxp_stochastic,
+    quantize_to_fxp_stochastic_,
 )
 
 

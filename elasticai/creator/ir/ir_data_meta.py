@@ -1,6 +1,7 @@
-from .required_field import SimpleRequiredField, is_required_field
+from types import GenericAlias, MappingProxyType, resolve_bases
 from typing import Any, cast
-from types import GenericAlias, resolve_bases, MappingProxyType
+
+from .required_field import SimpleRequiredField, is_required_field
 
 
 class IrDataMeta(type):

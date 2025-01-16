@@ -1,6 +1,5 @@
 import logging
 import sys
-import xml.etree.ElementTree as ET
 from io import BytesIO
 
 import click

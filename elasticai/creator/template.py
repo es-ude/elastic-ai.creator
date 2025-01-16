@@ -1,9 +1,9 @@
-from typing import TypeAlias, Protocol, runtime_checkable, AnyStr
-from collections.abc import Sequence, Callable
-from string import Template as _pyTemplate
-from re import Match, Pattern, compile as _regex_compile
+from collections.abc import Callable
 from functools import singledispatchmethod
-
+from re import Match, Pattern
+from re import compile as _regex_compile
+from string import Template as _pyTemplate
+from typing import AnyStr, Protocol, TypeAlias, runtime_checkable
 
 TemplateParameter: TypeAlias = int | str
 

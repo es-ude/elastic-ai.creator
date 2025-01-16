@@ -11,10 +11,8 @@ from elasticai.creator.ir.graph_iterators import bfs_iter_up
 from elasticai.creator.ir.helpers import Shape, ShapeTuple
 from elasticai.creator.lowering_pass_plugin import (
     IterableTypeHandlerDecorator,
-    PluginSpec,
     TypeHandlerDecorator,
 )
-from elasticai.creator.lowering_pass_plugin import PluginLoader as _Loader
 
 
 class ShapeField(RequiredField[ShapeTuple, Shape]):
