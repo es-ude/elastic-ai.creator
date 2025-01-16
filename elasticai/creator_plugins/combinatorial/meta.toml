@@ -1,0 +1,10 @@
+
+[[plugins]]
+name = 'combinatorial'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = ["unclocked_combinatorial", "clocked_combinatorial"]
+static_files = []
+
