@@ -10,18 +10,19 @@
 #       follows: nixpkg
 #
 #
-
-{pkgs, inputs, lib, config, ... }:
-
-let
-  unstablePkgs = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
-  rosettaPkgs =
-    if unstablePkgs.stdenv.isDarwin && unstablePkgs.stdenv.isAarch64 then 
-      unstablePkgs.pkgsx86_64Darwin
-    else 
-      unstablePkgs;
-in
 {
+  pkgs,
+  inputs,
+  lib,
+  config,
+  ...
+}: let
+  unstablePkgs = import inputs.nixpkgs-unstable {system = pkgs.stdenv.system;};
+  rosettaPkgs =
+    if unstablePkgs.stdenv.isDarwin && unstablePkgs.stdenv.isAarch64
+    then unstablePkgs.pkgsx86_64Darwin
+    else unstablePkgs;
+in {
   options = {
     languages.vhdl = {
       enable = lib.mkOption {
@@ -39,10 +40,8 @@ in
 
   config.packages = let
     vivadoPkgs = import inputs.vivado {pkgs = pkgs;};
-  in
-    [
-      (lib.mkIf config.languages.vhdl.enable rosettaPkgs.ghdl )
-      (lib.mkIf config.languages.vhdl.vivado.enable vivadoPkgs.vivado-2020_1)
-    ];
-  
+  in [
+    (lib.mkIf config.languages.vhdl.enable rosettaPkgs.ghdl)
+    (lib.mkIf config.languages.vhdl.vivado.enable vivadoPkgs.vivado-2020_1)
+  ];
 }
