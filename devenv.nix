@@ -32,12 +32,13 @@ let
 
   packages = [
     pkgs.kramdown-asciidoc
+    pkgs.git
+    unstablePkgs.jujutsu
     pkgs.gtkwave  # visualize wave forms from hw simulations
     antoraWithKroki
     pkgs.antora  # documentation generator
     pkgs.xunit-viewer
     unstablePkgs.mypy  # python type checker
-    unstablePkgs.ruff  # linter/formatter for python
     unstablePkgs.vale  # syntax aware linter for prose
     unstablePkgs.act  # run github workflows locally
   ];
@@ -47,8 +48,8 @@ let
     package = pkgs.python311;
     uv.enable = true;
     uv.package = unstablePkgs.uv;
-    uv.sync.enable = false;
-    uv.sync.allExtras = false;
+    uv.sync.enable = true;
+    uv.sync.allExtras = true;
 
   };
 
@@ -102,24 +103,50 @@ let
   };
 
   tasks = {
-    "test:vhdl_plugins" = {
+    "check:vhdl-plugins" = {
       exec = ''echo "running testbenches for discovered plugins"
-        UV_PROJECT_ENVIRONEMNT=venv-py311 ${unstablePkgs.uv}/bin/uv run -p 3.11 eai-run-ghdl-tbs-for-plugins
+        UV_PROJECT_ENVIRONMENT=venv-py311 ${unstablePkgs.uv}/bin/uv run --frozen --isolated -p 3.11 eai-run-ghdl-tbs-for-plugins
+        rm -r venv-py311
         '';
-      before = [ "devenv:enterTest" ];
+      before = ["check:all"];
     };
 
-    "build:package" = {
+    "check:slow-tests" = {
+      exec= "${unstablePkgs.uv}/bin/uv run pytest -m 'simulation'";
+      before = ["check:all"];
+    };
+
+    "check:fast-tests" = {
+      exec= "${unstablePkgs.uv}/bin/uv run pytest -m 'not simulation'";
+      before = ["check:all"];
+    };
+
+    "check:types" = {
+      exec = "${unstablePkgs.uv}/bin/uv run mypy";
+      # before = ["devenv:enterTest"];
+    };
+
+    "check:python-lint" = {
+      exec = "${unstablePkgs.uv}/bin/uv run ruff check";
+      before = ["check:all"];
+    };
+
+    "check:formatting" = {
+      exec = "${unstablePkgs.uv}/bin/uv run ruff format --check";
+      before = ["check:all"];
+    };
+
+    "package:build" = {
       exec = "uv build";
-      before = ["build:all"];
+      before = ["all:build"];
     };
 
-    "clean:package" = {
+    "package:clean" = {
       exec = "if [ -d dist ]; then rm -r dist; fi";
-      before = ["clean:all"];
+      before = ["all:clean"];
     };
 
-     "build:docs" = let
+     "docs:build" = let
        out_dir = "docs/modules/api/pages";
        nav_file = "docs/modules/api/partials/nav.adoc";
        pkg_name = "elasticai.creator";
@@ -132,10 +159,10 @@ let
         ${pysciidoc} --api-output-dir ${out_dir} --nav-file ${nav_file} ${pkg_name}
         ${antoraWithKroki}/bin/antora docs/antora-playbook.yml
       '';
-      before = ["build:all"];
+      before = ["all:build"];
     };
 
-    "clean:docs" = {
+    "docs:clean" = {
       exec = ''
         if [ -d docs/modules/api/pages ]; then rm -r docs/modules/api/pages; fi
         if [ -e docs/modules/ROOT/pages/index.adoc ]; then rm docs/modules/ROOT/pages/index.adoc; fi
@@ -144,12 +171,13 @@ let
         if [ -d docs/modules/plugins/pages ]; then rm -r docs/modules/plugins/pages; fi
         if [ -d docs/build ]; then rm -r docs/build; fi
         '';
-      before = ["clean:all"];
+      before = ["all:clean"];
     };
 
 
-    "build:all" = {};
-    "clean:all" = {};
+    "all:build" = {};
+    "all:clean" = {};
+    "check:all" = {};
   };
 
   ## Commented out while we're configuring pre-commit manually
