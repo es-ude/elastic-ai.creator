@@ -38,6 +38,7 @@ in {
     pkgs.gtkwave # visualize wave forms from hw simulations
     pkgs.graphviz
     antoraWithKroki
+    pkgs.cocogitto
     unstablePkgs.mypy # python type checker
     unstablePkgs.vale # syntax aware linter for prose
     unstablePkgs.act # run github workflows locally
@@ -164,7 +165,13 @@ in {
     };
 
     "check:commit-lint" = {
-      exec = "${unstablePkgs.uv}/bin/uv run cog check";
+      exec = ''
+        if $CI; then
+          ${pkgs.cocogitto}/bin/cog check ..$GITHUB_SOURCE_REF
+        else
+          ${pkgs.cocogitto}/bin/cog check
+        fi
+      '';
       before = ["check:all"];
     };
 
