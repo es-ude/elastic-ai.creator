@@ -45,7 +45,7 @@ let
   languages.c.enable = true;
   languages.python = {
     enable = true;
-    package = pkgs.python311;
+    package = pkgs.python310;
     uv.enable = true;
     uv.package = unstablePkgs.uv;
     uv.sync.enable = true;
