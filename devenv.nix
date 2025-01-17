@@ -9,12 +9,31 @@
 let
   unstablePkgs = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
   pyp = pkgs.python310Packages;
-in
+  asciidoctorKroki = pkgs.buildNpmPackage {
+     pname = "asciidoctor-kroki";
+     version = "0.17.0";
+     src = pkgs.fetchFromGitHub {
+       owner = "Mogztter";
+       repo = "asciidoctor-kroki";
+       rev = "v0.17.0";
+       sha256 = "sha256-N1zDTNjIA4jHa+h3mHLQJTJApmbPueAZpv0Jbm2H31o=";
+     };
+     npmDepsHash = "sha256-DU7zBkACn26Ia4nx5cby0S2weTNE3kMNg080yR1knjw=";
+     dontNpmBuild = true;
+     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "1";
+   };
+     antoraWithKroki = pkgs.writeShellScriptBin "antora" ''
+       export NODE_PATH=${asciidoctorKroki}/lib/node_modules:${pkgs.antora}/lib/node_modules
+       exec ${pkgs.antora}/bin/antora "$@"
+     '';
+   in
+ 
 {
 
   packages = [
     pkgs.kramdown-asciidoc
     pkgs.gtkwave  # visualize wave forms from hw simulations
+    antoraWithKroki
     pkgs.antora  # documentation generator
     pkgs.xunit-viewer
     unstablePkgs.mypy  # python type checker
@@ -111,7 +130,7 @@ in
         ${pkgs.kramdown-asciidoc}/bin/kramdoc README.md -o docs/modules/ROOT/pages/index.adoc
         ${pkgs.kramdown-asciidoc}/bin/kramdoc CONTRIBUTION.md -o docs/modules/ROOT/pages/contribution.adoc
         ${pysciidoc} --api-output-dir ${out_dir} --nav-file ${nav_file} ${pkg_name}
-        ${pkgs.antora}/bin/antora docs/antora-playbook.yml
+        ${antoraWithKroki}/bin/antora docs/antora-playbook.yml
       '';
       before = ["build:all"];
     };
