@@ -38,6 +38,7 @@ in {
     pkgs.gtkwave # visualize wave forms from hw simulations
     pkgs.graphviz
     antoraWithKroki
+    pkgs.cocogitto
     unstablePkgs.mypy # python type checker
     unstablePkgs.vale # syntax aware linter for prose
     unstablePkgs.act # run github workflows locally
@@ -137,12 +138,12 @@ in {
       exec = ''
         run_vhdl_tbs . "run_tbs.py"
       '';
-      before = ["check:all"];
+      before = ["check:tests"];
     };
 
     "check:slow-tests" = {
       exec = "${unstablePkgs.uv}/bin/uv run pytest -m 'simulation'";
-      before = ["check:all"];
+      before = ["check:tests"];
     };
 
     "check:fast-tests" = {
@@ -150,7 +151,7 @@ in {
         ${unstablePkgs.uv}/bin/uv run coverage run
         ${unstablePkgs.uv}/bin/uv run coverage xml
       '';
-      before = ["check:all"];
+      before = ["check:tests"];
     };
 
     "check:types" = {
@@ -160,22 +161,28 @@ in {
 
     "check:python-lint" = {
       exec = "${unstablePkgs.uv}/bin/uv run ruff check";
-      before = ["check:all"];
+      before = ["check:code-lint"];
     };
 
     "check:commit-lint" = {
-      exec = "${unstablePkgs.uv}/bin/uv run cog check";
+      exec = ''
+        if $CI; then
+          ${pkgs.cocogitto}/bin/cog check ..$GITHUB_SOURCE_REF
+        else
+          ${pkgs.cocogitto}/bin/cog check
+        fi
+      '';
       before = ["check:all"];
     };
 
     "check:nix-lint" = {
       exec = "${pkgs.alejandra}/bin/alejandra --exclude ./.devenv.flake.nix -c .";
-      before = ["check:all"];
+      before = ["check:code-lint"];
     };
 
     "check:formatting" = {
       exec = "${unstablePkgs.uv}/bin/uv run ruff format --check";
-      before = ["check:all"];
+      before = ["check:code-lint"];
     };
 
     "package:build" = {
@@ -218,8 +225,18 @@ in {
       after = ["check:all"];
     };
 
+    "check:code-lint" = {
+      before = ["check:all"];
+    };
+
+    "check:tests" = {
+      before = ["check:all"];
+    };
+
     "all:build" = {};
+
     "all:clean" = {};
+
     "check:all" = {
       exec = "";
       before = ["devenv:enterTest"];
