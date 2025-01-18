@@ -25,26 +25,11 @@ dev = [
     "pysciidoc>=0.3.3",
 ]
 release = ["git-cliff>=2.7.0"]
-testing = [
-    "pytest>=8.3.4",
-    "pytest-cov>=6.0.0",
-    "coverage>=7.6.9",
-]
-utils = [
-    "rust-just>=1.38.0",
-]
-versioning = [
-    "towncrier>=24.8.0",
-]
-lint = [
-    "mypy>=1.13.0",
-    "ruff>=0.9.0",
-]
-lsp = [
-    "pylsp-mypy>=0.6.9",
-    "pylsp-rope>=0.1.17",
-    "python-lsp-server>=1.12.0",
-]
+testing = ["pytest>=8.3.4", "pytest-cov>=6.0.0", "coverage>=7.6.9"]
+utils = ["rust-just>=1.38.0"]
+versioning = ["towncrier>=24.8.0"]
+lint = ["mypy>=1.13.0", "ruff>=0.9.0"]
+lsp = ["pylsp-mypy>=0.6.9", "pylsp-rope>=0.1.17", "python-lsp-server>=1.12.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -66,26 +51,25 @@ elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.e
 [tool.pytest.ini_options]
 minversion = "6.0"
 markers = [
-  "simulation: possibly slow running integration tests including hw simulation",
+    "simulation: possibly slow running integration tests including hw simulation",
 ]
 testpaths = ["elasticai/creator/", "tests", "elasticai/creator_plugins"]
 python_files = ["*_test.py", "test_*.py"]
-
+addopts = "--import-mode=importlib"
 
 [tool.coverage.run]
 omit = [
-  "elasticai/creator/examples/*py",
-  "elasticai/creator/tests/*py",
-  "elasticai/creator/*Tests/*py",
-  "elasticai/creator/**/*_test.py",
-  "elasticai/**/__init__.py",
-  "tests/*py",
-  "elasticai/creator/utils/_console_out.py",  # not testable
-  "elasticai/creator/utils/_run.py",  # not testable
+    "elasticai/creator/examples/*py",
+    "elasticai/creator/tests/*py",
+    "elasticai/creator/*Tests/*py",
+    "elasticai/creator/**/*_test.py",
+    "elasticai/**/__init__.py",
+    "tests/*py",
+    "elasticai/creator/utils/_console_out.py", # not testable
+    "elasticai/creator/utils/_run.py",         # not testable
 ]
 source = ["elasticai/creator", "elasticai/creator_plugins"]
 command_line = "-m pytest -m 'not simulation'"
-
 
 
 [tool.ruff]
@@ -136,12 +120,7 @@ target-version = "py38"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-select = [
-    "E4",
-    "E7",
-    "E9",
-    "F",
-]
+select = ["E4", "E7", "E9", "F"]
 ignore = [
     "D101",
     "D102",
