@@ -2,8 +2,8 @@ from typing import Any, cast
 
 from elasticai.creator.base_modules.linear import Linear as LinearBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.fixed_point._math_operations import MathOperations
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.math_operations import MathOperations
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.linear.design import LinearDesign

@@ -11,7 +11,7 @@ from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point import Conv1d
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5

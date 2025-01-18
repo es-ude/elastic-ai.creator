@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from tests.system_tests.helper.parse_tensors_to_bytearray import (

@@ -1,6 +1,6 @@
 from elasticai.creator.file_generation.savable import Savable
-from elasticai.creator.nn.fixed_point._math_operations import MathOperations
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.math_operations import MathOperations
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.number_converter import FXPParams

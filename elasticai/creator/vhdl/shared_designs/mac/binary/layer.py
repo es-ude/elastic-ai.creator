@@ -1,5 +1,5 @@
 from elasticai.creator.file_generation.savable import Savable
-from elasticai.creator.nn.binary._math_operations import MathOperations
+from elasticai.creator.nn.binary.math_operations import MathOperations
 
 from .design import MacDesign
 from .mactestbench import MacTestBench

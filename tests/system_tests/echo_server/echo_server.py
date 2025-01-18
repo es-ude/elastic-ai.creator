@@ -9,7 +9,7 @@ import torch
 from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.vhdl.system_integrations.plug_and_play_solution_ENV5 import (
