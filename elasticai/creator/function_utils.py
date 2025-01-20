@@ -64,9 +64,19 @@ class FunctionDecorator(Generic[FN, Tout]):
         """Register `fn` using its own name."""
         ...
 
-    def __call__(self, arg: FN | str, /) -> Tout | Callable[[FN], Tout]:
+    @overload
+    def __call__(self, name: str, fn: FN, /) -> Callable[[FN], Tout]:
+        """Register function by name."""
+        ...
+
+    def __call__(
+        self, arg: FN | str, arg2: FN | None = None, /
+    ) -> Tout | Callable[[FN], Tout]:
         if isinstance(arg, str):
-            return self.__reg_by_name(arg)
+            if arg2 is None:
+                return self.__reg_by_name(arg)
+            else:
+                return self.__reg_by_name(arg)(arg2)
         return self.__reg(arg)
 
     def __reg_by_name(self, name: str) -> Callable[[FN], Tout]:
