@@ -1,5 +1,5 @@
 from elasticai.creator.file_generation.savable import Savable
-from elasticai.creator.nn.binary._math_operations import MathOperations
+from elasticai.creator.nn.binary.math_operations import MathOperations
 
 from .design import MacDesign
 from .mactestbench import MacTestBench
@@ -14,7 +14,7 @@ class MacLayer:
     def __call__(self, a, b):
         return self.ops.matmul(a, b)
 
-    def create_design(self, name: str) -> Savable:
+    def create_design(self, name: str) -> MacDesign:
         return MacDesign(vector_width=self._vector_width, name=name)
 
     def create_testbench(self, name: str, design: MacDesign) -> MacTestBench:

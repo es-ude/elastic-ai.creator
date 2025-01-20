@@ -1,0 +1,5 @@
+= `Utils`
+
+The `utils` module has the following utilities:
+
+* xref:elasticai-creator:utils:ghdl-test-runner.adoc[`GHDL` testbench runner]

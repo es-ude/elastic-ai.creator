@@ -3,8 +3,8 @@ from typing import Any, cast
 
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.fixed_point._math_operations import MathOperations
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.math_operations import MathOperations
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign

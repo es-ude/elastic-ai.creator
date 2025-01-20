@@ -1,7 +1,7 @@
 from torch import Tensor
 
-from ._math_operations import MathOperations as _FxpOperations
-from ._two_complement_fixed_point_config import FixedPointConfig as _FxpConfig
+from .math_operations import MathOperations as _FxpOperations
+from .two_complement_fixed_point_config import FixedPointConfig as _FxpConfig
 
 
 def quantize(x: Tensor, total_bits: int, frac_bits: int) -> Tensor:

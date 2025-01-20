@@ -2,7 +2,7 @@ import glob
 import os
 import subprocess
 
-from ._ghdl_report_parsing import parse_report
+from .ghdl_report_parsing import parse_report
 
 
 class SimulationError(Exception):

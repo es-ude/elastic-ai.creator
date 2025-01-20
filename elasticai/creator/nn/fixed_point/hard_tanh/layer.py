@@ -1,6 +1,6 @@
 from elasticai.creator.base_modules.hard_tanh import HardTanh as HardTanhBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 

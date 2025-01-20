@@ -23,6 +23,7 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
     - [Modules in Development](#modules-in-development)
     - [Deprecated Modules](#deprecated-modules-removal-up-to-discussion)
     - [General Limitations](#general-limitations)
+  - [Structure of the Project](#structure-of-the-project)
 
 
 
@@ -87,3 +88,9 @@ Furthermore, it will generate a skeleton for the Elastic Node V5 that you can us
 By now we only support sequential models for our translations.
 That excludes skip and residual connections.
 
+## Structure of the Project
+
+The structure of the project is as follows.
+The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
+It also includes the supported target representations, like the subfolder [nn](elasticai/creator/nn) is for the translation to vhdl.
+Additionally, we have unit and integration tests in the [tests](tests) folder.

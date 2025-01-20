@@ -4,7 +4,7 @@ from typing import Protocol
 from .attribute import Attribute
 
 
-class IrData(Protocol):
+class _IrData(Protocol):
     _fields: dict[str, type]
     data: dict[str, Attribute]
 
@@ -34,6 +34,12 @@ class _ReadOnlyMappingWithHiddenFields(Mapping[str, Attribute]):
             raise KeyError(f"key not found '{k}'.")
         return self._mapping[k]
 
+    def __or__(self, other: Mapping[str, Attribute]) -> Mapping[str, Attribute]:
+        return dict(self) | other
+
+    def __ror__(self, other: Mapping[str, Attribute]) -> Mapping[str, Attribute]:
+        return other | dict(self)
+
 
 class AttributesDescriptor:
     """Read values from the `data` dict, while hiding key, value that show up
@@ -46,5 +52,5 @@ class AttributesDescriptor:
     NOTE: The returned Mapping is read only
     """
 
-    def __get__(self, instance: IrData, owner=type[IrData] | None):
+    def __get__(self, instance: _IrData, owner=type[_IrData] | None):
         return _ReadOnlyMappingWithHiddenFields(instance.data, instance._fields)
