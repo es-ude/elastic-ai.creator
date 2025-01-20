@@ -1,0 +1,10 @@
+
+[[plugins]]
+name = 'buffered_network_wrapper'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = ["buffered_network_wrapper"]
+static_files = []
+

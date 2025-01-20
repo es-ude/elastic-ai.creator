@@ -1,0 +1,9 @@
+$ version 1.1
+
+/**/clk
+/striding_shift_register_tb/y
+/striding_shift_register_tb/x
+
+/striding_shift_register_tb/register_valid
+/striding_shift_register_tb/dut_i/reg_i/valid_in
+/striding_shift_register_tb/input_valid

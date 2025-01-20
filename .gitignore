@@ -262,6 +262,7 @@ justfile
 .ropeproject/
 .ruff_cache
 .pytest_cache
+.devenv*/
 .jj
 venv-py311
 

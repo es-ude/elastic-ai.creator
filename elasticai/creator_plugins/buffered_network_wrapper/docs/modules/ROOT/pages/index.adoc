@@ -1,0 +1,60 @@
+= Buffered network wrapper
+
+The current skeleton implementation uses an address based interface. But many VHDL plugins use an interface resembling AXI.
+The buffered network wrapper acts as an adapter between these two interfaces.
+It will:
+
+. receive input data from the middleware
+. remove padding from the input data
+. buffer the result
+. use a sliding window to feed the buffered data to the network
+. pad output data for the middleware
+
+
+[IMPORTANT]
+.Connecting to a neural network
+====
+The wrapper instantiates the network as
+
+[,vhdl]
+----
+network_i: entity work.network(rtl) ...
+----
+
+Make sure to define your network as such.
+====
+
+== Network interface
+
+The wrapper expects the network to define the following interface:
+
+|===
+| Name | Type | Description
+
+| `clk`
+| `std_logic`
+| Clock signal
+
+| `valid_in`
+| `std_logic`
+| `'1'` on *rising* edge signals valid input data
+
+| `valid_out`
+| `std_logic`
+| `'1'` on *rising* edge signals valid output data
+
+| `rst`
+| `std_logic`
+a| asynchronous reset
+
+* set to `'1'` to reset the network
+* set to `'0'` to release the reset and allow processing
+
+| `d_in`
+| `std_logic_vector`
+| input data window
+
+| `d_out`
+| `std_logic_vector`
+| all output data
+|===
