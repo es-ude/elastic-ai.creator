@@ -1,4 +1,5 @@
 from typing import Protocol, TypeVar, runtime_checkable
+
 from typing_extensions import Self
 
 from .attribute import Attribute

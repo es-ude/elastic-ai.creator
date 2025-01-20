@@ -1,1 +1,1 @@
-from .quantization import quantize
+from .quantization import quantize as quantize

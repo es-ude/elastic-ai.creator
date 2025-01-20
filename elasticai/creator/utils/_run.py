@@ -1,9 +1,8 @@
-import logging as _logger
-from typing import Any, Coroutine, TypeVar, Generic
-from asyncio.subprocess import Process as _Process
 import asyncio as a
-from collections.abc import Callable, AsyncIterable
-
+import logging as _logger
+from asyncio.subprocess import Process as _Process
+from collections.abc import AsyncIterable, Callable
+from typing import Any, Coroutine, Generic, TypeVar
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

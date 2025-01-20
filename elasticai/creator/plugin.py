@@ -60,7 +60,7 @@ you should usually increase the minor version.
 | The version of the plugin API (plugin system) that this plugin was
 developed against. This is used to check if the plugin is compatible
 with the current system.
-----
+|===
 
 The `PluginLoader` will read that description from the `meta.toml` file
 in a given package and use a user provided function to decide which
@@ -74,7 +74,7 @@ Most other classes defined in this module are supposed to increase usability and
 """
 
 import importlib.resources as res
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from functools import partial

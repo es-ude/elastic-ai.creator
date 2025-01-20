@@ -1,6 +1,6 @@
 import csv
-from typing import Any
 from pathlib import Path as PyPath
+from typing import Any
 
 from elasticai.creator.file_generation.savable import Path
 

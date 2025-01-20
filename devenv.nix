@@ -111,10 +111,6 @@ in
         ${pkgs.kramdown-asciidoc}/bin/kramdoc README.md -o docs/modules/ROOT/pages/index.adoc
         ${pkgs.kramdown-asciidoc}/bin/kramdoc CONTRIBUTION.md -o docs/modules/ROOT/pages/contribution.adoc
         ${pysciidoc} --api-output-dir ${out_dir} --nav-file ${nav_file} ${pkg_name}
-        ${pysciidoc} \
-          --api-output-dir docs/modules/plugins/pages \
-          --nav-file docs/modules/plugins/partials/nav.adoc \
-          elasticai.creator_plugins
         ${pkgs.antora}/bin/antora docs/antora-playbook.yml
       '';
       before = ["build:all"];
