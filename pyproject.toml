@@ -1,6 +1,6 @@
 [project]
 name = "elasticai.creator"
-version = "0.60.0"
+dynamic = ["version"]
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 authors = [{ name = "Department Embedded Systems - University Duisburg Essen" }]
@@ -20,6 +20,7 @@ eai-run-ghdl-tbs-for-plugins = "elasticai.creator.utils.run_ghdl_tbs_for_plugins
 [dependency-groups]
 dev = [
     "build>=1.2.2.post1",
+    "hatch>=1.14.0",
     "ipykernel>=6.29.5",
     "pre-commit>=4.0.1",
     "pysciidoc>=0.3.3",
@@ -32,12 +33,15 @@ lint = ["mypy>=1.13.0", "ruff>=0.9.0"]
 lsp = ["pylsp-mypy>=0.6.9", "pylsp-rope>=0.1.17", "python-lsp-server>=1.12.0"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["elasticai"]
 exclude = ["*_test.py", "test_*.py"]
+
+[tool.hatch.version]
+source = "vcs"
 
 
 [tool.uv]
