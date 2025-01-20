@@ -37,8 +37,18 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["elasticai"]
-exclude = ["*_test.py", "test_*.py"]
+exclude = [
+    "*_test.py", 
+    "test_*.py",
+    "elasticai/creator_plugins/*/tests",
+    "elasticai/creator_plugins/*/examples",
+    "elasticai/creator_plugins/*/docs",
+]
+only-include = [
+    "elasticai/creator", 
+    "elasticai/creator_plugins"
+]
+
 
 [tool.hatch.version]
 source = "vcs"

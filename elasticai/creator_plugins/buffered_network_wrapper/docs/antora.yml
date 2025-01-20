@@ -1,0 +1,5 @@
+name: buffered-network-wrapper
+version: true
+title: buffered network wrapper
+nav:
+  - modules/ROOT/nav.adoc
