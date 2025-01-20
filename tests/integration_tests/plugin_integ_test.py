@@ -1,31 +1,23 @@
-import dataclasses
-from collections.abc import Callable, Iterable, Iterator
-from functools import partial
-from inspect import signature
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 
 import pytest
 
+import elasticai.creator.plugin as pl
 from elasticai.creator.ir import Lowerable, LoweringPass
-from elasticai.creator.lowering_pass_plugin import (
-    PluginLoader as LoweringPassPluginLoader,
-)
-from elasticai.creator.lowering_pass_plugin import (
-    PluginSpec,
-)
-from elasticai.creator.plugin import (
-    PluginDict,
-    PluginLoader,
-    build_plugin_spec,
-    read_plugin_dicts_from_package,
-)
+
+
+@dataclass
+class PluginSpec(pl.PluginSpec):
+    generated: tuple[str, ...]
 
 
 @pytest.fixture
 def plugin() -> PluginSpec:
-    p = list(read_plugin_dicts_from_package("tests.integration_tests.minimal_plugin"))[
-        0
-    ]
-    return build_plugin_spec(p, PluginSpec)
+    p = list(
+        pl.read_plugin_dicts_from_package("tests.integration_tests.minimal_plugin")
+    )[0]
+    return pl.build_plugin_spec(p, PluginSpec)
 
 
 def test_can_read_plugin(plugin) -> None:
@@ -38,8 +30,6 @@ def test_can_read_plugin(plugin) -> None:
             version="0.1",
             api_version="0.1",
             generated=("convolution",),
-            templates=("skeleton_id_pkg",),
-            static_files=("constraints.xdc",),
             package="tests.integration_tests.minimal_plugin",
         )
         == p
@@ -69,15 +59,14 @@ def test_can_load_entire_plugin(
 ) -> None:
     lower: LoweringPass[DummyLowerable, str] = LoweringPass()
 
-    def extract_symbols(data: Iterable[PluginDict]) -> Iterator[tuple[str, set[str]]]:
-        plugins = map(partial(build_plugin_spec, spec_type=PluginSpec), data)
-        for p in plugins:
-            print(p)
-            if p.target_runtime != "vhdl":
-                continue
-            yield f"{p.package}.src", set(p.generated)
+    def extract_symbols(p: PluginSpec) -> Iterator[pl.PluginSymbol]:
+        if p.target_runtime == "vhdl":
+            yield from pl.import_symbols(f"{p.package}.src", set(p.generated))
 
-    loader = PluginLoader(extract_fn=extract_symbols, plugin_receiver=lower)
+    loader = pl.PluginLoader(
+        fetch=pl.SymbolFetcherBuilder(PluginSpec).add_fn(extract_symbols).build(),
+        plugin_receiver=lower,
+    )
     lowerable = make_lowerable(["some", "important", "information"])
     loader.load_from_package("tests.integration_tests.minimal_plugin")
     print(lower.__dict__["_fns"].__dict__["_fns"])
@@ -90,8 +79,13 @@ def test_can_load_lowering_pass_plugin(
 ) -> None:
     lower: LoweringPass[DummyLowerable, str] = LoweringPass()
 
-    loader = LoweringPassPluginLoader(
-        target_runtime="lowering_pass_test", lowering=lower
+    def fetch(p: PluginSpec) -> Iterator[pl.PluginSymbol]:
+        if p.target_runtime == "lowering_pass_test":
+            yield from pl.import_symbols(f"{p.package}.src", set(p.generated))
+
+    loader = pl.PluginLoader(
+        fetch=pl.SymbolFetcherBuilder(PluginSpec).add_fn(fetch).build(),
+        plugin_receiver=lower,
     )
     lowerable = DummyLowerable(
         "lowering_pass_conv", ["some", "important", "information"]
