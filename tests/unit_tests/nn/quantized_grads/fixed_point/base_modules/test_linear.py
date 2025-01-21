@@ -2,21 +2,25 @@ import torch
 
 from elasticai.creator.nn.quantized_grads.base_modules import Linear
 from elasticai.creator.nn.quantized_grads.fixed_point import (
-    FixedPointConfigV2, QuantizeParamToFixedPointHTE, QuantizeParamToFixedPointStochastic,
-    QuantizeForwHTE
+    FixedPointConfigV2,
+    QuantizeForwHTE,
+    QuantizeParamToFixedPointHTE,
+    QuantizeParamToFixedPointStochastic,
 )
 
 
 def test_conv1d_fxp_init():
     conf = FixedPointConfigV2(8, 3)
 
-    l = Linear(QuantizeForwHTE(conf),
-               2,
-               3,
-               QuantizeParamToFixedPointHTE(conf),
-               True,
-               bias_quantization=QuantizeParamToFixedPointStochastic(conf))
+    l = Linear(
+        QuantizeForwHTE(conf),
+        2,
+        3,
+        QuantizeParamToFixedPointHTE(conf),
+        True,
+        bias_quantization=QuantizeParamToFixedPointStochastic(conf),
+    )
 
-    #print(l.)
+    # print(l.)
     x = torch.randn(1, 1, 2)
     y = l(x)

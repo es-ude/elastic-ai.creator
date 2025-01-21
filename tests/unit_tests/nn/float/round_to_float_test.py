@@ -3,9 +3,8 @@ from typing import cast
 import pytest
 import torch
 
-from tests.tensor_test_case import assertTensorEqual
-
 from elasticai.creator.nn.float.round_to_float import RoundToFloat
+from tests.tensor_test_case import assertTensorEqual
 
 
 def roundToFloat(

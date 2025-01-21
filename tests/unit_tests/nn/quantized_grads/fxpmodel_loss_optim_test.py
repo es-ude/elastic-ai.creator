@@ -1,13 +1,16 @@
 import pytest
 import torch
-from torch import Tensor
-from torch.nn import Sequential, Module
+from torch.nn import Sequential
 from torch.optim import SGD
 
 from elasticai.creator.nn.quantized_grads.base_modules import Linear
-from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2, QuantizeParamToFixedPointHTE, \
-    QuantizeForwHTEBackwHTE
+from elasticai.creator.nn.quantized_grads.fixed_point import (
+    FixedPointConfigV2,
+    QuantizeForwHTEBackwHTE,
+    QuantizeParamToFixedPointHTE,
+)
 from elasticai.creator.nn.quantized_grads.quantized_optim import get_quantized_optimizer
+
 
 class Test1:
     def test_pred(self, pred: torch.Tensor) -> None:
@@ -72,7 +75,9 @@ class Test1:
 
         nn = Sequential(
             Linear(
-                math_ops=QuantizeForwHTEBackwHTE(forward_conf=forward_conf, backward_conf=backward_conf),
+                math_ops=QuantizeForwHTEBackwHTE(
+                    forward_conf=forward_conf, backward_conf=backward_conf
+                ),
                 in_features=in_features,
                 out_features=out_features,
                 weight_quantization=QuantizeParamToFixedPointHTE(params_conf),
@@ -81,24 +86,24 @@ class Test1:
             )
         )
         nn[0].weight = torch.reshape(
-                input=torch.arange(
-                    start=0,
-                    end=(out_features * in_features) / (2**params_conf_frac_bits),
-                    step=1 / (2**params_conf_frac_bits),
-                    requires_grad=True,
-                    dtype=torch.float32,
-                ),
-                shape=nn[0].weight.shape,
+            input=torch.arange(
+                start=0,
+                end=(out_features * in_features) / (2**params_conf_frac_bits),
+                step=1 / (2**params_conf_frac_bits),
+                requires_grad=True,
+                dtype=torch.float32,
+            ),
+            shape=nn[0].weight.shape,
         )
         nn[0].bias = torch.reshape(
-                input=torch.arange(
-                    start=0,
-                    end=out_features / (2**params_conf_frac_bits),
-                    step=1 / (2**params_conf_frac_bits),
-                    dtype=torch.float32,
-                ),
-                shape=nn[0].bias.shape,
-            )
+            input=torch.arange(
+                start=0,
+                end=out_features / (2**params_conf_frac_bits),
+                step=1 / (2**params_conf_frac_bits),
+                dtype=torch.float32,
+            ),
+            shape=nn[0].bias.shape,
+        )
         return nn
 
     @pytest.fixture(scope="class")
@@ -197,10 +202,11 @@ class Test2:
             frac_bits=grad_conf_frac_bits,
         )
 
-
         nn = Sequential(
             Linear(
-                math_ops=QuantizeForwHTEBackwHTE(forward_conf=forward_conf, backward_conf=backward_conf),
+                math_ops=QuantizeForwHTEBackwHTE(
+                    forward_conf=forward_conf, backward_conf=backward_conf
+                ),
                 in_features=in_features,
                 out_features=out_features,
                 weight_quantization=QuantizeParamToFixedPointHTE(params_conf),

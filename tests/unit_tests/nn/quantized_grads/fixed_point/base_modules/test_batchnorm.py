@@ -1,7 +1,9 @@
 from elasticai.creator.nn.quantized_grads.base_modules import BatchNorm2d
 from elasticai.creator.nn.quantized_grads.fixed_point import (
-    FixedPointConfigV2, QuantizeParamToFixedPointStochastic, QuantizeParamToFixedPointHTE,
-QuantizeForwHTE
+    FixedPointConfigV2,
+    QuantizeForwHTE,
+    QuantizeParamToFixedPointHTE,
+    QuantizeParamToFixedPointStochastic,
 )
 
 
