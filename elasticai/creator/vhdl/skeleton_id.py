@@ -42,6 +42,7 @@ def replace_id_in_vhdl(code: Iterable[str], id: bytes) -> Iterable[str]:
 
 
 def update_skeleton_id_in_build_dir(build_dir: Path) -> None:
+    """insert the id into the skeleton_pkg.vhd file under `build_dir`."""
     logger = logging.getLogger(__name__)
     logger.debug("updating skeleton id")
     skeleton_pkg = None
@@ -53,7 +54,12 @@ def update_skeleton_id_in_build_dir(build_dir: Path) -> None:
             return False
         return True
 
-    files_to_hash = filter(is_not_skeleton_pkg, build_dir.glob("*/**"))
+    def files_recursive():
+        for f in build_dir.glob("**/*"):
+            if f.is_file():
+                yield f
+
+    files_to_hash = filter(is_not_skeleton_pkg, files_recursive())
     id = compute_skeleton_id_hash(files_to_hash)
     logger.debug(f"computed id is {id!r}")
     if skeleton_pkg is None:
