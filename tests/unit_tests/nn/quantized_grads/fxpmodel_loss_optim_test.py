@@ -6,8 +6,8 @@ from elasticai.creator.nn.quantized_grads import MathOperationsForwBackw
 from elasticai.creator.nn.quantized_grads.base_modules import Linear
 from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2
 from elasticai.creator.nn.quantized_grads.fixed_point.quantize_to_fixed_point import (
-    quantize_to_fxp_hte_,
     quantize_to_fxp_hte,
+    quantize_to_fxp_hte_,
 )
 from elasticai.creator.nn.quantized_grads.quantized_sgd import QuantizedSGD
 

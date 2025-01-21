@@ -5,7 +5,6 @@ from typing import cast
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-
 from elasticai.creator.vhdl.shared_designs.rom.design import Rom
 
 

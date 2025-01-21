@@ -1,5 +1,4 @@
 import torch
-from torch import Tensor
 
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,

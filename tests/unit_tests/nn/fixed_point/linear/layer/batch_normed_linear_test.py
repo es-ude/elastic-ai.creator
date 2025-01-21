@@ -1,12 +1,15 @@
+from dataclasses import dataclass
 from unittest import TestCase, main
 
-from dataclasses import dataclass
-from torch import Tensor, tensor, zeros, cat, testing
-from torch.nn import Sequential, Linear, BatchNorm1d
+from torch import Tensor, cat, tensor, testing, zeros
+from torch.nn import BatchNorm1d, Linear, Sequential
+
 from elasticai.creator.nn import Sequential as SequentialCreator
 from elasticai.creator.nn.fixed_point import (
-    Linear as LinearCreator,
     BatchNormedLinear as BatchNormedLinearCreator,
+)
+from elasticai.creator.nn.fixed_point import (
+    Linear as LinearCreator,
 )
 
 

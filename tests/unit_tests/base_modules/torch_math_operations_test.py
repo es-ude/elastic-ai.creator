@@ -1,8 +1,7 @@
 import torch
 
-from tests.tensor_test_case import TensorTestCase
-
 from elasticai.creator.base_modules.torch_math_operations import TorchMathOperations
+from tests.tensor_test_case import TensorTestCase
 
 
 class TorchMathOperationsTest(TensorTestCase):

@@ -3,12 +3,11 @@ from typing import Callable
 import pytest
 import torch
 
+from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
+from elasticai.creator.nn.fixed_point.conv1d.testbench import Conv1dTestbench
+from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.ports import Port
-
-from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
-from elasticai.creator.nn.fixed_point.conv1d.testbench import Conv1dTestbench
-from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
 
 
 class DummyConv1d:

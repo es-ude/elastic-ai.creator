@@ -3,12 +3,11 @@ from typing import Callable
 import pytest
 import torch
 
+from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
+from elasticai.creator.nn.fixed_point.linear.testbench import LinearTestbench
+from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.ports import Port
-
-from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
-from elasticai.creator.nn.fixed_point.linear.testbench import LinearTestbench
-from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
 
 
 class DummyLinear:
