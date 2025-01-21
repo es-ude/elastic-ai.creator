@@ -3,10 +3,9 @@ from dataclasses import dataclass
 import torch
 from torch.nn.parameter import Parameter
 
-from tests.tensor_test_case import TensorTestCase
-
 from elasticai.creator.base_modules.linear import Linear, MathOperations
 from elasticai.creator.base_modules.torch_math_operations import TorchMathOperations
+from tests.tensor_test_case import TensorTestCase
 
 
 def tensor(data: list) -> torch.Tensor:

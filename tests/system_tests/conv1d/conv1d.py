@@ -1,12 +1,9 @@
-import atexit
 import subprocess
-import time
-import tomllib
 from pathlib import Path
 
 import serial
+import tomllib
 import torch
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
@@ -15,6 +12,7 @@ from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
+from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
     parse_bytearray_to_fxp_tensor,
     parse_fxp_tensor_to_bytearray,

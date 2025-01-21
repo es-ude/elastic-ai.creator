@@ -1,12 +1,12 @@
 from pathlib import Path
+
 import pytest
 import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
-from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
-
 from elasticai.creator.vhdl.shared_designs.mac.binary.layer import MacLayer
+from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 sw_function_test_data = [
     [[[1, 1, 1], [-1, 1, -1]], [[1, 1, 1], [-1, 1, 1]]],

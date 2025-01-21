@@ -1,8 +1,8 @@
-from elasticai.creator.file_generation.in_memory_path import InMemoryPath, InMemoryFile
-from elasticai.creator.nn.sequential import Sequential
-from elasticai.creator.nn.fixed_point.conv1d import Conv1d
-
 import pytest
+
+from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.fixed_point.conv1d import Conv1d
+from elasticai.creator.nn.sequential import Sequential
 from elasticai.creator.vhdl.design.design import Design
 
 

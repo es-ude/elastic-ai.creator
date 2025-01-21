@@ -1,12 +1,10 @@
 import atexit
 import pathlib
 import subprocess
-import time
-import tomllib
 
 import serial  # type: ignore
+import tomllib
 import torch
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
@@ -15,6 +13,7 @@ from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
 from elasticai.creator.vhdl.system_integrations.plug_and_play_solution_ENV5 import (
     FirmwareEchoServerSkeletonV2,
 )
+from elasticai.runtime.env5.usb import UserRemoteControl  # type: ignore
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
     parse_bytearray_to_fxp_tensor,
     parse_fxp_tensor_to_bytearray,
@@ -99,7 +98,7 @@ if __name__ == "__main__":
     inputs = fxp_conf.as_rational(fxp_conf.as_integer(x))
     inference_data = parse_fxp_tensor_to_bytearray(inputs, total_bits, frac_bits)
 
-    print(f"Start inference")
+    print("Start inference")
     inference_result = list()
     for batch_data in inference_data:
         batch_result = urc.inference_with_data(batch_data, num_outputs)
