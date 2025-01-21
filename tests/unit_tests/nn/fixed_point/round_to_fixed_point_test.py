@@ -3,12 +3,11 @@ from typing import cast
 import pytest
 import torch
 
-from tests.tensor_test_case import assertTensorEqual
-
 from elasticai.creator.nn.fixed_point.round_to_fixed_point import RoundToFixedPoint
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
+from tests.tensor_test_case import assertTensorEqual
 
 
 def roundToFxp(inputs: list[float] | torch.Tensor) -> torch.Tensor:

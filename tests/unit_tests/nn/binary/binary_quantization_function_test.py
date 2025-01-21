@@ -4,9 +4,8 @@ from typing import cast
 import torch
 from torch import Tensor, tensor
 
-from tests.tensor_test_case import TensorTestCase
-
 from elasticai.creator.nn.binary.binary_quantization_function import Binarize
+from tests.tensor_test_case import TensorTestCase
 
 
 def binarize(x: Tensor) -> Tensor:

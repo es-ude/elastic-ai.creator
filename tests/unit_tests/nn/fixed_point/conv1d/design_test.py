@@ -3,7 +3,6 @@ from typing import cast
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
 
 
