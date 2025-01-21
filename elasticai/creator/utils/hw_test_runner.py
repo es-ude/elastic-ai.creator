@@ -179,6 +179,15 @@ class TestBench:
 
 
 class VhdlTestBenchRunner:
+    """Discover/Compile/Run testbenches inside `vhdl` folders of plugins.
+
+    The runner will consider all vhdl files in `vhdl` folders of other
+    plugins to belong to the work library.
+
+    WARNING:: This behaviour will surely change in the future, as it does
+    not scale.
+    """
+
     def __init__(self, report: TestBenchReport) -> None:
         self.vhd_files: list[Path] = []
         self._log = _get_logger()
@@ -273,7 +282,7 @@ class VhdlTestBenchRunner:
     def _collect_files(self) -> None:
         self._log.debug("collecting vhd files")
         for f in get_paths_from_package(CREATOR_PLUGIN_NAMESPACE):
-            for sub_path in f.glob("**/*.vhd"):
+            for sub_path in f.glob("*/vhdl/*.vhd"):
                 if "middleware" not in sub_path.parts:
                     self._log.debug("collecting {}".format(sub_path.name))
                     self.vhd_files.append(sub_path)
