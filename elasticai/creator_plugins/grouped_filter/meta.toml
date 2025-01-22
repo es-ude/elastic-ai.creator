@@ -1,0 +1,10 @@
+
+[[plugins]]
+name = 'grouped_filter'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'native'
+target_platform = 'native'
+generated = ["grouped_filter"]
+
+
