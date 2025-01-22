@@ -133,5 +133,9 @@ path = "elasticai.creator_plugins.grouped_filter"
 depends_on = ["elasticai.creator.ir2vhdl", "elasticai.creator.function_utils", "elasticai.creator.plugin"]
 
 [[modules ]]
+path = "elasticai.creator_plugins.time_multiplexed_sequential"
+depends_on = ["elasticai.creator.function_utils", "elasticai.creator.ir2vhdl", "elasticai.creator.plugin", "elasticai.creator_plugins.grouped_filter", "elasticai.creator.ir"]
+
+[[modules ]]
 path = "<root>"
-depends_on = ["elasticai.creator.nn.fixed_point", "elasticai.creator.file_generation", "elasticai.creator.nn", "elasticai.creator.vhdl"]
+depends_on = ["elasticai.creator.vhdl", "elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.nn"]
