@@ -29,8 +29,9 @@ class RequiredField(Generic[StoredT, VisibleT]):
 
     E.g.
     ```python
-    >>> class A:
-    ...    number: MandatoryField[str, int] = MandatoryField(set_transform=str, get_transform=int)
+    >>> from elasticai.creator.ir import IrData
+    >>> class A(IrData):
+    ...    number: RequiredField[str, int] = RequiredField(set_transform=str, get_transform=int)
     >>> a = A({'number': "12"})
     >>> a.number = a.number + 3
     >>> a.data
