@@ -32,6 +32,9 @@ let
 
   packages = [
     pkgs.kramdown-asciidoc
+    pkgs.git
+    pkgs.pikchr
+    unstablePkgs.jujutsu
     pkgs.gtkwave  # visualize wave forms from hw simulations
     antoraWithKroki
     pkgs.antora  # documentation generator
