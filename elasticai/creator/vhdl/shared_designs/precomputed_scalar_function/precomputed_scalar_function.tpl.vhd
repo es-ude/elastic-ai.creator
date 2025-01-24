@@ -17,7 +17,7 @@ architecture rtl of ${name} is
 begin
     signed_x <= signed(x);
     y <= std_logic_vector(signed_y);
-    ${name}_process : process(x)
+    ${name}_process : process(x, signed_x)
     begin
         ${process_content}
     end process;
