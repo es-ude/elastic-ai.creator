@@ -1,3 +1,8 @@
 * xref::contribution.adoc[Contribution]
 * Concepts
 ** xref::plugin-system.adoc[Plugin System]
+** xref:elasticai-creator::ir2vhdl.adoc[Concepts of Ir2Vhdl Translation]
+
+
+* Builtin Plugins
+** xref:shift_register::index.adoc[Shift Register]
