@@ -11,9 +11,7 @@ from elasticai.creator.nn.integer.hadamardproduct import HadamardProduct
 from elasticai.creator.nn.integer.hardsigmoid import HardSigmoid
 from elasticai.creator.nn.integer.hardtanh import HardTanh
 from elasticai.creator.nn.integer.linear import Linear
-from elasticai.creator.nn.integer.quant_utils.lstmcell.design import (
-    LSTMCell as LSTMCellDesign,
-)
+from elasticai.creator.nn.integer.lstmcell.design import LSTMCell as LSTMCellDesign
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 
@@ -151,8 +149,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         pass
 
     def precompute(self) -> None:
-        assert not self.training, "int_forward should be called in eval mode"
-
         self.concatenate.precompute()
         self.i_gate_linear.precompute()
         self.f_gate_linear.precompute()
@@ -171,6 +167,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.fc_hadamard_product.precompute()
         self.ic_hadamard_product.precompute()
         self.hc_hadamard_product.precompute()
+
+        self.precomputed = True
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
         file_path = file_dir / f"{file_name}.txt"
@@ -328,18 +326,18 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_c_next_inputs1,
             self.quant_data_file_dir,
-            f"{self.c_next_addition.name}q_x_1",
+            f"{self.c_next_addition.name}_q_x_1",
         )
         self._save_quant_data(
             q_c_next_inputs2,
             self.quant_data_file_dir,
-            f"{self.c_next_addition.name}q_x_2",
+            f"{self.c_next_addition.name}_q_x_2",
         )
         q_c_next = self.c_next_addition.int_forward(
             q_inputs1=q_c_next_inputs1, q_inputs2=q_c_next_inputs2
         )
         self._save_quant_data(
-            q_c_next, self.quant_data_file_dir, f"{self.c_next_addition.name}q_y"
+            q_c_next, self.quant_data_file_dir, f"{self.c_next_addition.name}_q_y"
         )
 
         # next hidden state
@@ -476,4 +474,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             given_inputs1_QParams=self.o_sigmoid.outputs_QParams,
             given_inputs2_QParams=self.h_tanh.outputs_QParams,
         )
+
+        self.h_next_QParams = self.hc_hadamard_product.outputs_QParams
+        self.c_next_QParams = self.c_next_addition.outputs_QParams
+
         return h_next, c_next
