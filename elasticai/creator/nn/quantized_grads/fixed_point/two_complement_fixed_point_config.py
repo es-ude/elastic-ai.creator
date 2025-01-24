@@ -1,10 +1,9 @@
-import dataclasses
 from dataclasses import dataclass
 
 import torch
 
 
-@dataclass
+@dataclass(frozen=True)
 class FixedPointConfigV2:
     """
     This class behaves almost like a frozen instance,
@@ -14,7 +13,6 @@ class FixedPointConfigV2:
 
     total_bits: int
     frac_bits: int
-    device: torch.device = torch.get_default_device()
 
     def __post_init__(self):
         """
@@ -31,24 +29,15 @@ class FixedPointConfigV2:
                 f"total bits-1 needs to be > frac bits for {self.__class__.__name__}."
                 f"You have set {self.total_bits=} and {self.frac_bits=}."
             )
-        self.minimum_as_rational_tensor = torch.Tensor(
-            [-(2 ** (self.total_bits - self.frac_bits - 1))]
-        ).to(device=self.device)
-        self.maximum_as_rational_tensor = torch.Tensor(
-            [-self.minimum_as_rational_tensor - 1 / (2**self.frac_bits)]
-        ).to(device=self.device)
-        self.resolution_per_int = torch.Tensor([2**self.frac_bits]).to(
-            device=self.device
-        )
 
-    def __setattr__(self, name, value):
-        if hasattr(self, "resolution_per_int"):
-            raise dataclasses.FrozenInstanceError(self.__class__.__name__, name)
-        else:
-            super().__setattr__(name, value)
+    @property
+    def minimum_as_rational(self):
+        return torch.Tensor([-(2 ** (self.total_bits - self.frac_bits - 1))])
 
-    def __delattr__(self, name):
-        if hasattr(self, "resolution_per_int"):
-            raise dataclasses.FrozenInstanceError(self.__class__.__name__, name)
-        else:
-            super().__delattr__(name)
+    @property
+    def maximum_as_rational(self):
+        return torch.Tensor([-self.minimum_as_rational - 1 / (2**self.frac_bits)])
+
+    @property
+    def resolution_per_int(self):
+        return torch.Tensor([2**self.frac_bits])

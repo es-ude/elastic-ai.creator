@@ -1,30 +1,39 @@
-from typing import Any, Callable, Protocol
+from typing import Any
 
-import torch
+from torch import Tensor
 from torch.nn import Linear as TorchLinear
-
-from elasticai.creator.base_modules.math_operations import Add, MatMul, Quantize
-from elasticai.creator.nn.quantized_grads.quantized_parameters import (
-    QuantizationSchemeByName,
-    QuantizedParameters,
-)
+from torch.nn import Module
+from torch.nn.utils import parametrize as P
 
 
-class _Linear(TorchLinear):
-    """
-    This class is a facade for Linear to allow clean multiple inheritance for Linear.
+class Linear(TorchLinear):
+    """A linear layer.
+    The weights and bias are fake quantized during initialization.
+    Make sure that math_ops is a module where all needed tensors are part of it,
+    so they can be moved to the same device.
+    Make sure that weight_quantization and bias_quantization are modules that implement the forward function.
+    If you want to quantize during initialization or only apply quantized updates make sure to use a quantized optimizer
+    and implement the right_inverse method for your module.
     """
 
     def __init__(
         self,
+        math_ops: Module,
         in_features: int,
         out_features: int,
+        weight_quantization: Module,
         bias: bool,
+        bias_quantization: Module = None,
         device: Any = None,
         dtype: Any = None,
-        *args,
-        **kwargs,
-    ):
+    ) -> None:
+        if bias ^ isinstance(bias_quantization, Module):
+            raise Exception(
+                f"if bias is True, bias_quantization can needs be set. "
+                f"If not it is not allowed to be set."
+                f"You have choosen {bias=} and {bias_quantization=}."
+            )
+
         super().__init__(
             in_features=in_features,
             out_features=out_features,
@@ -32,56 +41,11 @@ class _Linear(TorchLinear):
             device=device,
             dtype=dtype,
         )
+        P.register_parametrization(self, "weight", weight_quantization)
+        if bias:
+            P.register_parametrization(self, "bias", bias_quantization)
+        self.add_module("math_ops", math_ops)
 
-
-class MathOperations(Quantize, Add, MatMul, Protocol): ...
-
-
-class Linear(_Linear, QuantizedParameters):
-    """This module implements a linear layer.
-    The output of the convolution is fake quantized. The weights and bias are fake quantized during initialization.
-    To keep the weights quantized use only optimizers that apply a quantized update.
-    IMPORTANT: use only in-place operators for your quantize implementations
-    """
-
-    def __init__(
-        self,
-        in_features: int,
-        out_features: int,
-        operations: MathOperations,
-        weight_quantization: Callable[[torch.Tensor], None],
-        bias: bool,
-        bias_quantization: Callable[[torch.Tensor], None] = None,
-        device: Any = None,
-        dtype: Any = None,
-    ) -> None:
-        if bias ^ isinstance(bias_quantization, Callable):
-            raise Exception(
-                f"if bias is True, bias_quantization can needs be set. "
-                f"If not it is not allowed to be set."
-                f"You have choosen {bias=} and {bias_quantization=}."
-            )
-
-        params = [QuantizationSchemeByName("weight", weight_quantization)]
-        if bias is not False:
-            params.append(QuantizationSchemeByName("bias", bias_quantization))
-        super(Linear, self).__init__(
-            in_features=in_features,
-            out_features=out_features,
-            bias=bias,
-            device=device,
-            dtype=dtype,
-        )
-        self.qparams = params
-        self._operations = operations
-        weight_quantization(self.weight.data)
-        if bias is not False:
-            bias_quantization(self.bias.data)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.bias is not None:
-            return self._operations.add(
-                self._operations.matmul(x, self.weight.T), self.bias
-            )
-
-        return self._operations.matmul(x, self.weight.T)
+    def forward(self, x: Tensor) -> Tensor:
+        # return super().forward(x)
+        return self.math_ops(super().forward(x))
