@@ -91,7 +91,7 @@ class LinearDesign(Design, LinearDesignProtocol):
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="linear.tpl.vhd",
+            file_name="linear_new.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
                 weights_rom_name=rom_name["weights"],
