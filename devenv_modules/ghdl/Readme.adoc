@@ -1,0 +1,31 @@
+= Vhdl devenv module
+
+The module provides ghdl (using rosetta on apple silicon) and vivado.
+As long as devenv does not support composition of devenv.yaml files
+you have to ensure that your devenv.yaml contains
+
+[source, nix]
+----
+inputs:
+  vivado:
+    url: github:lschuermann/nur-packages
+	inputs:
+	  nixpkgs:
+	    follows: nixpkgs
+----
+This will make the nix build rules for vivado available.
+
+You have to download the vivado installer yourself from
+ https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Unified_2020.1_0602_1208.tar.gz
+and add it to your nix store.
+Since this is a large file (35GiB) you probably need to use this method https://nixos.wiki/wiki/Cheatsheet#Adding_files_to_the_store
+and add it to your nix store.
+
+.Available Options
+[source, nix]
+----
+ languages.vhdl = {
+  enable = false;
+  vivado.enable = false;
+};
+----

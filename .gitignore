@@ -246,12 +246,10 @@ Temporary Items
 
 # Ignore .pyc files
 *.pyc
-/elasticai/creator/nn/fixed_point/linear/fp_linear.tpl copy.vhd
-/presentation/presentation.html
-/presentation/presentation.pdf
 /vhdl93-bnf.html
-.devenv/
+.devenv*
 .direnv/
+devenv.local.nix
 build/
 justfile
 .zed/
