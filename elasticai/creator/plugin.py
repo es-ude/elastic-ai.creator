@@ -85,7 +85,7 @@ from dataclasses import dataclass
 from functools import partial, update_wrapper
 from importlib import import_module as _import_module
 from inspect import signature as _signature
-from typing import Generic, ParamSpec, Protocol, TypeAlias, TypeVar
+from typing import Generic, ParamSpec, Protocol, TypeAlias, TypeVar, Union
 
 import tomlkit as toml
 
@@ -111,7 +111,7 @@ class PluginSpec:
     package: str
 
 
-PluginDict: TypeAlias = dict[str, str | tuple[str, ...]]
+PluginDict: TypeAlias = dict[str, Union[str, tuple[str, ...], "PluginDict"]]
 
 _PlRecT = TypeVar("_PlRecT", contravariant=True)
 _T = TypeVar("_T")
@@ -272,22 +272,21 @@ def make_plugin_symbol(
 
 
 def build_plugin_spec(d: PluginDict, spec_type: type[PluginSpecT]) -> PluginSpecT:
-    """inspect spec_type and build an instance of it from the dictionary `d` raising an error in case of unexpected fields or missing fields."""
-    args = {k: tuple(v) if not isinstance(v, str) else v for k, v in d.items()}
+    """inspect spec_type and build an instance of it from the dictionary `d`.
+
+    Missing field raise an error while extra fields will be ignored.
+    """
+    args = d
     s = _signature(spec_type)
     expected_params = set(s.parameters.keys())
     actual_params = set(args.keys())
     if expected_params != actual_params:
-        if expected_params.issubset(actual_params):
-            raise UnexpectedFieldError(
-                actual_params.difference(expected_params), spec_type
-            )
-        else:
+        if actual_params.intersection(expected_params).issubset(expected_params):
             raise MissingFieldError(
                 expected_params.difference(actual_params), spec_type
             )
-    bound = s.bind(**args)
-    return spec_type(*bound.args, **bound.kwargs)
+    bound = {k: args[k] for k in s.parameters.keys()}
+    return spec_type(**bound)  # type: ignore
 
 
 def read_plugin_dicts_from_package(package: str) -> Iterable[PluginDict]:
@@ -301,13 +300,6 @@ def read_plugin_dicts_from_package(package: str) -> Iterable[PluginDict]:
     for d in parsed:
         d.update(dict(package=package))
     return parsed
-
-
-class UnexpectedFieldError(Exception):
-    def __init__(self, field_names: set[str], plugin_type: type[PluginSpecT]):
-        super().__init__(
-            f"unexpected fields {field_names} for plugin spec '{plugin_type.__qualname__}' \n\tmake sure you are trying to load the correct plugin and the meta.toml file is correct!"
-        )
 
 
 class MissingFieldError(Exception):
