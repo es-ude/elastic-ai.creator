@@ -27,7 +27,7 @@ class MathOperations(LinearOps, Conv1dOps, LSTMOps):
         return cast(torch.Tensor, RoundToFixedPoint.apply(a, self.config))
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self._clamp(a + b)
+        return self.quantize(a + b)
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return self.quantize(torch.matmul(a, b))
