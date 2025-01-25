@@ -5,7 +5,7 @@ description = "Design, train and compile neural networks optimized specifically 
 readme = "README.md"
 authors = [{ name = "Department Embedded Systems - University Duisburg Essen" }]
 maintainers = [{ name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "torch>=1.11",
     "numpy>=1.23.0",

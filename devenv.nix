@@ -8,7 +8,6 @@
 
 let
   unstablePkgs = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
-  pyp = pkgs.python310Packages;
   asciidoctorKroki = pkgs.buildNpmPackage {
      pname = "asciidoctor-kroki";
      version = "0.17.0";
