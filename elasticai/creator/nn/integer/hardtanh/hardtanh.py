@@ -44,6 +44,9 @@ class HardTanh(DesignCreatorModule, nn.Module):
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+        # inputs = self.inputs_QParams.dequantize(q_inputs)
+        # outputs = self.hardtanh(inputs)
+        # q_outputs = self.outputs_QParams.quantize(outputs)
 
         q_outputs = torch.where(
             q_inputs > self.quantized_one, self.quantized_one, q_inputs

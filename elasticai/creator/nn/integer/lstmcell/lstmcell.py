@@ -14,6 +14,7 @@ from elasticai.creator.nn.integer.linear import Linear
 from elasticai.creator.nn.integer.lstmcell.design import LSTMCell as LSTMCellDesign
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 
 
 class LSTMCell(DesignCreatorModule, nn.Module):
@@ -86,8 +87,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.c_tanh = HardTanh(
             name=self.name + "_c_tanh", quant_bits=quant_bits, device=device
         )
-        self.h_tanh = HardTanh(
-            name=self.name + "_h_tanh", quant_bits=quant_bits, device=device
+        self.c_next_tanh = HardTanh(
+            name=self.name + "_c_next_tanh", quant_bits=quant_bits, device=device
         )
 
         self.c_next_addition = Addition(
@@ -112,8 +113,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=quant_bits,
             device=device,
         )
-        self.hc_hadamard_product = HadamardProduct(
-            name=self.name + "_hc_hadamard_product",
+        self.oc_hadamard_product = HadamardProduct(
+            name=self.name + "_oc_hadamard_product",
             num_features=hidden_size,
             num_dimensions=1,
             quant_bits=quant_bits,
@@ -126,10 +127,10 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.h_prev_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        self.c_prev_QParams = AsymmetricSignedQParams(
+        self.h_next_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        self.h_next_QParams = AsymmetricSignedQParams(
+        self.c_prev_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
@@ -160,13 +161,13 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.o_sigmoid.precompute()
 
         self.c_tanh.precompute()
-        self.h_tanh.precompute()
+        self.c_next_tanh.precompute()
 
         self.c_next_addition.precompute()
 
         self.fc_hadamard_product.precompute()
         self.ic_hadamard_product.precompute()
-        self.hc_hadamard_product.precompute()
+        self.oc_hadamard_product.precompute()
 
         self.precomputed = True
 
@@ -192,7 +193,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             q_c_prev, self.quant_data_file_dir, f"{self.name}_q_c_prev"
         )
 
-        # concatenate operation
         self._save_quant_data(
             q_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_x"
         )
@@ -214,6 +214,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_i_gate_outputs, self.quant_data_file_dir, f"{self.i_gate_linear.name}_q_y"
         )
+
         # forget gate
         self._save_quant_data(
             q_concated_inputs,
@@ -224,6 +225,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_f_gate_outputs, self.quant_data_file_dir, f"{self.f_gate_linear.name}_q_y"
         )
+
         # output gate
         self._save_quant_data(
             q_concated_inputs,
@@ -234,6 +236,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_o_gate_outputs, self.quant_data_file_dir, f"{self.o_gate_linear.name}_q_y"
         )
+
         # cell gate
         self._save_quant_data(
             q_concated_inputs,
@@ -258,6 +261,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.i_sigmoid.name}_q_y",
         )
+
         # forget gate
         self._save_quant_data(
             q_f_gate_outputs,
@@ -270,6 +274,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.f_sigmoid.name}_q_y",
         )
+
         # output gate
         self._save_quant_data(
             q_o_gate_outputs,
@@ -282,6 +287,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.o_sigmoid.name}_q_y",
         )
+
         # cell gate
         self._save_quant_data(
             q_c_gate_outputs, self.quant_data_file_dir, f"{self.c_tanh.name}_q_x"
@@ -308,6 +314,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.fc_hadamard_product.name}_q_y",
         )
+
         # ic dot product
         self._save_quant_data(
             q_i_gate_sigmoid_outputs,
@@ -322,6 +329,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.ic_hadamard_product.name}_q_y",
         )
+
         # addition
         self._save_quant_data(
             q_c_next_inputs1,
@@ -341,30 +349,33 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
 
         # next hidden state
-        # h tanh
+        # c_next tanh
         self._save_quant_data(
-            q_c_next, self.quant_data_file_dir, f"{self.h_tanh.name}_q_x"
+            q_c_next, self.quant_data_file_dir, f"{self.c_next_tanh.name}_q_x"
         )
-        q_h_tanh_ouputs = self.h_tanh.int_forward(q_inputs=q_c_next)
+        q_c_next_tanh_ouputs = self.c_next_tanh.int_forward(q_inputs=q_c_next)
         self._save_quant_data(
-            q_h_tanh_ouputs, self.quant_data_file_dir, f"{self.h_tanh.name}_q_y"
+            q_c_next_tanh_ouputs,
+            self.quant_data_file_dir,
+            f"{self.c_next_tanh.name}_q_y",
         )
-        # hc dot product
+
+        # oc dot product
         self._save_quant_data(
             q_o_gate_sigmoid_outputs,
             self.quant_data_file_dir,
-            f"{self.hc_hadamard_product.name}_q_x_1",
+            f"{self.oc_hadamard_product.name}_q_x_1",
         )
         self._save_quant_data(
-            q_h_tanh_ouputs,
+            q_c_next_tanh_ouputs,
             self.quant_data_file_dir,
-            f"{self.hc_hadamard_product.name}_q_x_2",
+            f"{self.oc_hadamard_product.name}_q_x_2",
         )
-        q_h_next = self.hc_hadamard_product.int_forward(
-            q_inputs1=q_o_gate_sigmoid_outputs, q_inputs2=q_h_tanh_ouputs
+        q_h_next = self.oc_hadamard_product.int_forward(
+            q_inputs1=q_o_gate_sigmoid_outputs, q_inputs2=q_c_next_tanh_ouputs
         )
         self._save_quant_data(
-            q_h_next, self.quant_data_file_dir, f"{self.hc_hadamard_product.name}_q_y"
+            q_h_next, self.quant_data_file_dir, f"{self.oc_hadamard_product.name}_q_y"
         )
 
         self._save_quant_data(
@@ -400,7 +411,9 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             else:
                 self.c_prev_QParams = given_c_prev_QParams
 
-        # concatenate operation
+        h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
+        c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
+
         concated_inputs = self.concatenate.forward(
             inputs1=h_prev,
             inputs2=inputs,
@@ -451,6 +464,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             given_inputs1_QParams=self.f_sigmoid.outputs_QParams,
             given_inputs2_QParams=self.c_prev_QParams,
         )
+
         c_next_inputs2 = self.ic_hadamard_product.forward(
             inputs1=i_gate_sigmoid_outputs,
             inputs2=c_gate_tanh_outputs,
@@ -465,17 +479,15 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
 
         # next hidden state
-        h_tanh_outputs = self.h_tanh.forward(
+        c_next_tanh_outputs = self.c_next_tanh.forward(
             inputs=c_next, given_inputs_QParams=self.c_next_addition.outputs_QParams
         )
-        h_next = self.hc_hadamard_product.forward(
+        h_next = self.oc_hadamard_product.forward(
             inputs1=o_gate_sigmoid_outputs,
-            inputs2=h_tanh_outputs,
+            inputs2=c_next_tanh_outputs,
             given_inputs1_QParams=self.o_sigmoid.outputs_QParams,
-            given_inputs2_QParams=self.h_tanh.outputs_QParams,
+            given_inputs2_QParams=self.c_next_tanh.outputs_QParams,
         )
-
-        self.h_next_QParams = self.hc_hadamard_product.outputs_QParams
+        self.h_next_QParams = self.oc_hadamard_product.outputs_QParams
         self.c_next_QParams = self.c_next_addition.outputs_QParams
-
         return h_next, c_next

@@ -27,11 +27,18 @@ class Sequential(_SequentialBase):
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
-        outputs = inputs
+        print(f"-------------------{self.name}-------------------")
+        print("given_inputs_QParams: ", given_inputs_QParams)
+        # print(f"inputs: {inputs}")
         for submodule in self.submodules:
-            # outputs = submodule(outputs)
-            outputs = submodule(outputs, given_inputs_QParams=given_inputs_QParams)
+            print(f"-------------------{submodule.name}-------------------")
+            outputs = submodule(inputs, given_inputs_QParams=given_inputs_QParams)
+            print("given_inputs_QParams: ", given_inputs_QParams)
+            # print("submodule.outputs_QParams: ", submodule.outputs_QParams)
+            inputs = outputs
+            print("submodule.outputs_QParams: ", submodule.outputs_QParams)
             given_inputs_QParams = submodule.outputs_QParams
+            print(f"outputs: {outputs}")
         return outputs
 
     def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
@@ -51,6 +58,7 @@ class Sequential(_SequentialBase):
         assert self.precomputed, "precompute() should be called before int_forward()"
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
         # print(f"-------------------{self.name}-------------------")
+        # print(f"q_inputs: {q_inputs}")
         # i = 0
         for submodule in self.submodules:
             self._save_quant_data(
@@ -62,8 +70,10 @@ class Sequential(_SequentialBase):
             self._save_quant_data(
                 q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
             )
+            # print(f"q_outputs: {q_outputs}")
+            # print("dq_outputs: ", submodule.outputs_QParams.dequantize(q_outputs))
             # i += 1
-            # if i == 4:
+            # if i == 1:
             #     break
         self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
         return q_outputs

@@ -18,6 +18,8 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
         inputs_size = kwargs.get("inputs_size")
         self.hidden_size = kwargs.get("hidden_size")
         self.num_layers = kwargs.get("num_layers")
+        seq_len = kwargs.get("seq_len")
+        self.batch_size = kwargs.get("batch_size")
 
         self.name = kwargs.get("name")
         quant_bits = kwargs.get("quant_bits")
@@ -31,6 +33,8 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
                     inputs_size=inputs_size,
                     hidden_size=self.hidden_size,  # TODO: check if this is correct
                     quant_bits=quant_bits,
+                    seq_len=seq_len,
+                    batch_size=self.batch_size,
                     name=self.name + f"lstm_layer_{i}",
                     quant_data_file_dir=self.quant_data_file_dir,
                     device=device,
@@ -66,12 +70,10 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
         assert self.precomputed, "precompute should be called before int_forward"
 
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
-
-        batch_size = q_inputs.size(0)
-        q_h_prev = torch.zeros(batch_size, self.hidden_size, dtype=torch.int32).to(
-            q_inputs.device
+        q_h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.int32).to(
+            "cpu"
         )
-
+        q_h_prev = self.q_h_prev
         for layer in self.lstm_layers:
             q_h_next = layer.int_forward(q_inputs=q_inputs, q_h_prev=q_h_prev)
             q_h_prev = q_h_next
@@ -79,7 +81,6 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_h_next, self.quant_data_file_dir, f"{self.name}_q_h_next"
         )
-
         return q_h_next
 
     def forward(
@@ -93,14 +94,26 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_QParams = given_inputs_QParams
 
-        batch_size = inputs.size(0)
-        h_prev = torch.zeros(batch_size, self.hidden_size, dtype=torch.float32).to(
-            inputs.device
-        )
+        # h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+        #     inputs.device
+        # )
+        h_prev = torch.randn(self.batch_size, self.hidden_size).to(inputs.device) * 1e-5
 
+        given_h_prev_QParams = None
         for layer in self.lstm_layers:
-            h_next = layer.forward(inputs=inputs, h_prev=h_prev)
+            h_next = layer.forward(
+                inputs=inputs,
+                h_prev=h_prev,
+                given_inputs_QParams=self.inputs_QParams,
+                given_h_prev_QParams=given_h_prev_QParams,
+            )
             h_prev = h_next
+            print("layer.outputs_QParams: ", layer.outputs_QParams)
+            given_h_prev_QParams = layer.outputs_QParams
 
-        self.outputs_QParams = self.lstm_layers[-1].h_next_QParams
+        print(
+            "self.lstm_layers[-1].outputs_QParams: ",
+            self.lstm_layers[-1].outputs_QParams,
+        )
+        self.outputs_QParams = self.lstm_layers[-1].outputs_QParams
         return h_next

@@ -58,7 +58,6 @@ class MathOperations:
         assert w.dtype == torch.int32
 
         tmp = F.linear(x, w)
-        # tmp = x.matmul(w.t())
 
         tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
         self.clamp_result(tmp, tmp_quant_bits)
