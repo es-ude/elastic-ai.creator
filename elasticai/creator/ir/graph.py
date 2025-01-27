@@ -3,6 +3,7 @@ from typing import Generic, TypeVar
 
 from .core import Edge, Node
 from .graph_delegate import GraphDelegate
+from .graph_iterators import bfs_iter_down, bfs_iter_up, dfs_pre_order
 
 N = TypeVar("N", bound=Node)
 E = TypeVar("E", bound=Edge)
@@ -59,6 +60,23 @@ class Graph(Generic[N, E]):
     @property
     def edges(self) -> Mapping[tuple[str, str], E]:
         return _ReadOnlyMappingInOrderAsIterable(self._g.iter_edges, self._edge_data)
+
+    def iter_bfs_down_from(self, node: str) -> Iterator[N]:
+        nodes = self.nodes
+        for name in bfs_iter_down(
+            self._g.get_predecessors, self._g.get_successors, node
+        ):
+            yield nodes[name]
+
+    def iter_bfs_up_from(self, node: str) -> Iterator[N]:
+        nodes = self.nodes
+        for name in bfs_iter_up(self._g.get_predecessors, self._g.get_successors, node):
+            yield nodes[name]
+
+    def iter_dfs_preorder_down_from(self, node: str) -> Iterator[N]:
+        nodes = self.nodes
+        for name in dfs_pre_order(self._g.get_successors, node):
+            yield nodes[name]
 
 
 _K = TypeVar("_K")

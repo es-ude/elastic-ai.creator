@@ -1,9 +1,11 @@
 import importlib.resources as res
+import operator
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any, Iterator, TypeAlias, TypeVar
+from functools import reduce
+from typing import Any, Iterator, TypeAlias, TypeGuard, TypeVar, overload
 
 import elasticai.creator.function_utils as F
 import elasticai.creator.plugin as _pl
@@ -11,8 +13,6 @@ from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from elasticai.creator.ir import Edge as _Edge
 from elasticai.creator.ir import Graph, Lowerable, LoweringPass, RequiredField
 from elasticai.creator.ir import Node as _Node
-from elasticai.creator.ir.graph_iterators import bfs_iter_up
-from elasticai.creator.ir.helpers import Shape, ShapeTuple
 from elasticai.creator.plugin import PluginLoader as _Loader
 from elasticai.creator.plugin import PluginSpec as _PluginSpec
 from elasticai.creator.plugin import PluginSymbol as _PluginSymbol
@@ -22,6 +22,91 @@ from elasticai.creator.plugin import PluginSymbol as _PluginSymbol
 class PluginSpec(_PluginSpec):
     generated: tuple[str, ...]
     static_files: tuple[str, ...]
+
+
+ShapeTuple: TypeAlias = tuple[int] | tuple[int, int] | tuple[int, int, int]
+
+
+def is_shape_tuple(values) -> TypeGuard[ShapeTuple]:
+    max_num_values = 3
+    return len(values) <= max_num_values
+
+
+class Shape:
+    @overload
+    def __init__(self, width: int, /) -> None: ...
+
+    @overload
+    def __init__(self, depth: int, width: int, /) -> None: ...
+
+    @overload
+    def __init__(self, depth: int, width: int, height: int, /) -> None: ...
+
+    def __init__(self, *values: int) -> None:
+        """values are interpreted as one of the following:
+        - width
+        - depth, width
+        - depth, width, height
+
+        Usually width is kernel_size, depth is channels
+        """
+
+        if is_shape_tuple(values):
+            self._data = values
+        else:
+            raise TypeError(f"taking at most three ints, given {values}")
+
+    @classmethod
+    def from_tuple(cls, values: ShapeTuple) -> "Shape":
+        return cls(*values)  # type ignore
+
+    def to_tuple(self) -> ShapeTuple:
+        return self._data
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    def size(self) -> int:
+        return reduce(operator.mul, self._data, 1)
+
+    def ndim(self) -> int:
+        return len(self._data)
+
+    @property
+    def depth(self) -> int:
+        return self._data[0]
+
+    def __eq__(self, other):
+        if isinstance(other, tuple):
+            return self._data == other
+        if isinstance(other, Shape):
+            return self._data == other._data
+
+        return False
+
+    @property
+    def width(self) -> int:
+        if len(self._data) > 1:
+            return self._data[1]
+        else:
+            return 1
+
+    @property
+    def height(self) -> int:
+        if len(self._data) > 2:
+            return self._data[2]
+        return 1
+
+    def __repr__(self) -> str:
+        match self._data:
+            case (width,):
+                return f"Shape({width=})"
+            case (depth, width):
+                return f"Shape({depth=}, {width=})"
+            case (depth, width, height):
+                return f"Shape({depth=}, {width=}, {height=})"
+            case _:
+                return f"Shape({self._data})"
 
 
 class ShapeField(RequiredField[ShapeTuple, Shape]):
@@ -143,9 +228,7 @@ class Implementation(Graph[N, E], Lowerable):
         )
 
     def iterate_bfs_up_from(self, node: str) -> Iterator[N]:
-        nodes = self.nodes
-        for name in bfs_iter_up(self._g.get_predecessors, self._g.get_successors, node):
-            yield nodes[name]
+        yield from self.iterate_bfs_up_from(node)
 
 
 Code: TypeAlias = tuple[str, Sequence[str]]
