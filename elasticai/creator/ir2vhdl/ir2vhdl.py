@@ -503,6 +503,11 @@ class PluginLoader(_Loader[Ir2Vhdl]):
             plugin_receiver=lowering,
         )
 
+    def load_from_package(self, package: str) -> None:
+        if "." not in package:
+            package = f"elasticai.creator_plugins.{package}"
+        super().load_from_package(package)
+
     @staticmethod
     def __get_generated(plugin: PluginSpec) -> Iterator[PluginSymbol]:
         if plugin.target_runtime == "vhdl":

@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 import pytest
 
-from elasticai.creator.vhdl_template import EntityTemplateDirector
+from elasticai.creator.ir2vhdl import EntityTemplateDirector
 
 
 @pytest.fixture
