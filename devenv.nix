@@ -37,7 +37,11 @@ let
 
   packages = [
     pkgs.kramdown-asciidoc
-    pkgs.gtkwave  # visualize wave forms from hw simulations
+    pkgs.git
+    pkgs.pikchr
+    unstablePkgs.jujutsu
+    pkgs.gtkwave # visualize wave forms from hw simulations
+    pkgs.graphviz
     antoraWithKroki
     unstablePkgs.mypy  # python type checker
     unstablePkgs.ruff  # linter/formatter for python
