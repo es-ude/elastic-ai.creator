@@ -1,6 +1,6 @@
 from re import Match
 
-from .template import (
+from elasticai.creator.template import (
     AnalysingTemplateParameterType,
     Template,
     TemplateBuilder,

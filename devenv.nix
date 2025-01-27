@@ -36,7 +36,6 @@ in {
     pkgs.pikchr
     unstablePkgs.jujutsu
     pkgs.gtkwave # visualize wave forms from hw simulations
-    pkgs.graphviz
     antoraWithKroki
     pkgs.cocogitto
     unstablePkgs.mypy # python type checker

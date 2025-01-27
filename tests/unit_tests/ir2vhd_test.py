@@ -3,7 +3,6 @@ from typing import Any
 from pytest import fixture
 
 from elasticai.creator.ir import Node
-from elasticai.creator.ir.helpers import Shape
 from elasticai.creator.ir2vhdl import (
     Implementation,
     Instance,
@@ -11,6 +10,7 @@ from elasticai.creator.ir2vhdl import (
     LogicVectorSignal,
     NullDefinedLogicSignal,
     PortMap,
+    Shape,
     Signal,
     VhdlNode,
     vhdl_node,
