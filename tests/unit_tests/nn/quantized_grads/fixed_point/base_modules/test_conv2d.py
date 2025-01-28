@@ -10,7 +10,7 @@ from elasticai.creator.nn.quantized_grads.fixed_point import (
 def test_conv1d_fxp_init():
     conf = FixedPointConfigV2(8, 3)
 
-    l = Conv2d(
+    Conv2d(
         QuantizeForwHTE(conf),
         QuantizeParamToFixedPointHTE(conf),
         3,

@@ -10,7 +10,7 @@ from elasticai.creator.nn.quantized_grads.fixed_point import (
 def test_batchnorm_fxp_init():
     conf = FixedPointConfigV2(8, 3)
 
-    l = BatchNorm2d(
+    BatchNorm2d(
         math_ops=QuantizeForwHTE(forward_conf=conf),
         weight_quantization=QuantizeParamToFixedPointHTE(conf),
         bias_quantization=QuantizeParamToFixedPointStochastic(conf),

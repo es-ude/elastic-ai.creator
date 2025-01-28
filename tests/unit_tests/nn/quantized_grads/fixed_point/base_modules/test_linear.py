@@ -23,4 +23,4 @@ def test_conv1d_fxp_init():
 
     # print(l.)
     x = torch.randn(1, 1, 2)
-    y = l(x)
+    l(x)
