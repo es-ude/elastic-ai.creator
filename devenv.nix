@@ -184,6 +184,11 @@ in {
       before = ["check:code-lint"];
     };
 
+    "check:architecture" = {
+      exec = "${unstablePkgs.uv}/bin/uv run tach check";
+      before = ["check:all"];
+    };
+
     "package:build" = {
       exec = "${unstablePkgs.uv}/bin/uv build";
       before = ["all:build" "check:all"];
@@ -199,7 +204,7 @@ in {
       out_dir = "docs/modules/api/pages";
       nav_file = "docs/modules/api/partials/nav.adoc";
       pkg_name = "elasticai.creator";
-      pysciidoc = "UV_PROJECT_ENVIRONMENT=venv-py311 ${unstablePkgs.uv}/bin/uv run -p 3.11 pysciidoc";
+      pysciidoc = "${unstablePkgs.uv}/bin/uv run pysciidoc";
     in {
       exec = ''
         if [ ! -d docs/modules/api ]; then mkdir -p docs/modules/api; fi
@@ -216,7 +221,6 @@ in {
         if [ -d docs/modules/api/pages ]; then rm -r docs/modules/api/pages; fi
         if [ -e docs/modules/ROOT/pages/index.adoc ]; then rm docs/modules/ROOT/pages/index.adoc; fi
         if [ -e docs/modules/ROOT/pages/contribution.adoc ]; then rm docs/modules/ROOT/pages/contribution.adoc; fi
-        if [ -d venv-py311 ]; then rm -r venv-py311; fi
         if [ -d docs/modules/plugins/pages ]; then rm -r docs/modules/plugins/pages; fi
         if [ -d docs/build ]; then rm -r docs/build; fi
       '';
