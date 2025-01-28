@@ -1,0 +1,79 @@
+exclude = [
+    "**/*__pycache__",
+    "**/*egg-info",
+    "**/docs",
+    "**/tests",
+    "**/venv",
+    "dist/**/*"
+]
+exact = true
+forbid_circular_dependencies = true
+root_module = "dependenciesonly"
+source_roots = [ "." ]
+
+[[modules ]]
+path = "elasticai.creator.ir"
+depends_on = [ "elasticai.creator.function_utils"]
+
+[[interfaces]]
+expose = [
+"[a-zA-Z]*",
+]
+from = [
+    "elasticai.creator.ir",
+    "elasticai.creator.ir2vhdl"
+]
+
+[[modules ]]
+path = "elasticai.creator.ir2vhdl"
+depends_on = [ "elasticai.creator.ir", "elasticai.creator.plugin", "elasticai.creator.function_utils", "elasticai.creator.template"]
+
+[[modules ]]
+path = "elasticai.creator.plugin"
+depends_on = []
+
+
+[[modules ]]
+path = "elasticai.creator.nn"
+depends_on = ["elasticai.creator.file_generation", "elasticai.creator.base_modules", "elasticai.creator.vhdl"]
+
+[[modules ]]
+path = "elasticai.creator.vhdl"
+depends_on = ["elasticai.creator.file_generation"]
+
+[[modules ]]
+path = "elasticai.creator.hw_accelerator_meta"
+depends_on = []
+
+[[modules ]]
+path = "elasticai.creator.function_utils"
+depends_on = []
+
+[[interfaces]]
+expose = [
+    "[a-zA-Z_]*"
+]
+from = ["elasticai.creator_plugins.[a-z_]+"]
+
+
+
+[[modules ]]
+path = "elasticai.creator.template"
+depends_on = []
+
+
+[[modules ]]
+path = "elasticai.creator.base_modules"
+depends_on = []
+
+[[modules ]]
+path = "elasticai.creator.file_generation"
+depends_on = []
+
+[[modules ]]
+path = "elasticai.creator_plugins.middleware"
+depends_on = []
+
+[[modules ]]
+path = "<root>"
+depends_on = ["elasticai.creator.vhdl", "elasticai.creator.nn", "elasticai.creator.file_generation"]
