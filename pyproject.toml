@@ -14,8 +14,6 @@ dependencies = [
 ]
 
 
-[project.scripts]
-eai-run-ghdl-tbs-for-plugins = "elasticai.creator.utils.run_ghdl_tbs_for_plugins:main"
 
 [dependency-groups]
 dev = [
