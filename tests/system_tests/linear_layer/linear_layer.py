@@ -60,7 +60,7 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str) -> None:
     time.sleep(5)
     with open("./tests/system_tests/vivado_build_server_conf.toml", "rb") as f:
         config = tomllib.load(f)
-    out = subprocess.run(
+    subprocess.run(
         [
             "bash",
             "./utils/autobuild_binfile_vivado2021.1.sh",
