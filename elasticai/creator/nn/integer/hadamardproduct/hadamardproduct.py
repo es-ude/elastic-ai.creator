@@ -106,16 +106,11 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
 
         inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
         inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
-        print("inputs1", inputs1)
-        print("inputs2", inputs2)
-        print("self.inputs1_QParams", self.inputs1_QParams)
-        print("self.inputs2_QParams", self.inputs2_QParams)
+
         outputs = inputs1 * inputs2
-        print("outputs", outputs)
+
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
-        print(f"--------------{self.name}----------------")
-        print("self.outputs_QParams", self.outputs_QParams)
 
+        outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

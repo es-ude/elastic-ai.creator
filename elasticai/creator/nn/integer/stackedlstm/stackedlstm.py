@@ -5,59 +5,66 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.lstmblock.design import LSTMBlock as LSTMBlockDesign
 from elasticai.creator.nn.integer.lstmlayer import LSTMLayer
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.stackedlstm.design import (
+    StackedLSTM as StackedLSTMDesign,
+)
 
 
-class LSTMBlock(DesignCreatorModule, nn.Module):
+class StackedLSTM(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
-        inputs_size = kwargs.get("inputs_size")
+        self.inputs_size = kwargs.get("inputs_size")
         self.hidden_size = kwargs.get("hidden_size")
         self.num_layers = kwargs.get("num_layers")
-        seq_len = kwargs.get("seq_len")
+        self.seq_len = kwargs.get("seq_len")
         self.batch_size = kwargs.get("batch_size")
 
-        self.name = kwargs.get("name")
-        quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
         device = kwargs.get("device")
+        self.name = kwargs.get("name")
+        self.quant_bits = kwargs.get("quant_bits")
+        self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.lstm_layers = nn.ModuleList(
-            [
+        self.lstm_layers = nn.ModuleList()
+        for i in range(self.num_layers):
+            self.lstm_layers.append(
                 LSTMLayer(
-                    inputs_size=inputs_size,
-                    hidden_size=self.hidden_size,  # TODO: check if this is correct
-                    quant_bits=quant_bits,
-                    seq_len=seq_len,
+                    inputs_size=self.inputs_size if i == 0 else self.hidden_size,
+                    hidden_size=self.hidden_size,
+                    quant_bits=self.quant_bits,
+                    seq_len=self.seq_len,
                     batch_size=self.batch_size,
                     name=self.name + f"lstm_layer_{i}",
                     quant_data_file_dir=self.quant_data_file_dir,
                     device=device,
                 )
-                for i in range(self.num_layers)
-            ]
-        )
+            )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
 
-    def create_design(self, name) -> LSTMBlockDesign:
+    def create_design(self, name) -> StackedLSTMDesign:
         pass
 
     def precompute(self) -> None:
         for layer in self.lstm_layers:
             layer.precompute()
+
+        h_prev = torch.randn(self.batch_size, self.hidden_size).to("cpu") * 1e-5
+        c_prev = torch.randn(self.batch_size, self.hidden_size).to("cpu") * 1e-5
+        self.q_h_prev = self.lstm_layers[0].h_prev_QParams.quantize(h_prev)
+        self.q_c_prev = self.lstm_layers[0].c_prev_QParams.quantize(c_prev)
+
         self.precomputed = True
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
@@ -70,13 +77,22 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
         assert self.precomputed, "precompute should be called before int_forward"
 
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
-        q_h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.int32).to(
-            "cpu"
-        )
+
+        # q_h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.int32).to(
+        #     "cpu"
+        # )
+        # q_c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.int32).to(
+        #     "cpu"
+        # )
         q_h_prev = self.q_h_prev
+        q_c_prev = self.q_c_prev
         for layer in self.lstm_layers:
-            q_h_next = layer.int_forward(q_inputs=q_inputs, q_h_prev=q_h_prev)
-            q_h_prev = q_h_next
+            q_outputs, q_h_next, q_c_next = layer.int_forward(
+                q_inputs=q_inputs,
+                q_h_prev=q_h_prev,
+                q_c_prev=q_c_prev,
+            )
+            q_inputs, q_h_prev, q_c_prev = q_outputs, q_h_next, q_c_next
 
         self._save_quant_data(
             q_h_next, self.quant_data_file_dir, f"{self.name}_q_h_next"
@@ -94,26 +110,25 @@ class LSTMBlock(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_QParams = given_inputs_QParams
 
-        # h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
-        #     inputs.device
-        # )
         h_prev = torch.randn(self.batch_size, self.hidden_size).to(inputs.device) * 1e-5
+        c_prev = torch.randn(self.batch_size, self.hidden_size).to(inputs.device) * 1e-5
 
+        given_inputs_QParams = self.inputs_QParams
         given_h_prev_QParams = None
+        given_c_prev_QParams = None
         for layer in self.lstm_layers:
-            h_next = layer.forward(
+            outputs, h_next, c_next = layer.forward(
                 inputs=inputs,
                 h_prev=h_prev,
-                given_inputs_QParams=self.inputs_QParams,
+                c_prev=c_prev,
+                given_inputs_QParams=given_inputs_QParams,
                 given_h_prev_QParams=given_h_prev_QParams,
+                given_c_prev_QParams=given_c_prev_QParams,
             )
-            h_prev = h_next
-            print("layer.outputs_QParams: ", layer.outputs_QParams)
-            given_h_prev_QParams = layer.outputs_QParams
+            inputs, h_prev, c_prev = outputs, h_next, c_next
+            given_inputs_QParams = layer.outputs_QParams
+            given_h_prev_QParams = layer.h_next_QParams
+            given_c_prev_QParams = layer.c_next_QParams
 
-        print(
-            "self.lstm_layers[-1].outputs_QParams: ",
-            self.lstm_layers[-1].outputs_QParams,
-        )
-        self.outputs_QParams = self.lstm_layers[-1].outputs_QParams
+        self.outputs_QParams = self.lstm_layers[-1].h_next_QParams
         return h_next

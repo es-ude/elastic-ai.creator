@@ -137,13 +137,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
-        # # pre-allocate memory for computations
-        # self.concatenate = torch.zeros(1, inputs_size + hidden_size)
-        # self.i_gate_linear = torch.zeros(1, hidden_size)
-        # self.f_gate_linear = torch.zeros(1, hidden_size)
-        # self.c_gate_linear = torch.zeros(1, hidden_size)
-        # self.o_gate_linear = torch.zeros(1, hidden_size)
-
         self.precomputed = False
 
     def create_design(self, name):
@@ -194,10 +187,13 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
 
         self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_x"
+            q_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_x_1"
+        )
+        self._save_quant_data(
+            q_h_prev, self.quant_data_file_dir, f"{self.concatenate.name}_q_x_2"
         )
         q_concated_inputs = self.concatenate.int_forward(
-            q_inputs1=q_h_prev, q_inputs2=q_inputs
+            q_inputs1=q_inputs, q_inputs2=q_h_prev
         )
         self._save_quant_data(
             q_concated_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_y"
@@ -411,14 +407,15 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             else:
                 self.c_prev_QParams = given_c_prev_QParams
 
+        inputs = SimQuant.apply(inputs, self.inputs_QParams)
         h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
         c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
 
         concated_inputs = self.concatenate.forward(
-            inputs1=h_prev,
-            inputs2=inputs,
-            given_inputs1_QParams=self.h_prev_QParams,
-            given_inputs2_QParams=self.inputs_QParams,
+            inputs1=inputs,
+            inputs2=h_prev,
+            given_inputs1_QParams=self.inputs_QParams,
+            given_inputs2_QParams=self.h_prev_QParams,
         )
 
         # gate linear transformations
@@ -490,4 +487,5 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
         self.h_next_QParams = self.oc_hadamard_product.outputs_QParams
         self.c_next_QParams = self.c_next_addition.outputs_QParams
+
         return h_next, c_next

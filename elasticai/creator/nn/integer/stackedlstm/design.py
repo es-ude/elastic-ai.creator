@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 
 
-class LSTMBlock(Design):
+class StackedLSTM(Design):
     def __init__(self) -> None:
         super().__init__()
         pass
