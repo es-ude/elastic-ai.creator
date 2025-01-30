@@ -156,3 +156,12 @@ def test_left_oring_dict_with_attribute_does_not_add_hidden_fields():
     n = Node(dict(name="x", type="y", counter=1))
     d = n.attributes | d
     assert d == dict(counter=1)
+
+
+def test_inheriting_from_ir_data_without_annotated_fields_does_not_raise_exception():
+    try:
+
+        class Node(IrData):
+            pass
+    except KeyError:
+        pytest.fail("did not expect an error")
