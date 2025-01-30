@@ -58,7 +58,7 @@ class IrDataMeta(type):
         called before parsing class body and thus before metaclass instantiation,
         hence this is a classmethod
         """
-        create_init = kwds.get("create_init", True)
+        create_init = kwds.get("create_init", False)
         namespace = super().__prepare__(name, bases, **kwds)
         cls.__add_data_slot(namespace)
         if create_init:
