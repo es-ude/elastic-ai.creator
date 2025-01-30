@@ -21,7 +21,7 @@ class FunctionDecorator(Generic[FN, Tout]):
     ...  registry[name] = fn
     ...  return fn
     ...
-    >>> register = FunctionDecoratorFactory(register_fn)
+    >>> register = FunctionDecorator(register_fn)
     >>> def my_fn(x):
     ...   print(x)
     ...
@@ -38,7 +38,7 @@ class FunctionDecorator(Generic[FN, Tout]):
       registry[name] = fn
       return fn
 
-    register = FunctionDecoratorFactory(register_fn)
+    register = FunctionDecorator(register_fn)
 
     @register("other_name")
     @register
@@ -90,7 +90,7 @@ class FunctionDecorator(Generic[FN, Tout]):
 
 
 class RegisterDescriptor(Generic[Tin, Tout]):
-    """Automatically connect the `FunctionDecoratorFactory` to a callback and make it look like a method.
+    """Automatically connect the `FunctionDecorator` to a callback and make it look like a method.
 
     The owning instance needs to define a callback that has the name `f"_{name}_callback"`,
     where `name` is the name of the field assigned to this descriptor.
