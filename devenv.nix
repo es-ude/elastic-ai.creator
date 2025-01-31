@@ -8,7 +8,6 @@
 
 let
   unstablePkgs = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
-  pyp = pkgs.python310Packages;
   asciidoctorKroki = pkgs.buildNpmPackage {
      pname = "asciidoctor-kroki";
      version = "0.17.0";
@@ -30,12 +29,16 @@ let
  
 {
 
+  # override these in your devenv.local.nix as needed
+  languages.vhdl = {
+    enable = lib.mkDefault true;  
+    vivado.enable = lib.mkDefault false;
+  };
+
   packages = [
     pkgs.kramdown-asciidoc
     pkgs.gtkwave  # visualize wave forms from hw simulations
     antoraWithKroki
-    pkgs.antora  # documentation generator
-    pkgs.xunit-viewer
     unstablePkgs.mypy  # python type checker
     unstablePkgs.ruff  # linter/formatter for python
     unstablePkgs.vale  # syntax aware linter for prose
@@ -150,6 +153,7 @@ let
 
     "build:all" = {};
     "clean:all" = {};
+
   };
 
   ## Commented out while we're configuring pre-commit manually
