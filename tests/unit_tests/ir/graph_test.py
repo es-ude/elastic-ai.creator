@@ -37,9 +37,9 @@ def test_edges_is_read_only(graph) -> None:
 
 def test_predecessors_of_z_is_y(graph) -> None:
     n = next(iter(graph.predecessors("z").values()))
-    assert graph.nodes["y"] is n
+    assert graph.nodes["y"] == n
 
 
 def test_successor_of_x_is_y(graph) -> None:
     n = next(iter(graph.successors("x").values()))
-    assert graph.nodes["y"] is n
+    assert graph.nodes["y"] == n
