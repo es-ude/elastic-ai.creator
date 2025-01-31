@@ -153,7 +153,7 @@ in {
         if $CI; then
           ${pkgs.cocogitto}/bin/cog check ..$GITHUB_SOURCE_REF
         else
-          ${pkgs.cocogitto}/bin/cog check
+          ${pkgs.cocogitto}/bin/cog check --from-latest-tag --ignore-merge-commits
         fi
       '';
       before = ["check:all"];
