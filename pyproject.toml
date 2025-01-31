@@ -14,7 +14,6 @@ dependencies = [
 ]
 
 
-
 [dependency-groups]
 dev = [
     "build>=1.2.2.post1",
@@ -60,13 +59,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["elasticai"]
 exclude = [
-     "*_test.py", 
-     "test_*.py",
-     "elasticai/creator_plugins/*/tests",
-     "elasticai/creator_plugins/*/examples",
-     "elasticai/creator_plugins/*/docs",
+    "*_test.py",
+    "test_*.py",
+    "elasticai/creator_plugins/*/tests",
+    "elasticai/creator_plugins/*/examples",
+    "elasticai/creator_plugins/*/docs",
 ]
- 
+
 
 [tool.hatch.version]
 source = "vcs"
@@ -110,7 +109,7 @@ include = [
     "elasticai/**/*.py",
     "elasticai/**/*.pyi",
     "elasticai/**/*.py",
-    "tests/**/*.py"
+    "tests/**/*.py",
 ]
 
 # Exclude a variety of commonly ignored directories.
@@ -153,13 +152,7 @@ target-version = "py38"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-select = [
-    "E4",
-    "E7",
-    "E9",
-    "F",
-    "I"
-]
+select = ["E4", "E7", "E9", "F", "I"]
 ignore = [
     "D101",
     "D102",
@@ -185,5 +178,3 @@ skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
-
-

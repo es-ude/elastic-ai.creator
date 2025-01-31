@@ -18,6 +18,7 @@ in {
     pkgs.pikchr
     unstablePkgs.jujutsu
     pkgs.gtkwave # visualize wave forms from hw simulations
+    pkgs.graphviz
     pkgs.cocogitto
     unstablePkgs.mypy # python type checker
     unstablePkgs.vale # syntax aware linter for prose
