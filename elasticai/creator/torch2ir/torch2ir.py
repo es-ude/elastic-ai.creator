@@ -8,7 +8,7 @@ from torch.nn import Module
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
 
 from .core import Edge, Implementation, Node, new_node
-from .default_module_handlers import handlers as default_handlers
+from .default_handlers import handlers as default_handlers
 
 
 class _DefaultTracer(Tracer):
@@ -28,25 +28,26 @@ class Torch2Ir:
         super().__init__()
         self._tracer = tracer
         self._registry: dict[str, Implementation] = {}
-        self._g = Implementation(node_fn=Node, edge_fn=Edge)
-        self._g.type = "module"
-        self._g.name = "root"
-        self._registry["root"] = self._g
+        self._root = Implementation(node_fn=Node, edge_fn=Edge)
+        self._root.type = "module"
+        self._root.name = ""
+        self._registry[""] = self._root
         self._extractors: KeyedFunctionDispatcher[Module, dict] = (
             KeyedFunctionDispatcher(self._get_module_key)
         )
 
-    def register_module_handler(
+    def register(
         self, module_type: str, handler: Callable[[Module], dict]
-    ) -> None:
+    ) -> Callable[[Module], dict]:
         """The handlers are used to extract the attributes of the module"""
         self._extractors.register(module_type, handler)
+        return handler
 
-    def register_module_handlers(
+    def register_handlers(
         self, handlers: Iterable[Callable[[Module], dict]]
     ) -> "Torch2Ir":
         for handler in handlers:
-            self.register_module_handler(handler.__name__, handler)
+            self.register(handler.__name__, handler)
         return self
 
     @staticmethod
@@ -103,7 +104,7 @@ class Torch2Ir:
             implementation=self._get_implementation(node),
             attributes={},
         )
-        self._g.add_node(ir_node)
+        self._root.add_node(ir_node)
         impl = ir_node.implementation
         if impl not in self._registry and impl not in ("input", "output"):
             self._registry[impl] = Implementation(
@@ -115,7 +116,9 @@ class Torch2Ir:
             )
 
         for successor in self._get_successors(node):
-            self._g.add_edge(Edge(dict(src=str(node.name), sink=str(successor.name))))
+            self._root.add_edge(
+                Edge(dict(src=str(node.name), sink=str(successor.name)))
+            )
 
     def _extract_attributes(self, node: FxNode) -> dict:
         if self._get_type(node) in ("input", "output"):
@@ -123,8 +126,8 @@ class Torch2Ir:
         module = self.model.get_submodule(cast(str, node.target))
         return self._extractors(module)
 
-    @classmethod
-    def get_default_converter(cls) -> "Torch2Ir":
-        converter = cls()
-        converter.register_module_handlers(default_handlers)
-        return converter
+
+def get_default_converter() -> Torch2Ir:
+    converter = Torch2Ir()
+    converter.register_handlers(default_handlers)
+    return converter

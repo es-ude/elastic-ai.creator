@@ -2,8 +2,8 @@ import hypothesis.strategies as st
 from hypothesis import given
 from torch.nn import Linear, ReLU, Sequential
 
-from elasticai.creator.ir2torch import Ir2Torch
-from elasticai.creator.torch2ir import Torch2Ir
+from elasticai.creator.ir2torch import get_default_converter as get_ir2torch
+from elasticai.creator.torch2ir import get_default_converter as get_torch2ir
 
 
 def model():
@@ -14,7 +14,7 @@ def model():
 
 
 def convert(model):
-    return Torch2Ir.get_default_converter().convert(model)
+    return get_torch2ir().convert(model)
 
 
 @given(st.tuples(st.integers(1, 10), st.integers(1, 10)), st.booleans())
@@ -23,9 +23,7 @@ def test_build_model_from_ir_and_state_dict(num_features, bias):
     original = Sequential(Linear(in_features, out_features, bias))
     ir = convert(original)
     state = original.state_dict()
-    print(ir)
-    rebuilt = Ir2Torch.get_default_converter().convert(ir)
-    print(rebuilt)
+    rebuilt = get_ir2torch().convert(ir)
     rebuilt.load_state_dict(state)
 
     def to_native_python(data) -> dict:

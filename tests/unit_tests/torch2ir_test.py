@@ -1,7 +1,7 @@
 import torch
 from torch.nn import Linear, ReLU, Sequential
 
-from elasticai.creator.torch2ir import Torch2Ir
+from elasticai.creator.torch2ir import get_default_converter
 
 
 def model():
@@ -12,7 +12,7 @@ def model():
 
 
 def convert(model):
-    ir = Torch2Ir.get_default_converter().convert(model)
+    ir = get_default_converter().convert(model)
     return {impl.name: impl.data for impl in ir.values()}
 
 
@@ -22,8 +22,8 @@ def test_convert_linear_without_bias():
         m.get_submodule("0").weight.mul_(0).add_(1)
     ir = convert(m)
     assert ir == {
-        "root": {
-            "name": "root",
+        "": {
+            "name": "",
             "type": "module",
             "nodes": {
                 "input_1": {
@@ -82,8 +82,8 @@ def test_convert_linear_to_ir():
             "edges": {},
             "nodes": {},
         },
-        "root": {
-            "name": "root",
+        "": {
+            "name": "",
             "type": "module",
             "nodes": {
                 "input_1": {
@@ -142,7 +142,7 @@ def test_converting_model_with_batchnorm():
             "nodes": {},
             "type": "relu",
         },
-        "root": {
+        "": {
             "edges": {
                 ("bn", "relu"): {
                     "sink": "relu",
@@ -157,7 +157,7 @@ def test_converting_model_with_batchnorm():
                     "src": "x",
                 },
             },
-            "name": "root",
+            "name": "",
             "nodes": {
                 "bn": {
                     "implementation": "bn",

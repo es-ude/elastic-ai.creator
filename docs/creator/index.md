@@ -12,6 +12,7 @@
 
 readme.md
 ir.md
+torch2ir.md
 ir2vhdl.md
 plugin-system.md
 skeleton.md

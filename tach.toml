@@ -108,7 +108,7 @@ depends_on = []
 
 [[modules ]]
 path = "elasticai.creator.ir2torch"
-depends_on = []
+depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.ir"]
 
 [[modules ]]
 path = "elasticai.creator.torch2ir"

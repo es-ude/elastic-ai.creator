@@ -20,12 +20,11 @@ translation process by registering your own module handlers.
 from elasticai.creator.ir import edge as new_edge
 
 from .core import Edge, Implementation, Node, input_node, new_node, output_node
-from .torch2ir import (
-    Torch2Ir,
-)
+from .torch2ir import Torch2Ir, get_default_converter
 
 __all__ = [
     "Torch2Ir",
+    "get_default_converter",
     "Implementation",
     "Node",
     "Edge",
