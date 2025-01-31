@@ -2,8 +2,8 @@ from typing import Any
 
 from pytest import fixture
 
-from elasticai.creator.ir import Node
 from elasticai.creator.ir2vhdl import (
+    Edge,
     Implementation,
     Instance,
     LogicSignal,
@@ -19,12 +19,15 @@ from elasticai.creator.ir2vhdl import (
 
 @fixture
 def impl() -> Implementation:
-    return Implementation(
+    impl: Implementation[VhdlNode, Edge] = Implementation(
         name="conv1",
         type="conv",
-        attributes={"a": 1},
-        nodes=(Node(dict(name="x", type="y")),),
+        data={"a": 1},
     )
+    impl.add_node(
+        VhdlNode(dict(name="x", type="y")),
+    )
+    return impl
 
 
 @fixture
@@ -36,16 +39,16 @@ def data() -> dict[str, Any]:
             {"name": "x", "type": "y"},
         ],
         "edges": [],
-        "attributes": {"a": 1},
+        "a": 1,
     }
 
 
 def test_store_as_dict(data, impl):
-    assert data == impl.asdict()
+    assert data == impl.as_dict()
 
 
 def test_load_from_dict(data):
-    assert data == Implementation.fromdict(data).asdict()
+    assert data == Implementation.from_dict(data).as_dict()
 
 
 def test_can_access_attributes_of_vhdl_node():
