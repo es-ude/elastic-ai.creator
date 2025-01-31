@@ -108,7 +108,7 @@ depends_on = []
 
 [[modules ]]
 path = "elasticai.creator.ir2torch"
-depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.function_utils"]
+depends_on = []
 
 [[modules ]]
 path = "elasticai.creator.torch2ir"
@@ -116,4 +116,4 @@ depends_on = ["elasticai.creator.ir", "elasticai.creator.function_utils"]
 
 [[modules ]]
 path = "<root>"
-depends_on = ["elasticai.creator.ir", "elasticai.creator.plugin", "elasticai.creator.function_utils", "elasticai.creator.ir2vhdl", "elasticai.creator.vhdl", "elasticai.creator.nn.fixed_point", "elasticai.creator.nn", "elasticai.creator.file_generation"]
+depends_on = [ "elasticai.creator.vhdl", "elasticai.creator.nn.fixed_point", "elasticai.creator.nn", "elasticai.creator.file_generation"]
