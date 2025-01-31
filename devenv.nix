@@ -157,7 +157,6 @@ in {
           ${pkgs.cocogitto}/bin/cog check --from-latest-tag --ignore-merge-commits
         fi
       '';
-      before = ["check:all"];
     };
 
     "check:nix-lint" = {
@@ -172,18 +171,10 @@ in {
 
     "check:architecture" = {
       exec = "${unstablePkgs.uv}/bin/uv run tach check";
-      before = ["check:all"];
     };
 
     "package:build" = {
       exec = "${unstablePkgs.uv}/bin/uv build";
-      before = ["all:build" "check:all"];
-    };
-
-    "package:clean" = {
-      exec = "if [ -d dist ]; then rm -r dist; fi";
-      before = ["all:clean"];
-      after = ["check:all"];
     };
 
     "docs:build" = let
@@ -194,32 +185,18 @@ in {
         ${uv_run} sphinx-build -b html docs build/docs
         touch build/docs/.nojekyll  # prevent github from trying to build the docs
       '';
-      before = ["all:build" "check:all"];
     };
 
     "docs:clean" = {
       exec = ''
         rm -rf build/docs/*
       '';
-      before = ["all:clean"];
-      after = ["check:all"];
     };
 
     "check:code-lint" = {
-      before = ["check:all"];
     };
 
     "check:tests" = {
-      before = ["check:all"];
-    };
-
-    "all:build" = {};
-
-    "all:clean" = {};
-
-    "check:all" = {
-      exec = "";
-      before = ["devenv:enterTest"];
     };
   };
 }
