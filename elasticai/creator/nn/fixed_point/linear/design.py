@@ -26,6 +26,7 @@ class LinearDesign(Design, LinearDesignProtocol):
         name: str,
         work_library_name: str = "work",
         resource_option: str = "auto",
+        parallel : bool = False,
     ) -> None:
         super().__init__(name=name)
         self._name = name
@@ -39,6 +40,7 @@ class LinearDesign(Design, LinearDesignProtocol):
         self._data_width = total_bits
         self.x_addr_width = self.port["x_address"].width
         self.y_addr_width = self.port["y_address"].width
+        self.parallel = parallel
 
     @property
     def name(self):
@@ -89,9 +91,11 @@ class LinearDesign(Design, LinearDesignProtocol):
     def save_to(self, destination: Path):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
+        filename = "linear_new.tpl.vhd" if self.parallel else "linear_seq.tpl.vhd"
+
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="linear_new.tpl.vhd",
+            file_name=filename,
             parameters=dict(
                 layer_name=self.name,
                 weights_rom_name=rom_name["weights"],

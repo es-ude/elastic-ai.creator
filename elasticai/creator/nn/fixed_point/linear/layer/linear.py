@@ -20,9 +20,11 @@ class Linear(DesignCreatorModule, LinearBase):
         frac_bits: int,
         bias: bool = True,
         device: Any = None,
+        parallel : bool = False,
     ) -> None:
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         self._double_config = FixedPointConfig(total_bits=2*total_bits, frac_bits=2*frac_bits)
+        self.parallel = parallel
         super().__init__(
             in_features=in_features,
             out_features=out_features,
@@ -52,6 +54,7 @@ class Linear(DesignCreatorModule, LinearBase):
             weights=signed_int_weights,
             bias=signed_int_bias,
             name=name,
+            parallel=self.parallel
         )
 
     def create_testbench(self, name: str, uut: LinearDesign) -> LinearTestbench:
