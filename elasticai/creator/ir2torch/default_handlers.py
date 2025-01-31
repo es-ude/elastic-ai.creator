@@ -24,3 +24,27 @@ def linear(impl: Implementation) -> nn.Module:
 @_register
 def relu(impl: Implementation) -> nn.Module:
     return nn.ReLU()
+
+
+@_register
+def conv1d(impl: Implementation) -> nn.Conv1d:
+    keywords = (
+        "in_channels",
+        "out_channels",
+        "bias",
+        "groups",
+        "kernel_size",
+        "stride",
+    )
+    kwargs = dict(((k, impl.data[k]) for k in keywords))
+    return nn.Conv1d(**kwargs)  # type: ignore
+
+
+@_register
+def sigmoid(impl: Implementation) -> nn.Sigmoid:
+    return nn.Sigmoid()
+
+
+@_register
+def flatten(imp: Implementation) -> nn.Flatten:
+    return nn.Flatten()
