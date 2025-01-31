@@ -18,6 +18,7 @@ elasticai.creator.ir
 elasticai.creator.vhdl
 elasticai.creator.base_modules
 elasticai.creator.torch2ir
+elasticai.creator.ir2torch
 elasticai.creator.ir2vhdl
 elasticai.creator.file_generation
 ```
