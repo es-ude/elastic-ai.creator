@@ -53,6 +53,9 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
         self.c_prev_QParams = AsymmetricSignedQParams(
             quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
+        self.outputs_QParams = AsymmetricSignedQParams(
+            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+        ).to(device)
 
         self.precomputed = False
 
