@@ -139,8 +139,26 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.precomputed = False
 
-    def create_design(self, name):
-        pass
+    def create_design(self, name) -> LSTMCellDesign:
+        return LSTMCellDesign(
+            name=name,
+            data_width=self.inputs_QParams.quant_bits,
+            concatenate=self.concatenate,
+            f_gate_linear=self.f_gate_linear,
+            c_gate_linear=self.c_gate_linear,
+            i_gate_linear=self.i_gate_linear,
+            o_gate_linear=self.o_gate_linear,
+            i_sigmoid=self.i_sigmoid,
+            f_sigmoid=self.f_sigmoid,
+            o_sigmoid=self.o_sigmoid,
+            c_tanh=self.c_tanh,
+            c_next_tanh=self.c_next_tanh,
+            c_next_addition=self.c_next_addition,
+            fc_hadamard_product=self.fc_hadamard_product,
+            ic_hadamard_product=self.ic_hadamard_product,
+            oc_hadamard_product=self.oc_hadamard_product,
+            work_library_name="work",
+        )
 
     def precompute(self) -> None:
         self.concatenate.precompute()
