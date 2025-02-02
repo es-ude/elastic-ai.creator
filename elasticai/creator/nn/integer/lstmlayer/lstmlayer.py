@@ -56,6 +56,14 @@ class LSTMLayer(nn.Module):
 
         self.precomputed = False
 
+    def create_design(self, name: str) -> LSTMLayerDesign:
+        return LSTMLayerDesign(
+            name=name,
+            data_width=self.inputs_QParams.quant_bits,
+            lstm_cell=self.lstm_cell,
+            work_library_name="work",
+        )
+
     def precompute(self):
         self.lstm_cell.precompute()
 
@@ -75,13 +83,9 @@ class LSTMLayer(nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
-        self._save_quant_data(
-            q_h_prev, self.quant_data_file_dir, f"{self.name}_q_h_prev"
-        )
-        self._save_quant_data(
-            q_c_prev, self.quant_data_file_dir, f"{self.name}_q_c_prev"
-        )
+        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x_1")
+        self._save_quant_data(q_h_prev, self.quant_data_file_dir, f"{self.name}_q_x_2")
+        self._save_quant_data(q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3")
         q_outputs = torch.zeros(
             self.batch_size, self.seq_len, self.hidden_size, dtype=torch.int32
         ).to("cpu")
@@ -92,15 +96,10 @@ class LSTMLayer(nn.Module):
             q_outputs[:, t, :] = q_h_next
             q_h_prev, q_c_prev = q_h_next, q_c_next
 
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.name}_q_outputs"
-        )
-        self._save_quant_data(
-            q_h_next, self.quant_data_file_dir, f"{self.name}_q_h_next"
-        )
-        self._save_quant_data(
-            q_c_next, self.quant_data_file_dir, f"{self.name}_q_c_next"
-        )
+        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y_1")
+        self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
+        self._save_quant_data(q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_3")
+
         return q_outputs, q_h_next, q_c_next
 
     def forward(
@@ -113,47 +112,42 @@ class LSTMLayer(nn.Module):
         given_c_prev_QParams: torch.nn.Module = None,
     ) -> torch.FloatTensor:
         if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
+            if given_inputs_QParams is not None:
                 self.inputs_QParams = given_inputs_QParams
-            if given_h_prev_QParams is None:
-                self.h_prev_QParams.update_quant_params(h_prev)
             else:
+                self.inputs_QParams.update_quant_params(input)
+            if given_h_prev_QParams is not None:
                 self.h_prev_QParams = given_h_prev_QParams
-            if given_c_prev_QParams is None:
-                self.c_prev_QParams.update_quant_params(c_prev)
             else:
+                self.h_prev_QParams.update_quant_params(h_prev)
+            if given_c_prev_QParams is not None:
                 self.c_prev_QParams = given_c_prev_QParams
+            else:
+                self.c_prev_QParams.update_quant_params(c_prev)
 
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
+        h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
+        c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
 
         outputs = torch.zeros(
             self.batch_size, self.seq_len, self.hidden_size, dtype=torch.float32
         ).to(inputs.device)
 
-        given_inputs_QParams = self.inputs_QParams
-        given_h_prev_QParams = self.h_prev_QParams
-        given_c_prev_QParams = self.c_prev_QParams
         for t in range(self.seq_len):
             h_next, c_next = self.lstm_cell.forward(
                 inputs=inputs[:, t, :],
                 h_prev=h_prev,
                 c_prev=c_prev,
-                given_inputs_QParams=given_inputs_QParams,
-                given_h_prev_QParams=given_h_prev_QParams,
-                given_c_prev_QParams=given_c_prev_QParams,
+                given_inputs_QParams=self.inputs_QParams,
             )
             outputs[:, t, :] = h_next
             h_prev, c_prev = h_next, c_next
-            given_h_prev_QParams = self.lstm_cell.h_next_QParams
-            given_c_prev_QParams = self.lstm_cell.c_next_QParams
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)
         outputs = SimQuant.apply(outputs, self.outputs_QParams)
 
-        self.h_next_QParams = given_h_prev_QParams
-        self.c_next_QParams = given_c_prev_QParams
+        self.h_next_QParams = self.lstm_cell.h_next_QParams
+        self.c_next_QParams = self.lstm_cell.c_next_QParams
 
         return outputs, h_next, c_next

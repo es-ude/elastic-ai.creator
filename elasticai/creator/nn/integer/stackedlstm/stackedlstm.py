@@ -25,7 +25,7 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
 
         device = kwargs.get("device")
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        quant_bits = kwargs.get("quant_bits")
         self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -35,7 +35,7 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
                 LSTMLayer(
                     inputs_size=self.inputs_size if i == 0 else self.hidden_size,
                     hidden_size=self.hidden_size,
-                    quant_bits=self.quant_bits,
+                    quant_bits=quant_bits,
                     seq_len=self.seq_len,
                     batch_size=self.batch_size,
                     name=self.name + f"lstm_layer_{i}",
@@ -45,25 +45,35 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
             )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+        self.h_prev_QParams = AsymmetricSignedQParams(
+            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+        ).to(device)
+        self.c_prev_QParams = AsymmetricSignedQParams(
+            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
 
     def create_design(self, name) -> StackedLSTMDesign:
-        pass
+        return StackedLSTMDesign(
+            name=name,
+            data_width=self.inputs_QParams.quant_bits,
+            lstm_layers=self.lstm_layers,
+            num_layers=self.num_layers,
+            work_library_name="work",
+        )
 
     def precompute(self) -> None:
         for layer in self.lstm_layers:
             layer.precompute()
 
-        h_prev = torch.randn(self.batch_size, self.hidden_size).to("cpu") * 1e-5
-        c_prev = torch.randn(self.batch_size, self.hidden_size).to("cpu") * 1e-5
-        self.q_h_prev = self.lstm_layers[0].h_prev_QParams.quantize(h_prev)
-        self.q_c_prev = self.lstm_layers[0].c_prev_QParams.quantize(c_prev)
+        h_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
+        c_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
+
+        self.q_h_0 = self.h_prev_QParams.quantize(h_0)
+        self.q_c_0 = self.c_prev_QParams.quantize(c_0)
 
         self.precomputed = True
 
@@ -78,25 +88,19 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
 
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
 
-        # q_h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.int32).to(
-        #     "cpu"
-        # )
-        # q_c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.int32).to(
-        #     "cpu"
-        # )
-        q_h_prev = self.q_h_prev
-        q_c_prev = self.q_c_prev
+        q_h_prev = self.q_h_0
+        q_c_prev = self.q_c_0
         for layer in self.lstm_layers:
             q_outputs, q_h_next, q_c_next = layer.int_forward(
                 q_inputs=q_inputs,
                 q_h_prev=q_h_prev,
                 q_c_prev=q_c_prev,
             )
-            q_inputs, q_h_prev, q_c_prev = q_outputs, q_h_next, q_c_next
+            q_inputs = q_outputs
+            q_h_prev = q_h_next
+            q_c_prev = q_c_next
 
-        self._save_quant_data(
-            q_h_next, self.quant_data_file_dir, f"{self.name}_q_h_next"
-        )
+        self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y")
         return q_h_next
 
     def forward(
@@ -105,17 +109,26 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
         given_inputs_QParams: torch.nn.Module = None,
     ) -> torch.FloatTensor:
         if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
+            if given_inputs_QParams is not None:
                 self.inputs_QParams = given_inputs_QParams
+            else:
+                self.inputs_QParams.update_quant_params(inputs)
 
-        h_prev = torch.randn(self.batch_size, self.hidden_size).to(inputs.device) * 1e-5
-        c_prev = torch.randn(self.batch_size, self.hidden_size).to(inputs.device) * 1e-5
+        h_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+            inputs.device
+        )
+        c_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+            inputs.device
+        )
+        if self.training:
+            self.h_prev_QParams.update_quant_params(h_0)
+            self.c_prev_QParams.update_quant_params(c_0)
 
+        h_prev = h_0
+        c_prev = c_0
         given_inputs_QParams = self.inputs_QParams
-        given_h_prev_QParams = None
-        given_c_prev_QParams = None
+        given_h_prev_QParams = self.h_prev_QParams
+        given_c_prev_QParams = self.c_prev_QParams
         for layer in self.lstm_layers:
             outputs, h_next, c_next = layer.forward(
                 inputs=inputs,
@@ -125,7 +138,9 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
                 given_h_prev_QParams=given_h_prev_QParams,
                 given_c_prev_QParams=given_c_prev_QParams,
             )
-            inputs, h_prev, c_prev = outputs, h_next, c_next
+            inputs = outputs
+            h_prev = h_next
+            c_prev = c_next
             given_inputs_QParams = layer.outputs_QParams
             given_h_prev_QParams = layer.h_next_QParams
             given_c_prev_QParams = layer.c_next_QParams

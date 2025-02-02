@@ -196,14 +196,11 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
-        self._save_quant_data(
-            q_h_prev, self.quant_data_file_dir, f"{self.name}_q_h_prev"
-        )
-        self._save_quant_data(
-            q_c_prev, self.quant_data_file_dir, f"{self.name}_q_c_prev"
-        )
+        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x_1")
+        self._save_quant_data(q_h_prev, self.quant_data_file_dir, f"{self.name}_q_x_2")
+        self._save_quant_data(q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3")
 
+        # concatenate inputs and h_prev
         self._save_quant_data(
             q_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_x_1"
         )
@@ -228,7 +225,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_i_gate_outputs, self.quant_data_file_dir, f"{self.i_gate_linear.name}_q_y"
         )
-
         # forget gate
         self._save_quant_data(
             q_concated_inputs,
@@ -239,7 +235,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_f_gate_outputs, self.quant_data_file_dir, f"{self.f_gate_linear.name}_q_y"
         )
-
         # output gate
         self._save_quant_data(
             q_concated_inputs,
@@ -250,7 +245,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_o_gate_outputs, self.quant_data_file_dir, f"{self.o_gate_linear.name}_q_y"
         )
-
         # cell gate
         self._save_quant_data(
             q_concated_inputs,
@@ -263,7 +257,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
 
         # gate activations
-        # inputs gate
+        # inputs gate sigmoid
         self._save_quant_data(
             q_i_gate_outputs,
             self.quant_data_file_dir,
@@ -275,8 +269,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.i_sigmoid.name}_q_y",
         )
-
-        # forget gate
+        # forget gate sigmoid
         self._save_quant_data(
             q_f_gate_outputs,
             self.quant_data_file_dir,
@@ -288,8 +281,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.f_sigmoid.name}_q_y",
         )
-
-        # output gate
+        # output gate sigmoid
         self._save_quant_data(
             q_o_gate_outputs,
             self.quant_data_file_dir,
@@ -301,8 +293,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.o_sigmoid.name}_q_y",
         )
-
-        # cell gate
+        # cell gate tanh
         self._save_quant_data(
             q_c_gate_outputs, self.quant_data_file_dir, f"{self.c_tanh.name}_q_x"
         )
@@ -318,7 +309,10 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_f_gate_sigmoid_outputs,
             self.quant_data_file_dir,
-            f"{self.fc_hadamard_product.name}_q_x",
+            f"{self.fc_hadamard_product.name}_q_x_1",
+        )
+        self._save_quant_data(
+            q_c_prev, self.quant_data_file_dir, f"{self.fc_hadamard_product.name}_q_x_2"
         )
         q_c_next_inputs1 = self.fc_hadamard_product.int_forward(
             q_inputs1=q_f_gate_sigmoid_outputs, q_inputs2=q_c_prev
@@ -333,7 +327,12 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_i_gate_sigmoid_outputs,
             self.quant_data_file_dir,
-            f"{self.ic_hadamard_product.name}_q_x",
+            f"{self.ic_hadamard_product.name}_q_x_1",
+        )
+        self._save_quant_data(
+            q_c_gate_tanh_outputs,
+            self.quant_data_file_dir,
+            f"{self.ic_hadamard_product.name}_q_x_2",
         )
         q_c_next_inputs2 = self.ic_hadamard_product.int_forward(
             q_inputs1=q_i_gate_sigmoid_outputs, q_inputs2=q_c_gate_tanh_outputs
@@ -392,12 +391,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             q_h_next, self.quant_data_file_dir, f"{self.oc_hadamard_product.name}_q_y"
         )
 
-        self._save_quant_data(
-            q_h_next, self.quant_data_file_dir, f"{self.name}_q_h_next"
-        )
-        self._save_quant_data(
-            q_c_next, self.quant_data_file_dir, f"{self.name}_q_c_next"
-        )
+        self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_1")
+        self._save_quant_data(q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
         return q_h_next, q_c_next
 
     def forward(
@@ -405,29 +400,12 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         inputs: torch.FloatTensor,
         h_prev: torch.FloatTensor,
         c_prev: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
-        given_h_prev_QParams: torch.nn.Module = None,
-        given_c_prev_QParams: torch.nn.Module = None,
+        given_inputs_QParams: torch.nn.Module,
     ) -> torch.Tensor:
+        self.inputs_QParams = given_inputs_QParams
         if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
-
-            if given_h_prev_QParams is None:
-                self.h_prev_QParams.update_quant_params(h_prev)
-            else:
-                self.h_prev_QParams = given_h_prev_QParams
-
-            if given_c_prev_QParams is None:
-                self.c_prev_QParams.update_quant_params(c_prev)
-            else:
-                self.c_prev_QParams = given_c_prev_QParams
-
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
-        h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
-        c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
+            self.h_prev_QParams.update_quant_params(h_prev)
+            self.c_prev_QParams.update_quant_params(c_prev)
 
         concated_inputs = self.concatenate.forward(
             inputs1=inputs,

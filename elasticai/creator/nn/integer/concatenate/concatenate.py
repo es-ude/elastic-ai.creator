@@ -84,13 +84,6 @@ class Concatenate(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        # inputs1 = self.inputs1_QParams.dequantize(q_inputs1)
-        # inputs2 = self.inputs2_QParams.dequantize(q_inputs2)
-
-        # outputs = torch.cat((inputs1, inputs2), dim=self.num_dimensions)
-
-        # q_outputs = self.outputs_QParams.quantize(outputs)
-
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
