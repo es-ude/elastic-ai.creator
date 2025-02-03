@@ -64,10 +64,6 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        # inputs = self.inputs_QParams.dequantize(q_inputs)
-        # outputs = self._customized_hard_sigmoid(inputs)
-        # q_outputs = self.outputs_QParams.quantize(outputs)
-
         q_outputs = torch.where(
             q_inputs <= self.quantized_minus_three,
             torch.ones_like(q_inputs) * self.quantized_zero,
@@ -101,10 +97,5 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
 
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
         outputs = self._customized_hard_sigmoid(inputs)
-
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
-
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
-
+        self.outputs_QParams = self.inputs_QParams
         return outputs

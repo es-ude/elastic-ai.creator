@@ -5,6 +5,7 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.hardtanh.design import HardTanh as HardTanhDesign
+from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
@@ -23,14 +24,13 @@ class HardTanh(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
-
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
 
         self.hardtanh = nn.Hardtanh(min_val=-1.0, max_val=1.0, inplace=False)
-
+        self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name: str) -> HardTanhDesign:
@@ -44,13 +44,11 @@ class HardTanh(DesignCreatorModule, nn.Module):
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-        # inputs = self.inputs_QParams.dequantize(q_inputs)
-        # outputs = self.hardtanh(inputs)
-        # q_outputs = self.outputs_QParams.quantize(outputs)
 
         q_outputs = torch.where(
             q_inputs > self.quantized_one, self.quantized_one, q_inputs
         )
+
         q_outputs = torch.where(
             q_outputs < self.quantized_minus_one, self.quantized_minus_one, q_outputs
         )
@@ -67,11 +65,8 @@ class HardTanh(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_QParams = given_inputs_QParams
 
+        inputs = SimQuant.apply(inputs, self.inputs_QParams)
+
         outputs = self.hardtanh(inputs)
-
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
-
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
-
+        self.outputs_QParams = self.inputs_QParams
         return outputs

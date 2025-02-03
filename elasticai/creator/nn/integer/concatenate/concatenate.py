@@ -78,8 +78,8 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs1: torch.IntTensor,  # h_prev
-        q_inputs2: torch.IntTensor,  # inputs
+        q_inputs1: torch.IntTensor,  # inputs
+        q_inputs2: torch.IntTensor,  # h_prev
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
@@ -111,8 +111,8 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs1: torch.FloatTensor,
-        inputs2: torch.FloatTensor,
+        inputs1: torch.FloatTensor,  # inputs
+        inputs2: torch.FloatTensor,  # h_prev
         given_inputs1_QParams: torch.nn.Module = None,
         given_inputs2_QParams: torch.nn.Module = None,
     ) -> torch.FloatTensor:

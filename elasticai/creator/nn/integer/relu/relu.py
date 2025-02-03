@@ -57,6 +57,4 @@ class ReLU(DesignCreatorModule):
         outputs = F.relu(inputs)
 
         self.outputs_QParams = self.inputs_QParams
-        # outputs = SimQuant.apply(outputs, self.outputs_QParams)
-
         return outputs
