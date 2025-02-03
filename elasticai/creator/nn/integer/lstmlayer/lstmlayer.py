@@ -119,25 +119,27 @@ class LSTMLayer(nn.Module):
             if given_inputs_QParams is not None:
                 self.inputs_QParams = given_inputs_QParams
             else:
-                self.inputs_QParams.update_quant_params(input)
+                self.inputs_QParams.update_quant_params(inputs)
             if given_h_prev_QParams is not None:
                 self.h_prev_QParams = given_h_prev_QParams
             else:
                 self.h_prev_QParams.update_quant_params(h_prev)
+
             if given_c_prev_QParams is not None:
                 self.c_prev_QParams = given_c_prev_QParams
             else:
                 self.c_prev_QParams.update_quant_params(c_prev)
 
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
-        h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
-        c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
 
         outputs = torch.zeros(
             self.batch_size, self.seq_len, self.hidden_size, dtype=torch.float32
         ).to(inputs.device)
 
         for t in range(self.seq_len):
+            h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
+            c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
+
             h_next, c_next = self.lstm_cell.forward(
                 inputs=inputs[:, t, :],
                 h_prev=h_prev,

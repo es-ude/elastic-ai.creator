@@ -75,7 +75,6 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
 
         h_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
         c_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
-
         self.q_h_0 = self.h_prev_QParams.quantize(h_0)
         self.q_c_0 = self.c_prev_QParams.quantize(c_0)
 

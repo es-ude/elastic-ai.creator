@@ -393,6 +393,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_1")
         self._save_quant_data(q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
+
         return q_h_next, q_c_next
 
     def forward(
@@ -403,10 +404,12 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         given_inputs_QParams: torch.nn.Module,
     ) -> torch.Tensor:
         self.inputs_QParams = given_inputs_QParams
+
         if self.training:
             self.h_prev_QParams.update_quant_params(h_prev)
             self.c_prev_QParams.update_quant_params(c_prev)
 
+        # concatenate inputs and h_prev
         concated_inputs = self.concatenate.forward(
             inputs1=inputs,
             inputs2=h_prev,

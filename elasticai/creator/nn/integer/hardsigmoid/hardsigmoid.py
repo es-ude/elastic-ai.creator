@@ -54,14 +54,23 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         self.out_quantized_one = self.outputs_QParams.quantize(torch.tensor(1.0))
         self.out_quantized_zero = self.outputs_QParams.quantize(torch.tensor(0.0))
 
-        self.tmp = int(
-            4 / (self.inputs_QParams.scale_factor) + 7 * self.inputs_QParams.zero_point
+        # print(f"-------------------{self.name}-------------------")
+        self.tmp = (  # TODO:  int() or self.inputs_QParams.quantize(torch.tensor(0.5)) * 8
+            int(
+                0.5 / (self.inputs_QParams.scale_factor)
+                + self.inputs_QParams.zero_point
+            )
+            * 8
         )
         self.precomputed = True
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+
+        inputs = self.inputs_QParams.dequantize(q_inputs).to("cuda")
+        outputs = self._customized_hard_sigmoid(inputs)
+        q_outputs = self.outputs_QParams.quantize(outputs).to("cpu")
 
         q_outputs = torch.where(
             q_inputs <= self.quantized_minus_three,
@@ -78,6 +87,7 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         q_outputs = torch.where(
             (q_inputs > self.quantized_minus_three) & (q_inputs < self.quantized_three),
             (q_outputs + self.tmp) // 8,
+            # (q_outputs // 8) + self.tmp,
             q_outputs,
         )
 
