@@ -39,7 +39,6 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
     def _customized_hard_sigmoid(self, inputs: torch.FloatTensor) -> torch.FloatTensor:
         outputs = torch.where(inputs <= -3.0, torch.zeros_like(inputs), inputs)
         outputs = torch.where(inputs >= 3.0, torch.ones_like(outputs), outputs)
-
         outputs = torch.where(
             (inputs > -3.0) & (inputs < 3.0), outputs / 8.0 + 0.5, outputs
         )

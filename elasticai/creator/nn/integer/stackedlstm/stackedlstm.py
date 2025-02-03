@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModu
 from elasticai.creator.nn.integer.lstmlayer import LSTMLayer
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 from elasticai.creator.nn.integer.stackedlstm.design import (
     StackedLSTM as StackedLSTMDesign,
 )
@@ -126,6 +127,9 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
         if self.training:
             self.h_prev_QParams.update_quant_params(h_0)
             self.c_prev_QParams.update_quant_params(c_0)
+
+        h_0 = SimQuant.apply(h_0, self.h_prev_QParams)
+        c_0 = SimQuant.apply(c_0, self.c_prev_QParams)
 
         h_prev = h_0
         c_prev = c_0

@@ -86,15 +86,19 @@ class LSTMLayer(nn.Module):
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x_1")
         self._save_quant_data(q_h_prev, self.quant_data_file_dir, f"{self.name}_q_x_2")
         self._save_quant_data(q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3")
+
         q_outputs = torch.zeros(
             self.batch_size, self.seq_len, self.hidden_size, dtype=torch.int32
         ).to("cpu")
+
         for t in range(self.seq_len):
             q_h_next, q_c_next = self.lstm_cell.int_forward(
                 q_inputs=q_inputs[:, t, :], q_h_prev=q_h_prev, q_c_prev=q_c_prev
             )
+
             q_outputs[:, t, :] = q_h_next
-            q_h_prev, q_c_prev = q_h_next, q_c_next
+            q_h_prev = q_h_next
+            q_c_prev = q_c_next
 
         self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y_1")
         self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_2")

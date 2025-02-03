@@ -52,6 +52,7 @@ class HardTanh(DesignCreatorModule, nn.Module):
         q_outputs = torch.where(
             q_outputs < self.quantized_minus_one, self.quantized_minus_one, q_outputs
         )
+
         return q_outputs
 
     def forward(
