@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Iterable, Iterator
 from typing import Generic, TypeVar
 
@@ -49,11 +50,20 @@ class GraphDelegate(Generic[_T]):
         """Iterator over nodes in a fixed but unspecified order."""
         yield from self.predecessors.keys()
 
-    def get_edges(self) -> Iterator[tuple[_T, _T]]:
+    def iter_edges(self) -> Iterator[tuple[_T, _T]]:
         """Iterator over edges in a fixed but unspecified order."""
         for _from, _tos in self.successors.items():
             for _to in _tos:
                 yield _from, _to
+
+    def get_edges(self) -> Iterator[tuple[_T, _T]]:
+        """Iterator over edges in a fixed but unspecified order."""
+        warnings.warn(
+            "get_edges() is deprecated, use iter_edges() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        yield from self.iter_edges()
 
     def get_successors(self, node: _T) -> Iterator[_T]:
         """Iterator over node successors in a fixed but unspecified order."""

@@ -58,7 +58,7 @@ class Graph(Generic[N, E]):
 
     @property
     def edges(self) -> Mapping[tuple[str, str], E]:
-        return _ReadOnlyMappingInOrderAsIterable(self._g.get_edges, self._edge_data)
+        return _ReadOnlyMappingInOrderAsIterable(self._g.iter_edges, self._edge_data)
 
 
 _K = TypeVar("_K")

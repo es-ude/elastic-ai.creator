@@ -9,7 +9,7 @@ from elasticai.creator.ir import Lowerable, LoweringPass
 
 @dataclass
 class PluginSpec(pl.PluginSpec):
-    generated: tuple[str, ...]
+    generated: list[str]
 
 
 @pytest.fixture
@@ -29,7 +29,9 @@ def test_can_read_plugin(plugin) -> None:
             target_runtime="vhdl",
             version="0.1",
             api_version="0.1",
-            generated=("convolution",),
+            generated=[
+                "convolution",
+            ],
             package="tests.integration_tests.minimal_plugin",
         )
         == p

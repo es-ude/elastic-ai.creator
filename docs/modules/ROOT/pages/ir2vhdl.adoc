@@ -228,3 +228,4 @@ NOTE: including (un)clocked combinatorial allows us to nest combinatorial design
 The `combinatorial` plugin defines a `Instance` type for each of these nodes types and
 uses the `InstanceFactory` to create instances from nodes in an IR graph.
 
+
