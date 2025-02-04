@@ -4,9 +4,10 @@ from typing import cast
 import pytest
 import torch
 
+from elasticai.creator.nn.fixed_point.precomputed.identity_step_function import (
+    IdentityStepFunction,
+)
 from tests.tensor_test_case import assertTensorEqual
-
-from elasticai.creator.nn.fixed_point.precomputed.identity_step_function import IdentityStepFunction
 
 
 def generate_step_lut(min: float, max: float, steps: int) -> torch.Tensor:

@@ -1,11 +1,10 @@
 import torch
 
-from tests.tensor_test_case import TensorTestCase
-
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
+from tests.tensor_test_case import TensorTestCase
 
 
 class FixedPointMathOperationsTest(TensorTestCase):

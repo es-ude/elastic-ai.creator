@@ -1,12 +1,12 @@
 from pathlib import Path
+
 import pytest
 import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
+from elasticai.creator.nn.fixed_point.conv1d.layer import Conv1d
 from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
-
-from elasticai.creator.nn.fixed_point.conv1d.layer import Conv1d
 
 
 def create_ones_conv1d_input_list(

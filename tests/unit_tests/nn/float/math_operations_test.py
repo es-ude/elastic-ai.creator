@@ -1,8 +1,7 @@
 import torch
 
-from tests.tensor_test_case import assertTensorEqual
-
 from elasticai.creator.nn.float.math_operations import MathOperations
+from tests.tensor_test_case import assertTensorEqual
 
 
 def test_quantize() -> None:

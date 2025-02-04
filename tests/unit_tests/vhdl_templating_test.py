@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 import pytest
 
-from elasticai.creator.vhdl_template import EntityTemplateDirector
+from elasticai.creator.ir2vhdl import EntityTemplateDirector
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def dummy_vhdl_prototype() -> Iterable[str]:
         "end entity;",
         "",
         "begin architecture rtl of skeleton is",
-        "  constant ADDRESS_WIDTH: integer := 16;" "begin" "  d_in <= address_in;",
+        "  constant ADDRESS_WIDTH: integer := 16;begin  d_in <= address_in;",
         "end architecture;",
     ]
 
