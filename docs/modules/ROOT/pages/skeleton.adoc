@@ -1,8 +1,8 @@
 = Skeleton
 
-== Skeleton ID
+== Hardware Function ID
 
-The `SKELETON_ID` uniquely identifies a hw design.
+The `HW_FUNCTION_ID` uniquely identifies a hw design.
 It is set in the skeleton hardware module (hence the name).
 The skeleton id is 16 byte long.
 To ensure uniqueness the id is obtained by running blake2b on all files except for the skeleton_pkg itself.
@@ -20,8 +20,8 @@ file_digests := *sort*(file_hashes)
 skeleton_id := *hash*(file_digests)
 ----
 
-.Skeleton ID in VHDL
-In VHDL we include the skeleton id as a constant from a package called `skeleton_pkg`.
+.Hw Function ID in VHDL
+In VHDL we include the hardware function id as a constant from a package called `skeleton_pkg`.
 
 
 == HW accelerator meta description
