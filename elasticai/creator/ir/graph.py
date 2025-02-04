@@ -171,3 +171,11 @@ class _ReadOnlyMappingInOrderAsIterable(Mapping[_K, _V]):
 
     def __getitem__(self, k: _K) -> _V:
         return self._value_constructor(self._d[k])
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        return dict(self) == dict(other)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({dict(self)})"
