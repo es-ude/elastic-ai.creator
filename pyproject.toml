@@ -14,8 +14,6 @@ dependencies = [
 ]
 
 
-[project.scripts]
-eai-run-ghdl-tbs-for-plugins = "elasticai.creator.utils.run_ghdl_tbs_for_plugins:main"
 
 [dependency-groups]
 dev = [
@@ -26,7 +24,12 @@ dev = [
     "pysciidoc>=0.3.3",
 ]
 release = ["git-cliff>=2.7.0"]
-testing = ["pytest>=8.3.4", "pytest-cov>=6.0.0", "coverage>=7.6.9"]
+testing = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "coverage>=7.6.9",
+    "vunit-hdl>=5.0.0.dev5",
+]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
 lint = ["mypy>=1.13.0", "ruff>=0.9.0"]

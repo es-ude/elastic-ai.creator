@@ -284,7 +284,7 @@ wheels = [
 
 [[package]]
 name = "elasticai-creator"
-version = "0.60.1.dev70+g55df6961c.d19800101"
+version = "0.60.1.dev74+gd6f4d5a75.d19800101"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -317,6 +317,7 @@ testing = [
     { name = "coverage" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "vunit-hdl" },
 ]
 utils = [
     { name = "rust-just" },
@@ -355,6 +356,7 @@ testing = [
     { name = "coverage", specifier = ">=7.6.9" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "vunit-hdl", specifier = ">=5.0.0.dev5" },
 ]
 utils = [{ name = "rust-just", specifier = ">=1.38.0" }]
 versioning = [{ name = "towncrier", specifier = ">=24.8.0" }]
@@ -1824,6 +1826,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/a7/ca/f23dcb02e161a9bba
 wheels = [
     { url = "https://files.pythonhosted.org/packages/89/9b/599bcfc7064fbe5740919e78c5df18e5dceb0887e676256a1061bb5ae232/virtualenv-20.29.1-py3-none-any.whl", hash = "sha256:4e4cb403c0b0da39e13b46b1b2476e505cb0046b25f242bee80f62bf990b2779", size = 4282379 },
 ]
+
+[[package]]
+name = "vunit-hdl"
+version = "5.0.0.dev5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ff/d2/ca173e351bf3f9e48dea24957a2d820c54e031a5b9469d275ed10d6e3049/vunit_hdl-5.0.0.dev5.tar.gz", hash = "sha256:f9f74226c03f36d670fb393624540dddd8a5f3c874b396489a1e112c717141a5", size = 721573 }
 
 [[package]]
 name = "wcwidth"
