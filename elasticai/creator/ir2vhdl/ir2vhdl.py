@@ -1,6 +1,7 @@
 import importlib.resources as res
 import operator
 import re
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ import elasticai.creator.function_utils as F
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from elasticai.creator.ir import Edge as _Edge
-from elasticai.creator.ir import Graph, Lowerable, LoweringPass, RequiredField
+from elasticai.creator.ir import Graph, LoweringPass, RequiredField
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.plugin import PluginLoader as _Loader
 from elasticai.creator.plugin import PluginSpec as _PluginSpec
@@ -186,49 +187,40 @@ N = TypeVar("N", bound=VhdlNode)
 E = TypeVar("E", bound=Edge)
 
 
-class Implementation(Graph[N, E], Lowerable):
+class Implementation(Graph[N, E]):
+    name: str
+    type: str
+
     def __init__(
         self,
-        name: str,
-        type: str,
-        attributes: dict[str, Any],
-        nodes=tuple(),
-        edges=tuple(),
+        *,
+        name: str | None = None,
+        type: str | None = None,
+        node_fn: Callable[[dict], N] = VhdlNode,
+        edge_fn: Callable[[dict], E] = Edge,
+        data: dict[str, Any] | None = None,
+        attributes: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(nodes, edges)
-        self._name = name
-        self._type = type
-        self.attributes = attributes
-
-    @property
-    def type(self) -> str:
-        return self._type
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    def asdict(self) -> dict[str, Any]:
-        return {
-            "nodes": [n.data for n in self.nodes.values()],
-            "edges": [e.data for e in self.edges.values()],
-            "name": self.name,
-            "type": self.type,
-            "attributes": self.attributes,
-        }
-
-    @classmethod
-    def fromdict(cls, data: dict[str, Any]) -> "Implementation":
-        return cls(
-            name=data["name"],
-            type=data["type"],
-            attributes=data["attributes"],
-            nodes=map(VhdlNode, data["nodes"]),
-            edges=map(Edge, data["edges"]),
+        if attributes is not None and data is not None:
+            raise TypeError("pass either attributes or data argument")
+        if attributes is not None:
+            warnings.warn(
+                "the argument `attributes` is deprecated, use `data` instead.",
+                DeprecationWarning,
+                2,
+            )
+            data = attributes
+        if data is None:
+            data = {}
+        if name is not None:
+            data["name"] = name
+        if type is not None:
+            data["type"] = type
+        super().__init__(
+            node_fn=node_fn,
+            edge_fn=edge_fn,
+            data=data,
         )
-
-    def iterate_bfs_up_from(self, node: str) -> Iterator[N]:
-        yield from self.iterate_bfs_up_from(node)
 
 
 Code: TypeAlias = tuple[str, Sequence[str]]
