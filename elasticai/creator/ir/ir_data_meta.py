@@ -115,7 +115,7 @@ class IrDataMeta(type):
     def __get_user_defined_fields_from_annotations(
         namespace: dict[str, Any],
     ) -> dict[str, type]:
-        annotations = namespace["__annotations__"]
+        annotations = namespace.get("__annotations__", {})
         fields = dict()
         for name, annotation in annotations.items():
             if not name.startswith("_") and name in namespace:
@@ -129,7 +129,7 @@ class IrDataMeta(type):
     def __get_fields_to_be_generated(
         namespace: dict[str, Any],
     ) -> dict[str, type]:
-        annotations = namespace["__annotations__"]
+        annotations = namespace.get("__annotations__", {})
         fields: dict[str, type] = dict()
         for name, annotation in annotations.items():
             if name.startswith("_") or name in namespace:
