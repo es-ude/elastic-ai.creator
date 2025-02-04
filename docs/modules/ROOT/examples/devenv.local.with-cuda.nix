@@ -1,6 +1,8 @@
-{pkgs, lib, ...} :
-
-let
+{
+  pkgs,
+  lib,
+  ...
+}: let
   buildInputs = with pkgs; [
     cudaPackages.cuda_cudart
     cudaPackages.cudatoolkit
@@ -9,8 +11,7 @@ let
     libuv
     zlib
   ];
-in 
-{
+in {
   env.UV_PYTHON_PREFERENCE = lib.mkForce "only-system";
   packages = with pkgs; [
     cudaPackages.cuda_nvcc
@@ -22,10 +23,9 @@ in
   env = {
     LD_LIBRARY_PATH = "${
       with pkgs;
-      lib.makeLibraryPath buildInputs
+        lib.makeLibraryPath buildInputs
     }:/run/opengl-driver/lib:/run/opengl-driver-32/lib";
     XLA_FLAGS = "--xla_gpu_cuda_data_dir=${pkgs.cudaPackages.cudatoolkit}"; # For tensorflow with GPU support
     CUDA_PATH = pkgs.cudaPackages.cudatoolkit;
   };
-
 }
