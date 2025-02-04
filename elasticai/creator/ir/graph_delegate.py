@@ -12,6 +12,11 @@ class GraphDelegate(Generic[_T]):
     content of two GraphDelegates is the same and they were built
     in the same way, then their iteration order is the same as well.
 
+    NOTE: This class is not thread-safe.
+
+    NOTE: We are not providing methods for removal of nodes or edges on purpose.
+        If you need to remove nodes or edges, you should create a new GraphDelegate.
+        Manipulation of the graph should usually be done in a dedicated build phase.
     """
 
     def __init__(self) -> None:
