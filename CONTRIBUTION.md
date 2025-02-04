@@ -5,7 +5,6 @@
 * 2. [Pull Requests and Commits](#PullRequestsandCommits)
 		* 2.1. [Do](#Do)
 		* 2.2. [Don't](#Dont)
-	* 2.1. [Conventional Commit Rules](#ConventionalCommitRules)
 * 3. [Documentation](#Documentation)
 * 4. [Concepts](#Concepts)
 	* 4.1. [Glossary](#Glossary)
@@ -87,8 +86,8 @@ for a full list of installed tools have a look at the `devenv.nix` file.
 
 
 ##  2. <a name='PullRequestsandCommits'></a>Pull Requests and Commits
-Use conventional commit types especially (`feat`, `fix`) and mark `BREAKING CHANGES`
-in commit messages.
+Use conventional commit types (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)) especially (`feat`, `fix`) and mark `BREAKING CHANGES`
+in commit messages. The message scope is optional.
 Please try to use rebasing and squashing to make sure your commits are atomic.
 By atomic we mean, that each commit should make sense on its own.
 As an example let's assume you have been working on a new feature `A` and
@@ -146,10 +145,6 @@ it should ideally also contain the test coverage, documentation, etc.
 If there are changes that are not directly related to that feature, 
 they should go into a different commit.
 
-###  2.1. <a name='ConventionalCommitRules'></a>Conventional Commit Rules
-
-We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types are allowed. The message scope is optional.
-
 
 ##  3. <a name='Documentation'></a>Documentation
 The easiest way to build the documentation yourself is to setup devenv as shown above in the section [devenv](#devenv). Afterwards just run
@@ -182,17 +177,21 @@ hardware definitions over a wide range of supported architectures and platforms 
 
 The code-base is composed out of the following packages
 - `file_generation`:
-  - write files to paths on hard disk or to virtual paths (e.g., for testing purposes)
+  - provides a very restricted api to generate files or file subtrees under a given root node and defines a basic template api and data structure, compatible with `file_generation`
+  - writes files to paths on hard disk or to virtual paths (e.g., for testing purposes)
   - simple template definition
   - template writer/expander
 - `vhdl`:
+  - shared code that we use to represent and generate vhdl code
   - helper functions to generate frequently used vhdl constructs
   - the `Design` interface to facilitate composition of hardware designs
   - basic vhdl design without a machine learning layer counterpart to be used as dependencies in other designs (e.g., rom modules)
   - additional vhdl designs to make the neural network accelerator accessible via the elasticai.runtime, also see [skeleton](./elasticai/creator/vhdl/system_integrations/README.md)
 - `base_modules`:
+  - shared functionality and data structures, that we use to create our neural network software modules
   - basic machine learning modules that are used as dependencies by translatable layers
 - `nn`:
+  - trainable modules that can be translated to vhdl to build a hardware accelerator
   - package for public layer api; hosting translatable layers of different categories
   - layers within a subpackage of `nn`, e.g. `nn.fixed_point` are supposed to be compatible with each other
 
@@ -222,8 +221,11 @@ python3 -m pytest ./tests/path/to/specific/test.py
 If you want to run all tests, give the path to the tests:
 
 ```bash
-python3 -m pytest ./tests
+python3 -m pytest ./tests ./elasticai
 ```
+
+There still are unit tests for specific modules in their respective folders.
+Those are subject to be moved.
 
 If you want to add more tests please refer to the Test Guidelines in the following.
 
@@ -290,6 +292,8 @@ references: https://jrsmith3.github.io/python-testing-style-guidelines.html
 
 ##  6. <a name='Addinganewtranslatablelayersubjecttochange'></a>Adding a new translatable layer (subject to change)
 
+### General approach
+
 Adding a new layer involves three main tasks:
 1. define the new ml framework module, typically you want to inherit from `pytorch.nn.Module` and optionally use one
         of our layers from `base_module`
@@ -299,7 +303,7 @@ Adding a new layer involves three main tasks:
      - the hardware implementation (i.e., which files are written to where and what's their content)
      - the interface (`Port`) of the design, so we can automatically combine it with other designs
      - to help with the implementation, you can use the template system as well as the `elasticai.creator.vhdl.code_generation` modules
-3. define a trainable `DesignCreator`, typically inheriting from the class defined in 1. and implement the `create_design` method which
+3. define a trainable `DesignCreatorModule`, typically inheriting from the class defined in 1. and implement the `create_design` method which
    a. extracts information from the module defined in 1.
    b. converts that information to native python types
    c. instantiates the corresponding design from 2. providing the necessary data from a.
@@ -308,12 +312,21 @@ Adding a new layer involves three main tasks:
 
 ###  6.1. <a name='Portsandautomaticallycombininglayerssubjecttochange'></a>Ports and automatically combining layers (subject to change)
 The algorithm for combining layers lives in `elasticai.creator.vhdl.auto_wire_protocols`.
+The *autowiring algorithm* will take care of generating vhdl code to correctly connect a graph of buffered and bufferless designs.
+
+### Example
+
+Example steps:
+- Create a new folder in `elasticai.creator.nn.<quantization_scheme>`
+- Create files: `__init__.py`, `layer.py`, `layer_test.py`, `layer.tpl.vhd`, `design.py`, `design_test.py`
+
+
+#### VHDL layer template: interface and port description
+
 Currently, we support two types of interfaces: a) bufferless design, b) buffered design.
 
 b) a design that features its own buffer to store computation results and will fetch its input data from a previous buffer
 c) a design without buffer that processes data as a stream, this is assumed to be fast enough such that a buffered design can fetch its input data through a bufferless design
-
-The *autowiring algorithm* will take care of generating vhdl code to correctly connect a graph of buffered and bufferless designs.
 
 A bufferless design features the following signals:
 
@@ -335,3 +348,27 @@ For a buffered design we define the following signals:
 | clock| in       |std_logic       | clock signal, possibly shared with other layers |
 |done | out | std_logic | set to "1" when computation is finished |
 |enable | in | std_logic | compute while set to "1" |
+
+
+#### design.py
+
+- needs to inherit from `elasticai.creator.vhdl.design.design.Design`
+- typical constructor arguments: num_bits (frac_bits, total_bits), in_feature_num, out_feature_num, weights, bias, name
+- `port(self)`: defines the number of inputs and outputs and their data widths
+- `save_to(self, destination: Path)`: load a template via `elasticai.creator.file_generation.template.InProjectTemplate` to make text replacements in the VHDL template for filling it with values and parameters; if you have read-only-values (like weights and biases) that you load in the VHDL template, use `elasticai.creator.vhdl.shared_designs.rom.Rom` to create them and call their `save_to()` function
+
+#### layer.py
+
+- Create a layer class which inherits from `elasticai.creator.vhdl.design_creator.DesignCreator` and `torch.nn.Module`
+- write `create_design` function that returns a `Design`
+
+#### Base modules
+
+- If you want to define custom mathematic operators for your quantization scheme, you can implement them in `elasticai.creator.nn.<quantization_scheme>._math_operations.py`.
+- Create a new file in `elasticai.creator.base_modules` which defines a class inheriting from `torch.nn.Module` and specifies the math operators that you need for your base module
+- Your different `layer.py` files for every `elasticai.creator.nn.<quantization_scheme>` can then inherit from `elasticai.creator.base_modules.<module>.py`
+
+
+### Adding new quantization scheme of an existing module
+
+TODO
