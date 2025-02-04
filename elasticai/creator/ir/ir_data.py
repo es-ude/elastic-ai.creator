@@ -59,7 +59,7 @@ class IrData(metaclass=IrDataMeta, create_init=False):
         return missing
 
     def __repr__(self) -> str:
-        return f"{self.__class__} ({self.data})"
+        return f"{self.__class__.__name__}({self.data})"
 
     def __eq__(self, o: object) -> bool:
         if self is o:
