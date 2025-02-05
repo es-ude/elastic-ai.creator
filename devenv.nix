@@ -6,23 +6,6 @@
   ...
 }: let
   unstablePkgs = import inputs.nixpkgs-unstable {system = pkgs.stdenv.system;};
-  asciidoctorKroki = pkgs.buildNpmPackage {
-    pname = "asciidoctor-kroki";
-    version = "0.17.0";
-    src = pkgs.fetchFromGitHub {
-      owner = "Mogztter";
-      repo = "asciidoctor-kroki";
-      rev = "v0.17.0";
-      sha256 = "sha256-N1zDTNjIA4jHa+h3mHLQJTJApmbPueAZpv0Jbm2H31o=";
-    };
-    npmDepsHash = "sha256-DU7zBkACn26Ia4nx5cby0S2weTNE3kMNg080yR1knjw=";
-    dontNpmBuild = true;
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "1";
-  };
-  antoraWithKroki = pkgs.writeShellScriptBin "antora" ''
-    export NODE_PATH=${asciidoctorKroki}/lib/node_modules:${pkgs.antora}/lib/node_modules
-    exec ${pkgs.antora}/bin/antora "$@"
-  '';
 in {
   # override these in your devenv.local.nix as needed
   languages.vhdl = {
@@ -31,12 +14,10 @@ in {
   };
 
   packages = [
-    pkgs.kramdown-asciidoc
     pkgs.git
     pkgs.pikchr
     unstablePkgs.jujutsu
     pkgs.gtkwave # visualize wave forms from hw simulations
-    antoraWithKroki
     pkgs.cocogitto
     unstablePkgs.mypy # python type checker
     unstablePkgs.vale # syntax aware linter for prose
@@ -53,6 +34,10 @@ in {
     uv.package = unstablePkgs.uv;
     uv.sync.enable = true;
     uv.sync.allExtras = true;
+  };
+
+  processes = {
+    serve_docs.exec = "cd docs; SPHINX_AUTOBUILD=YES ${unstablePkgs.uv}/bin/uv run sphinx-autobuild source build";
   };
 
   scripts = {
@@ -201,28 +186,20 @@ in {
     };
 
     "docs:build" = let
-      out_dir = "docs/modules/api/pages";
-      nav_file = "docs/modules/api/partials/nav.adoc";
-      pkg_name = "elasticai.creator";
-      pysciidoc = "${unstablePkgs.uv}/bin/uv run pysciidoc";
+      uv_run = "${unstablePkgs.uv}/bin/uv run";
     in {
       exec = ''
-        if [ ! -d docs/modules/api ]; then mkdir -p docs/modules/api; fi
-        ${pkgs.kramdown-asciidoc}/bin/kramdoc README.md -o docs/modules/ROOT/pages/index.adoc
-        ${pkgs.kramdown-asciidoc}/bin/kramdoc CONTRIBUTION.md -o docs/modules/ROOT/pages/contribution.adoc
-        ${pysciidoc} --api-output-dir ${out_dir} --nav-file ${nav_file} ${pkg_name}
-        ${antoraWithKroki}/bin/antora docs/antora-playbook.yml
+        cd docs
+        export LC_ALL=C  # necessary to run in github action
+        ${uv_run} sphinx-build -b html source build
+        touch build/.nojekyll  # prevent github from trying to build the docs
       '';
       before = ["all:build" "check:all"];
     };
 
     "docs:clean" = {
       exec = ''
-        if [ -d docs/modules/api/pages ]; then rm -r docs/modules/api/pages; fi
-        if [ -e docs/modules/ROOT/pages/index.adoc ]; then rm docs/modules/ROOT/pages/index.adoc; fi
-        if [ -e docs/modules/ROOT/pages/contribution.adoc ]; then rm docs/modules/ROOT/pages/contribution.adoc; fi
-        if [ -d docs/modules/plugins/pages ]; then rm -r docs/modules/plugins/pages; fi
-        if [ -d docs/build ]; then rm -r docs/build; fi
+        rm -rf docs/build
       '';
       before = ["all:clean"];
       after = ["check:all"];

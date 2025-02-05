@@ -17,7 +17,7 @@ depends_on = [ "elasticai.creator.function_utils"]
 
 [[interfaces]]
 expose = [
-"[a-zA-Z]*",
+"[a-zA-Z0-9_]+",
 ]
 from = [
     "elasticai.creator.ir",
@@ -35,7 +35,7 @@ depends_on = []
 
 [[modules ]]
 path = "elasticai.creator.nn"
-depends_on = ["elasticai.creator.file_generation", "elasticai.creator.base_modules", "elasticai.creator.vhdl"]
+depends_on = [ "elasticai.creator.base_modules", "elasticai.creator.nn.sequential", "elasticai.creator.nn.identity"]
 
 [[modules ]]
 path = "elasticai.creator.vhdl"
@@ -75,5 +75,45 @@ path = "elasticai.creator_plugins.middleware"
 depends_on = []
 
 [[modules ]]
+path = "elasticai.creator.hw_function_id"
+depends_on = []
+
+[[modules ]]
+path = "elasticai.creator.nn.design_creator_module"
+depends_on = ["elasticai.creator.vhdl"]
+
+[[modules ]]
+path = "elasticai.creator.nn.identity"
+depends_on = ["elasticai.creator.nn.design_creator_module", "elasticai.creator.vhdl", "elasticai.creator.file_generation", "elasticai.creator.base_modules"]
+
+[[modules ]]
+path = "elasticai.creator.nn.quantized_grads"
+depends_on = ["elasticai.creator.base_modules"]
+
+[[modules ]]
+path = "elasticai.creator.nn.fixed_point"
+depends_on = ["elasticai.creator.vhdl", "elasticai.creator.nn.design_creator_module", "elasticai.creator.file_generation", "elasticai.creator.base_modules"]
+
+[[modules ]]
+path = "elasticai.creator.nn.float"
+depends_on = ["elasticai.creator.base_modules"]
+
+[[modules ]]
+path = "elasticai.creator.nn.sequential"
+depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn.design_creator_module", "elasticai.creator.vhdl"]
+
+[[modules ]]
+path = "elasticai.creator.ir2vhdl.testing"
+depends_on = []
+
+[[modules ]]
+path = "elasticai.creator.ir2torch"
+depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.function_utils"]
+
+[[modules ]]
+path = "elasticai.creator.torch2ir"
+depends_on = ["elasticai.creator.ir", "elasticai.creator.function_utils"]
+
+[[modules ]]
 path = "<root>"
-depends_on = ["elasticai.creator.vhdl", "elasticai.creator.nn", "elasticai.creator.file_generation"]
+depends_on = ["elasticai.creator.ir", "elasticai.creator.plugin", "elasticai.creator.function_utils", "elasticai.creator.ir2vhdl", "elasticai.creator.vhdl", "elasticai.creator.nn.fixed_point", "elasticai.creator.nn", "elasticai.creator.file_generation"]

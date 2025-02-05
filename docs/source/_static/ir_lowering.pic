@@ -1,0 +1,27 @@
+fill = white
+scale = 0.8
+linerad = 0.2
+file "torch" "model"
+arrow right
+oval "Torch2Ir" "Lowering" "Pass"
+arrow from last oval.s down
+file "high" "level" "ir"
+move left from last file.w
+oval "Ir2Ir" "Transformation"
+arc -> from 0.15 north of last file.w to last oval.ne
+arc -> from last oval.se to 0.15 south of last file.w
+arrow from last file.e right 0.25 then down 0.75
+
+oval "Ir2Ir" "Lowering" "Pass"
+arrow from last oval.s down 0.25 then left 0.75
+file "low" "level" "ir"
+arrow from last file.s down
+oval "Ir2Vhdl"
+arrow from last file.w left 0.5 then down 1.6
+oval "Ir2C"
+arrow from last file.w left 1.25 then down 1 + 2*0.6 + 0.1
+oval "Ir2Verilog"
+arrow down then right
+file "*.c" "*.vhd" "*.v"
+arrow from 2nd last oval.s to last file.n
+arrow from 3rd last oval.s down until even with last file.e then to last file.e

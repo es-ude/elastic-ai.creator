@@ -1,0 +1,63 @@
+<svg xmlns='http://www.w3.org/2000/svg' class="pikchr" width="406" height="772" viewBox="0 0 508.32 965.52">
+<path d="M146.16,110.16L218.16,110.16L218.16,23.76L196.56,2.16L146.16,2.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M196.56,2.16L196.56,23.76L218.16,23.76"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="182.16" y="46.08" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">torch</text>
+<text x="182.16" y="66.24" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">model</text>
+<polygon points="290.16,56.16 278.64,60.48 278.64,51.84" style="fill:rgb(0,0,0)"/>
+<path d="M218.16,56.16L284.4,56.16"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M326.16,92.16L398.16,92.16A36 36 0 0 0 434.16 56.16A36 36 0 0 0 398.16 20.16L326.16,20.16A36 36 0 0 0 290.16 56.16A36 36 0 0 0 326.16 92.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="362.16" y="36" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Torch2Ir</text>
+<text x="362.16" y="56.16" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Lowering</text>
+<text x="362.16" y="76.32" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Pass</text>
+<polygon points="362.16,164.16 357.84,152.64 366.48,152.64" style="fill:rgb(0,0,0)"/>
+<path d="M362.16,92.16L362.16,158.4"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M326.16,272.16L398.16,272.16L398.16,185.76L376.56,164.16L326.16,164.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M376.56,164.16L376.56,185.76L398.16,185.76"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="362.16" y="198" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">high</text>
+<text x="362.16" y="218.16" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">level</text>
+<text x="362.16" y="238.32" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">ir</text>
+<path d="M146.16,254.16L218.16,254.16A36 36 0 0 0 254.16 218.16A36 36 0 0 0 218.16 182.16L146.16,182.16A36 36 0 0 0 110.16 218.16A36 36 0 0 0 146.16 254.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="182.16" y="208.08" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Ir2Ir</text>
+<text x="182.16" y="228.24" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Transformation</text>
+<polygon points="243.616,192.704 249.224,181.753 255.042,188.141" style="fill:rgb(0,0,0)"/>
+<path d="M326.16,196.56Q286.816,153.36 247.874,188.826"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<polygon points="326.16,239.76 321.597,251.186 315.209,245.368" style="fill:rgb(0,0,0)"/>
+<path d="M243.616,243.616Q286.816,282.96 322.282,244.019"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<polygon points="434.16,326.16 429.84,314.64 438.48,314.64" style="fill:rgb(0,0,0)"/>
+<path d="M398.16,218.16 L 416.16,218.16 Q 434.16,218.16 434.16,246.96 L 434.16,291.6 L 434.16,320.4"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M398.16,398.16L470.16,398.16A36 36 0 0 0 506.16 362.16A36 36 0 0 0 470.16 326.16L398.16,326.16A36 36 0 0 0 362.16 362.16A36 36 0 0 0 398.16 398.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="434.16" y="342" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Ir2Ir</text>
+<text x="434.16" y="362.16" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Lowering</text>
+<text x="434.16" y="382.32" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Pass</text>
+<polygon points="326.16,434.16 337.68,429.84 337.68,438.48" style="fill:rgb(0,0,0)"/>
+<path d="M434.16,398.16 L 434.16,416.16 Q 434.16,434.16 405.36,434.16 L 360.72,434.16 L 331.92,434.16"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M254.16,488.16L326.16,488.16L326.16,401.76L304.56,380.16L254.16,380.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M304.56,380.16L304.56,401.76L326.16,401.76"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="290.16" y="414" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">low</text>
+<text x="290.16" y="434.16" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">level</text>
+<text x="290.16" y="454.32" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">ir</text>
+<polygon points="290.16,560.16 285.84,548.64 294.48,548.64" style="fill:rgb(0,0,0)"/>
+<path d="M290.16,488.16L290.16,554.4"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M254.16,632.16L326.16,632.16A36 36 0 0 0 362.16 596.16A36 36 0 0 0 326.16 560.16L254.16,560.16A36 36 0 0 0 218.16 596.16A36 36 0 0 0 254.16 632.16Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="290.16" y="596.16" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Ir2Vhdl</text>
+<polygon points="182.16,664.56 177.84,653.04 186.48,653.04" style="fill:rgb(0,0,0)"/>
+<path d="M254.16,434.16 L 210.96,434.16 Q 182.16,434.16 182.16,462.96 L 182.16,630 L 182.16,658.8"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M146.16,736.56L218.16,736.56A36 36 0 0 0 254.16 700.56A36 36 0 0 0 218.16 664.56L146.16,664.56A36 36 0 0 0 110.16 700.56A36 36 0 0 0 146.16 736.56Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="182.16" y="700.56" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Ir2C</text>
+<polygon points="74.16,765.36 69.84,753.84 78.48,753.84" style="fill:rgb(0,0,0)"/>
+<path d="M254.16,434.16 L 102.96,434.16 Q 74.16,434.16 74.16,462.96 L 74.16,730.8 L 74.16,759.6"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M38.16,837.36L110.16,837.36A36 36 0 0 0 146.16 801.36A36 36 0 0 0 110.16 765.36L38.16,765.36A36 36 0 0 0 2.16 801.36A36 36 0 0 0 38.16 837.36Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="74.16" y="801.36" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">Ir2Verilog</text>
+<polygon points="146.16,909.36 134.64,913.68 134.64,905.04" style="fill:rgb(0,0,0)"/>
+<path d="M74.16,837.36 L 74.16,880.56 Q 74.16,909.36 102.96,909.36 L 111.6,909.36 L 140.4,909.36"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M146.16,963.36L218.16,963.36L218.16,876.96L196.56,855.36L146.16,855.36Z"  style="fill:rgb(255,255,255);stroke-width:2.16;stroke:rgb(0,0,0);" />
+<path d="M196.56,855.36L196.56,876.96L218.16,876.96"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<text x="182.16" y="889.2" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">*.c</text>
+<text x="182.16" y="909.36" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">*.vhd</text>
+<text x="182.16" y="929.52" text-anchor="middle" fill="rgb(0,0,0)" dominant-baseline="central">*.v</text>
+<polygon points="182.16,855.36 177.84,843.84 186.48,843.84" style="fill:rgb(0,0,0)"/>
+<path d="M182.16,736.56L182.16,849.6"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+<polygon points="218.16,909.36 229.68,905.04 229.68,913.68" style="fill:rgb(0,0,0)"/>
+<path d="M290.16,632.16 L 290.16,880.56 Q 290.16,909.36 261.36,909.36 L 252.72,909.36 L 223.92,909.36"  style="fill:none;stroke-width:2.16;stroke:rgb(0,0,0);" />
+</svg>
+

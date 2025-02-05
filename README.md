@@ -93,3 +93,5 @@ The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
 It also includes the supported target representations, like the subfolder [nn](elasticai/creator/nn) is for the translation to vhdl.
 Additionally, we have unit and integration tests in the [tests](tests) folder.
+
+

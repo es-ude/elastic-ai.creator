@@ -1,9 +1,0 @@
-= Data Types
-
-== Core Data Types
-=== Node
-=== Edge
-
-== Helper Data Types
-=== FilterParameters
-=== Shape

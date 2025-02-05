@@ -23,25 +23,25 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Configure Pages
-      uses: actions/configure-pages@v5
-    - uses: actions/checkout@v4
-    - uses: cachix/install-nix-action@v26
-    - uses: cachix/cachix-action@v14
-      with:
-        name: devenv
-    - name: Install devenv.sh
-      run: nix profile install nixpkgs#devenv
-    - name: build docs
-      shell: devenv shell -- bash -e {0}
-      run: devenv tasks run "build:docs" 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v26
+      - uses: cachix/cachix-action@v14
+        with:
+          name: devenv
+      - name: Install devenv.sh
+        run: nix profile install nixpkgs#devenv
+      - name: build docs
+        shell: devenv shell -- bash -e {0}
+        run: devenv tasks run "build:docs"
 
-    - name: Upload Artifacts
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: docs/build/site
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/build/
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
