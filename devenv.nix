@@ -140,8 +140,8 @@ in {
     };
 
     "check:types" = {
-      exec = "${unstablePkgs.uv}/bin/uv run mypy";
-      # before = ["devenv:enterTest"];
+      exec = "${unstablePkgs.uv}/bin/uv run mypy -p elasticai.creator";
+      before = ["check:code-lint"];
     };
 
     "check:python-lint" = {
