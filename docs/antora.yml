@@ -1,6 +1,6 @@
-name: elasticai-creator
 version: true
-title: elasticai.creator
+title: elastic-ai.creator
+name: elasticai-creator
 nav:
   - modules/ROOT/nav.adoc
   - modules/utils/nav.adoc

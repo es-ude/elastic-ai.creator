@@ -4,47 +4,48 @@
   config,
   inputs,
   ...
-}:
-
-let
-  unstablePkgs = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
+}: let
+  unstablePkgs = import inputs.nixpkgs-unstable {system = pkgs.stdenv.system;};
   asciidoctorKroki = pkgs.buildNpmPackage {
-     pname = "asciidoctor-kroki";
-     version = "0.17.0";
-     src = pkgs.fetchFromGitHub {
-       owner = "Mogztter";
-       repo = "asciidoctor-kroki";
-       rev = "v0.17.0";
-       sha256 = "sha256-N1zDTNjIA4jHa+h3mHLQJTJApmbPueAZpv0Jbm2H31o=";
-     };
-     npmDepsHash = "sha256-DU7zBkACn26Ia4nx5cby0S2weTNE3kMNg080yR1knjw=";
-     dontNpmBuild = true;
-     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "1";
-   };
-     antoraWithKroki = pkgs.writeShellScriptBin "antora" ''
-       export NODE_PATH=${asciidoctorKroki}/lib/node_modules:${pkgs.antora}/lib/node_modules
-       exec ${pkgs.antora}/bin/antora "$@"
-     '';
-   in
- 
-{
-
+    pname = "asciidoctor-kroki";
+    version = "0.17.0";
+    src = pkgs.fetchFromGitHub {
+      owner = "Mogztter";
+      repo = "asciidoctor-kroki";
+      rev = "v0.17.0";
+      sha256 = "sha256-N1zDTNjIA4jHa+h3mHLQJTJApmbPueAZpv0Jbm2H31o=";
+    };
+    npmDepsHash = "sha256-DU7zBkACn26Ia4nx5cby0S2weTNE3kMNg080yR1knjw=";
+    dontNpmBuild = true;
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "1";
+  };
+  antoraWithKroki = pkgs.writeShellScriptBin "antora" ''
+    export NODE_PATH=${asciidoctorKroki}/lib/node_modules:${pkgs.antora}/lib/node_modules
+    exec ${pkgs.antora}/bin/antora "$@"
+  '';
+in {
   # override these in your devenv.local.nix as needed
   languages.vhdl = {
-    enable = lib.mkDefault true;  
+    enable = lib.mkDefault true;
     vivado.enable = lib.mkDefault false;
   };
 
   packages = [
     pkgs.kramdown-asciidoc
-    pkgs.gtkwave  # visualize wave forms from hw simulations
+    pkgs.git
+    pkgs.pikchr
+    unstablePkgs.jujutsu
+    pkgs.gtkwave # visualize wave forms from hw simulations
+    pkgs.graphviz
     antoraWithKroki
-    unstablePkgs.mypy  # python type checker
-    unstablePkgs.ruff  # linter/formatter for python
-    unstablePkgs.vale  # syntax aware linter for prose
-    unstablePkgs.act  # run github workflows locally
+    unstablePkgs.mypy # python type checker
+    unstablePkgs.ruff # linter/formatter for python
+    unstablePkgs.vale # syntax aware linter for prose
+    unstablePkgs.act # run github workflows locally
   ];
+
   languages.c.enable = true;
+
   languages.python = {
     enable = true;
     package = pkgs.python311;
@@ -52,7 +53,6 @@ let
     uv.package = unstablePkgs.uv;
     uv.sync.enable = false;
     uv.sync.allExtras = false;
-
   };
 
   scripts = {
@@ -83,9 +83,9 @@ let
         target_platform = 'platform'
 
         " > elasticai/creator_plugins/$1/meta.toml
-        '';
-        package = pkgs.bash;
-        description = "create a new minimal meta.toml file for a plugin";
+      '';
+      package = pkgs.bash;
+      description = "create a new minimal meta.toml file for a plugin";
     };
 
     new_creator_plugin = {
@@ -102,14 +102,29 @@ let
       package = pkgs.bash;
       description = "create a new creator plugin incl. meta.toml and docs";
     };
+
+    run_vhdl_tbs = {
+      exec = ''
+        LAST_EXIT=0
+        START_DIR=$1
+        FILE_PATTERN=$2
+        for tb in $(find $START_DIR -type f -iname $FILE_PATTERN); do
+          ${unstablePkgs.uv}/bin/uv run $tb
+          LAST_EXIT=$? || $LAST_EXIT
+        done
+        exit $LAST_EXIT
+      '';
+      package = pkgs.bash;
+      description = "search for all testbenches in given directory and  run them using given command";
+    };
   };
 
   tasks = {
-    "test:vhdl_plugins" = {
-      exec = ''echo "running testbenches for discovered plugins"
-        UV_PROJECT_ENVIRONEMNT=venv-py311 ${unstablePkgs.uv}/bin/uv run -p 3.11 eai-run-ghdl-tbs-for-plugins
-        '';
-      before = [ "devenv:enterTest" ];
+    "check:vhdl-plugins" = {
+      exec = ''
+        run_vhdl_tbs . "run_tbs.py"
+      '';
+      before = ["check:all"];
     };
 
     "build:package" = {
@@ -122,12 +137,12 @@ let
       before = ["clean:all"];
     };
 
-     "build:docs" = let
-       out_dir = "docs/modules/api/pages";
-       nav_file = "docs/modules/api/partials/nav.adoc";
-       pkg_name = "elasticai.creator";
-       pysciidoc = "UV_PROJECT_ENVIRONMENT=venv-py311 ${unstablePkgs.uv}/bin/uv run -p 3.11 pysciidoc";
-     in {
+    "build:docs" = let
+      out_dir = "docs/modules/api/pages";
+      nav_file = "docs/modules/api/partials/nav.adoc";
+      pkg_name = "elasticai.creator";
+      pysciidoc = "UV_PROJECT_ENVIRONMENT=venv-py311 ${unstablePkgs.uv}/bin/uv run -p 3.11 pysciidoc";
+    in {
       exec = ''
         if [ ! -d docs/modules/api ]; then mkdir -p docs/modules/api; fi
         ${pkgs.kramdown-asciidoc}/bin/kramdoc README.md -o docs/modules/ROOT/pages/index.adoc
@@ -146,32 +161,29 @@ let
         if [ -d venv-py311 ]; then rm -r venv-py311; fi
         if [ -d docs/modules/plugins/pages ]; then rm -r docs/modules/plugins/pages; fi
         if [ -d docs/build ]; then rm -r docs/build; fi
-        '';
+      '';
       before = ["clean:all"];
     };
 
-
     "build:all" = {};
     "clean:all" = {};
-
   };
-
-  ## Commented out while we're configuring pre-commit manually
-  # pre-commit.hooks = {
-  #   shellcheck.enable = true;
-  #   ripsecrets.enable = true; # don't commit secrets
-  #   ruff.enable = true; # lint and automatically fix simple problems/reformat
-  #   taplo.enable = true; # reformat toml
-  #   nixfmt-rfc-style.enable = true; # reformat nix
-  #   ruff-format.enable = true;
-  #   mypy = {
-  #     enable = false;
-  #   }; # check type annotations
-  #   end-of-file-fixer.enable = true;
-  #   commitizen.enable = true; # help adhering to commit style guidelines
-  #   check-toml.enable = true; # check toml syntax
-  #   check-case-conflicts.enable = true;
-  #   check-added-large-files.enable = true;
-  # };
-
 }
+## Commented out while we're configuring pre-commit manually
+# pre-commit.hooks = {
+#   shellcheck.enable = true;
+#   ripsecrets.enable = true; # don't commit secrets
+#   ruff.enable = true; # lint and automatically fix simple problems/reformat
+#   taplo.enable = true; # reformat toml
+#   nixfmt-rfc-style.enable = true; # reformat nix
+#   ruff-format.enable = true;
+#   mypy = {
+#     enable = false;
+#   }; # check type annotations
+#   end-of-file-fixer.enable = true;
+#   commitizen.enable = true; # help adhering to commit style guidelines
+#   check-toml.enable = true; # check toml syntax
+#   check-case-conflicts.enable = true;
+#   check-added-large-files.enable = true;
+# };
+

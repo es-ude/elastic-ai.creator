@@ -1,16 +1,12 @@
-from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from importlib import import_module
-from typing import Generic, NamedTuple, Protocol, TypeVar, cast
 
 import pytest
 
 import elasticai.creator.plugin as p
 
 
-def test_importing_plugin_with_unkown_fields_raises_meaningful_error():
+def test_importing_plugin_with_missing_fields_raises_meaningful_error():
     config_from_file = {
-        "name": "my_plugin",
         "api_version": "0.1",
         "version": "0.2",
         "package": "mypackage",
@@ -19,8 +15,8 @@ def test_importing_plugin_with_unkown_fields_raises_meaningful_error():
         "new_unknown_field": "value",
     }
     with pytest.raises(
-        p.UnexpectedFieldError,
-        match="unexpected fields {'new_unknown_field'} for plugin spec 'PluginSpec'",
+        p.MissingFieldError,
+        match="missing required fields {'name'} for plugin spec 'PluginSpec'\n\tmake sure you are trying to load the correct plugin and the meta.toml file is correct!",
     ):
         p.build_plugin_spec(config_from_file, p.PluginSpec)
 
