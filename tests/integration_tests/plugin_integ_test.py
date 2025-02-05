@@ -71,7 +71,6 @@ def test_can_load_entire_plugin(
     )
     lowerable = make_lowerable(["some", "important", "information"])
     loader.load_from_package("tests.integration_tests.minimal_plugin")
-    print(lower.__dict__["_fns"].__dict__["_fns"])
 
     assert ("some_important_information",) == tuple(lower((lowerable,)))
 
