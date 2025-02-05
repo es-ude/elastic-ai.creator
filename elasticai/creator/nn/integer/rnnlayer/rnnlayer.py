@@ -5,13 +5,13 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.lstmcell import LSTMCell
-from elasticai.creator.nn.integer.lstmlayer.design import LSTMLayer as LSTMLayerDesign
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
+from elasticai.creator.nn.integer.rnnlayer.design import RNNLayer as RNNLayerDesign
 
 
-class LSTMLayer(nn.Module):
+class RNNLayer(nn.Module):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
@@ -19,6 +19,7 @@ class LSTMLayer(nn.Module):
         self.hidden_size = kwargs.get("hidden_size")
         self.batch_size = kwargs.get("batch_size")
         self.seq_len = kwargs.get("seq_len")
+        self.cell_type = kwargs.get("cell_type")
 
         device = kwargs.get("device")
         self.name = kwargs.get("name")
@@ -26,14 +27,19 @@ class LSTMLayer(nn.Module):
         self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.lstm_cell = LSTMCell(
-            name=f"{self.name}_lstm_cell",
-            inputs_size=inputs_size,
-            hidden_size=self.hidden_size,
-            quant_bits=self.quant_bits,
-            quant_data_file_dir=self.quant_data_file_dir,
-            device=device,
-        )
+        if self.cell_type == "lstm":
+            self.rnn_cell = LSTMCell(
+                name=f"{self.name}_lstm_cell",
+                inputs_size=inputs_size,
+                hidden_size=self.hidden_size,
+                quant_bits=self.quant_bits,
+                quant_data_file_dir=self.quant_data_file_dir,
+                device=device,
+            )
+        elif self.cell_type == "gru":
+            pass
+        else:
+            raise ValueError(f"Unsupported cell type: {self.cell_type}")
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -56,16 +62,16 @@ class LSTMLayer(nn.Module):
 
         self.precomputed = False
 
-    def create_design(self, name: str) -> LSTMLayerDesign:
-        return LSTMLayerDesign(
+    def create_design(self, name: str) -> RNNLayerDesign:
+        return RNNLayerDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
-            lstm_cell=self.lstm_cell,
+            rnn_cell=self.rnn_cell,
             work_library_name="work",
         )
 
     def precompute(self):
-        self.lstm_cell.precompute()
+        self.rnn_cell.precompute()
 
         self.precomputed = True
 
@@ -92,7 +98,7 @@ class LSTMLayer(nn.Module):
         ).to("cpu")
 
         for t in range(self.seq_len):
-            q_h_next, q_c_next = self.lstm_cell.int_forward(
+            q_h_next, q_c_next = self.rnn_cell.int_forward(
                 q_inputs=q_inputs[:, t, :], q_h_prev=q_h_prev, q_c_prev=q_c_prev
             )
 
@@ -140,7 +146,7 @@ class LSTMLayer(nn.Module):
             h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
             c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
 
-            h_next, c_next = self.lstm_cell.forward(
+            h_next, c_next = self.rnn_cell.forward(
                 inputs=inputs[:, t, :],
                 h_prev=h_prev,
                 c_prev=c_prev,
@@ -153,7 +159,7 @@ class LSTMLayer(nn.Module):
             self.outputs_QParams.update_quant_params(outputs)
         outputs = SimQuant.apply(outputs, self.outputs_QParams)
 
-        self.h_next_QParams = self.lstm_cell.h_next_QParams
-        self.c_next_QParams = self.lstm_cell.c_next_QParams
+        self.h_next_QParams = self.rnn_cell.h_next_QParams
+        self.c_next_QParams = self.rnn_cell.c_next_QParams
 
         return outputs, h_next, c_next

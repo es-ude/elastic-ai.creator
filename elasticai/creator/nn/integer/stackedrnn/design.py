@@ -8,7 +8,7 @@ from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 
 
-class StackedLSTM(Design):
+class StackedRNN(Design):
     def __init__(
         self,
         name: str,

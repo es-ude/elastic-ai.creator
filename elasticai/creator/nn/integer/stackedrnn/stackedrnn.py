@@ -5,16 +5,16 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.lstmlayer import LSTMLayer
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.stackedlstm.design import (
-    StackedLSTM as StackedLSTMDesign,
+from elasticai.creator.nn.integer.rnnlayer import RNNLayer
+from elasticai.creator.nn.integer.stackedrnn.design import (
+    StackedRNN as StackedRNNDesign,
 )
 
 
-class StackedLSTM(DesignCreatorModule, nn.Module):
+class StackedRNN(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -23,6 +23,7 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
         self.num_layers = kwargs.get("num_layers")
         self.seq_len = kwargs.get("seq_len")
         self.batch_size = kwargs.get("batch_size")
+        self.cell_type = kwargs.get("cell_type")
 
         device = kwargs.get("device")
         self.name = kwargs.get("name")
@@ -30,16 +31,17 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
         self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.lstm_layers = nn.ModuleList()
+        self.rnn_layers = nn.ModuleList()
         for i in range(self.num_layers):
-            self.lstm_layers.append(
-                LSTMLayer(
+            self.rnn_layers.append(
+                RNNLayer(
                     inputs_size=self.inputs_size if i == 0 else self.hidden_size,
                     hidden_size=self.hidden_size,
                     quant_bits=quant_bits,
                     seq_len=self.seq_len,
+                    cell_type=self.cell_type,
                     batch_size=self.batch_size,
-                    name=self.name + f"lstm_layer_{i}",
+                    name=self.name + f"rnn_layer_{i}",
                     quant_data_file_dir=self.quant_data_file_dir,
                     device=device,
                 )
@@ -60,17 +62,17 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
 
         self.precomputed = False
 
-    def create_design(self, name) -> StackedLSTMDesign:
-        return StackedLSTMDesign(
+    def create_design(self, name) -> StackedRNNDesign:
+        return StackedRNNDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
-            lstm_layers=self.lstm_layers,
+            rnn_layers=self.rnn_layers,
             num_layers=self.num_layers,
             work_library_name="work",
         )
 
     def precompute(self) -> None:
-        for layer in self.lstm_layers:
+        for layer in self.rnn_layers:
             layer.precompute()
 
         h_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
@@ -93,7 +95,7 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
 
         q_h_prev = self.q_h_0
         q_c_prev = self.q_c_0
-        for layer in self.lstm_layers:
+        for layer in self.rnn_layers:
             q_outputs, q_h_next, q_c_next = layer.int_forward(
                 q_inputs=q_inputs,
                 q_h_prev=q_h_prev,
@@ -135,7 +137,7 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
         given_inputs_QParams = self.inputs_QParams
         given_h_prev_QParams = self.h_prev_QParams
         given_c_prev_QParams = self.c_prev_QParams
-        for layer in self.lstm_layers:
+        for layer in self.rnn_layers:
             outputs, h_next, c_next = layer.forward(
                 inputs=inputs,
                 h_prev=h_prev,
@@ -151,5 +153,5 @@ class StackedLSTM(DesignCreatorModule, nn.Module):
             given_h_prev_QParams = layer.h_next_QParams
             given_c_prev_QParams = layer.c_next_QParams
 
-        self.outputs_QParams = self.lstm_layers[-1].h_next_QParams
+        self.outputs_QParams = self.rnn_layers[-1].h_next_QParams
         return h_next
