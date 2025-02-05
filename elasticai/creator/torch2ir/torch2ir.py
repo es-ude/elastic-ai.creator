@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from typing import cast
 
 from torch.fx import Node as FxNode
@@ -54,12 +54,17 @@ class Torch2Ir:
     def _get_module_key(module: Module) -> str:
         return module.__class__.__name__.lower()
 
-    def convert(self, model: Module) -> dict[str, Implementation]:
+    def convert(self, model: Module) -> Iterator[Implementation]:
         self.model = model
         torch_graph = self._tracer.trace(model)
         for node in torch_graph.nodes:
             self._handle_fx_node(node)
-        return self._registry
+        registry = self._registry
+        self._registry = {}
+        yield from registry.values()
+
+    def __call__(self, model: Module) -> Iterator[Implementation]:
+        yield from self.convert(model)
 
     def _get_successors(self, node: FxNode) -> list[FxNode]:
         return list(node.users)
