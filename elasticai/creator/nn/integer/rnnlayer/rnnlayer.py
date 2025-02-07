@@ -4,6 +4,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.grucell import GRUCell
 from elasticai.creator.nn.integer.lstmcell import LSTMCell
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
@@ -37,7 +38,14 @@ class RNNLayer(nn.Module):
                 device=device,
             )
         elif self.cell_type == "gru":
-            pass
+            self.rnn_cell = GRUCell(
+                name=f"{self.name}_gru_cell",
+                inputs_size=inputs_size,
+                hidden_size=self.hidden_size,
+                quant_bits=self.quant_bits,
+                quant_data_file_dir=self.quant_data_file_dir,
+                device=device,
+            )
         else:
             raise ValueError(f"Unsupported cell type: {self.cell_type}")
 
@@ -91,7 +99,10 @@ class RNNLayer(nn.Module):
 
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x_1")
         self._save_quant_data(q_h_prev, self.quant_data_file_dir, f"{self.name}_q_x_2")
-        self._save_quant_data(q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3")
+        if q_c_prev is not None:
+            self._save_quant_data(
+                q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3"
+            )
 
         q_outputs = torch.zeros(
             self.batch_size, self.seq_len, self.hidden_size, dtype=torch.int32
@@ -108,7 +119,10 @@ class RNNLayer(nn.Module):
 
         self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y_1")
         self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
-        self._save_quant_data(q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_3")
+        if q_c_next is not None:
+            self._save_quant_data(
+                q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_3"
+            )
 
         return q_outputs, q_h_next, q_c_next
 
@@ -134,7 +148,8 @@ class RNNLayer(nn.Module):
             if given_c_prev_QParams is not None:
                 self.c_prev_QParams = given_c_prev_QParams
             else:
-                self.c_prev_QParams.update_quant_params(c_prev)
+                if c_prev is not None:
+                    self.c_prev_QParams.update_quant_params(c_prev)
 
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
@@ -144,7 +159,8 @@ class RNNLayer(nn.Module):
 
         for t in range(self.seq_len):
             h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
-            c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
+            if c_prev is not None:
+                c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
 
             h_next, c_next = self.rnn_cell.forward(
                 inputs=inputs[:, t, :],
