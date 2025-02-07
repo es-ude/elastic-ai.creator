@@ -8,13 +8,17 @@ FN = TypeVar("FN", bound=Callable)
 class FunctionDecorator(Generic[FN, Tout]):
     """Apply a callback to functions and either their own or custom names.
 
-    IMPORTANT: if you want to use this as a decorator, do not forget to
+
+
+
+    :param: `callback`: will be called as `callback(name, fn)`
+
+    :::{important}
+    if you want to use this as a decorator, do not forget to
     return the wrapped function from your callback.
+    :::
 
-    .Parameters
-    callback:: will be called as `callback(name, fn)`
-
-    .Example:
+    *Examples*:
     ```python
     >>> registry = dict()
     >>> def register_fn(name, fn):
@@ -30,24 +34,28 @@ class FunctionDecorator(Generic[FN, Tout]):
     "hello, world!"
     ```
 
-    another example could look like this
+    another example could look like this:
 
     ```python
+
     registry = dict()
+
     def register_fn(name, fn):
-      registry[name] = fn
-      return fn
+        registry[name] = fn
+        return fn
 
     register = FunctionDecorator(register_fn)
 
     @register("other_name")
     @register
     def my_fn(x):
-      print(x)
+        print(x)
     ```
 
-    This will add `my_fn` to the registry using the
-    name `"my_fn"` and the name `"other_name"`.
+    This will add ``my_fn`` to the registry using the
+    name ``"my_fn"`` and the name ``"other_name"``.
+
+
 
     """
 

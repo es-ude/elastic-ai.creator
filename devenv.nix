@@ -37,7 +37,7 @@ in {
   };
 
   processes = {
-    serve_docs.exec = "cd docs; SPHINX_AUTOBUILD=YES ${unstablePkgs.uv}/bin/uv run sphinx-autobuild source build";
+    serve_docs.exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild docs build/docs/";
   };
 
   scripts = {
@@ -189,17 +189,16 @@ in {
       uv_run = "${unstablePkgs.uv}/bin/uv run";
     in {
       exec = ''
-        cd docs
         export LC_ALL=C  # necessary to run in github action
-        ${uv_run} sphinx-build -b html source build
-        touch build/.nojekyll  # prevent github from trying to build the docs
+        ${uv_run} sphinx-build -b html docs build/docs
+        touch build/docs/.nojekyll  # prevent github from trying to build the docs
       '';
       before = ["all:build" "check:all"];
     };
 
     "docs:clean" = {
       exec = ''
-        rm -rf docs/build
+        rm -rf build/docs/*
       '';
       before = ["all:clean"];
       after = ["check:all"];

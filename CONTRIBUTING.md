@@ -1,6 +1,7 @@
 # Contribution Guide
 
-### Table of Contents
+
+## Table of Contents
 - [Contribution Guide](#contribution-guide)
   - [Development Environment](#development-environment)
   - [Pull Requests and Commits](#pull-requests-and-commits)
@@ -90,7 +91,9 @@ As an example let's assume you have been working on a new feature `A` and
 during that work you were also performing some refactoring and fixed a small
 bug that you discovered. Ideally your history would more or less like this:
 
+:::
 #### Do
+:::
 
 ```
 * feat: introduce A
@@ -116,7 +119,9 @@ bug that you discovered. Ideally your history would more or less like this:
 
 What we want to avoid is a commit history like that one
 
+:::
 #### Don't
+:::
 ```
 * feat: realize changes requested by reviewer
 
@@ -155,21 +160,14 @@ $ uv sync
 Now move to the docs folder and build the documentation
 
 ```bash
-$ cd docs
-$ uv run sphinx-build source build
+$ uv run sphinx-build docs build/docs
 ```
 
 While working on the documentation you can run a server that will automatically rebuild the the docs on every change and serve them under `localhost:8000`.
 You can start the server with
 
 ```bash
-$ uv run sphinx-autobuild source build
-```
-
-Generating the api docs will take quite some time, you can skip that by using
-
-```bash
-$ SPHINX_AUTOBUILD=YES uv run sphinx-autobuild source build
+$ uv run sphinx-autobuild docs build/docs
 ```
 
 If you have question about the markup have a look at the [myst-documentation](https://myst-parser.readthedocs.io/en/latest/index.html).

@@ -41,20 +41,28 @@ class AnalysingTemplateParameterType(TemplateParameterType, Protocol):
 class TemplateBuilder:
     """Builds a template based on a given prototype.
 
-    The builder takes a prototype as a string and creates a template from it,
+    The builder takes a *prototype* as a string and creates a template from it,
     based on specified template parameter types.
     A template parameter type specifies how a pattern inside the prototype shall
     be converted into a template parameter.
 
     Two different kinds of template parameter types are supported:
 
-    `TemplateParameterType`:: will use a regular expression `.regex` to search for
+    `TemplateParameterType`
+
+    : will use a regular expression `.regex` to search for
         occurences of a pattern and replace them by the result of calling `.replace`
         on the found match. Usually the new value is a template parameter, e.g.,
         `"$my_template_param"`.
-        NOTE: in case of multiple overlapping parameter types the first one added
+        :::{note}
+        in case of multiple overlapping parameter types the first one added
         to the builder will take precedence.
-    `AnalysingTemplateParameterType`:: works like `TemplateParameterType` but will
+        :::
+
+
+    `AnalysingTemplateParameterType`
+
+    :  works like `TemplateParameterType` but will
         first go through an analysing phase. This is useful to let the regular expression
         depend on the content of the prototype. E.g., we could find the first defined
         class in a python file and replace all occurences of that class name with

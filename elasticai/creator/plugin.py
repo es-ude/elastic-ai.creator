@@ -2,24 +2,23 @@
 
 The plugin systems evolves around the
 
-* <<PluginLoader, `PluginLoader`>> class
-* <<PluginSymbol, `PluginSymbol`>> protocol
+* [`PluginLoader`](#elasticai.creator.plugin.PluginLoader) class
+* [`PluginSymbol`](#elasticai.creator.plugin.PluginSymbol)protocol
 * `meta.toml` files that describe the plugins
 
 For convenience many functions convert the dicts loaded from the `meta.toml` file into `PluginSpec` objects.
 The `meta.toml` file needs to define the value of each field of the `PluginSpec` class.
-The function <<read_plugin_dicts_from_package, `read_plugin_dicts_from_package()`>> will read all plugins from the `plugins` key in the `meta.toml` file of a package.
+The function [`read_plugin_dicts_from_package`](#elasticai.creator.plugin.read_plugin_dicts_from_package) will read all plugins from the `plugins` key in the `meta.toml` file of a package.
 
-.Example of a minimal `meta.toml` file
-[source,toml]
-----
+**Example of a minimal `meta.toml` file**
+```toml
 [[plugins]]
 name = "minimal_plugin"
 target_platform = "elastic-node-v5"
 target_runtime = "vhdl"
 version = "0.1"
 api_version = "0.1"
-----
+```
 
 The few minimal fields that a plugin is required to define shall allow
 plugin loaders to decide how to treat the plugin this could mean to
@@ -30,42 +29,35 @@ plugin loaders to decide how to treat the plugin this could mean to
 
 The following table lists these required fields:
 
-|===
-| field name
-| type
-| description
+:::{list-table}
+* - Field name
+  - Type
+  - Description
+* - **name**
+  - `str`
+  - The name of the plugin, used to identify the plugin
+* - **target platform**
+  - `str`
+  - A string describing the target platform for the plugin.
+    Currently there is no strict definition of the semantics of this string.
+* - **target runtime**
+  - `str`
+  - A string the runtime context for the plugin.
+    Currently there is no strict definition of the semantics of this string.
+* - **version**
+  - `str`
+  - A version string in the form `major.minor.[patch]`.
+    Specifies the version of the plugin, ie. if you introduce a new feature or fix a bug, you should usually increase the minor version.
+* - **api_version**
+  - `str`
+  - The version of the plugin API (plugin system) that this plugin was developed against.
+    This is used to check if the plugin is compatible with the current system.
+:::
 
-| **name**
-| `str`
-| The name of the plugin, used to identify the plugin
 
-| **target platform**
-| `str`
-| A string describing the target platform for the plugin.
-Currently there is no strict definition of the semantics of this string.
-
-| **target runtime**
-| `str`
-| A string the runtime context for the plugin.
-Currently there is no strict definition of the semantics of this string.
-
-| **version**
-| `str`
-| A version string in the form `major.minor.[patch]`. Specifies the
-version of the plugin, ie. if you introduce a new feature or fix a bug,
-you should usually increase the minor version.
-
-| **api_version**
-| `str`
-| The version of the plugin API (plugin system) that this plugin was
-developed against. This is used to check if the plugin is compatible
-with the current system.
-|===
-
-[WARNING]
-====
+:::{warning}
 The set of required fields and their semantics is experimental and likely to change in the future.
-====
+:::
 
 The `PluginLoader` will read that description from the `meta.toml` file
 in a given package and use a user provided function to decide which

@@ -452,6 +452,7 @@ dependencies = [
 dev = [
     { name = "build" },
     { name = "hatch" },
+    { name = "hatch-vcs" },
     { name = "ipykernel" },
     { name = "pre-commit" },
     { name = "tach" },
@@ -470,6 +471,7 @@ docs = [
     { name = "sphinxcontrib-mermaid" },
     { name = "sphinxcontrib-plantuml" },
     { name = "sphinxcontrib-wavedrom" },
+    { name = "sphinxext-opengraph" },
 ]
 lint = [
     { name = "mypy" },
@@ -509,6 +511,7 @@ requires-dist = [
 dev = [
     { name = "build", specifier = ">=1.2.2.post1" },
     { name = "hatch", specifier = ">=1.14.0" },
+    { name = "hatch-vcs", specifier = ">=0.4.0" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "tach", specifier = ">=0.23.0" },
@@ -527,6 +530,7 @@ docs = [
     { name = "sphinxcontrib-mermaid", specifier = ">=1.0.0" },
     { name = "sphinxcontrib-plantuml", specifier = ">=0.30" },
     { name = "sphinxcontrib-wavedrom", specifier = ">=3.0.4" },
+    { name = "sphinxext-opengraph", specifier = ">=0.9.1" },
 ]
 lint = [
     { name = "mypy", specifier = ">=1.13.0" },
@@ -665,6 +669,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/bc/15/b4e3d50d8177e6e8a243b24d9819e3807f7bfd3b2bebe7b5aef32a9c79cb/hatch-1.14.0.tar.gz", hash = "sha256:351e41bc6c72bc93cb98651212226e495b43549eee27c487832e459e5d0f0eda", size = 5188143 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/c6/ad910cdb79600af0100b7c4f7093eb4b95a2b44e589e66b6b938b09cc6f9/hatch-1.14.0-py3-none-any.whl", hash = "sha256:b12c7a2f4aaf6db7180e35c476e1a2ad4ec7197c20c4332964599424d4918ded", size = 125763 },
+]
+
+[[package]]
+name = "hatch-vcs"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "hatchling" },
+    { name = "setuptools-scm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f5/c9/54bb4fa27b4e4a014ef3bb17710cdf692b3aa2cbc7953da885f1bf7e06ea/hatch_vcs-0.4.0.tar.gz", hash = "sha256:093810748fe01db0d451fabcf2c1ac2688caefd232d4ede967090b1c1b07d9f7", size = 10917 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/0f/6cbd9976160bc334add63bc2e7a58b1433a31b34b7cda6c5de6dd983d9a7/hatch_vcs-0.4.0-py3-none-any.whl", hash = "sha256:b8a2b6bee54cf6f9fc93762db73890017ae59c9081d1038a41f16235ceaf8b2c", size = 8412 },
 ]
 
 [[package]]
@@ -1876,6 +1893,19 @@ wheels = [
 ]
 
 [[package]]
+name = "setuptools-scm"
+version = "8.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4f/a4/00a9ac1b555294710d4a68d2ce8dfdf39d72aa4d769a7395d05218d88a42/setuptools_scm-8.1.0.tar.gz", hash = "sha256:42dea1b65771cba93b7a515d65a65d8246e560768a66b9106a592c8e7f26c8a7", size = 76465 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/b9/1906bfeb30f2fc13bb39bf7ddb8749784c05faadbd18a21cf141ba37bff2/setuptools_scm-8.1.0-py3-none-any.whl", hash = "sha256:897a3226a6fd4a6eb2f068745e49733261a21f70b1bb28fce0339feb978d9af3", size = 43666 },
+]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -2140,6 +2170,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ff/b5/c09b6ac2b0ac8455ec65ab73b62aaebd77ca6ac7eaee47730f9a4b67812b/sphinxcontrib-wavedrom-3.0.4.tar.gz", hash = "sha256:d334c7541afd917c0c128e1545316cc5d5f61c8df50f17477cb5070909b0d4aa", size = 209122 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/41/ec/4d733b2ad6b6b55bda555ed3184d6525de3371426bb522106b217b56b35a/sphinxcontrib_wavedrom-3.0.4-py3-none-any.whl", hash = "sha256:1131126ab00c05984cf5c20c3f164b0200209fff7c8c0ad66dd36b019fc3cb95", size = 10676 },
+]
+
+[[package]]
+name = "sphinxext-opengraph"
+version = "0.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/5b/4302fe33c88dbfb572e2c1cad26735164c23f16fb8dba94ddb1867d0ef06/sphinxext-opengraph-0.9.1.tar.gz", hash = "sha256:dd2868a1e7c9497977fbbf44cc0844a42af39ca65fe1bb0272518af225d06fc5", size = 1034511 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/0a/970b80b4fa1feeb6deb6f2e22d4cb14e388b27b315a1afdb9db930ff91a4/sphinxext_opengraph-0.9.1-py3-none-any.whl", hash = "sha256:b3b230cc6a5b5189139df937f0d9c7b23c7c204493b22646273687969dcb760e", size = 1005241 },
 ]
 
 [[package]]
