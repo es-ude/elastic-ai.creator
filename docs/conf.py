@@ -140,7 +140,7 @@ myst_heading_slug = True
 
 
 html_theme_options = {
-    "source_repository": "https://github.com/es-ude/elasticai.creator/",
+    "source_repository": "https://github.com/es-ude/elastic-ai.creator/",
     "source_branch": "main",
     "source_directory": "docs",
 }
