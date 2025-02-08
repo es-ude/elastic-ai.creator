@@ -39,7 +39,7 @@ depends_on = [ "elasticai.creator.base_modules", "elasticai.creator.nn.sequentia
 
 [[modules ]]
 path = "elasticai.creator.vhdl"
-depends_on = ["elasticai.creator.file_generation"]
+depends_on = ["elasticai.creator.file_generation", "elasticai.creator.hw_function_id"]
 
 [[modules ]]
 path = "elasticai.creator.hw_accelerator_meta"
