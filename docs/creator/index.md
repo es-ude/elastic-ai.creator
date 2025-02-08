@@ -1,5 +1,7 @@
 # Creator
 
+
+
 ```{include} ../../README.md
 :start-line: 2
 :end-line: 13
@@ -15,6 +17,7 @@ plugin-system.md
 skeleton.md
 system_integrations.md
 quantized_grads.md
+plugins/index
 ../apidocs/index.rst
 ```
 

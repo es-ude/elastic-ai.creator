@@ -45,7 +45,7 @@
 ```
 ````
 
-````{py:function} update_skeleton_id_in_build_dir(build_dir: pathlib.Path) -> None
+````{py:function} update_skeleton_id_in_build_dir(build_dir: pathlib.Path) -> bytes
 :canonical: elasticai.creator.vhdl.skeleton_id.update_skeleton_id_in_build_dir
 
 ```{autodoc2-docstring} elasticai.creator.vhdl.skeleton_id.update_skeleton_id_in_build_dir

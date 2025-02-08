@@ -353,10 +353,20 @@ Bases: {py:obj}`typing.Protocol`
 
 `````
 
-`````{py:class} Graph(nodes: collections.abc.Iterable[elasticai.creator.ir.graph.N] = tuple(), edges: collections.abc.Iterable[elasticai.creator.ir.graph.E] = tuple())
+`````{py:class} Graph(*, node_fn: collections.abc.Callable[[dict], elasticai.creator.ir.graph.N] = Node, edge_fn: collections.abc.Callable[[dict], elasticai.creator.ir.graph.E] = Edge, nodes: collections.abc.Iterable[elasticai.creator.ir.graph.N] = tuple(), edges: collections.abc.Iterable[elasticai.creator.ir.graph.E] = tuple(), data=None)
 :canonical: elasticai.creator.ir.graph.Graph
 
-Bases: {py:obj}`typing.Generic`\[{py:obj}`elasticai.creator.ir.graph.N`\, {py:obj}`elasticai.creator.ir.graph.E`\]
+Bases: {py:obj}`elasticai.creator.ir.ir_data.IrData`, {py:obj}`typing.Generic`\[{py:obj}`elasticai.creator.ir.graph.N`\, {py:obj}`elasticai.creator.ir.graph.E`\]
+
+````{py:attribute} __slots__
+:canonical: elasticai.creator.ir.graph.Graph.__slots__
+:value: >
+   ('data', '_g', '_node_data', '_edge_data', '_node_fn', '_edge_fn')
+
+```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.__slots__
+```
+
+````
 
 ````{py:method} add_node(n: elasticai.creator.ir.graph.N) -> None
 :canonical: elasticai.creator.ir.graph.Graph.add_node
@@ -424,7 +434,7 @@ Bases: {py:obj}`typing.Generic`\[{py:obj}`elasticai.creator.ir.graph.N`\, {py:ob
 
 ````
 
-````{py:method} iter_bfs_down_from(node: str) -> collections.abc.Iterator[elasticai.creator.ir.graph.N]
+````{py:method} iter_bfs_down_from(node: str) -> collections.abc.Mapping[str, elasticai.creator.ir.graph.N]
 :canonical: elasticai.creator.ir.graph.Graph.iter_bfs_down_from
 
 ```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.iter_bfs_down_from
@@ -432,7 +442,7 @@ Bases: {py:obj}`typing.Generic`\[{py:obj}`elasticai.creator.ir.graph.N`\, {py:ob
 
 ````
 
-````{py:method} iter_bfs_up_from(node: str) -> collections.abc.Iterator[elasticai.creator.ir.graph.N]
+````{py:method} iter_bfs_up_from(node: str) -> collections.abc.Mapping[str, elasticai.creator.ir.graph.N]
 :canonical: elasticai.creator.ir.graph.Graph.iter_bfs_up_from
 
 ```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.iter_bfs_up_from
@@ -440,10 +450,35 @@ Bases: {py:obj}`typing.Generic`\[{py:obj}`elasticai.creator.ir.graph.N`\, {py:ob
 
 ````
 
-````{py:method} iter_dfs_preorder_down_from(node: str) -> collections.abc.Iterator[elasticai.creator.ir.graph.N]
+````{py:method} iter_dfs_preorder_down_from(node: str) -> collections.abc.Mapping[str, elasticai.creator.ir.graph.N]
 :canonical: elasticai.creator.ir.graph.Graph.iter_dfs_preorder_down_from
 
 ```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.iter_dfs_preorder_down_from
+```
+
+````
+
+````{py:method} as_dict() -> dict
+:canonical: elasticai.creator.ir.graph.Graph.as_dict
+
+```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.as_dict
+```
+
+````
+
+````{py:method} from_dict(d: dict[str, typing.Any], node_fn: collections.abc.Callable[[dict], elasticai.creator.ir.graph.N] = Node, edge_fn: collections.abc.Callable[[dict], elasticai.creator.ir.graph.E] = Edge) -> Graph[N, E]
+:canonical: elasticai.creator.ir.graph.Graph.from_dict
+:classmethod:
+
+```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.from_dict
+```
+
+````
+
+````{py:method} load_dict(data: dict[str, typing.Any]) -> None
+:canonical: elasticai.creator.ir.graph.Graph.load_dict
+
+```{autodoc2-docstring} elasticai.creator.ir.graph.Graph.load_dict
 ```
 
 ````

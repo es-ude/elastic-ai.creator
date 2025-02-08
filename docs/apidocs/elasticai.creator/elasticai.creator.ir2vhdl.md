@@ -318,50 +318,29 @@ Bases: {py:obj}`abc.ABC`
 
 `````
 
-`````{py:class} Implementation(name: str, type: str, attributes: dict[str, typing.Any], nodes=tuple(), edges=tuple())
+`````{py:class} Implementation(*, name: str | None = None, type: str | None = None, node_fn: collections.abc.Callable[[dict], elasticai.creator.ir2vhdl.ir2vhdl.N] = VhdlNode, edge_fn: collections.abc.Callable[[dict], elasticai.creator.ir2vhdl.ir2vhdl.E] = Edge, data: dict[str, typing.Any] | None = None, attributes: dict[str, typing.Any] | None = None)
 :canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation
 
-Bases: {py:obj}`elasticai.creator.ir.Graph`\[{py:obj}`elasticai.creator.ir2vhdl.ir2vhdl.N`\, {py:obj}`elasticai.creator.ir2vhdl.ir2vhdl.E`\], {py:obj}`elasticai.creator.ir.Lowerable`
+Bases: {py:obj}`elasticai.creator.ir.Graph`\[{py:obj}`elasticai.creator.ir2vhdl.ir2vhdl.N`\, {py:obj}`elasticai.creator.ir2vhdl.ir2vhdl.E`\]
 
-````{py:property} type
-:canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation.type
-:type: str
-
-```{autodoc2-docstring} elasticai.creator.ir2vhdl.ir2vhdl.Implementation.type
-```
-
-````
-
-````{py:property} name
+````{py:attribute} name
 :canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation.name
 :type: str
+:value: >
+   None
 
 ```{autodoc2-docstring} elasticai.creator.ir2vhdl.ir2vhdl.Implementation.name
 ```
 
 ````
 
-````{py:method} asdict() -> dict[str, typing.Any]
-:canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation.asdict
+````{py:attribute} type
+:canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation.type
+:type: str
+:value: >
+   None
 
-```{autodoc2-docstring} elasticai.creator.ir2vhdl.ir2vhdl.Implementation.asdict
-```
-
-````
-
-````{py:method} fromdict(data: dict[str, typing.Any]) -> elasticai.creator.ir2vhdl.ir2vhdl.Implementation
-:canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation.fromdict
-:classmethod:
-
-```{autodoc2-docstring} elasticai.creator.ir2vhdl.ir2vhdl.Implementation.fromdict
-```
-
-````
-
-````{py:method} iterate_bfs_up_from(node: str) -> typing.Iterator[elasticai.creator.ir2vhdl.ir2vhdl.N]
-:canonical: elasticai.creator.ir2vhdl.ir2vhdl.Implementation.iterate_bfs_up_from
-
-```{autodoc2-docstring} elasticai.creator.ir2vhdl.ir2vhdl.Implementation.iterate_bfs_up_from
+```{autodoc2-docstring} elasticai.creator.ir2vhdl.ir2vhdl.Implementation.type
 ```
 
 ````

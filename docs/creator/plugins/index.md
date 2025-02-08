@@ -1,3 +1,7 @@
+# Builtin Plugins
+
+
 ```{toctree}
 
+counter
 ```

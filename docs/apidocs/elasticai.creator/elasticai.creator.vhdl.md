@@ -29,6 +29,7 @@ elasticai.creator.vhdl.shared_designs
 
 elasticai.creator.vhdl.ghdl_simulation
 elasticai.creator.vhdl.simulated_layer
+elasticai.creator.vhdl.hw_function_id
 elasticai.creator.vhdl.skeleton_id
 elasticai.creator.vhdl.ghdl_report_parsing
 ```
