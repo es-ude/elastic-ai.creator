@@ -2,9 +2,14 @@ from typing import Any
 
 import pytest
 
+from elasticai.creator.ir import (
+    ReadOnlyField,
+    RequiredField,
+    read_only_field,
+    static_required_field,
+)
 from elasticai.creator.ir.ir_data import IrData
 from elasticai.creator.ir.ir_data_meta import IrDataMeta
-from elasticai.creator.ir.required_field import ReadOnlyField, RequiredField
 
 
 def test_using_metaclass() -> None:
@@ -167,3 +172,41 @@ def test_inheriting_from_ir_data_without_annotated_fields_does_not_raise_excepti
             pass
     except KeyError:
         pytest.fail("did not expect an error")
+
+
+class test_can_read_from_decorated_method_field:
+    class Node(IrData):
+        __slots__ = ("length_scaling",)
+
+        def __init__(self, data: dict[str, Any]):
+            super().__init__(data)
+            self.length_scaling = 2
+
+        @read_only_field
+        def length(self, value: int) -> float:
+            return value * self.length_scaling
+
+    n = Node(dict(length=1))
+    assert n.length == 2.0
+
+
+class test_can_write_to_decorated_method_field:
+    class Node(IrData):
+        __slots__ = ("length_scaling",)
+
+        def __init__(self, data: dict[str, Any]):
+            super().__init__(data)
+
+        @static_required_field
+        @staticmethod
+        def length(value: int) -> float:
+            return value * 2
+
+        @length.setter
+        @staticmethod
+        def _(value: float) -> int:
+            return int(value / 2)
+
+    n = Node(dict(length=1))
+    n.length = 4.0
+    assert n.data["length"] == 2
