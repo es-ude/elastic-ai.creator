@@ -10,7 +10,9 @@ __all__ = [
     "LoweringPass",
     "Lowerable",
     "Graph",
+    "Attribute",
 ]
+from .attribute import Attribute
 from .core import Edge, Node, edge, node
 from .graph import Graph
 from .ir_data import IrData

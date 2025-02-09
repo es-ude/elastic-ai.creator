@@ -1,6 +1,7 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Union, overload
 
+from .attribute import Attribute
 from .core import Edge, Node
 from .graph_delegate import GraphDelegate
 from .graph_iterators import (
@@ -17,13 +18,53 @@ E = TypeVar("E", bound=Edge)
 class Graph(IrData, Generic[N, E], create_init=False):
     __slots__ = ("data", "_g", "_node_data", "_edge_data", "_node_fn", "_edge_fn")
 
+    @overload
+    def __init__(
+        self: "Graph[N, E]",
+        *,
+        node_fn: Callable[[dict], N],
+        edge_fn: Callable[[dict], E],
+        nodes: Iterable[N] = tuple(),
+        edges: Iterable[E] = tuple(),
+        data: dict | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "Graph[Node, Edge]",
+        *,
+        nodes: Iterable[Node] = tuple(),
+        edges: Iterable[Edge] = tuple(),
+        data: dict | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "Graph[N, Edge]",
+        *,
+        node_fn: Callable[[dict], N],
+        nodes: Iterable[N] = tuple(),
+        edges: Iterable[Edge] = tuple(),
+        data: dict | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "Graph[Node, E]",
+        *,
+        edge_fn: Callable[[dict], E],
+        nodes: Iterable[Node] = tuple(),
+        edges: Iterable[E] = tuple(),
+        data: dict | None = None,
+    ): ...
+
     def __init__(
         self,
         *,
-        node_fn: Callable[[dict], N] = Node,
-        edge_fn: Callable[[dict], E] = Edge,
-        nodes: Iterable[N] = tuple(),
-        edges: Iterable[E] = tuple(),
+        node_fn=Node,
+        edge_fn=Edge,
+        nodes=tuple(),
+        edges=tuple(),
         data=None,
     ) -> None:
         if data is None:
@@ -34,16 +75,14 @@ class Graph(IrData, Generic[N, E], create_init=False):
             data["edges"] = {}
         super().__init__(data)
         self._g: GraphDelegate[str] = GraphDelegate()
-        self._node_data = data["nodes"]
-        self._edge_data = data["edges"]
+        self._node_data: dict[str, Attribute] = data["nodes"]
+        self._edge_data: dict[tuple[str, str], Attribute] = data["edges"]
         for n in self._node_data:
             self._g.add_node(n)
         for src, sink in self._edge_data:
             self._g.add_edge(src, sink)
-        for n in nodes:
-            self.add_node(n)
-        for e in edges:
-            self.add_edge(e)
+        self.add_nodes(nodes)
+        self.add_edges(edges)
         self._node_fn = node_fn
         self._edge_fn = edge_fn
 
@@ -115,19 +154,43 @@ class Graph(IrData, Generic[N, E], create_init=False):
 
         return self._get_node_mapping(iter_keys)
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Attribute]:
         data = self.data.copy()
-        data["nodes"] = list(data["nodes"].values())
-        data["edges"] = list(data["edges"].values())
+        data["nodes"] = list(self._node_data.values())
+        data["edges"] = list(self._edge_data.values())
         return data
+
+    @classmethod
+    @overload
+    def from_dict(
+        cls,
+        d: dict[str, Any],
+    ) -> "Graph[Node, Edge]": ...
+
+    @classmethod
+    @overload
+    def from_dict(
+        cls,
+        d: dict[str, Any],
+        node_fn: Callable[[dict], N],
+    ) -> "Graph[N, Edge]": ...
+
+    @classmethod
+    @overload
+    def from_dict(
+        cls,
+        d: dict[str, Any],
+        node_fn: Callable[[dict], N],
+        edge_fn: Callable[[dict], E],
+    ) -> "Graph[N, E]": ...
 
     @classmethod
     def from_dict(
         cls,
         d: dict[str, Any],
-        node_fn: Callable[[dict], N] = Node,
-        edge_fn: Callable[[dict], E] = Edge,
-    ) -> "Graph[N, E]":
+        node_fn: Callable[[dict], N] | Callable[[dict], Node] = Node,
+        edge_fn: Callable[[dict], E] | Callable[[dict], Edge] = Edge,
+    ) -> "Union[Graph[N, Edge], Graph[N, E], Graph[Node, Edge]]":
         data = d.copy()
         data["nodes"] = {node["name"]: node for node in data["nodes"]}
         data["edges"] = {(edge["src"], edge["sink"]): edge for edge in data["edges"]}
