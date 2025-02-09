@@ -60,7 +60,7 @@ def test_can_get_specific_edge(graph: _Graph) -> None:
 
 def test_edges_is_read_only(graph: _Graph) -> None:
     with pytest.raises(TypeError):
-        graph.edges[("x", "z")] = edge("x", "z")
+        graph.edges[("x", "z")] = edge("x", "z")  # type: ignore
 
 
 def test_predecessors_of_z_is_y(graph: _Graph) -> None:
