@@ -36,7 +36,7 @@ class HwFunctionIdUpdater:
         self._updater = _generalUpdater(build_dir, target_file, _replace_id_in_vhdl)
 
     def compute_id(self) -> None:
-        self._udpater.compute_id()
+        self._updater.compute_id()
 
     def write_id(self) -> None:
         self._updater.write_id()
