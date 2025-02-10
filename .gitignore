@@ -15,6 +15,7 @@ coverage.xml
 *.onnx
 htmlcov
 do_not_commit/*
+.hypothesis/
 
 # python build output
 dist/
