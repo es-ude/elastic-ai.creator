@@ -135,14 +135,14 @@ class Graph(IrData, Generic[N, E], create_init=False):
         return g
 
     def load_dict(self, data: dict[str, Any]) -> None:
-        """override the current state with the state from `data`.
+        """override the current state with `data`.
 
         Use this if you want to change the underlying data structure
         for an already existing graph, e.g., because you want to reuse
         the set `node_fn`, `edge_fn` functions for constructing
         nodes and edges.
         """
-        self.data = data.copy()
+        self.data = data
 
 
 _K = TypeVar("_K")
