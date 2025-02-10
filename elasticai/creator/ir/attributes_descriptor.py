@@ -34,11 +34,11 @@ class _ReadOnlyMappingWithHiddenFields(Mapping[str, Attribute]):
             raise KeyError(f"key not found '{k}'.")
         return self._mapping[k]
 
-    def __or__(self, other: Mapping[str, Attribute]) -> Mapping[str, Attribute]:
-        return dict(self) | other
+    def __or__(self, other: Mapping[str, Attribute]) -> dict[str, Attribute]:
+        return dict(self) | dict(other.items())
 
-    def __ror__(self, other: Mapping[str, Attribute]) -> Mapping[str, Attribute]:
-        return other | dict(self)
+    def __ror__(self, other: Mapping[str, Attribute]) -> dict[str, Attribute]:
+        return dict(other.items()) | dict(self)
 
 
 class AttributesDescriptor:

@@ -11,8 +11,8 @@ from typing import Any, Iterator, TypeAlias, TypeGuard, TypeVar, overload
 import elasticai.creator.function_utils as F
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
+from elasticai.creator.ir import Attribute, Graph, LoweringPass, RequiredField
 from elasticai.creator.ir import Edge as _Edge
-from elasticai.creator.ir import Graph, LoweringPass, RequiredField
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.plugin import PluginLoader as _Loader
 from elasticai.creator.plugin import PluginSpec as _PluginSpec
@@ -58,11 +58,14 @@ class Shape:
             raise TypeError(f"taking at most three ints, given {values}")
 
     @classmethod
-    def from_tuple(cls, values: ShapeTuple) -> "Shape":
+    def from_tuple(cls, values: ShapeTuple | list[int]) -> "Shape":
         return cls(*values)  # type ignore
 
     def to_tuple(self) -> ShapeTuple:
         return self._data
+
+    def to_list(self) -> list[int]:
+        return list(self.to_tuple())
 
     def __getitem__(self, item):
         return self._data[item]
@@ -110,10 +113,10 @@ class Shape:
                 return f"Shape({self._data})"
 
 
-class ShapeField(RequiredField[ShapeTuple, Shape]):
+class ShapeField(RequiredField[list[int], Shape]):
     def __init__(self):
         super().__init__(
-            set_convert=lambda x: x.to_tuple(), get_convert=Shape.from_tuple
+            set_convert=lambda x: x.to_list(), get_convert=Shape.from_tuple
         )
 
 
@@ -136,8 +139,8 @@ class VhdlNode(_Node):
     """
 
     implementation: str
-    input_shape: RequiredField[ShapeTuple, Shape] = ShapeField()
-    output_shape: RequiredField[ShapeTuple, Shape] = ShapeField()
+    input_shape: RequiredField[list[int], Shape] = ShapeField()
+    output_shape: RequiredField[list[int], Shape] = ShapeField()
 
 
 def vhdl_node(
@@ -191,13 +194,57 @@ class Implementation(Graph[N, E]):
     name: str
     type: str
 
+    @overload
+    def __init__(
+        self: "Implementation[VhdlNode, Edge]",
+        *,
+        name: str | None = None,
+        type: str | None = None,
+        data: dict[str, Attribute] | None = None,
+        attributes: dict[str, Attribute] | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "Implementation[N, Edge]",
+        *,
+        node_fn: Callable[[dict], N],
+        name: str | None = None,
+        type: str | None = None,
+        data: dict[str, Attribute] | None = None,
+        attributes: dict[str, Attribute] | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "Implementation[VhdlNode, E]",
+        *,
+        edge_fn: Callable[[dict], E],
+        name: str | None = None,
+        type: str | None = None,
+        data: dict[str, Attribute] | None = None,
+        attributes: dict[str, Attribute] | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "Implementation[N, E]",
+        *,
+        node_fn: Callable[[dict], N],
+        edge_fn: Callable[[dict], E],
+        name: str | None = None,
+        type: str | None = None,
+        data: dict[str, Attribute] | None = None,
+        attributes: dict[str, Attribute] | None = None,
+    ) -> None: ...
+
     def __init__(
         self,
         *,
         name: str | None = None,
         type: str | None = None,
-        node_fn: Callable[[dict], N] = VhdlNode,
-        edge_fn: Callable[[dict], E] = Edge,
+        node_fn=VhdlNode,
+        edge_fn=Edge,
         data: dict[str, Any] | None = None,
         attributes: dict[str, Any] | None = None,
     ) -> None:
@@ -227,7 +274,7 @@ Code: TypeAlias = tuple[str, Sequence[str]]
 
 
 class Ir2Vhdl(LoweringPass[Implementation, Code]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__static_files: dict[str, Callable[[], str]] = {}
 
@@ -286,7 +333,7 @@ class LogicSignal(Signal):
         return cls._search(code) is not None
 
     @classmethod
-    def _search(cls, code: str) -> Signal | None:
+    def _search(cls, code: str) -> re.Match[str] | None:
         match = re.search(
             r"signal ([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*std_logic(?:\s+|;)", code
         )
@@ -332,7 +379,7 @@ class LogicVectorSignal(Signal):
         return cls._search(code) is not None
 
     @classmethod
-    def _search(cls, code: str) -> Signal | None:
+    def _search(cls, code: str) -> re.Match[str] | None:
         match = re.match(
             r"signal ([a-zA-Z_][a-zA-Z0-9_]*)\s*: std_logic_vector\((\d+|(?:\d+ - \d+)) downto 0\)",
             code,
@@ -404,6 +451,7 @@ class PortMap:
             return True
         if isinstance(other, PortMap):
             return self._signals == other._signals
+        return False
 
 
 class Instance:
@@ -484,9 +532,11 @@ class PluginLoader(_Loader[Ir2Vhdl]):
     """Plugin loader for ir2vhdl translation."""
 
     def __init__(self, lowering: Ir2Vhdl):
-        fetcher = (
+        builder: _pl.SymbolFetcherBuilder[PluginSpec, Ir2Vhdl] = (
             _pl.SymbolFetcherBuilder(PluginSpec)
-            .add_fn(self.__get_generated)
+        )
+        fetcher: _pl.SymbolFetcher[Ir2Vhdl] = (
+            builder.add_fn(self.__get_generated)
             .add_fn(_StaticFile.make_symbols)
             .build()
         )
@@ -506,7 +556,7 @@ class PluginLoader(_Loader[Ir2Vhdl]):
             yield from _pl.import_symbols(plugin.package, plugin.generated)
 
 
-class _StaticFile(_PluginSymbol[PluginLoader]):
+class _StaticFile(_PluginSymbol[Ir2Vhdl]):
     def __init__(self, name: str, package: str):
         self._name = name
         self._package = package
@@ -524,9 +574,9 @@ class _StaticFile(_PluginSymbol[PluginLoader]):
             for name in p.static_files:
                 yield cls(name=name, package=p.package)
 
-    def __call__(self) -> Iterator[str]:
+    def __call__(self) -> str:
         file = res.files(self._package).joinpath(f"vhdl/{self.name}")
-        yield file.read_text()
+        return file.read_text()
 
 
 _Tcontra = TypeVar("_Tcontra", contravariant=True)
