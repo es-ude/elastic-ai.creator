@@ -83,7 +83,7 @@ elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.e
 minversion = "6.0"
 markers = [
     "simulation: possibly slow running integration tests including hw simulation, depends on ghdl being present",
-    "slow: a slow test that you would not run in tdd cycle"
+    "slow: a slow test that you would not run in tdd cycle",
 ]
 testpaths = ["elasticai/creator/", "tests", "elasticai/creator_plugins"]
 python_files = ["*_test.py", "test_*.py"]
@@ -179,3 +179,21 @@ skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
+
+
+[tool.mypy]
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+## Ignore errors in the following modules until we fixed type hints
+module = [
+    "elasticai.creator.nn.fixed_point.lstm.*",
+    "elasticai.creator.nn.fixed_point.conv1d.*",
+    "elasticai.creator.nn.fixed_point.linear.*",
+    "elasticai.creator.nn.fixed_point.number_converter.*",
+    "elasticai.creator.nn.quantized_grads.*",
+    "elasticai.creator.base_modules.conv1d",
+    "elasticai.creator.base_modules.conv2d",
+    "elasticai.creator.base_modules.linear",
+]
+ignore_errors = true
