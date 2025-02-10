@@ -60,3 +60,8 @@ def flatten(module: nn.Flatten) -> dict:
 @_register
 def relu(module: nn.ReLU) -> dict:
     return {}
+
+
+@_register
+def sigmoid(module: nn.Sigmoid) -> dict:
+    return {}

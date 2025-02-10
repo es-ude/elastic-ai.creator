@@ -148,6 +148,8 @@ class KeyedFunctionDispatcher(Generic[Tin, Tout]):
         return self._key_fn(item) in self
 
     def call(self, arg: Tin) -> Tout:
+        if not self.can_dispatch(arg):
+            raise ValueError("cannot dispatch function call for {}".format(repr(arg)))
         return self._fns[self._key_fn(arg)](arg)
 
     def __call__(self, arg: Tin) -> Tout:
