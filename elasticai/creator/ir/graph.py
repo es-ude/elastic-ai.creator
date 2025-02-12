@@ -1,5 +1,7 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any, Generic, ParamSpec, TypeVar, Union, overload
+import copy
+from functools import singledispatchmethod
+from typing import Any, Generic, ParamSpec, Self, TypeVar, Union, overload
 
 from .attribute import Attribute
 from .core import Edge, Node
@@ -91,21 +93,81 @@ class Graph(IrData, Generic[N, E], create_init=False):
         self._node_fn = node_fn
         self._edge_fn = edge_fn
 
-    def add_node(self, n: N) -> None:
-        self._g.add_node(n.name)
-        self._node_data[n.name] = n.data
+    @overload
+    def add_node(self, n: N) -> Self: ...
 
-    def add_nodes(self, ns: Iterable[N]) -> None:
+    @overload
+    def add_node(self, n: Node) -> Self: ...
+
+    @overload
+    def add_node(self, n: dict[str, Attribute]) -> Self: ...
+
+    @overload
+    def add_node(self, *, name: str, type: str, **attributes: Attribute) -> Self: ...
+
+    @singledispatchmethod  # type: ignore[operator, misc]
+    def add_node(self, *args, **kwargs) -> Self:
+        raise NotImplementedError()
+
+    @add_node.register  # type: ignore[attr-defined]
+    def _(self, n: Node) -> Self:
+        self.add_node(n.data)
+        return self
+
+    @add_node.register  # type: ignore[attr-defined]
+    def _(self, n: dict) -> Self:
+        self._g.add_node(n["name"])
+        self._node_data[n["name"]] = n
+        return self
+
+    @add_node.register  # type: ignore[attr-defined]
+    def _(self, *, name: str, type: str, **attributes: Attribute) -> Self:
+        n = {"name": name, "type": type, **attributes}
+        self.add_node(n)
+        return self
+
+    @overload
+    def add_edge(self, e: E) -> Self: ...
+
+    @overload
+    def add_edge(self, e: Edge) -> Self: ...
+
+    @overload
+    def add_edge(self, e: dict) -> Self: ...
+
+    @overload
+    def add_edge(self, *, src: str, sink: str, **attributes: Attribute) -> Self: ...
+
+    @singledispatchmethod  # type: ignore[operator, misc]
+    def add_edge(self, *args, **kwargs) -> Self:
+        raise NotImplementedError()
+
+    @add_edge.register  # type: ignore[attr-defined]
+    def _(self, e: Edge) -> Self:
+        self.add_edge(e.data)
+        return self
+
+    @add_edge.register  # type: ignore[attr-defined]
+    def _(self, e: dict) -> Self:
+        self._g.add_edge(e["src"], e["sink"])
+        self._edge_data[(e["src"], e["sink"])] = e
+        return self
+
+    @add_edge.register  # type: ignore[attr-defined]
+    def _(self, *, src: str, sink: str, **attributes: Attribute) -> Self:
+        e = {"src": src, "sink": sink, **attributes}
+        self.add_edge(e)
+        return self
+
+    def add_nodes(self, ns: Iterable[N | Node | dict[str, Attribute]]) -> Self:
         for n in ns:
             self.add_node(n)
+        return self
 
-    def add_edges(self, es: Iterable[E]) -> None:
+    def add_edges(self, es: Iterable[E | Edge | dict[str, Attribute]]) -> Self:
         for e in es:
             self.add_edge(e)
-
-    def add_edge(self, e: E) -> None:
-        self._g.add_edge(e.src, e.sink)
-        self._edge_data[(e.src, e.sink)] = e.data
+        return self
 
     def successors(self, node: str | N) -> Mapping[str, N]:
         if not isinstance(node, str):
@@ -161,8 +223,8 @@ class Graph(IrData, Generic[N, E], create_init=False):
 
     def as_dict(self) -> dict[str, Attribute]:
         data = self.data.copy()
-        data["nodes"] = list(self._node_data.values())
-        data["edges"] = list(self._edge_data.values())
+        data["nodes"] = list(n.data for n in self.nodes.values())
+        data["edges"] = list(e.data for e in self.edges.values())
         return data
 
     @classmethod
@@ -209,8 +271,26 @@ class Graph(IrData, Generic[N, E], create_init=False):
         for an already existing graph, e.g., because you want to reuse
         the set `node_fn`, `edge_fn` functions for constructing
         nodes and edges.
+
+        :::{note}
+        `data` is not copied, so it is shared between the original and the new graph.
+        :::
         """
         self.data = data
+
+    def get_empty_copy(self) -> "Graph[N, E]":
+        """Get an empty version of the graph, with the same node_fn and edge_fn.
+
+        This is the complement of `load_dict`.
+
+        :::{note}
+        `node_fn` and `edge_fn` are deep copied, so they are not shared between the
+        original and the new graph.
+        :::
+        """
+        return self.__class__(
+            node_fn=copy.deepcopy(self._node_fn), edge_fn=copy.deepcopy(self._edge_fn)
+        )
 
 
 _K = TypeVar("_K")
