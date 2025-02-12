@@ -1,7 +1,7 @@
 import copy
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from functools import singledispatchmethod
-from typing import Any, Generic, ParamSpec, Self, TypeVar, Union, overload
+from typing import Any, Generic, ParamSpec, Self, TypeVar, Union, cast, overload
 
 from .attribute import Attribute
 from .core import Edge, Node
@@ -223,8 +223,10 @@ class Graph(IrData, Generic[N, E], create_init=False):
 
     def as_dict(self) -> dict[str, Attribute]:
         data = self.data.copy()
-        data["nodes"] = list(n.data for n in self.nodes.values())
-        data["edges"] = list(e.data for e in self.edges.values())
+        data["nodes"] = cast(
+            Attribute, list(n.data for n in self.nodes.values())
+        )  # seems like mypy can't handle the nested recursive type hint list[dict[str, Attribute]]
+        data["edges"] = cast(Attribute, list(e.data for e in self.edges.values()))
         return data
 
     @classmethod
