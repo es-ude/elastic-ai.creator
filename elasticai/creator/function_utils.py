@@ -103,7 +103,7 @@ class RegisterDescriptor(Generic[Tin, Tout]):
     The owning instance needs to define a callback that has the name `f"_{name}_callback"`,
     where `name` is the name of the field assigned to this descriptor.
 
-    For an example see the `MultiArgDispatcher` below.
+    For an example see the `KeyedFunctionDispatcher` below.
     """
 
     def __set_name__(self, instance, name):
