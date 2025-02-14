@@ -24,6 +24,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
+        self.num_dimensions = kwargs.get("num_dimensions", None)
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
         self.device = kwargs.get("device")
@@ -52,6 +53,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             name=name,
             data_width=self.quant_bits,
             in_features=self.in_features,
+            num_dimensions=self.num_dimensions,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),

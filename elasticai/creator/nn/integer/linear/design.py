@@ -32,12 +32,14 @@ class Linear(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
+        num_dimensions: int = None,
     ) -> None:
         super().__init__(name=name)
 
         self._data_width = data_width
         self._in_features = in_features
         self._out_features = out_features
+        self._num_dimensions = num_dimensions
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -72,28 +74,52 @@ class Linear(Design):
     def save_to(self, destination: Path) -> None:
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
+        template_parameters = dict(
+            name=self.name,
+            x_addr_width=str(self._x_addr_width),
+            y_addr_width=str(self._y_addr_width),
+            data_width=str(self._data_width),
+            m_q_data_width=str(self._m_q_data_width),
+            in_features=str(self._in_features),
+            out_features=str(self._out_features),
+            z_x=str(self._z_x),
+            z_w=str(self._z_w),
+            z_b=str(self._z_b),
+            z_y=str(self._z_y),
+            m_q=str(self._m_q),
+            m_q_shift=str(self._m_q_shift),
+            weights_rom_name=rom_name["weights"],
+            bias_rom_name=rom_name["bias"],
+            work_library_name=self._work_library_name,
+            resource_option=self._resource_option,
+        )
+
+        test_template_parameters = dict(
+            name=self.name,
+            x_addr_width=str(self._x_addr_width),
+            y_addr_width=str(self._y_addr_width),
+            data_width=str(self._data_width),
+            in_features=str(self._in_features),
+            out_features=str(self._out_features),
+            work_library_name=self._work_library_name,
+        )
+
+        if self._num_dimensions is None:
+            file_name = "linear.tpl.vhd"
+            test_file_name = "linear_tb.tpl.vhd"
+        else:
+            if self._in_features != 1:
+                file_name = "linear_2d.tpl.vhd"
+            else:
+                file_name = "linear_2d_feature1.tpl.vhd"
+            test_file_name = "linear_2d_tb.tpl.vhd"
+            template_parameters["num_dimensions"] = str(self._num_dimensions)
+            test_template_parameters["num_dimensions"] = str(self._num_dimensions)
+
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="linear.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                m_q_data_width=str(self._m_q_data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                z_x=str(self._z_x),
-                z_w=str(self._z_w),
-                z_b=str(self._z_b),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-            ),
+            file_name=file_name,
+            parameters=template_parameters,
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
@@ -116,16 +142,8 @@ class Linear(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="linear_tb.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                work_library_name=self._work_library_name,
-            ),
+            file_name=test_file_name,
+            parameters=test_template_parameters,
         )
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             template_test
