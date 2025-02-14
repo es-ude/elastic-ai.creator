@@ -50,8 +50,8 @@ class BatchNorm1d(Design):
         self._z_b = z_b
         self._z_y = z_y
 
-        self._weights = [[w + self._z_w for w in row] for row in weights]
-        self._bias = [b + self._z_b for b in bias]
+        self._weights = weights
+        self._bias = bias
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option

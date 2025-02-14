@@ -240,14 +240,14 @@ begin
         regceb => '1',
         doutb  => y
     );
-    inst_${numerator_name}: entity ${work_library_name}.${numerator_name}
+    inst_${name}_numerator: entity ${work_library_name}.${name}_numerator
     port map (
         enable => enable,
         clock => clock,
         x => denominator_lut_x,
         y => numerator_lut_y
     );
-    inst_${denominator_name}: entity ${work_library_name}.${denominator_name}
+    inst_${name}_denominator: entity ${work_library_name}.${name}_denominator
     port map (
         enable => enable,
         clock => clock,

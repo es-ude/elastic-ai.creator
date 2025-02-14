@@ -65,7 +65,6 @@ architecture rtl of ${name}_tb is
         variable output_rd_cnt : integer := 0;
         variable v_TIME : time := 0 ns;
         begin
-
             file_open (filestatus, fp_inputs, file_inputs, READ_MODE);
             report file_inputs & LF & HT & "file_open_status = " &
                         file_open_status'image(filestatus);
@@ -130,7 +129,7 @@ architecture rtl of ${name}_tb is
         clock  => clock,
         x_address => x_address,
         y_address => y_address,
-        x   => x,
+        x  => x,
         y  => y,
         done   => done
     );

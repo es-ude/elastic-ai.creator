@@ -55,6 +55,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> MatrixMultiDesign:
         return MatrixMultiDesign(
             name=name,
+            is_score_mode="true" if self.operation_mode == "score" else "false",
             data_width=self.quant_bits,
             x_1_dim_a=self.x_1_dim_a,
             x_1_dim_b=self.x_1_dim_b,

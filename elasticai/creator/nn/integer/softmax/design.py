@@ -23,6 +23,8 @@ class SoftmaxLUT(Design):
         dim_a: int,
         dim_b: int,
         dim_c: int,
+        Qinput2QDenominator_LUT_dict: dict,
+        Qinput2QNumerator_LUT_dict: dict,
         numberator_lut_out_data_width: int,
         denominator_lut_out_data_width: int,
         z_x: int,
@@ -40,6 +42,8 @@ class SoftmaxLUT(Design):
         self._dim_b = dim_b
         self._dim_c = dim_c
 
+        self._Qinput2QDenominator_LUT_dict = Qinput2QDenominator_LUT_dict
+        self._Qinput2QNumerator_LUT_dict = Qinput2QNumerator_LUT_dict
         self._numberator_lut_out_data_width = numberator_lut_out_data_width
         self._denominator_lut_out_data_width = denominator_lut_out_data_width
 
@@ -71,23 +75,56 @@ class SoftmaxLUT(Design):
             file_name="softmaxLUT.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                divider_name=self._divider_name,
-                dim_a=self._dim_a,
-                dim_b=self._dim_b,
-                dim_c=self._dim_c,
-                x_addr_width=self._x_addr_width,
-                y_addr_width=self._y_addr_width,
-                numberator_lut_out_data_width=self._numberator_lut_out_data_width,
-                denominator_lut_out_data_width=self._denominator_lut_out_data_width,
-                z_x=self._z_x,
-                z_t=self._z_t,
-                z_y=self._z_y,
+                data_width=str(self._data_width),
+                divider_name=str(self._divider_name),
+                dim_a=str(self._dim_a),
+                dim_b=str(self._dim_b),
+                dim_c=str(self._dim_c),
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                numberator_lut_out_data_width=str(self._numberator_lut_out_data_width),
+                denominator_lut_out_data_width=str(
+                    self._denominator_lut_out_data_width
+                ),
+                z_x=str(self._z_x),
+                z_t=str(self._z_t),
+                z_y=str(self._z_y),
                 work_library_name=self._work_library_name,
                 resource_option=self._resource_option,
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        numerator_LUT = self._Qinput2QNumerator_LUT_dict
+        numerator_name = f"{self.name}_numerator"
+        numerator_design = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="LUT.tpl.vhd",
+            parameters=dict(
+                name=numerator_name,
+                data_width=str(self._data_width),
+                out_data_width=str(self._numberator_lut_out_data_width),
+                function=lambda x: numerator_LUT[x],
+                inputs=list(numerator_LUT.keys()),
+            ),
+        )
+
+        numerator_design.save_to(destination)
+
+        denominator_LUT = self._Qinput2QDenominator_LUT_dict
+        denominator_name = f"{self.name}_denominator"
+        denominator_design = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="LUT.tpl.vhd",
+            parameters=dict(
+                name=denominator_name,
+                data_width=str(self._data_width),
+                out_data_width=str(self._denominator_lut_out_data_width),
+                function=lambda x: denominator_LUT[x],
+                inputs=list(denominator_LUT.keys()),
+            ),
+        )
+        denominator_design.save_to(destination)
 
         divider_template = InProjectTemplate(
             package=f"{module_to_package(self.__module__)}.vhdl_templates",
@@ -109,14 +146,16 @@ class SoftmaxLUT(Design):
             file_name="softmaxLUT_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                dim_a=self._dim_a,
-                dim_b=self._dim_b,
-                dim_c=self._dim_c,
-                x_addr_width=self._x_addr_width,
-                y_addr_width=self._y_addr_width,
-                numberator_lut_out_data_width=self._numberator_lut_out_data_width,
-                denominator_lut_out_data_width=self._denominator_lut_out_data_width,
+                data_width=str(self._data_width),
+                dim_a=str(self._dim_a),
+                dim_b=str(self._dim_b),
+                dim_c=str(self._dim_c),
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                numberator_lut_out_data_width=str(self._numberator_lut_out_data_width),
+                denominator_lut_out_data_width=str(
+                    self._denominator_lut_out_data_width
+                ),
                 work_library_name=self._work_library_name,
                 resource_option=self._resource_option,
             ),

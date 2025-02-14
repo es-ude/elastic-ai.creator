@@ -29,7 +29,7 @@ class Encoder(DesignCreatorModule, nn.Module):
         self.encoder_layers = nn.ModuleList(
             [
                 EncoderLayer(
-                    name=f"enc_layer_{i}",
+                    name=f"enc_layer_{i}",  # TODO: support more than 1 encoder layer
                     d_model=d_model,
                     nhead=nhead,
                     window_size=window_size,
@@ -49,7 +49,13 @@ class Encoder(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> EncoderDesign:
-        return EncoderDesign(name=name)
+        return EncoderDesign(
+            name=name,
+            data_width=self.quant_bits,
+            encoder_layers=self.encoder_layers,
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
         file_path = file_dir / f"{file_name}.txt"

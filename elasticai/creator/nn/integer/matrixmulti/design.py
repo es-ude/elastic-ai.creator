@@ -16,6 +16,7 @@ class MatrixMulti(Design):
     def __init__(
         self,
         name: str,
+        is_score_mode: str,
         data_width: int,
         x_1_dim_a: int,
         x_1_dim_b: int,
@@ -37,6 +38,7 @@ class MatrixMulti(Design):
         super().__init__(name=name)
 
         self._data_width = data_width
+        self._is_score_mode = is_score_mode
         self._x_1_dim_a = x_1_dim_a
         self._x_1_dim_b = x_1_dim_b
         self._x_1_dim_c = x_1_dim_c
@@ -83,6 +85,7 @@ class MatrixMulti(Design):
             file_name="matrixmulti.tpl.vhd",
             parameters=dict(
                 name=self.name,
+                is_score_mode=self._is_score_mode,
                 x_1_addr_width=str(self._x_1_addr_width),
                 x_2_addr_width=str(self._x_2_addr_width),
                 y_addr_width=str(self._y_addr_width),
@@ -98,6 +101,7 @@ class MatrixMulti(Design):
                 y_dim_c=str(self._y_dim_c),
                 m_q=str(self._m_q),
                 m_q_shift=str(self._m_q_shift),
+                m_q_data_width=str(self._m_q_data_width),
                 z_x_1=str(self._z_x_1),
                 z_x_2=str(self._z_x_2),
                 z_y=str(self._z_y),
