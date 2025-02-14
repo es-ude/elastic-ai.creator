@@ -102,7 +102,16 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> EncoderLayerDesign:
-        return EncoderLayerDesign(name=name)
+        return EncoderLayerDesign(
+            name=name,
+            data_width=self.quant_bits,
+            mha=self.mha,
+            mha_add=self.mha_add,
+            mha_norm=self.mha_norm,
+            ffn=self.ffn,
+            ffn_add=self.ffn_add,
+            ffn_norm=self.ffn_norm,
+        )
 
     def precompute(self) -> None:
         self.mha.precompute()
