@@ -57,7 +57,23 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.precomputed = False
 
     def create_design(self, name: str) -> BatchNorm1dDesign:
-        return BatchNorm1dDesign(name=name)
+        return BatchNorm1dDesign(
+            name=name,
+            data_width=self.quant_bits,
+            num_dimensions=self.num_dimensions,
+            in_features=self.in_features,
+            out_features=self.out_features,
+            weights=self.q_weights.tolist(),
+            bias=self.q_modified_bias.tolist(),
+            m_q=self.scale_factor_m_q.item(),
+            m_q_shift=self.scale_factor_m_q_shift.item(),
+            z_x=self.inputs_QParams.zero_point.item(),
+            z_w=self.weight_QParams.zero_point.item(),
+            z_b=self.bias_QParams.zero_point.item(),
+            z_y=self.outputs_QParams.zero_point.item(),
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def _get_quantized_weights(
         self, weight: torch.FloatTensor, weight_QParams: nn.Module
@@ -105,7 +121,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.modified_bias = bias - modified_weight * mean
 
         self.weight_QParams.update_quant_params(modified_weight)
-        self.q_weight = self._get_quantized_weights(
+        self.q_weights = self._get_quantized_weights(
             modified_weight, self.weight_QParams
         )
 
@@ -133,7 +149,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         )
 
         # integer-only
-        tmp = self.math_ops.int_dotproduct(self.q_weight, q_inputs, self.tmp_quant_bits)
+        tmp = self.math_ops.int_dotproduct(
+            self.q_weights, q_inputs, self.tmp_quant_bits
+        )
         tmp = self.math_ops.intadd(tmp, self.q_modified_bias, self.tmp_quant_bits + 1)
 
         tmp = simulate_bitshifting(
