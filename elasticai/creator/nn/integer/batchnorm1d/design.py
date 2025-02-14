@@ -72,39 +72,35 @@ class BatchNorm1d(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
-
         template = InProjectTemplate(
             package=module_to_package(__name__),
-            file_name="batchnorm1d.vhd",
+            file_name="batchnorm1d.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                num_dimensions=self._num_dimensions,
-                in_features=self._in_features,
-                out_features=self._out_features,
-                x_addr_width=self._x_addr_width,
-                y_addr_width=self._y_addr_width,
-                m_q=self._m_q,
-                m_q_shift=self._m_q_shift,
-                m_q_data_width=self._m_q_data_width,
-                z_w=self._z_w,
-                z_b=self._z_b,
-                z_x=self._z_x,
-                z_y=self._z_y,
-                weights=self._weights,
-                bias=self._bias,
+                data_width=str(self._data_width),
+                num_dimensions=str(self._num_dimensions),
+                in_features=str(self._in_features),
+                out_features=str(self._out_features),
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                m_q=str(self._m_q),
+                m_q_shift=str(self._m_q_shift),
+                m_q_data_width=str(self._m_q_data_width),
+                z_w=str(self._z_w),
+                z_b=str(self._z_b),
+                z_x=str(self._z_x),
+                z_y=str(self._z_y),
                 work_library_name=self._work_library_name,
                 resource_option=self._resource_option,
             ),
         )
-
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
+        rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
         rom_weights = Rom(
             name=rom_name["weights"],
             data_width=self._data_width,
-            values_as_integers=_flatten_params(self._weights),
+            values_as_integers=self._weights,
         )
         rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
@@ -120,24 +116,19 @@ class BatchNorm1d(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(__name__),
-            file_name="batchnorm1d_tb.vhd",
+            file_name="batchnorm1d_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                num_dimensions=self._num_dimensions,
-                in_features=self._in_features,
-                out_features=self._out_features,
-                x_addr_width=self._x_addr_width,
-                y_addr_width=self._y_addr_width,
+                data_width=str(self._data_width),
+                num_dimensions=str(self._num_dimensions),
+                in_features=str(self._in_features),
+                out_features=str(self._out_features),
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
 
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             template_test
         )
-
-
-def _flatten_params(params: list[list[int]]) -> list[int]:
-    return list(chain(*params))

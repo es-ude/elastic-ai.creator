@@ -230,14 +230,14 @@ begin
         regceb => '1',
         doutb  => y
     );
-    rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
+    rom_w : entity ${work_library_name}.${name}_weights_rom(rtl)
     port map  (
         clk  => clock,
         en   => '1',
         addr => w_addr,
         data => w_in
     );
-    rom_b : entity ${work_library_name}.${bias_rom_name}(rtl)
+    rom_b : entity ${work_library_name}.${name}_bias_rom(rtl)
     port map  (
         clk  => clock,
         en   => '1',
