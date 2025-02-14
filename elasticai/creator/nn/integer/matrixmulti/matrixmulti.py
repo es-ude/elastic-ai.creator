@@ -53,7 +53,26 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> MatrixMultiDesign:
-        return MatrixMultiDesign(name=name)
+        return MatrixMultiDesign(
+            name=name,
+            data_width=self.quant_bits,
+            x_1_dim_a=self.x_1_dim_a,
+            x_1_dim_b=self.x_1_dim_b,
+            x_1_dim_c=self.x_1_dim_c,
+            x_2_dim_a=self.x_2_dim_a,
+            x_2_dim_b=self.x_2_dim_b,
+            x_2_dim_c=self.x_2_dim_c,
+            y_dim_a=self.y_dim_a,
+            y_dim_b=self.y_dim_b,
+            y_dim_c=self.y_dim_c,
+            m_q=self.scale_factor_m_q.item(),
+            m_q_shift=self.scale_factor_m_q_shift.item(),
+            z_x_1=self.inputs1_QParams.zero_point.item(),
+            z_x_2=self.inputs2_QParams.zero_point.item(),
+            z_y=self.outputs_QParams.zero_point.item(),
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def precompute(self) -> None:
         if self.additional_scale is not None:  # 1/sqrt(d_model)

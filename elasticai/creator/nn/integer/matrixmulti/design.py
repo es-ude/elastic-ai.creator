@@ -34,7 +34,7 @@ class MatrixMulti(Design):
         work_library_name: str,
         resource_option: str,
     ) -> None:
-        super().__init__()
+        super().__init__(name=name)
 
         self._data_width = data_width
         self._x_1_dim_a = x_1_dim_a

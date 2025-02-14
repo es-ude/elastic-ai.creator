@@ -56,7 +56,6 @@ begin
                 '0' after 20.0*C_CLK_PERIOD;
     wait;
     end process RESET_GEN;
-
     clk <= clock;
     data_read : process( clock )
     begin
