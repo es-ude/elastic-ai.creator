@@ -156,8 +156,7 @@ begin
         y => mha_norm_y,
         done => mha_norm_done
     );
-    ------------ FFN module ------------
-    inst_${ffn_name} : entity ${work_library_name}.${ffn_name}(rtl)
+    inst_${name}_ffn : entity ${work_library_name}.${name}_ffn(rtl)
     port map (
         enable => ffn_enable,
         clock => ffn_clock,

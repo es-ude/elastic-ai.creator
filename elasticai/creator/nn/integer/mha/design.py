@@ -41,6 +41,15 @@ class MHA(Design):
             name=self._output_linear.name
         )
 
+        self._x_addr_width = self.q_linear_design._x_addr_width
+        self._num_dimensions = self.q_linear_design._num_dimensions
+        self._in_features = self.q_linear_design._in_features
+        self._y_addr_width = self.output_linear_design._y_addr_width
+        self._out_features = self.output_linear_design._out_features
+
+        self._x_count = self.q_linear_design._x_count
+        self._y_count = self.output_linear_design._y_count
+
     @property
     def port(self) -> Port:
         return create_port(

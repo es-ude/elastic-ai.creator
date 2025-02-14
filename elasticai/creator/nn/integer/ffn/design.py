@@ -51,7 +51,7 @@ class FFN(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                x_1_addr_width=str(self.fc1_design._x_addr_width),
+                x_addr_width=str(self.fc1_design._x_addr_width),
                 y_addr_width=str(self.fc2_design._y_addr_width),
                 num_dimensions=str(self.fc1_design._num_dimensions),
                 fc1_in_features=str(self.fc1_design._in_features),
