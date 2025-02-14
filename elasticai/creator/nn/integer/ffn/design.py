@@ -17,7 +17,6 @@ class FFN(Design):
         relu: object,
         fc2: object,
         work_library_name: str,
-        resource_option: str,
     ) -> None:
         super().__init__(name=name)
 
@@ -27,7 +26,6 @@ class FFN(Design):
         self._fc2 = fc2
 
         self._work_library_name = work_library_name
-        self._resource_option = resource_option
 
         self.fc1_design = self._fc1.create_design(name=self._fc1.name)
         self.relu_design = self._relu.create_design(name=self._relu.name)
@@ -52,15 +50,14 @@ class FFN(Design):
             file_name="ffn.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                x_1_addr_width=self.fc1_design._x_addr_width,
-                y_addr_width=self.fc2_design._y_addr_width,
-                num_dimensions=self.fc1_design._num_dimensions,
-                fc1_in_features=self.fc1_design._in_features,
-                fc1_out_features=self.fc1_design._out_features,
-                fc2_out_features=self.fc2_design._out_features,
+                data_width=str(self._data_width),
+                x_1_addr_width=str(self.fc1_design._x_addr_width),
+                y_addr_width=str(self.fc2_design._y_addr_width),
+                num_dimensions=str(self.fc1_design._num_dimensions),
+                fc1_in_features=str(self.fc1_design._in_features),
+                fc1_out_features=str(self.fc1_design._out_features),
+                fc2_out_features=str(self.fc2_design._out_features),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
@@ -70,14 +67,13 @@ class FFN(Design):
             file_name="ffn_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                x_addr_width=self.fc1_design._x_addr_width,
-                y_addr_width=self.fc2_design._y_addr_width,
-                num_dimensions=self.fc1_design._num_dimensions,
-                in_features=self.fc1_design._in_features,
-                out_features=self.fc1_design._out_features,
+                data_width=str(self._data_width),
+                x_addr_width=str(self.fc1_design._x_addr_width),
+                y_addr_width=str(self.fc2_design._y_addr_width),
+                num_dimensions=str(self.fc1_design._num_dimensions),
+                in_features=str(self.fc1_design._in_features),
+                out_features=str(self.fc1_design._out_features),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
         destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)

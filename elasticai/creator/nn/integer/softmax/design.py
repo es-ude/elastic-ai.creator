@@ -20,13 +20,11 @@ class SoftmaxLUT(Design):
         self,
         name: str,
         data_width: int,
+        numberator_lut_out_data_width: int,
+        denominator_lut_out_data_width: int,
         dim_a: int,
         dim_b: int,
         dim_c: int,
-        Qinput2QDenominator_LUT_dict: dict,
-        Qinput2QNumerator_LUT_dict: dict,
-        numberator_lut_out_data_width: int,
-        denominator_lut_out_data_width: int,
         z_x: int,
         z_t: int,
         z_y: int,
@@ -38,14 +36,11 @@ class SoftmaxLUT(Design):
         self._divider_name = f"{name}_divider"
 
         self._data_width = data_width
+        self._numberator_lut_out_data_width = numberator_lut_out_data_width
+        self._denominator_lut_out_data_width = denominator_lut_out_data_width
         self._dim_a = dim_a
         self._dim_b = dim_b
         self._dim_c = dim_c
-
-        self._Qinput2QDenominator_LUT_dict = Qinput2QDenominator_LUT_dict
-        self._Qinput2QNumerator_LUT_dict = Qinput2QNumerator_LUT_dict
-        self._numberator_lut_out_data_width = numberator_lut_out_data_width
-        self._denominator_lut_out_data_width = denominator_lut_out_data_width
 
         self._z_x = z_x
         self._z_t = z_t
@@ -95,39 +90,8 @@ class SoftmaxLUT(Design):
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        numerator_LUT = self._Qinput2QNumerator_LUT_dict
-        numerator_name = f"{self.name}_numerator"
-        numerator_design = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="LUT.tpl.vhd",
-            parameters=dict(
-                name=numerator_name,
-                data_width=str(self._data_width),
-                out_data_width=str(self._numberator_lut_out_data_width),
-                function=lambda x: numerator_LUT[x],
-                inputs=list(numerator_LUT.keys()),
-            ),
-        )
-
-        numerator_design.save_to(destination)
-
-        denominator_LUT = self._Qinput2QDenominator_LUT_dict
-        denominator_name = f"{self.name}_denominator"
-        denominator_design = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="LUT.tpl.vhd",
-            parameters=dict(
-                name=denominator_name,
-                data_width=str(self._data_width),
-                out_data_width=str(self._denominator_lut_out_data_width),
-                function=lambda x: denominator_LUT[x],
-                inputs=list(denominator_LUT.keys()),
-            ),
-        )
-        denominator_design.save_to(destination)
-
         divider_template = InProjectTemplate(
-            package=f"{module_to_package(self.__module__)}.vhdl_templates",
+            package=module_to_package(self.__module__),
             file_name="Divider.tpl.vhd",
             parameters=dict(
                 name=self._divider_name,
@@ -157,7 +121,6 @@ class SoftmaxLUT(Design):
                     self._denominator_lut_out_data_width
                 ),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
 

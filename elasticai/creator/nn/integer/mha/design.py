@@ -19,7 +19,6 @@ class MHA(Design):
         inner_attn_module: object,
         output_linear: object,
         work_library_name: str,
-        resource_option: str,
     ) -> None:
         super().__init__(name=name)
 
@@ -31,7 +30,6 @@ class MHA(Design):
         self._output_linear = output_linear
 
         self._work_library_name = work_library_name
-        self._resource_option = resource_option
 
         self.q_linear_design = self._q_linear.create_design(name=self._q_linear.name)
         self.k_linear_design = self._k_linear.create_design(name=self._k_linear.name)
@@ -64,17 +62,18 @@ class MHA(Design):
             file_name="mha.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                q_linear_x_addr_width=self.q_linear_design._x_addr_width,
-                q_linear_y_addr_width=self.q_linear_design._y_addr_width,
-                k_linear_x_addr_width=self.k_linear_design._x_addr_width,
-                k_linear_y_addr_width=self.k_linear_design._y_addr_width,
-                v_linear_x_addr_width=self.v_linear_design._x_addr_width,
-                v_linear_y_addr_width=self.v_linear_design._y_addr_width,
-                inner_attn_y_address_width=self.inner_attn_module_design._y_addr_width,
-                output_linear_y_addr_width=self.output_linear_design._y_addr_width,
+                data_width=str(self._data_width),
+                q_linear_x_addr_width=str(self.q_linear_design._x_addr_width),
+                q_linear_y_addr_width=str(self.q_linear_design._y_addr_width),
+                k_linear_x_addr_width=str(self.k_linear_design._x_addr_width),
+                k_linear_y_addr_width=str(self.k_linear_design._y_addr_width),
+                v_linear_x_addr_width=str(self.v_linear_design._x_addr_width),
+                v_linear_y_addr_width=str(self.v_linear_design._y_addr_width),
+                inner_attn_y_address_width=str(
+                    self.inner_attn_module_design._y_addr_width
+                ),
+                output_linear_y_addr_width=str(self.output_linear_design._y_addr_width),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
 
@@ -85,21 +84,22 @@ class MHA(Design):
             file_name="mha_test.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                q_linear_x_addr_width=self.q_linear_design._x_addr_width,
-                q_linear_num_dimensions=self.q_linear_design._num_dimensions,
-                q_linear_in_features=self.q_linear_design._in_features,
-                k_linear_x_addr_width=self.k_linear_design._x_addr_width,
-                k_linear_num_dimensions=self.k_linear_design._num_dimensions,
-                k_linear_in_features=self.k_linear_design._in_features,
-                v_linear_x_addr_width=self.v_linear_design._x_addr_width,
-                v_linear_num_dimensions=self.v_linear_design._num_dimensions,
-                v_linear_in_features=self.v_linear_design._in_features,
-                output_linear_y_addr_width=self.output_linear_design._y_addr_width,
-                output_linear_num_dimensions=self.output_linear_design._num_dimensions,
-                output_linear_out_features=self.output_linear_design._out_features,
+                data_width=str(self._data_width),
+                q_linear_x_addr_width=str(self.q_linear_design._x_addr_width),
+                q_linear_num_dimensions=str(self.q_linear_design._num_dimensions),
+                q_linear_in_features=str(self.q_linear_design._in_features),
+                k_linear_x_addr_width=str(self.k_linear_design._x_addr_width),
+                k_linear_num_dimensions=str(self.k_linear_design._num_dimensions),
+                k_linear_in_features=str(self.k_linear_design._in_features),
+                v_linear_x_addr_width=str(self.v_linear_design._x_addr_width),
+                v_linear_num_dimensions=str(self.v_linear_design._num_dimensions),
+                v_linear_in_features=str(self.v_linear_design._in_features),
+                output_linear_y_addr_width=str(self.output_linear_design._y_addr_width),
+                output_linear_num_dimensions=str(
+                    self.output_linear_design._num_dimensions
+                ),
+                output_linear_out_features=str(self.output_linear_design._out_features),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
 

@@ -98,7 +98,6 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             inner_attn_module=self.inner_attn_module,
             output_linear=self.output_linear,
             work_library_name="work",
-            resource_option="auto",
         )
 
     def precompute(self) -> None:

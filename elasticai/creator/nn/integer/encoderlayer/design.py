@@ -20,7 +20,6 @@ class EncoderLayer(Design):
         ffn_add: object,
         ffn_norm: object,
         work_library_name: str,
-        resource_option: str,
     ) -> None:
         super().__init__(name=name)
 
@@ -33,7 +32,6 @@ class EncoderLayer(Design):
         self._ffn_norm = ffn_norm
 
         self._work_library_name = work_library_name
-        self._resource_option = resource_option
 
         self.mha_design = self._mha.create_design(name=self._mha.name)
         self.mha_add_design = self._mha_add.create_design(name=self._mha_add.name)
@@ -64,14 +62,13 @@ class EncoderLayer(Design):
             file_name="encoderlayer.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                x_addr_width=self.mha_design._x_addr_width,
-                y_addr_width=self.ffn_norm_design._y_addr_width,
-                num_dimensions=self.mha_design._num_dimensions,
-                in_features=self.mha_design._in_features,
-                out_features=self.mha_design._out_features,
+                data_width=str(self._data_width),
+                x_addr_width=str(self.mha_design._x_addr_width),
+                y_addr_width=str(self.ffn_norm_design._y_addr_width),
+                num_dimensions=str(self.mha_design._num_dimensions),
+                in_features=str(self.mha_design._in_features),
+                out_features=str(self.mha_design._out_features),
                 work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
@@ -81,12 +78,12 @@ class EncoderLayer(Design):
             file_name="encoderlayer_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=self._data_width,
-                x_addr_width=self.mha_design._x_addr_width,
-                y_addr_width=self.ffn_norm_design._y_addr_width,
-                num_dimensions=self.mha_design._num_dimensions,
-                in_features=self.mha_design._in_features,
-                out_features=self.mha_design._out_features,
+                data_width=str(self._data_width),
+                x_addr_width=str(self.mha_design._x_addr_width),
+                y_addr_width=str(self.ffn_norm_design._y_addr_width),
+                num_dimensions=str(self.mha_design._num_dimensions),
+                in_features=str(self.mha_design._in_features),
+                out_features=str(self.mha_design._out_features),
                 work_library_name=self._work_library_name,
             ),
         )

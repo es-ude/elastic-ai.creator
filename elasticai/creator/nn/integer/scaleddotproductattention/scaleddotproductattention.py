@@ -96,7 +96,6 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             softmax=self.softmax,
             matrix_multi_att=self.matrix_multi_att,
             work_library_name="work",
-            resource_option="auto",
         )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):

@@ -112,7 +112,6 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             ffn_add=self.ffn_add,
             ffn_norm=self.ffn_norm,
             work_library_name="work",
-            resource_option="auto",
         )
 
     def precompute(self) -> None:

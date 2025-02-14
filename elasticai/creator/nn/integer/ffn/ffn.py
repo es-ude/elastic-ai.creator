@@ -69,7 +69,6 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             relu=self.relu,
             fc2=self.fc2,
             work_library_name="work",
-            resource_option="auto",
         )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):

@@ -54,7 +54,6 @@ class Encoder(DesignCreatorModule, nn.Module):
             data_width=self.quant_bits,
             encoder_layers=self.encoder_layers,
             work_library_name="work",
-            resource_option="auto",
         )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
