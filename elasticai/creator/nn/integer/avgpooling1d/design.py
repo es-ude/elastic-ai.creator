@@ -108,7 +108,3 @@ class AVGPooling1d(Design):
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             template_test
         )
-
-
-def _flatten_params(params: list[list[int]]) -> list[int]:
-    return list(chain(*params))
