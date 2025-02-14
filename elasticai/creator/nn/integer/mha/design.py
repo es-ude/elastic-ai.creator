@@ -81,7 +81,7 @@ class MHA(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="mha_test.tpl.vhd",
+            file_name="mha_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
