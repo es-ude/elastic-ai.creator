@@ -89,7 +89,17 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> MHADesign:
-        return MHADesign(name=name)
+        return MHADesign(
+            name=name,
+            data_width=self.quant_bits,
+            q_linear=self.q_linear,
+            k_linear=self.k_linear,
+            v_linear=self.v_linear,
+            inner_attn_module=self.inner_attn_module,
+            output_linear=self.output_linear,
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def precompute(self) -> None:
         self.q_linear.precompute()

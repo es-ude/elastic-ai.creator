@@ -62,7 +62,15 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> FFNDesign:
-        return FFNDesign(name=name)
+        return FFNDesign(
+            name=name,
+            data_width=self.quant_bits,
+            fc1=self.fc1,
+            relu=self.relu,
+            fc2=self.fc2,
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
         file_path = file_dir / f"{file_name}.txt"
