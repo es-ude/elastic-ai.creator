@@ -5,6 +5,7 @@ from elasticai.creator.file_generation.template import (
 )
 from elasticai.creator.nn.integer.LUT.design import LUT as LUTDesign
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
+from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 
@@ -51,6 +52,12 @@ class ScaledDotProductAttention(Design):
             name=self._matrix_multi_att.name
         )
 
+        self._x_1_addr_width = self.matrix_multi_score_design._x_1_addr_width
+        self._x_2_addr_width = self.matrix_multi_score_design._x_2_addr_width
+        self._y_score_addr_width = self.matrix_multi_score_design._y_addr_width
+        self._x_3_addr_width = self.softmax_design._x_addr_width
+        self._y_addr_width = self.matrix_multi_att_design._y_addr_width
+
     @property
     def port(self) -> Port:
         return create_port(
@@ -73,11 +80,11 @@ class ScaledDotProductAttention(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                x_1_addr_width=str(self.matrix_multi_score_design._x_1_addr_width),
-                x_2_addr_width=str(self.matrix_multi_score_design._x_2_addr_width),
-                y_score_addr_width=str(self.matrix_multi_score_design._y_addr_width),
-                x_3_addr_width=str(self.softmax_design._x_addr_width),
-                y_addr_width=str(self.matrix_multi_att_design._y_addr_width),
+                x_1_addr_width=str(self._x_1_addr_width),
+                x_2_addr_width=str(self._x_2_addr_width),
+                y_score_addr_width=str(self._y_score_addr_width),
+                x_3_addr_width=str(self._x_3_addr_width),
+                y_addr_width=str(self._y_addr_width),
                 work_library_name=self._work_library_name,
             ),
         )
@@ -89,10 +96,10 @@ class ScaledDotProductAttention(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                x_1_addr_width=str(self.matrix_multi_score_design._x_1_addr_width),
-                x_2_addr_width=str(self.matrix_multi_score_design._x_2_addr_width),
-                x_3_addr_width=str(self.softmax_design._x_addr_width),
-                y_addr_width=str(self.matrix_multi_att_design._y_addr_width),
+                x_1_addr_width=str(self._x_1_addr_width),
+                x_2_addr_width=str(self._x_2_addr_width),
+                x_3_addr_width=str(self._x_3_addr_width),
+                y_addr_width=str(self._y_addr_width),
                 matmul_score_x_1_dim_a=str(self.matrix_multi_score_design._x_1_dim_a),
                 matmul_score_x_1_dim_b=str(self.matrix_multi_score_design._x_1_dim_b),
                 matmul_score_x_1_dim_c=str(self.matrix_multi_score_design._x_1_dim_c),
