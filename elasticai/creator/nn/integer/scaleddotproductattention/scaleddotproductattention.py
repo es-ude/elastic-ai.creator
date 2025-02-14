@@ -89,7 +89,15 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> ScaledDotProductAttentionDesign:
-        return ScaledDotProductAttentionDesign(name=name)
+        return ScaledDotProductAttentionDesign(
+            name=name,
+            data_width=self.quant_bits,
+            matrix_multi_score=self.matrix_multi_score,
+            softmax=self.softmax,
+            matrix_multi_att=self.matrix_multi_att,
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
         file_path = file_dir / f"{file_name}.txt"
