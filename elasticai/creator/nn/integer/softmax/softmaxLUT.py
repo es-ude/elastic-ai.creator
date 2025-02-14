@@ -24,6 +24,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
 
         self.device = kwargs.get("device")
         self.name = kwargs.get("name")
+
         self.quant_bits = kwargs.get("quant_bits")
         self.logger = logging.getLogger(self.__class__.__name__)
 

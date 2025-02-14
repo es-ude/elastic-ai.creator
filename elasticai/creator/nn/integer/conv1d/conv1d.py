@@ -150,7 +150,6 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
                 padding=0,
             )
             tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits + 1)
-
         else:
             tmp = F.conv1d(
                 q_inputs,

@@ -95,5 +95,4 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         )
 
         self.outputs_QParams = self.inputs_QParams
-        # outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

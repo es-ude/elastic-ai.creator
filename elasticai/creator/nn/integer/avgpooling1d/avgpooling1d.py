@@ -41,7 +41,7 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(self.device)
 
-        self.scale_factor_Math_ops = MathOperations()
+        self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name: str) -> AVGPooling1dDesign:
@@ -62,7 +62,7 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
-        L = self.in_features  # e.g., seq_len
+        L = self.in_features  # e.g., seq_len, window_size
         self.scale_factor_M = torch.tensor(
             self.inputs_QParams.scale_factor.item()
             / (self.outputs_QParams.scale_factor.item() * L),
@@ -80,18 +80,20 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        q_inputs = self.scale_factor_Math_ops.intsub(
+        q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
+
+        # assume that (batch_size, channels, seq_len) is the shape of q_inputs
         tmp = torch.sum(q_inputs, dim=2, keepdim=True).to(
             torch.int32
-        )  # dim=1 for Transformer
+        )  # sum over seq_len
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )
 
-        q_outputs = self.scale_factor_Math_ops.intadd(
+        q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
@@ -107,6 +109,7 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
                 self.inputs_QParams = given_inputs_QParams
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
+        # assume that (batch_size, channels, seq_len) is the shape of inputs
         outputs = F.avg_pool1d(inputs, kernel_size=inputs.size(2))
 
         if self.training:
