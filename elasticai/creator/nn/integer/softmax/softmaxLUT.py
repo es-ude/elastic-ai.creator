@@ -42,7 +42,26 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> SoftmaxLUTDesign:
-        return SoftmaxLUTDesign(name=name)
+        if self.quant_bits <= 4:
+            numerator_out_data_width = self.quant_bits * 3 - 1
+            denominator_out_data_width = self.quant_bits * 3
+        else:
+            numerator_out_data_width = self.quant_bits * 3 - 1
+            denominator_out_data_width = self.quant_bits * 2
+
+        return SoftmaxLUTDesign(
+            name=name,
+            data_width=self.quant_bits,
+            dim_a=self.dim_a,
+            dim_b=self.dim_b,
+            numberator_lut_out_data_width=numerator_out_data_width,
+            denominator_lut_out_data_width=denominator_out_data_width,
+            z_x=self.inputs1_QParams.zero_point.item(),
+            z_t=self.inputs2_QParams.zero_point.item(),
+            z_y=self.outputs_QParams.zero_point.item(),
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def precompute(self):
         # prepare all possible quantised inputs
@@ -68,7 +87,9 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
                     (2 ** (self.quant_bits * 3 - 1) - 1)
                     - (-(2 ** (self.quant_bits * 3 - 1)))
                 )
-                // ((self.window_size**2) * self.nhead)
+                // (
+                    (self.window_size**2) * self.nhead
+                )  # TODO: (self.window_size**2) * self.nhead -> self.window_size
             )  # get scale factor of t
             z_t = (2 ** (self.quant_bits * 3 - 1) - 1) - (
                 1.0 / s_t
