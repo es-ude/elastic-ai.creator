@@ -1,0 +1,117 @@
+name: Pull Request
+description: Submit a pull request
+title: "[TYPE]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please have a look at our [contribution guidelines](https://es-ude.github.io/elastic-ai.creator/contribution.html) before submitting a pull request.
+        
+        ---
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe your changes in detail
+      placeholder: What changes did you make and why?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: change-type
+    attributes:
+      label: Type of Change
+      description: |
+        Select the type of change using conventional commit types:
+        - feat: A new feature
+        - fix: A bug fix
+        - docs: Documentation changes
+        - style: Changes that don't affect code meaning (formatting, etc)
+        - refactor: Code change that neither fixes a bug nor adds a feature
+        - perf: Code change that improves performance
+        - test: Adding missing tests or correcting existing tests
+        - chore: Changes to build process or auxiliary tools
+        - ci: Changes to CI configuration files and scripts
+      multiple: true
+      options:
+        - "feat: New feature"
+        - "fix: Bug fix"
+        - "docs: Documentation change"
+        - "style: Code style/formatting"
+        - "refactor: Code refactoring"
+        - "perf: Performance improvement"
+        - "test: Testing changes"
+        - "chore: Build/tooling changes"
+        - "ci: CI configuration changes"
+        - "BREAKING CHANGE"
+    validations:
+      required: true
+
+  - type: textarea
+    id: breaking-changes
+    attributes:
+      label: Breaking Changes
+      description: If your PR introduces breaking changes, list them here and explain why they're necessary
+      placeholder: List any breaking changes and their justification
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I have added/updated tests that prove my fix/feature works
+          required: true
+        - label: All new and existing tests pass
+          required: true
+        - label: I have formatted my code using the project's style guidelines
+          required: true
+        - label: I have rebased my branch on the latest main/master
+          required: true
+        - label: My commits follow a linear history (no merge commits)
+          required: true
+        - label: My commit messages are descriptive and explain what/why (e.g., "feat(component): add validation to reduce server load")
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Development Guidelines
+        - Maintain a linear history by rebasing your branch before merging
+        - Format your code according to project guidelines
+        - Write meaningful tests for new features and bug fixes
+        - Breaking changes must be clearly documented
+        - Each commit should be atomic and have a descriptive message explaining:
+          - What change was made
+          - Why it was necessary
+
+        ## Development Tools
+        Please ensure your changes pass all our code quality checks:
+
+        ### Code Quality Tools
+        - **Ruff** ([docs](https://docs.astral.sh/ruff/))
+          - `ruff check` for linting
+          - `ruff format` for code formatting
+        - **MyPy** ([docs](https://mypy.readthedocs.io))
+          - `mypy -p elasticai.creator` for type checking
+        - **Cocogitto** ([docs](https://docs.cocogitto.io))
+          - `cog` for commit message linting
+
+        ### Editor Setup
+        - **VSCode**: Install the Python, Pylance, and Ruff extensions for real-time feedback
+        - **Pre-commit**: Use our `.pre-commit-config.yaml` to run some checks automatically:
+          ```bash
+          pip install pre-commit
+          pre-commit install
+          ```
+
+        ### Version Control Tips
+        - Consider using [Jujutsu](https://github.com/martinvonz/jj) (`jj`) for easier maintenance of a linear history
+        - Basic jj workflow:
+          ```bash
+          jj new main  # create new change on top of main
+          jj squash    # combine current change into previous one
+          jj rebase -R <id1> -A <id2>   # move change <id1> behind <id2> in the history, rebasing children of <id1> on top of <id2>
+          jj describe  # edit the commit message for the current change
+          jj git push -c <id>  # push the given change id to a new branch on github
+          ```
