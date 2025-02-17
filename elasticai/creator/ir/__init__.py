@@ -15,6 +15,7 @@ __all__ = [
     "read_only_field",
     "StaticMethodField",
     "ReadOnlyField",
+    "find_subgraphs",
 ]
 from .attribute import Attribute
 from .core import Edge, Node, edge, node
@@ -30,3 +31,4 @@ from .required_field import (
     read_only_field,
     static_required_field,
 )
+from .subgraph_matching import find_subgraphs
