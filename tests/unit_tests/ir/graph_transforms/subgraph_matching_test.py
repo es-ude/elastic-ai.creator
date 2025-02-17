@@ -1,4 +1,4 @@
-from elasticai.creator import ir
+from .utils import build_graph_from_dict, find_matches
 
 """
 Test List:
@@ -9,24 +9,6 @@ Test List:
    them to be removed from the next list of potential matches.
 
 """
-
-
-def build_graph_from_dict(d: dict[tuple[str, str], list[str]]) -> ir.Graph:
-    g = ir.Graph()
-    for (node, node_type), successors in d.items():
-        g.add_node(ir.node(node, node_type))
-        for s in successors:
-            g.add_edge(ir.edge(node, s))
-
-    return g
-
-
-def equal_type(a: ir.Node, b: ir.Node) -> bool:
-    return a.type == b.type
-
-
-def find_matches(graph: ir.Graph, pattern: ir.Graph) -> list[dict[str, str]]:
-    return ir.find_subgraphs(graph, pattern, equal_type)
 
 
 def test_find_identical_graph_with_single_node():
