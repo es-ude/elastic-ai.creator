@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any, Generic, TypeVar, Union, overload
+from typing import Any, Generic, ParamSpec, TypeVar, Union, overload
 
 from .attribute import Attribute
 from .core import Edge, Node
@@ -10,9 +10,14 @@ from .graph_iterators import (
     dfs_pre_order,
 )
 from .ir_data import IrData
+from .required_field import read_only_field
 
 N = TypeVar("N", bound=Node)
 E = TypeVar("E", bound=Edge)
+
+StoredT = TypeVar("StoredT", bound=Attribute)
+VisibleT = TypeVar("VisibleT")
+P = ParamSpec("P")
 
 
 class Graph(IrData, Generic[N, E], create_init=False):
@@ -128,12 +133,12 @@ class Graph(IrData, Generic[N, E], create_init=False):
     ) -> Mapping[tuple[str, str], E]:
         return _ReadOnlyMappingInOrderAsIterable(keys, self._edge_data, self._edge_fn)
 
-    @property
-    def nodes(self) -> Mapping[str, N]:
+    @read_only_field
+    def nodes(self, _: dict[str, Attribute]) -> Mapping[str, N]:
         return self._get_node_mapping(self._g.iter_nodes)
 
-    @property
-    def edges(self) -> Mapping[tuple[str, str], E]:
+    @read_only_field
+    def edges(self, _: dict[str, Attribute]) -> Mapping[tuple[str, str], E]:
         return self._get_edge_mapping(self._g.iter_edges)
 
     def iter_bfs_down_from(self, node: str) -> Mapping[str, N]:
