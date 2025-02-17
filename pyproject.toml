@@ -38,6 +38,7 @@ docs = [
     "linkify-it-py>=2.0.3",
     "sphinx-autodoc2>=0.5.0",
     "sphinxext-opengraph>=0.9.1",
+    "sphinxcontrib-kroki>=1.3.0",
 ]
 release = ["git-cliff>=2.7.0"]
 testing = [
@@ -77,6 +78,7 @@ default-groups = ["utils", "testing", "lint", "dev", "docs"]
 
 [tool.uv.sources]
 elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61" }
+sphinxcontrib-wavedrom = { git = "https://github.com/glencoe/sphinx-wavedrom.git", rev = "hotfix_html_only_version" }
 
 
 [tool.pytest.ini_options]
