@@ -1,0 +1,12 @@
+
+[[plugins]]
+name = 'sliding_window'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = []
+static_files = [
+  "sliding_window.vhd",
+]
+
