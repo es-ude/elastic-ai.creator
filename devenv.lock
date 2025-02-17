@@ -3,10 +3,10 @@
     "devenv": {
       "locked": {
         "dir": "src/modules",
-        "lastModified": 1737321981,
+        "lastModified": 1739444039,
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "a30b871f21bfc987b65356909d04186a18adf0c6",
+        "rev": "1235cd13f47df6ad19c8a183c6eabc1facb7c399",
         "type": "github"
       },
       "original": {
@@ -46,10 +46,31 @@
         "type": "github"
       }
     },
+    "git-hooks": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "gitignore": "gitignore",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1737465171,
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "rev": "9364dc02281ce2d37a1f55b6e51f7c0f65a75f17",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "type": "github"
+      }
+    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
-          "pre-commit-hooks",
+          "git-hooks",
           "nixpkgs"
         ]
       },
@@ -83,7 +104,7 @@
     },
     "nixpkgs-python": {
       "inputs": {
-        "flake-compat": "flake-compat",
+        "flake-compat": "flake-compat_2",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -103,10 +124,10 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1737370608,
+        "lastModified": 1739451785,
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "300081d0cc72df578b02d914df941b8ec62240e6",
+        "rev": "1128e89fd5e11bb25aedbfc287733c6502202ea9",
         "type": "github"
       },
       "original": {
@@ -116,34 +137,16 @@
         "type": "github"
       }
     },
-    "pre-commit-hooks": {
-      "inputs": {
-        "flake-compat": "flake-compat_2",
-        "gitignore": "gitignore",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1737301351,
-        "owner": "cachix",
-        "repo": "pre-commit-hooks.nix",
-        "rev": "15a87cedeb67e3dbc8d2f7b9831990dffcf4e69f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "cachix",
-        "repo": "pre-commit-hooks.nix",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "devenv": "devenv",
+        "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs",
         "nixpkgs-python": "nixpkgs-python",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "pre-commit-hooks": "pre-commit-hooks"
+        "pre-commit-hooks": [
+          "git-hooks"
+        ]
       }
     }
   },
