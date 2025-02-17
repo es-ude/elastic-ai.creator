@@ -1,5 +1,0 @@
-name: counter
-version: true
-title: Counter
-nav:
- - modules/ROOT/nav.adoc
