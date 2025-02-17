@@ -32,4 +32,5 @@ __all__ = [
     "new_edge",
     "input_node",
     "output_node",
+    "get_default_converter",
 ]
