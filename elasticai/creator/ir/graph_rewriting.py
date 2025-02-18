@@ -1,9 +1,8 @@
 import copy
 from collections.abc import Callable, Sequence
-from typing import Generic, TypeVar
+from typing import Generic, Protocol, TypeVar
 
 from .core import Edge, Node
-from .graph import Graph
 from .name_generation import NameRegistry
 
 EdgeT = TypeVar("EdgeT", bound=Edge)
@@ -12,6 +11,18 @@ PNodeT = TypeVar("PNodeT", bound=Node)
 INodeT = TypeVar("INodeT", bound=Node)
 RNodeT = TypeVar("RNodeT", bound=Node)
 GNodeT = TypeVar("GNodeT", bound=Node)
+
+
+class Graph(Protocol[GNodeT, EdgeT]):
+    def get_empty_copy(self) -> "Graph[GNodeT, EdgeT]": ...
+
+    def add_node(self, node: Node) -> None: ...
+
+    def add_edge(self, edge: Edge) -> None: ...
+
+    def nodes(self) -> dict[str, Node]: ...
+
+    def edges(self) -> dict[tuple[str, str], Edge]: ...
 
 
 class GraphRewriter(Generic[PNodeT, INodeT, RNodeT, GNodeT, EdgeT]):

@@ -22,12 +22,20 @@ VisibleT = TypeVar("VisibleT")
 P = ParamSpec("P")
 
 
-class Graph(IrData, Generic[N, E], create_init=False):
+class Implementation(IrData, Generic[N, E], create_init=False):
     __slots__ = ("data", "_g", "_node_data", "_edge_data", "_node_fn", "_edge_fn")
+
+    name: str
+    type: str
+    """TODO:
+        - remove data from constructor when called together with nodes or edges
+        - just wrap the data in the constructor, without adding nodes or edges
+        - expose graph delegate to public api, have constructor just combine grapoh delegate and data
+    """
 
     @overload
     def __init__(
-        self: "Graph[N, E]",
+        self: "Implementation[N, E]",
         *,
         node_fn: Callable[[dict], N],
         edge_fn: Callable[[dict], E],
@@ -38,7 +46,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
 
     @overload
     def __init__(
-        self: "Graph[Node, Edge]",
+        self: "Implementation[Node, Edge]",
         *,
         nodes: Iterable[Node] = tuple(),
         edges: Iterable[Edge] = tuple(),
@@ -47,7 +55,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
 
     @overload
     def __init__(
-        self: "Graph[N, Edge]",
+        self: "Implementation[N, Edge]",
         *,
         node_fn: Callable[[dict], N],
         nodes: Iterable[N] = tuple(),
@@ -57,7 +65,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
 
     @overload
     def __init__(
-        self: "Graph[Node, E]",
+        self: "Implementation[Node, E]",
         *,
         edge_fn: Callable[[dict], E],
         nodes: Iterable[Node] = tuple(),
@@ -73,6 +81,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
         nodes=tuple(),
         edges=tuple(),
         data=None,
+        delegate=None,
     ) -> None:
         if data is None:
             data = {}
@@ -81,7 +90,10 @@ class Graph(IrData, Generic[N, E], create_init=False):
         if "edges" not in data:
             data["edges"] = {}
         super().__init__(data)
-        self._g: GraphDelegate[str] = GraphDelegate()
+        if delegate is None:
+            self._g: GraphDelegate[str] = GraphDelegate()
+        else:
+            self._g = delegate
         self._node_data: dict[str, Attribute] = data["nodes"]
         self._edge_data: dict[tuple[str, str], Attribute] = data["edges"]
         for n in self._node_data:
@@ -234,7 +246,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
     def from_dict(
         cls,
         d: dict[str, Any],
-    ) -> "Graph[Node, Edge]": ...
+    ) -> "Implementation[Node, Edge]": ...
 
     @classmethod
     @overload
@@ -242,7 +254,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
         cls,
         d: dict[str, Any],
         node_fn: Callable[[dict], N],
-    ) -> "Graph[N, Edge]": ...
+    ) -> "Implementation[N, Edge]": ...
 
     @classmethod
     @overload
@@ -251,7 +263,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
         d: dict[str, Any],
         node_fn: Callable[[dict], N],
         edge_fn: Callable[[dict], E],
-    ) -> "Graph[N, E]": ...
+    ) -> "Implementation[N, E]": ...
 
     @classmethod
     def from_dict(
@@ -259,7 +271,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
         d: dict[str, Any],
         node_fn: Callable[[dict], N] | Callable[[dict], Node] = Node,
         edge_fn: Callable[[dict], E] | Callable[[dict], Edge] = Edge,
-    ) -> "Union[Graph[N, Edge], Graph[N, E], Graph[Node, Edge]]":
+    ) -> "Union[Implementation[N, Edge], Implementation[N, E], Implementation[Node, Edge]]":
         data = d.copy()
         data["nodes"] = {node["name"]: node for node in data["nodes"]}
         data["edges"] = {(edge["src"], edge["sink"]): edge for edge in data["edges"]}
@@ -280,7 +292,7 @@ class Graph(IrData, Generic[N, E], create_init=False):
         """
         self.data = data
 
-    def get_empty_copy(self) -> "Graph[N, E]":
+    def get_empty_copy(self) -> "Implementation[N, E]":
         """Get an empty version of the graph, with the same node_fn and edge_fn.
 
         This is the complement of `load_dict`.

@@ -1,6 +1,7 @@
 from typing import Any
 
-from elasticai.creator.ir import Edge, Graph
+from elasticai.creator.ir import Edge
+from elasticai.creator.ir import Implementation as _Implementation
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.ir import node as _node
 
@@ -27,6 +28,6 @@ def output_node(attributes: dict[str, Any] | None = None) -> Node:
     return new_node("output", "output", "output", attributes)
 
 
-class Implementation(Graph[Node, Edge]):
+class Implementation(_Implementation[Node, Edge]):
     name: str
     type: str

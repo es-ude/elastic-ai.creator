@@ -11,8 +11,15 @@ from typing import Any, Iterator, TypeAlias, TypeGuard, TypeVar, overload
 import elasticai.creator.function_utils as F
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
-from elasticai.creator.ir import Attribute, Graph, LoweringPass, RequiredField
+from elasticai.creator.ir import (
+    Attribute,
+    LoweringPass,
+    RequiredField,
+)
 from elasticai.creator.ir import Edge as _Edge
+from elasticai.creator.ir import (
+    Implementation as _Implementation,
+)
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.plugin import PluginLoader as _Loader
 from elasticai.creator.plugin import PluginSpec as _PluginSpec
@@ -190,7 +197,7 @@ N = TypeVar("N", bound=VhdlNode)
 E = TypeVar("E", bound=Edge)
 
 
-class Implementation(Graph[N, E]):
+class Implementation(_Implementation[N, E]):
     name: str
     type: str
 

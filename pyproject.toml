@@ -203,5 +203,7 @@ module = [
     "elasticai.creator.base_modules.conv1d",
     "elasticai.creator.base_modules.conv2d",
     "elasticai.creator.base_modules.linear",
+    "elasticai.creator.ir.graph_rewriting",                # only temporary until next change request
+    "elasticai.creator.ir.subgraph_matching",              # only temporary until next change request
 ]
 ignore_errors = true

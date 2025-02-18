@@ -1,5 +1,5 @@
 from elasticai.creator.ir import Edge, Node, edge, node
-from elasticai.creator.ir import Graph as _Graph
+from elasticai.creator.ir import Implementation as _Graph
 
 
 class Graph(_Graph[Node, Edge]):
