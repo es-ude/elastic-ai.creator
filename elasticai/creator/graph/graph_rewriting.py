@@ -1,5 +1,5 @@
 import copy
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 
 from .graph import Graph
 from .name_generation import NameRegistry
@@ -38,8 +38,8 @@ class GraphRewriter:
         interface: Graph[str],
         replacement: Graph[str],
         match: Callable[[Graph[str], Graph[str]], Sequence[dict[str, str]]],
-        lhs: Callable[[str], str],
-        rhs: Callable[[str], str],
+        lhs: Mapping[str, str],
+        rhs: Mapping[str, str],
     ) -> None:
         self._pattern = pattern
         self._interface = interface
@@ -47,8 +47,8 @@ class GraphRewriter:
         self._match = match
         self._lhs = lhs
         self._rhs = rhs
-        self._rhs_inversed = {self._rhs(node): node for node in self._interface.nodes}
-        self._replacement_nodes_in_interface = set(self._rhs_inversed.keys())
+        self._rhs_inversed = {self._rhs[node]: node for node in self._interface.nodes}
+        self._replacement_nodes_in_interface = self._rhs_inversed.keys()
         if len(self._interface.nodes) != len(self._replacement_nodes_in_interface):
             raise ValueError(
                 "Ensure the `rhs` function is injective. The `rhs` function should map each interface node to a unique replacement node."
@@ -61,7 +61,7 @@ class GraphRewriter:
         else:
             return copy.deepcopy(graph)
         interface_nodes_in_pattern = set(
-            self._lhs(node) for node in self._interface.nodes
+            self._lhs[node] for node in self._interface.nodes
         )
         interface_nodes_in_graph = set(
             match[node] for node in interface_nodes_in_pattern
@@ -76,7 +76,7 @@ class GraphRewriter:
 
         def get_name_for_replacement_node_in_new_graph(node: str) -> str:
             if node in self._replacement_nodes_in_interface:
-                return match[self._lhs(self._rhs_inversed[node])]
+                return match[self._lhs[self._rhs_inversed[node]]]
             if node in nodes_to_keep:
                 return name_registry.get_name(node)
             return node

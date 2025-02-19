@@ -15,11 +15,9 @@ def test_can_replace_single_node():
         {("r0", "a_t"): ["r1"], ("r1", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
 
-    def lhs(node: str) -> str:
-        return {"i0": "0", "i1": "2"}[node]
+    lhs = {"i0": "0", "i1": "2"}
 
-    def rhs(node: str) -> str:
-        return {"i0": "r0", "i1": "r2"}[node]
+    rhs = {"i0": "r0", "i1": "r2"}
 
     rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
 
@@ -45,11 +43,9 @@ def test_create_new_name_for_replacement_in_case_of_conflict():
         {("r0", "a_t"): ["a"], ("a", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
 
-    def lhs(node: str) -> str:
-        return {"i0": "0", "i1": "2"}[node]
+    lhs = {"i0": "0", "i1": "2"}
 
-    def rhs(node: str) -> str:
-        return {"i0": "r0", "i1": "r2"}[node]
+    rhs = {"i0": "r0", "i1": "r2"}
 
     rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
 
@@ -72,11 +68,8 @@ def test_raise_error_if_rhs_is_not_injective():
         {("r0", "a_t"): ["a"], ("a", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
 
-    def lhs(node: str) -> str:
-        return {"i0": "0", "i1": "2"}[node]
-
-    def rhs(node: str) -> str:
-        return {"i0": "r0", "i1": "r0"}[node]
+    lhs = {"i0": "0", "i1": "2"}
+    rhs = {"i0": "r0", "i1": "r0"}
 
     pytest.raises(
         ValueError,
@@ -107,11 +100,8 @@ def test_can_replace_one_of_two_matches():
         {("r0", "a_t"): ["r1"], ("r1", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
 
-    def lhs(node: str) -> str:
-        return {"i0": "0", "i1": "2"}[node]
-
-    def rhs(node: str) -> str:
-        return {"i0": "r0", "i1": "r2"}[node]
+    lhs = {"i0": "0", "i1": "2"}
+    rhs = {"i0": "r0", "i1": "r2"}
 
     rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
 
