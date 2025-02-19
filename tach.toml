@@ -23,12 +23,13 @@ from = [
     "elasticai.creator.ir",
     "elasticai.creator.ir2vhdl",
     "elasticai.creator.ir2torch",
-    "elasticai.creator.torch2ir"
+    "elasticai.creator.torch2ir",
+    "elasticai.creator.graph",
 ]
 
 [[modules ]]
 path = "elasticai.creator.ir2vhdl"
-depends_on = [ "elasticai.creator.ir", "elasticai.creator.plugin", "elasticai.creator.function_utils", "elasticai.creator.template"]
+depends_on = [ "elasticai.creator.ir", "elasticai.creator.plugin", "elasticai.creator.function_utils", "elasticai.creator.template", "elasticai.creator.graph"]
 
 [[modules ]]
 path = "elasticai.creator.plugin"
@@ -114,7 +115,7 @@ depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.ir"]
 
 [[modules ]]
 path = "elasticai.creator.torch2ir"
-depends_on = ["elasticai.creator.ir", "elasticai.creator.function_utils"]
+depends_on = ["elasticai.creator.ir", "elasticai.creator.function_utils", "elasticai.creator.graph"]
 
 [[modules ]]
 path = "elasticai.creator_plugins.skeleton"
@@ -134,8 +135,12 @@ depends_on = ["elasticai.creator.ir2vhdl", "elasticai.creator.function_utils", "
 
 [[modules ]]
 path = "elasticai.creator_plugins.time_multiplexed_sequential"
-depends_on = ["elasticai.creator.function_utils", "elasticai.creator.ir2vhdl", "elasticai.creator.plugin", "elasticai.creator_plugins.grouped_filter", "elasticai.creator.ir"]
+depends_on = ["elasticai.creator.function_utils", "elasticai.creator.ir2vhdl", "elasticai.creator.plugin", "elasticai.creator_plugins.grouped_filter", "elasticai.creator.ir", "elasticai.creator.graph"]
+
+[[modules ]]
+path = "elasticai.creator.graph"
+depends_on = []
 
 [[modules ]]
 path = "<root>"
-depends_on = ["elasticai.creator.vhdl", "elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.nn"]
+depends_on = ["elasticai.creator.vhdl", "elasticai.creator.file_generation", "elasticai.creator.nn", "elasticai.creator.nn.fixed_point"]

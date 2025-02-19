@@ -2,7 +2,6 @@ __all__ = [
     "RequiredField",
     "SimpleRequiredField",
     "IrData",
-    "IrDataMeta",
     "Edge",
     "Node",
     "edge",
@@ -15,19 +14,10 @@ __all__ = [
     "read_only_field",
     "StaticMethodField",
     "ReadOnlyField",
-    "find_subgraphs",
-    "GraphRewriter",
-    "GraphDelegate",
 ]
-from .attribute import Attribute
-from .core import Edge, Node, edge, node
-from .graph_delegate import GraphDelegate
-from .graph_rewriting import GraphRewriter
-from .implementation import Implementation
-from .ir_data import IrData
-from .ir_data_meta import IrDataMeta
-from .lowering import Lowerable, LoweringPass
-from .required_field import (
+from .base import (
+    Attribute,
+    IrData,
     ReadOnlyField,
     RequiredField,
     SimpleRequiredField,
@@ -35,4 +25,4 @@ from .required_field import (
     read_only_field,
     static_required_field,
 )
-from .subgraph_matching import find_subgraphs
+from .core import Edge, Implementation, Lowerable, LoweringPass, Node, edge, node

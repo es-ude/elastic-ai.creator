@@ -11,6 +11,7 @@ from typing import Any, Iterator, TypeAlias, TypeGuard, TypeVar, overload
 import elasticai.creator.function_utils as F
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
+from elasticai.creator.graph import Graph
 from elasticai.creator.ir import (
     Attribute,
     LoweringPass,
@@ -220,6 +221,7 @@ class Implementation(_Implementation[N, E]):
         type: str | None = None,
         data: dict[str, Attribute] | None = None,
         attributes: dict[str, Attribute] | None = None,
+        graph: Graph | None = None,
     ) -> None: ...
 
     @overload
@@ -231,6 +233,7 @@ class Implementation(_Implementation[N, E]):
         type: str | None = None,
         data: dict[str, Attribute] | None = None,
         attributes: dict[str, Attribute] | None = None,
+        graph: Graph | None = None,
     ) -> None: ...
 
     @overload
@@ -243,6 +246,7 @@ class Implementation(_Implementation[N, E]):
         type: str | None = None,
         data: dict[str, Attribute] | None = None,
         attributes: dict[str, Attribute] | None = None,
+        graph: Graph | None = None,
     ) -> None: ...
 
     def __init__(
@@ -254,6 +258,7 @@ class Implementation(_Implementation[N, E]):
         edge_fn=Edge,
         data: dict[str, Any] | None = None,
         attributes: dict[str, Any] | None = None,
+        graph: Graph | None = None,
     ) -> None:
         if attributes is not None and data is not None:
             raise TypeError("pass either attributes or data argument")
@@ -270,10 +275,13 @@ class Implementation(_Implementation[N, E]):
             data["name"] = name
         if type is not None:
             data["type"] = type
+        if graph is None:
+            graph = Graph()
         super().__init__(
             node_fn=node_fn,
             edge_fn=edge_fn,
             data=data,
+            graph=graph,
         )
 
 

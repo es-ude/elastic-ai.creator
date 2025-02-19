@@ -8,8 +8,8 @@ from elasticai.creator.ir import (
     read_only_field,
     static_required_field,
 )
-from elasticai.creator.ir.ir_data import IrData
-from elasticai.creator.ir.ir_data_meta import IrDataMeta
+from elasticai.creator.ir.base.ir_data import IrData
+from elasticai.creator.ir.base.ir_data_meta import IrDataMeta
 
 
 def test_using_metaclass() -> None:

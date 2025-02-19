@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
-from elasticai.creator.ir.lowering import LoweringPass
+from elasticai.creator.ir import LoweringPass
 
 """
 Tests:

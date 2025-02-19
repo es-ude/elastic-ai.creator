@@ -1,31 +1,11 @@
 import copy
 from collections.abc import Callable, Sequence
-from typing import Generic, Protocol, TypeVar
 
-from .core import Edge, Node
+from .graph import Graph
 from .name_generation import NameRegistry
 
-EdgeT = TypeVar("EdgeT", bound=Edge)
 
-PNodeT = TypeVar("PNodeT", bound=Node)
-INodeT = TypeVar("INodeT", bound=Node)
-RNodeT = TypeVar("RNodeT", bound=Node)
-GNodeT = TypeVar("GNodeT", bound=Node)
-
-
-class Graph(Protocol[GNodeT, EdgeT]):
-    def get_empty_copy(self) -> "Graph[GNodeT, EdgeT]": ...
-
-    def add_node(self, node: Node) -> None: ...
-
-    def add_edge(self, edge: Edge) -> None: ...
-
-    def nodes(self) -> dict[str, Node]: ...
-
-    def edges(self) -> dict[tuple[str, str], Edge]: ...
-
-
-class GraphRewriter(Generic[PNodeT, INodeT, RNodeT, GNodeT, EdgeT]):
+class GraphRewriter:
     """Rewrite graphs based on a pattern, interface, and replacement.
 
     :param: `pattern`: The pattern to match in the graph.
@@ -54,12 +34,10 @@ class GraphRewriter(Generic[PNodeT, INodeT, RNodeT, GNodeT, EdgeT]):
 
     def __init__(
         self,
-        pattern: Graph[PNodeT, EdgeT],
-        interface: Graph[INodeT, EdgeT],
-        replacement: Graph[RNodeT, EdgeT],
-        match: Callable[
-            [Graph[GNodeT, EdgeT], Graph[PNodeT, EdgeT]], Sequence[dict[str, str]]
-        ],
+        pattern: Graph[str],
+        interface: Graph[str],
+        replacement: Graph[str],
+        match: Callable[[Graph[str], Graph[str]], Sequence[dict[str, str]]],
         lhs: Callable[[str], str],
         rhs: Callable[[str], str],
     ) -> None:
@@ -70,13 +48,13 @@ class GraphRewriter(Generic[PNodeT, INodeT, RNodeT, GNodeT, EdgeT]):
         self._lhs = lhs
         self._rhs = rhs
         self._rhs_inversed = {self._rhs(node): node for node in self._interface.nodes}
-        self._interface_nodes_in_replacement = set(self._rhs_inversed.keys())
-        if len(self._interface.nodes) != len(self._interface_nodes_in_replacement):
+        self._replacement_nodes_in_interface = set(self._rhs_inversed.keys())
+        if len(self._interface.nodes) != len(self._replacement_nodes_in_interface):
             raise ValueError(
                 "Ensure the `rhs` function is injective. The `rhs` function should map each interface node to a unique replacement node."
             )
 
-    def rewrite(self, graph: Graph[GNodeT, EdgeT]) -> Graph[GNodeT, EdgeT]:
+    def rewrite(self, graph: Graph[str]) -> Graph[str]:
         matches = self._match(graph, self._pattern)
         if len(matches) > 0:
             match = matches[0]
@@ -89,15 +67,15 @@ class GraphRewriter(Generic[PNodeT, INodeT, RNodeT, GNodeT, EdgeT]):
             match[node] for node in interface_nodes_in_pattern
         )
 
-        new_graph = graph.get_empty_copy()
+        new_graph: Graph[str] = Graph()
         nodes_to_be_removed = set(match.values()) - set(interface_nodes_in_graph)
-        nodes_to_keep = set(graph.nodes.keys()) - nodes_to_be_removed
+        nodes_to_keep = set(graph.nodes) - nodes_to_be_removed
         name_registry = SingleNewNameGenerator(
             NameRegistry().prepopulate(nodes_to_keep)
         )
 
         def get_name_for_replacement_node_in_new_graph(node: str) -> str:
-            if node in self._interface_nodes_in_replacement:
+            if node in self._replacement_nodes_in_interface:
                 return match[self._lhs(self._rhs_inversed[node])]
             if node in nodes_to_keep:
                 return name_registry.get_name(node)
@@ -106,47 +84,35 @@ class GraphRewriter(Generic[PNodeT, INodeT, RNodeT, GNodeT, EdgeT]):
         def get_name_for_old_node_in_new_graph(node: str) -> str:
             return node
 
-        def get_old_node_for_new_graph(node: str) -> Node:
-            node_data = copy.deepcopy(graph.nodes[node].data)
-            node_data["name"] = get_name_for_old_node_in_new_graph(node)
-            return Node(node_data)
+        def get_old_node_for_new_graph(node: str) -> str:
+            return get_name_for_old_node_in_new_graph(node)
 
-        def get_replacement_node_for_new_graph(node: str) -> Node:
-            node_data = copy.deepcopy(self._replacement.nodes[node].data)
-            node_data["name"] = get_name_for_replacement_node_in_new_graph(node)
-            return Node(node_data)
+        def get_replacement_node_for_new_graph(node: str) -> str:
+            return get_name_for_replacement_node_in_new_graph(node)
 
-        def get_old_edge_for_new_graph(src: str, sink: str) -> Edge:
-            old_edge = graph.edges[(src, sink)]
-            edge_data = copy.deepcopy(old_edge.data)
-            edge_data["src"] = get_name_for_old_node_in_new_graph(old_edge.src)
-            edge_data["sink"] = get_name_for_old_node_in_new_graph(old_edge.sink)
-            return Edge(edge_data)
+        def get_old_edge_for_new_graph(src: str, sink: str) -> tuple[str, str]:
+            src = get_name_for_old_node_in_new_graph(src)
+            sink = get_name_for_old_node_in_new_graph(sink)
+            return src, sink
 
-        def get_replacement_edge_for_new_graph(src: str, sink: str) -> Edge:
-            replacement_edge = self._replacement.edges[(src, sink)]
-            edge_data = copy.deepcopy(replacement_edge.data)
-            edge_data["src"] = get_name_for_replacement_node_in_new_graph(
-                replacement_edge.src
-            )
-            edge_data["sink"] = get_name_for_replacement_node_in_new_graph(
-                replacement_edge.sink
-            )
-            return Edge(edge_data)
+        def get_replacement_edge_for_new_graph(src: str, sink: str) -> tuple[str, str]:
+            src = get_name_for_replacement_node_in_new_graph(src)
+            sink = get_name_for_replacement_node_in_new_graph(sink)
+            return src, sink
 
         for node in nodes_to_keep:
             new_graph.add_node(get_old_node_for_new_graph(node))
 
         for node in self._replacement.nodes:
-            if node not in self._interface_nodes_in_replacement:
+            if node not in self._replacement_nodes_in_interface:
                 new_graph.add_node(get_replacement_node_for_new_graph(node))
 
-        for src, sink in graph.edges:
+        for src, sink in graph.iter_edges():
             if src in nodes_to_keep and sink in nodes_to_keep:
-                new_graph.add_edge(get_old_edge_for_new_graph(src, sink))
+                new_graph.add_edge(*get_old_edge_for_new_graph(src, sink))
 
-        for src, sink in self._replacement.edges:
-            new_graph.add_edge(get_replacement_edge_for_new_graph(src, sink))
+        for src, sink in self._replacement.iter_edges():
+            new_graph.add_edge(*get_replacement_edge_for_new_graph(src, sink))
         return new_graph
 
 

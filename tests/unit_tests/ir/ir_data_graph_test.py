@@ -1,14 +1,26 @@
-from elasticai.creator.ir import Edge, Node, edge, node
-from elasticai.creator.ir import Implementation as _Graph
+from elasticai.creator.graph import Graph as _Graph
+from elasticai.creator.ir import Edge, Implementation, Node, edge, node
+from elasticai.creator.ir.base.attribute import Attribute
 
 
-class Graph(_Graph[Node, Edge]):
+class Graph(Implementation[Node, Edge]):
     name: str
     type: str
 
+    def __init__(self, data: dict[str, Attribute] | None = None):
+        g: _Graph[str] = _Graph()
+        if data is None:
+            data = {}
+        super().__init__(
+            graph=g,
+            node_fn=Node,
+            edge_fn=Edge,
+            data=data,
+        )
+
 
 def test_graph_is_serialized():
-    g = Graph(data=dict(name="network", type="network"), node_fn=Node, edge_fn=Edge)
+    g = Graph(data=dict(name="network", type="network"))
     g.add_node(node(name="node1", type="type1"))
     g.add_node(node(name="node2", type="type2"))
     g.add_edge(edge(src="node1", sink="node2"))
@@ -26,5 +38,5 @@ def test_graph_is_serialized():
 
 
 def test_graph_has_required_fields():
-    g = Graph(data=dict(name="network", type="network"), node_fn=Node, edge_fn=Edge)
+    g = Graph(data=dict(name="network", type="network"))
     assert g.name == "network"

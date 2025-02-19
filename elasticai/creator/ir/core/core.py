@@ -1,6 +1,4 @@
-from .attribute import Attribute
-from .ir_data import IrData
-from .required_field import ReadOnlyField
+from elasticai.creator.ir.base import Attribute, IrData, ReadOnlyField
 
 
 def _read_only_str() -> ReadOnlyField[str, str]:

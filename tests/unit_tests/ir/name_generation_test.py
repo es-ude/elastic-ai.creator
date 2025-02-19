@@ -1,4 +1,4 @@
-from elasticai.creator.ir.name_generation import NameRegistry
+from elasticai.creator.graph.name_generation import NameRegistry
 
 
 def test_can_generate_unique_name():
