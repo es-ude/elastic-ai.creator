@@ -1,3 +1,4 @@
+from .base_graph import BaseGraph
 from .graph import Graph
 from .graph_iterators import (
     bfs_iter_down,
@@ -9,6 +10,7 @@ from .name_generation import NameRegistry
 from .subgraph_matching import find_subgraphs
 
 __all__ = [
+    "BaseGraph",
     "Graph",
     "find_subgraphs",
     "GraphRewriter",

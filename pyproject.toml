@@ -57,7 +57,12 @@ testing = [
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
 lint = ["mypy>=1.13.0", "ruff>=0.9.0"]
-lsp = ["pylsp-mypy>=0.6.9", "pylsp-rope>=0.1.17", "python-lsp-server>=1.12.0"]
+lsp = [
+    "esbonio>=0.16.5",
+    "pylsp-mypy>=0.6.9",
+ "pylsp-rope>=0.1.17",
+ "python-lsp-server>=1.12.0",
+]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

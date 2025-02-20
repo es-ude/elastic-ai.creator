@@ -3,13 +3,13 @@ from typing import (
     Any,
     Generic,
     ParamSpec,
-    Protocol,
     Self,
     TypeVar,
     cast,
     overload,
 )
 
+from elasticai.creator.graph import Graph
 from elasticai.creator.ir.base import Attribute, IrData, read_only_field
 
 from .core import Edge, Node
@@ -20,20 +20,6 @@ E = TypeVar("E", bound=Edge, covariant=True)
 StoredT = TypeVar("StoredT", bound=Attribute)
 VisibleT = TypeVar("VisibleT")
 P = ParamSpec("P")
-
-
-class Graph(Protocol):
-    def add_node(self, node: str) -> None: ...
-
-    def add_edge(self, src: str, sink: str) -> None: ...
-
-    def get_successors(self, node: str) -> Iterable[str]: ...
-
-    def get_predecessors(self, node: str) -> Iterable[str]: ...
-
-    def iter_nodes(self) -> Iterable[str]: ...
-
-    def iter_edges(self) -> Iterable[tuple[str, str]]: ...
 
 
 class Implementation(IrData, Generic[N, E], create_init=False):
@@ -53,7 +39,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
     def __init__(
         self: "Implementation[N, E]",
         *,
-        graph: Graph,
+        graph: Graph[str],
         edge_fn: Callable[[dict[str, Attribute]], E],
         node_fn: Callable[[dict[str, Attribute]], N],
         data: dict[str, Attribute] | None = None,
@@ -72,7 +58,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
     def __init__(
         self: "Implementation[Node, E]",
         *,
-        graph: Graph,
+        graph: Graph[str],
         edge_fn: Callable[[dict[str, Attribute]], E],
         data: dict[str, Attribute] | None = None,
     ) -> None: ...
@@ -81,14 +67,14 @@ class Implementation(IrData, Generic[N, E], create_init=False):
     def __init__(
         self: "Implementation[Node, Edge]",
         *,
-        graph: Graph,
+        graph: Graph[str],
         data: dict[str, Attribute] | None = None,
     ) -> None: ...
 
     def __init__(
         self,
         *,
-        graph: Graph,
+        graph: Graph[str],
         node_fn: Callable[[dict[str, Attribute]], Any] = Node,
         edge_fn: Callable[[dict[str, Attribute]], Any] = Edge,
         data: dict[str, Attribute] | None = None,
@@ -206,7 +192,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
             node = node.name
 
         def _successors():
-            return self.graph.get_successors(node)
+            return self.graph.successors[node]
 
         return self.get_node_mapping(_successors)
 
@@ -215,7 +201,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
             node = node.name
 
         def _predecessors():
-            return self.graph.get_predecessors(node)
+            return self.graph.predecessors[node]
 
         return self.get_node_mapping(_predecessors)
 
@@ -231,7 +217,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
 
     @read_only_field
     def nodes(self, _: dict[str, Attribute]) -> Mapping[str, N]:
-        return self.get_node_mapping(self.graph.iter_nodes)
+        return self.get_node_mapping(lambda: self.graph.nodes)
 
     @read_only_field
     def edges(self, _: dict[str, Attribute]) -> Mapping[tuple[str, str], E]:

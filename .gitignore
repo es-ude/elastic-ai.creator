@@ -1,6 +1,8 @@
 .ijwb/
 data
 venv
+.venv
+.tach
 simulation
 simulation/*
 node_modules

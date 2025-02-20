@@ -27,7 +27,7 @@ def build_graph_from_dict(
     graph_dict: dict[str, Iterable[str]] = {k[0]: v for k, v in d.items()}
     data_dict = {k[0]: k[1] for k in d}
 
-    return Graph(g.Graph.from_dict(graph_dict), data=data_dict)
+    return Graph(g.BaseGraph.from_dict(graph_dict), data=data_dict)
 
 
 def find_matches(graph, pattern) -> list[dict[str, str]]:

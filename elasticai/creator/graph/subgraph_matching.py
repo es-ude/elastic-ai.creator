@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterator
 from functools import singledispatchmethod
 from typing import Generic, Protocol, TypeVar, overload
 
-from .graph import Graph
+from elasticai.creator.graph.graph import Graph
 
 T = TypeVar("T", int, str)
 TPattern = TypeVar("TPattern", int, str)
@@ -317,11 +317,11 @@ class _SubgraphMatcher(Generic[TPattern, T]):
         )
 
     def _pick_a_start_node_from_pattern(self) -> _MatcherNode[TPattern]:
-        return _MatcherNode(next(self._pattern.iter_nodes()), self._pattern)
+        return _MatcherNode(next(iter(self._pattern.nodes)), self._pattern)
 
     def _find_all_start_nodes_from_graph(self, start_node: TPattern) -> set[T]:
         matches = set()
-        for node in self._graph.iter_nodes():
+        for node in self._graph.nodes:
             if self._node_constraint(pattern_node=start_node, graph_node=node):
                 matches.add(node)
         return matches

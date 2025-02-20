@@ -2,7 +2,7 @@ from typing import Any
 
 from pytest import fixture
 
-from elasticai.creator.graph.graph import Graph
+from elasticai.creator.graph.base_graph import BaseGraph
 from elasticai.creator.ir2vhdl import (
     Edge,
     Implementation,
@@ -49,7 +49,7 @@ def test_store_as_dict(data, impl):
 
 
 def test_load_from_dict(data):
-    assert data == Implementation(graph=Graph()).load_from_dict(data).as_dict()
+    assert data == Implementation(graph=BaseGraph()).load_from_dict(data).as_dict()
 
 
 def test_can_access_attributes_of_vhdl_node():

@@ -1,4 +1,4 @@
-from elasticai.creator.graph import Graph as _Graph
+from elasticai.creator.graph import BaseGraph as _Graph
 from elasticai.creator.ir import Edge, Implementation, Node, edge, node
 from elasticai.creator.ir.base.attribute import Attribute
 
