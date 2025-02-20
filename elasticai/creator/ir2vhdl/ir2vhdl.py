@@ -182,16 +182,16 @@ def vhdl_node(
 
 
 class Edge(_Edge):
-    src_sink_indices: tuple[tuple[int, int] | tuple[str, str], ...]
+    src_dst_indices: tuple[tuple[int, int] | tuple[str, str], ...]
 
     def __hash__(self) -> int:
-        return hash((self.src, self.sink, self.src_sink_indices))
+        return hash((self.src, self.dst, self.src_dst_indices))
 
 
 def edge(
-    src: str, sink: str, src_sink_indices: Iterable[tuple[int, int]] | tuple[str, str]
+    src: str, dst: str, src_dst_indices: Iterable[tuple[int, int]] | tuple[str, str]
 ) -> Edge:
-    return Edge(dict(src=src, sink=sink, src_sink_indices=tuple(src_sink_indices)))
+    return Edge(dict(src=src, dst=dst, src_dst_indices=tuple(src_dst_indices)))
 
 
 N = TypeVar("N", bound=VhdlNode)

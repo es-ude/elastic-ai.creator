@@ -56,9 +56,9 @@ def network(input_shape, kernel_size, out_channels, stride=2):
     )
     _net.add_edges(
         (
-            edge(src="input", sink="conv0_i0", src_sink_indices=tuple()),
-            edge(src="conv0_i0", sink="conv1_i0", src_sink_indices=tuple()),
-            edge(src="conv1_i0", sink="output", src_sink_indices=tuple()),
+            edge(src="input", dst="conv0_i0", src_dst_indices=tuple()),
+            edge(src="conv0_i0", dst="conv1_i0", src_dst_indices=tuple()),
+            edge(src="conv1_i0", dst="output", src_dst_indices=tuple()),
         )
     )
 

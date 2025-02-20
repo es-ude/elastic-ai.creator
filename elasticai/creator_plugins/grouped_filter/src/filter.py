@@ -103,15 +103,15 @@ def grouped_filter(impl: Implementation) -> Implementation:
         result.add_edge(
             edge(
                 src="input",
-                sink=node.name,
-                src_sink_indices=tuple(zip(wires, range(len(wires)))),
+                dst=node.name,
+                src_dst_indices=tuple(zip(wires, range(len(wires)))),
             )
         )
         result.add_edge(
             edge(
                 src=node.name,
-                sink="output",
-                src_sink_indices=(
+                dst="output",
+                src_dst_indices=(
                     f"range(0, {params.out_channels_per_group})",
                     f"range({output_offset}, {output_offset + params.out_channels_per_group})",
                 ),

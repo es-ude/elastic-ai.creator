@@ -44,20 +44,20 @@ class Sequential(Design):
             return [d for d in self._subdesigns if d.name == name]
 
         def connected_to_self_source(
-            sink_source: tuple[tuple[str, str], tuple[str, str]], self_source_name: str
+            dst_source: tuple[tuple[str, str], tuple[str, str]], self_source_name: str
         ) -> bool:
-            return sink_source[1] == (self.name, self_source_name)
+            return dst_source[1] == (self.name, self_source_name)
 
-        def connected_to_self_sink(sink_source, self_sink_name):
-            return sink_source[0] == (self.name, self_sink_name)
+        def connected_to_self_dst(dst_source, self_dst_name):
+            return dst_source[0] == (self.name, self_dst_name)
 
-        def sink_design_name(sink_source):
-            return sink_source[0][0]
+        def dst_design_name(dst_source):
+            return dst_source[0][0]
 
         def source_design_name(
-            sink_source: tuple[tuple[str, str], tuple[str, str]],
+            dst_source: tuple[tuple[str, str], tuple[str, str]],
         ) -> str:
-            return sink_source[1][0]
+            return dst_source[1][0]
 
         def get_connected_designs(get_name, is_connected) -> list[Design]:
             return reduce(
@@ -73,17 +73,17 @@ class Sequential(Design):
             )
 
         width = {k: 1 for k in ("x", "y_address", "x_address", "y")}
-        sink_keys = ("y", "x_address")
+        dst_keys = ("y", "x_address")
         source_keys = ("x", "y_address")
 
-        for key in sink_keys:
-            connected = partial(connected_to_self_sink, self_sink_name=key)
+        for key in dst_keys:
+            connected = partial(connected_to_self_dst, self_dst_name=key)
             for d in get_connected_designs(source_design_name, connected):
                 width[key] = d.port[key].width
 
         for key in source_keys:
             connected = partial(connected_to_self_source, self_source_name=key)
-            for d in get_connected_designs(sink_design_name, connected):
+            for d in get_connected_designs(dst_design_name, connected):
                 width[key] = d.port[key].width
 
         return create_port(
@@ -109,7 +109,7 @@ class Sequential(Design):
         nodes = [
             DataFlowNode(
                 name=n[0],
-                sinks=tuple(s.name for s in n[1].incoming),
+                dsts=tuple(s.name for s in n[1].incoming),
                 sources=tuple(s.name for s in n[1].outgoing),
             )
             for n in named_ports
