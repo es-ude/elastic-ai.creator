@@ -22,11 +22,11 @@ class Node(IrData):
 
 class Edge(IrData):
     """
-    NOTE: src, sink are read only when accessed through their descriptors.
+    NOTE: src, dst are read only when accessed through their descriptors.
     """
 
     src: ReadOnlyField[str, str] = _read_only_str()
-    sink: ReadOnlyField[str, str] = _read_only_str()
+    dst: ReadOnlyField[str, str] = _read_only_str()
 
 
 def node(name: str, type: str, attributes: dict[str, Attribute] | None = None) -> Node:
@@ -35,7 +35,7 @@ def node(name: str, type: str, attributes: dict[str, Attribute] | None = None) -
     return Node(dict(name=name, type=type, **attributes))
 
 
-def edge(src: str, sink: str, attributes: dict[str, Attribute] | None = None) -> Edge:
+def edge(src: str, dst: str, attributes: dict[str, Attribute] | None = None) -> Edge:
     if attributes is None:
         attributes = dict()
-    return Edge(dict(src=src, sink=sink, **attributes))
+    return Edge(dict(src=src, dst=dst, **attributes))

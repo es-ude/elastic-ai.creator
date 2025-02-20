@@ -45,8 +45,8 @@ def test_convert_linear_without_bias():
                 },
             ],
             "edges": [
-                {"src": "input_1", "sink": "_0"},
-                {"src": "_0", "sink": "output"},
+                {"src": "input_1", "dst": "_0"},
+                {"src": "_0", "dst": "output"},
             ],
         },
         {
@@ -95,9 +95,9 @@ def test_convert_linear_to_ir():
                 },
             ],
             "edges": [
-                {"src": "input_1", "sink": "_0"},
-                {"src": "_0", "sink": "_1"},
-                {"src": "_1", "sink": "output"},
+                {"src": "input_1", "dst": "_0"},
+                {"src": "_0", "dst": "_1"},
+                {"src": "_1", "dst": "output"},
             ],
         },
         {
@@ -133,15 +133,15 @@ def test_converting_model_with_batchnorm():
         {
             "edges": [
                 {
-                    "sink": "bn",
+                    "dst": "bn",
                     "src": "x",
                 },
                 {
-                    "sink": "relu",
+                    "dst": "relu",
                     "src": "bn",
                 },
                 {
-                    "sink": "output",
+                    "dst": "output",
                     "src": "relu",
                 },
             ],
@@ -217,9 +217,9 @@ def test_can_handle_same_object_under_different_hierarchy_paths():
                 },
             ],
             "edges": [
-                {"src": "input_1", "sink": "a"},
-                {"src": "a", "sink": "a_1"},
-                {"src": "a_1", "sink": "output"},
+                {"src": "input_1", "dst": "a"},
+                {"src": "a", "dst": "a_1"},
+                {"src": "a_1", "dst": "output"},
             ],
         },
         {

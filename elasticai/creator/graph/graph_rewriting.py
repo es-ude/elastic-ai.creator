@@ -108,10 +108,10 @@ class GraphRewriter:
                 return name_registry.get_name(node)
             return node
 
-        def get_replacement_edge_for_new_graph(src: str, sink: str) -> tuple[str, str]:
+        def get_replacement_edge_for_new_graph(src: str, dst: str) -> tuple[str, str]:
             src = get_replacement_node_in_new_graph(src)
-            sink = get_replacement_node_in_new_graph(sink)
-            return src, sink
+            dst = get_replacement_node_in_new_graph(dst)
+            return src, dst
 
         for node in nodes_to_keep:
             new_graph.add_node(node)
@@ -120,12 +120,12 @@ class GraphRewriter:
             if node not in self._replacement_nodes_in_interface:
                 new_graph.add_node(get_replacement_node_in_new_graph(node))
 
-        for src, sink in graph.iter_edges():
-            if src in nodes_to_keep and sink in nodes_to_keep:
-                new_graph.add_edge(src, sink)
+        for src, dst in graph.iter_edges():
+            if src in nodes_to_keep and dst in nodes_to_keep:
+                new_graph.add_edge(src, dst)
 
-        for src, sink in self._replacement.iter_edges():
-            new_graph.add_edge(*get_replacement_edge_for_new_graph(src, sink))
+        for src, dst in self._replacement.iter_edges():
+            new_graph.add_edge(*get_replacement_edge_for_new_graph(src, dst))
 
         return RewriteResult(
             new_graph=new_graph,

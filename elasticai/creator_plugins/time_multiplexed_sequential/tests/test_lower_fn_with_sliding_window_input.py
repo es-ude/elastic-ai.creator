@@ -19,8 +19,8 @@ def test_inserts_edge_from_input_to_sliding_window():
     expected = [
         edge(
             src="input",
-            sink="conv0_i0",
-            src_sink_indices=tuple(),
+            dst="conv0_i0",
+            src_dst_indices=tuple(),
         )
     ]
     actual = []

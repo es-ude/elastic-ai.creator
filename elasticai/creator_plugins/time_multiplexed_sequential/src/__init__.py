@@ -155,8 +155,8 @@ class _Sequential:
             self._impl.add_edge(
                 edge(
                     src=old_node.name,
-                    sink=new_node.name,
-                    src_sink_indices=tuple(),
+                    dst=new_node.name,
+                    src_dst_indices=tuple(),
                 )
             )
 

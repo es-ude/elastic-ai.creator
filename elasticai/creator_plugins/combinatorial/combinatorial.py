@@ -28,9 +28,7 @@ def build_instantiations_for_combinatorial(impl: Implementation) -> Iterator[str
 def build_data_signal_connections_for_combinatorial(
     impl: Implementation,
 ) -> Iterator[str]:
-    connections = tuple(
-        (e.src, e.sink, e.src_sink_indices) for e in impl.edges.values()
-    )
+    connections = tuple((e.src, e.dst, e.src_dst_indices) for e in impl.edges.values())
     data_signal_connections = connect_data_signals(connections)
     yield from data_signal_connections
 

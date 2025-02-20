@@ -21,8 +21,8 @@ def _build_expected_connections(spec: str):
     regex = r"\s*(\w+)\s*,\s*(\w+)\s*:\s*(\w+)\s*,\s*(\w+)\s*\n*"
     result = {}
     for match in re.finditer(regex, spec):
-        sink_node, sink_signal, source_node, source_signal = match.groups()
-        result[(sink_node, sink_signal)] = (source_node, source_signal)
+        dst_node, dst_signal, source_node, source_signal = match.groups()
+        result[(dst_node, dst_signal)] = (source_node, source_signal)
     return result
 
 
@@ -98,6 +98,6 @@ def test_wire_buffered_and_unbuffered() -> None:
 
 
 def test_wiring_unknown_signals_yields_error() -> None:
-    a = DataFlowNode(name="a", sinks=("signal_a",), sources=tuple())
+    a = DataFlowNode(name="a", dsts=("signal_a",), sources=tuple())
     with pytest.raises(AutoWiringProtocolViolation):
         _wire(top=DataFlowNode.top("top"), graph=(a,))

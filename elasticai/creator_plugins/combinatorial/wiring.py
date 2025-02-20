@@ -50,14 +50,14 @@ def connect_data_signals(
             raise ValueError(f"Invalid range: {r}")
         return args  # pyright: ignore
 
-    source, sink, wiring = edge
+    source, dst, wiring = edge
 
     if len(wiring) >= 1 and isinstance(wiring[0], tuple) and len(wiring[0]) == 2:
         for i, j in wiring:
-            yield f"d_in_{sink}({j}) <= d_out_{source}({i});"
+            yield f"d_in_{dst}({j}) <= d_out_{source}({i});"
         return
     if len(wiring) == 0:
-        yield f"d_in_{sink} <= d_out_{source};"
+        yield f"d_in_{dst} <= d_out_{source};"
         return
     elif (
         len(wiring) == 2
@@ -67,18 +67,18 @@ def connect_data_signals(
         and wiring[1].startswith("range")
     ):
         src_args = get_args(wiring[0])
-        sink_args = get_args(wiring[1])
-        if len(src_args) <= 2 and len(sink_args) <= 2:
+        dst_args = get_args(wiring[1])
+        if len(src_args) <= 2 and len(dst_args) <= 2:
             if len(src_args) == 1:
                 src_args = (0, src_args[0])
-            if len(sink_args) == 1:
-                sink_args = (0, sink_args[0])
-            yield f"d_in_{sink}({sink_args[1] - 1} downto {sink_args[0]}) <= d_out_{source}({src_args[1] - 1} downto {src_args[0]});"
+            if len(dst_args) == 1:
+                dst_args = (0, dst_args[0])
+            yield f"d_in_{dst}({dst_args[1] - 1} downto {dst_args[0]}) <= d_out_{source}({src_args[1] - 1} downto {src_args[0]});"
             return
         else:
-            wiring = zip(range(*src_args), range(*sink_args))
+            wiring = zip(range(*src_args), range(*dst_args))
     for i, j in wiring:  # pyright: ignore
-        yield f"d_in_{sink}({j}) <= d_out_{source}({i});"
+        yield f"d_in_{dst}({j}) <= d_out_{source}({i});"
 
 
 def _define_signal_vector(name, length):

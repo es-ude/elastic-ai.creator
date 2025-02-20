@@ -48,8 +48,8 @@ To extend `Ir2Torch` with support for new modules, you need to register custom h
                "output": {"name": "output", "type": "output", "implementation": "output"},
            },
            "edges": {
-               ("input_1", "_0"): {"src": "input_1", "sink": "_0"},
-               ("_0", "output"): {"src": "_0", "sink": "output"},
+               ("input_1", "_0"): {"src": "input_1", "dst": "_0"},
+               ("_0", "output"): {"src": "_0", "dst": "output"},
            },
        },
        "0": {

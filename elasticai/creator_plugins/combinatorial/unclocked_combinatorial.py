@@ -41,9 +41,7 @@ def combinatorial(
     input = impl.nodes["input"]
     output = impl.nodes["output"]
 
-    connections = tuple(
-        (e.src, e.sink, e.src_sink_indices) for e in impl.edges.values()
-    )
+    connections = tuple((e.src, e.dst, e.src_dst_indices) for e in impl.edges.values())
     signal_defs = (line for n in nodes for line in n.define_signals())
 
     instantiations = (line for n in instances for line in n.instantiate())
