@@ -61,13 +61,14 @@ class IrData(metaclass=IrDataMeta, create_init=False):
         return missing
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.data})"
+        return f"{self.__module__}.{self.__class__.__qualname__}({self.data})"
 
     def __eq__(self, o: object) -> bool:
         if self is o:
             return True
-        if isinstance(o, self.__class__):
+        if hasattr(o, "data"):
             return o.data == self.data
+
         return False
 
 
