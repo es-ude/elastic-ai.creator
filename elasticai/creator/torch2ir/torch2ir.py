@@ -6,7 +6,7 @@ from torch.fx import Tracer
 from torch.nn import Module
 
 from elasticai.creator.function_utils import KeyedFunctionDispatcher
-from elasticai.creator.graph import Graph
+from elasticai.creator.graph import BaseGraph
 
 from .core import Edge, Implementation, new_node
 from .default_handlers import handlers as default_handlers
@@ -29,7 +29,7 @@ class Torch2Ir:
         super().__init__()
         self._tracer = tracer
         self._registry: dict[str, Implementation] = {}
-        self._root = Implementation(graph=Graph())
+        self._root = Implementation(graph=BaseGraph())
         self._root.type = "module"
         self._root.name = ""
         self._registry[""] = self._root
@@ -114,7 +114,7 @@ class Torch2Ir:
         impl = ir_node.implementation
         if impl not in self._registry and impl not in ("input", "output"):
             self._registry[impl] = Implementation(
-                graph=Graph(),
+                graph=BaseGraph(),
                 data=dict(
                     name=impl, type=ir_node.type, **self._extract_attributes(node)
                 ),

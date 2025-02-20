@@ -1,4 +1,4 @@
-from elasticai.creator.graph import Graph as GraphDelegate
+from elasticai.creator.graph import BaseGraph as GraphDelegate
 from elasticai.creator.graph import bfs_iter_up, dfs_pre_order
 
 

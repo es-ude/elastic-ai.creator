@@ -20,9 +20,7 @@ class RewriteResult:
 
 
 class Matcher(Protocol):
-    def __call__(
-        self, *, pattern: Graph[str], graph: Graph[str]
-    ) -> Sequence[dict[str, str]]: ...
+    def __call__(self, *, pattern: Graph, graph: Graph) -> Sequence[dict[str, str]]: ...
 
 
 class GraphRewriter:
@@ -96,7 +94,7 @@ class GraphRewriter:
             match[node] for node in interface_nodes_in_pattern
         )
 
-        new_graph: Graph[str] = Graph()
+        new_graph: Graph = graph.new()
         nodes_to_be_removed = set(match.values()) - set(interface_nodes_in_graph)
         nodes_to_keep = set(graph.nodes) - nodes_to_be_removed
         name_registry = SingleNewNameGenerator(

@@ -57,9 +57,9 @@ Edge
 
 Source / Sink
 
-:   Given an edge $(n_1, n_2) \in E_G$ we call $n_1$ **source** and
-    $n_2$ **sink**. The terms refer to the direction of data flow. They
-    have been chosen over other possible terms like input/output because
+:   Given an edge $(n_1, n_2) \in E_G$ we call $n_1$ **source** (`src`) and
+    $n_2$ **sink** (`sink`). The terms refer to the direction of data flow.
+    They have been chosen over other possible terms like input/output because
     those are reserved tokens in many programming languages.
 
 Lowering Pass
