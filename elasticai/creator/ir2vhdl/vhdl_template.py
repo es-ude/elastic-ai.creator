@@ -1,14 +1,12 @@
-from re import Match
-
 from elasticai.creator.template import (
-    AnalysingTemplateParameterType,
+    AnalysingTemplateParameter,
     Template,
     TemplateBuilder,
-    TemplateParameterType,
+    TemplateParameter,
 )
 
 
-class EntityTemplateParameter(AnalysingTemplateParameterType):
+class EntityTemplateParameter(AnalysingTemplateParameter):
     """Find the entity in vhdl code and make its name available as a template paramter.
 
     Assumes that there is only one entity in the provided prototype.
@@ -21,22 +19,21 @@ class EntityTemplateParameter(AnalysingTemplateParameterType):
     """
 
     def __init__(self):
+        self.name = "entity"
         self.analyse_regex = (
-            r"(?i:(?<=entity )(?P<{value}>[a-zA-Z][a-zA-Z0-9_]*)(?=\s+is))"
+            r"(?i:(?<=entity )(?P<param>[a-zA-Z][a-zA-Z0-9_]*)(?=\s+is))"
         )
         self.regex = "<none>"
 
-    def analyse(self, m: Match) -> None:
-        if m.lastgroup is None:
-            raise ValueError()
-        original_name = m.group(m.lastgroup)
-        self.regex = r"(?P<{{value}}>\b{}\b)".format(original_name)
+    def analyse(self, m: dict[str, str]) -> None:
+        original_name = m["param"]
+        self.regex = r"\b{original_name}\b".format(original_name=original_name)
 
-    def replace(self, m: Match):
+    def replace(self, m: dict[str, str]) -> str:
         return "$entity"
 
 
-class ValueTemplateParameter(TemplateParameterType):
+class ValueTemplateParameter(TemplateParameter):
     """Find a value definition and make it settable via a template parameter.
 
     Searches for vhdl value definitions of the form `identifier : type`
@@ -45,17 +42,22 @@ class ValueTemplateParameter(TemplateParameterType):
     Essentially allows to replace generics as well as variable or signal initializations.
     """
 
-    def __init__(self):
-        self.regex = r"(?i:{value}\s*:\s*(natural|integer))(?P<{value}>\b)"
+    def __init__(self, name: str):
+        self.regex = (
+            r"(?P<def>(?i:{name}\s*:\s*(natural|integer)))\s*(:=\s*.*)?\b".format(
+                name=name
+            )
+        )
+        self.name = name
 
-    def replace(self, m: Match) -> str:
-        return f"{m.group(0)} := ${m.lastgroup}"
+    def replace(self, match: dict[str, str]) -> str:
+        return f"{match['def']} := ${self.name}"
 
 
 class EntityTemplateDirector:
     def __init__(self):
         self._builder = TemplateBuilder()
-        self._builder.add_parameter("entity", EntityTemplateParameter())
+        self._builder.add_parameter(EntityTemplateParameter())
 
     def set_prototype(self, prototype: str) -> "EntityTemplateDirector":
         self._builder.set_prototype(prototype)
@@ -63,8 +65,8 @@ class EntityTemplateDirector:
 
     def add_generic(self, name: str) -> "EntityTemplateDirector":
         if name == "entity":
-            raise ValueError("name 'entity' is reserverd for entity parameter")
-        self._builder.add_parameter(name, ValueTemplateParameter())
+            raise ValueError("name 'entity' is reserved for entity parameter")
+        self._builder.add_parameter(ValueTemplateParameter(name))
         return self
 
     def build(self) -> Template:
