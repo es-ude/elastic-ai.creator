@@ -13,10 +13,12 @@ post_package_bump_hooks = []
 
 [git_hooks]
 
-[commit_types]
-
 [changelog]
 path = "CHANGELOG.md"
+template = "./changelog_template"
+remote = "github.com"
+owner = "es-ude"
+repository = "elastic-ai.creator"
 authors = []
 
 [bump_profiles]
