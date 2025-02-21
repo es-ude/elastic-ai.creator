@@ -54,12 +54,11 @@ class IrDataMeta(type):
         return self._fields.keys().mapping  # type: ignore
 
     @classmethod
-    def __prepare__(cls, name, bases, **kwds):
+    def __prepare__(cls, name, bases, create_init=False, **kwds):
         """
         called before parsing class body and thus before metaclass instantiation,
         hence this is a classmethod
         """
-        create_init = kwds.get("create_init", False)
         namespace = super().__prepare__(name, bases, **kwds)
         cls.__add_data_slot(namespace)
         if create_init:

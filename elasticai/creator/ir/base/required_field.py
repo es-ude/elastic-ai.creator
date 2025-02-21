@@ -3,9 +3,8 @@ from typing import Generic, TypeVar, cast
 
 from typing_extensions import TypeIs
 
-from elasticai.creator.ir.attribute import Attribute
-
 from ._has_data import HasData
+from .attribute import Attribute
 
 StoredT = TypeVar("StoredT", bound=Attribute)
 VisibleT = TypeVar("VisibleT")

@@ -3,6 +3,7 @@ from typing import ParamSpec
 
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import FunctionDecorator
+from elasticai.creator.graph import dfs_pre_order
 from elasticai.creator.ir import RequiredField
 from elasticai.creator.ir2vhdl import (
     Edge,
@@ -232,7 +233,13 @@ class _Sequential:
 def sequential(impl: Implementation) -> Implementation:
     seq = _Sequential(impl.name)
 
-    for n in impl.iter_dfs_preorder_down_from("input").values():
+    def iter_nodes():
+        def iterator():
+            yield from dfs_pre_order(impl.successors, "input")
+
+        return impl.get_node_mapping(iterator)
+
+    for n in iter_nodes().values():
         match n.type:
             case "filter":
                 seq.filter(n)

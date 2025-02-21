@@ -1,8 +1,6 @@
 import pytest
 
-from elasticai.creator.ir import GraphRewriter
-
-from .utils import build_graph_from_dict, find_matches
+from .utils import build_graph_from_dict, get_rewriter
 
 
 def test_can_replace_single_node():
@@ -23,7 +21,7 @@ def test_can_replace_single_node():
     def rhs(node: str) -> str:
         return {"i0": "r0", "i1": "r2"}[node]
 
-    rewriter = GraphRewriter(pattern, interface, replacement, find_matches, lhs, rhs)
+    rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
 
     expected = build_graph_from_dict(
         {
@@ -32,7 +30,7 @@ def test_can_replace_single_node():
             ("r1", "r_t"): ["c"],
         }
     )
-    assert rewriter.rewrite(graph).as_dict() == expected.as_dict()
+    assert rewrite(graph).as_dict() == expected.as_dict()
 
 
 def test_create_new_name_for_replacement_in_case_of_conflict():
@@ -53,7 +51,7 @@ def test_create_new_name_for_replacement_in_case_of_conflict():
     def rhs(node: str) -> str:
         return {"i0": "r0", "i1": "r2"}[node]
 
-    rewriter = GraphRewriter(pattern, interface, replacement, find_matches, lhs, rhs)
+    rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
 
     expected = build_graph_from_dict(
         {
@@ -62,7 +60,7 @@ def test_create_new_name_for_replacement_in_case_of_conflict():
             ("a_1", "r_t"): ["c"],
         }
     )
-    assert rewriter.rewrite(graph).as_dict() == expected.as_dict()
+    assert rewrite(graph).as_dict() == expected.as_dict()
 
 
 def test_raise_error_if_rhs_is_not_injective():
@@ -82,11 +80,10 @@ def test_raise_error_if_rhs_is_not_injective():
 
     pytest.raises(
         ValueError,
-        GraphRewriter,
+        get_rewriter,
         pattern,
         interface,
         replacement,
-        find_matches,
         lhs,
         rhs,
     )
@@ -116,7 +113,7 @@ def test_can_replace_one_of_two_matches():
     def rhs(node: str) -> str:
         return {"i0": "r0", "i1": "r2"}[node]
 
-    rewriter = GraphRewriter(pattern, interface, replacement, find_matches, lhs, rhs)
+    rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
 
     expected = build_graph_from_dict(
         {
@@ -127,6 +124,6 @@ def test_can_replace_one_of_two_matches():
             ("e", "a_t"): [],
         }
     )
-    actual = rewriter.rewrite(graph)
+    actual = rewrite(graph)
     assert set(actual.edges) == set(expected.edges)
     assert set(actual.nodes) == set(expected.nodes)

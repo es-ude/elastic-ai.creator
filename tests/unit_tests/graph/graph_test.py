@@ -1,5 +1,15 @@
-from elasticai.creator.ir.graph_delegate import GraphDelegate
-from elasticai.creator.ir.graph_iterators import bfs_iter_up, dfs_pre_order
+from elasticai.creator.graph import Graph as GraphDelegate
+from elasticai.creator.graph import bfs_iter_up, dfs_pre_order
+
+
+def test_yield_node_in_case_it_has_no_successors():
+    g = GraphDelegate.from_dict(
+        {
+            "0": [],
+        }
+    )
+    actual = tuple(g.iter_nodes())
+    assert actual == ("0",)
 
 
 def test_iterating_breadth_first_upwards():
