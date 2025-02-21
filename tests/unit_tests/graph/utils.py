@@ -26,7 +26,6 @@ def build_graph_from_dict(
 ) -> Graph:
     graph_dict: dict[str, Iterable[str]] = {k[0]: v for k, v in d.items()}
     data_dict = {k[0]: k[1] for k in d}
-    print(graph_dict)
 
     return Graph(g.Graph.from_dict(graph_dict), data=data_dict)
 
@@ -60,8 +59,8 @@ def get_rewriter(
     pattern: Graph,
     interface: Graph,
     replacement: Graph,
-    lhs: Callable[[str], str],
-    rhs: Callable[[str], str],
+    lhs: dict[str, str],
+    rhs: dict[str, str],
 ) -> Callable[[Graph], Graph]:
     match = Matcher(pattern)
 
