@@ -190,7 +190,6 @@ def test_converting_model_with_batchnorm():
 def test_can_handle_same_object_under_different_hierarchy_paths():
     lin = Linear(1, 1)
     model = Sequential(OrderedDict(a=lin, b=lin))
-    print(model)
     assert convert(model) == [
         {
             "name": "",

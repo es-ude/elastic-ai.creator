@@ -1,5 +1,5 @@
 import warnings
-from collections.abc import Iterable, Iterator, Set
+from collections.abc import Iterable, Iterator, Mapping, Set
 from typing import Generic, TypeVar
 
 T = TypeVar("T", int, str)
@@ -23,8 +23,16 @@ class Graph(Generic[T]):
         """We keep successor and predecessor nodes just to allow for easier implementation.
         Currently, this implementation is not optimized for performance.
         """
-        self.successors: dict[T, set[T]] = dict()
-        self.predecessors: dict[T, set[T]] = dict()
+        self._successors: dict[T, set[T]] = dict()
+        self._predecessors: dict[T, set[T]] = dict()
+
+    @property
+    def successors(self) -> Mapping[T, set[T]]:
+        return self._successors.keys().mapping
+
+    @property
+    def predecessors(self) -> Mapping[T, set[T]]:
+        return self._predecessors.keys().mapping
 
     @staticmethod
     def from_dict(d: dict[T, Iterable[T]]):
@@ -36,7 +44,7 @@ class Graph(Generic[T]):
         return g
 
     def as_dict(self) -> dict[T, set[T]]:
-        return self.successors.copy()
+        return self._successors.copy()
 
     def add_edge(self, _from: T, _to: T):
         self.add_node(_from)
@@ -47,14 +55,14 @@ class Graph(Generic[T]):
 
     def add_node(self, node: T):
         if node not in self.predecessors:
-            self.predecessors[node] = set()
+            self._predecessors[node] = set()
         if node not in self.successors:
-            self.successors[node] = set()
+            self._successors[node] = set()
         return self
 
     @property
     def nodes(self) -> Set[T]:
-        return self.successors.keys()
+        return self._successors.keys()
 
     def iter_nodes(self) -> Iterator[T]:
         """Iterator over nodes in a fixed but unspecified order."""

@@ -62,6 +62,22 @@ def get_rewriter(
     lhs: dict[str, str],
     rhs: dict[str, str],
 ) -> Callable[[Graph], Graph]:
+    kwargs = locals()
+    _rewrite = get_rewriter_returning_full_result(**kwargs)
+
+    def rewrite(graph: Graph):
+        return Graph(_rewrite(graph).new_graph, {})
+
+    return rewrite
+
+
+def get_rewriter_returning_full_result(
+    pattern: Graph,
+    interface: Graph,
+    replacement: Graph,
+    lhs: Callable[[str], str],
+    rhs: Callable[[str], str],
+) -> Callable[[Graph], g.RewriteResult]:
     match = Matcher(pattern)
 
     rewriter = g.GraphRewriter(
@@ -75,6 +91,6 @@ def get_rewriter(
 
     def rewrite(graph: Graph):
         match.graph = graph
-        return Graph(rewriter.rewrite(graph.wrapped), {})
+        return rewriter.rewrite(graph.wrapped)
 
     return rewrite

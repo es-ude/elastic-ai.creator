@@ -4,7 +4,7 @@ from .graph_iterators import (
     bfs_iter_up,
     dfs_pre_order,
 )
-from .graph_rewriting import GraphRewriter
+from .graph_rewriting import GraphRewriter, RewriteResult
 from .name_generation import NameRegistry
 from .subgraph_matching import find_subgraphs
 
@@ -16,4 +16,5 @@ __all__ = [
     "bfs_iter_up",
     "dfs_pre_order",
     "NameRegistry",
+    "RewriteResult",
 ]
