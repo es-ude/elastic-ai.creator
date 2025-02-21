@@ -3,6 +3,202 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v0.61.0](https://github.com/es-ude/elastic-ai.creator/compare/e2b86a8f8b556cd3d285f59052f11a9c173592a8..v0.61.0) - 2025-02-21
+#### Features
+- **(function-utils)** extend signature of FunctionDecorator - ([b972cf4](https://github.com/es-ude/elastic-ai.creator/commit/b972cf4923f05f2ee8f091df3a3de85e9acf7313))
+- **(ir)** support pattern based graph rewriting - ([79dc9f4](https://github.com/es-ude/elastic-ai.creator/commit/79dc9f4e25eed23e15c3b0322e793f1422b23cbe))
+- **(ir)** add `get_empty_copy` fn for `ir.Graph` - ([1e28c14](https://github.com/es-ude/elastic-ai.creator/commit/1e28c149777a2eee7f51a26b503159b3a071617e))
+- **(ir)** add `find_subgraph` - ([97e84ec](https://github.com/es-ude/elastic-ai.creator/commit/97e84ece6f5452023dac79628a47a7f34e2e56f2))
+- **(ir)** support decorating methods as required fields - ([569d0b2](https://github.com/es-ude/elastic-ai.creator/commit/569d0b2a7a90f41427bb59a49615cd48d57a7603))
+- **(ir)** implement __eq__ for nodes/edges attributes of Graphs  - ([47e37dd](https://github.com/es-ude/elastic-ai.creator/commit/47e37ddf46f2e477a84feb2c16a751870f679492))
+- **(ir)** support overriding registered type handlers - ([fec5313](https://github.com/es-ude/elastic-ai.creator/commit/fec5313bb155627a26a2237b13b2ab62fd33a119))
+- **(ir)** turn ir.Graph into a IrData object - ([8d44f1b](https://github.com/es-ude/elastic-ai.creator/commit/8d44f1b9ab1fb18212e03b6980fc44af1205cd49))
+  - **BREAKING CHANGE**: Might break clients that were using
+    `asdict` `fromdict` methods of `ir2vhdl.Implementation`
+    previously. Clients using the old version of the
+    Graph constructor will receive a deprecation warning.
+- **(ir)** add FilterParameters and Shape - ([09443f4](https://github.com/es-ude/elastic-ai.creator/commit/09443f495460b86764299daf8a20fd567d6df2f3))
+- **(ir2torch)** support loading model state dicts - ([a1eacaf](https://github.com/es-ude/elastic-ai.creator/commit/a1eacaf490e07334a14fbbb252b2e0005319b0d2))
+- **(ir2torch)** make ir2torch a lowering pass - ([74942a4](https://github.com/es-ude/elastic-ai.creator/commit/74942a40d862ef6cb5a11614cc846822409675f3))
+  - **BREAKING CHANGE**: impacts all code that has been
+    using the ir2torch module
+- **(ir2torch)** add Ir2Torch and support linear+relu - ([df47f74](https://github.com/es-ude/elastic-ai.creator/commit/df47f7471ac3f708b04d2928237e0e1d4c3a3aa9))
+- **(ir2vhdl)** add basic test runner for vunit testbenches - ([b6b48ee](https://github.com/es-ude/elastic-ai.creator/commit/b6b48ee103436062c36edbf2731aca55286ae691))
+- **(ir2vhdl)** create static files from plugins - ([ee23798](https://github.com/es-ude/elastic-ai.creator/commit/ee23798ca8376983c877927203921297a874ab1e))
+- **(ir2vhdl)** adds support for ir2vhdl plugins - ([3239641](https://github.com/es-ude/elastic-ai.creator/commit/3239641f87ab109908be0be24c0b5f0922b492d6))
+- **(nn-qgrad)** added momentum and weight decay - ([44a0732](https://github.com/es-ude/elastic-ai.creator/commit/44a073273cc10644c4465b7dd0896b19187da32b))
+- **(nn-qgrad)** added sgd (#429) - ([6d74b48](https://github.com/es-ude/elastic-ai.creator/commit/6d74b486b5a00ffd09e308c4ed1710c2ac4c8828))
+- **(plugin)** make plugin loader more flexible - ([aae96e6](https://github.com/es-ude/elastic-ai.creator/commit/aae96e6392aae03cc6efc832057cf72bb9b6cbe5))
+- **(plugins)** make the plugin system more intuitive - ([ac13c15](https://github.com/es-ude/elastic-ai.creator/commit/ac13c15e8d42d92d23a74f0484030f79a64128ed))
+- **(qgrads)** added parametrization and module quantization - ([4e551e9](https://github.com/es-ude/elastic-ai.creator/commit/4e551e958abef5a17f74807cb4f8204b39daa6cd))
+- **(qgrads)** add support for execution on specific devices - ([2964e62](https://github.com/es-ude/elastic-ai.creator/commit/2964e62d7a145c62c19fa9c6ad2f2f20c819aadc))
+- **(torch2ir)** support simple torch 2 ir conversion w/o model state - ([e06e028](https://github.com/es-ude/elastic-ai.creator/commit/e06e02893ee6541204f090319dd325106ab55e1b))
+- **(vhdl)** add HwFunctionIdUpdater - ([09aef74](https://github.com/es-ude/elastic-ai.creator/commit/09aef74eb6bdef899e1ad323500f42119800de5c))
+- **(vhdl-plugins)** add a new skeleton - ([e4bc616](https://github.com/es-ude/elastic-ai.creator/commit/e4bc6161feb5d9ecc9ff3ab6a7db74a90e90b9c4))
+- **(vhdl-plugins)** add striding shift register - ([7f25038](https://github.com/es-ude/elastic-ai.creator/commit/7f25038659825f5942f17a924f4a8eb68b1b6ecb))
+- **(vhdl-plugins)** add sliding window - ([d22336e](https://github.com/es-ude/elastic-ai.creator/commit/d22336e1a249422b1dda9a4ef5562b9df07e5a9e))
+- **(vhdl-plugins)** add shift register - ([6b5a5b2](https://github.com/es-ude/elastic-ai.creator/commit/6b5a5b2f5448cab825d0fb97311ded09b15fed5f))
+- **(vhdl-plugins)** add padding - ([b71a83a](https://github.com/es-ude/elastic-ai.creator/commit/b71a83ad09de36095a025eb075993b01e05445b4))
+- **(vhdl-plugins)** add counter - ([7e04f9a](https://github.com/es-ude/elastic-ai.creator/commit/7e04f9a95447e101993bf3f80d02f26f30d05706))
+- **(vhdl-plugins)** add middleware - ([1c7b82b](https://github.com/es-ude/elastic-ai.creator/commit/1c7b82b8f66f6e3ad214db165687543c20e3e535))
+
+- improve typing and allow to pass pathlib.Path as working_dir - ([79c6115](https://github.com/es-ude/elastic-ai.creator/commit/79c611512de072b2768b40b1088692fc4ee27b89))
+
+- improve error handling when loading plugins - ([924d63c](https://github.com/es-ude/elastic-ai.creator/commit/924d63c15f7cb5e1f186ad1ed2448c83f0315dac))
+
+- discover/compile/run/log vhdl testbenches from plugins - ([c485099](https://github.com/es-ude/elastic-ai.creator/commit/c4850990de72533374f854c5617606470359751f))
+#### Bug Fixes
+- **(HwFunctionId)** fix typo - ([13ebdfb](https://github.com/es-ude/elastic-ai.creator/commit/13ebdfb0f86e92273b8190ec5757eb9abb15fd7a))
+- **(ci)** correct command for building docs - ([0344afd](https://github.com/es-ude/elastic-ai.creator/commit/0344afda66ec1f02755e34bb2a3d65c37adfb526))
+- **(docs)** correct link to repo in html theme - ([dabecc1](https://github.com/es-ude/elastic-ai.creator/commit/dabecc111cf19f914e7fed977c7dcd178d19ebc7))
+- **(ghdl-test-runner)** provide useful error message for <py311 - ([940ccfe](https://github.com/es-ude/elastic-ai.creator/commit/940ccfe08ee3c07d40bfc039466381667ec08c0e))
+- **(ir)** do not auto create __init__ from IrDataMeta by default - ([6d4b87d](https://github.com/es-ude/elastic-ai.creator/commit/6d4b87d8d8ca49374a95b77cf7b6b7c8cdc80fef))
+- **(ir)** error from IrDataMeta if inheriting class has no annotations - ([42fbea2](https://github.com/es-ude/elastic-ai.creator/commit/42fbea2efd75c011b2f6590ac83eb103d168113e))
+- **(ir)** exclude required fields for node.attributes | dict() - ([5ef4802](https://github.com/es-ude/elastic-ai.creator/commit/5ef480250e5fe5495c3c40cf705d1fcc8d3e38e6))
+- **(plugin)** do not raise error on unexpected plugin fields - ([e3d4445](https://github.com/es-ude/elastic-ai.creator/commit/e3d4445a0a2091d67007596461b3c32e6656474c))
+- **(skeleton_id)** properly deal with nested folders - ([79e5f9e](https://github.com/es-ude/elastic-ai.creator/commit/79e5f9e948e9dd60d0a5a3c662743c92decc21d8))
+
+- use the pytest tmp_dir fixture to avoid creating files when running simulations - ([06dbd62](https://github.com/es-ude/elastic-ai.creator/commit/06dbd629d84c11a800526197696a808f7dba0814))
+
+- remove incorrect use of Self type variable - ([0f8a738](https://github.com/es-ude/elastic-ai.creator/commit/0f8a738fe67074e04db3ae0768b3bead27e7d718))
+
+- fix several minor errors that were discoverd by mypy - ([5645da0](https://github.com/es-ude/elastic-ai.creator/commit/5645da0f9a60cbb8071b22a7346a95880e4a9521))
+#### Miscellaneous Chores
+- **(build)** configure mypy - ([32cd72e](https://github.com/es-ude/elastic-ai.creator/commit/32cd72e8e85464c0786cb9b287b4208d7793d939))
+- **(changelog)** fine tune change log template - ([04cf4fe](https://github.com/es-ude/elastic-ai.creator/commit/04cf4fe294e3ba1862ed85006fad1eb659a41686))
+- **(devenv)** update devenv.lock - ([09dd5f1](https://github.com/es-ude/elastic-ai.creator/commit/09dd5f18bd9182b67e8dfd52ed111dd78b240b5d))
+- **(devenv)** remove statements to run py311 to generate docs - ([0841dc3](https://github.com/es-ude/elastic-ai.creator/commit/0841dc3b32f044892da781c72bd73b5ac4ca38d6))
+- **(devenv)** update devenv.lock - ([640a01e](https://github.com/es-ude/elastic-ai.creator/commit/640a01e2308ccc271a6c05f7aecb69c14c23c08b))
+- **(devenv)** add devenv tasks to run all checks in parallel - ([cc17635](https://github.com/es-ude/elastic-ai.creator/commit/cc1763557d02747b2a87979759a44bc1ade9396c))
+- **(devenv)** add jj/git/pikchr - ([9c8ebdc](https://github.com/es-ude/elastic-ai.creator/commit/9c8ebdc5d1711feefc1fd991ab59649bf97628d1))
+- **(devenv)** support vivado and add options to ghdl module - ([0ddb41f](https://github.com/es-ude/elastic-ai.creator/commit/0ddb41fa88c4a3932d0f4e613eb39c72bc0023fe))
+- **(docs)** remove and ignore autogenerated files - ([4a29ee9](https://github.com/es-ude/elastic-ai.creator/commit/4a29ee969bbfe8d8098b390777721363283deecf))
+- **(docs)** change docs theme to pydata - ([9f23518](https://github.com/es-ude/elastic-ai.creator/commit/9f235182a1c94e3d5ea3f7fc56e96261dd6bb7dd))
+- **(docs)** move docs source do `docs/` and adjust some docstrings - ([1325b12](https://github.com/es-ude/elastic-ai.creator/commit/1325b12e64b9e1f80027002912f289ea3a40554c))
+- **(docs)** replace antora/asciidoc by sphinx/markdown - ([39b38d4](https://github.com/es-ude/elastic-ai.creator/commit/39b38d491a7b4e44dfab9cdefdb16afeafe0b59c))
+- **(ghdl-tb-runner)** remove runner and utils - ([fa268cf](https://github.com/es-ude/elastic-ai.creator/commit/fa268cf1b1dce2b4e822985c4fdcf08ec6b7b2bc))
+- **(github)** add issue and pr templates - ([f9fe969](https://github.com/es-ude/elastic-ai.creator/commit/f9fe969f09dfe0a25aaaa7c00ee74c5c7f025143))
+- **(ir)** print class name in instead of class in IrData repr - ([168f45c](https://github.com/es-ude/elastic-ai.creator/commit/168f45c46e911963371bdd8afe928bd7469c35d2))
+- **(plugins)** add bash scripts to help creating new plugins - ([a1b7f4a](https://github.com/es-ude/elastic-ai.creator/commit/a1b7f4ad618654d1b9d82bf5ae2e2fd90d1d6d5d))
+- **(pyproject)** add wavedrom extension for sphinx - ([4e3514d](https://github.com/es-ude/elastic-ai.creator/commit/4e3514d0e0866e4608a2a7c4eabc80af34ef61b1))
+- **(pytest)** add new 'slow' marker - ([4da2334](https://github.com/es-ude/elastic-ai.creator/commit/4da23341706824bc557e3eb0b31e4bec5b901678))
+
+- use tach to adhere to architecture - ([9c845ae](https://github.com/es-ude/elastic-ai.creator/commit/9c845aebb8eda4cc84943157a8e32f8010f313c4))
+
+- include tests in ruff linting - ([9e3e38a](https://github.com/es-ude/elastic-ai.creator/commit/9e3e38a8b7a04775a0d56f87797ff65c72a2841e))
+
+- rename FunctionDecoratorFactory to FunctionDecorator - ([85464cf](https://github.com/es-ude/elastic-ai.creator/commit/85464cfcbef68d8fb588e5b23c6577685ccf4ffe))
+
+- lint unorganized imports - ([f31196a](https://github.com/es-ude/elastic-ai.creator/commit/f31196aa42bda753f49d35b42744ca1cc39b4085))
+
+- use importlib mode for pytest to avoid errors about missing __init__ files in test folders - ([687f0c3](https://github.com/es-ude/elastic-ai.creator/commit/687f0c3e896c3388b9babb4a86162140aef904b8))
+
+- add basic support for devenv - ([bbb3073](https://github.com/es-ude/elastic-ai.creator/commit/bbb30738014cb44f90cfee2e30a25019503358e6))
+
+- add basic support for devenv - ([7df56a1](https://github.com/es-ude/elastic-ai.creator/commit/7df56a17428833ecdf63cc3f62509c04e76c557a))
+#### Documentation
+- **(contribution)** improve readability (hopefully) - ([7be9894](https://github.com/es-ude/elastic-ai.creator/commit/7be9894ecf563a6c5bc54725b8e0be81f2679d50))
+- **(function_utils)** fix incorrect class names in examples - ([99968b8](https://github.com/es-ude/elastic-ai.creator/commit/99968b885b1b3715c31ee96fc55f778f0725afe7))
+- **(ir)** explain the core concepts of ir - ([1d54159](https://github.com/es-ude/elastic-ai.creator/commit/1d54159db87af8b6815ac99ab45485c9eb9ce01f))
+- **(ir)** explain how to annotate fields - ([4176c58](https://github.com/es-ude/elastic-ai.creator/commit/4176c58985a954e5bbc9c63d6203d2cd039ba428))
+- **(ir2vhdl)** add previously missing ir2vhdl.adoc file - ([05606c7](https://github.com/es-ude/elastic-ai.creator/commit/05606c7d8b449792ca832e146c21d2577c4021c2))
+
+- update autogenerated docs - ([3ce97f4](https://github.com/es-ude/elastic-ai.creator/commit/3ce97f4c1545b9bdfc26d8a0f5dd3b716b18cd8e))
+
+- add GitHub repository link to documentation header - ([78d110d](https://github.com/es-ude/elastic-ai.creator/commit/78d110d631048da5f79dcc3af22dd50eb064c855))
+
+- extend ir2vhdl documentaion - ([c5eafde](https://github.com/es-ude/elastic-ai.creator/commit/c5eafde83fb72ceac0e0a07517723d0a717906ff))
+
+- Clarified installation via PyPi - ([037d0e2](https://github.com/es-ude/elastic-ai.creator/commit/037d0e2be285695e3aa31719a1656314ca74a375))
+
+- fix missing table end - ([6ec2343](https://github.com/es-ude/elastic-ai.creator/commit/6ec2343f13c8e49e736030737cb5055f6f6b8e30))
+
+- do not build api docs for plugins - ([7de975d](https://github.com/es-ude/elastic-ai.creator/commit/7de975d216d81f1e872ec20151649172a50f52be))
+
+- fix asciidoc refs and formatting in docstrings - ([b6ff358](https://github.com/es-ude/elastic-ai.creator/commit/b6ff358d282acec8474128483e011d305a1f0a20))
+
+- improve wording in ghdl test-runner docs - ([868a51f](https://github.com/es-ude/elastic-ai.creator/commit/868a51f84ea7ee6edd60c055fe93c799366af7bf))
+
+- improve formatting - ([1c81917](https://github.com/es-ude/elastic-ai.creator/commit/1c81917bea6eb7870edcc80f229769cb252bd6e8))
+
+- fix wrong package name in install command - ([22426ab](https://github.com/es-ude/elastic-ai.creator/commit/22426aba973377b89388da9e0d0c171b03eb1fb0))
+
+- move dev docs from readme into contribution.md - ([3a56226](https://github.com/es-ude/elastic-ai.creator/commit/3a5622604b07b21a9665d271013529e6366b655b))
+
+- explain commit/pr policy in contribution guide - ([e04630c](https://github.com/es-ude/elastic-ai.creator/commit/e04630cfab084cb4d8e2ec40a9aa863cbe6a5bdb))
+
+- Listed deprecated modules and those in development - ([9c7c12c](https://github.com/es-ude/elastic-ai.creator/commit/9c7c12c59ed6d84eee5caf70fb5ca8722964a139))
+
+- Added preliminary documentation for creating new modules - ([1d47f05](https://github.com/es-ude/elastic-ai.creator/commit/1d47f05290811af95c62e22dab7605b608209a8d))
+
+- started documenting supported features - ([91c5167](https://github.com/es-ude/elastic-ai.creator/commit/91c5167056b88402190b5f51b59e49d8db7090d3))
+
+- specified required versions for dev dependencies - ([3b39f0e](https://github.com/es-ude/elastic-ai.creator/commit/3b39f0e8c6a8e7a68a748df9217ad81f638705fc))
+#### Refactoring
+- **(ir)** expose nodes/edges via ir data fields - ([d861c53](https://github.com/es-ude/elastic-ai.creator/commit/d861c536ad0a1d46be5c2c98f89ec82f8c797720))
+- **(ir)** clean up type hints - ([8047010](https://github.com/es-ude/elastic-ai.creator/commit/80470101f912ff1799002b1843e5a96382a8688a))
+- **(ir)** add iterator methods to ir.Graph - ([dd6f077](https://github.com/es-ude/elastic-ai.creator/commit/dd6f077343a2f22d25023c1e25ab641b7939f054))
+- **(ir)** add iter_edges method to GraphDelegate for consistency - ([87313b7](https://github.com/es-ude/elastic-ai.creator/commit/87313b70bc9eeaeec51442060acf117902facc5a))
+- **(ir2vhdl)** move ir2vhdl to dedicated subpackage - ([65034d5](https://github.com/es-ude/elastic-ai.creator/commit/65034d51c218ea3d28e1c7d477dc28681d33e88e))
+  - **BREAKING CHANGE**: impacts every client that imported
+    the elasticai.creator.vhdl_template package
+- **(qgrads)** refactored interface for autograd and mathoperations (#456) - ([e745f3b](https://github.com/es-ude/elastic-ai.creator/commit/e745f3b3448e8f4001e20498f2e7635590d7a69f))
+- **(test)** put ir graph tests into same module - ([d1441e6](https://github.com/es-ude/elastic-ai.creator/commit/d1441e6db5c24a8c86999ea3b4ba77699726a303))
+- **(tests)** move tests from the elasticai.creator source tree to the tests folder to maintain a consistent tests location - ([7ea58c4](https://github.com/es-ude/elastic-ai.creator/commit/7ea58c4894c9ec4b97d978effb975e61418900ce))
+- **(tests)** move tests from the Elasticai Creator source to the tests folder to maintain a consistent location for tests - ([b0b892f](https://github.com/es-ude/elastic-ai.creator/commit/b0b892f26defed59e12884c8fea6c641f8dc2605))
+- **(utils)** move ghdl_msg parsing to its own module - ([124cad1](https://github.com/es-ude/elastic-ai.creator/commit/124cad1aafe825fb9f3726b648e7dedd08311acd))
+- **(vhdl-mac)** move fixed point mac to nn.fixed_point - ([21f5fd6](https://github.com/es-ude/elastic-ai.creator/commit/21f5fd62023e4a2c756c89036a3be6dd73077239))
+  - **BREAKING CHANGE**: will impact everything that was
+    importing from elasticai.creator.vhdl.shared_designs.mac
+
+- use more a precise return type for the create_design function - ([079328a](https://github.com/es-ude/elastic-ai.creator/commit/079328a8260f4cedf1196e28333f7cac2e0c0b7f))
+
+- Removed test_utils - ([ff3cd5a](https://github.com/es-ude/elastic-ai.creator/commit/ff3cd5a5510fda21a972ab26f2e6a7944ef960ba))
+
+- automatically fix linted problems - ([3862f21](https://github.com/es-ude/elastic-ai.creator/commit/3862f218fe0f4ec5dc16b50239d61eac1c3edd42))
+
+- renamed tests folder to test_utils and moved to elasticai/creator - ([e2b86a8](https://github.com/es-ude/elastic-ai.creator/commit/e2b86a8f8b556cd3d285f59052f11a9c173592a8))
+#### Build system
+- **(devenv)** add kroki plugin to antora to build diagrams - ([380ab02](https://github.com/es-ude/elastic-ai.creator/commit/380ab021458c5827edddec5d8e4e2a18014279e1))
+- **(pyproject)** add hypothesis for testing - ([a0f5eba](https://github.com/es-ude/elastic-ai.creator/commit/a0f5eba394177e8a622436446d91fd533f37fa2f))
+- **(versioning)** use cog instead of cliff for changelogs - ([eabf4e1](https://github.com/es-ude/elastic-ai.creator/commit/eabf4e1b57657e4e0131d676be606d67d8618487))
+
+- add VUnit to testing dependencies - ([8bf1572](https://github.com/es-ude/elastic-ai.creator/commit/8bf15720342826dfe4e5013a6792a562a2b191f8))
+
+- drop support for py 3.10 and move to 3.11 - ([284d476](https://github.com/es-ude/elastic-ai.creator/commit/284d476aa66102aedd0ee839a70cc414f2f53048))
+  - **BREAKING CHANGE**: every dependant that uses python
+    3.10
+
+- fix includes for hatch - ([58c8f8e](https://github.com/es-ude/elastic-ai.creator/commit/58c8f8e11e5772d89895ddf67314c5dd21acb4bd))
+
+- use git to dynamically extract version - ([223a13e](https://github.com/es-ude/elastic-ai.creator/commit/223a13e8014cf320f90386453be9daa29d00e22b))
+
+- autoupdate uv.lock - ([2a59a5c](https://github.com/es-ude/elastic-ai.creator/commit/2a59a5c69ab026311f137ea2f30c7a59399830d8))
+
+- add plugins namespace to pytest discovery - ([fbf5c07](https://github.com/es-ude/elastic-ai.creator/commit/fbf5c07505df674f8d5077b0cac021595376509e))
+
+- update ruff version and uv.lock file - ([9229e30](https://github.com/es-ude/elastic-ai.creator/commit/9229e301bb48e50e2445dd0790e30857ea1b68c8))
+
+- add uv.lock and set .python-version to 3.10 - ([533add1](https://github.com/es-ude/elastic-ai.creator/commit/533add17585846ea7f6c49ce0c954df24c0c88a5))
+
+- replace poetry by uv - ([47d9538](https://github.com/es-ude/elastic-ai.creator/commit/47d9538782766f33ae553e2425a6fe21956dd4cb))
+#### Style
+- **(ir)** improve type hints - ([c0701d0](https://github.com/es-ude/elastic-ai.creator/commit/c0701d0f363eedfb270f2018492127552f28dfb7))
+
+- apply unsafe ruff fixes to tests - ([c588232](https://github.com/es-ude/elastic-ai.creator/commit/c5882324d7b3332fe17e5bd6a2d84aed67cba243))
+
+- apply safe ruff fixes to tests - ([ed2ec86](https://github.com/es-ude/elastic-ai.creator/commit/ed2ec86e006d1d64f378a7b4734d3a2851082db5))
+
+- make imports in __init__.py files explicit - ([60149d1](https://github.com/es-ude/elastic-ai.creator/commit/60149d162639427e7341fed82744fd4ebd4f62c4))
+
+- apply safe ruff format for imports - ([f42651e](https://github.com/es-ude/elastic-ai.creator/commit/f42651e973bb4de492a41fe60ab242820a894e2c))
+
+- improve formatting and add missing text in workflows - ([11b0160](https://github.com/es-ude/elastic-ai.creator/commit/11b0160224165e200f1a5e42198de4bdb9802655))
+
+- fix formatting using ruff - ([faf97cb](https://github.com/es-ude/elastic-ai.creator/commit/faf97cb6f2a163f27ce5602c4ff383183d88ea2a))
+
+- - -
+
 
 ## [0.60.0](https://github.com/es-ude/elastic-ai.creator/compare/v0.59.2..v0.60.0) - 2024-12-18
 
