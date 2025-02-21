@@ -1,7 +1,7 @@
 __all__ = [
     "Node",
     "Edge",
-    "Graph",
+    "Implementation",
     "Lowerable",
     "LoweringPass",
     "Implementation",
@@ -11,7 +11,7 @@ __all__ = [
     "FilterParameters",
     "Shape",
 ]
-from elasticai.creator.ir import Graph, Lowerable, LoweringPass, Node
+from elasticai.creator.ir import Lowerable, LoweringPass, Node
 from elasticai.creator.ir2vhdl import (
     Edge,
     Implementation,

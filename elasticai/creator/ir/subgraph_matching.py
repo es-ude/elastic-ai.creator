@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping
 from functools import singledispatchmethod
-from typing import Generic, TypeVar, overload
+from typing import Generic, Protocol, TypeVar, overload
 
 from .core import Edge
 from .core import Node as Node
-from .graph import Graph
 
 PatternNodeT = TypeVar("PatternNodeT", bound=Node)
 GraphNodeT = TypeVar("GraphNodeT", bound=Node)
@@ -14,9 +13,21 @@ NodeT = TypeVar("NodeT", bound=Node)
 EdgeT = TypeVar("EdgeT", bound=Edge)
 
 
+class Graph(Protocol[NodeT, EdgeT]):
+    def get_empty_copy(self) -> "Graph[NodeT, EdgeT]": ...
+
+    def nodes(self) -> Mapping[str, NodeT]: ...
+
+    def edges(self) -> Mapping[str, EdgeT]: ...
+
+    def successors(self, node_name: str) -> Mapping[str, NodeT]: ...
+
+    def predecessors(self, node_name: str) -> Mapping[str, NodeT]: ...
+
+
 def find_subgraphs(
-    graph: Graph,
-    pattern: Graph,
+    graph: Graph[GraphNodeT, EdgeT],
+    pattern: Graph[PatternNodeT, EdgeT],
     node_constraint: Callable[[GraphNodeT, PatternNodeT], bool],
 ) -> list[dict[str, str]]:
     """Find occurences of `pattern` in `graph` where nodes match according to `node_constraint`.
