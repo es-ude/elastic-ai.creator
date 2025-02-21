@@ -1,17 +1,26 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterator
 from functools import singledispatchmethod
-from typing import Generic, TypeVar, overload
+from typing import Generic, Protocol, TypeVar, overload
 
 from .graph import Graph
 
 T = TypeVar("T", int, str)
+TPattern = TypeVar("TPattern", int, str)
+
+_Tcon = TypeVar("_Tcon", contravariant=True)
+_TPatternCon = TypeVar("_TPatternCon", contravariant=True)
+
+
+class NodeConstraint(Protocol[_TPatternCon, _Tcon]):
+    def __call__(self, *, pattern_node: _TPatternCon, graph_node: _Tcon) -> bool: ...
 
 
 def find_subgraphs(
+    *,
+    pattern: Graph[TPattern],
     graph: Graph[T],
-    pattern: Graph[T],
-    node_constraint: Callable[[T, T], bool],
-) -> list[dict[T, T]]:
+    node_constraint: NodeConstraint[TPattern, T],
+) -> list[dict[TPattern, T]]:
     """Find occurences of `pattern` in `graph` where nodes match according to `node_constraint`.
 
     Use the `node_constraint` function to define how nodes in `graph` and `pattern` should match.
@@ -28,7 +37,7 @@ def find_subgraphs(
         "1": {"type": "B", "channels": 2},
     }
 
-    def node_constraint(graph_node: str, pattern_node: str) -> bool:
+    def node_constraint(pattern_node: str, graph_node: str) -> bool:
         return graph_nodes_data[graph_node]["type"] == pattern_nodes_data[pattern_node]["type"]
 
     subgraphs = find_subgraphs(graph, pattern, node_constraint)
@@ -54,14 +63,12 @@ def find_subgraphs(
     :return: A list of dictionaries, where each dictionary maps the names of the nodes in `pattern` to the names of the corresponding nodes in `graph`. The list contains one dictionary for each match found.
     """
 
-    def stop_condition(matches: list[_Match[T]]) -> bool:
+    def stop_condition(matches: list[_Match[TPattern, T]]) -> bool:
         return any(m.is_complete() for m in matches) or len(matches) == 0
 
-    return list(
-        _SubgraphMatcher(
-            graph, pattern, node_constraint, stop_condition=stop_condition
-        ).find_matches()
-    )
+    return _SubgraphMatcher(
+        pattern, graph, node_constraint, stop_condition=stop_condition
+    ).find_matches()
 
 
 class _MatcherNode(Generic[T]):
@@ -91,27 +98,27 @@ class _MatcherNode(Generic[T]):
             yield _MatcherNode(node, self.owner)
 
 
-class _Match(Generic[T]):
+class _Match(Generic[TPattern, T]):
     def __init__(
         self,
-        last_pattern_node: T | None,
-        pattern: Graph[T],
+        last_pattern_node: TPattern | None,
+        pattern: Graph[TPattern],
         graph: Graph[T],
-        map: dict[T, T] | None = None,
+        map: dict[TPattern, T] | None = None,
     ):
         if map is None:
             map = {}
-        self.map: dict[T, T] = map
-        self.pattern: Graph[T] = pattern
+        self.map: dict[TPattern, T] = map
+        self.pattern: Graph[TPattern] = pattern
         self.graph: Graph[T] = graph
-        self._last_pattern_node: T | None = last_pattern_node
+        self._last_pattern_node: TPattern | None = last_pattern_node
 
-    def _get_last_pattern_node(self) -> _MatcherNode[T]:
+    def _get_last_pattern_node(self) -> _MatcherNode[TPattern]:
         assert self._last_pattern_node is not None
         return _MatcherNode(self._last_pattern_node, self.pattern)
 
     @property
-    def pattern_successors(self) -> Iterator[_MatcherNode[T]]:
+    def pattern_successors(self) -> Iterator[_MatcherNode[TPattern]]:
         return self._get_last_pattern_node().successors
 
     @property
@@ -119,7 +126,7 @@ class _Match(Generic[T]):
         return self._last_graph_node().successors
 
     @property
-    def pattern_predecessors(self) -> Iterator[_MatcherNode[T]]:
+    def pattern_predecessors(self) -> Iterator[_MatcherNode[TPattern]]:
         return self._get_last_pattern_node().predecessors
 
     @property
@@ -152,7 +159,7 @@ class _Match(Generic[T]):
     @overload
     def visited_neither(
         self,
-        pattern_node: _MatcherNode[T],
+        pattern_node: _MatcherNode[TPattern],
         graph_node: _MatcherNode[T],
     ) -> bool: ...
 
@@ -174,14 +181,14 @@ class _Match(Generic[T]):
         )
 
     @overload
-    def visit(self, pattern_node: T, graph_node: T) -> "_Match[T]": ...
+    def visit(self, pattern_node: TPattern, graph_node: T) -> "_Match[T, TPattern]": ...
 
     @overload
     def visit(
         self,
-        pattern_node: _MatcherNode[T],
+        pattern_node: _MatcherNode[TPattern],
         graph_node: _MatcherNode[T],
-    ) -> "_Match[T]": ...
+    ) -> "_Match[TPattern, T]": ...
 
     @singledispatchmethod  # type: ignore[operator, misc]
     def visit(self, pattern_node, graph_node):
@@ -207,20 +214,22 @@ class _Match(Generic[T]):
         return len(self.map) == len(self.pattern.nodes)
 
 
-class _SubgraphMatcher(Generic[T]):
+class _SubgraphMatcher(Generic[TPattern, T]):
     def __init__(
         self,
+        pattern: Graph[TPattern],
         graph: Graph[T],
-        pattern: Graph[T],
-        node_constraint: Callable[[T, T], bool],
-        stop_condition: Callable[[list[_Match]], bool],
+        node_constraint: NodeConstraint[TPattern, T],
+        stop_condition: Callable[[list[_Match[TPattern, T]]], bool],
     ):
         self._graph: Graph[T] = graph
-        self._pattern: Graph[T] = pattern
-        self._node_constraint: Callable[[T, T], bool] = node_constraint
-        self._stop_condition = stop_condition
+        self._pattern: Graph[TPattern] = pattern
+        self._node_constraint: NodeConstraint[TPattern, T] = node_constraint
+        self._stop_condition: Callable[[list[_Match[TPattern, T]]], bool] = (
+            stop_condition
+        )
 
-    def find_matches(self) -> Iterable[dict[T, T]]:
+    def find_matches(self) -> list[dict[TPattern, T]]:
         potential_matches = self._build_initial_potential_matches()
         while not self._stop_condition(potential_matches):
             potential_matches = self._build_next_potential_matches(potential_matches)
@@ -229,13 +238,13 @@ class _SubgraphMatcher(Generic[T]):
 
     def _build_initial_potential_matches(
         self,
-    ) -> list[_Match[T]]:
+    ) -> list[_Match[TPattern, T]]:
         pn = self._pick_a_start_node_from_pattern()
         gns = []
         for name in self._find_all_start_nodes_from_graph(pn.name):
             gns.append(_MatcherNode(name, self._graph))
 
-        potential_matches: list[_Match[T]] = []
+        potential_matches: list[_Match[TPattern, T]] = []
         base_element = _Match(None, self._pattern, self._graph)
         for gn in gns:
             potential_matches.append(base_element.visit(pn, gn))
@@ -243,17 +252,19 @@ class _SubgraphMatcher(Generic[T]):
         return potential_matches
 
     def _build_next_potential_matches(
-        self, potential_matches: list[_Match[T]]
-    ) -> list[_Match[T]]:
-        next_potential_matches: list[_Match[T]] = []
+        self, potential_matches: list[_Match[TPattern, T]]
+    ) -> list[_Match[TPattern, T]]:
+        next_potential_matches: list[_Match[TPattern, T]] = []
         for potential_match in potential_matches:
             next_potential_matches.extend(
                 self._find_follow_ups_for_match(potential_match)
             )
         return next_potential_matches
 
-    def _find_follow_ups_for_match(self, potential_match: _Match[T]) -> list[_Match[T]]:
-        next_potential_matches: list[_Match[T]] = []
+    def _find_follow_ups_for_match(
+        self, potential_match: _Match[TPattern, T]
+    ) -> list[_Match[TPattern, T]]:
+        next_potential_matches: list[_Match[TPattern, T]] = []
 
         def should_visit(pn, gn):
             return potential_match.visited_neither(pn, gn) and self._nodes_match(pn, gn)
@@ -274,18 +285,18 @@ class _SubgraphMatcher(Generic[T]):
         return next_potential_matches
 
     @overload
-    def _nodes_match(self, pattern_node: T, graph_node: T) -> bool: ...
+    def _nodes_match(self, pattern_node: TPattern, graph_node: T) -> bool: ...
 
     @overload
     def _nodes_match(
         self,
-        pattern_node: _MatcherNode[T],
+        pattern_node: _MatcherNode[TPattern],
         graph_node: _MatcherNode[T],
     ) -> bool: ...
 
     @singledispatchmethod  # type: ignore[operator, misc]
     def _nodes_match(
-        self, pattern_node: _MatcherNode, graph_node: _MatcherNode
+        self, pattern_node: _MatcherNode[TPattern], graph_node: _MatcherNode[T]
     ) -> bool:
         return self._node_constraint(graph_node.name, pattern_node.name)
 
@@ -301,14 +312,16 @@ class _SubgraphMatcher(Generic[T]):
     def _nodes_match(
         self, pattern_node: _MatcherNode, graph_node: _MatcherNode
     ) -> bool:
-        return self._node_constraint(graph_node.name, pattern_node.name)
+        return self._node_constraint(
+            graph_node=graph_node.name, pattern_node=pattern_node.name
+        )
 
-    def _pick_a_start_node_from_pattern(self) -> _MatcherNode[T]:
+    def _pick_a_start_node_from_pattern(self) -> _MatcherNode[TPattern]:
         return _MatcherNode(next(self._pattern.iter_nodes()), self._pattern)
 
-    def _find_all_start_nodes_from_graph(self, start_node: T) -> set[T]:
+    def _find_all_start_nodes_from_graph(self, start_node: TPattern) -> set[T]:
         matches = set()
         for node in self._graph.iter_nodes():
-            if self._node_constraint(node, start_node):
+            if self._node_constraint(pattern_node=start_node, graph_node=node):
                 matches.add(node)
         return matches

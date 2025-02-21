@@ -31,10 +31,12 @@ def build_graph_from_dict(
 
 
 def find_matches(graph, pattern) -> list[dict[str, str]]:
-    def node_constraint(graph_node, pattern_node):
+    def node_constraint(pattern_node, graph_node):
         return graph.data[graph_node] == pattern.data[pattern_node]
 
-    return g.find_subgraphs(graph.wrapped, pattern.wrapped, node_constraint)
+    return g.find_subgraphs(
+        pattern=pattern.wrapped, graph=graph.wrapped, node_constraint=node_constraint
+    )
 
 
 class Matcher:
@@ -52,7 +54,9 @@ class Matcher:
     def __call__(
         self, graph: g.Graph[str], pattern: g.Graph[str]
     ) -> list[dict[str, str]]:
-        return g.find_subgraphs(graph, pattern, self._node_constraint)
+        return g.find_subgraphs(
+            pattern=pattern, graph=graph, node_constraint=self._node_constraint
+        )
 
 
 def get_rewriter(
@@ -75,8 +79,8 @@ def get_rewriter_returning_full_result(
     pattern: Graph,
     interface: Graph,
     replacement: Graph,
-    lhs: Callable[[str], str],
-    rhs: Callable[[str], str],
+    lhs: dict[str, str],
+    rhs: dict[str, str],
 ) -> Callable[[Graph], g.RewriteResult]:
     match = Matcher(pattern)
 

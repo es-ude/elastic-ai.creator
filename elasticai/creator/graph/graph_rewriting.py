@@ -1,5 +1,6 @@
 import copy
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Protocol
 
 from .graph import Graph
 from .name_generation import NameRegistry
@@ -16,6 +17,12 @@ class RewriteResult:
         self.new_graph = new_graph
         self.pattern_to_original = pattern_to_original
         self.replacement_to_new = replacement_to_new
+
+
+class Matcher(Protocol):
+    def __call__(
+        self, *, pattern: Graph[str], graph: Graph[str]
+    ) -> Sequence[dict[str, str]]: ...
 
 
 class GraphRewriter:
@@ -46,10 +53,11 @@ class GraphRewriter:
 
     def __init__(
         self,
+        *,
         pattern: Graph[str],
         interface: Graph[str],
         replacement: Graph[str],
-        match: Callable[[Graph[str], Graph[str]], Sequence[dict[str, str]]],
+        match: Matcher,
         lhs: Mapping[str, str],
         rhs: Mapping[str, str],
     ) -> None:
@@ -72,7 +80,7 @@ class GraphRewriter:
         Returns a [`RewriteResult`](#elasticai.creator.ir.graph_rewriting.RewriteResult) object containing the new graph and two dicts mapping nodes from `pattern` to the original graph and nodes from `replacement` to the new graph.
         matches = self._match(graph, self._pattern)
         """
-        matches = self._match(graph, self._pattern)
+        matches = self._match(pattern=self._pattern, graph=graph)
         if len(matches) > 0:
             match = matches[0]
         else:
