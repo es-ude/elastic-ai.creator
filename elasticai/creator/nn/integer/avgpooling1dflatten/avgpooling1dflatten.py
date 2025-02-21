@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from elasticai.creator.nn.integer.avgpooling1d.design import (
-    AVGPooling1d as AVGPooling1dDesign,
+from elasticai.creator.nn.integer.avgpooling1dflatten.design import (
+    AVGPooling1dFlatten as AVGPooling1dFlattenDesign,
 )
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
@@ -21,7 +21,7 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
 )
 
 
-class AVGPooling1d(DesignCreatorModule, nn.Module):
+class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -44,8 +44,8 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
         self.math_ops = MathOperations()
         self.precomputed = False
 
-    def create_design(self, name: str) -> AVGPooling1dDesign:
-        return AVGPooling1dDesign(
+    def create_design(self, name: str) -> AVGPooling1dFlattenDesign:
+        return AVGPooling1dFlattenDesign(
             name=name,
             data_width=self.quant_bits,
             in_features=self.in_features,
@@ -79,7 +79,6 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
@@ -97,7 +96,7 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
-        return q_outputs
+        return q_outputs.squeeze(2)
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
@@ -116,4 +115,4 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
             self.outputs_QParams.update_quant_params(outputs)
 
         outputs = SimQuant.apply(outputs, self.outputs_QParams)
-        return outputs
+        return outputs.squeeze(2)

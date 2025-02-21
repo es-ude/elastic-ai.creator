@@ -14,7 +14,7 @@ from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 
 
-class AVGPooling1d(Design):
+class AVGPooling1dFlatten(Design):
     def __init__(
         self,
         name: str,
@@ -66,7 +66,7 @@ class AVGPooling1d(Design):
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="avgpooling1d.tpl.vhd",
+            file_name="avgpooling1dflatten.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
@@ -92,7 +92,7 @@ class AVGPooling1d(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="avgpooling1d_tb.tpl.vhd",
+            file_name="avgpooling1dflatten_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
