@@ -129,5 +129,9 @@ path = "elasticai.creator_plugins.combinatorial"
 depends_on = ["elasticai.creator.ir2vhdl"]
 
 [[modules ]]
+path = "elasticai.creator_plugins.grouped_filter"
+depends_on = ["elasticai.creator.ir2vhdl", "elasticai.creator.function_utils", "elasticai.creator.plugin"]
+
+[[modules ]]
 path = "<root>"
-depends_on = ["elasticai.creator.nn.fixed_point", "elasticai.creator.vhdl", "elasticai.creator.nn", "elasticai.creator.file_generation"]
+depends_on = ["elasticai.creator.nn.fixed_point", "elasticai.creator.file_generation", "elasticai.creator.nn", "elasticai.creator.vhdl"]
