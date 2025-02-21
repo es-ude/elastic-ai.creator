@@ -134,20 +134,20 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
+        # MHA
         self._save_quant_data(
             q_inputs, self.quant_data_file_dir, f"{self.mha.name}_q_x"
         )
-
         q_mha_outputs, mha_attns = self.mha.int_forward(
             q_q=q_inputs,
             q_k=q_inputs,
             q_v=q_inputs,
         )
-
         self._save_quant_data(
             q_mha_outputs, self.quant_data_file_dir, f"{self.mha.name}_q_y"
         )
 
+        # MHA ADD
         self._save_quant_data(
             q_mha_outputs, self.quant_data_file_dir, f"{self.mha_add.name}_q_x"
         )
@@ -159,6 +159,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             q_mha_add_outputs, self.quant_data_file_dir, f"{self.mha_add.name}_q_y"
         )
 
+        # MHA NORM
         self._save_quant_data(
             q_mha_add_outputs, self.quant_data_file_dir, f"{self.mha_norm.name}_q_x"
         )
@@ -168,10 +169,11 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_mha_norm_outputs, self.quant_data_file_dir, f"{self.mha_norm.name}_q_y"
         )
-
         self._save_quant_data(
             q_mha_norm_outputs, self.quant_data_file_dir, f"{self.ffn.name}_q_x"
         )
+
+        # FFN
         q_ffn_outputs = self.ffn.int_forward(
             q_inputs=q_mha_norm_outputs,
         )
@@ -179,6 +181,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             q_ffn_outputs, self.quant_data_file_dir, f"{self.ffn.name}_q_y"
         )
 
+        # FFN ADD
         q_ffn_add_outputs = self.ffn_add.int_forward(
             q_inputs1=q_mha_norm_outputs,
             q_inputs2=q_ffn_outputs,
@@ -187,6 +190,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             q_ffn_add_outputs, self.quant_data_file_dir, f"{self.ffn_add.name}_q_y"
         )
 
+        # FFN NORM
         self._save_quant_data(
             q_ffn_add_outputs, self.quant_data_file_dir, f"{self.ffn_norm.name}_q_x"
         )

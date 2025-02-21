@@ -63,51 +63,50 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
             resource_option="auto",
         )
 
-    def _compute_scale_zero_point(self, quant_bits, divisor, t):
-        max_int = 2 ** (quant_bits - 1) - 1
-        s_t = (1.0 - 0.0) / ((2 * max_int) // divisor)
-        z_t = max_int - (1.0 / s_t)
-
-        z_t = torch.tensor(z_t).round_().clamp(-max_int, max_int)
-        q_t = (t / s_t + z_t).to(dtype=torch.int32).round_().clamp(-max_int, max_int)
-
-        return s_t, z_t, q_t
-
     def precompute(self):
-        # prepare all possible quantised inputs
+        # prepare all possible quantised input
         min_quant = self.inputs2_QParams.min_quant.item()
         max_quant = self.inputs2_QParams.max_quant.item()
-        q_inputs = torch.arange(min_quant, max_quant + 1, 1).to(self.device)  # q_x
+        q_inputs = torch.arange(min_quant, max_quant + 1, 1).to("cpu")
 
         # subtract max_quant from q_inputs
-        q_inputs_offset = self.math_ops.intsub(
-            q_inputs.to(dtype=torch.int32),
-            self.inputs2_QParams.zero_point.to("cpu"),
-            self.inputs2_QParams.quant_bits + 1,
+        q_inputs_offset = (
+            q_inputs.to(self.inputs2_QParams.zero_point.device)
+            - self.inputs2_QParams.zero_point
         )  # q_x - zero_point
+        inputs = (
+            q_inputs_offset * self.inputs2_QParams.scale_factor
+        )  # s_x * (q_x - zero_point)
 
-        inputs = q_inputs_offset * self.inputs2_QParams.scale_factor.to("cpu")
-        # s_x * (q_x - zero_point)
+        tmp = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
 
-        t = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
-
-        divisor = (self.window_size**2) * self.nhead
-        if self.quant_bits <= 4:
-            quant_factor = 3
-        else:
-            quant_factor = 2
-        s_t, self.z_t, q_t = self._compute_scale_zero_point(
-            self.quant_bits * quant_factor, divisor, t
+        tmp_quant_bits = (
+            3 * self.quant_bits if self.quant_bits <= 4 else 2 * self.quant_bits
+        )
+        tmp_scale_factor = (1.0 - 0.0) / (
+            ((2 ** (tmp_quant_bits - 1) - 1) - (-(2 ** (tmp_quant_bits - 1))))
+            // ((self.window_size**2) * self.nhead)
+        )  # get scale_factor factor of tmp
+        tmp_zero_point = (2 ** (tmp_quant_bits - 1) - 1) - (
+            1.0 / tmp_scale_factor
+        )  # get zero point of tmp
+        tmp_zero_point = torch.tensor(tmp_zero_point)
+        self.tmp_zero_point = tmp_zero_point.round_().clamp(
+            -(2 ** (tmp_quant_bits - 1)), 2 ** (tmp_quant_bits - 1) - 1
+        )
+        q_tmp = (tmp / tmp_scale_factor + self.tmp_zero_point).to(torch.int32)
+        q_tmp = q_tmp.round_().clamp(
+            -(2 ** (tmp_quant_bits - 1)), 2 ** (tmp_quant_bits - 1) - 1
         )
 
         # for denominator
         self.Qinput2QDenominator_LUT_dict = {}
-        for i in range(len(q_t)):
-            self.Qinput2QDenominator_LUT_dict[q_inputs[i].item()] = int(q_t[i].item())
+        for i in range(len(q_tmp)):
+            self.Qinput2QDenominator_LUT_dict[q_inputs[i].item()] = int(q_tmp[i].item())
 
         # for numerator
-        q_numerator = t / (s_t * self.outputs_QParams.scale_factor.to("cpu"))
-        q_numerator = q_numerator.to(dtype=torch.int32)
+        q_numerator = tmp / (tmp_scale_factor * self.outputs_QParams.scale_factor)
+        q_numerator = q_numerator.to(torch.int32)
         q_numerator = q_numerator.round_().clamp(
             -(2 ** (self.quant_bits * 3 - 1)), 2 ** (self.quant_bits * 3 - 1) - 1
         )
@@ -117,31 +116,22 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
             self.Qinput2QNumerator_LUT_dict[q_inputs[i].item()] = int(
                 q_numerator[i].item()
             )
-
         self.precomputed = True
 
-    def int_forward(
-        self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.FloatTensor:
-        assert self.precomputed, "Precompute the model before running int_forward"
-        assert not self.training, "int_forward() can only be used in inference mode"
-
+    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         max_q_inputs = q_inputs.max(dim=-1, keepdim=True)[0]
 
         q_inputs = self.math_ops.intsub(
-            q_inputs,
-            max_q_inputs,
-            self.inputs2_QParams.quant_bits + 1,
+            q_inputs, max_q_inputs, self.inputs2_QParams.quant_bits + 1
         )
 
         q_inputs = self.math_ops.intadd(
             q_inputs,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits,
+            self.inputs2_QParams.quant_bits + 1,
         )
 
-        q_numerator = q_inputs.clone()  # t / (S_soft * S_t)
+        q_numerator = q_inputs.clone()  # tmp / (S_soft * S_t)
         for i in range(q_inputs.shape[0]):
             for j in range(q_inputs.shape[1]):
                 for k in range(q_inputs.shape[2]):
@@ -159,24 +149,16 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
                             self.Qinput2QDenominator_LUT_dict[
                                 q_inputs[i][j][k][l].item()
                             ]
-                            - self.z_t
+                            - self.tmp_zero_point
                         )
         q_denominator = q_denominator.sum(dim=-1, keepdim=True)  # sum(Q_t - Z_t)
-
-        tmp = q_numerator / q_denominator
-        tmp = (
-            tmp.round_()
-            .clamp(-(2 ** (self.quant_bits)), 2 ** (self.quant_bits) - 1)
-            .to(dtype=torch.int32)
+        tmp = self.math_ops.int_division(
+            q_numerator, q_denominator, self.quant_bits + 1
         )
-
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.quant_bits
         )
-
-        dq_outputs = self.outputs_QParams.dequantize(
-            q_outputs
-        )  # dequantize for visualization
+        dq_outputs = self.outputs_QParams.dequantize(q_outputs)
         return q_outputs, dq_outputs
 
     def forward(
@@ -190,10 +172,9 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
 
         max_input = inputs.max(dim=-1, keepdim=True)[0]
         inputs = inputs - max_input
+
         if self.training:
-            self.inputs2_QParams.update_quant_params(
-                inputs
-            )  # QParams after doing subtraction
+            self.inputs2_QParams.update_quant_params(inputs)
 
         inputs = SimQuant.apply(inputs.to(self.device), self.inputs2_QParams)
         outputs = torch.softmax(inputs, dim=-1)

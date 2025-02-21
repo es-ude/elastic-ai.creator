@@ -143,3 +143,17 @@ class MathOperations:
 
         dot_product = dot_product.to(a.device)
         return self.clamp_result(dot_product, c_quant_bits)
+
+    def int_division(
+        self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
+    ) -> torch.IntTensor:
+        assert a.dtype == torch.int32 or a.dtype == torch.int64
+        assert b.dtype == torch.int32 or b.dtype == torch.int64
+
+        a_cpu = a.cpu().to(torch.int32)
+        b_cpu = b.cpu().to(torch.int32)
+
+        division = a_cpu // b_cpu
+
+        division = division.to(a.device)
+        return self.clamp_result(division, c_quant_bits)
