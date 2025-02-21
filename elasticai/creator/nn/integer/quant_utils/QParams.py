@@ -51,18 +51,17 @@ class QParams(nn.Module):
 
     def _calculate_quant_range(self):
         if self.is_signed:
-            min_value = -(1 << (self.quant_bits - 1)) + (
+            min_value = -(2 ** (self.quant_bits - 1)) + (
                 1 if self.is_symmetric else 0
             )  # -127 or -128 for 8 bits
             self.min_quant.copy_(torch.tensor(min_value))
 
             self.max_quant.copy_(
-                torch.tensor((1 << (self.quant_bits - 1)) - 1)  # 127 for 8 bits
+                torch.tensor((2 ** (self.quant_bits - 1)) - 1)  # 127 for 8 bits
             )
         else:
             self.min_quant.copy_(torch.tensor(0))  # 0 for 8 bits
-
-            max_value = (1 << self.quant_bits) - (
+            max_value = (1**self.quant_bits) - (
                 2 if self.is_symmetric else 1
             )  # 254 or 255 for 8 bits
             self.max_quant.copy_(torch.tensor(max_value))

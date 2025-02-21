@@ -21,8 +21,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         super().__init__()
 
         d_model = kwargs.get("d_model")
-        nhead = kwargs.get("nhead")
         window_size = kwargs.get("window_size")
+        nhead = kwargs.get("nhead")
 
         device = kwargs.get("device")
         self.name = kwargs.get("name")
@@ -33,8 +33,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self.mha = MultiHeadAttention(
             name=self.name + "_mha",
             nhead=nhead,
-            window_size=window_size,
             d_model=d_model,
+            window_size=window_size,
             quant_bits=self.quant_bits,
             quant_data_file_dir=self.quant_data_file_dir,
             device=device,
@@ -65,7 +65,6 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             name=self.name + "_ffn",
             num_dimensions=window_size,
             d_model=d_model,
-            window_size=window_size,
             quant_bits=self.quant_bits,
             quant_data_file_dir=self.quant_data_file_dir,
             device=device,
@@ -138,11 +137,13 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_inputs, self.quant_data_file_dir, f"{self.mha.name}_q_x"
         )
+
         q_mha_outputs, mha_attns = self.mha.int_forward(
             q_q=q_inputs,
             q_k=q_inputs,
             q_v=q_inputs,
         )
+
         self._save_quant_data(
             q_mha_outputs, self.quant_data_file_dir, f"{self.mha.name}_q_y"
         )
@@ -199,7 +200,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         return q_ffn_norm_outputs, mha_attns
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: object
+        self, inputs: torch.FloatTensor, given_inputs_QParams: object = None
     ) -> torch.FloatTensor:
         if self.training:
             if given_inputs_QParams is not None:
@@ -207,32 +208,35 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_QParams.update_quant_params(inputs)
 
-        mha_outputs, mha_attns = self.mha(
+        mha_outputs, mha_attns = self.mha.forward(
             q=inputs, k=inputs, v=inputs, given_inputs_QParams=self.inputs_QParams
         )
-        mha_add_outputs = self.mha_add(
+
+        mha_add_outputs = self.mha_add.forward(
             inputs1=inputs,
             inputs2=mha_outputs,
-            given_inputs1_QParams=given_inputs_QParams,
+            given_inputs1_QParams=self.inputs_QParams,
             given_inputs2_QParams=self.mha.outputs_QParams,
         )
 
-        mha_norm_outputs = self.mha_norm(  # TODO:check dimensions of normalization
-            inputs=mha_add_outputs, given_inputs_QParams=self.mha_add.outputs_QParams
+        mha_norm_outputs = self.mha_norm.forward(
+            inputs=mha_add_outputs,
+            given_inputs_QParams=self.mha_add.outputs_QParams,
         )
 
-        ffn_outputs = self.ffn(
+        ffn_outputs = self.ffn.forward(
             inputs=mha_norm_outputs,
             given_inputs_QParams=self.mha_norm.outputs_QParams,
         )
-        ffn_add_outputs = self.ffn_add(
+        ffn_add_outputs = self.ffn_add.forward(
             inputs1=mha_norm_outputs,
             inputs2=ffn_outputs,
             given_inputs1_QParams=self.mha_norm.outputs_QParams,
             given_inputs2_QParams=self.ffn.outputs_QParams,
         )
-        ffn_norm_outputs = self.ffn_norm(  # TODO:check dimensions of normalization
-            inputs=ffn_add_outputs, given_inputs_QParams=self.ffn_add.outputs_QParams
+        ffn_norm_outputs = self.ffn_norm.forward(
+            inputs=ffn_add_outputs,
+            given_inputs_QParams=self.ffn_add.outputs_QParams,
         )
         self.outputs_QParams = self.ffn_norm.outputs_QParams
 

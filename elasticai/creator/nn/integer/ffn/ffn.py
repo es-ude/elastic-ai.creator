@@ -16,9 +16,8 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
-        self.num_dimensions = kwargs.get("num_dimensions")
         d_model = kwargs.get("d_model")
-        window_size = kwargs.get("window_size")
+        num_dimensions = kwargs.get("num_dimensions")
 
         device = kwargs.get("device")
         self.name = kwargs.get("name")
@@ -26,30 +25,28 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.fc1 = (
-            Linear(  # TODO: missing num_dimensions(=window_size) for VHDL templates
-                name=self.name + "_fc1",
-                in_features=d_model,
-                out_features=d_model * 4,
-                quant_bits=self.quant_bits,
-                device=device,
-                bias=True,
-            )
+        self.fc1 = Linear(
+            name=self.name + "_fc1",
+            in_features=d_model,
+            out_features=d_model * 4,
+            num_dimensions=num_dimensions,
+            bias=True,
+            quant_bits=self.quant_bits,
+            device=device,
         )
 
         self.relu = ReLU(
             name=self.name + "_relu", quant_bits=self.quant_bits, device=device
         )
 
-        self.fc2 = (
-            Linear(  # TODO: missing num_dimensions(=window_size) for VHDL templates
-                name=self.name + "_fc2",
-                in_features=d_model * 4,
-                out_features=d_model,
-                quant_bits=self.quant_bits,
-                device=device,
-                bias=True,
-            )
+        self.fc2 = Linear(
+            name=self.name + "_fc2",
+            in_features=d_model * 4,
+            out_features=d_model,
+            num_dimensions=num_dimensions,
+            bias=True,
+            quant_bits=self.quant_bits,
+            device=device,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -127,12 +124,14 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_QParams.update_quant_params(inputs)
 
-        f1_outputs = self.fc1(inputs=inputs, given_inputs_QParams=self.inputs_QParams)
+        f1_outputs = self.fc1.forward(
+            inputs=inputs, given_inputs_QParams=self.inputs_QParams
+        )
 
-        relu_outputs = self.relu(
+        relu_outputs = self.relu.forward(
             inputs=f1_outputs, given_inputs_QParams=self.fc1.outputs_QParams
         )
-        f2_outputs = self.fc2(
+        f2_outputs = self.fc2.forward(
             inputs=relu_outputs,
             given_inputs_QParams=self.fc1.outputs_QParams,
         )

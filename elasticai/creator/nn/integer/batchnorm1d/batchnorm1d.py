@@ -43,6 +43,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
+        self.modified_weight_QParams = AsymmetricSignedQParams(
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+        ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
@@ -64,7 +67,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             in_features=self.in_features,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
-            bias=self.q_modified_bias.tolist(),
+            bias=self.q_bias.tolist(),
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -81,7 +84,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
-        if not weight_QParams.is_symmetric:
+        if weight_QParams.is_symmetric == False:
             q_weights = self.math_ops.intsub(
                 q_weights,
                 weight_QParams.zero_point,
@@ -90,23 +93,18 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         return q_weights
 
     def _get_quantized_bias(
-        self, bias: torch.FloatTensor, bias_QParams: nn.Module
+        self,
+        bias: torch.FloatTensor,
+        bias_QParams: nn.Module,
+        given_quant_scale: torch.FloatTensor,
+        given_quant_bits: int,
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        new_bias_scale_factor = (
-            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
-        )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
-            self.weight_QParams.quant_bits + 1
-        )
-        bias_QParams.set_scale_factor(new_bias_scale_factor)
+
+        bias_QParams.set_scale_factor(given_quant_scale)
         bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(new_bias_quant_bits)
+        bias_QParams.set_quant_range(given_quant_bits)
         q_bias = bias_QParams.quantize(bias).to("cpu")
-        if not bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, bias_QParams.zero_point, new_bias_quant_bits + 1
-            )
         return q_bias
 
     def precompute(self):
@@ -114,30 +112,37 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        weight = SimQuant.apply(self.weight, self.weight_QParams)
-        modified_weight = weight / std
-
-        bias = SimQuant.apply(self.bias, self.bias_QParams)
-        self.modified_bias = bias - modified_weight * mean
-
-        self.weight_QParams.update_quant_params(modified_weight)
-        self.q_weights = self._get_quantized_weights(
-            modified_weight, self.weight_QParams
+        self.tmp_quant_bits = (self.weight_QParams.quant_bits + 1) + (
+            self.inputs_QParams.quant_bits + 1
         )
 
-        self.tmp_quant_bits = (self.quant_bits + 1) * 2
-        self.q_modified_bias = self._get_quantized_bias(
-            bias=self.modified_bias,
+        weight = SimQuant.apply(self.weight, self.weight_QParams)
+        modified_weight = weight / std
+        self.modified_weight_QParams.update_quant_params(modified_weight)
+        self.q_weights = self._get_quantized_weights(
+            modified_weight, self.modified_weight_QParams
+        )
+
+        bias = SimQuant.apply(self.bias, self.bias_QParams)
+        modified_bias = bias - modified_weight * mean
+        new_bias_QParms_scale = (
+            self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
+        )
+        self.q_bias = self._get_quantized_bias(
+            bias=modified_bias,
             bias_QParams=self.bias_QParams,
+            given_quant_scale=new_bias_QParms_scale,
+            given_quant_bits=self.tmp_quant_bits,
         )
 
         self.scale_factor_M = (
-            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
+            self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
         ) / self.outputs_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
+
         self.precomputed = True
 
     def int_forward(
@@ -152,7 +157,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         tmp = self.math_ops.int_dotproduct(
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
-        tmp = self.math_ops.intadd(tmp, self.q_modified_bias, self.tmp_quant_bits + 1)
+        tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q

@@ -118,13 +118,13 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
+        # MatrixMulti Score
         self._save_quant_data(
             q_q, self.quant_data_file_dir, f"{self.matrix_multi_score.name}_q_x_1"
         )
         self._save_quant_data(
             q_k, self.quant_data_file_dir, f"{self.matrix_multi_score.name}_q_x_2"
         )
-
         q_scores = self.matrix_multi_score.int_forward(
             q_inputs1=q_q,
             q_inputs2=q_k,
@@ -133,6 +133,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             q_scores, self.quant_data_file_dir, f"{self.matrix_multi_score.name}_q_y"
         )
 
+        # Softmax
         self._save_quant_data(
             q_scores, self.quant_data_file_dir, f"{self.softmax.name}_q_x"
         )
@@ -143,6 +144,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             q_att, self.quant_data_file_dir, f"{self.softmax.name}_q_y"
         )
 
+        # MatrixMulti Attention
         self._save_quant_data(
             q_att, self.quant_data_file_dir, f"{self.matrix_multi_att.name}_q_x_1"
         )
@@ -165,9 +167,9 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         q: torch.FloatTensor,
         k: torch.FloatTensor,
         v: torch.FloatTensor,
-        given_inputs_q_QParams: object,
-        given_inputs_k_QParams: object,
-        given_inputs_v_QParams: object,
+        given_inputs_q_QParams: object = None,
+        given_inputs_k_QParams: object = None,
+        given_inputs_v_QParams: object = None,
     ) -> torch.FloatTensor:
         if self.training:
             if given_inputs_q_QParams is not None:
@@ -183,22 +185,21 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_v_QParams.update_quant_params(v)
 
-        scores = self.matrix_multi_score(
+        scores = self.matrix_multi_score.forward(
             inputs1=q,
             inputs2=k,
             given_inputs1_QParams=self.inputs_q_QParams,
             given_inputs2_QParams=self.inputs_k_QParams,
         )
-
-        att = self.softmax(
+        att = self.softmax.forward(
             inputs=scores, given_inputs_QParams=self.matrix_multi_score.outputs_QParams
         )
-
-        context = self.matrix_multi_att(
+        context = self.matrix_multi_att.forward(
             inputs1=att,
             inputs2=v,
             given_inputs1_QParams=self.softmax.outputs_QParams,
             given_inputs2_QParams=self.inputs_v_QParams,
         )
         context = context.contiguous()
+        self.outputs_QParams = self.matrix_multi_att.outputs_QParams
         return context, att

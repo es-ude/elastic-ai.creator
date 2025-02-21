@@ -132,13 +132,17 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
 
         q_linear_outputs = self.q_linear.int_forward(
             q_inputs=q_q,
-        ).view(B, L, H, -1)
+        )
         k_linear_outputs = self.k_linear.int_forward(
             q_inputs=q_k,
-        ).view(B, L, H, -1)
+        )
         v_linear_outputs = self.v_linear.int_forward(
             q_inputs=q_v,
-        ).view(B, L, H, -1)
+        )
+
+        q_linear_outputs = q_linear_outputs.view(B, L, H, -1)
+        k_linear_outputs = k_linear_outputs.view(B, L, H, -1)
+        v_linear_outputs = v_linear_outputs.view(B, L, H, -1)
 
         # execute scaled dot product attention
         self._save_quant_data(
@@ -162,6 +166,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             q_k=k_linear_outputs,
             q_v=v_linear_outputs,
         )
+
         q_context = q_context.view(B, L, -1)  # B,L,H,E -> B,L,D
         self._save_quant_data(
             q_context, self.quant_data_file_dir, f"{self.inner_attn_module.name}_q_y"
@@ -185,7 +190,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         q: torch.FloatTensor,
         k: torch.FloatTensor,
         v: torch.FloatTensor,
-        given_inputs_QParams: object,
+        given_inputs_QParams: object = None,
     ) -> torch.FloatTensor:
         if self.training:
             if given_inputs_QParams is not None:
@@ -197,17 +202,15 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         L = q.shape[1]
         H = self.nhead
 
-        # linear projection and split heads
-        q = self.q_linear(inputs=q, given_inputs_QParams=self.inputs_QParams)
-        k = self.k_linear(inputs=k, given_inputs_QParams=self.inputs_QParams)
-        v = self.v_linear(inputs=v, given_inputs_QParams=self.inputs_QParams)
+        q = self.q_linear.forward(inputs=q, given_inputs_QParams=self.inputs_QParams)
+        k = self.k_linear.forward(inputs=k, given_inputs_QParams=self.inputs_QParams)
+        v = self.v_linear.forward(inputs=v, given_inputs_QParams=self.inputs_QParams)
 
         q = q.view(B, L, H, -1)  # B,L,E -> B,L,H,E/H
         k = k.view(B, L, H, -1)
         v = v.view(B, L, H, -1)
 
-        # execute scaled dot product attention
-        context, attn_weights = self.inner_attn_module(
+        context, attn_weights = self.inner_attn_module.forward(
             q=q,
             k=k,
             v=v,
@@ -219,7 +222,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         # concat heads
         context = context.view(B, L, -1)  # B,L,H,E -> B,L,D
 
-        outputs = self.output_linear(
+        outputs = self.output_linear.forward(
             inputs=context,
             given_inputs_QParams=self.inner_attn_module.matrix_multi_att.outputs_QParams,
         )

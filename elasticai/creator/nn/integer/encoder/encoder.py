@@ -15,21 +15,22 @@ class Encoder(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
+        window_size = kwargs.get("window_size")
         d_model = kwargs.get("d_model")
         nhead = kwargs.get("nhead")
-        window_size = kwargs.get("window_size")
-        enc_layers = kwargs.get("num_enc_layers")
+        num_enc_layers = kwargs.get("num_enc_layers")
 
         device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+        self.do_int_forward = kwargs.get("do_int_forward")
         self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.encoder_layers = nn.ModuleList(
             [
                 EncoderLayer(
-                    name=f"enc_layer_{i}",  # TODO: support more than 1 encoder layer
+                    name=f"enc_layer_{i}",
                     d_model=d_model,
                     nhead=nhead,
                     window_size=window_size,
@@ -37,7 +38,7 @@ class Encoder(DesignCreatorModule, nn.Module):
                     quant_data_file_dir=self.quant_data_file_dir,
                     device=device,
                 )
-                for i in range(enc_layers)
+                for i in range(num_enc_layers)
             ]
         )
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -49,6 +50,7 @@ class Encoder(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> EncoderDesign:
+        # TODO: support more than 1 encoder layer
         return EncoderDesign(
             name=name,
             data_width=self.quant_bits,
@@ -72,7 +74,6 @@ class Encoder(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
 
         encoder_attns = []
@@ -89,10 +90,14 @@ class Encoder(DesignCreatorModule, nn.Module):
             )
             current_layer_inputs = q_layer_outputs
             encoder_attns.append(layer_attns)
+
         q_encoder_outputs = q_layer_outputs
+        self._save_quant_data(
+            q_encoder_outputs, self.quant_data_file_dir, f"{self.name}_q_y"
+        )
         return q_encoder_outputs, encoder_attns
 
-    def forward(self, inputs: torch.FloatTensor, given_inputs_QParams: object):
+    def forward(self, inputs: torch.FloatTensor, given_inputs_QParams: object = None):
         if self.training:
             if given_inputs_QParams is not None:
                 self.inputs_QParams = given_inputs_QParams
@@ -101,8 +106,9 @@ class Encoder(DesignCreatorModule, nn.Module):
         encoder_attns = []
         current_inputs_QParams = self.inputs_QParams
         current_layer_inputs = inputs
+
         for layer in self.encoder_layers:
-            layer_outputs, layer_attns = layer(
+            layer_outputs, layer_attns = layer.forward(
                 inputs=current_layer_inputs, given_inputs_QParams=current_inputs_QParams
             )
             encoder_attns.append(layer_attns)
