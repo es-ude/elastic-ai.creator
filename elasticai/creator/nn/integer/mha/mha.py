@@ -28,55 +28,51 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.q_linear = (
-            Linear(  # TODO: missing num_dimensions(=window_size) for VHDL templates
-                name=self.name + "_q_linear",
-                in_features=d_model,
-                out_features=d_model,
-                quant_bits=self.quant_bits,
-                device=device,
-                bias=True,
-            )
+        self.q_linear = Linear(
+            name=self.name + "_q_linear",
+            in_features=d_model,
+            out_features=d_model,
+            num_dimensions=window_size,
+            quant_bits=self.quant_bits,
+            device=device,
+            bias=True,
         )
 
-        self.k_linear = (
-            Linear(  # TODO: missing num_dimensions(=window_size) for VHDL templates
-                name=self.name + "_k_linear",
-                in_features=d_model,
-                out_features=d_model,
-                quant_bits=self.quant_bits,
-                device=device,
-                bias=True,
-            )
+        self.k_linear = Linear(
+            name=self.name + "_k_linear",
+            in_features=d_model,
+            out_features=d_model,
+            quant_bits=self.quant_bits,
+            num_dimensions=window_size,
+            device=device,
+            bias=True,
         )
-        self.v_linear = (
-            Linear(  # TODO: missing num_dimensions(=window_size) for VHDL templates
-                name=self.name + "_v_linear",
-                in_features=d_model,
-                out_features=d_model,
-                quant_bits=self.quant_bits,
-                device=device,
-                bias=True,
-            )
+        self.v_linear = Linear(
+            name=self.name + "_v_linear",
+            in_features=d_model,
+            out_features=d_model,
+            quant_bits=self.quant_bits,
+            num_dimensions=window_size,
+            device=device,
+            bias=True,
         )
 
         self.inner_attn_module = ScaledDotProductAttention(
             name=self.name + "_inner_attn",
             quant_bits=self.quant_bits,
             nhead=self.nhead,
-            window_size=kwargs.get("window_size"),
+            window_size=window_size,
             quant_data_file_dir=self.quant_data_file_dir,
             d_model=d_model,
         )
-        self.output_linear = (
-            Linear(  # TODO: missing num_dimensions(=window_size) for VHDL templates
-                name=self.name + "_output_linear",
-                in_features=d_model,
-                out_features=d_model,
-                quant_bits=self.quant_bits,
-                device=device,
-                bias=True,
-            )
+        self.output_linear = Linear(
+            name=self.name + "_output_linear",
+            in_features=d_model,
+            out_features=d_model,
+            quant_bits=self.quant_bits,
+            num_dimensions=window_size,
+            device=device,
+            bias=True,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
