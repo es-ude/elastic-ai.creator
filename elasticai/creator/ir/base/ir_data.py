@@ -11,9 +11,11 @@ class IrData(metaclass=IrDataMeta, create_init=False):
     To create a new Ir data class, inherit from `IrData` and define your required fields.
     Supported field types are
 
-    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.adoc#RequiredField[`RequiredField`]
-    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.adoc#ReadOnlyField[`ReadOnlyField`]
-    - xref:elasticai-creator:api:elasticai.creator.ir.required_field.adoc#SimpleField[`SimpleField`]
+    - ['RequiredField'](#elasticai.creator.ir.required_field.RequiredField)
+    - [`ReadOnlyField`](#elasticai.creator.ir.required_field.ReadOnlyField)
+    - [`SimpleField`](#elasticai.creator.ir.required_field.SimpleField)
+    - [`StaticMethodField`](#elasticai.creator.ir.required_field.static_required_field)
+    - [`ReadOnlyMethodField`](#elasticai.creator.ir.required_field.read_only_field)
 
     Examples:
 
@@ -59,13 +61,14 @@ class IrData(metaclass=IrDataMeta, create_init=False):
         return missing
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.data})"
+        return f"{self.__module__}.{self.__class__.__qualname__}({self.data})"
 
     def __eq__(self, o: object) -> bool:
         if self is o:
             return True
-        if isinstance(o, self.__class__):
+        if hasattr(o, "data"):
             return o.data == self.data
+
         return False
 
 

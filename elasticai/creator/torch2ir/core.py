@@ -1,6 +1,6 @@
 from typing import Any
 
-from elasticai.creator.ir import Edge
+from elasticai.creator.ir import Attribute, Edge, GraphProtocol
 from elasticai.creator.ir import Implementation as _Implementation
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.ir import node as _node
@@ -31,3 +31,17 @@ def output_node(attributes: dict[str, Any] | None = None) -> Node:
 class Implementation(_Implementation[Node, Edge]):
     name: str
     type: str
+
+    def __init__(
+        self,
+        *,
+        graph: GraphProtocol,
+        name: str | None = None,
+        type: str | None = None,
+        data: dict[str, Attribute] | None = None,
+    ):
+        super().__init__(data=data, graph=graph, node_fn=Node, edge_fn=Edge)
+        if name is not None:
+            self.name = name
+        if type is not None:
+            self.type = type

@@ -1,5 +1,5 @@
 from .core import Edge, Node, edge, node
-from .implementation import Implementation
+from .implementation import Graph, Implementation
 from .lowering import Lowerable, LoweringPass
 
 __all__ = [
@@ -10,4 +10,5 @@ __all__ = [
     "LoweringPass",
     "Lowerable",
     "Implementation",
+    "Graph",
 ]

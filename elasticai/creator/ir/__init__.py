@@ -14,6 +14,7 @@ __all__ = [
     "read_only_field",
     "StaticMethodField",
     "ReadOnlyField",
+    "GraphProtocol",
 ]
 from .base import (
     Attribute,
@@ -25,4 +26,15 @@ from .base import (
     read_only_field,
     static_required_field,
 )
-from .core import Edge, Implementation, Lowerable, LoweringPass, Node, edge, node
+from .core import (
+    Edge,
+    Implementation,
+    Lowerable,
+    LoweringPass,
+    Node,
+    edge,
+    node,
+)
+from .core import (
+    Graph as GraphProtocol,
+)
