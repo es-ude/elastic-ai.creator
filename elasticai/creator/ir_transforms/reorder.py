@@ -1,11 +1,13 @@
 import copy
 from collections.abc import Sequence
-from typing import Protocol, TypeVar, cast
+from typing import TypeVar, cast
 
 from elasticai.creator import graph as g
 from elasticai.creator import ir
-from elasticai.creator.graph import Graph
 from elasticai.creator.torch2ir import Implementation
+
+from ._matcher import Matcher as _Matcher
+from .constraint import NodeConstraint
 
 
 def build_sequential_pattern(
@@ -24,39 +26,6 @@ def build_sequential_pattern(
 
 PNode = TypeVar("PNode", bound=ir.Node)
 GNode = TypeVar("GNode", bound=ir.Node)
-
-PNodeCon = TypeVar("PNodeCon", bound=ir.Node, contravariant=True)
-GNodeCon = TypeVar("GNodeCon", bound=ir.Node, contravariant=True)
-
-
-class NodeConstraint(Protocol[PNodeCon, GNodeCon]):
-    def __call__(self, *, pattern_node: PNodeCon, graph_node: GNodeCon) -> bool: ...
-
-
-class _Matcher:
-    def __init__(
-        self,
-        pattern: ir.Implementation[ir.Node, ir.Edge],
-        graph: ir.Implementation[ir.Node, ir.Edge],
-        node_constraint: NodeConstraint[ir.Node, ir.Node],
-    ):
-        self.pattern = pattern
-        self.graph = graph
-        self._node_constraint = node_constraint
-
-    def set_graph(self, graph: ir.Implementation[ir.Node, ir.Edge]) -> None:
-        self.graph = graph
-
-    def node_constraint(self, pattern_node: str, graph_node: str) -> bool:
-        return self._node_constraint(
-            pattern_node=self.pattern.nodes[pattern_node],
-            graph_node=self.graph.nodes[graph_node],
-        )
-
-    def __call__(self, pattern: Graph[str], graph: Graph[str]) -> list[dict[str, str]]:
-        return g.find_subgraphs(
-            pattern=pattern, graph=graph, node_constraint=self.node_constraint
-        )
 
 
 class SequenceReorderer:
