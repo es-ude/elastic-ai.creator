@@ -33,6 +33,7 @@ class RNNLayer(nn.Module):
                 name=f"{self.name}_lstm_cell",
                 inputs_size=inputs_size,
                 hidden_size=self.hidden_size,
+                seq_len=self.seq_len,
                 quant_bits=self.quant_bits,
                 quant_data_file_dir=self.quant_data_file_dir,
                 device=device,
@@ -42,6 +43,7 @@ class RNNLayer(nn.Module):
                 name=f"{self.name}_gru_cell",
                 inputs_size=inputs_size,
                 hidden_size=self.hidden_size,
+                seq_len=self.seq_len,
                 quant_bits=self.quant_bits,
                 quant_data_file_dir=self.quant_data_file_dir,
                 device=device,
@@ -123,7 +125,6 @@ class RNNLayer(nn.Module):
             self._save_quant_data(
                 q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_3"
             )
-
         return q_outputs, q_h_next, q_c_next
 
     def forward(

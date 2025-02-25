@@ -43,6 +43,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_f_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
+            num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
             bias=True,
@@ -51,6 +52,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_c_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
+            num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
             bias=True,
@@ -60,6 +62,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_i_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
+            num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
             bias=True,
@@ -69,6 +72,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_o_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
+            num_dimensions=seq_len,
             quant_bits=quant_bits,
             device=device,
             bias=True,
@@ -225,6 +229,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_i_gate_outputs, self.quant_data_file_dir, f"{self.i_gate_linear.name}_q_y"
         )
+
         # forget gate
         self._save_quant_data(
             q_concated_inputs,
@@ -235,6 +240,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_f_gate_outputs, self.quant_data_file_dir, f"{self.f_gate_linear.name}_q_y"
         )
+
         # output gate
         self._save_quant_data(
             q_concated_inputs,
@@ -245,6 +251,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_o_gate_outputs, self.quant_data_file_dir, f"{self.o_gate_linear.name}_q_y"
         )
+
         # cell gate
         self._save_quant_data(
             q_concated_inputs,
@@ -269,6 +276,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.i_sigmoid.name}_q_y",
         )
+
         # forget gate sigmoid
         self._save_quant_data(
             q_f_gate_outputs,
@@ -281,6 +289,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.f_sigmoid.name}_q_y",
         )
+
         # output gate sigmoid
         self._save_quant_data(
             q_o_gate_outputs,
@@ -293,6 +302,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             self.quant_data_file_dir,
             f"{self.o_sigmoid.name}_q_y",
         )
+
         # cell gate tanh
         self._save_quant_data(
             q_c_gate_outputs, self.quant_data_file_dir, f"{self.c_tanh.name}_q_x"
@@ -390,7 +400,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self._save_quant_data(
             q_h_next, self.quant_data_file_dir, f"{self.oc_hadamard_product.name}_q_y"
         )
-
         self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_1")
         self._save_quant_data(q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
 
