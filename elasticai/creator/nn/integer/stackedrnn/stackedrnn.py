@@ -75,10 +75,15 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         for layer in self.rnn_layers:
             layer.precompute()
 
-        h_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
-        c_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32)
-        self.q_h_0 = self.h_prev_QParams.quantize(h_0)
-        self.q_c_0 = self.c_prev_QParams.quantize(c_0)
+        h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+            "cuda"
+        )
+        c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+            "cuda"
+        )
+
+        self.q_h_prev = self.h_prev_QParams.quantize(h_prev).to("cpu")
+        self.q_c_prev = self.c_prev_QParams.quantize(c_prev).to("cpu")
 
         self.precomputed = True
 
@@ -93,8 +98,9 @@ class StackedRNN(DesignCreatorModule, nn.Module):
 
         self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
 
-        q_h_prev = self.q_h_0
-        q_c_prev = self.q_c_0
+        q_h_prev = self.q_h_prev
+        q_c_prev = self.q_c_prev
+
         for layer in self.rnn_layers:
             q_outputs, q_h_next, q_c_next = layer.int_forward(
                 q_inputs=q_inputs,
@@ -106,7 +112,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             q_c_prev = q_c_next
 
         self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y")
-        return q_h_next
+        return q_outputs[:, -1, :]
 
     def forward(
         self,
@@ -119,24 +125,21 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             else:
                 self.inputs_QParams.update_quant_params(inputs)
 
-        h_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+        h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
             inputs.device
         )
-        c_0 = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
+        c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
             inputs.device
         )
+
         if self.training:
-            self.h_prev_QParams.update_quant_params(h_0)
-            self.c_prev_QParams.update_quant_params(c_0)
+            self.h_prev_QParams.update_quant_params(h_prev)
+            self.c_prev_QParams.update_quant_params(c_prev)
 
-        h_0 = SimQuant.apply(h_0, self.h_prev_QParams)
-        c_0 = SimQuant.apply(c_0, self.c_prev_QParams)
-
-        h_prev = h_0
-        c_prev = c_0
         given_inputs_QParams = self.inputs_QParams
         given_h_prev_QParams = self.h_prev_QParams
         given_c_prev_QParams = self.c_prev_QParams
+
         for layer in self.rnn_layers:
             outputs, h_next, c_next = layer.forward(
                 inputs=inputs,
@@ -154,4 +157,4 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             given_c_prev_QParams = layer.c_next_QParams
 
         self.outputs_QParams = self.rnn_layers[-1].h_next_QParams
-        return h_next
+        return outputs[:, -1, :]

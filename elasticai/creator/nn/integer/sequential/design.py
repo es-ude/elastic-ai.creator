@@ -22,7 +22,7 @@ class Sequential(_SequentialDesign):
 
         network_template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="network.tpl.vhd",
+            file_name="sequential.tpl.vhd",
             parameters=dict(
                 layer_connections=self._generate_connections_code(),
                 layer_instantiations=self._generate_instantiations(),
@@ -46,7 +46,7 @@ class Sequential(_SequentialDesign):
 
         network_template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="network_tb.tpl.vhd",
+            file_name="sequential_tb.tpl.vhd",
             parameters=dict(
                 x_address_width=str(self._x_address_width),
                 y_address_width=str(self._y_address_width),

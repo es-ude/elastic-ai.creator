@@ -21,7 +21,7 @@ def sequential_instance(linear_layer_0, relu_layer_0, linear_layer_1):
     layers.append(linear_layer_0)
     layers.append(relu_layer_0)
     layers.append(linear_layer_1)
-    return Sequential(*layers, name="network", quant_data_file_dir=None)
+    return Sequential(*layers, name="sequential", quant_data_file_dir=None)
 
 
 @pytest.fixture
@@ -30,19 +30,19 @@ def saved_files(sequential_instance, inputs):
     sequential_instance.forward(inputs)
     sequential_instance.eval()
     sequential_instance.precompute()
-    design = sequential_instance.create_design("network")
+    design = sequential_instance.create_design("sequential")
 
     destination = InMemoryPath("source", parent=None)
     design.save_to(destination)
 
     network_folder = None
     for name, child in destination.children.items():
-        if name == "network" and isinstance(child, InMemoryPath):
+        if name == "sequential" and isinstance(child, InMemoryPath):
             network_folder = child
             break
         elif isinstance(child, InMemoryPath):
             for sub_name, sub_child in child.children.items():
-                if sub_name == "network" and isinstance(sub_child, InMemoryPath):
+                if sub_name == "sequential" and isinstance(sub_child, InMemoryPath):
                     network_folder = sub_child
                     break
             if network_folder:
@@ -57,7 +57,7 @@ def saved_files(sequential_instance, inputs):
 
 def test_saved_design_contains_needed_files(saved_files) -> None:
     expected_files = {
-        "network.vhd",
+        "sequential.vhd",
         "network_tb.vhd",
     }
     actual_files = set(saved_files.keys())
@@ -65,13 +65,13 @@ def test_saved_design_contains_needed_files(saved_files) -> None:
 
 
 def test_network_code_generated_correctly(saved_files) -> None:
-    actual_code = saved_files["network.vhd"]
+    actual_code = saved_files["sequential.vhd"]
     expected_code = """library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library work;
 use work.all;
-entity network is
+entity sequential is
     port (
         enable: in std_logic;
         clock: in std_logic;
@@ -81,8 +81,8 @@ entity network is
         y: out std_logic_vector(8-1 downto 0);
         done: out std_logic
     );
-end network;
-architecture rtl of network is
+end sequential;
+architecture rtl of sequential is
     signal i_linear_0_clock : std_logic := '0';
     signal i_linear_0_done : std_logic := '0';
     signal i_linear_0_enable : std_logic := '0';
@@ -274,7 +274,7 @@ begin
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
-    uut: entity work.network(rtl)
+    uut: entity work.sequential(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,
