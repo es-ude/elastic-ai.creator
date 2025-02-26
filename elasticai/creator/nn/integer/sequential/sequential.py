@@ -27,9 +27,9 @@ class Sequential(_SequentialBase):
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
     ) -> torch.FloatTensor:
+        outputs = inputs
         for submodule in self.submodules:
-            outputs = submodule(inputs, given_inputs_QParams=given_inputs_QParams)
-            inputs = outputs
+            outputs = submodule(outputs, given_inputs_QParams=given_inputs_QParams)
             given_inputs_QParams = submodule.outputs_QParams
         return outputs
 
@@ -54,6 +54,7 @@ class Sequential(_SequentialBase):
                 q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
             )
             q_outputs = submodule.int_forward(q_inputs)
+
             q_inputs = q_outputs
             self._save_quant_data(
                 q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"

@@ -10,6 +10,7 @@ entity ${name} is
         DATA_WIDTH : integer := ${data_width};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features};
+        NUM_DIMENSIONS : integer := ${num_dimensions};
         M_Q : integer := ${m_q};
         M_Q_SHIFT : integer := ${m_q_shift};
         Z_X : integer := ${z_x};
@@ -199,7 +200,7 @@ begin
             else
                 mac_state <= s_done;
             end if;
-            x_addr <= std_logic_vector(to_unsigned(input_idx, x_addr'length));
+            x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
             w_addr <= std_logic_vector(to_unsigned(weight_idx, w_addr'length));
             b_addr <= std_logic_vector(to_unsigned(bias_idx, b_addr'length));
         end if;
@@ -213,8 +214,8 @@ begin
     begin
         if rising_edge(clock) then
             y_ram(y_store_addr) := y_store_data;
-            address_int := to_integer(unsigned(y_addr));
-            y_out <= y_ram(address_int);
+            address_int := to_integer(unsigned(y_address));
+            y <= y_ram(address_int);
         end if;
     end process process_y_ram;
     rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)

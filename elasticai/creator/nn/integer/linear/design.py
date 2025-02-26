@@ -110,10 +110,10 @@ class Linear(Design):
         else:
             if self._in_features != 1:
                 file_name = "linear_2d.tpl.vhd"
-                template_parameters["num_dimensions"] = str(self._num_dimensions)
             else:
                 file_name = "linear_2d_feature1.tpl.vhd"
             test_file_name = "linear_2d_tb.tpl.vhd"
+            template_parameters["num_dimensions"] = str(self._num_dimensions)
             test_template_parameters["num_dimensions"] = str(self._num_dimensions)
 
         template = InProjectTemplate(

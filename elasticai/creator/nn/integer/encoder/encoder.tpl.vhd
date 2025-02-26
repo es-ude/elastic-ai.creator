@@ -55,8 +55,8 @@ begin
         clock => enc_layer_clock,
         x_address => enc_layer_x_address,
         y_address => enc_layer_y_address,
-        x => enc_layer_x_in,
-        y => enc_layer_y_out,
+        x => enc_layer_x,
+        y => enc_layer_y,
         done => enc_layer_done
     );
 end architecture;

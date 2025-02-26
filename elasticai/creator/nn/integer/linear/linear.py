@@ -24,6 +24,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
+
         self.num_dimensions = kwargs.get("num_dimensions", None)
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
