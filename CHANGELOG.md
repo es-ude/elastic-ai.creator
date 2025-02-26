@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v0.62.0](https://github.com/es-ude/elastic-ai.creator/compare/f81c05aca6ae9c6e034c38cfb0010392b191562c..v0.62.0) - 2025-02-26
+#### Features
+- **(graph)** provide replaced and resulting subgraph from rewriting - ([1b9aab8](https://github.com/es-ude/elastic-ai.creator/commit/1b9aab8349657eca5e313fe14c014109e669753e))
+- **(ir2ir)** add time multiplexed sequential plugin - ([080af51](https://github.com/es-ude/elastic-ai.creator/commit/080af5109b1be09130015952fc46a417aab12db3))
+- **(ir2ir)** add grouped filter plugin - ([5794938](https://github.com/es-ude/elastic-ai.creator/commit/5794938ad4dd0f5e97cbda16c88d3b03b47620fd))
+- **(ir2verilog)** add support verilog translation - ([f40439b](https://github.com/es-ude/elastic-ai.creator/commit/f40439bf56d5b7cb9e1e67792b11126defbdc6e7))
+- **(ir_transform)** support reordering sequential subgraphs - ([b356307](https://github.com/es-ude/elastic-ai.creator/commit/b356307121f4a964de60cea99c05f2ef66077be6))
+- **(vhdl-plugins)** add combinatorial components - ([f3f6745](https://github.com/es-ude/elastic-ai.creator/commit/f3f67458b4c7b073b2540d73b9966a31bd1bbb72))
+- **(vhdl-plugins)** add lutron implementation - ([f04aa63](https://github.com/es-ude/elastic-ai.creator/commit/f04aa63bc6cc9d6888e0c988263a7fe706f37e81))
+#### Bug Fixes
+- **(ir)** fix __eq__ and __repr__ for IrData - ([a18a207](https://github.com/es-ude/elastic-ai.creator/commit/a18a207852c71a8ca205b6f64ab6184b0947e131))
+- **(template)** return str instead of str.Template from builder - ([dfd9d8e](https://github.com/es-ude/elastic-ai.creator/commit/dfd9d8e7c8b73691a84f747fb81210248c10f4cf))
+#### Documentation
+- **(ir)** fix links in docstrings - ([fc7fc79](https://github.com/es-ude/elastic-ai.creator/commit/fc7fc7902e7f8ffd7d294da72bdadf082b9e102a))
+#### Refactoring
+- **(graph)** make pattern/graph args kw only - ([7a7ea1e](https://github.com/es-ude/elastic-ai.creator/commit/7a7ea1e4c4b1ff1ba5a9d5292e8afa58e55ced3d))
+- **(graph)** use mappings instead of functions for lhs/rhs - ([99fc7ec](https://github.com/es-ude/elastic-ai.creator/commit/99fc7ec7382f2be085b658b191cca717d6465dc1))
+- **(ir)** separate graph from ir - ([3c09f1f](https://github.com/es-ude/elastic-ai.creator/commit/3c09f1fa29bf7075124eedb858e4e414391fc93e))
+- **(ir)** turn Graph into Implementation - ([065aece](https://github.com/es-ude/elastic-ai.creator/commit/065aece5e6f0730085b45395f3da4b015f332834))
+  - **BREAKING CHANGE**: breaks every client that was previously
+    importing ir.Graph directly
+- **(ir2vhdl)** allow strings to specify src_sink_indices - ([5868dcb](https://github.com/es-ude/elastic-ai.creator/commit/5868dcb55c77136bb02128e408e009aaab0f2e6d))
+- **(template)** simplify template API - ([be6de71](https://github.com/es-ude/elastic-ai.creator/commit/be6de71516b94b3684275cce29d706c74152148e))
+  - **BREAKING CHANGE**: impacts only clients that were
+       using the template parameter classes directly
+- **(torch2ir)** automatically pass node/edge_fn to impl - ([2817325](https://github.com/es-ude/elastic-ai.creator/commit/28173258a13185a921496d81356f0889bc06ed56))
+
+- - -
+
 ## [v0.61.0](https://github.com/es-ude/elastic-ai.creator/compare/e2b86a8f8b556cd3d285f59052f11a9c173592a8..v0.61.0) - 2025-02-21
 #### Features
 - **(function-utils)** extend signature of FunctionDecorator - ([b972cf4](https://github.com/es-ude/elastic-ai.creator/commit/b972cf4923f05f2ee8f091df3a3de85e9acf7313))
