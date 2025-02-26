@@ -34,8 +34,8 @@ def create_connections_using_to_from_pairs(mapping: dict[str, str]) -> list[str]
     return connections
 
 
-def create_connection(sink, source) -> str:
-    return f"{sink} <= {source};"
+def create_connection(dst, source) -> str:
+    return f"{dst} <= {source};"
 
 
 def create_signal_definitions(prefix: str, signals: Sequence[Signal]):

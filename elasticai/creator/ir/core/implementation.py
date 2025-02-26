@@ -95,9 +95,9 @@ class Implementation(IrData, Generic[N, E], create_init=False):
             if fulfills_constraint(node):
                 subgraph.add_node(node.name)
 
-        for src, sink in original_impl.edges:
-            if fulfills_constraint(original_impl.nodes[src]) and fulfills_constraint(original_impl.nodes[sink]):
-                subgraph.add_edge(src, sink)
+        for src, dst in original_impl.edges:
+            if fulfills_constraint(original_impl.nodes[src]) and fulfills_constraint(original_impl.nodes[dst]):
+                subgraph.add_edge(src, dst)
 
         new_impl = Implementation(graph=subgraph, data=original_impl.data)
 
@@ -158,7 +158,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
     def add_edge(self, e: dict) -> Self: ...
 
     @overload
-    def add_edge(self, *, src: str, sink: str, **attributes: Attribute) -> Self: ...
+    def add_edge(self, *, src: str, dst: str, **attributes: Attribute) -> Self: ...
 
     def add_edge(self, *args, **kwargs) -> Self:
         if len(args) == 1 and not kwargs:
@@ -166,15 +166,15 @@ class Implementation(IrData, Generic[N, E], create_init=False):
                 return self.add_edge(args[0].data)
             elif isinstance(args[0], dict):
                 return self._add_edge(args[0])
-        elif len(args) == 0 and "src" in kwargs and "sink" in kwargs:
+        elif len(args) == 0 and "src" in kwargs and "dst" in kwargs:
             return self.add_edge(kwargs)
         raise TypeError(
-            "invalid arguments, expected either an Edge or a dict or keyword arguments src, sink, and more optional attributes"
+            "invalid arguments, expected either an Edge or a dict or keyword arguments src, dst, and more optional attributes"
         )
 
     def _add_edge(self, e: dict) -> Self:
-        self.graph.add_edge(e["src"], e["sink"])
-        self._edge_data[(e["src"], e["sink"])] = e
+        self.graph.add_edge(e["src"], e["dst"])
+        self._edge_data[(e["src"], e["dst"])] = e
         return self
 
     def add_nodes(self, ns: Iterable[Node | dict[str, Attribute]]) -> Self:
@@ -212,7 +212,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
     def get_edge_mapping(
         self, keys: Callable[[], Iterable[tuple[str, str]]]
     ) -> Mapping[tuple[str, str], E]:
-        """Create a read-only mapping of (src, sink) pairs to Edges in the order of `keys()`."""
+        """Create a read-only mapping of (src, dst) pairs to Edges in the order of `keys()`."""
         return _ReadOnlyMappingInOrderAsIterable(keys, self._edge_data, self._edge_fn)
 
     @read_only_field
@@ -244,7 +244,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         """
         data = d.copy()
         nodes = {node["name"]: node for node in data["nodes"]}
-        edges = {(edge["src"], edge["sink"]): edge for edge in data["edges"]}
+        edges = {(edge["src"], edge["dst"]): edge for edge in data["edges"]}
         data["nodes"] = nodes
         data["edges"] = edges
         for node in nodes.values():

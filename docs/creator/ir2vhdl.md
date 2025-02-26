@@ -74,7 +74,7 @@ relevant parameters and the structure of the network.
 
       class Edge {
         +str src
-        +str sink
+        +str dst
         +dict attributes
       }
 
@@ -198,8 +198,8 @@ complex. The result could look like this
     "edges": [
       {
         "src": "input",
-        "sink": "conv_0_i0",
-        "src_sink_indices": [
+        "dst": "conv_0_i0",
+        "src_dst_indices": [
           [0, 0],
           [1, 1],
           [2, 2],
@@ -208,8 +208,8 @@ complex. The result could look like this
       },
       {
         "src": "input",
-        "sink": "conv_0_i1",
-        "src_sink_indices": [
+        "dst": "conv_0_i1",
+        "src_dst_indices": [
           [2, 0],
           [3, 1],
           [4, 2],
@@ -218,18 +218,18 @@ complex. The result could look like this
       },
       {
         "src": "conv_0_i0",
-        "sink": "linear_0_i0",
-        "src_sink_indices": [[0, 0]]
+        "dst": "linear_0_i0",
+        "src_dst_indices": [[0, 0]]
       },
       {
         "src": "conv_0_i1",
-        "sink": "linear_0_i0",
-        "src_sink_indices": [[0, 1]]
+        "dst": "linear_0_i0",
+        "src_dst_indices": [[0, 1]]
       },
       {
         "src": "linear_0",
-        "sink": "output",
-        "src_sink_indices": [[0, 0]]
+        "dst": "output",
+        "src_dst_indices": [[0, 0]]
       }
     ]
   },

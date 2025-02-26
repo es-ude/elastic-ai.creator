@@ -47,8 +47,8 @@ def clocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
         connected_valid_signals = []
         valid_in_out_pairs = tuple(_get_valid_in_out_pairs(impl).items())
         connected_valid_signals.extend(("valid_out_input <= valid_in;",))
-        for sink, src in valid_in_out_pairs:
-            connected_valid_signals.append(f"valid_in_{sink} <= valid_out_{src};")
+        for dst, src in valid_in_out_pairs:
+            connected_valid_signals.append(f"valid_in_{dst} <= valid_out_{src};")
         connected_valid_signals.append("valid_out <= valid_in_output;")
         definitions = chain(
             definitions,

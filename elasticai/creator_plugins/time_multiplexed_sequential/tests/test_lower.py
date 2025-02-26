@@ -104,20 +104,20 @@ def test_add_correct_edges(lower):
     expected = (
         edge(
             src="input",
-            sink="conv0_i0",
-            src_sink_indices=tuple(),
+            dst="conv0_i0",
+            src_dst_indices=tuple(),
         ),
         edge(
             src="conv0_i0",
-            sink="striding_shift_register_i0",
-            src_sink_indices=tuple(),
+            dst="striding_shift_register_i0",
+            src_dst_indices=tuple(),
         ),
         edge(
             src="striding_shift_register_i0",
-            sink="conv1_i0",
-            src_sink_indices=tuple(),
+            dst="conv1_i0",
+            src_dst_indices=tuple(),
         ),
-        edge(src="conv1_i0", sink="output", src_sink_indices=tuple()),
+        edge(src="conv1_i0", dst="output", src_dst_indices=tuple()),
     )
     assert edges == expected
 

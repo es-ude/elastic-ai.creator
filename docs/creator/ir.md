@@ -28,7 +28,7 @@ We define the following terms
     with the same name and type respectively. Any node that is not
     transitively connected as a source (i.e., by an outgoing edge) to
     the output node is considered a **dead node**. A node not connected
-    to the input node as a sink (i.e., by an incoming edge) is an
+    to the input node as a destination (i.e., by an incoming edge) is an
     independent node. That means it's value does not depend on incoming
     data.
 
@@ -55,10 +55,10 @@ Edge
     individual lowering passes to add edges for other things, e.g.,
     control signals.
 
-Source / Sink
+Source / Destination
 
 :   Given an edge $(n_1, n_2) \in E_G$ we call $n_1$ **source** (`src`) and
-    $n_2$ **sink** (`sink`). The terms refer to the direction of data flow.
+    $n_2$ **destination** (`dst`). The terms refer to the direction of data flow.
     They have been chosen over other possible terms like input/output because
     those are reserved tokens in many programming languages.
 

@@ -23,7 +23,7 @@ def test_graph_is_serialized():
     g = Graph(data=dict(name="network", type="network"))
     g.add_node(node(name="node1", type="type1"))
     g.add_node(node(name="node2", type="type2"))
-    g.add_edge(edge(src="node1", sink="node2"))
+    g.add_edge(edge(src="node1", dst="node2"))
     assert g.data == {
         "name": "network",
         "type": "network",
@@ -32,7 +32,7 @@ def test_graph_is_serialized():
             "node2": {"name": "node2", "type": "type2"},
         },
         "edges": {
-            ("node1", "node2"): {"src": "node1", "sink": "node2"},
+            ("node1", "node2"): {"src": "node1", "dst": "node2"},
         },
     }
 

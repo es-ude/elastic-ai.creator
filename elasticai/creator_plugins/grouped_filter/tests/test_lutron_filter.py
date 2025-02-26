@@ -72,8 +72,8 @@ class TestLutronFilterWithSingleGroup:
         expected_edges.add(
             edge(
                 src="input",
-                sink="lutron_0_i0",
-                src_sink_indices=tuple(
+                dst="lutron_0_i0",
+                src_dst_indices=tuple(
                     zip(
                         range(p.in_channels * p.kernel_size),
                         range(p.in_channels * p.kernel_size),
@@ -84,8 +84,8 @@ class TestLutronFilterWithSingleGroup:
         expected_edges.add(
             edge(
                 src="lutron_0_i0",
-                sink="output",
-                src_sink_indices=(
+                dst="output",
+                src_dst_indices=(
                     f"range(0, {p.out_channels})",
                     f"range(0, {p.out_channels})",
                 ),
@@ -104,26 +104,26 @@ class TestLutronFilterWithTwoGroups:
             (
                 edge(
                     src="input",
-                    sink="lutron_0_i0",
-                    src_sink_indices=(
+                    dst="lutron_0_i0",
+                    src_dst_indices=(
                         (0, 0),
                         (2, 1),
                     ),
                 ),
                 edge(
                     src="input",
-                    sink="lutron_1_i0",
-                    src_sink_indices=((1, 0), (3, 1)),
+                    dst="lutron_1_i0",
+                    src_dst_indices=((1, 0), (3, 1)),
                 ),
                 edge(
                     src="lutron_0_i0",
-                    sink="output",
-                    src_sink_indices=("range(0, 2)", "range(0, 2)"),
+                    dst="output",
+                    src_dst_indices=("range(0, 2)", "range(0, 2)"),
                 ),
                 edge(
                     src="lutron_1_i0",
-                    sink="output",
-                    src_sink_indices=("range(0, 2)", "range(2, 4)"),
+                    dst="output",
+                    src_dst_indices=("range(0, 2)", "range(2, 4)"),
                 ),
             )
         )

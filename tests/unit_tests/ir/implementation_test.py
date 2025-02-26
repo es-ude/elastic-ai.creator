@@ -21,7 +21,7 @@ def test_graph_is_serialized():
     g = Graph(data=dict(name="network", type="network"))
     g.add_node(node(name="node1", type="type1"))
     g.add_node(node(name="node2", type="type2"))
-    g.add_edge(edge(src="node1", sink="node2"))
+    g.add_edge(edge(src="node1", dst="node2"))
     assert g.data == {
         "name": "network",
         "type": "network",
@@ -30,7 +30,7 @@ def test_graph_is_serialized():
             "node2": {"name": "node2", "type": "type2"},
         },
         "edges": {
-            ("node1", "node2"): {"src": "node1", "sink": "node2"},
+            ("node1", "node2"): {"src": "node1", "dst": "node2"},
         },
     }
 
@@ -45,10 +45,10 @@ def test_can_retrieve_edges() -> None:
         Graph()
         .add_node(name="x", type="t")
         .add_node(name="y", type="t")
-        .add_edge(src="x", sink="y")
+        .add_edge(src="x", dst="y")
     )
     edges = tuple(g.edges.values())
-    assert edge(src="x", sink="y") == edges[0]
+    assert edge(src="x", dst="y") == edges[0]
 
 
 @pytest.fixture
@@ -58,8 +58,8 @@ def graph() -> Graph:
         .add_node(name="x", type="t")
         .add_node(name="y", type="t")
         .add_node(name="z", type="t")
-        .add_edge(src="x", sink="y")
-        .add_edge(src="y", sink="z", extra="e")
+        .add_edge(src="x", dst="y")
+        .add_edge(src="y", dst="z", extra="e")
     )
     return g
 
