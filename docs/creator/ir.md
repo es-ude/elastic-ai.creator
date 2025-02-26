@@ -62,6 +62,14 @@ Source / Destination
     They have been chosen over other possible terms like input/output because
     those are reserved tokens in many programming languages.
 
+Upstream / Downstream
+
+:   We use the terms **upstream** and **downstream** to refer to the direction
+    of dataflow. Thus, downstream child nodes of a node $n$ are the nodes $m$
+    that are connected to $n$ as a destination, i.e., for which $(n, m) \in E_G$.
+    Upstream is the opposite direction. Upstream child nodes of $n$ are
+    the nodes $m$ for which $(m, n) \in E_G$.
+
 Lowering Pass
 
 :   A translation stage to or from an intermediate representation, that
