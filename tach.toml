@@ -24,6 +24,7 @@ from = [
     "elasticai.creator.torch2ir",
     "elasticai.creator.graph",
     "elasticai.creator.ir_transforms",
+    "elasticai.creator.ir2verilog",
 ]
 
 [[modules]]
@@ -188,5 +189,20 @@ depends_on = [
 ]
 
 [[modules]]
+path = "elasticai.creator.ir2verilog"
+depends_on = [
+    'elasticai.creator.ir',
+    'elasticai.creator.plugin',
+    'elasticai.creator.function_utils',
+    'elasticai.creator.graph',
+    'elasticai.creator.template',
+]
+
+[[modules]]
 path = "<root>"
-depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn", "elasticai.creator.vhdl", "elasticai.creator.nn.fixed_point"]
+depends_on = [
+    "elasticai.creator.file_generation",
+    "elasticai.creator.nn",
+    "elasticai.creator.vhdl",
+    "elasticai.creator.nn.fixed_point",
+]
