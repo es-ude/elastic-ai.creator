@@ -14,15 +14,17 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 ## Table of contents
 
-- [Users Guide](#users-guide)
-  - [Install](#install)
-  - [Minimal Example](#minimal-example)
-  - [Features](#features)
-    - [Supported Network Architectures and Layers](#supported-network-architectures-and-layers)
-    - [Planned Network Architectures](#planned-network-architectures-and-layers-supported-in-the-future)
-    - [Modules in Development](#modules-in-development)
-    - [Deprecated Modules](#deprecated-modules-removal-up-to-discussion)
-    - [General Limitations](#general-limitations)
+- [ElasticAI.creator](#elasticaicreator)
+  - [Table of contents](#table-of-contents)
+  - [Users Guide](#users-guide)
+    - [Install](#install)
+    - [Minimal Example](#minimal-example)
+    - [Features](#features)
+      - [Supported network architectures and layers](#supported-network-architectures-and-layers)
+      - [Planned network architectures and layers supported in the future](#planned-network-architectures-and-layers-supported-in-the-future)
+      - [Modules in development:](#modules-in-development)
+      - [Deprecated modules (removal up to discussion):](#deprecated-modules-removal-up-to-discussion)
+      - [General limitations](#general-limitations)
   - [Structure of the Project](#structure-of-the-project)
 
 
@@ -53,6 +55,15 @@ Furthermore, it will generate a skeleton for the Elastic Node V5 that you can us
 
 
 ### Features
+
+- Modular architecture for adding new custom VHDL components
+- Translation from IR to VHDL ([combinatorial](./docs/creator/plugins/combinatorial.md))
+- [Builtin VHDL components](./docs/creator/plugins/vhdl.md):
+  - time multiplexed networks
+  - counter
+  - shift registers
+  - sliding window
+  - grouped filters
 
 #### Supported network architectures and layers
 
