@@ -1,5 +1,3 @@
-from elasticai.creator.template import Template
-
 from .ir2vhdl import (
     Code,
     Edge,

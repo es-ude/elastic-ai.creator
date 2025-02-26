@@ -1,59 +1,67 @@
+from string import Template as _pyTemplate
 from typing import Mapping, Self, cast
 
 from elasticai.creator import template as tpl
 
 
 class _Definition(tpl.TemplateParameter):
-    def __init__(self, type: str, name: str):
+    def __init__(self, type: str, name: str, delimiter: str) -> None:
         self.name = name
+        self.delimiter = delimiter
         self.regex = r"(?P<param>{type}\s+(signed\s+)?(\[.*?\]\s+)?{name}\s*=)\s?.[^;,\n]*".format(
             type=type, name=name
         )
 
     def replace(self, m: dict[str, str]) -> str:
-        return f"{m['param']} ${self.name}"
+        d = self.delimiter
+        return f"{m['param']} {d}{self.name}"
 
 
 class _LocalParameter(_Definition):
     """Turn the localparam `name` into a template parameter."""
 
-    def __init__(self, name: str):
-        super().__init__("localparam", name)
+    def __init__(self, name: str, delimiter: str):
+        super().__init__("localparam", name, delimiter)
 
 
 class _Parameter(_Definition):
-    def __init__(self, name: str):
-        super().__init__("parameter", name)
+    def __init__(self, name: str, delimiter: str):
+        super().__init__("parameter", name, delimiter)
 
 
 class _IdParameter(tpl.TemplateParameter):
-    def __init__(self, name: str):
+    def __init__(self, name: str, delimiter: str):
         self.name = name
+        self.delimiter = delimiter
         self.regex = r"(?P<prefix>[^_a-zA-Z0-9]*)(?P<id>{name})(?P<suffix>[^_a-zA-Z0-9]*)".format(
             name=name
         )
 
     def replace(self, m: dict[str, str]) -> str:
-        return f"{m['prefix']}${self.name}{m['suffix']}"
+        d = self.delimiter
+        return f"{m['prefix']}{d}{self.name}{m['suffix']}"
 
 
 class _DefineSwitch(tpl.TemplateParameter):
-    def __init__(self, name: str):
+    def __init__(self, name: str, delimiter: str):
         self.name = name
         self.regex = r"`define\s+{name}()(?=\s)".format(name=name)
+        self.delimiter = delimiter
 
     def replace(self, m: dict[str, str]) -> str:
-        return f"$def{self.name}"
+        d = self.delimiter
+        return f"{d}def{self.name}"
 
 
 class _ModuleName(tpl.AnalysingTemplateParameter):
-    def __init__(self):
+    def __init__(self, delimiter: str):
         self._pre_analysis_regex = (
             r"(?P<prefix>[^_a-zA-Z0-9]){name}(?P<suffix>[^_a-zA-Z0-9])"
         )
         self.regex = ""
         self.analyse_regex = r"module\s+(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)"
         self._analysed = False
+        self._delimiter = delimiter
 
     def analyse(self, match: dict[str, str]) -> None:
         self._analysed = True
@@ -61,9 +69,10 @@ class _ModuleName(tpl.AnalysingTemplateParameter):
         self.regex = self._pre_analysis_regex.format(name=name)
 
     def replace(self, match: dict[str, str]) -> str:
+        d = self._delimiter
         if not self._analysed:
             raise ValueError("No module name found")
-        return f"{match['prefix']}$module_name{match['suffix']}"
+        return f"{match['prefix']}{d}module_name{match['suffix']}"
 
 
 class TemplateDirector:
@@ -74,6 +83,7 @@ class TemplateDirector:
     def __init__(self) -> None:
         self._builder = tpl.TemplateBuilder()
         self._define_switches: dict[str, bool] = {}
+        self._delimiter = "§"
 
     def reset(self) -> Self:
         self._builder = tpl.TemplateBuilder()
@@ -85,11 +95,11 @@ class TemplateDirector:
         return self
 
     def parameter(self, name: str) -> Self:
-        self._builder.add_parameter(_Parameter(name))
+        self._builder.add_parameter(_Parameter(name, self._delimiter))
         return self
 
     def localparam(self, name: str) -> Self:
-        self._builder.add_parameter(_LocalParameter(name))
+        self._builder.add_parameter(_LocalParameter(name, self._delimiter))
         return self
 
     def define_scoped_switch(self, name: str, default=True) -> Self:
@@ -97,22 +107,27 @@ class TemplateDirector:
 
         The switch will be prefixed with the value that users provide as `module_name` to the render call.
         """
-        switch = _DefineSwitch(name)
+        switch = _DefineSwitch(name, self._delimiter)
         self._builder.add_parameter(switch)
-        self._builder.add_parameter(_IdParameter(name))
+        self._builder.add_parameter(_IdParameter(name, self._delimiter))
         self._define_switches[name] = default
         return self
 
     def add_module_name(self) -> Self:
-        self._builder.add_parameter(_ModuleName())
+        self._builder.add_parameter(_ModuleName(self._delimiter))
         return self
 
     def build(self) -> "VerilogTemplate":
-        return VerilogTemplate(self._builder.build(), self._define_switches)
+        MyStrTemplate = type(
+            "MyStrTemplate", (_pyTemplate,), {"delimiter": self._delimiter}
+        )
+        return VerilogTemplate(
+            MyStrTemplate(self._builder.build()), self._define_switches
+        )
 
 
 class VerilogTemplate:
-    def __init__(self, template: tpl.Template, defines: dict[str, bool]) -> None:
+    def __init__(self, template: _pyTemplate, defines: dict[str, bool]) -> None:
         self._template = template
         self._defines = defines.copy()
 
@@ -124,7 +139,7 @@ class VerilogTemplate:
         """Enable a define switch, ie. uncomment the define statement"""
         self._defines[name] = True
 
-    def render(self, params: Mapping[str, str | bool]) -> str:
+    def substitute(self, params: Mapping[str, str | bool]) -> str:
         new_params: dict[str, str] = {}
         if "module_name" in params:
             module_prefix = f"{params['module_name']}_"
@@ -148,4 +163,4 @@ class VerilogTemplate:
                 new_params[defname] = "// automatically disabled\n// " + cast(
                     str, new_params[defname]
                 )
-        return self._template.render(new_params)
+        return self._template.substitute(new_params)

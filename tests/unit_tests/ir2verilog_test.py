@@ -11,7 +11,8 @@ class TestVerilogTemplate:
         )
 
         assert (
-            template.render({"DATA_WIDTH": "'h16"}) == "localparam DATA_WIDTH = 'h16;"
+            template.substitute({"DATA_WIDTH": "'h16"})
+            == "localparam DATA_WIDTH = 'h16;"
         )
 
     def test_can_set_parameter_before_comma(self):
@@ -22,7 +23,10 @@ class TestVerilogTemplate:
             .build()
         )
 
-        assert template.render({"DATA_WIDTH": "'h16"}) == "parameter DATA_WIDTH = 'h16,"
+        assert (
+            template.substitute({"DATA_WIDTH": "'h16"})
+            == "parameter DATA_WIDTH = 'h16,"
+        )
 
     def test_keep_new_line_between_define_switches(self):
         template = (
@@ -34,7 +38,7 @@ class TestVerilogTemplate:
         )
 
         assert (
-            template.render(
+            template.substitute(
                 {
                     "DATA_WIDTH": True,
                     "DATA_LENGTH": True,
@@ -53,7 +57,8 @@ class TestVerilogTemplate:
         )
 
         assert (
-            template.render({"DATA_WIDTH": "'h16"}) == "parameter DATA_WIDTH = 'h16\n"
+            template.substitute({"DATA_WIDTH": "'h16"})
+            == "parameter DATA_WIDTH = 'h16\n"
         )
 
     def test_can_undefine_data_width(self):
@@ -65,7 +70,7 @@ class TestVerilogTemplate:
         )
         template.undef("DATA_WIDTH")
         assert (
-            template.render({})
+            template.substitute({})
             == """// automatically disabled\n// `define DATA_WIDTH 8"""
         )
 
@@ -77,7 +82,7 @@ class TestVerilogTemplate:
             .build()
         )
         template.define("DATA_WIDTH")
-        assert template.render({}) == "`define DATA_WIDTH 8"
+        assert template.substitute({}) == "`define DATA_WIDTH 8"
 
     def test_can_replace_module_name(self):
         template = (
@@ -87,7 +92,7 @@ class TestVerilogTemplate:
             .build()
         )
         assert (
-            template.render({"module_name": "FILTER_FIR_MY_NAME_HALF"})
+            template.substitute({"module_name": "FILTER_FIR_MY_NAME_HALF"})
             == "module FILTER_FIR_MY_NAME_HALF#("
         )
 
@@ -99,7 +104,7 @@ class TestVerilogTemplate:
             .build()
         )
         assert (
-            template.render({"module_name": "FILTER_FIR_HALF"})
+            template.substitute({"module_name": "FILTER_FIR_HALF"})
             == "`define FILTER_FIR_HALF_DATA_WIDTH 8"
         )
 
@@ -111,6 +116,6 @@ class TestVerilogTemplate:
             .build()
         )
         assert (
-            template.render({"module_name": "FILTER_FIR_HALF"})
+            template.substitute({"module_name": "FILTER_FIR_HALF"})
             == "`define FILTER_FIR_HALF_DATA_WIDTH 8\nFILTER_FIR_HALF_DATA_WIDTH + 10"
         )

@@ -2,17 +2,7 @@ from collections.abc import Callable
 from functools import singledispatchmethod
 from re import Match, Pattern
 from re import compile as _regex_compile
-from string import Template as _pyTemplate
 from typing import Iterable, Protocol, runtime_checkable
-
-
-class Template(Protocol):
-    def render(self, mapping: dict[str, str]) -> str:
-        """Replace all parameters in the template by the values provided by mapping.
-
-        Will raise a `KeyError` if not all parameter values are defined in mapping.
-        """
-        ...
 
 
 @runtime_checkable
@@ -131,7 +121,7 @@ class TemplateBuilder:
         self._analysing_template_parameters: dict[str, _AnalyseParameterTypeWrapper] = (
             dict()
         )
-        self._template = _pyTemplate("")
+        self._template = ""
         self._cached_template_is_valid = False
 
     def set_prototype(
@@ -178,12 +168,12 @@ class TemplateBuilder:
 
         return adder
 
-    def build(self) -> Template:
+    def build(self) -> str:
         if not self._cached_template_is_valid:
             self._analyse()
             regex = self._build_replacement_regex()
-            self._template = _pyTemplate(regex.sub(self._replace, self._prototype))
-        return _Template(self._template)
+            self._template = regex.sub(self._replace, self._prototype)
+        return self._template
 
     def _replace(self, m: Match) -> str:
         type_name = m.lastgroup
@@ -294,15 +284,3 @@ def _demangle_capture_group_names(name, match: dict[str, str]) -> dict[str, str]
             k = k.removeprefix("_")
             new_dict[k] = v
     return new_dict
-
-
-class _Template:
-    def __init__(self, template: _pyTemplate) -> None:
-        self._template = template
-
-    def render(self, mapping: dict[str, str]) -> str:
-        """Replace all parameters in the template by the values provided by mapping.
-
-        Will raise a `KeyError` if not all parameter values are defined in mapping.
-        """
-        return self._template.substitute(mapping)
