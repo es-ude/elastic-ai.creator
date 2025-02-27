@@ -73,10 +73,10 @@ class MHA(Design):
                 name=self.name,
                 data_width=str(self._data_width),
                 q_linear_x_addr_width=str(self.q_linear_design._x_addr_width),
-                q_linear_y_addr_width=str(self.q_linear_design._y_addr_width),
                 k_linear_x_addr_width=str(self.k_linear_design._x_addr_width),
-                k_linear_y_addr_width=str(self.k_linear_design._y_addr_width),
                 v_linear_x_addr_width=str(self.v_linear_design._x_addr_width),
+                q_linear_y_addr_width=str(self.q_linear_design._y_addr_width),
+                k_linear_y_addr_width=str(self.k_linear_design._y_addr_width),
                 v_linear_y_addr_width=str(self.v_linear_design._y_addr_width),
                 inner_attn_y_address_width=str(
                     self.inner_attn_module_design._y_addr_width

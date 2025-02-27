@@ -97,7 +97,7 @@ architecture rtl of ${name} is
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal macc_sum : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal macc_sum : signed(MACC_OUT_WIDTH - 1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     w_int <= signed(w_in);
