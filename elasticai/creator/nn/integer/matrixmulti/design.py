@@ -60,30 +60,13 @@ class MatrixMulti(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        print("-----------self.name", self.name, "-----------")
-
         self._x_1_count = self._x_1_dim_a * self._x_1_dim_b * self._x_1_dim_c
         self._x_2_count = self._x_2_dim_a * self._x_2_dim_b * self._x_2_dim_c
         self._y_count = self._y_dim_a * self._y_dim_b * self._y_dim_c
-        print("self._x_1_dim_a", self._x_1_dim_a)
-        print("self._x_1_dim_b", self._x_1_dim_b)
-        print("self._x_1_dim_c", self._x_1_dim_c)
-        print("---x_1_count", self._x_1_count)
-        print("self._x_2_dim_a", self._x_2_dim_a)
-        print("self._x_2_dim_b", self._x_2_dim_b)
-        print("self._x_2_dim_c", self._x_2_dim_c)
-        print("---x_2_count", self._x_2_count)
-        print("self._y_dim_a", self._y_dim_a)
-        print("self._y_dim_b", self._y_dim_b)
-        print("self._y_dim_c", self._y_dim_c)
-        print("---y_count", self._y_count)
 
         self._x_1_addr_width = calculate_address_width(self._x_1_count)
         self._x_2_addr_width = calculate_address_width(self._x_2_count)
         self._y_addr_width = calculate_address_width(self._y_count)
-        print("x_1_addr_width", self._x_1_addr_width)
-        print("x_2_addr_width", self._x_2_addr_width)
-        print("y_addr_width", self._y_addr_width)
 
     @property
     def port(self) -> Port:

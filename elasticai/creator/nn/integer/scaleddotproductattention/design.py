@@ -59,13 +59,6 @@ class ScaledDotProductAttention(Design):
         self._x_3_addr_width = self.matrix_multi_att_design._x_2_addr_width
         self._y_addr_width = self.matrix_multi_att_design._y_addr_width
 
-        print("-----------self.name", self.name, "-----------")
-        print("self._x_1_addr_width", self._x_1_addr_width)
-        print("self._x_2_addr_width", self._x_2_addr_width)
-        print("self._y_score_addr_width", self._y_score_addr_width)
-        print("self._x_3_addr_width", self._x_3_addr_width)
-        print("self._y_addr_width", self._y_addr_width)
-
     @property
     def port(self) -> Port:
         return create_port(
