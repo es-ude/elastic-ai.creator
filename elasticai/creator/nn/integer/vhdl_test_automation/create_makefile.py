@@ -3,12 +3,14 @@ import os
 
 def create_makefile(destination_dir, stop_time="4000ns"):
     makefile_content = f"""# vhdl files
-FILES = ./source/*/*.vhd
+
+# files
+FILES = $(shell find ./source -type f -name "*.vhd")
 VHDLEX = .vhd
 
 # testbench
 TESTBENCHFILE = ${{TESTBENCH}}_tb
-TESTBENCHPATH = ./source/*/${{TESTBENCHFILE}}$(VHDLEX)
+TESTBENCHPATH = $(shell find ./source -type f -name "${{TESTBENCH}}_tb.vhd")
 
 # GHDL CONFIG
 GHDL_CMD = ghdl3

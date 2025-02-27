@@ -1,6 +1,6 @@
 --
 --! @file Main entity for interfacing with the ICAP,
---! used for specifying the next configuration to boot 
+--! used for specifying the next configuration to boot
 --! and to trigger a reconfiguration
 --! @brief Main entity for interfacing with the ICAP of the FPGA
 --
@@ -11,9 +11,9 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 --! Use device primitives
-Library UNISIM;
+-- Library UNISIM;
 --! For using the ICAP_SPARTAN6 component
-use UNISIM.vcomponents.all;
+-- use UNISIM.vcomponents.all;
 
 --
 --! @brief Main entity for interfacing with the ICAP of the FPGA
@@ -36,7 +36,7 @@ end icapInterface;
 
 architecture Behavioral of icapInterface is
 
-type state_type is 
+type state_type is
 	(IDLE, WAITING_FLASH,DUMMY,SYNC,CMD_0,CMD_1,CMD_2,CMD_3,WRITE_CMD,IPROG);
 attribute enum_encoding : string;
 attribute enum_encoding of state_type : type is "sequential";
@@ -94,7 +94,7 @@ begin
 	end process;
 
     with current_state select icap_in <=
-		x"FFFFFFFF" when IDLE,              -- 
+		x"FFFFFFFF" when IDLE,              --
 		x"FFFFFFFF" when DUMMY,             -- Dummy Word
 		x"AA995566" when SYNC,              -- Sync Word
 		x"20000000" when CMD_0,             -- Type 1 NO OP

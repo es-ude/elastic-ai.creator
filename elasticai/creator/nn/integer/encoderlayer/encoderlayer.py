@@ -201,7 +201,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             q_ffn_norm_outputs, self.quant_data_file_dir, f"{self.ffn_norm.name}_q_y"
         )
 
-        return q_ffn_norm_outputs, mha_attns
+        return q_ffn_norm_outputs  # , mha_attns
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: object = None
@@ -244,4 +244,4 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         )
         self.outputs_QParams = self.ffn_norm.outputs_QParams
 
-        return ffn_norm_outputs, mha_attns
+        return ffn_norm_outputs  # , mha_attns

@@ -9,9 +9,11 @@ from elasticai.creator.nn.integer.encoder.design import Encoder as EncoderDesign
 from elasticai.creator.nn.integer.encoderlayer import EncoderLayer
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.sequential import Sequential
 
 
-class Encoder(DesignCreatorModule, nn.Module):
+# class Encoder(DesignCreatorModule, nn.Module):
+class Encoder(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -30,7 +32,7 @@ class Encoder(DesignCreatorModule, nn.Module):
         self.encoder_layers = nn.ModuleList(
             [
                 EncoderLayer(
-                    name=f"enc_layer_{i}",
+                    name=f"encoderlayer_{i}",
                     d_model=d_model,
                     nhead=nhead,
                     window_size=window_size,
@@ -47,73 +49,101 @@ class Encoder(DesignCreatorModule, nn.Module):
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
+
+        self.sequential = Sequential(
+            *self.encoder_layers,
+            name=self.name,
+            quant_data_file_dir=self.quant_data_file_dir,
+        )
+
         self.precomputed = False
 
-    def create_design(self, name: str) -> EncoderDesign:
-        # TODO: support more than 1 encoder layer
-        return EncoderDesign(
-            name=name,
-            data_width=self.quant_bits,
-            encoder_layers=self.encoder_layers,
-            work_library_name="work",
-        )
+    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+        q_outputs = self.sequential.int_forward(q_inputs)
+        return q_outputs
 
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
-
-    def precompute(self) -> None:
-        for layer in self.encoder_layers:
-            layer.precompute()
-        self.precomputed = True
-
-    def int_forward(
+    def forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
-        assert not self.training, "int_forward should be called in eval mode"
-        assert self.precomputed, "precompute should be called before int_forward"
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
-
-        encoder_attns = []
-        current_layer_inputs = q_inputs
-        for layer in self.encoder_layers:
-            self._save_quant_data(
-                current_layer_inputs, self.quant_data_file_dir, f"{layer.name}_q_x"
-            )
-            q_layer_outputs, layer_attns = layer.int_forward(
-                q_inputs=current_layer_inputs,
-            )
-            self._save_quant_data(
-                q_layer_outputs, self.quant_data_file_dir, f"{layer.name}_q_y"
-            )
-            current_layer_inputs = q_layer_outputs
-            encoder_attns.append(layer_attns)
-
-        q_encoder_outputs = q_layer_outputs
-        self._save_quant_data(
-            q_encoder_outputs, self.quant_data_file_dir, f"{self.name}_q_y"
-        )
-        return q_encoder_outputs, encoder_attns
-
-    def forward(self, inputs: torch.FloatTensor, given_inputs_QParams: object = None):
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+    ) -> torch.FloatTensor:
         if self.training:
             if given_inputs_QParams is not None:
                 self.inputs_QParams = given_inputs_QParams
             else:
-                self.inputs_QParams.update_quant_params(inputs)
-        encoder_attns = []
-        current_inputs_QParams = self.inputs_QParams
-        current_layer_inputs = inputs
+                self.inputs_QParams.update_quant_params
 
-        for layer in self.encoder_layers:
-            layer_outputs, layer_attns = layer.forward(
-                inputs=current_layer_inputs, given_inputs_QParams=current_inputs_QParams
-            )
-            encoder_attns.append(layer_attns)
-            current_layer_inputs = layer_outputs
-            current_inputs_QParams = layer.outputs_QParams
-        encoder_outputs = layer_outputs
-        self.outputs_QParams = current_inputs_QParams
-        return encoder_outputs, encoder_attns
+        outputs = self.sequential.forward(
+            inputs, given_inputs_QParams=self.inputs_QParams
+        )
+        self.outputs_QParams = self.sequential.submodules[-1].outputs_QParams
+        return outputs
+
+    # def create_design(self, name: str) -> EncoderDesign:
+    #     # TODO: support more than 1 encoder layer
+    #     return EncoderDesign(
+    #         name=name,
+    #         data_width=self.quant_bits,
+    #         encoder_layers=self.encoder_layers,
+    #         work_library_name="work",
+    #     )
+
+    # def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
+    #     file_path = file_dir / f"{file_name}.txt"
+    #     tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
+    #     file_path.write_text(tensor_str)
+
+    # def precompute(self) -> None:
+    #     for layer in self.encoder_layers:
+    #         layer.precompute()
+    #     self.precomputed = True
+
+    # def int_forward(
+    #     self,
+    #     q_inputs: torch.IntTensor,
+    # ) -> torch.IntTensor:
+    #     assert not self.training, "int_forward should be called in eval mode"
+    #     assert self.precomputed, "precompute should be called before int_forward"
+    #     self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
+
+    #     encoder_attns = []
+    #     current_layer_inputs = q_inputs
+    #     for layer in self.encoder_layers:
+    #         self._save_quant_data(
+    #             current_layer_inputs, self.quant_data_file_dir, f"{layer.name}_q_x"
+    #         )
+    #         q_layer_outputs, layer_attns = layer.int_forward(
+    #             q_inputs=current_layer_inputs,
+    #         )
+    #         self._save_quant_data(
+    #             q_layer_outputs, self.quant_data_file_dir, f"{layer.name}_q_y"
+    #         )
+    #         current_layer_inputs = q_layer_outputs
+    #         encoder_attns.append(layer_attns)
+
+    #     q_encoder_outputs = q_layer_outputs
+    #     self._save_quant_data(
+    #         q_encoder_outputs, self.quant_data_file_dir, f"{self.name}_q_y"
+    #     )
+    #     return q_encoder_outputs, encoder_attns
+
+    # def forward(self, inputs: torch.FloatTensor, given_inputs_QParams: object = None):
+    #     if self.training:
+    #         if given_inputs_QParams is not None:
+    #             self.inputs_QParams = given_inputs_QParams
+    #         else:
+    #             self.inputs_QParams.update_quant_params(inputs)
+    #     encoder_attns = []
+    #     current_inputs_QParams = self.inputs_QParams
+    #     current_layer_inputs = inputs
+
+    #     for layer in self.encoder_layers:
+    #         layer_outputs, layer_attns = layer.forward(
+    #             inputs=current_layer_inputs, given_inputs_QParams=current_inputs_QParams
+    #         )
+    #         encoder_attns.append(layer_attns)
+    #         current_layer_inputs = layer_outputs
+    #         current_inputs_QParams = layer.outputs_QParams
+    #     encoder_outputs = layer_outputs
+    #     self.outputs_QParams = current_inputs_QParams
+    #     return encoder_outputs, encoder_attns

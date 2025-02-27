@@ -61,5 +61,5 @@ class Sequential(_SequentialDesign):
             network_template_test
         )
 
-        ram = Ram(name=f"dual_port_2_clock_ram")
+        ram = Ram(name=self.name + "_ram")
         ram.save_to(destination)

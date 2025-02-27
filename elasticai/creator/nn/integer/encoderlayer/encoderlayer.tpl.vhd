@@ -36,10 +36,10 @@ architecture rtl of ${name} is
     end function log2;
     signal mha_enable : std_logic;
     signal mha_clock : std_logic;
-    signal mha_x_1_addressess : std_logic_vector(log2(NUM_DIMENSIONS * IN_FEATURES)-1 downto 0);
+    signal mha_x_1_address : std_logic_vector(log2(NUM_DIMENSIONS * IN_FEATURES)-1 downto 0);
     signal mha_x_2_address : std_logic_vector(log2(NUM_DIMENSIONS * IN_FEATURES)-1 downto 0);
     signal mha_x_3_address : std_logic_vector(log2(NUM_DIMENSIONS * IN_FEATURES)-1 downto 0);
-    signal mha_y_addressess : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
+    signal mha_y_address : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
     signal mha_x_1 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal mha_x_2 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal mha_x_3 : std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -47,8 +47,8 @@ architecture rtl of ${name} is
     signal mha_done : std_logic;
     signal mha_add_enable : std_logic;
     signal mha_add_clock : std_logic;
-    signal mha_add_x_1_addressess : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
-    signal mha_add_x_2_addressess : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
+    signal mha_add_x_1_address : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
+    signal mha_add_x_2_address : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
     signal mha_add_y_address : std_logic_vector(log2(NUM_DIMENSIONS * OUT_FEATURES)-1 downto 0);
     signal mha_add_x_1 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal mha_add_x_2 : std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -103,7 +103,7 @@ begin
             (others => '0');
     mha_y_address <= mha_add_x_2_address;
     mha_add_y_address <= mha_norm_x_address;
-    mha_norm_y_addr <= ffn_x_address when ffn_done = '0' else
+    mha_norm_y_address <= ffn_x_address when ffn_done = '0' else
                     ffn_add_x_1_address when ffn_done = '1' and ffn_add_done = '0' else
                     (others => '0');
     ffn_y_address <= ffn_add_x_2_address;
@@ -160,8 +160,8 @@ begin
     port map (
         enable => ffn_enable,
         clock => ffn_clock,
-        x_address => ffn_x_addr,
-        y_address => ffn_y_addr,
+        x_address => ffn_x_address,
+        y_address => ffn_y_address,
         x => ffn_x,
         y => ffn_y,
         done => ffn_done

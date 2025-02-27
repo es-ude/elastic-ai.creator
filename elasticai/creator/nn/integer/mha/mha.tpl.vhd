@@ -86,8 +86,8 @@ begin
     q_linear_y_address <= inner_attn_x_1_address;
     k_linear_y_address <= inner_attn_x_2_address;
     v_linear_y_address <= inner_attn_x_3_address;
-    inner_attn_y_address <= output_linear_x_addr;
-    output_linear_y_addr <= y_address;
+    inner_attn_y_address <= output_linear_x_address;
+    output_linear_y_address <= y_address;
     q_linear_x <= x_1;
     k_linear_x <= x_2;
     v_linear_x <= x_3;
@@ -101,7 +101,7 @@ begin
     port map (
         enable => q_linear_enable,
         clock => q_linear_clock,
-        x_addr => q_linear_x_address,
+        x_address => q_linear_x_address,
         y_address => q_linear_y_address,
         x => q_linear_x,
         y => q_linear_y,
@@ -111,7 +111,7 @@ begin
     port map (
         enable => k_linear_enable,
         clock => k_linear_clock,
-        x_addr => k_linear_x_address,
+        x_address => k_linear_x_address,
         y_address => k_linear_y_address,
         x => k_linear_x,
         y => k_linear_y,
@@ -121,7 +121,7 @@ begin
     port map (
         enable => v_linear_enable,
         clock => v_linear_clock,
-        x_addr => v_linear_x_address,
+        x_address => v_linear_x_address,
         y_address => v_linear_y_address,
         x => v_linear_x,
         y => v_linear_y,
@@ -145,8 +145,8 @@ begin
     port map (
         enable => output_linear_enable,
         clock => output_linear_clock,
-        x_addr => output_linear_x_addr,
-        y_address => output_linear_y_addr,
+        x_address => output_linear_x_address,
+        y_address => output_linear_y_address,
         x => output_linear_x,
         y => output_linear_y,
         done => output_linear_done

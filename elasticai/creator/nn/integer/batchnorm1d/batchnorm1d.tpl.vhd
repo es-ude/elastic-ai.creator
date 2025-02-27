@@ -51,15 +51,6 @@ architecture rtl of ${name} is
         temp := w * x_in;
         return temp + y_out;
     end function;
-    function multiply_accumulate(w : in signed(DATA_WIDTH downto 0);
-                                x_in : in signed(DATA_WIDTH downto 0);
-                                y_out : in signed(2*(DATA_WIDTH+1)-1 downto 0)
-            ) return signed is
-        variable temp : signed(2*(DATA_WIDTH+1)-1 downto 0) := (others=>'0');
-    begin
-        temp := w * x_in;
-        return temp + y_out;
-    end function;
     function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
@@ -230,14 +221,14 @@ begin
         regceb => '1',
         doutb  => y
     );
-    rom_w : entity ${work_library_name}.${name}_weights_rom(rtl)
+    rom_w : entity ${work_library_name}.${name}_w_rom(rtl)
     port map  (
         clk  => clock,
         en   => '1',
         addr => w_addr,
         data => w_in
     );
-    rom_b : entity ${work_library_name}.${name}_bias_rom(rtl)
+    rom_b : entity ${work_library_name}.${name}_b_rom(rtl)
     port map  (
         clk  => clock,
         en   => '1',

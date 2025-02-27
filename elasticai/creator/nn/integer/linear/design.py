@@ -56,8 +56,12 @@ class Linear(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        self._x_count = self._in_features
-        self._y_count = self._out_features
+        if self._num_dimensions is None:
+            self._x_count = self._in_features
+            self._y_count = self._out_features
+        else:
+            self._x_count = self._in_features * self._num_dimensions
+            self._y_count = self._out_features * self._num_dimensions
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)

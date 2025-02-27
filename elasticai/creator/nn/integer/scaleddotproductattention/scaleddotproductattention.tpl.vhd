@@ -99,7 +99,7 @@ begin
     port map (
         enable => softmax_enable,
         clock => softmax_clock,
-        x_addr => softmax_x_address,
+        x_address => softmax_x_address,
         x => softmax_x,
         y_address => softmax_y_address,
         y => softmax_y,

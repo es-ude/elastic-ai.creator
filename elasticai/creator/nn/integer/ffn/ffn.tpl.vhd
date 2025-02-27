@@ -90,7 +90,7 @@ architecture rtl of ${name} is
     port map (
         enable => fc2_enable,
         clock  => fc2_clock,
-        x_address  => fc2_x_addr,
+        x_address  => fc2_x_address,
         y_address  => fc2_y_address,
         x  => fc2_x,
         y => fc2_y,
