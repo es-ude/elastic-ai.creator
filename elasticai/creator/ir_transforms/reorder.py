@@ -71,7 +71,8 @@ class SequenceReorderer:
         replacement = new_order
         self.pattern = build_sequential_pattern(pattern)
         self.replacement = build_sequential_pattern(replacement)
-        self.interface = g.BaseGraph().add_node("start").add_node("end")
+        self.interface: g.Graph[str] = g.BaseGraph()
+        self.interface.add_node("start").add_node("end")
         self.lhs = {"start": pattern[0].name, "end": pattern[-1].name}
         self.rhs = {"start": replacement[0].name, "end": replacement[-1].name}
         self.matcher = _Matcher(

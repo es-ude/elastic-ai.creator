@@ -47,7 +47,7 @@ class Matcher:
     def set_graph(self, graph: Graph):
         self.graph = graph
 
-    def _node_constraint(self, graph_node: str, pattern_node: str) -> bool:
+    def _node_constraint(self, pattern_node: str, graph_node: str) -> bool:
         assert self.graph is not None
         return self.graph.data[graph_node] == self.pattern.data[pattern_node]
 

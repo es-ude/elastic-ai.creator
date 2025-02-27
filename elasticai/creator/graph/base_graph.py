@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import copy
 import warnings
 from collections.abc import Iterable, Iterator, Mapping, Set
-from typing import Self
+from typing import Hashable, Self, TypeVar, cast
 
 from .graph import Graph
 
+T = TypeVar("T", bound=Hashable)  # noqa: F821
 
-# we have to keep this bound to str, until we move to python 3.13 with default type arguments
-class BaseGraph(Graph[str]):
+
+# we have to keep this bound to T, until we move to python 3.13 with default type arguments
+class BaseGraph(Graph[T]):
     """All iterators in this class are guaranteed to have a fixed
-    order. strhat means, the order of iteration is only allowed
-    to change when the data structure is altered. If the
+    order. That means, the order of iteration is only allowed
+    to change when the data Tucture is altered. If the
     content of two GraphDelegates is the same and they were built
     in the same way, then their iteration order is the same as well.
 
@@ -30,37 +33,37 @@ class BaseGraph(Graph[str]):
         """We keep successor and predecessor nodes just to allow for easier implementation.
         Currently, this implementation is not optimized for performance.
         """
-        self._successors: dict[str, set[str]] = dict()
-        self._predecessors: dict[str, set[str]] = dict()
+        self._successors: dict[T, set[T]] = dict()
+        self._predecessors: dict[T, set[T]] = dict()
 
     @property
-    def successors(self) -> Mapping[str, set[str]]:
+    def successors(self) -> Mapping[T, set[T]]:
         return self._successors.keys().mapping
 
     @property
-    def predecessors(self) -> Mapping[str, set[str]]:
+    def predecessors(self) -> Mapping[T, set[T]]:
         return self._predecessors.keys().mapping
 
     @staticmethod
-    def from_dict(d: dict[str, Iterable[str]]):
-        g: Graph[str] = BaseGraph()
+    def from_dict(d: dict[T, Iterable[T]]):
+        g: Graph[T] = BaseGraph()
         for node, successors in d.items():
             g.add_node(node)
             for s in successors:
                 g.add_edge(node, s)
         return g
 
-    def as_dict(self) -> dict[str, set[str]]:
+    def as_dict(self) -> dict[T, set[T]]:
         return self._successors.copy()
 
-    def add_edge(self, _from: str, _to: str) -> Self:
+    def add_edge(self, _from: T, _to: T) -> Self:
         self.add_node(_from)
         self.add_node(_to)
         self.predecessors[_to].add(_from)
         self.successors[_from].add(_to)
         return self
 
-    def add_node(self, node: str) -> Self:
+    def add_node(self, node: T) -> Self:
         if node not in self.predecessors:
             self._predecessors[node] = set()
         if node not in self.successors:
@@ -68,20 +71,20 @@ class BaseGraph(Graph[str]):
         return self
 
     @property
-    def nodes(self) -> Set[str]:
+    def nodes(self) -> Set[T]:
         return self._successors.keys()
 
-    def iter_nodes(self) -> Iterator[str]:
+    def iter_nodes(self) -> Iterator[T]:
         """Iterator over nodes in a fixed but unspecified order."""
         yield from self.predecessors.keys()
 
-    def iter_edges(self) -> Iterator[tuple[str, str]]:
+    def iter_edges(self) -> Iterator[tuple[T, T]]:
         """Iterator over edges in a fixed but unspecified order."""
         for _from, _tos in self.successors.items():
             for _to in _tos:
                 yield _from, _to
 
-    def get_edges(self) -> Iterator[tuple[str, str]]:
+    def get_edges(self) -> Iterator[tuple[T, T]]:
         """Iterator over edges in a fixed but unspecified order."""
         warnings.warn(
             "get_edges() is deprecated, use iter_edges() instead",
@@ -90,13 +93,19 @@ class BaseGraph(Graph[str]):
         )
         yield from self.iter_edges()
 
-    def get_successors(self, node: str) -> Iterator[str]:
+    def get_successors(self, node: T) -> Iterator[T]:
         """Iterator over node successors in a fixed but unspecified order."""
-        yield from sorted(self.successors[node])
+        yield from self.successors[node]
 
-    def get_predecessors(self, node: str) -> Iterator[str]:
+    def get_predecessors(self, node: T) -> Iterator[T]:
         """Iterator over node predecessors in a fixed but unspecified order."""
-        yield from sorted(self.predecessors[node])
+        yield from self.predecessors[node]
 
-    def new(self) -> Graph[str]:
-        return BaseGraph()
+    def new(self: Self) -> Self:
+        return cast(Self, BaseGraph())
+
+    def copy(self: Self) -> Self:
+        g = self.new()
+        g._predecessors = copy.deepcopy(self._predecessors)
+        g._successors = copy.deepcopy(self._successors)
+        return g
