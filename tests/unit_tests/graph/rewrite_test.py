@@ -1,12 +1,14 @@
 import pytest
 
 from elasticai.creator.graph.graph_rewriting import RewriteResult
-from tests.unit_tests.graph.utils import Graph
+from tests.unit_tests.graph.utils import (
+    Graph,
+    get_rewriter,
+    get_rewriter_returning_full_result,
+)
 
 from .utils import (
     build_graph_from_dict,
-    get_rewriter,
-    get_rewriter_returning_full_result,
 )
 
 
@@ -114,10 +116,10 @@ def test_can_replace_one_of_two_matches():
 
     expected = build_graph_from_dict(
         {
-            ("c", "a_t"): ["r1"],
-            ("a", "a_t"): ["b"],
-            ("b", "b_t"): ["c"],
-            ("r1", "r_t"): ["e"],
+            ("c", "a_t"): ["d"],
+            ("a", "a_t"): ["r1"],
+            ("r1", "r_t"): ["c"],
+            ("d", "b_t"): ["e"],
             ("e", "a_t"): [],
         }
     )

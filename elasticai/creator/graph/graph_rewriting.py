@@ -90,6 +90,7 @@ class GraphRewriter:
         interface_nodes_in_pattern = set(
             self._lhs[node] for node in self._interface.nodes
         )
+        print(match)
         interface_nodes_in_graph = set(
             match[node] for node in interface_nodes_in_pattern
         )
