@@ -11,18 +11,13 @@ from .design import Sequential as _SequentialDesign
 
 class Sequential(_SequentialBase):
     def __init__(
-        self, *submodules: DesignCreatorModule, name: str, quant_data_file_dir: Path
+        self, *submodules: DesignCreatorModule, name: str, quant_data_dir: Path
     ) -> None:
         super().__init__(*submodules)
         self.submodules = submodules
         self.name = name
-        self.quant_data_file_dir = quant_data_file_dir
+        self.quant_data_dir = quant_data_dir
         self.precomputed = False
-
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
@@ -48,18 +43,9 @@ class Sequential(_SequentialBase):
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
         assert self.precomputed, "precompute() should be called before int_forward()"
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
         for submodule in self.submodules:
-            self._save_quant_data(
-                q_inputs, self.quant_data_file_dir, f"{submodule.name}_q_x"
-            )
             q_outputs = submodule.int_forward(q_inputs)
-
             q_inputs = q_outputs
-            self._save_quant_data(
-                q_outputs, self.quant_data_file_dir, f"{submodule.name}_q_y"
-            )
-        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
         return q_outputs
 
     def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:

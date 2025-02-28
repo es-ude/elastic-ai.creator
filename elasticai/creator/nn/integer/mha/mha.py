@@ -1,17 +1,17 @@
-import logging
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear import Linear
 from elasticai.creator.nn.integer.mha.design import MHA as MHADesign
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
 from elasticai.creator.nn.integer.scaleddotproductattention import (
     ScaledDotProductAttention,
 )
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class MultiHeadAttention(DesignCreatorModule, nn.Module):
@@ -21,12 +21,11 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.nhead = kwargs.get("nhead")
         d_model = kwargs.get("d_model")
         window_size = kwargs.get("window_size")
-        self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
 
         self.name = kwargs.get("name")
-        device = kwargs.get("device")
         self.quant_bits = kwargs.get("quant_bits")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.q_linear = Linear(
             name=self.name + "_q_linear",
@@ -34,6 +33,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
         )
@@ -42,8 +42,9 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             name=self.name + "_k_linear",
             in_features=d_model,
             out_features=d_model,
-            quant_bits=self.quant_bits,
             num_dimensions=window_size,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
         )
@@ -51,26 +52,28 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             name=self.name + "_v_linear",
             in_features=d_model,
             out_features=d_model,
-            quant_bits=self.quant_bits,
             num_dimensions=window_size,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
         )
 
         self.inner_attn_module = ScaledDotProductAttention(
             name=self.name + "_inner_attn",
-            quant_bits=self.quant_bits,
             nhead=self.nhead,
             window_size=window_size,
-            quant_data_file_dir=self.quant_data_file_dir,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             d_model=d_model,
         )
         self.output_linear = Linear(
             name=self.name + "_output_linear",
             in_features=d_model,
             out_features=d_model,
-            quant_bits=self.quant_bits,
             num_dimensions=window_size,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
         )
@@ -104,11 +107,6 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.output_linear.precompute()
         self.precomputed = True
 
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
-
     def int_forward(
         self,
         q_q: torch.IntTensor,
@@ -118,9 +116,9 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
-        self._save_quant_data(q_q, self.quant_data_file_dir, f"{self.name}_q_q")
-        self._save_quant_data(q_k, self.quant_data_file_dir, f"{self.name}_q_k")
-        self._save_quant_data(q_v, self.quant_data_file_dir, f"{self.name}_q_v")
+        save_quant_data(q_q, self.quant_data_dir, f"{self.name}_q_q")
+        save_quant_data(q_k, self.quant_data_dir, f"{self.name}_q_k")
+        save_quant_data(q_v, self.quant_data_dir, f"{self.name}_q_v")
 
         B = q_q.shape[0]
         L = q_q.shape[1]
@@ -141,43 +139,19 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         v_linear_outputs = v_linear_outputs.view(B, L, H, -1)
 
         # execute scaled dot product attention
-        self._save_quant_data(
-            q_linear_outputs,
-            self.quant_data_file_dir,
-            f"{self.inner_attn_module.name}_q_q",
-        )
-        self._save_quant_data(
-            k_linear_outputs,
-            self.quant_data_file_dir,
-            f"{self.inner_attn_module.name}_q_k",
-        )
-        self._save_quant_data(
-            v_linear_outputs,
-            self.quant_data_file_dir,
-            f"{self.inner_attn_module.name}_q_v",
-        )
-
         q_context, attn_weights = self.inner_attn_module.int_forward(
             q_q=q_linear_outputs,
             q_k=k_linear_outputs,
             q_v=v_linear_outputs,
         )
-
         q_context = q_context.view(B, L, -1)  # B,L,H,E -> B,L,D
-        self._save_quant_data(
-            q_context, self.quant_data_file_dir, f"{self.inner_attn_module.name}_q_y"
-        )
 
         # Linear outputs
-        self._save_quant_data(
-            q_context, self.quant_data_file_dir, f"{self.output_linear.name}_q_x"
-        )
         q_outputs = self.output_linear.int_forward(
             q_inputs=q_context,
         )
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, f"{self.output_linear.name}_q_y"
-        )
+
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 
         return q_outputs, attn_weights
 

@@ -60,11 +60,15 @@ class MHA(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        self.q_linear_design.save_to(destination)
-        self.k_linear_design.save_to(destination)
-        self.v_linear_design.save_to(destination)
-        self.inner_attn_module_design.save_to(destination)
-        self.output_linear_design.save_to(destination)
+        self.q_linear_design.save_to(destination.create_subpath(self._q_linear.name))
+        self.k_linear_design.save_to(destination.create_subpath(self._k_linear.name))
+        self.v_linear_design.save_to(destination.create_subpath(self._v_linear.name))
+        self.inner_attn_module_design.save_to(
+            destination.create_subpath(self._inner_attn_module.name)
+        )
+        self.output_linear_design.save_to(
+            destination.create_subpath(self._output_linear.name)
+        )
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

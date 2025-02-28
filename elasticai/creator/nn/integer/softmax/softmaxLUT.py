@@ -1,15 +1,15 @@
-import logging
-from pathlib import Path
-
 import torch
 from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
+from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
+)
 from elasticai.creator.nn.integer.softmax.design import SoftmaxLUT as SoftmaxLUTDesign
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class SoftmaxLUT(DesignCreatorModule, nn.Module):
@@ -22,20 +22,20 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.nhead = kwargs.get("nhead")
         self.window_size = kwargs.get("window_size")
 
-        self.device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.inputs2_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
@@ -47,7 +47,6 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         else:
             numerator_out_data_width = self.quant_bits * 3 - 1
             denominator_out_data_width = self.quant_bits * 2
-
         return SoftmaxLUTDesign(
             name=name,
             data_width=self.quant_bits,
@@ -56,8 +55,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
             dim_c=self.dim_c,
             numberator_lut_out_data_width=numerator_out_data_width,
             denominator_lut_out_data_width=denominator_out_data_width,
-            z_x=self.inputs1_QParams.zero_point.item(),
-            z_t=self.inputs2_QParams.zero_point.item(),
+            z_x=self.inputs2_QParams.zero_point.item(),
+            z_t=self.tmp_zero_point.item(),  # self.inputs2_QParams.zero_point.item(),
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
@@ -90,7 +89,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         tmp_zero_point = (2 ** (tmp_quant_bits - 1) - 1) - (
             1.0 / tmp_scale_factor
         )  # get zero point of tmp
-        tmp_zero_point = torch.tensor(tmp_zero_point)
+        tmp_zero_point = torch.tensor(tmp_zero_point, dtype=torch.int32)
         self.tmp_zero_point = tmp_zero_point.round_().clamp(
             -(2 ** (tmp_quant_bits - 1)), 2 ** (tmp_quant_bits - 1) - 1
         )
@@ -119,6 +118,11 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.precomputed = True
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "precompute should be called before int_forward"
+
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         max_q_inputs = q_inputs.max(dim=-1, keepdim=True)[0]
 
         q_inputs = self.math_ops.intsub(
@@ -139,7 +143,6 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
                         q_numerator[i][j][k][l] = self.Qinput2QNumerator_LUT_dict[
                             q_inputs[i][j][k][l].item()
                         ]
-
         q_denominator = q_inputs.clone()
         for i in range(q_inputs.shape[0]):
             for j in range(q_inputs.shape[1]):
@@ -152,13 +155,16 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
                             - self.tmp_zero_point
                         )
         q_denominator = q_denominator.sum(dim=-1, keepdim=True)  # sum(Q_t - Z_t)
+
         tmp = self.math_ops.int_division(
             q_numerator, q_denominator, self.quant_bits + 1
         )
+
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.quant_bits
         )
         dq_outputs = self.outputs_QParams.dequantize(q_outputs)
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs, dq_outputs
 
     def forward(
@@ -176,10 +182,10 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         if self.training:
             self.inputs2_QParams.update_quant_params(inputs)
 
-        inputs = SimQuant.apply(inputs.to(self.device), self.inputs2_QParams)
+        inputs = SimQuant.apply(inputs, self.inputs2_QParams)
         outputs = torch.softmax(inputs, dim=-1)
 
         if self.training:
             self.outputs_QParams.update_quant_params(outputs)
-        outputs = SimQuant.apply(outputs.to(self.device), self.outputs_QParams)
+        outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

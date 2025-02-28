@@ -27,7 +27,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
+        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
         device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -200,117 +200,117 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x_1")
-        self._save_quant_data(q_h_prev, self.quant_data_file_dir, f"{self.name}_q_x_2")
-        self._save_quant_data(q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3")
+        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x_1")
+        self._save_quant_data(q_h_prev, self.quant_data_dir, f"{self.name}_q_x_2")
+        self._save_quant_data(q_c_prev, self.quant_data_dir, f"{self.name}_q_x_3")
 
         # concatenate inputs and h_prev
         self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_x_1"
+            q_inputs, self.quant_data_dir, f"{self.concatenate.name}_q_x_1"
         )
         self._save_quant_data(
-            q_h_prev, self.quant_data_file_dir, f"{self.concatenate.name}_q_x_2"
+            q_h_prev, self.quant_data_dir, f"{self.concatenate.name}_q_x_2"
         )
         q_concated_inputs = self.concatenate.int_forward(
             q_inputs1=q_inputs, q_inputs2=q_h_prev
         )
         self._save_quant_data(
-            q_concated_inputs, self.quant_data_file_dir, f"{self.concatenate.name}_q_y"
+            q_concated_inputs, self.quant_data_dir, f"{self.concatenate.name}_q_y"
         )
 
         # gate linear transformations
         # inputs gate
         self._save_quant_data(
             q_concated_inputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.i_gate_linear.name}_q_x",
         )
         q_i_gate_outputs = self.i_gate_linear.int_forward(q_inputs=q_concated_inputs)
         self._save_quant_data(
-            q_i_gate_outputs, self.quant_data_file_dir, f"{self.i_gate_linear.name}_q_y"
+            q_i_gate_outputs, self.quant_data_dir, f"{self.i_gate_linear.name}_q_y"
         )
 
         # forget gate
         self._save_quant_data(
             q_concated_inputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.f_gate_linear.name}_q_x",
         )
         q_f_gate_outputs = self.f_gate_linear.int_forward(q_inputs=q_concated_inputs)
         self._save_quant_data(
-            q_f_gate_outputs, self.quant_data_file_dir, f"{self.f_gate_linear.name}_q_y"
+            q_f_gate_outputs, self.quant_data_dir, f"{self.f_gate_linear.name}_q_y"
         )
 
         # output gate
         self._save_quant_data(
             q_concated_inputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.o_gate_linear.name}_q_x",
         )
         q_o_gate_outputs = self.o_gate_linear.int_forward(q_inputs=q_concated_inputs)
         self._save_quant_data(
-            q_o_gate_outputs, self.quant_data_file_dir, f"{self.o_gate_linear.name}_q_y"
+            q_o_gate_outputs, self.quant_data_dir, f"{self.o_gate_linear.name}_q_y"
         )
 
         # cell gate
         self._save_quant_data(
             q_concated_inputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.c_gate_linear.name}_q_x",
         )
         q_c_gate_outputs = self.c_gate_linear.int_forward(q_inputs=q_concated_inputs)
         self._save_quant_data(
-            q_c_gate_outputs, self.quant_data_file_dir, f"{self.c_gate_linear.name}_q_y"
+            q_c_gate_outputs, self.quant_data_dir, f"{self.c_gate_linear.name}_q_y"
         )
 
         # gate activations
         # inputs gate sigmoid
         self._save_quant_data(
             q_i_gate_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.i_sigmoid.name}_q_x",
         )
         q_i_gate_sigmoid_outputs = self.i_sigmoid.int_forward(q_inputs=q_i_gate_outputs)
         self._save_quant_data(
             q_i_gate_sigmoid_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.i_sigmoid.name}_q_y",
         )
 
         # forget gate sigmoid
         self._save_quant_data(
             q_f_gate_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.f_sigmoid.name}_q_x",
         )
         q_f_gate_sigmoid_outputs = self.f_sigmoid.int_forward(q_inputs=q_f_gate_outputs)
         self._save_quant_data(
             q_f_gate_sigmoid_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.f_sigmoid.name}_q_y",
         )
 
         # output gate sigmoid
         self._save_quant_data(
             q_o_gate_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.o_sigmoid.name}_q_x",
         )
         q_o_gate_sigmoid_outputs = self.o_sigmoid.int_forward(q_inputs=q_o_gate_outputs)
         self._save_quant_data(
             q_o_gate_sigmoid_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.o_sigmoid.name}_q_y",
         )
 
         # cell gate tanh
         self._save_quant_data(
-            q_c_gate_outputs, self.quant_data_file_dir, f"{self.c_tanh.name}_q_x"
+            q_c_gate_outputs, self.quant_data_dir, f"{self.c_tanh.name}_q_x"
         )
         q_c_gate_tanh_outputs = self.c_tanh.int_forward(q_inputs=q_c_gate_outputs)
         self._save_quant_data(
             q_c_gate_tanh_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.c_tanh.name}_q_y",
         )
 
@@ -318,30 +318,30 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         # fc dot product
         self._save_quant_data(
             q_f_gate_sigmoid_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.fc_hadamard_product.name}_q_x_1",
         )
         self._save_quant_data(
-            q_c_prev, self.quant_data_file_dir, f"{self.fc_hadamard_product.name}_q_x_2"
+            q_c_prev, self.quant_data_dir, f"{self.fc_hadamard_product.name}_q_x_2"
         )
         q_c_next_inputs1 = self.fc_hadamard_product.int_forward(
             q_inputs1=q_f_gate_sigmoid_outputs, q_inputs2=q_c_prev
         )
         self._save_quant_data(
             q_c_next_inputs1,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.fc_hadamard_product.name}_q_y",
         )
 
         # ic dot product
         self._save_quant_data(
             q_i_gate_sigmoid_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.ic_hadamard_product.name}_q_x_1",
         )
         self._save_quant_data(
             q_c_gate_tanh_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.ic_hadamard_product.name}_q_x_2",
         )
         q_c_next_inputs2 = self.ic_hadamard_product.int_forward(
@@ -349,59 +349,59 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
         self._save_quant_data(
             q_c_next_inputs2,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.ic_hadamard_product.name}_q_y",
         )
 
         # addition
         self._save_quant_data(
             q_c_next_inputs1,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.c_next_addition.name}_q_x_1",
         )
         self._save_quant_data(
             q_c_next_inputs2,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.c_next_addition.name}_q_x_2",
         )
         q_c_next = self.c_next_addition.int_forward(
             q_inputs1=q_c_next_inputs1, q_inputs2=q_c_next_inputs2
         )
         self._save_quant_data(
-            q_c_next, self.quant_data_file_dir, f"{self.c_next_addition.name}_q_y"
+            q_c_next, self.quant_data_dir, f"{self.c_next_addition.name}_q_y"
         )
 
         # next hidden state
         # c_next tanh
         self._save_quant_data(
-            q_c_next, self.quant_data_file_dir, f"{self.c_next_tanh.name}_q_x"
+            q_c_next, self.quant_data_dir, f"{self.c_next_tanh.name}_q_x"
         )
         q_c_next_tanh_ouputs = self.c_next_tanh.int_forward(q_inputs=q_c_next)
         self._save_quant_data(
             q_c_next_tanh_ouputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.c_next_tanh.name}_q_y",
         )
 
         # oc dot product
         self._save_quant_data(
             q_o_gate_sigmoid_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.oc_hadamard_product.name}_q_x_1",
         )
         self._save_quant_data(
             q_c_next_tanh_ouputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             f"{self.oc_hadamard_product.name}_q_x_2",
         )
         q_h_next = self.oc_hadamard_product.int_forward(
             q_inputs1=q_o_gate_sigmoid_outputs, q_inputs2=q_c_next_tanh_ouputs
         )
         self._save_quant_data(
-            q_h_next, self.quant_data_file_dir, f"{self.oc_hadamard_product.name}_q_y"
+            q_h_next, self.quant_data_dir, f"{self.oc_hadamard_product.name}_q_y"
         )
-        self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_1")
-        self._save_quant_data(q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
+        self._save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_1")
+        self._save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_2")
 
         return q_h_next, q_c_next
 

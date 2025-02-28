@@ -1,22 +1,19 @@
-import logging
-
 import torch
 from torch import nn
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
-from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import (
+from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
     SymmetricSignedQParams,
-)
-from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class Linear(DesignCreatorModule, nn.Linear):
@@ -24,27 +21,27 @@ class Linear(DesignCreatorModule, nn.Linear):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
-
         self.num_dimensions = kwargs.get("num_dimensions", None)
+
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.device = kwargs.get("device")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         if kwargs.get("bias"):
             self.bias_QParams = SymmetricSignedQParams(
                 quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-            ).to(self.device)
+            ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
@@ -122,6 +119,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
@@ -141,6 +140,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 
         return q_outputs
 

@@ -25,7 +25,7 @@ class RNNLayer(nn.Module):
         device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
+        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
         self.logger = logging.getLogger(self.__class__.__name__)
 
         if self.cell_type == "lstm":
@@ -35,7 +35,7 @@ class RNNLayer(nn.Module):
                 hidden_size=self.hidden_size,
                 seq_len=self.seq_len,
                 quant_bits=self.quant_bits,
-                quant_data_file_dir=self.quant_data_file_dir,
+                quant_data_dir=self.quant_data_dir,
                 device=device,
             )
         elif self.cell_type == "gru":
@@ -45,7 +45,7 @@ class RNNLayer(nn.Module):
                 hidden_size=self.hidden_size,
                 seq_len=self.seq_len,
                 quant_bits=self.quant_bits,
-                quant_data_file_dir=self.quant_data_file_dir,
+                quant_data_dir=self.quant_data_dir,
                 device=device,
             )
         else:
@@ -99,12 +99,10 @@ class RNNLayer(nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x_1")
-        self._save_quant_data(q_h_prev, self.quant_data_file_dir, f"{self.name}_q_x_2")
+        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x_1")
+        self._save_quant_data(q_h_prev, self.quant_data_dir, f"{self.name}_q_x_2")
         if q_c_prev is not None:
-            self._save_quant_data(
-                q_c_prev, self.quant_data_file_dir, f"{self.name}_q_x_3"
-            )
+            self._save_quant_data(q_c_prev, self.quant_data_dir, f"{self.name}_q_x_3")
 
         q_outputs = torch.zeros(
             self.batch_size, self.seq_len, self.hidden_size, dtype=torch.int32
@@ -119,12 +117,10 @@ class RNNLayer(nn.Module):
             q_h_prev = q_h_next
             q_c_prev = q_c_next
 
-        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y_1")
-        self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y_2")
+        self._save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y_1")
+        self._save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_2")
         if q_c_next is not None:
-            self._save_quant_data(
-                q_c_next, self.quant_data_file_dir, f"{self.name}_q_y_3"
-            )
+            self._save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_3")
 
         return q_outputs, q_h_next, q_c_next
 

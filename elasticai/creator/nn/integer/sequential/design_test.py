@@ -21,7 +21,7 @@ def sequential_instance(linear_layer_0, relu_layer_0, linear_layer_1):
     layers.append(linear_layer_0)
     layers.append(relu_layer_0)
     layers.append(linear_layer_1)
-    return Sequential(*layers, name="network", quant_data_file_dir=None)
+    return Sequential(*layers, name="network", quant_data_dir=None)
 
 
 @pytest.fixture

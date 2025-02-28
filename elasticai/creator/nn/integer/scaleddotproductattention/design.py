@@ -69,11 +69,15 @@ class ScaledDotProductAttention(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        self.matrix_multi_score_design.save_to(destination)
-        self.numerator_design.save_to(destination)
-        self.denominator_design.save_to(destination)
-        self.softmax_design.save_to(destination)
-        self.matrix_multi_att_design.save_to(destination)
+        self.matrix_multi_score_design.save_to(
+            destination.create_subpath(self._matrix_multi_score.name)
+        )
+        self.numerator_design.save_to(destination.create_subpath(self._softmax.name))
+        self.denominator_design.save_to(destination.create_subpath(self._softmax.name))
+        self.softmax_design.save_to(destination.create_subpath(self._softmax.name))
+        self.matrix_multi_att_design.save_to(
+            destination.create_subpath(self._matrix_multi_att.name)
+        )
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

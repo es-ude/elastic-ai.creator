@@ -4,9 +4,12 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.encoderlayer import EncoderLayer
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
 from elasticai.creator.nn.integer.sequential import Sequential
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class Encoder(nn.Module):
@@ -18,12 +21,11 @@ class Encoder(nn.Module):
         nhead = kwargs.get("nhead")
         num_enc_layers = kwargs.get("num_enc_layers")
 
-        device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.do_int_forward = kwargs.get("do_int_forward")
-        self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        device = kwargs.get("device")
 
         self.encoder_layers = nn.ModuleList(
             [
@@ -33,7 +35,7 @@ class Encoder(nn.Module):
                     nhead=nhead,
                     window_size=window_size,
                     quant_bits=self.quant_bits,
-                    quant_data_file_dir=self.quant_data_file_dir,
+                    quant_data_dir=self.quant_data_dir,
                     device=device,
                 )
                 for i in range(num_enc_layers)
@@ -49,13 +51,15 @@ class Encoder(nn.Module):
         self.sequential = Sequential(
             *self.encoder_layers,
             name=self.name,
-            quant_data_file_dir=self.quant_data_file_dir,
+            quant_data_dir=self.quant_data_dir,
         )
 
         self.precomputed = False
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
         q_outputs = self.sequential.int_forward(q_inputs)
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
     def forward(

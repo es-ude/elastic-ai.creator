@@ -18,7 +18,7 @@ class Ram(Design):
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="dual_port_2_clock_ram.tpl.vhd",
+            file_name="ram.tpl.vhd",
             parameters=dict(name=self.name),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)

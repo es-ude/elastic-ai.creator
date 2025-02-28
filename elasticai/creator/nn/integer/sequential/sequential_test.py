@@ -67,7 +67,7 @@ def sequential_instance(linear_layer_0, relu_layer_0, linear_layer_1):
     layers.append(relu_layer_0)
     layers.append(linear_layer_1)
 
-    return Sequential(*layers, name="network", quant_data_file_dir=None)
+    return Sequential(*layers, name="network", quant_data_dir=None)
 
 
 @pytest.fixture
@@ -184,12 +184,12 @@ def test_save_quant_data_in_int_forward(
 ):
     layers = nn.ModuleList([linear_layer_0, relu_layer_0, linear_layer_1])
 
-    with tempfile.TemporaryDirectory() as tmp_quant_data_file_dir:
-        quant_data_file_dir = Path(tmp_quant_data_file_dir) / "quant_data"
-        quant_data_file_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp_quant_data_dir:
+        quant_data_dir = Path(tmp_quant_data_dir) / "quant_data"
+        quant_data_dir.mkdir(parents=True, exist_ok=True)
 
         sequential_instance_with_dir = Sequential(
-            *layers, name="network", quant_data_file_dir=quant_data_file_dir
+            *layers, name="network", quant_data_dir=quant_data_dir
         )
         sequential_instance_with_dir.train()
         sequential_instance_with_dir(inputs)
@@ -198,7 +198,7 @@ def test_save_quant_data_in_int_forward(
         sequential_instance_with_dir.int_forward(q_inputs)
 
         files = {}
-        for file_path in quant_data_file_dir.iterdir():
+        for file_path in quant_data_dir.iterdir():
             if file_path.is_file():
                 try:
                     with file_path.open("r") as file:

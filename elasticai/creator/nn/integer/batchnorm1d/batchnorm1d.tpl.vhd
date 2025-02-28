@@ -31,33 +31,24 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function log2(val : INTEGER) return natural is
-        variable result : natural;
-    begin
-        for i in 1 to 31 loop
-            if (val <= (2 ** i)) then
-                result := i;
-                exit;
-            end if;
-        end loop;
-        return result;
-    end function log2;
-    function multiply_accumulate(w : in signed(DATA_WIDTH downto 0);
-                                x_in : in signed(DATA_WIDTH downto 0);
-                                y_out : in signed(2*(DATA_WIDTH+1)-1 downto 0)
+    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    function multiply_accumulate(
+                    w : in signed(DATA_WIDTH downto 0);
+                    x_in : in signed(DATA_WIDTH downto 0);
+                    y_out : in signed(MACC_OUT_WIDTH - 1 downto 0)
             ) return signed is
-        variable temp : signed(2*(DATA_WIDTH+1)-1 downto 0) := (others=>'0');
+        variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
-        temp := w * x_in;
-        return temp + y_out;
+        TMP := w * x_in;
+        return TMP + y_out;
     end function;
-    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_2 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_3 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
@@ -76,6 +67,17 @@ architecture rtl of ${name} is
             return resize(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
+    function log2(val : INTEGER) return natural is
+        variable result : natural;
+    begin
+        for i in 1 to 31 loop
+            if (val <= (2 ** i)) then
+                result := i;
+                exit;
+            end if;
+        end loop;
+        return result;
+    end function log2;
     signal M_Q_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
@@ -97,7 +99,7 @@ architecture rtl of ${name} is
     signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal mac_sum : signed(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal mac_sum : signed(MACC_OUT_WIDTH-1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     w_int <= signed(w_in);

@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import numpy as np
@@ -7,12 +6,15 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.matrixmulti import MatrixMulti
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
 from elasticai.creator.nn.integer.scaleddotproductattention.design import (
     ScaledDotProductAttention as ScaledDotProductAttentionDesign,
 )
 from elasticai.creator.nn.integer.softmax import SoftmaxLUT
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
@@ -23,11 +25,10 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         d_model = kwargs.get("d_model")
         nhead = kwargs.get("nhead")
 
-        device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.matrix_multi_score = MatrixMulti(
             name=self.name + "_matmul_score",
@@ -41,6 +42,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             y_dim_b=window_size,
             y_dim_c=window_size,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             operation_mode="score",
             addtion_scale=1 / np.sqrt(d_model),
             device=device,
@@ -50,10 +52,11 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             name=self.name + "_softmax",
             nhead=nhead,
             window_size=window_size,
-            quant_bits=self.quant_bits,
             dim_a=nhead,
             dim_b=window_size,
             dim_c=window_size,
+            quant_data_dir=self.quant_data_dir,
+            quant_bits=self.quant_bits,
             device=device,
         )
 
@@ -69,6 +72,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             y_dim_b=nhead,
             y_dim_c=d_model,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             operation_mode="att",
             addtion_scale=None,
             device=device,
@@ -118,48 +122,29 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
+        save_quant_data(q_q, self.quant_data_dir, f"{self.name}_q_q")
+        save_quant_data(q_k, self.quant_data_dir, f"{self.name}_q_k")
+        save_quant_data(q_v, self.quant_data_dir, f"{self.name}_q_v")
+
         # MatrixMulti Score
-        self._save_quant_data(
-            q_q, self.quant_data_file_dir, f"{self.matrix_multi_score.name}_q_x_1"
-        )
-        self._save_quant_data(
-            q_k, self.quant_data_file_dir, f"{self.matrix_multi_score.name}_q_x_2"
-        )
         q_scores = self.matrix_multi_score.int_forward(
             q_inputs1=q_q,
             q_inputs2=q_k,
         )
-        self._save_quant_data(
-            q_scores, self.quant_data_file_dir, f"{self.matrix_multi_score.name}_q_y"
-        )
 
         # Softmax
-        self._save_quant_data(
-            q_scores, self.quant_data_file_dir, f"{self.softmax.name}_q_x"
-        )
         q_att, att = self.softmax.int_forward(
             q_inputs=q_scores,
         )
-        self._save_quant_data(
-            q_att, self.quant_data_file_dir, f"{self.softmax.name}_q_y"
-        )
 
         # MatrixMulti Attention
-        self._save_quant_data(
-            q_att, self.quant_data_file_dir, f"{self.matrix_multi_att.name}_q_x_1"
-        )
-        self._save_quant_data(
-            q_v, self.quant_data_file_dir, f"{self.matrix_multi_att.name}_q_x_2"
-        )
         q_context = self.matrix_multi_att.int_forward(
             q_inputs1=q_att,
             q_inputs2=q_v,
         )
-        self._save_quant_data(
-            q_context, self.quant_data_file_dir, f"{self.matrix_multi_att.name}_q_y"
-        )
         q_context = q_context.contiguous()
 
+        save_quant_data(q_context, self.quant_data_dir, f"{self.name}_q_y")
         return q_context, att
 
     def forward(

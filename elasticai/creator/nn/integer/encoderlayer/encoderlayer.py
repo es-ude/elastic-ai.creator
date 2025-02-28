@@ -1,6 +1,3 @@
-import logging
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 
@@ -12,8 +9,11 @@ from elasticai.creator.nn.integer.encoderlayer.design import (
 )
 from elasticai.creator.nn.integer.ffn import FeedForwardNetwork
 from elasticai.creator.nn.integer.mha import MultiHeadAttention
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class EncoderLayer(DesignCreatorModule, nn.Module):
@@ -24,11 +24,10 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         window_size = kwargs.get("window_size")
         nhead = kwargs.get("nhead")
 
-        device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.mha = MultiHeadAttention(
             name=self.name + "_mha",
@@ -36,7 +35,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             d_model=d_model,
             window_size=window_size,
             quant_bits=self.quant_bits,
-            quant_data_file_dir=self.quant_data_file_dir,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.mha_add = Addition(
@@ -44,6 +43,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             num_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -53,11 +53,12 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             in_features=d_model,
             out_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
             eps=1e-5,
             momentum=0.1,
             affine=True,
             track_running_stats=True,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -66,7 +67,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             num_dimensions=window_size,
             d_model=d_model,
             quant_bits=self.quant_bits,
-            quant_data_file_dir=self.quant_data_file_dir,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -75,6 +76,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             num_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -84,11 +86,12 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             in_features=d_model,
             out_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
             eps=1e-5,
             momentum=0.1,
             affine=True,
             track_running_stats=True,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -122,11 +125,6 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self.ffn_norm.precompute()
         self.precomputed = True
 
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
-
     def int_forward(
         self,
         q_inputs: torch.IntTensor,
@@ -134,74 +132,36 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
-        # MHA
-        self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, f"{self.mha.name}_q_x"
-        )
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
+        # MHA + ADD + NORM
         q_mha_outputs, mha_attns = self.mha.int_forward(
             q_q=q_inputs,
             q_k=q_inputs,
             q_v=q_inputs,
         )
-        self._save_quant_data(
-            q_mha_outputs, self.quant_data_file_dir, f"{self.mha.name}_q_y"
-        )
-
-        # MHA ADD
-        self._save_quant_data(
-            q_mha_outputs, self.quant_data_file_dir, f"{self.mha_add.name}_q_x"
-        )
         q_mha_add_outputs = self.mha_add.int_forward(
             q_inputs1=q_inputs,
             q_inputs2=q_mha_outputs,
         )
-        self._save_quant_data(
-            q_mha_add_outputs, self.quant_data_file_dir, f"{self.mha_add.name}_q_y"
-        )
-
-        # MHA NORM
-        self._save_quant_data(
-            q_mha_add_outputs, self.quant_data_file_dir, f"{self.mha_norm.name}_q_x"
-        )
         q_mha_norm_outputs = self.mha_norm.int_forward(
             q_inputs=q_mha_add_outputs,
         )
-        self._save_quant_data(
-            q_mha_norm_outputs, self.quant_data_file_dir, f"{self.mha_norm.name}_q_y"
-        )
-        self._save_quant_data(
-            q_mha_norm_outputs, self.quant_data_file_dir, f"{self.ffn.name}_q_x"
-        )
 
-        # FFN
+        # FFN + ADD + NORM
         q_ffn_outputs = self.ffn.int_forward(
             q_inputs=q_mha_norm_outputs,
         )
-        self._save_quant_data(
-            q_ffn_outputs, self.quant_data_file_dir, f"{self.ffn.name}_q_y"
-        )
-
-        # FFN ADD
         q_ffn_add_outputs = self.ffn_add.int_forward(
             q_inputs1=q_mha_norm_outputs,
             q_inputs2=q_ffn_outputs,
         )
-        self._save_quant_data(
-            q_ffn_add_outputs, self.quant_data_file_dir, f"{self.ffn_add.name}_q_y"
-        )
-
-        # FFN NORM
-        self._save_quant_data(
-            q_ffn_add_outputs, self.quant_data_file_dir, f"{self.ffn_norm.name}_q_x"
-        )
         q_ffn_norm_outputs = self.ffn_norm.int_forward(
             q_inputs=q_ffn_add_outputs,
         )
-        self._save_quant_data(
-            q_ffn_norm_outputs, self.quant_data_file_dir, f"{self.ffn_norm.name}_q_y"
-        )
 
-        return q_ffn_norm_outputs  # , mha_attns
+        save_quant_data(q_ffn_norm_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        return q_ffn_norm_outputs
 
     def forward(
         self, inputs: torch.FloatTensor, given_inputs_QParams: object = None
@@ -244,4 +204,4 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         )
         self.outputs_QParams = self.ffn_norm.outputs_QParams
 
-        return ffn_norm_outputs  # , mha_attns
+        return ffn_norm_outputs

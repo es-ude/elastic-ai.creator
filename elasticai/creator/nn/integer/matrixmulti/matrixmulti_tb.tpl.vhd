@@ -39,7 +39,7 @@ architecture rtl of ${name}_tb is
     signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     type t_array_x_2 is array (0 to X_2_DIM_A*X_2_DIM_B*X_2_DIM_C-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_2_arr : t_array_x_2 := (others=>(others=>'0'));
-    signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+    signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
 begin
@@ -104,7 +104,7 @@ begin
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        y_addr <= (others=>'0');
+        y_address <= (others=>'0');
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
@@ -133,7 +133,7 @@ begin
             while output_rd_cnt<Y_DIM_A * Y_DIM_B * Y_DIM_C loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
-                y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
+                y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
                 wait for 3*C_CLK_PERIOD;
                 report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
                 write (line_num, to_integer(signed(y)));
@@ -156,12 +156,12 @@ begin
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_1_address => x_1_address,
         x_1   => x_1,
-        x_2_address => x_2_address,
         x_2   => x_2,
-        y_addr => y_addr,
-        y  => y,
+        y     => y,
+        x_1_address => x_1_address,
+        x_2_address => x_2_address,
+        y_address => y_address,
         done   => done
     );
 end architecture;

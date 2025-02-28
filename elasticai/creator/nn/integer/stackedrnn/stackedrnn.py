@@ -28,7 +28,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         device = kwargs.get("device")
         self.name = kwargs.get("name")
         quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
+        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.rnn_layers = nn.ModuleList()
@@ -42,7 +42,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
                     cell_type=self.cell_type,
                     batch_size=self.batch_size,
                     name=self.name + f"rnn_layer_{i}",
-                    quant_data_file_dir=self.quant_data_file_dir,
+                    quant_data_dir=self.quant_data_dir,
                     device=device,
                 )
             )
@@ -96,7 +96,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
+        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_h_prev = self.q_h_prev
         q_c_prev = self.q_c_prev
@@ -111,7 +111,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             q_h_prev = q_h_next
             q_c_prev = q_c_next
 
-        self._save_quant_data(q_h_next, self.quant_data_file_dir, f"{self.name}_q_y")
+        self._save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs[:, -1, :]
 
     def forward(

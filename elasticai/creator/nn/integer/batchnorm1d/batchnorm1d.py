@@ -7,17 +7,16 @@ from elasticai.creator.nn.integer.batchnorm1d.design import (
     BatchNorm1d as BatchNorm1dDesign,
 )
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import (
+from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
     SymmetricSignedQParams,
-)
-from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
@@ -29,16 +28,15 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             kwargs.get("affine"),
             kwargs.get("track_running_stats"),
         )
-
         self.num_dimensions = kwargs.get("num_dimensions")
         self.in_features = kwargs.get("in_features")
         self.out_features = kwargs.get("out_features")
         self.norm_dim = kwargs.get("norm_dim")
 
-        device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -71,7 +69,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
-            z_w=self.weight_QParams.zero_point.item(),
+            z_w=self.modified_weight_QParams.zero_point.item(),
             z_b=self.bias_QParams.zero_point.item(),
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
@@ -149,15 +147,18 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self,
         q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
-
         # integer-only
         tmp = self.math_ops.int_dotproduct(
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
+
         tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
+        # print("tmp + self.q_bias: ", self.q_bias)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
@@ -166,6 +167,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        # print("q_outputs: ", q_outputs)
         return q_outputs
 
     def forward(

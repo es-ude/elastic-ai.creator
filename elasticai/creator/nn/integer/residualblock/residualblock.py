@@ -26,7 +26,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = Path(kwargs.get("quant_data_file_dir"))
+        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
         device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -125,37 +125,37 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_file_dir, f"{self.name}_q_x")
+        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_residual = q_inputs
 
         self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, self.conv1dbn_0.name + "_q_x"
+            q_inputs, self.quant_data_dir, self.conv1dbn_0.name + "_q_x"
         )
         q_outputs = self.conv1dbn_0.int_forward(q_inputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, self.conv1dbn_0.name + "_q_y"
+            q_outputs, self.quant_data_dir, self.conv1dbn_0.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, self.conv1dbn_0_relu.name + "_q_x"
+            q_outputs, self.quant_data_dir, self.conv1dbn_0_relu.name + "_q_x"
         )
         q_outputs = self.conv1dbn_0_relu.int_forward(q_outputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, self.conv1dbn_0_relu.name + "_q_y"
+            q_outputs, self.quant_data_dir, self.conv1dbn_0_relu.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, self.conv1dbn_1.name + "_q_x"
+            q_outputs, self.quant_data_dir, self.conv1dbn_1.name + "_q_x"
         )
         q_outputs = self.conv1dbn_1.int_forward(q_outputs)
         self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, self.conv1dbn_1.name + "_q_y"
+            q_outputs, self.quant_data_dir, self.conv1dbn_1.name + "_q_y"
         )
 
         self._save_quant_data(
             q_residual,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             self.name + "_shortcut_q_x",
         )
         if len(self.shortcut) > 0:
@@ -168,36 +168,34 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
 
         self._save_quant_data(
             q_shortcut_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             self.name + "_shortcut_q_y",
         )
 
         self._save_quant_data(
             q_shortcut_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             self.add.name + "_q_x_1",
         )
         self._save_quant_data(
             q_outputs,
-            self.quant_data_file_dir,
+            self.quant_data_dir,
             self.add.name + "_q_x_2",
         )
         q_add_outputs = self.add.int_forward(
             q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs
         )
         self._save_quant_data(
-            q_add_outputs, self.quant_data_file_dir, self.add.name + "_q_y"
+            q_add_outputs, self.quant_data_dir, self.add.name + "_q_y"
         )
 
         self._save_quant_data(
-            q_add_outputs, self.quant_data_file_dir, self.relu.name + "_q_x"
+            q_add_outputs, self.quant_data_dir, self.relu.name + "_q_x"
         )
         q_outputs = self.relu.int_forward(q_add_outputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_file_dir, self.relu.name + "_q_y"
-        )
+        self._save_quant_data(q_outputs, self.quant_data_dir, self.relu.name + "_q_y")
 
-        self._save_quant_data(q_outputs, self.quant_data_file_dir, f"{self.name}_q_y")
+        self._save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
     def forward(

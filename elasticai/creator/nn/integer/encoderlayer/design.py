@@ -59,12 +59,12 @@ class EncoderLayer(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        self.mha_design.save_to(destination)
-        self.mha_add_design.save_to(destination)
-        self.mha_norm_design.save_to(destination)
-        self.ffn_design.save_to(destination)
-        self.ffn_add_design.save_to(destination)
-        self.ffn_norm_design.save_to(destination)
+        self.mha_design.save_to(destination.create_subpath(self._mha.name))
+        self.mha_add_design.save_to(destination.create_subpath(self._mha_add.name))
+        self.mha_norm_design.save_to(destination.create_subpath(self._mha_norm.name))
+        self.ffn_design.save_to(destination.create_subpath(self._ffn.name))
+        self.ffn_add_design.save_to(destination.create_subpath(self._ffn_add.name))
+        self.ffn_norm_design.save_to(destination.create_subpath(self._ffn_norm.name))
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

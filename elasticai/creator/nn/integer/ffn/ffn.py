@@ -1,15 +1,15 @@
-import logging
-from pathlib import Path
-
 import torch
 from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.ffn.design import FFN as FFNDesign
 from elasticai.creator.nn.integer.linear import Linear
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
 from elasticai.creator.nn.integer.relu import ReLU
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class FeedForwardNetwork(DesignCreatorModule, nn.Module):
@@ -19,11 +19,10 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         d_model = kwargs.get("d_model")
         num_dimensions = kwargs.get("num_dimensions")
 
-        device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.fc1 = Linear(
             name=self.name + "_fc1",
@@ -32,11 +31,15 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.relu = ReLU(
-            name=self.name + "_relu", quant_bits=self.quant_bits, device=device
+            name=self.name + "_relu",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
 
         self.fc2 = Linear(
@@ -46,6 +49,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -68,11 +72,6 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             work_library_name="work",
         )
 
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
-
     def precompute(self):
         self.fc1.precompute()
         self.fc2.precompute()
@@ -84,35 +83,16 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
-        self._save_quant_data(
-            q_inputs, self.quant_data_file_dir, f"{self.fc1.name}_q_x"
-        )
         q_f1_outputs = self.fc1.int_forward(
             q_inputs=q_inputs,
         )
-        self._save_quant_data(
-            q_f1_outputs, self.quant_data_file_dir, f"{self.fc1.name}_q_y"
-        )
-
-        self._save_quant_data(
-            q_f1_outputs, self.quant_data_file_dir, f"{self.relu.name}_q_x"
-        )
         q_relu_outputs = self.relu.int_forward(q_inputs=q_f1_outputs)
-        self._save_quant_data(
-            q_relu_outputs, self.quant_data_file_dir, f"{self.relu.name}_q_y"
-        )
-
-        self._save_quant_data(
-            q_relu_outputs, self.quant_data_file_dir, f"{self.fc2.name}_q_x"
-        )
         q_f2_outputs = self.fc2.int_forward(
             q_inputs=q_relu_outputs,
         )
-        self._save_quant_data(
-            q_f2_outputs, self.quant_data_file_dir, f"{self.fc2.name}_q_y"
-        )
-
+        save_quant_data(q_f2_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_f2_outputs
 
     def forward(

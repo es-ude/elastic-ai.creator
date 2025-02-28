@@ -1,20 +1,19 @@
-import logging
-
 import torch
 from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.matrixmulti.design import (
     MatrixMulti as MatrixMultiDesign,
 )
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
+    scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
 
 
 class MatrixMulti(DesignCreatorModule, nn.Module):
@@ -31,13 +30,14 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.y_dim_b = kwargs.get("y_dim_b")
         self.y_dim_c = kwargs.get("y_dim_c")
 
-        device = kwargs.get("device")
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        # attention score, or attention context
         self.operation_mode = kwargs.get("operation_mode")
         self.additional_scale = kwargs.get("additional_scale")
-        self.quant_data_file_dir = kwargs.get("quant_data_file_dir")
-        self.logger = logging.getLogger(self.__class__.__name__)
+
+        self.name = kwargs.get("name")
+        self.quant_bits = kwargs.get("quant_bits")
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -92,12 +92,19 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
+        self.precomputed = True
 
     def int_forward(
         self,
         q_inputs1: torch.IntTensor,
         q_inputs2: torch.IntTensor,
     ) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "precompute should be called before int_forward"
+
+        save_quant_data(q_inputs1, self.quant_data_dir, f"{self.name}_q_x_1")
+        save_quant_data(q_inputs2, self.quant_data_dir, f"{self.name}_q_x_2")
+
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
@@ -125,6 +132,8 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 
         return q_outputs
 

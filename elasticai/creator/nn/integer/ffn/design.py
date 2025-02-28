@@ -41,9 +41,9 @@ class FFN(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        self.fc1_design.save_to(destination)
-        self.relu_design.save_to(destination)
-        self.fc2_design.save_to(destination)
+        self.fc1_design.save_to(destination.create_subpath(self._fc1.name))
+        self.relu_design.save_to(destination.create_subpath(self._relu.name))
+        self.fc2_design.save_to(destination.create_subpath(self._fc2.name))
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
