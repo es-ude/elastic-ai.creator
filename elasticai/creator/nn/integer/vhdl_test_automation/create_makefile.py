@@ -5,12 +5,12 @@ def create_makefile(destination_dir, stop_time="4000ns"):
     makefile_content = f"""# vhdl files
 
 # files
-FILES = $(shell find ./source -type f -name "*.vhd")
+FILES = $(shell find -type f -name "*.vhd")
 VHDLEX = .vhd
 
 # testbench
 TESTBENCHFILE = ${{TESTBENCH}}_tb
-TESTBENCHPATH = $(shell find ./source -type f -name "${{TESTBENCH}}_tb.vhd")
+TESTBENCHPATH = $(shell find -type f -name "${{TESTBENCH}}_tb.vhd")
 
 # GHDL CONFIG
 GHDL_CMD = ghdl3

@@ -11,9 +11,9 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 --! Use device primitives
--- Library UNISIM;
+Library UNISIM;
 --! For using the ICAP_SPARTAN6 component
--- use UNISIM.vcomponents.all;
+use UNISIM.vcomponents.all;
 
 --
 --! @brief Main entity for interfacing with the ICAP of the FPGA
