@@ -2,9 +2,9 @@ import os
 
 
 def create_makefile(destination_dir, stop_time="4000ns"):
-    makefile_content = f"""# vhdl files
+    makefile_content = f"""# automatically generates a Makefile for GHDL
 
-# files
+# vhdl files
 FILES = $(shell find -type f -name "*.vhd")
 VHDLEX = .vhd
 
@@ -12,10 +12,11 @@ VHDLEX = .vhd
 TESTBENCHFILE = ${{TESTBENCH}}_tb
 TESTBENCHPATH = $(shell find -type f -name "${{TESTBENCH}}_tb.vhd")
 
-# GHDL CONFIG
+# GHDL configuration
 GHDL_CMD = ghdl3
 GHDL_FLAGS  = --ieee=synopsys --warn-no-vital-generic
 
+# simulation configuration
 SIMDIR = .simulation
 STOP_TIME = {stop_time}
 # Simulation break condition

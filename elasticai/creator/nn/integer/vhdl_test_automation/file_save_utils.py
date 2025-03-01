@@ -6,7 +6,7 @@ def save_quant_data(tensor, file_dir: Path, file_name: str):
     if file_dir is None:
         # logging.warning("quant_file_dir is None, skipping saving quant data.")
         return
-    file_path = file_dir / f"{file_name}.txt"
+    file_path = Path(file_dir) / f"{file_name}.txt"
     try:
         tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
         with open(file_path, "w", encoding="utf-8") as f:

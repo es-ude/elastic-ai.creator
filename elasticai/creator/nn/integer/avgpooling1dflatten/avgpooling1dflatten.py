@@ -14,7 +14,9 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
 
 
 class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):

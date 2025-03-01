@@ -14,7 +14,9 @@ from elasticai.creator.nn.integer.scaleddotproductattention.design import (
     ScaledDotProductAttention as ScaledDotProductAttentionDesign,
 )
 from elasticai.creator.nn.integer.softmax import SoftmaxLUT
-from elasticai.creator.nn.integer.vhdl_test_automation.utils import save_quant_data
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
 
 
 class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
