@@ -7,12 +7,13 @@ from .graph_iterators import (
 )
 from .graph_rewriting import GraphRewriter, RewriteResult
 from .name_generation import NameRegistry
-from .subgraph_matching import find_subgraphs
+from .subgraph_matching import find_all_subgraphs, find_subgraph
 
 __all__ = [
     "BaseGraph",
     "Graph",
-    "find_subgraphs",
+    "find_all_subgraphs",
+    "find_subgraph",
     "GraphRewriter",
     "bfs_iter_down",
     "bfs_iter_up",

@@ -34,7 +34,7 @@ def find_matches(graph, pattern) -> list[dict[str, str]]:
     def node_constraint(pattern_node, graph_node):
         return graph.data[graph_node] == pattern.data[pattern_node]
 
-    return g.find_subgraphs(
+    return g.find_all_subgraphs(
         pattern=pattern.wrapped, graph=graph.wrapped, node_constraint=node_constraint
     )
 
@@ -54,7 +54,7 @@ class Matcher:
     def __call__(
         self, graph: g.Graph[str], pattern: g.Graph[str]
     ) -> list[dict[str, str]]:
-        return g.find_subgraphs(
+        return g.find_all_subgraphs(
             pattern=pattern, graph=graph, node_constraint=self._node_constraint
         )
 
