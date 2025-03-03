@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library ${work_library_name};
 use ${work_library_name}.all;
-entity $layer_name is
+entity ${name} is
     port (
         enable: in std_logic;
         clock: in std_logic;
@@ -13,8 +13,8 @@ entity $layer_name is
         y: out std_logic_vector($y_width-1 downto 0);
         done: out std_logic
     );
-end $layer_name;
-architecture rtl of $layer_name is
+end ${name};
+architecture rtl of ${name} is
     $signal_definitions
 begin
     $layer_connections

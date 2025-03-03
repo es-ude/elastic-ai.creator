@@ -1,14 +1,17 @@
-import logging
-
 import torch
 from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.hardtanh.design import HardTanh as HardTanhDesign
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
+)
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
 
 
 class HardTanh(DesignCreatorModule, nn.Module):
@@ -17,17 +20,17 @@ class HardTanh(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.device = kwargs.get("device")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
-        ).to(self.device)
+        ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
-        ).to(self.device)
+        ).to(device)
 
         self.hardtanh = nn.Hardtanh(min_val=-1.0, max_val=1.0, inplace=False)
         self.math_ops = MathOperations()
@@ -45,6 +48,8 @@ class HardTanh(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         q_outputs = torch.where(
             q_inputs > self.quantized_one, self.quantized_one, q_inputs
         )
@@ -53,6 +58,7 @@ class HardTanh(DesignCreatorModule, nn.Module):
             q_outputs < self.quantized_minus_one, self.quantized_minus_one, q_outputs
         )
 
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
     def forward(

@@ -24,7 +24,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
         inputs_size = kwargs.get("inputs_size")
         hidden_size = kwargs.get("hidden_size")
-        seq_len = kwargs.get("seq_len")
+        window_size = kwargs.get("window_size")
 
         self.name = kwargs.get("name")
         quant_bits = kwargs.get("quant_bits")
@@ -110,7 +110,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
         self.h_next_addition = Addition(
             name=self.name + "_add",
-            num_features=seq_len,
+            num_features=window_size,
             num_dimensions=hidden_size,
             quant_bits=quant_bits,
             device=device,

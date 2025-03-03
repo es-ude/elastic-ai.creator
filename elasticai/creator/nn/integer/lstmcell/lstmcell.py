@@ -1,6 +1,3 @@
-import logging
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 
@@ -12,9 +9,13 @@ from elasticai.creator.nn.integer.hardsigmoid import HardSigmoid
 from elasticai.creator.nn.integer.hardtanh import HardTanh
 from elasticai.creator.nn.integer.linear import Linear
 from elasticai.creator.nn.integer.lstmcell.design import LSTMCell as LSTMCellDesign
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
 
 
 class LSTMCell(DesignCreatorModule, nn.Module):
@@ -23,19 +24,19 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         inputs_size = kwargs.get("inputs_size")
         hidden_size = kwargs.get("hidden_size")
-        seq_len = kwargs.get("seq_len")
+        window_size = kwargs.get("window_size")
 
         self.name = kwargs.get("name")
-        quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
+        self.quant_bits = kwargs.get("quant_bits")
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
-        self.logger = logging.getLogger(self.__class__.__name__)
 
         self.concatenate = Concatenate(
             name=self.name + "_concatenate",
             num_features=inputs_size + hidden_size,
             num_dimensions=1,
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -43,63 +44,83 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_f_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
-            num_dimensions=seq_len,
-            quant_bits=quant_bits,
-            device=device,
+            num_dimensions=window_size,
             bias=True,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
         self.c_gate_linear = Linear(
             name=self.name + "_c_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
-            num_dimensions=seq_len,
-            quant_bits=quant_bits,
-            device=device,
+            num_dimensions=window_size,
             bias=True,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
 
         self.i_gate_linear = Linear(
             name=self.name + "_i_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
-            num_dimensions=seq_len,
-            quant_bits=quant_bits,
-            device=device,
             bias=True,
+            num_dimensions=window_size,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
 
         self.o_gate_linear = Linear(
             name=self.name + "_o_gate_linear",
             in_features=inputs_size + hidden_size,
             out_features=hidden_size,
-            num_dimensions=seq_len,
-            quant_bits=quant_bits,
-            device=device,
             bias=True,
+            num_dimensions=window_size,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
 
         self.i_sigmoid = HardSigmoid(
-            name=self.name + "_i_sigmoid", quant_bits=quant_bits, device=device
+            name=self.name + "_i_sigmoid",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
         self.f_sigmoid = HardSigmoid(
-            name=self.name + "_f_sigmoid", quant_bits=quant_bits, device=device
+            name=self.name + "_f_sigmoid",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
         self.o_sigmoid = HardSigmoid(
-            name=self.name + "_o_sigmoid", quant_bits=quant_bits, device=device
+            name=self.name + "_o_sigmoid",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
 
         self.c_tanh = HardTanh(
-            name=self.name + "_c_tanh", quant_bits=quant_bits, device=device
+            name=self.name + "_c_tanh",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
         self.c_next_tanh = HardTanh(
-            name=self.name + "_c_next_tanh", quant_bits=quant_bits, device=device
+            name=self.name + "_c_next_tanh",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
         )
 
         self.c_next_addition = Addition(
             name=self.name + "_add",
-            num_features=seq_len,
+            num_features=window_size,
             num_dimensions=hidden_size,
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -107,38 +128,41 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_fc_hadamard_product",
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.ic_hadamard_product = HadamardProduct(
             name=self.name + "_ic_hadamard_product",
             num_features=hidden_size,
             num_dimensions=1,
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.oc_hadamard_product = HadamardProduct(
             name=self.name + "_oc_hadamard_product",
             num_features=hidden_size,
             num_dimensions=1,
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_next_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
@@ -146,7 +170,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
     def create_design(self, name) -> LSTMCellDesign:
         return LSTMCellDesign(
             name=name,
-            data_width=self.inputs_QParams.quant_bits,
+            data_width=self.quant_bits,
             concatenate=self.concatenate,
             f_gate_linear=self.f_gate_linear,
             c_gate_linear=self.c_gate_linear,
@@ -186,11 +210,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.precomputed = True
 
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
-
     def int_forward(
         self,
         q_inputs: torch.IntTensor,
@@ -200,208 +219,46 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x_1")
-        self._save_quant_data(q_h_prev, self.quant_data_dir, f"{self.name}_q_x_2")
-        self._save_quant_data(q_c_prev, self.quant_data_dir, f"{self.name}_q_x_3")
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x_1")
+        save_quant_data(q_h_prev, self.quant_data_dir, f"{self.name}_q_x_2")
+        save_quant_data(q_c_prev, self.quant_data_dir, f"{self.name}_q_x_3")
 
         # concatenate inputs and h_prev
-        self._save_quant_data(
-            q_inputs, self.quant_data_dir, f"{self.concatenate.name}_q_x_1"
-        )
-        self._save_quant_data(
-            q_h_prev, self.quant_data_dir, f"{self.concatenate.name}_q_x_2"
-        )
         q_concated_inputs = self.concatenate.int_forward(
             q_inputs1=q_inputs, q_inputs2=q_h_prev
         )
-        self._save_quant_data(
-            q_concated_inputs, self.quant_data_dir, f"{self.concatenate.name}_q_y"
-        )
 
         # gate linear transformations
-        # inputs gate
-        self._save_quant_data(
-            q_concated_inputs,
-            self.quant_data_dir,
-            f"{self.i_gate_linear.name}_q_x",
-        )
         q_i_gate_outputs = self.i_gate_linear.int_forward(q_inputs=q_concated_inputs)
-        self._save_quant_data(
-            q_i_gate_outputs, self.quant_data_dir, f"{self.i_gate_linear.name}_q_y"
-        )
-
-        # forget gate
-        self._save_quant_data(
-            q_concated_inputs,
-            self.quant_data_dir,
-            f"{self.f_gate_linear.name}_q_x",
-        )
         q_f_gate_outputs = self.f_gate_linear.int_forward(q_inputs=q_concated_inputs)
-        self._save_quant_data(
-            q_f_gate_outputs, self.quant_data_dir, f"{self.f_gate_linear.name}_q_y"
-        )
-
-        # output gate
-        self._save_quant_data(
-            q_concated_inputs,
-            self.quant_data_dir,
-            f"{self.o_gate_linear.name}_q_x",
-        )
         q_o_gate_outputs = self.o_gate_linear.int_forward(q_inputs=q_concated_inputs)
-        self._save_quant_data(
-            q_o_gate_outputs, self.quant_data_dir, f"{self.o_gate_linear.name}_q_y"
-        )
-
-        # cell gate
-        self._save_quant_data(
-            q_concated_inputs,
-            self.quant_data_dir,
-            f"{self.c_gate_linear.name}_q_x",
-        )
         q_c_gate_outputs = self.c_gate_linear.int_forward(q_inputs=q_concated_inputs)
-        self._save_quant_data(
-            q_c_gate_outputs, self.quant_data_dir, f"{self.c_gate_linear.name}_q_y"
-        )
 
         # gate activations
-        # inputs gate sigmoid
-        self._save_quant_data(
-            q_i_gate_outputs,
-            self.quant_data_dir,
-            f"{self.i_sigmoid.name}_q_x",
-        )
         q_i_gate_sigmoid_outputs = self.i_sigmoid.int_forward(q_inputs=q_i_gate_outputs)
-        self._save_quant_data(
-            q_i_gate_sigmoid_outputs,
-            self.quant_data_dir,
-            f"{self.i_sigmoid.name}_q_y",
-        )
-
-        # forget gate sigmoid
-        self._save_quant_data(
-            q_f_gate_outputs,
-            self.quant_data_dir,
-            f"{self.f_sigmoid.name}_q_x",
-        )
         q_f_gate_sigmoid_outputs = self.f_sigmoid.int_forward(q_inputs=q_f_gate_outputs)
-        self._save_quant_data(
-            q_f_gate_sigmoid_outputs,
-            self.quant_data_dir,
-            f"{self.f_sigmoid.name}_q_y",
-        )
-
-        # output gate sigmoid
-        self._save_quant_data(
-            q_o_gate_outputs,
-            self.quant_data_dir,
-            f"{self.o_sigmoid.name}_q_x",
-        )
         q_o_gate_sigmoid_outputs = self.o_sigmoid.int_forward(q_inputs=q_o_gate_outputs)
-        self._save_quant_data(
-            q_o_gate_sigmoid_outputs,
-            self.quant_data_dir,
-            f"{self.o_sigmoid.name}_q_y",
-        )
-
-        # cell gate tanh
-        self._save_quant_data(
-            q_c_gate_outputs, self.quant_data_dir, f"{self.c_tanh.name}_q_x"
-        )
         q_c_gate_tanh_outputs = self.c_tanh.int_forward(q_inputs=q_c_gate_outputs)
-        self._save_quant_data(
-            q_c_gate_tanh_outputs,
-            self.quant_data_dir,
-            f"{self.c_tanh.name}_q_y",
-        )
 
         # next cell state
-        # fc dot product
-        self._save_quant_data(
-            q_f_gate_sigmoid_outputs,
-            self.quant_data_dir,
-            f"{self.fc_hadamard_product.name}_q_x_1",
-        )
-        self._save_quant_data(
-            q_c_prev, self.quant_data_dir, f"{self.fc_hadamard_product.name}_q_x_2"
-        )
         q_c_next_inputs1 = self.fc_hadamard_product.int_forward(
             q_inputs1=q_f_gate_sigmoid_outputs, q_inputs2=q_c_prev
-        )
-        self._save_quant_data(
-            q_c_next_inputs1,
-            self.quant_data_dir,
-            f"{self.fc_hadamard_product.name}_q_y",
-        )
-
-        # ic dot product
-        self._save_quant_data(
-            q_i_gate_sigmoid_outputs,
-            self.quant_data_dir,
-            f"{self.ic_hadamard_product.name}_q_x_1",
-        )
-        self._save_quant_data(
-            q_c_gate_tanh_outputs,
-            self.quant_data_dir,
-            f"{self.ic_hadamard_product.name}_q_x_2",
         )
         q_c_next_inputs2 = self.ic_hadamard_product.int_forward(
             q_inputs1=q_i_gate_sigmoid_outputs, q_inputs2=q_c_gate_tanh_outputs
         )
-        self._save_quant_data(
-            q_c_next_inputs2,
-            self.quant_data_dir,
-            f"{self.ic_hadamard_product.name}_q_y",
-        )
-
-        # addition
-        self._save_quant_data(
-            q_c_next_inputs1,
-            self.quant_data_dir,
-            f"{self.c_next_addition.name}_q_x_1",
-        )
-        self._save_quant_data(
-            q_c_next_inputs2,
-            self.quant_data_dir,
-            f"{self.c_next_addition.name}_q_x_2",
-        )
         q_c_next = self.c_next_addition.int_forward(
             q_inputs1=q_c_next_inputs1, q_inputs2=q_c_next_inputs2
         )
-        self._save_quant_data(
-            q_c_next, self.quant_data_dir, f"{self.c_next_addition.name}_q_y"
-        )
 
         # next hidden state
-        # c_next tanh
-        self._save_quant_data(
-            q_c_next, self.quant_data_dir, f"{self.c_next_tanh.name}_q_x"
-        )
         q_c_next_tanh_ouputs = self.c_next_tanh.int_forward(q_inputs=q_c_next)
-        self._save_quant_data(
-            q_c_next_tanh_ouputs,
-            self.quant_data_dir,
-            f"{self.c_next_tanh.name}_q_y",
-        )
-
-        # oc dot product
-        self._save_quant_data(
-            q_o_gate_sigmoid_outputs,
-            self.quant_data_dir,
-            f"{self.oc_hadamard_product.name}_q_x_1",
-        )
-        self._save_quant_data(
-            q_c_next_tanh_ouputs,
-            self.quant_data_dir,
-            f"{self.oc_hadamard_product.name}_q_x_2",
-        )
         q_h_next = self.oc_hadamard_product.int_forward(
             q_inputs1=q_o_gate_sigmoid_outputs, q_inputs2=q_c_next_tanh_ouputs
         )
-        self._save_quant_data(
-            q_h_next, self.quant_data_dir, f"{self.oc_hadamard_product.name}_q_y"
-        )
-        self._save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_1")
-        self._save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_2")
+
+        save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_1")
+        save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_2")
 
         return q_h_next, q_c_next
 

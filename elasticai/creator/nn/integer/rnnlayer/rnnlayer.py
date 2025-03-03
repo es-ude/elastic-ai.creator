@@ -1,39 +1,40 @@
-import logging
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.grucell import GRUCell
 from elasticai.creator.nn.integer.lstmcell import LSTMCell
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
+)
 from elasticai.creator.nn.integer.rnnlayer.design import RNNLayer as RNNLayerDesign
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
 
 
 class RNNLayer(nn.Module):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
+        self.cell_type = kwargs.get("cell_type")
         inputs_size = kwargs.get("inputs_size")
         self.hidden_size = kwargs.get("hidden_size")
         self.batch_size = kwargs.get("batch_size")
-        self.seq_len = kwargs.get("seq_len")
-        self.cell_type = kwargs.get("cell_type")
+        self.window_size = kwargs.get("window_size")
 
-        device = kwargs.get("device")
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         if self.cell_type == "lstm":
             self.rnn_cell = LSTMCell(
                 name=f"{self.name}_lstm_cell",
                 inputs_size=inputs_size,
                 hidden_size=self.hidden_size,
-                seq_len=self.seq_len,
+                window_size=self.window_size,
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
@@ -43,7 +44,7 @@ class RNNLayer(nn.Module):
                 name=f"{self.name}_gru_cell",
                 inputs_size=inputs_size,
                 hidden_size=self.hidden_size,
-                seq_len=self.seq_len,
+                window_size=self.window_size,
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
@@ -82,13 +83,7 @@ class RNNLayer(nn.Module):
 
     def precompute(self):
         self.rnn_cell.precompute()
-
         self.precomputed = True
-
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
 
     def int_forward(
         self,
@@ -99,16 +94,16 @@ class RNNLayer(nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x_1")
-        self._save_quant_data(q_h_prev, self.quant_data_dir, f"{self.name}_q_x_2")
-        if q_c_prev is not None:
-            self._save_quant_data(q_c_prev, self.quant_data_dir, f"{self.name}_q_x_3")
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x_1")
+        save_quant_data(q_h_prev, self.quant_data_dir, f"{self.name}_q_x_2")
+        if q_c_prev is not None:  # to be compatible with GRU
+            save_quant_data(q_c_prev, self.quant_data_dir, f"{self.name}_q_x_3")
 
         q_outputs = torch.zeros(
-            self.batch_size, self.seq_len, self.hidden_size, dtype=torch.int32
+            self.batch_size, self.window_size, self.hidden_size, dtype=torch.int32
         ).to("cpu")
 
-        for t in range(self.seq_len):
+        for t in range(self.window_size):
             q_h_next, q_c_next = self.rnn_cell.int_forward(
                 q_inputs=q_inputs[:, t, :], q_h_prev=q_h_prev, q_c_prev=q_c_prev
             )
@@ -117,11 +112,10 @@ class RNNLayer(nn.Module):
             q_h_prev = q_h_next
             q_c_prev = q_c_next
 
-        self._save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y_1")
-        self._save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_2")
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y_1")
+        save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_2")
         if q_c_next is not None:
-            self._save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_3")
-
+            save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_3")
         return q_outputs, q_h_next, q_c_next
 
     def forward(
@@ -152,27 +146,12 @@ class RNNLayer(nn.Module):
         inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         outputs = torch.zeros(
-            self.batch_size, self.seq_len, self.hidden_size, dtype=torch.float32
+            self.batch_size, self.window_size, self.hidden_size, dtype=torch.float32
         ).to(inputs.device)
 
-        for t in range(self.seq_len):
-            # if self.training:
-            # if given_h_prev_QParams is not None:
-            #     self.h_prev_QParams = given_h_prev_QParams
-            # else:
-            #     print("xxxxxxxxxxxxx hprev")
-            # self.h_prev_QParams.update_quant_params(h_prev)
-
+        for t in range(self.window_size):
             h_prev = SimQuant.apply(h_prev, self.h_prev_QParams)
-
             if c_prev is not None:  # to be compatible with GRU
-                # if self.training:
-                #     if given_c_prev_QParams is not None:
-                #         self.c_prev_QParams = given_c_prev_QParams
-                #     else:
-                # print("xxxxxxxxxxxxx cprev")
-                # self.c_prev_QParams.update_quant_params(c_prev)
-
                 c_prev = SimQuant.apply(c_prev, self.c_prev_QParams)
 
             h_next, c_next = self.rnn_cell.forward(

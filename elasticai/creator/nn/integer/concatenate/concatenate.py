@@ -1,5 +1,3 @@
-import logging
-
 import torch
 import torch.nn as nn
 
@@ -8,12 +6,15 @@ from elasticai.creator.nn.integer.concatenate.design import (
 )
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
-from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
+    scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
 )
 
 
@@ -26,18 +27,18 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.device = kwargs.get("device")
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.inputs2_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
@@ -73,7 +74,6 @@ class Concatenate(DesignCreatorModule, nn.Module):
         self.scale_factor_m_q_2_shift, self.scale_factor_m_q_2 = scaling_M(
             self.scale_factor_M_2
         )
-
         self.precomputed = True
 
     def int_forward(
@@ -83,6 +83,9 @@ class Concatenate(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+
+        save_quant_data(q_inputs1, self.quant_data_dir, f"{self.name}_q_x_1")
+        save_quant_data(q_inputs2, self.quant_data_dir, f"{self.name}_q_x_2")
 
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
@@ -106,6 +109,8 @@ class Concatenate(DesignCreatorModule, nn.Module):
         q_outputs = self.math_ops.intadd(
             q_outputs, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 
         return q_outputs
 
