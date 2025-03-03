@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from elasticai.creator.graph import BaseGraph as _Graph
@@ -26,12 +28,10 @@ def test_graph_is_serialized():
         "name": "network",
         "type": "network",
         "nodes": {
-            "node1": {"name": "node1", "type": "type1"},
-            "node2": {"name": "node2", "type": "type2"},
+            "node1": {"type": "type1"},
+            "node2": {"type": "type2"},
         },
-        "edges": {
-            ("node1", "node2"): {"src": "node1", "dst": "node2"},
-        },
+        "edges": {"node1": {"node2": {}}},
     }
 
 
@@ -43,9 +43,9 @@ def test_graph_has_required_fields():
 def test_can_retrieve_edges() -> None:
     g = (
         Graph()
-        .add_node(name="x", type="t")
-        .add_node(name="y", type="t")
-        .add_edge(src="x", dst="y")
+        .add_node(name="x", data=dict(type="t"))
+        .add_node(name="y", data=dict(type="t"))
+        .add_edge(src="x", dst="y", data=dict())
     )
     edges = tuple(g.edges.values())
     assert edge(src="x", dst="y") == edges[0]
@@ -55,11 +55,11 @@ def test_can_retrieve_edges() -> None:
 def graph() -> Graph:
     g = (
         Graph()
-        .add_node(name="x", type="t")
-        .add_node(name="y", type="t")
-        .add_node(name="z", type="t")
-        .add_edge(src="x", dst="y")
-        .add_edge(src="y", dst="z", extra="e")
+        .add_node(name="x", data=dict(type="t"))
+        .add_node(name="y", data=dict(type="t"))
+        .add_node(name="z", data=dict(type="t"))
+        .add_edge(src="x", dst="y", data={})
+        .add_edge(src="y", dst="z", data=dict(extra="e"))
     )
     return g
 
@@ -82,3 +82,10 @@ def test_predecessors_of_z_is_y(graph: Graph) -> None:
 def test_successor_of_x_is_y(graph: Graph) -> None:
     n = next(iter(graph.successors("x").values()))
     assert graph.nodes["y"] == n
+
+
+def test_is_json_serializable(graph: Graph) -> None:
+    result = json.dumps(graph.as_dict())
+    assert result == (
+        r'{"nodes": {"x": {"type": "t"}, "y": {"type": "t"}, "z": {"type": "t"}}, "edges": {"x": {"y": {}}, "y": {"z": {"extra": "e"}}}}'
+    )

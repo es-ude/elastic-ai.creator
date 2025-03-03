@@ -129,7 +129,7 @@ class SequenceReorderer:
                         cast(str, result.pattern_to_original[pattern_node])
                     ]
                 ),
-            ) | {"name": new_name}
+            )
 
         for node in self._get_nodes_that_are_in_pattern_and_replacement():
             copy_original_data_to_replaced_subgraph(node, node)

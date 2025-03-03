@@ -2,7 +2,9 @@ from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import (
     Any,
     Generic,
+    MutableMapping,
     ParamSpec,
+    Protocol,
     Self,
     TypeVar,
     cast,
@@ -22,12 +24,18 @@ VisibleT = TypeVar("VisibleT")
 P = ParamSpec("P")
 
 
+class NodeFn(Protocol[N]):
+    def __call__(self, name: str, data: dict[str, Attribute]) -> N: ...
+
+
+class EdgeFn(Protocol[E]):
+    def __call__(self, src: str, dst: str, data: dict[str, Attribute]) -> E: ...
+
+
 class Implementation(IrData, Generic[N, E], create_init=False):
     __slots__ = (
         "data",
         "graph",
-        "_node_data",
-        "_edge_data",
         "_node_fn",
         "_edge_fn",
     )
@@ -40,8 +48,8 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         self: "Implementation[N, E]",
         *,
         graph: Graph[str],
-        edge_fn: Callable[[dict[str, Attribute]], E],
-        node_fn: Callable[[dict[str, Attribute]], N],
+        edge_fn: EdgeFn[E],
+        node_fn: NodeFn[N],
         data: dict[str, Attribute] | None = None,
     ) -> None: ...
 
@@ -50,7 +58,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         self: "Implementation[N, Edge]",
         *,
         graph: Graph,
-        node_fn: Callable[[dict[str, Attribute]], N],
+        node_fn: NodeFn[N],
         data: dict[str, Attribute] | None = None,
     ) -> None: ...
 
@@ -59,7 +67,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         self: "Implementation[Node, E]",
         *,
         graph: Graph[str],
-        edge_fn: Callable[[dict[str, Attribute]], E],
+        edge_fn: EdgeFn[E],
         data: dict[str, Attribute] | None = None,
     ) -> None: ...
 
@@ -75,8 +83,8 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         self,
         *,
         graph: Graph[str],
-        node_fn: Callable[[dict[str, Attribute]], Any] = Node,
-        edge_fn: Callable[[dict[str, Attribute]], Any] = Edge,
+        node_fn: NodeFn = Node,
+        edge_fn: EdgeFn = Edge,
         data: dict[str, Attribute] | None = None,
     ) -> None:
         """Create a new Implementation. Nodes and edges from `data` will not be automatically added to the graph.
@@ -106,7 +114,7 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         ```
         """
         if data is None:
-            data = {}
+            data = {"nodes": {}, "edges": {}}
         if "nodes" not in data:
             data["nodes"] = {}
         if "edges" not in data:
@@ -114,75 +122,65 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         super().__init__(data)
 
         self.graph = graph
-        self._node_data: dict[str, Attribute] = cast(
-            dict[str, Attribute], data["nodes"]
-        )
-        self._edge_data: dict[tuple[str, str], Attribute] = cast(
-            dict[tuple[str, str], Attribute], data["edges"]
-        )
+
         self._node_fn = node_fn
         self._edge_fn = edge_fn
+
+    @property
+    def _node_data(self) -> dict[str, Attribute]:
+        return cast(dict[str, Attribute], self.data["nodes"])
+
+    @property
+    def _edge_data(self) -> MutableMapping[tuple[str, str], Attribute]:
+        return _NestedDictToTupleKeyAdapter(
+            cast(dict[str, dict[str, "Attribute"]], self.data["edges"])
+        )
 
     @overload
     def add_node(self, n: Node) -> Self: ...
 
     @overload
-    def add_node(self, n: dict[str, Attribute]) -> Self: ...
-
-    @overload
-    def add_node(self, *, name: str, type: str, **attributes: Attribute) -> Self: ...
+    def add_node(self, *, name: str, data: dict[str, Attribute]) -> Self: ...
 
     def add_node(self, *args, **kwargs) -> Self:
-        if len(args) == 1 and not kwargs:
-            if isinstance(args[0], Node):
-                return self.add_node(args[0].data)
-            elif isinstance(args[0], dict):
-                return self._add_node(args[0])
-        elif len(args) == 0 and "name" in kwargs and "type" in kwargs:
-            return self.add_node(kwargs)
+        if len(args) + len(kwargs) == 1:
+            bound = _bind_args(["node"], {}, *args, **kwargs)
+            node = bound["node"]
+            return self._add_node(node.name, node.data)
         else:
-            raise TypeError(
-                "invalid arguments, expected either a Node or a dict or keyword arguments name, type, and more optional attributes"
-            )
-        return self
+            bound = _bind_args(["name", "data"], {"data": {}}, *args, **kwargs)
+            return self._add_node(bound["name"], bound["data"])
 
-    def _add_node(self, n: dict[str, Attribute]) -> Self:
-        self.graph.add_node(cast(str, n["name"]))
-        self._node_data[cast(str, n["name"])] = n
+    def _add_node(self, name: str, data: dict[str, Attribute]) -> Self:
+        self.graph.add_node(name)
+        self._node_data[name] = data
         return self
 
     @overload
     def add_edge(self, e: Edge) -> Self: ...
 
     @overload
-    def add_edge(self, e: dict) -> Self: ...
-
-    @overload
-    def add_edge(self, *, src: str, dst: str, **attributes: Attribute) -> Self: ...
+    def add_edge(self, src: str, dst: str, data: dict[str, Attribute]) -> Self: ...
 
     def add_edge(self, *args, **kwargs) -> Self:
-        if len(args) == 1 and not kwargs:
-            if isinstance(args[0], Edge):
-                return self.add_edge(args[0].data)
-            elif isinstance(args[0], dict):
-                return self._add_edge(args[0])
-        elif len(args) == 0 and "src" in kwargs and "dst" in kwargs:
-            return self.add_edge(kwargs)
-        raise TypeError(
-            "invalid arguments, expected either an Edge or a dict or keyword arguments src, dst, and more optional attributes"
-        )
+        if len(args) + len(kwargs) == 1:
+            if len(args) == 1:
+                e = args[0]
+            else:
+                e = kwargs["edge"]
+            return self.add_edge(e.src, e.dst, e.data)
+        else:
+            bound = _bind_args(["src", "dst", "data"], {"data": {}}, *args, **kwargs)
+            self.graph.add_edge(bound["src"], bound["dst"])
+            self._edge_data[(bound["src"], bound["dst"])] = bound["data"]
+            return self
 
-    def _add_edge(self, e: dict) -> Self:
-        self.graph.add_edge(e["src"], e["dst"])
-        self._edge_data[(e["src"], e["dst"])] = e
-        return self
-
-    def add_nodes(self, ns: Iterable[Node | dict[str, Attribute]]) -> Self:
+    def add_nodes(self, ns: Iterable[Node]) -> Self:
         for n in ns:
             self.add_node(n)
         return self
 
-    def add_edges(self, es: Iterable[Edge | dict[str, Attribute]]) -> Self:
+    def add_edges(self, es: Iterable[Edge]) -> Self:
         for e in es:
             self.add_edge(e)
         return self
@@ -213,7 +211,15 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         self, keys: Callable[[], Iterable[tuple[str, str]]]
     ) -> Mapping[tuple[str, str], E]:
         """Create a read-only mapping of (src, dst) pairs to Edges in the order of `keys()`."""
-        return _ReadOnlyMappingInOrderAsIterable(keys, self._edge_data, self._edge_fn)
+        return _ReadOnlyMappingInOrderAsIterable(
+            keys, self._edge_data, self._construct_edge
+        )
+
+    def _construct_edge(
+        self, src_dst: tuple[str, str], data: dict[str, Attribute]
+    ) -> E:
+        src, dst = src_dst
+        return self._edge_fn(src, dst, data)
 
     @read_only_field
     def nodes(self, _: dict[str, Attribute]) -> Mapping[str, N]:
@@ -225,10 +231,14 @@ class Implementation(IrData, Generic[N, E], create_init=False):
 
     def as_dict(self) -> dict[str, Attribute]:
         data = self.data.copy()
-        data["nodes"] = cast(
-            Attribute, list(n.data for n in self.nodes.values())
-        )  # seems like mypy can't handle the nested recursive type hint list[dict[str, Attribute]]
-        data["edges"] = cast(Attribute, list(e.data for e in self.edges.values()))
+        edges: dict[str, dict[str, Attribute]] = {}
+        for (src, dst), d in self._edge_data.items():
+            if src in edges:
+                edges[src][dst] = d
+            else:
+                edges[src] = {dst: d}
+        data["edges"] = cast(Attribute, edges)
+
         return data
 
     def load_from_dict(
@@ -242,29 +252,62 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         This will override all state of the current object.
         :::
         """
-        data = d.copy()
-        nodes = {node["name"]: node for node in data["nodes"]}
-        edges = {(edge["src"], edge["dst"]): edge for edge in data["edges"]}
-        data["nodes"] = nodes
-        data["edges"] = edges
-        for node in nodes.values():
-            self.add_node(node)
-        for edge in edges.values():
-            self.add_edge(edge)
-        self.data = data
+        self.data = d.copy()
+        g = self.graph
+        self.graph = self.graph.new()
+        del g
+        for n in self._node_data.keys():
+            self.graph.add_node(n)
+        for src, dst in self._edge_data.keys():
+            self.graph.add_edge(src, dst)
+
         return self
 
 
 _K = TypeVar("_K")
 _V = TypeVar("_V")
+_K2 = TypeVar("_K2")
+
+
+class _NestedDictToTupleKeyAdapter(MutableMapping[tuple[_K, _K2], _V]):
+    def __init__(self, wrapped: dict[_K, dict[_K2, _V]]):
+        self.wrapped = wrapped
+
+    def __getitem__(self, k: tuple[_K, _K2]) -> _V:
+        return self.wrapped[k[0]][k[1]]
+
+    def __len__(self) -> int:
+        acc = 0
+        for v in self.wrapped.values():
+            acc += len(v)
+        return acc
+
+    def __contains__(self, k: object) -> bool:
+        if not isinstance(k, tuple) or len(k) != 2:
+            return False
+        return k[0] in self.wrapped and k[1] in self.wrapped[k[0]]
+
+    def __delitem__(self, key):
+        self.wrapped(key[0]).__delitem__(key[1])
+
+    def __iter__(self) -> Iterator[tuple[_K, _K2]]:
+        for k0 in self.wrapped:
+            for k1 in self.wrapped[k0]:
+                yield k0, k1
+
+    def __setitem__(self, k: tuple[_K, _K2], v: _V) -> None:
+        if k[0] not in self.wrapped:
+            self.wrapped[k[0]] = {}
+
+        self.wrapped[k[0]][k[1]] = v
 
 
 class _ReadOnlyMappingInOrderAsIterable(Mapping[_K, _V]):
     def __init__(
         self,
         iterable: Callable[[], Iterable[_K]],
-        d: dict[_K, Any],
-        value_constructor: Callable[[Any], _V],
+        d: MutableMapping[_K, Any],
+        value_constructor: Callable[[_K, Any], _V],
     ):
         self._iterable = iterable
         self._d = d
@@ -280,7 +323,7 @@ class _ReadOnlyMappingInOrderAsIterable(Mapping[_K, _V]):
         return k in self._d
 
     def __getitem__(self, k: _K) -> _V:
-        return self._value_constructor(self._d[k])
+        return self._value_constructor(k, self._d[k])
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Mapping):
@@ -289,3 +332,27 @@ class _ReadOnlyMappingInOrderAsIterable(Mapping[_K, _V]):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({dict(self)})"
+
+
+def _bind_args(keywords: list[str], optionals: dict[str, Any], *args, **kwargs) -> dict:
+    bound = dict()
+    keys = keywords.copy()
+    opts = optionals.copy()
+    for key, arg in zip(keys, args):
+        bound[key] = arg
+    for key, value in kwargs.items():
+        if key in bound:
+            raise TypeError("failed to bind arguments: multiple values for argument")
+        bound[key] = value
+    for key, value in opts.items():
+        if key not in bound:
+            bound[key] = value
+
+    missing_args = set()
+    for k in keywords:
+        if k not in bound:
+            missing_args.add(k)
+    if len(missing_args) > 0:
+        raise TypeError(f"failed to bind arguments: missing argument {missing_args}")
+
+    return bound

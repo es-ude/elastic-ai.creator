@@ -27,27 +27,21 @@ def test_convert_linear_without_bias():
         {
             "name": "",
             "type": "module",
-            "nodes": [
-                {
-                    "name": "input_1",
+            "nodes": {
+                "input_1": {
                     "type": "input",
                     "implementation": "input",
                 },
-                {
-                    "name": "_0",
+                "_0": {
                     "type": "linear",
                     "implementation": "0",
                 },
-                {
-                    "name": "output",
+                "output": {
                     "type": "output",
                     "implementation": "output",
                 },
-            ],
-            "edges": [
-                {"src": "input_1", "dst": "_0"},
-                {"src": "_0", "dst": "output"},
-            ],
+            },
+            "edges": {"input_1": {"_0": dict()}, "_0": {"output": dict()}},
         },
         {
             "name": "0",
@@ -55,8 +49,8 @@ def test_convert_linear_without_bias():
             "in_features": 1,
             "out_features": 2,
             "bias": False,
-            "edges": [],
-            "nodes": [],
+            "edges": {},
+            "nodes": {},
         },
     ]
 
@@ -72,48 +66,40 @@ def test_convert_linear_to_ir():
         {
             "name": "",
             "type": "module",
-            "nodes": [
-                {
+            "nodes": {
+                "input_1": {
                     "implementation": "input",
-                    "name": "input_1",
                     "type": "input",
                 },
-                {
-                    "name": "_0",
+                "_0": {
                     "implementation": "0",
                     "type": "linear",
                 },
-                {
+                "_1": {
                     "implementation": "1",
-                    "name": "_1",
                     "type": "relu",
                 },
-                {
+                "output": {
                     "implementation": "output",
-                    "name": "output",
                     "type": "output",
                 },
-            ],
-            "edges": [
-                {"src": "input_1", "dst": "_0"},
-                {"src": "_0", "dst": "_1"},
-                {"src": "_1", "dst": "output"},
-            ],
+            },
+            "edges": {"input_1": {"_0": {}}, "_0": {"_1": {}}, "_1": {"output": {}}},
         },
         {
             "type": "linear",
             "in_features": 1,
             "out_features": 2,
             "bias": True,
-            "edges": [],
+            "edges": {},
             "name": "0",
-            "nodes": [],
+            "nodes": {},
         },
         {
             "type": "relu",
             "name": "1",
-            "edges": [],
-            "nodes": [],
+            "edges": {},
+            "nodes": {},
         },
     ]
 
@@ -131,57 +117,40 @@ def test_converting_model_with_batchnorm():
     m = Model()
     assert convert(m) == [
         {
-            "edges": [
-                {
-                    "dst": "bn",
-                    "src": "x",
-                },
-                {
-                    "dst": "relu",
-                    "src": "bn",
-                },
-                {
-                    "dst": "output",
-                    "src": "relu",
-                },
-            ],
+            "edges": {"x": {"bn": {}}, "bn": {"relu": {}}, "relu": {"output": {}}},
             "name": "",
-            "nodes": [
-                {
+            "nodes": {
+                "x": {
                     "implementation": "input",
-                    "name": "x",
                     "type": "input",
                 },
-                {
+                "bn": {
                     "implementation": "bn",
-                    "name": "bn",
                     "type": "batchnorm1d",
                 },
-                {
+                "relu": {
                     "implementation": "relu",
-                    "name": "relu",
                     "type": "relu",
                 },
-                {
+                "output": {
                     "implementation": "output",
-                    "name": "output",
                     "type": "output",
                 },
-            ],
+            },
             "type": "module",
         },
         {
             "name": "bn",
             "type": "batchnorm1d",
-            "edges": [],
-            "nodes": [],
+            "edges": {},
+            "nodes": {},
             "num_features": 2,
             "affine": True,
         },
         {
-            "edges": [],
+            "edges": {},
             "name": "relu",
-            "nodes": [],
+            "nodes": {},
             "type": "relu",
         },
     ]
@@ -194,33 +163,29 @@ def test_can_handle_same_object_under_different_hierarchy_paths():
         {
             "name": "",
             "type": "module",
-            "nodes": [
-                {
-                    "name": "input_1",
+            "nodes": {
+                "input_1": {
                     "type": "input",
                     "implementation": "input",
                 },
-                {
-                    "name": "a",
+                "a": {
                     "type": "linear",
                     "implementation": "a",
                 },
-                {
-                    "name": "a_1",
+                "a_1": {
                     "type": "linear",
                     "implementation": "a",
                 },
-                {
-                    "name": "output",
+                "output": {
                     "type": "output",
                     "implementation": "output",
                 },
-            ],
-            "edges": [
-                {"src": "input_1", "dst": "a"},
-                {"src": "a", "dst": "a_1"},
-                {"src": "a_1", "dst": "output"},
-            ],
+            },
+            "edges": {
+                "input_1": {"a": {}},
+                "a": {"a_1": {}},
+                "a_1": {"output": {}},
+            },
         },
         {
             "name": "a",
@@ -228,7 +193,7 @@ def test_can_handle_same_object_under_different_hierarchy_paths():
             "in_features": 1,
             "out_features": 1,
             "bias": True,
-            "edges": [],
-            "nodes": [],
+            "edges": {},
+            "nodes": {},
         },
     ]

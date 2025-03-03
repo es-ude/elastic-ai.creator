@@ -3,7 +3,6 @@ from typing import Any
 from elasticai.creator.ir import Attribute, Edge, GraphProtocol
 from elasticai.creator.ir import Implementation as _Implementation
 from elasticai.creator.ir import Node as _Node
-from elasticai.creator.ir import node as _node
 
 
 class Node(_Node):
@@ -15,9 +14,7 @@ def new_node(
 ) -> Node:
     if attributes is None:
         attributes = {}
-    return Node(
-        _node(name, type, dict(implementation=implementation) | attributes).data
-    )
+    return Node(name, dict(type=type, implementation=implementation) | attributes)
 
 
 def input_node(attributes: dict[str, Any] | None = None) -> Node:

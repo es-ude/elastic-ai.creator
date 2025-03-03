@@ -13,14 +13,14 @@ def test_shift_register_converts_depth_and_width_to_correct_generics():
     conv1_in_shape = Shape(conv0_channels, conv1_kernel_size)
     stride = 2
     n = VhdlNode(
-        dict(
-            name="sr0",
+        name="sr0",
+        data=dict(
             type="shift_register",
             implementation="",
             input_shape=conv0_out_shape.to_tuple(),
             output_shape=conv1_in_shape.to_tuple(),
             stride=stride,
-        )
+        ),
     )
     sr = striding_shift_register(n)
     entity = tuple(extract_code_section(sr.instantiate(), start="generic", end=")"))

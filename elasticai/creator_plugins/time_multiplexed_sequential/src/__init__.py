@@ -3,7 +3,7 @@ from typing import ParamSpec
 
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import FunctionDecorator
-from elasticai.creator.graph import dfs_pre_order
+from elasticai.creator.graph import dfs_pre_order as dfs_iter
 from elasticai.creator.ir import RequiredField
 from elasticai.creator.ir2vhdl import (
     Edge,
@@ -77,7 +77,8 @@ def append_counter_suffix_before_construction(
 class _Sequential:
     def __init__(self, name: str):
         self._impl: Implementation[Node, Edge] = Implementation(
-            name=name, type="clocked_combinatorial", data={}
+            name=name,
+            type="clocked_combinatorial",
         )
         self._last_node: Node | None = None
         self._counting_node_constructor = append_counter_suffix_before_construction(
@@ -98,7 +99,7 @@ class _Sequential:
         self._last_node = self._impl.nodes["input"]
 
     def filter(self, n: Node):
-        node = _FilterNode(n.data)
+        node = _FilterNode(n.name, n.data)
         attributes = n.attributes
         params = node.params
         if "top_stride" not in self._impl.attributes:
@@ -108,7 +109,7 @@ class _Sequential:
                 }
             )
         elif self._last_node is not None and "params" in self._last_node.data:
-            old_params = _FilterNode(self._last_node.data).params
+            old_params = _FilterNode(self._last_node.name, self._last_node.data).params
             if params.kernel_size != 1 or params.stride != 1:
                 self.strided_shift_register(
                     output_shape=(
@@ -205,7 +206,9 @@ class _Sequential:
         first_node_after_input = tuple(impl.successors("input").values())[0]
         match first_node_after_input.type:
             case "filter":
-                n = _FilterNode(first_node_after_input.data)
+                n = _FilterNode(
+                    first_node_after_input.name, first_node_after_input.data
+                )
                 return Shape(n.params.in_channels, n.params.kernel_size)
             case _:
                 return impl.nodes["input"].output_shape
@@ -235,7 +238,7 @@ def sequential(impl: Implementation) -> Implementation:
 
     def iter_nodes():
         def iterator():
-            yield from dfs_pre_order(impl.successors, "input")
+            yield from dfs_iter(impl.successors, "input")
 
         return impl.get_node_mapping(iterator)
 

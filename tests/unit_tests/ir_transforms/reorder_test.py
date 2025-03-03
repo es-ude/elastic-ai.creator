@@ -81,7 +81,7 @@ class Conv1d(Node):
         padding: int,
     ) -> "Conv1d":
         args = locals() | {"type": NodeType.CONV1D.value}
-        return Conv1d(args)
+        return Conv1d(name, data=args)
 
 
 class Batchnorm1d(Node):
@@ -93,14 +93,15 @@ class Batchnorm1d(Node):
         name: str, implementation: str, num_features: int, affine: bool
     ) -> "Batchnorm1d":
         args = locals() | {"type": NodeType.BATCHNORM1D.value}
-        return Batchnorm1d(args)
+        return Batchnorm1d(name, data=args)
 
 
 class Binarize(Node):
     @staticmethod
     def new(name: str, implementation: str) -> "Binarize":
         return Binarize(
-            dict(name=name, type=NodeType.BINARIZE.value, implementation=implementation)
+            name=name,
+            data=dict(type=NodeType.BINARIZE.value, implementation=implementation),
         )
 
 
@@ -116,7 +117,7 @@ class MaxPool1d(Node):
         stride: int,
     ) -> "MaxPool1d":
         args = locals() | {"type": NodeType.MAXPOOL1D.value}
-        return MaxPool1d(args)
+        return MaxPool1d(name, args)
 
 
 class SequentialBuilder:

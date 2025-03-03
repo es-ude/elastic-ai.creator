@@ -5,7 +5,7 @@ from elasticai.creator_plugins.grouped_filter import FilterParameters
 def network(input_shape, kernel_size, out_channels, stride=2):
     out_length = (input_shape[1] - kernel_size) // stride + 1
     in_channels = input_shape[0]
-    _net = Implementation(name="network", type="network", data={})
+    _net = Implementation(name="network", type="network")
     _net.add_nodes(
         (
             vhdl_node(

@@ -121,7 +121,7 @@ class Torch2Ir:
             )
 
         for successor in self._get_successors(node):
-            self._root.add_edge(Edge(dict(src=str(node.name), dst=str(successor.name))))
+            self._root.add_edge(Edge(src=node.name, dst=successor.name, data={}))
 
     def _extract_attributes(self, node: FxNode) -> dict:
         if self._get_type(node) in ("input", "output"):

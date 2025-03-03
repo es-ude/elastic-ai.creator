@@ -23,7 +23,7 @@ def new_node(
     if attributes is None:
         attributes = {}
     n = VhdlNode(
-        dict(name=name, type=type, implementation=implementation, **attributes)
+        name=name, data=dict(type=type, implementation=implementation, **attributes)
     )
     n.input_shape = input_shape
     n.output_shape = output_shape
