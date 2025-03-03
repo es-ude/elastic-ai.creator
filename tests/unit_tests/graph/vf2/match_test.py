@@ -1,7 +1,8 @@
 import pytest
 
 import elasticai.creator.graph as gr
-from elasticai.creator.graph.vf2 import match
+from elasticai.creator.graph.vf2 import find_all_matches, match
+from elasticai.creator.graph.vf2.matching import MatchError
 
 
 @pytest.fixture
@@ -30,8 +31,8 @@ def test_match_single_edge_two_times(create_graph):
     p = create_graph()
     add_path(p, "a->b")
     g = create_graph()
-    add_path(g, "0->1->2")
-    assert match(p, g) in [{"a": "0", "b": "1"}, {"a": "1", "b": "2"}]
+    add_path(g, "0->1->2->3")
+    assert find_all_matches(p, g) == [{"a": "0", "b": "1"}, {"a": "2", "b": "3"}]
 
 
 def test_double_edge(create_graph):
@@ -60,7 +61,7 @@ def test_donot_match_partially_with_single_edge(create_graph):
     add_path(p, "a->b->c")
     g = create_graph()
     add_path(g, "0->1")
-    assert match(p, g) == dict()
+    pytest.raises(MatchError, match, p, g)
 
 
 def test_donot_match_partially_four_to_three_edges(create_graph):
@@ -68,7 +69,7 @@ def test_donot_match_partially_four_to_three_edges(create_graph):
     add_path(p, "a->b->c->d->e")
     g = create_graph()
     add_path(g, "0->1->2->3")
-    assert match(p, g) == dict()
+    pytest.raises(MatchError, match, p, g)
 
 
 def test_match_acyclic_pattern_to_cyclic_graph(create_graph):
