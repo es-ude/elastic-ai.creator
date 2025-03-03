@@ -1,5 +1,3 @@
-import logging
-
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -11,15 +9,16 @@ from elasticai.creator.nn.integer.math_operations import (
     get_padding_len,
 )
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import (
+from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
     SymmetricSignedQParams,
-)
-from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
-from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
 )
 
 
@@ -31,25 +30,25 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             kwargs.get("kernel_size"),
             kwargs.get("padding"),
         )
-
         self.seq_len = kwargs.get("seq_len")
+
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.device = kwargs.get("device")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
@@ -93,7 +92,6 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
         self.bias_QParams.set_quant_range(self.tmp_quant_bits)
@@ -131,6 +129,8 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
@@ -165,6 +165,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
     def forward(

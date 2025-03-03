@@ -1,5 +1,3 @@
-import logging
-
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -9,12 +7,14 @@ from elasticai.creator.nn.integer.math_operations.math_operations import MathOpe
 from elasticai.creator.nn.integer.maxpooling.design import (
     MaxPooling1d as MaxPooling1dDesign,
 )
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import (
+from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
-    SymmetricSignedQParams,
+    GlobalMinMaxObserver,
+    SimQuant,
 )
-from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
 
 
 class MaxPooling1d(DesignCreatorModule, nn.Module):
@@ -28,16 +28,17 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         self.out_num_dimensions = kwargs.get("out_num_dimensions")
         self.kernel_size = kwargs.get("kernel_size")
 
+        self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
-        self.device = kwargs.get("device")
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        device = kwargs.get("device")
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
-        ).to(self.device)
+        ).to(device)
 
         self.scale_factor_Math_ops = MathOperations()
 
@@ -60,6 +61,8 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
 
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         batch_size, channels, seq_len = q_inputs.shape
         kernel_size = self.kernel_size
         stride = self.kernel_size
@@ -77,6 +80,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
             end = start + kernel_size
             q_outputs[:, :, i] = q_inputs[:, :, start:end].max(dim=2)[0]
 
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
     def forward(

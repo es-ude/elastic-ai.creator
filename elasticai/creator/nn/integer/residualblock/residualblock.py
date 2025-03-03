@@ -1,17 +1,19 @@
-import logging
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
 from elasticai.creator.nn.integer.conv1dbn import Conv1dBN
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
-from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils import (
+    AsymmetricSignedQParams,
+    GlobalMinMaxObserver,
+)
 from elasticai.creator.nn.integer.relu import ReLU
 from elasticai.creator.nn.integer.residualblock.design import (
     ResidualBlock as ResidualBlockDesign,
+)
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
 )
 
 
@@ -25,10 +27,9 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         seq_len = kwargs.get("seq_len")
 
         self.name = kwargs.get("name")
-        quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
+        self.quant_bits = kwargs.get("quant_bits")
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
-        self.logger = logging.getLogger(self.__class__.__name__)
 
         self.conv1dbn_0 = Conv1dBN(
             in_channels=in_channels,
@@ -37,13 +38,15 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             padding="same",
             seq_len=seq_len,
             name=self.name + "_conv1dbn_0",
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.conv1dbn_0_relu = ReLU(
             name=self.name + "_conv1dbn_0_relu",
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -54,7 +57,8 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             padding="same",
             seq_len=seq_len,
             name=self.name + "_conv1dbn_1",
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -68,7 +72,8 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                     padding="same",
                     seq_len=seq_len,
                     name=self.name + "_shortcut",
-                    quant_bits=quant_bits,
+                    quant_bits=self.quant_bits,
+                    quant_data_dir=self.quant_data_dir,
                     device=device,
                 )
             )
@@ -77,16 +82,22 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             name=self.name + "_add",
             num_features=seq_len,
             num_dimensions=out_channels,
-            quant_bits=quant_bits,
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
-        self.relu = ReLU(name=self.name + "_relu", quant_bits=quant_bits, device=device)
+        self.relu = ReLU(
+            name=self.name + "_relu",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
+        )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.precomputed = False
 
@@ -116,86 +127,32 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
 
         self.precomputed = True
 
-    def _save_quant_data(self, tensor, file_dir: Path, file_name: str):
-        file_path = file_dir / f"{file_name}.txt"
-        tensor_str = "\n".join(map(str, tensor.flatten().tolist()))
-        file_path.write_text(tensor_str)
-
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
-        self._save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_residual = q_inputs
 
-        self._save_quant_data(
-            q_inputs, self.quant_data_dir, self.conv1dbn_0.name + "_q_x"
-        )
         q_outputs = self.conv1dbn_0.int_forward(q_inputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_dir, self.conv1dbn_0.name + "_q_y"
-        )
-
-        self._save_quant_data(
-            q_outputs, self.quant_data_dir, self.conv1dbn_0_relu.name + "_q_x"
-        )
         q_outputs = self.conv1dbn_0_relu.int_forward(q_outputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_dir, self.conv1dbn_0_relu.name + "_q_y"
-        )
 
-        self._save_quant_data(
-            q_outputs, self.quant_data_dir, self.conv1dbn_1.name + "_q_x"
-        )
         q_outputs = self.conv1dbn_1.int_forward(q_outputs)
-        self._save_quant_data(
-            q_outputs, self.quant_data_dir, self.conv1dbn_1.name + "_q_y"
-        )
 
-        self._save_quant_data(
-            q_residual,
-            self.quant_data_dir,
-            self.name + "_shortcut_q_x",
-        )
         if len(self.shortcut) > 0:
             for submodule in self.shortcut:
                 q_shortcut_outputs = submodule.int_forward(q_residual)
                 q_residual = q_shortcut_outputs
-
         else:
             q_shortcut_outputs = q_residual
 
-        self._save_quant_data(
-            q_shortcut_outputs,
-            self.quant_data_dir,
-            self.name + "_shortcut_q_y",
-        )
-
-        self._save_quant_data(
-            q_shortcut_outputs,
-            self.quant_data_dir,
-            self.add.name + "_q_x_1",
-        )
-        self._save_quant_data(
-            q_outputs,
-            self.quant_data_dir,
-            self.add.name + "_q_x_2",
-        )
         q_add_outputs = self.add.int_forward(
             q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs
         )
-        self._save_quant_data(
-            q_add_outputs, self.quant_data_dir, self.add.name + "_q_y"
-        )
-
-        self._save_quant_data(
-            q_add_outputs, self.quant_data_dir, self.relu.name + "_q_x"
-        )
         q_outputs = self.relu.int_forward(q_add_outputs)
-        self._save_quant_data(q_outputs, self.quant_data_dir, self.relu.name + "_q_y")
 
-        self._save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
     def forward(
