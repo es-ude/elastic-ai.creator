@@ -3,7 +3,7 @@ from typing import ParamSpec
 
 import elasticai.creator.plugin as _pl
 from elasticai.creator.function_utils import FunctionDecorator
-from elasticai.creator.graph import dfs_pre_order as dfs_iter
+from elasticai.creator.graph import dfs_iter
 from elasticai.creator.ir import RequiredField
 from elasticai.creator.ir2vhdl import (
     Edge,
