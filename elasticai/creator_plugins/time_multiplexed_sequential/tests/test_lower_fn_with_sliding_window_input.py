@@ -8,14 +8,13 @@ from .high_level_network import network
 
 
 def test_inserts_edge_from_input_to_sliding_window():
-    lowered = sequential(
-        network(
-            input_shape=(1, 4),
-            kernel_size=3,
-            out_channels=1,
-            stride=2,
-        ),
+    nw = network(
+        input_shape=(1, 4),
+        kernel_size=3,
+        out_channels=1,
+        stride=2,
     )
+    lowered = sequential(nw)
     expected = [
         edge(
             src="input",
@@ -27,6 +26,7 @@ def test_inserts_edge_from_input_to_sliding_window():
     for e in lowered.edges.values():
         if e.src == "input":
             actual.append(e)
+
     assert actual == expected
 
 

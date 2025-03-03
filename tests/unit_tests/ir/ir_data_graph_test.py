@@ -28,11 +28,11 @@ def test_graph_is_serialized():
         "name": "network",
         "type": "network",
         "nodes": {
-            "node1": {"name": "node1", "type": "type1"},
-            "node2": {"name": "node2", "type": "type2"},
+            "node1": {"type": "type1"},
+            "node2": {"type": "type2"},
         },
         "edges": {
-            ("node1", "node2"): {"src": "node1", "dst": "node2"},
+            ("node1", "node2"): {},
         },
     }
 

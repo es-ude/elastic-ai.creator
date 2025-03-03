@@ -170,14 +170,14 @@ def vhdl_node(
             return s
 
     return VhdlNode(
-        dict(
-            name=name,
+        name=name,
+        data=dict(
             type=type,
             implementation=implementation,
             input_shape=to_tuple(input_shape),
             output_shape=to_tuple(output_shape),
         )
-        | attributes
+        | attributes,
     )
 
 
@@ -191,7 +191,7 @@ class Edge(_Edge):
 def edge(
     src: str, dst: str, src_dst_indices: Iterable[tuple[int, int]] | tuple[str, str]
 ) -> Edge:
-    return Edge(dict(src=src, dst=dst, src_dst_indices=tuple(src_dst_indices)))
+    return Edge(src=src, dst=dst, data={"src_dst_indices": tuple(src_dst_indices)})
 
 
 N = TypeVar("N", bound=VhdlNode)
@@ -269,12 +269,7 @@ class Implementation(_Implementation[N, E]):
                 2,
             )
             data = attributes
-        if data is None:
-            data = {}
-        if name is not None:
-            data["name"] = name
-        if type is not None:
-            data["type"] = type
+
         if graph is None:
             graph = BaseGraph()
         super().__init__(
@@ -283,6 +278,10 @@ class Implementation(_Implementation[N, E]):
             data=data,
             graph=graph,
         )
+        if name is not None:
+            self.data["name"] = name
+        if type is not None:
+            self.data["type"] = type
 
 
 Code: TypeAlias = tuple[str, Sequence[str]]

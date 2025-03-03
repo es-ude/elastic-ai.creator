@@ -26,7 +26,7 @@ def impl() -> Implementation:
         data={"a": 1},
     )
     impl.add_node(
-        VhdlNode(dict(name="x", type="y")),
+        VhdlNode(name="x", data=dict(type="y")),
     )
     return impl
 
@@ -36,10 +36,10 @@ def data() -> dict[str, Any]:
     return {
         "name": "conv1",
         "type": "conv",
-        "nodes": [
-            {"name": "x", "type": "y"},
-        ],
-        "edges": [],
+        "nodes": {
+            "x": {"type": "y"},
+        },
+        "edges": {},
         "a": 1,
     }
 
@@ -53,7 +53,7 @@ def test_load_from_dict(data):
 
 
 def test_can_access_attributes_of_vhdl_node():
-    n = VhdlNode({"name": "a", "type": "b", "implementation": "c", "stride": 2})
+    n = VhdlNode(name="a", data={"type": "b", "implementation": "c", "stride": 2})
     n.input_shape = Shape(1)
     n.output_shape = Shape(2)
     assert n.attributes["stride"] == 2
