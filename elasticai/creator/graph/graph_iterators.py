@@ -8,7 +8,7 @@ class NodeNeighbourFn(Protocol[HashableT]):
     def __call__(self, node: HashableT) -> Iterable[HashableT]: ...
 
 
-def dfs_pre_order(successors: NodeNeighbourFn, start: HashableT) -> Iterator[HashableT]:
+def dfs_iter(successors: NodeNeighbourFn, start: HashableT) -> Iterator[HashableT]:
     visited: set[HashableT] = set()
 
     def visit(nodes: tuple[HashableT, ...]):
