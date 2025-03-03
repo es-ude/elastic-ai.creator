@@ -10,11 +10,35 @@ T = TypeVar("T")
 TP = TypeVar("TP")
 
 
+class MatchError(Exception):
+    def __init__(self):
+        super().__init__("No match found")
+
+
 def match(
     pattern: Graph[TP],
     graph: Graph[T],
     node_constraint: NodeConstraintFn[TP, T] = lambda _, __: True,
 ) -> dict[TP, T]:
+    try:
+        return next(_match(pattern, graph, node_constraint))
+    except StopIteration:
+        raise MatchError()
+
+
+def find_all_matches(
+    pattern: Graph[TP],
+    graph: Graph[T],
+    node_constraint: NodeConstraintFn[TP, T] = lambda _, __: True,
+) -> list[dict[TP, T]]:
+    return list(_match(pattern, graph, node_constraint))
+
+
+def _match(
+    pattern: Graph[TP],
+    graph: Graph[T],
+    node_constraint: NodeConstraintFn[TP, T] = lambda _, __: True,
+) -> Iterator[dict[TP, T]]:
     """
     Implementation of the VF2 algorithm by Cordella et al. 2004
     """
@@ -25,12 +49,31 @@ def match(
         graph=graph,
     )
 
-    def compute_candidate_pairs(pattern_state, graph_state) -> Iterator[tuple[TP, T]]:
+    def get_all_matches() -> Iterator[dict[TP, T]]:
+        nonlocal pattern_state, graph_state
+        matched_graph_nodes: set[T] = set()
+        while True:
+            do_match(exclude_nodes=matched_graph_nodes, depth=0)
+            if pattern_state.is_complete():
+                last_match = dict(pattern_state.iter_matched_pairs())
+                matched_graph_nodes.update(last_match.values())
+                yield last_match
+                pattern_state = State(graph=pattern)
+                graph_state = State(graph=graph)
+            else:
+                break
+
+    def compute_candidate_pairs(
+        pattern_state: State[TP, T],
+        graph_state: State[T, TP],
+        excluded_nodes: set[T],
+        depth: int,
+    ) -> Iterator[tuple[TP, T]]:
         candidate_pairs: set[tuple[TP, T]] = set()
-        out_of_g: set[T] = set(graph_state.iter_out_nodes())
+        out_of_g: set[T] = set(graph_state.iter_out_nodes()).difference(excluded_nodes)
         out_of_p: set[TP] = set(pattern_state.iter_out_nodes())
         if len(out_of_g) == 0 or len(out_of_p) == 0:
-            into_g: set[T] = set(graph_state.iter_in_nodes())
+            into_g: set[T] = set(graph_state.iter_in_nodes()).difference(excluded_nodes)
             into_p: set[TP] = set(pattern_state.iter_in_nodes())
             for pn in into_p:
                 for gn in into_g:
@@ -41,12 +84,11 @@ def match(
                 for gn in out_of_g:
                     candidate_pairs.add((pn, gn))
 
-        if len(candidate_pairs) == 0:
-            power_ = set()
+        if len(candidate_pairs) == 0 and depth == 0:
             for pn in pattern.nodes:
                 for gn in graph.nodes:
-                    power_.add((pn, gn))
-            yield from power_
+                    if gn not in excluded_nodes:
+                        yield pn, gn
         else:
             yield from candidate_pairs
 
@@ -138,20 +180,22 @@ def match(
 
     result: dict[TP, T] = {}
 
-    def do_match() -> None:
+    def do_match(exclude_nodes: set[T], depth: int) -> None:
         nonlocal result
         if pattern_state.is_complete():
             return
         pattern_state.next_depth()
         graph_state.next_depth()
 
-        for pn, gn in compute_candidate_pairs(pattern_state, graph_state):
+        for pn, gn in compute_candidate_pairs(
+            pattern_state, graph_state, excluded_nodes=exclude_nodes, depth=depth
+        ):
             if pattern_state.contains_node_with_lower_id(pn):
                 continue
             if is_feasible(pn, gn):
                 pattern_state.add_pair(pn, gn)
                 graph_state.add_pair(gn, pn)
-                do_match()
+                do_match(exclude_nodes=exclude_nodes, depth=depth + 1)
                 if pattern_state.is_complete():
                     return
                 pattern_state.remove_pair(pn, gn)
@@ -159,7 +203,4 @@ def match(
         pattern_state.restore()
         graph_state.restore()
 
-    do_match()
-    if pattern_state.is_complete():
-        return dict(pattern_state.iter_matched_pairs())
-    return {}
+    return get_all_matches()
