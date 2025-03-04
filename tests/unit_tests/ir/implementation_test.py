@@ -26,11 +26,11 @@ def test_graph_is_serialized():
         "name": "network",
         "type": "network",
         "nodes": {
-            "node1": {"name": "node1", "type": "type1"},
-            "node2": {"name": "node2", "type": "type2"},
+            "node1": {"type": "type1"},
+            "node2": {"type": "type2"},
         },
         "edges": {
-            ("node1", "node2"): {"src": "node1", "dst": "node2"},
+            ("node1", "node2"): {},
         },
     }
 
@@ -43,9 +43,9 @@ def test_graph_has_required_fields():
 def test_can_retrieve_edges() -> None:
     g = (
         Graph()
-        .add_node(name="x", type="t")
-        .add_node(name="y", type="t")
-        .add_edge(src="x", dst="y")
+        .add_node(name="x", data=dict(type="t"))
+        .add_node(name="y", data=dict(type="t"))
+        .add_edge(src="x", dst="y", data=dict())
     )
     edges = tuple(g.edges.values())
     assert edge(src="x", dst="y") == edges[0]
@@ -55,11 +55,11 @@ def test_can_retrieve_edges() -> None:
 def graph() -> Graph:
     g = (
         Graph()
-        .add_node(name="x", type="t")
-        .add_node(name="y", type="t")
-        .add_node(name="z", type="t")
-        .add_edge(src="x", dst="y")
-        .add_edge(src="y", dst="z", extra="e")
+        .add_node(name="x", data=dict(type="t"))
+        .add_node(name="y", data=dict(type="t"))
+        .add_node(name="z", data=dict(type="t"))
+        .add_edge(src="x", dst="y", data={})
+        .add_edge(src="y", dst="z", data=dict(extra="e"))
     )
     return g
 
