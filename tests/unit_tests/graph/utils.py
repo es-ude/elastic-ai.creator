@@ -51,10 +51,8 @@ class Matcher:
         assert self.graph is not None
         return self.graph.data[graph_node] == self.pattern.data[pattern_node]
 
-    def __call__(
-        self, graph: g.Graph[str], pattern: g.Graph[str]
-    ) -> list[dict[str, str]]:
-        return g.find_all_subgraphs(
+    def __call__(self, graph: g.Graph[str], pattern: g.Graph[str]) -> dict[str, str]:
+        return g.find_subgraph(
             pattern=pattern, graph=graph, node_constraint=self._node_constraint
         )
 
