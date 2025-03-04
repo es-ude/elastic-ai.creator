@@ -53,8 +53,8 @@ class _Matcher:
             graph_node=self.graph.nodes[graph_node],
         )
 
-    def __call__(self, pattern: Graph[str], graph: Graph[str]) -> list[dict[str, str]]:
-        return g.find_all_subgraphs(
+    def __call__(self, pattern: Graph[str], graph: Graph[str]) -> dict[str, str]:
+        return g.find_subgraph(
             pattern=pattern, graph=graph, node_constraint=self.node_constraint
         )
 
