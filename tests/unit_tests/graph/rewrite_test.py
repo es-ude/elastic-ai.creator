@@ -1,5 +1,6 @@
 import pytest
 
+import elasticai.creator.graph as gr
 from elasticai.creator.graph.graph_rewriting import RewriteResult
 from tests.unit_tests.graph.utils import (
     Graph,
@@ -128,6 +129,32 @@ def test_can_replace_one_of_two_matches():
     assert set(actual.nodes) == set(expected.nodes)
 
 
+def test_raise_error_if_rewrite_would_produce_dangling_edge():
+    g = (
+        gr.BaseGraph()
+        .add_edge("a", "b")
+        .add_edge("b", "c")
+        .add_edge("c", "d")
+        .add_edge("would_be_disconnected", "b")
+    )
+    raised = False
+    try:
+        new_graph, new_names = gr.rewrite(
+            interface=gr.BaseGraph().add_node("i0").add_node("i1"),
+            replacement=gr.BaseGraph().add_edge("i0", "r").add_edge("r", "i1"),
+            original=g,
+            match={"i0": "a", "p0": "b", "p1": "c", "i1": "d"},
+            lhs={"i0": "i0", "i1": "i1"},
+            rhs={"i0": "i0", "i1": "i1"},
+        )
+        print(new_graph.successors)
+        print(new_names)
+    except gr.DanglingEdgeError:
+        raised = True
+
+    assert raised
+
+
 class TestRewriteResult:
     @pytest.fixture
     def graph(self):
@@ -193,7 +220,6 @@ class TestRewriteResult:
         replacement.data = {"r0": "100", "r1": "200", "r2": "300"}
 
         new_graph = Graph(result.new_graph, {})
-
         for repl_node in replacement.data:
             new_node = result.replacement_to_new[repl_node]
             original_node_with_interesting_value = result.pattern_to_original["1"]

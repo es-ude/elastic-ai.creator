@@ -5,7 +5,7 @@ from .graph_iterators import (
     bfs_iter_up,
     dfs_iter,
 )
-from .graph_rewriting import GraphRewriter, RewriteResult
+from .graph_rewriting import DanglingEdgeError, GraphRewriter, RewriteResult, rewrite
 from .name_generation import NameRegistry
 from .subgraph_matching import find_all_subgraphs, find_subgraph
 
@@ -18,6 +18,8 @@ __all__ = [
     "bfs_iter_down",
     "bfs_iter_up",
     "dfs_iter",
+    "rewrite",
     "NameRegistry",
     "RewriteResult",
+    "DanglingEdgeError",
 ]
