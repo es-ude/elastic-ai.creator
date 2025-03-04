@@ -193,7 +193,6 @@ class TestRewriteResult:
         replacement.data = {"r0": "100", "r1": "200", "r2": "300"}
 
         new_graph = Graph(result.new_graph, {})
-
         for repl_node in replacement.data:
             new_node = result.replacement_to_new[repl_node]
             original_node_with_interesting_value = result.pattern_to_original["1"]
