@@ -151,7 +151,7 @@ def rewrite(
     """
     rhs_inversed = {rhs[node]: node for node in rhs}
     replacement_nodes_in_interface = set(rhs_inversed.keys())
-    if len(rhs) != len(replacement_nodes_in_interface):
+    if len(set(rhs.keys())) != len(replacement_nodes_in_interface):
         raise ValueError(
             "Ensure the `rhs` function is injective. The `rhs` function should map each interface node to a unique replacement node."
         )

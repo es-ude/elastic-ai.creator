@@ -59,7 +59,6 @@ class Matcher:
 
 def get_rewriter(
     pattern: Graph,
-    interface: Graph,
     replacement: Graph,
     lhs: dict[str, str],
     rhs: dict[str, str],
@@ -75,24 +74,24 @@ def get_rewriter(
 
 def get_rewriter_returning_full_result(
     pattern: Graph,
-    interface: Graph,
     replacement: Graph,
     lhs: dict[str, str],
     rhs: dict[str, str],
 ) -> Callable[[Graph], g.RewriteResult]:
-    match = Matcher(pattern)
+    do_match = Matcher(pattern)
 
-    rewriter = g.GraphRewriter(
-        pattern=pattern.wrapped,
-        interface=interface.wrapped,
-        replacement=replacement.wrapped,
-        match=match,
-        lhs=lhs,
-        rhs=rhs,
-    )
-
-    def rewrite(graph: Graph):
-        match.graph = graph
-        return rewriter.rewrite(graph.wrapped)
+    def rewrite(graph: Graph) -> g.RewriteResult:
+        do_match.set_graph(graph)
+        match = do_match(graph.wrapped, pattern.wrapped)
+        new_graph, new_names = g.rewrite(
+            original=graph.wrapped,
+            replacement=replacement.wrapped,
+            match=match,
+            lhs=lhs,
+            rhs=rhs,
+        )
+        return g.RewriteResult(
+            new_graph=new_graph, pattern_to_original=match, replacement_to_new=new_names
+        )
 
     return rewrite

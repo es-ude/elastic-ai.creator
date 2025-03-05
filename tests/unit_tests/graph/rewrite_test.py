@@ -24,7 +24,7 @@ def test_can_replace_single_node():
     pattern = build_graph_from_dict(
         {("0", "a_t"): ["1"], ("1", "b_t"): ["2"], ("2", "c_t"): []}
     )
-    interface = build_graph_from_dict({("i0", ""): [], ("i1", ""): []})
+
     replacement = build_graph_from_dict(
         {("r0", "a_t"): ["r1"], ("r1", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
@@ -33,7 +33,7 @@ def test_can_replace_single_node():
 
     rhs = {"i0": "r0", "i1": "r2"}
 
-    rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
+    rewrite = get_rewriter(pattern, replacement, lhs, rhs)
 
     expected = build_graph_from_dict(
         {
@@ -52,7 +52,7 @@ def test_create_new_name_for_replacement_in_case_of_conflict():
     pattern = build_graph_from_dict(
         {("0", "a_t"): ["1"], ("1", "b_t"): ["2"], ("2", "c_t"): []}
     )
-    interface = build_graph_from_dict({("i0", ""): [], ("i1", ""): []})
+
     replacement = build_graph_from_dict(
         {("r0", "a_t"): ["a"], ("a", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
@@ -61,7 +61,7 @@ def test_create_new_name_for_replacement_in_case_of_conflict():
 
     rhs = {"i0": "r0", "i1": "r2"}
 
-    rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
+    rewrite = get_rewriter(pattern, replacement, lhs, rhs)
 
     expected = build_graph_from_dict(
         {
@@ -77,22 +77,20 @@ def test_raise_error_if_rhs_is_not_injective():
     pattern = build_graph_from_dict(
         {("0", "a_t"): ["1"], ("1", "b_t"): ["2"], ("2", "c_t"): []}
     )
-    interface = build_graph_from_dict({("i0", ""): [], ("i1", ""): []})
+
     replacement = build_graph_from_dict(
         {("r0", "a_t"): ["a"], ("a", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
 
     lhs = {"i0": "0", "i1": "2"}
     rhs = {"i0": "r0", "i1": "r0"}
-
+    rewriter = get_rewriter(pattern, replacement, lhs, rhs)
     pytest.raises(
         ValueError,
-        get_rewriter,
-        pattern,
-        interface,
-        replacement,
-        lhs,
-        rhs,
+        rewriter,
+        build_graph_from_dict(
+            {("a", "a_t"): ["b"], ("b", "b_t"): ["c"], ("c", "c_t"): []}
+        ),
     )
 
 
@@ -109,7 +107,7 @@ def test_can_replace_one_of_two_matches():
     pattern = build_graph_from_dict(
         {("0", "a_t"): ["1"], ("1", "b_t"): ["2"], ("2", "a_t"): []}
     )
-    interface = build_graph_from_dict({("i0", ""): [], ("i1", ""): []})
+
     replacement = build_graph_from_dict(
         {("r0", "a_t"): ["r1"], ("r1", "r_t"): ["r2"], ("r2", "c_t"): []}
     )
@@ -117,7 +115,7 @@ def test_can_replace_one_of_two_matches():
     lhs = {"i0": "0", "i1": "2"}
     rhs = {"i0": "r0", "i1": "r2"}
 
-    rewrite = get_rewriter(pattern, interface, replacement, lhs, rhs)
+    rewrite = get_rewriter(pattern, replacement, lhs, rhs)
 
     expected = build_graph_from_dict(
         {
@@ -189,15 +187,11 @@ class TestRewriteResult:
         replacement: Graph,
         rhs_dict: dict[str, str],
     ):
-        interface = build_graph_from_dict({("i0", ""): [], ("i1", ""): []})
-
         lhs = {"i0": "0", "i1": "2"}
 
         rhs = rhs_dict
 
-        rewrite = get_rewriter_returning_full_result(
-            pattern, interface, replacement, lhs, rhs
-        )
+        rewrite = get_rewriter_returning_full_result(pattern, replacement, lhs, rhs)
         result = rewrite(graph)
         return result
 
