@@ -12,6 +12,10 @@ from .utils import (
     build_graph_from_dict,
 )
 
+"""Tests
+- fail if removing pattern match leaves dangling edges
+"""
+
 
 def test_can_replace_single_node():
     graph = build_graph_from_dict(

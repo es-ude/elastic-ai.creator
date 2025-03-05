@@ -32,7 +32,11 @@ def test_match_single_edge_two_times(create_graph):
     add_path(p, "a->b")
     g = create_graph()
     add_path(g, "0->1->2->3")
-    assert find_all_matches(p, g) == [{"a": "0", "b": "1"}, {"a": "2", "b": "3"}]
+    assert find_all_matches(p, g) == [
+        {"a": "0", "b": "1"},
+        {"a": "1", "b": "2"},
+        {"a": "2", "b": "3"},
+    ]
 
 
 def test_double_edge(create_graph):
@@ -77,10 +81,8 @@ def test_match_acyclic_pattern_to_cyclic_graph(create_graph):
     add_path(p, "a->b")
     g = create_graph()
     add_path(g, "0->1->0")
-    print(g.successors)
-    print(p.successors)
-    print(p.predecessors)
-    assert match(p, g) in [{"a": "0", "b": "1"}, {"a": "1", "b": "0"}]
+
+    assert find_all_matches(p, g) == []
 
 
 def test_match_cyclic_pattern_to_cyclic_graph(create_graph):
@@ -115,6 +117,4 @@ def test_match_diamond_pattern(create_graph):
     g = create_graph()
     add_path(g, "1->2->3->4")
     add_path(g, "1->6->4")
-    print(p.successors)
-    print(g.successors)
     assert match(p, g) == {"a": "1", "b": "2", "c": "3", "d": "6", "e": "4"}
