@@ -71,8 +71,6 @@ class SequenceReorderer:
         replacement = new_order
         self.pattern = build_sequential_pattern(pattern)
         self.replacement = build_sequential_pattern(replacement)
-        self.interface: g.Graph[str] = g.BaseGraph()
-        self.interface.add_node("start").add_node("end")
         self.lhs = {"start": pattern[0].name, "end": pattern[-1].name}
         self.rhs = {"start": replacement[0].name, "end": replacement[-1].name}
         self.matcher = _Matcher(
@@ -104,33 +102,32 @@ class SequenceReorderer:
         :::
         """
         self.matcher.set_graph(impl)
-        rewriter = g.GraphRewriter(
-            pattern=self.pattern.graph,
-            interface=self.interface,
+        match = self.matcher(self.pattern.graph, impl.graph)
+        new_graph, new_names = g.rewrite(
+            original=impl.graph,
             replacement=self.replacement.graph,
-            match=self.matcher,
+            match=match,
             lhs=self.lhs,
             rhs=self.rhs,
         )
-        result = rewriter.rewrite(impl.graph)
-        self._has_changed = len(result.pattern_to_original) == 0
+        self._has_changed = len(match) > 0
 
         new_data = copy.deepcopy(impl.data)
 
         def copy_original_data_to_replaced_subgraph(
             pattern_node: str, replacement_node: str
         ) -> None:
-            new_name = result.replacement_to_new[replacement_node]
+            new_name = new_names[replacement_node]
 
             cast(dict[str, ir.Attribute], new_data["nodes"])[new_name] = cast(
                 dict,
                 copy.deepcopy(
                     cast(dict[str, ir.Attribute], new_data["nodes"])[
-                        cast(str, result.pattern_to_original[pattern_node])
+                        cast(str, match[pattern_node])
                     ]
                 ),
             )
 
         for node in self._get_nodes_that_are_in_pattern_and_replacement():
             copy_original_data_to_replaced_subgraph(node, node)
-        return ir.Implementation(graph=result.new_graph, data=new_data)
+        return ir.Implementation(graph=new_graph, data=new_data)
