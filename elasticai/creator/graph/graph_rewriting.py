@@ -92,7 +92,6 @@ def produces_dangling_edge(
 
 def rewrite(
     *,
-    interface: Graph[str],
     replacement: Graph[str],
     original: Graph[str],
     match: Mapping[str, str],
@@ -150,13 +149,13 @@ def rewrite(
     :raises ValueError: If the `rhs` function is not injective (when different interface nodes map to the same replacement node).
     :raises DanglingEdgeError: if there is an edge between an unmatched node and a matched non-interface node.
     """
-    rhs_inversed = {rhs[node]: node for node in interface.nodes}
+    rhs_inversed = {rhs[node]: node for node in rhs}
     replacement_nodes_in_interface = set(rhs_inversed.keys())
-    if len(interface.nodes) != len(replacement_nodes_in_interface):
+    if len(rhs) != len(replacement_nodes_in_interface):
         raise ValueError(
             "Ensure the `rhs` function is injective. The `rhs` function should map each interface node to a unique replacement node."
         )
-    interface_nodes_in_pattern = set(lhs[node] for node in interface.nodes)
+    interface_nodes_in_pattern = set(lhs.values())
     interface_nodes_in_graph = set(match[node] for node in interface_nodes_in_pattern)
 
     new_graph: Graph = original.new()
@@ -306,7 +305,6 @@ class GraphRewriter:
         new_graph, new_names = rewrite(
             original=graph,
             replacement=self._replacement,
-            interface=self._interface,
             match=match,
             lhs=self._lhs,
             rhs=self._rhs,

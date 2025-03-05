@@ -144,7 +144,6 @@ def test_raise_error_if_rewrite_would_produce_dangling_edge():
     raised = False
     try:
         new_graph, new_names = gr.rewrite(
-            interface=gr.BaseGraph().add_node("i0").add_node("i1"),
             replacement=gr.BaseGraph().add_edge("i0", "r").add_edge("r", "i1"),
             original=g,
             match={"i0": "a", "p0": "b", "p1": "c", "i1": "d"},
