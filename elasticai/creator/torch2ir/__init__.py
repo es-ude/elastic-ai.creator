@@ -20,6 +20,7 @@ translation process by registering your own module handlers.
 from elasticai.creator.ir import edge as new_edge
 
 from .core import Edge, Implementation, Node, input_node, new_node, output_node
+from .default_handlers import handlers as default_module_handlers
 from .torch2ir import Torch2Ir, get_default_converter
 
 __all__ = [
@@ -33,4 +34,5 @@ __all__ = [
     "input_node",
     "output_node",
     "get_default_converter",
+    "default_module_handlers",
 ]

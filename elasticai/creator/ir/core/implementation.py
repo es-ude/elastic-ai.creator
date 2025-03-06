@@ -306,7 +306,7 @@ class _ReadOnlyMappingInOrderAsIterable(Mapping[_K, _V]):
     def __init__(
         self,
         iterable: Callable[[], Iterable[_K]],
-        d: MutableMapping[_K, Any],
+        d: Mapping[_K, Any],
         value_constructor: Callable[[_K, Any], _V],
     ):
         self._iterable = iterable
