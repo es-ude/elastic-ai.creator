@@ -1,6 +1,7 @@
 import copy
+import warnings
 from collections.abc import Mapping, Sequence
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from .graph import Graph
 from .name_generation import NameRegistry
@@ -19,7 +20,13 @@ class RewriteResult:
         self.replacement_to_new = replacement_to_new
 
 
+@runtime_checkable
 class Matcher(Protocol):
+    def __call__(self, *, pattern: Graph, graph: Graph) -> dict[str, str]: ...
+
+
+@runtime_checkable
+class _SeqMatcher(Protocol):
     def __call__(self, *, pattern: Graph, graph: Graph) -> Sequence[dict[str, str]]: ...
 
 
@@ -39,6 +46,27 @@ class GraphRewriter:
     * The nodes from `replacement` will be automatically renamed to avoid conflicts with the nodes in the original graph, i.e., if node `a` exists already we will add a new node `a_1`.
     :::
 
+    :::{note}
+    In many cases where you want the matcher to compare graph and pattern attributes, you will have to
+    pass a custom matcher and change it before running the rewrite on a new graph.
+    E.g. to perform two subsequent rewrites you might have to:
+    ```python
+    matcher = MyMatcher()
+    matcher.set_graph(graph)
+    rewriter = GraphRewriter(
+        pattern=pattern,
+        interface=interface,
+        replacement=replacement,
+        match=matcher,
+        lhs=lhs,
+        rhs=rhs,
+    )
+    result = rewriter.rewrite(graph)
+    matcher.set_graph(result.new_graph)
+    result = rewriter.rewrite(result.new_graph)
+    ```
+    :::
+
     :param pattern: The pattern to match in the graph.
     :param interface: The interface where graph and replacement will be "glued" together.
     :param replacement: The replacement for the pattern.
@@ -55,7 +83,7 @@ class GraphRewriter:
         pattern: Graph[str],
         interface: Graph[str],
         replacement: Graph[str],
-        match: Matcher,
+        match: Matcher | _SeqMatcher,
         lhs: Mapping[str, str],
         rhs: Mapping[str, str],
     ) -> None:
@@ -79,6 +107,14 @@ class GraphRewriter:
         matches = self._match(graph, self._pattern)
         """
         matches = self._match(pattern=self._pattern, graph=graph)
+        if isinstance(matches, dict):
+            matches = [matches]
+        else:
+            warnings.warn(
+                "Using a matcher that returns multiple matches. Only the first match will be used. This is deprecated and will be removed in the future.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         if len(matches) > 0:
             match = matches[0]
         else:
