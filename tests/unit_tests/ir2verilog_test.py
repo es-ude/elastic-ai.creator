@@ -119,3 +119,12 @@ class TestVerilogTemplate:
             template.substitute({"module_name": "FILTER_FIR_HALF"})
             == "`define FILTER_FIR_HALF_DATA_WIDTH 8\nFILTER_FIR_HALF_DATA_WIDTH + 10"
         )
+
+    def test_can_replace_arrays(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("localparam DATA = {'d2, 'd3};")
+            .localparam("DATA")
+            .build()
+        )
+        assert template.substitute({"DATA": "'d5"}) == "localparam DATA = 'd5;"
