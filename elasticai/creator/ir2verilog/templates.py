@@ -8,7 +8,7 @@ class _Definition(tpl.TemplateParameter):
     def __init__(self, type: str, name: str, delimiter: str) -> None:
         self.name = name
         self.delimiter = delimiter
-        self.regex = r"(?P<param>{type}\s+(signed\s+)?(\[.*?\]\s+)?{name}\s*=)\s?.[^;,\n]*".format(
+        self.regex = r"(?P<param>{type}\s+(signed\s+)?(\[.*?\]\s+)?{name}\s*=)\s?.([^;,\n]|,(?=.*}}))*".format(
             type=type, name=name
         )
 
