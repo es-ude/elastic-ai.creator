@@ -49,31 +49,16 @@ def _match(
         graph=graph,
     )
 
-    def get_all_matches() -> Iterator[dict[TP, T]]:
-        nonlocal pattern_state, graph_state
-        matched_graph_nodes: set[T] = set()
-        while True:
-            do_match(exclude_nodes=matched_graph_nodes, depth=0)
-            if pattern_state.is_complete():
-                last_match = dict(pattern_state.iter_matched_pairs())
-                matched_graph_nodes.update(last_match.values())
-                yield last_match
-                pattern_state = State(graph=pattern)
-                graph_state = State(graph=graph)
-            else:
-                break
-
     def compute_candidate_pairs(
         pattern_state: State[TP, T],
         graph_state: State[T, TP],
-        excluded_nodes: set[T],
         depth: int,
     ) -> Iterator[tuple[TP, T]]:
         candidate_pairs: set[tuple[TP, T]] = set()
-        out_of_g: set[T] = set(graph_state.iter_out_nodes()).difference(excluded_nodes)
+        out_of_g: set[T] = set(graph_state.iter_out_nodes())
         out_of_p: set[TP] = set(pattern_state.iter_out_nodes())
         if len(out_of_g) == 0 or len(out_of_p) == 0:
-            into_g: set[T] = set(graph_state.iter_in_nodes()).difference(excluded_nodes)
+            into_g: set[T] = set(graph_state.iter_in_nodes())
             into_p: set[TP] = set(pattern_state.iter_in_nodes())
             for pn in into_p:
                 for gn in into_g:
@@ -87,14 +72,16 @@ def _match(
         if len(candidate_pairs) == 0 and depth == 0:
             for pn in pattern.nodes:
                 for gn in graph.nodes:
-                    if gn not in excluded_nodes:
-                        yield pn, gn
+                    yield pn, gn
         else:
             yield from candidate_pairs
 
     def is_feasible(pn: TP, gn: T) -> bool:
         partial_pattern_pred = pattern_state.partial_predecessors(pn)
         partial_pattern_succ = pattern_state.partial_successors(pn)
+        partial_graph_pred = graph_state.partial_predecessors(gn)
+        partial_graph_succ = graph_state.partial_successors(gn)
+
         pattern_in_node_pred = pattern_state.in_node_predecessors(pn)
         pattern_out_node_pred = pattern_state.out_node_predecessors(pn)
         pattern_in_node_succ = pattern_state.in_node_successors(pn)
@@ -104,6 +91,8 @@ def _match(
 
         full_graph_pred = graph.predecessors[gn]
         full_graph_succ = graph.successors[gn]
+        full_pattern_pred = pattern.predecessors[pn]
+        full_pattern_succ = pattern.successors[pn]
 
         graph_in_node_pred = graph_state.in_node_predecessors(gn)
         graph_out_node_pred = graph_state.out_node_predecessors(gn)
@@ -121,8 +110,19 @@ def _match(
             """
             ensure that each predecessors of the considered nodes
             that is in our partial pattern match (pattern_state.core) also has a corresponding
-            node in our partial graph match (graph_state.core).
-            The paper states we'd have to match vice versa, but that would prevent actual subgraph matching.
+            node in our partial graph match (graph_state.core)
+            and vice versa.
+            This also prevents a node from being matched if including it would include new edges in the match, that are not present in the pattern, e.g.,
+            consider the graph
+
+            a: {b, c}
+            b: {c}
+
+            would not match the pattern
+            a: {b}
+            b: {c}
+
+            because including c would introduce the new edge (a, c) which is not present in the pattern.
             """
             for ps in partial_pattern_pred:
                 found = False
@@ -133,6 +133,14 @@ def _match(
                 if not found:
                     return False
 
+            for gs in partial_graph_pred:
+                found = False
+                for ps in full_pattern_pred:
+                    if was_matched(ps, gs):
+                        found = True
+                        break
+                if not found:
+                    return False
             return True
 
         def successors_check():
@@ -147,7 +155,14 @@ def _match(
                         break
                 if not found:
                     return False
-
+            for gs in partial_graph_succ:
+                found = False
+                for ps in full_pattern_succ:
+                    if was_matched(ps, gs):
+                        found = True
+                        break
+                if not found:
+                    return False
             return True
 
         def in_check():
@@ -178,29 +193,23 @@ def _match(
 
         return result
 
-    result: dict[TP, T] = {}
-
-    def do_match(exclude_nodes: set[T], depth: int) -> None:
-        nonlocal result
+    def do_match(depth: int) -> Iterator[dict[TP, T]]:
         if pattern_state.is_complete():
+            yield dict(pattern_state.iter_matched_pairs())
             return
         pattern_state.next_depth()
         graph_state.next_depth()
 
-        for pn, gn in compute_candidate_pairs(
-            pattern_state, graph_state, excluded_nodes=exclude_nodes, depth=depth
-        ):
+        for pn, gn in compute_candidate_pairs(pattern_state, graph_state, depth=depth):
             if pattern_state.contains_node_with_lower_id(pn):
                 continue
             if is_feasible(pn, gn):
                 pattern_state.add_pair(pn, gn)
                 graph_state.add_pair(gn, pn)
-                do_match(exclude_nodes=exclude_nodes, depth=depth + 1)
-                if pattern_state.is_complete():
-                    return
+                yield from do_match(depth=depth + 1)
                 pattern_state.remove_pair(pn, gn)
                 graph_state.remove_pair(gn, pn)
         pattern_state.restore()
         graph_state.restore()
 
-    return get_all_matches()
+    yield from do_match(depth=0)
