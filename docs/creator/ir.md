@@ -85,7 +85,7 @@ Transformation
     semantics of node types. E.g., changing the order of nodes, removing
     dead nodes, etc.
 
-## Python implementation 
+## Python implementation
 
 The design goals for the python implementation of nodes and edges are
 
@@ -107,7 +107,7 @@ underlying fields through descriptors that model more complex custom
 data types.
 :::
 
-## `IrData` 
+## `IrData`
 
 These goals are realized by the `IrData` class. Its metaclass,
 `IrDataMeta`, customizes the object creation process, by inspecting type
@@ -222,11 +222,11 @@ n = VhdlNode(dict(
     name="x", type="t",
     implementation="impl",
     input_shape=(1, 2),
-    output_shape=(3,4)
+    output_shape=(3, 4)
 ))
-n.input_shape.length = 5  # WRONG! 
+n.input_shape.length = 5  # WRONG!
 n.input_shape = Shape(length=5,
-    channels=n.input_shape.channels)  # CORRECT! 
+    channels=n.input_shape.channels)  # CORRECT!
 ```
 
 1.  The value is not written into the underlying `.data` because
@@ -244,3 +244,33 @@ Introducing a new type of field, that passes the reference to the
 conversion functions would (if implemented properly) allow for nested
 `IrData` objects. If you need this feature, please open an issue.
 :::
+
+## High Level IR Types
+
+While the exact types and parameters of IR data types is often highly
+dependent on the target (e.g., vhdl vs c), the purpose of the
+high level IR is solely to describe the neural network and not to
+specify its implementation. As such, we can define IR data types for
+a concrete set of components.
+
+Note that each of the types below represents a layer instead of an operator,
+i.e. we consider them to be mappings from the example space $X$ instead of
+example and parameter space $X \times \Omega$
+
+### Convolution
+
+Input tensors should be structured as `[L, C]`, with
+
+* `L`: length of each example
+* `C`: number of channels of each example
+
+#### Parameters
+
+  * `weight`: Nested array of floats. The dimensions depend on `in_channels`, `out_channels`, `kernel_size`
+  * `bias`: Nested array of floats. The dimensions depend on `out_channels`. Is an empty array if no bias should be used.
+  * `in_channels`: `int`
+  * `out_channels`: `int`
+  * `kernel_size`: `int`
+  * `padding`: `str`
+  * `padding_value`: `float`
+  * `groups`: `int`

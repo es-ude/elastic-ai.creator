@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import hypothesis.strategies as st
 from hypothesis import given
 from torch.nn import Linear, ReLU, Sequential
@@ -50,6 +52,15 @@ def test_can_rebuild_model_with_duplicate_submodule():
     state = original.state_dict()
     ir = convert(original)
     rebuilt = ir2torch_converter().convert(ir, state)
+    original_params = to_native_python(original.named_parameters())
+    rebuilt_params = to_native_python(rebuilt.named_parameters())
+    assert original_params == rebuilt_params
+
+
+def test_create_parent_modules_for_implemantations_with_dots():
+    original = Sequential(OrderedDict(top=Sequential(OrderedDict(nested=Linear(1, 1)))))
+    ir = convert(original)
+    rebuilt = ir2torch_converter().convert(ir, original.state_dict())
     original_params = to_native_python(original.named_parameters())
     rebuilt_params = to_native_python(rebuilt.named_parameters())
     assert original_params == rebuilt_params

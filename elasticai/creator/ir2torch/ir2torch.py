@@ -16,6 +16,13 @@ class Ir2Torch(LoweringPass[Implementation, nn.Module]):
     ) -> nn.Module:
         """Rebuild the original pytorch model from a given IR.
 
+        Implemenation names containing dots will result in the corresponding modules sorted
+        into a corresponding object hierarchy. E.g., for the implementation
+        name `'top.linear'` we will create a pytorch container module under the name
+        `'top'` and add the linear layer to it under the name `'linear'`. Note that this
+        is an implementation detail of Ir2Torch and not a semantic meaning assigned to
+        the `'.'` character.
+
         :param: `ir`: You need to make sure that `Ir2Torch` has a type handler for each implementation in `ir`
         :param: `state_dict`: You can optionally pass a state dict. This should be a state dict created
             from the original model via `nn.Module.state_dict`. As the `Torch2Ir` stage got rid of all
@@ -28,7 +35,19 @@ class Ir2Torch(LoweringPass[Implementation, nn.Module]):
             if impl.type != "module":
                 modules = list(self([impl]))
                 assert len(modules) == 1
-                root_module.add_module(impl.name, modules[0])
+                name = impl.name
+                last_parent = root_module
+                while "." in name:
+                    parent_name, name = name.rsplit(".", 1)
+                    last_children = dict(last_parent.named_children())
+                    if parent_name not in last_children:
+                        current_parent = nn.Module()
+                        last_parent.add_module(parent_name, current_parent)
+                    else:
+                        current_parent = last_children[parent_name]
+                    last_parent = current_parent
+                last_parent.add_module(name, modules[0])
+
             else:
                 root = impl.name
 

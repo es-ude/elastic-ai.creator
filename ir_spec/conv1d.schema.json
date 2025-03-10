@@ -1,0 +1,67 @@
+{  
+    "$schema": "https://json-schema.org/draft/2020-12/schema",  
+    "$id": "https://github.com/es-ude/elastic-ai.creator/ir_spec/conv1d.schema.json",
+    "title": "conv1d",
+    "type": "object",
+    "properties": {
+        "weight": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                }
+            },
+            "description": "dimension is [out_channels, in_channels, kernel_size]"
+        },
+        "bias": {
+            "type": "array",
+            "items": {
+                "type": "number"
+            },
+            "description": "The bias of the convolutional layer."
+        },
+        "stride": {
+            "type": "integer",
+            "description": "The stride of the convolutional layer."
+        },
+        "padding_mode": {
+            "type": "string",
+            "description": "The padding of the convolutional layer."
+        },
+        "padding_value": {
+            "type": "number",
+            "description": "The padding value of the convolutional layer."
+        },
+        "in_channels": {
+            "type": "integer",
+            "description": "The number of input channels."
+        },
+        "out_channels": {
+            "type": "integer",
+            "description": "The number of output channels."
+        },
+        "kernel_size": {
+            "type": "integer",
+            "description": "The kernel size of the convolutional layer."
+        },
+        "groups": {
+            "type": "integer",
+            "description": "The number of groups for the convolutional layer."
+        }
+    },
+    "required": [
+        "weight",
+        "bias",
+        "stride",
+        "padding_mode",
+        "padding_value",
+        "in_channels",
+        "out_channels",
+        "kernel_size",
+        "groups"
+    ]
+}
