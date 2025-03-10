@@ -58,10 +58,10 @@ architecture rtl of ${name} is
             return resize(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
-    signal M_Q_1_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_1, M_Q_DATA_WIDTH);
-    signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
+    signal M_Q_1_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_1, M_Q_DATA_WIDTH);
+    signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
     type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_sum, s_output, s_done);

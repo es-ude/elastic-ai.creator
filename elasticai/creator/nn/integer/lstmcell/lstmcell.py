@@ -33,8 +33,9 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.concatenate = Concatenate(
             name=self.name + "_concatenate",
-            num_features=inputs_size + hidden_size,
-            num_dimensions=1,
+            inputs_size=inputs_size,
+            hidden_size=hidden_size,
+            num_dimensions=1,  # only one-step
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -241,6 +242,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         q_c_gate_tanh_outputs = self.c_tanh.int_forward(q_inputs=q_c_gate_outputs)
 
         # next cell state
+        print("shape of q_f_gate_sigmoid_outputs", q_f_gate_sigmoid_outputs.shape)
+        print("shape of q_c_prev", q_c_prev.shape)
         q_c_next_inputs1 = self.fc_hadamard_product.int_forward(
             q_inputs1=q_f_gate_sigmoid_outputs, q_inputs2=q_c_prev
         )

@@ -22,7 +22,8 @@ class Concatenate(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
-        self.num_features = kwargs.get("num_features")
+        self.input_size = kwargs.get("input_size")  # num_features of input1
+        self.hidden_size = kwargs.get("hidden_size")  # num_features of input2
         self.num_dimensions = kwargs.get("num_dimensions")
 
         self.name = kwargs.get("name")
@@ -47,7 +48,8 @@ class Concatenate(DesignCreatorModule, nn.Module):
         return ConcatenateDesign(
             name=name,
             data_width=self.quant_bits,
-            num_features=self.num_features,
+            input_size=self.input_size,
+            hidden_size=self.hidden_size,
             num_dimensions=self.num_dimensions,
             m_q_1=self.scale_factor_m_q_1.item(),
             m_q_2=self.scale_factor_m_q_2.item(),

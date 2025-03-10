@@ -64,6 +64,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name) -> StackedRNNDesign:
+        # TODO: only support 1 rnn layer now
         return StackedRNNDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,
@@ -91,7 +92,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
     def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_h_prev = self.q_h_prev

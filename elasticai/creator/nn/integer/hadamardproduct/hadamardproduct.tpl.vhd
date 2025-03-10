@@ -5,17 +5,13 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name} is
     generic (
-        X_1_ADDR_WIDTH : integer := ${x_1_addr_width};
-        X_2_ADDR_WIDTH : integer := ${x_2_addr_width};
+        X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         DATA_WIDTH : integer := ${data_width};
-        X1_NUM_FEATURES : integer := ${x1_num_features};
-        X2_NUM_FEATURES : integer := ${x2_num_features};
+        NUM_FEATURES : integer := ${num_features};
         NUM_DIMENSIONS : integer := ${num_dimensions};
-        M_Q_1 : integer := ${m_q_1};
-        M_Q_2 : integer := ${m_q_2};
-        M_Q_1_SHIFT : integer := ${m_q_1_shift};
-        M_Q_2_SHIFT : integer := ${m_q_2_shift};
+        M_Q : integer := ${m_q};
+        M_Q_SHIFT : integer := ${m_q_shift};
         Z_X_1 : integer := ${z_x_1};
         Z_X_2 : integer := ${z_x_2};
         Z_Y : integer := ${z_y};
@@ -25,8 +21,8 @@ entity ${name} is
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x_1_address : out std_logic_vector(X_1_ADDR_WIDTH - 1 downto 0);
-        x_2_address : out std_logic_vector(X_2_ADDR_WIDTH - 1 downto 0);
+        x_1_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+        x_2_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
         x_1 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         x_2 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -62,18 +58,15 @@ architecture rtl of ${name} is
     end function;
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
-    signal M_Q_1_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_1, M_Q_DATA_WIDTH);
-    signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
+    signal M_Q_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
     type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_sum, s_output, s_done);
     signal add_state : t_add_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_1_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal x_1_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal x_2_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_store_addr : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
@@ -125,21 +118,18 @@ begin
                         x_2_sub_z <= to_signed(0, x_2_sub_z'length);
                         sum <= (OTHERS=>'0');
                         add_state <= s_sub;
-
                     when s_sub =>
                         x_1_sub_z <= x_1_int - to_signed(Z_X_1, x_1_sub_z'length);
                         x_2_sub_z <= x_2_int - to_signed(Z_X_2, x_2_sub_z'length);
+                        add_state <= s_sum;
+                    when s_sum =>
+                        sum <= sum + x_1_sub_z * x_2_sub_z;
                         add_state <= s_scaling;
                     when s_scaling =>
-                        x_1_scaled <= scaling(x_1_sub_z, M_Q_1_SIGNED, M_Q_1_SHIFT);
-                        x_2_scaled <= scaling(x_2_sub_z, M_Q_2_SIGNED, M_Q_2_SHIFT);
-                        add_state <= s_sum;
-
-                    when s_sum =>
-                        sum <= sum + x_1_scaled + x_2_scaled;
+                        sum_scaled <= scaling(sum, M_Q_SIGNED, M_Q_SHIFT);
                         add_state <= s_output;
                     when s_output =>
-                        var_y_store := sum + to_signed(Z_Y, sum'length);
+                        var_y_store := sum_scaled + to_signed(Z_Y, sum_scaled'length);
                         y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
                         y_store_addr <= output_idx;
                         y_store_en <= '1';

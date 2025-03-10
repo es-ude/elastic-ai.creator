@@ -86,7 +86,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         )
         tmp_scale_factor = (1.0 - 0.0) / (
             ((2 ** (tmp_quant_bits - 1) - 1) - (-(2 ** (tmp_quant_bits - 1))))
-            // ((self.window_size**2) * self.nhead)
+            // self.window_size  #  ((self.window_size**2) * self.nhead)
         )  # get scale_factor factor of tmp
         tmp_zero_point = (2 ** (tmp_quant_bits - 1) - 1) - (
             1.0 / tmp_scale_factor

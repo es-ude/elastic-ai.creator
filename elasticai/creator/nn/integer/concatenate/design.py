@@ -1,5 +1,3 @@
-from itertools import chain
-
 import numpy as np
 
 from elasticai.creator.file_generation.savable import Path
@@ -19,7 +17,8 @@ class Concatenate(Design):
         self,
         name: str,
         data_width: int,
-        num_features: int,
+        input_size: int,  #  num_features of inputs1
+        hidden_size: int,  # num_features of inputs2
         num_dimensions: int,
         m_q_1: int,
         m_q_2: int,
@@ -34,7 +33,8 @@ class Concatenate(Design):
         super().__init__(name=name)
 
         self._data_width = data_width
-        self._num_features = num_features
+        self._input_size = input_size
+        self._hidden_size = hidden_size
         self._num_dimensions = num_dimensions
 
         self._m_q_1 = m_q_1
@@ -53,31 +53,37 @@ class Concatenate(Design):
 
         self._m_q_data_width = max(self._m_q_1_data_width, self._m_q_2_data_width)
 
-        self._x_count = self._num_features * self._num_dimensions
-        self._y_count = self._x_count
+        self._x_1_count = self._input_size * self._num_dimensions
+        self._x_2_count = self._hidden_size * self._num_dimensions
+        self._y_count = (self._input_size + self._hidden_size) * self._num_dimensions
 
-        self._x_addr_width = calculate_address_width(self._x_count)
+        self._x_1_addr_width = calculate_address_width(self._x_1_count)
+        self._x_2_addr_width = calculate_address_width(self._x_2_count)
         self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
+            x_1_width=self._data_width,
+            x_2_width=self._data_width,
             y_width=self._data_width,
-            x_count=self._x_count,
+            x_1_count=self._x_1_count,
+            x_2_count=self._x_2_count,
             y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="concatenate.tpl.vhd",  # TODO: write the correct VHDL template
+            file_name="concatenate.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
                 data_width=str(self._data_width),
-                num_features=str(self._num_features),
+                x_1_addr_width=str(self._x_1_addr_width),
+                x_2_addr_width=str(self._x_2_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x1_num_features=str(self._input_size),
+                x2_num_features=str(self._hidden_size),
                 num_dimensions=str(self._num_dimensions),
                 m_q_1=str(self._m_q_1),
                 m_q_1_shift=str(self._m_q_1_shift),
@@ -98,13 +104,15 @@ class Concatenate(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="concatenate_tb.tpl.vhd",  # TODO: write the correct VHDL template
+            file_name="concatenate_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                x_addr_width=str(self._x_addr_width),
+                x_1_addr_width=str(self._x_1_addr_width),
+                x_2_addr_width=str(self._x_2_addr_width),
                 y_addr_width=str(self._y_addr_width),
                 data_width=str(self._data_width),
-                num_features=str(self._num_features),
+                x1_num_features=str(self._input_size),
+                x2_num_features=str(self._hidden_size),
                 num_dimensions=str(self._num_dimensions),
                 work_library_name=self._work_library_name,
             ),

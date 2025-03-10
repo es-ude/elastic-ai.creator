@@ -44,7 +44,19 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> HadamardProductDesign:
-        pass
+        return HadamardProductDesign(
+            name=name,
+            data_width=self.quant_bits,
+            num_features=self.num_features,
+            num_dimensions=self.num_dimensions,
+            m_q=self.scale_factor_m_q.item(),
+            m_q_shift=self.scale_factor_m_q_shift.item(),
+            z_x1=self.inputs1_QParams.zero_point.item(),
+            z_x2=self.inputs2_QParams.zero_point.item(),
+            z_y=self.outputs_QParams.zero_point.item(),
+            work_library_name="work",
+            resource_option="auto",
+        )
 
     def precompute(self):
         self.scale_factor_M = (

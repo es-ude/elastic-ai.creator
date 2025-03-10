@@ -42,14 +42,14 @@ entity ${name} is
     port (
         enable : in std_logic;
         clock : in std_logic;
-        x_1_address : out std_logic_vector(CONCATENATE_X_1_ADDR_WIDTH - 1 downto 0); -- last time step
-        x_2_address : out std_logic_vector(CONCATENATE_X_2_ADDR_WIDTH - 1 downto 0); -- last hidden state
+        x_1_address : out std_logic_vector(CONCATENATE_X_1_ADDR_WIDTH - 1 downto 0);         -- last time step
+        x_2_address : out std_logic_vector(CONCATENATE_X_2_ADDR_WIDTH - 1 downto 0);         -- last hidden state
         x_3_address : out std_logic_vector(FC_HAMADARD_PRODUCT_X_2_ADDR_WIDTH - 1 downto 0); -- last cell state
         x_1 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         x_2 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         x_3 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         y_1_address : in std_logic_vector(OC_HAMADARD_PRODUCT_Y_ADDR_WIDTH - 1 downto 0); -- next hidden state
-        y_2_address : in std_logic_vector(C_NEXT_ADDITION_Y_ADDR_WIDTH - 1 downto 0); -- next cell state
+        y_2_address : in std_logic_vector(C_NEXT_ADDITION_Y_ADDR_WIDTH - 1 downto 0);     -- next cell state
         y_1 : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         y_2 : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done : out std_logic
@@ -253,9 +253,11 @@ architecture rtl of ${name} is
     port map (
         enable => concetenate_enable,
         clock  => concetenate_clock,
-        x_address  => concetenate_x_address,
+        x_1_address  => concetenate_x_1_address,
+        x_2_address  => concetenate_x_2_address,
         y_address  => concetenate_y_address,
-        x  => concetenate_x,
+        x_1  => concetenate_x_1,
+        x_2  => concetenate_x_2,
         y => concetenate_y,
         done  => concetenate_done
     );
@@ -349,14 +351,15 @@ architecture rtl of ${name} is
         y => c_next_tanh_y,
         done  => c_next_tanh_done
     );
-    # TODO
     inst_${name}_c_next_addition: entity ${work_library_name}.${name}_c_next_addition(rtl)
     port map (
         enable => c_next_addition_enable,
         clock  => c_next_addition_clock,
-        x_address  => c_next_addition_x_address,
+        x_1_address  => c_next_addition_x_1_address,
+        x_2_address  => c_next_addition_x_2_address,
         y_address  => c_next_addition_y_address,
-        x  => c_next_addition_x,
+        x_1  => c_next_addition_x_1,
+        x_2  => c_next_addition_x_2,
         y => c_next_addition_y,
         done  => c_next_addition_done
     );
@@ -364,9 +367,11 @@ architecture rtl of ${name} is
     port map (
         enable => fc_hamadard_product_enable,
         clock  => fc_hamadard_product_clock,
-        x_address  => fc_hamadard_product_x_address,
+        x_1_address  => fc_hamadard_product_x_1_address,
+        x_2_address  => fc_hamadard_product_x_2_address,
         y_address  => fc_hamadard_product_y_address,
-        x  => fc_hamadard_product_x,
+        x_1  => fc_hamadard_product_x_1,
+        x_2  => fc_hamadard_product_x_2,
         y => fc_hamadard_product_y,
         done  => fc_hamadard_product_done
     );
@@ -374,9 +379,11 @@ architecture rtl of ${name} is
     port map (
         enable => ic_hamadard_product_enable,
         clock  => ic_hamadard_product_clock,
-        x_address  => ic_hamadard_product_x_address,
+        x_1_address  => ic_hamadard_product_x_1_address,
+        x_2_address  => ic_hamadard_product_x_2_address,
         y_address  => ic_hamadard_product_y_address,
-        x  => ic_hamadard_product_x,
+        x_1  => ic_hamadard_product_x_1,
+        x_2  => ic_hamadard_product_x_2,
         y => ic_hamadard_product_y,
         done  => ic_hamadard_product_done
     );
@@ -384,9 +391,11 @@ architecture rtl of ${name} is
     port map (
         enable => oc_hamadard_product_enable,
         clock  => oc_hamadard_product_clock,
-        x_address  => oc_hamadard_product_x_address,
+        x_1_address  => oc_hamadard_product_x_1_address,
+        x_2_address  => oc_hamadard_product_x_2_address,
         y_address  => oc_hamadard_product_y_address,
-        x  => oc_hamadard_product_x,
+        x_1  => oc_hamadard_product_x_1,
+        x_2  => oc_hamadard_product_x_2,
         y => oc_hamadard_product_y,
         done  => oc_hamadard_product_done
     );

@@ -76,6 +76,7 @@ class RNNLayer(nn.Module):
     def create_design(self, name: str) -> RNNLayerDesign:
         return RNNLayerDesign(
             name=name,
+            cell_type=self.cell_type,
             data_width=self.inputs_QParams.quant_bits,
             rnn_cell=self.rnn_cell,
             work_library_name="work",

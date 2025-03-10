@@ -23,7 +23,6 @@ entity ${name} is
         done : out std_logic
     ) ;
 end ${name};
-
 architecture rtl of ${name} is
     function log2(val : INTEGER) return natural is
         variable result : natural;

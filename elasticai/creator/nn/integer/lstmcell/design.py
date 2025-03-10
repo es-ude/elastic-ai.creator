@@ -84,29 +84,62 @@ class LSTMCell(Design):
             name=self._oc_hadamard_product.name
         )
 
+        self._x_1_count = self.concatenate_design._x_1_count
+        self._x_2_count = self.concatenate_design._x_2_count
+        self._x_3_count = self.fc_hadamard_product_design._x_2_count
+
+        self._y_1_count = self.oc_hadamard_product_design._y_count
+        self._y_2_count = self.c_next_addition_design._y_count
+
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
-            x_count=self.concatenate_design._x_count,
-            y_count=self.oc_hadamard_product_design._y_count,
+            x_1_width=self._data_width,
+            x_2_width=self._data_width,
+            x_3_width=self._data_width,
+            y_1_width=self._data_width,
+            y_2_width=self._data_width,
+            x_1_count=self._x_1_count,
+            x_2_count=self._x_2_count,
+            x_3_count=self._x_3_count,
+            y_1_count=self._y_1_count,
+            y_2_count=self._y_2_count,
         )
 
     def save_to(self, destination: Path) -> None:
-        self.concatenate_design.save_to(destination)
-        self.f_gate_linear_design.save_to(destination)
-        self.c_gate_linear_design.save_to(destination)
-        self.i_gate_linear_design.save_to(destination)
-        self.o_gate_linear_design.save_to(destination)
-        self.i_sigmoid_design.save_to(destination)
-        self.f_sigmoid_design.save_to(destination)
-        self.o_sigmoid_design.save_to(destination)
-        self.c_tanh_design.save_to(destination)
-        self.c_next_tanh_design.save_to(destination)
-        self.c_next_addition_design.save_to(destination)
-        self.fc_hadamard_product_design.save_to(destination)
-        self.ic_hadamard_product_design.save_to(destination)
-        self.oc_hadamard_product_design.save_to(destination)
+        self.concatenate_design.save_to(
+            destination.create_subpath(self._concatenate.name)
+        )
+        self.f_gate_linear_design.save_to(
+            destination.create_subpath(self._f_gate_linear.name)
+        )
+        self.c_gate_linear_design.save_to(
+            destination.create_subpath(self._c_gate_linear.name)
+        )
+        self.i_gate_linear_design.save_to(
+            destination.create_subpath(self._i_gate_linear.name)
+        )
+        self.o_gate_linear_design.save_to(
+            destination.create_subpath(self._o_gate_linear.name)
+        )
+        self.i_sigmoid_design.save_to(destination.create_subpath(self._i_sigmoid.name))
+        self.f_sigmoid_design.save_to(destination.create_subpath(self._f_sigmoid.name))
+        self.o_sigmoid_design.save_to(destination.create_subpath(self._o_sigmoid.name))
+        self.c_tanh_design.save_to(destination.create_subpath(self._c_tanh.name))
+        self.c_next_tanh_design.save_to(
+            destination.create_subpath(self._c_next_tanh.name)
+        )
+        self.c_next_addition_design.save_to(
+            destination.create_subpath(self._c_next_addition.name)
+        )
+        self.fc_hadamard_product_design.save_to(
+            destination.create_subpath(self._fc_hadamard_product.name)
+        )
+        self.ic_hadamard_product_design.save_to(
+            destination.create_subpath(self._ic_hadamard_product.name)
+        )
+        self.oc_hadamard_product_design.save_to(
+            destination.create_subpath(self._oc_hadamard_product.name)
+        )
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

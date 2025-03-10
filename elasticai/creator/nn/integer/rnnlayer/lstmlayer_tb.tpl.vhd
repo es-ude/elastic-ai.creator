@@ -13,16 +13,13 @@ entity ${name}_tb is
         X_3_ADDR_WIDTH : integer := ${x_3_addr_width};
         Y_1_ADDR_WIDTH : integer := ${y_1_addr_width};
         Y_2_ADDR_WIDTH : integer := ${y_2_addr_width};
-        X_1_NUM_FEATURES : integer := ${x_1_num_features};
-        X_1_NUM_DIMENSIONS : integer := ${x_1_num_dimensions};
-        X_2_NUM_FEATURES : integer := ${x_2_num_features};
-        X_2_NUM_DIMENSIONS : integer := ${x_2_num_dimensions};
-        X_3_NUM_FEATURES : integer := ${x_3_num_features};
-        X_3_NUM_DIMENSIONS : integer := ${x_3_num_dimensions};
-        Y_1_NUM_FEATURES : integer := ${y_1_num_features};
-        Y_1_NUM_DIMENSIONS : integer := ${y_1_num_dimensions};
-        Y_2_NUM_FEATURES : integer := ${y_2_num_features};
-        Y_2_NUM_DIMENSIONS : integer := ${y_2_num_dimensions}
+        Y_3_ADDR_WIDTH : integer := ${y_3_addr_width};
+        X_1_COUNT: integer := ${x_1_count};
+        X_2_COUNT: integer := ${x_2_count};
+        X_3_COUNT: integer := ${x_3_count};
+        Y_1_COUNT: integer := ${y_1_count};
+        Y_2_COUNT: integer := ${y_2_count};
+        Y_3_COUNT: integer := ${y_3_count}
     );
     port(
         clk : out std_logic
@@ -39,9 +36,9 @@ architecture rtl of ${name}_tb is
     signal x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_3 : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x_1 is array (0 to 2**X_1_ADDR_WIDTH-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x_2 is array (0 to 2**X_2_ADDR_WIDTH-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x_3 is array (0 to 2**X_3_ADDR_WIDTH-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x_1 is array (0 to X_1_COUNT-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x_2 is array (0 to X_2_COUNT-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x_3 is array (0 to X_3_COUNT-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_1_arr : t_array_x_1 := (others=>(others=>'0'));
     signal x_2_arr : t_array_x_2 := (others=>(others=>'0'));
     signal x_3_arr : t_array_x_3 := (others=>(others=>'0'));
@@ -79,8 +76,10 @@ begin
         constant file_inputs:      string := "./data/${name}_q_x_3.txt";
         constant file_labels:      string := "./data/${name}_q_y_1.txt";
         constant file_labels:      string := "./data/${name}_q_y_2.txt";
+        constant file_labels:      string := "./data/${name}_q_y_3.txt";
         constant file_pred:      string := "./data/${name}_q_out_1.txt";
         constant file_pred:      string := "./data/${name}_q_out_2.txt";
+        constant file_pred:      string := "./data/${name}_q_out_3.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -115,19 +114,19 @@ begin
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < X_1_NUM_FEATURES * X_1_NUM_DIMENSIONS loop
+            while input_rd_cnt < X_1_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
-            while input_rd_cnt < X_2_NUM_FEATURES * X_2_NUM_DIMENSIONS loop
+            while input_rd_cnt < X_2_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
-            while input_rd_cnt < X_3_NUM_FEATURES * X_3_NUM_DIMENSIONS loop
+            while input_rd_cnt < X_3_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_3_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -140,7 +139,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt< Y_1_NUM_FEATURES * Y_1_NUM_DIMENSIONS loop
+            while output_rd_cnt< Y_1_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_1_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
@@ -150,10 +149,20 @@ begin
                 writeline(fp_pred, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
-            while output_rd_cnt< Y_2_NUM_FEATURES * Y_2_NUM_DIMENSIONS loop
+            while output_rd_cnt< Y_2_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_2_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
+                wait for 2*C_CLK_PERIOD;
+                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+                write (line_num, to_integer(signed(y)));
+                writeline(fp_pred, line_num);
+                output_rd_cnt := output_rd_cnt + 1;
+            end loop;
+            while output_rd_cnt< Y_3_COUNT loop
+                readline (fp_labels, line_num);
+                read (line_num, line_content);
+                y_3_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
                 wait for 2*C_CLK_PERIOD;
                 report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
                 write (line_num, to_integer(signed(y)));
@@ -180,11 +189,13 @@ begin
         x_3_address => x_3_address,
         y_1_address => y_1_address,
         y_2_address => y_2_address,
+        y_3_address => y_3_address,
         x_1   => x_1,
         x_2   => x_2,
         x_3   => x_3,
         y_1  => y_1,
         y_2  => y_2,
+        y_3  => y_3,
         done   => done
     );
 end architecture;

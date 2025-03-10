@@ -13,7 +13,7 @@ class StackedRNN(Design):
         self,
         name: str,
         data_width: int,
-        lstm_layers: object,
+        rnn_layers: object,
         num_layers: int,
         work_library_name: str,
     ):
@@ -22,38 +22,53 @@ class StackedRNN(Design):
         self._data_width = data_width
         self._work_library_name = work_library_name
 
-        self._lstm_layers = lstm_layers
+        self._rnn_layers = rnn_layers
         self._num_layers = num_layers
 
-        for i in range(self._num_layers):
-            self.lstm_layers_design = [None] * self._num_layers
-            self.lstm_layers_design[i] = self._lstm_layers[i].create_design(
-                name=self._lstm_layers[i].name
-            )
+        # TODO: only support 1 rnn layer now
+        # for i in range(self._num_layers):
+        #     self.rnn_layers_design = [None] * self._num_layers
+        #     self.rnn_layers_design[i] = self._rnn_layers[i].create_design(
+        #         name=self._rnn_layers[i].name
+        #     )
+        assert self._num_layers == 1, "Only support 1 rnn layer now"
+        self.rnn_layer_design = self._rnn_layers[0].create_design(
+            name=self._rnn_layers[0].name
+        )
+
+        self._x_count = self.rnn_layer_design._x_count
+        self._y_count = self.rnn_layer_design._y_count
+
+        self.x_addr_width = self.rnn_layer_design._x_addr_width
+        self.y_addr_width = self.rnn_layer_design._y_addr_width
 
     @property
     def port(self) -> Port:
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self.lstm_layers_design[0]._x_count,
-            y_count=self.lstm_layers_design[-1]._y_count,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
-        for i in range(self._num_layers):
-            self.lstm_layers_design[i].save_to(destination)
+        # for i in range(self._num_layers):
+        #     self.rnn_layers_design[i].save_to(destination)
+
+        self.rnn_layer_design.save_to(
+            destination.create_subpath(self.rnn_layer_design.name)
+        )
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="stackedlstm.tpl.vhd",
+            file_name="stackedrnn.tpl.vhd",
             parameters=dict(  # TODO: problems here
                 name=self.name,
-                lstm_layers_x_1_addr_width=self.lstm_layers_design[0]._x_1_addr_width,
-                lstm_layers_x_2_addr_width=self.lstm_layers_design[0]._x_2_addr_width,
-                lstm_layers_x_3_addr_width=self.lstm_layers_design[0]._x_3_addr_width,
-                lstm_layers_y_1_addr_width=self.lstm_layers_design[-1]._y_1_addr_width,
-                lstm_layers_y_2_addr_width=self.lstm_layers_design[-1]._y_2_addr_width,
+                x_addr_width=self.x_addr_width,
+                y_addr_width=self.y_addr_width,
+                x_count=self._x_count,
+                y_count=self._y_count,
+                layer_name=self.rnn_layer_design.name,
                 work_library_name=self._work_library_name,
             ),
         )
@@ -61,14 +76,14 @@ class StackedRNN(Design):
 
         test_template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="stackedlstm_tb.tpl.vhd",
+            file_name="stackedrnn_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                x_1_addr_width=self.lstm_layers_design[0]._x_1_addr_width,
-                x_2_addr_width=self.lstm_layers_design[0]._x_2_addr_width,
-                x_3_addr_width=self.lstm_layers_design[0]._x_3_addr_width,
-                y_1_addr_width=self.lstm_layers_design[-1]._y_1_addr_width,
-                y_2_addr_width=self.lstm_layers_design[-1]._y_2_addr_width,
+                x_addr_width=self.x_addr_width,
+                y_addr_width=self.y_addr_width,
+                x_count=self._x_count,
+                y_count=self._y_count,
+                work_library_name=self._work_library_name,
             ),
         )
         destination.create_subpath(self.name).as_file("_tb.vhd").write(test_template)
