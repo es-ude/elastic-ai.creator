@@ -9,6 +9,23 @@ from elasticai.creator.vhdl.design.ports import Port
 
 
 class HardSigmoid(Design):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        name: str,
+        data_width: int,
+        work_library_name: str,
+    ) -> None:
+        super().__init__(name=name)
+
+        self._data_width = data_width
+        self._work_library_name = work_library_name
+
+    @property
+    def port(self) -> Port:
+        return create_port(
+            x_width=self._data_width,
+            y_width=self._data_width,
+        )
+
+    def save_to(self, destination: Path) -> None:
         pass

@@ -23,8 +23,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         super().__init__()
 
         inputs_size = kwargs.get("inputs_size")
-        hidden_size = kwargs.get("hidden_size")
-        window_size = kwargs.get("window_size")
+        self.hidden_size = kwargs.get("hidden_size")
+        self.window_size = kwargs.get("window_size")
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
@@ -34,7 +34,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.concatenate = Concatenate(
             name=self.name + "_concatenate",
             inputs_size=inputs_size,
-            hidden_size=hidden_size,
+            hidden_size=self.hidden_size,
             num_dimensions=1,  # only one-step
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -43,9 +43,9 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.f_gate_linear = Linear(
             name=self.name + "_f_gate_linear",
-            in_features=inputs_size + hidden_size,
-            out_features=hidden_size,
-            num_dimensions=window_size,
+            in_features=inputs_size + self.hidden_size,
+            out_features=self.hidden_size,
+            num_dimensions=self.window_size,
             bias=True,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -53,9 +53,9 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
         self.c_gate_linear = Linear(
             name=self.name + "_c_gate_linear",
-            in_features=inputs_size + hidden_size,
-            out_features=hidden_size,
-            num_dimensions=window_size,
+            in_features=inputs_size + self.hidden_size,
+            out_features=self.hidden_size,
+            num_dimensions=self.window_size,
             bias=True,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -64,10 +64,10 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.i_gate_linear = Linear(
             name=self.name + "_i_gate_linear",
-            in_features=inputs_size + hidden_size,
-            out_features=hidden_size,
+            in_features=inputs_size + self.hidden_size,
+            out_features=self.hidden_size,
             bias=True,
-            num_dimensions=window_size,
+            num_dimensions=self.window_size,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -75,10 +75,10 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.o_gate_linear = Linear(
             name=self.name + "_o_gate_linear",
-            in_features=inputs_size + hidden_size,
-            out_features=hidden_size,
+            in_features=inputs_size + self.hidden_size,
+            out_features=self.hidden_size,
             bias=True,
-            num_dimensions=window_size,
+            num_dimensions=self.window_size,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -118,8 +118,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.c_next_addition = Addition(
             name=self.name + "_add",
-            num_features=window_size,
-            num_dimensions=hidden_size,
+            num_features=self.window_size,
+            num_dimensions=self.hidden_size,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -127,7 +127,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.fc_hadamard_product = HadamardProduct(
             name=self.name + "_fc_hadamard_product",
-            num_features=hidden_size,  # TODO: check this
+            num_features=self.hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -135,7 +135,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
         self.ic_hadamard_product = HadamardProduct(
             name=self.name + "_ic_hadamard_product",
-            num_features=hidden_size,
+            num_features=self.hidden_size,
             num_dimensions=1,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -143,7 +143,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
         self.oc_hadamard_product = HadamardProduct(
             name=self.name + "_oc_hadamard_product",
-            num_features=hidden_size,
+            num_features=self.hidden_size,
             num_dimensions=1,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -242,8 +242,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         q_c_gate_tanh_outputs = self.c_tanh.int_forward(q_inputs=q_c_gate_outputs)
 
         # next cell state
-        print("shape of q_f_gate_sigmoid_outputs", q_f_gate_sigmoid_outputs.shape)
-        print("shape of q_c_prev", q_c_prev.shape)
         q_c_next_inputs1 = self.fc_hadamard_product.int_forward(
             q_inputs1=q_f_gate_sigmoid_outputs, q_inputs2=q_c_prev
         )

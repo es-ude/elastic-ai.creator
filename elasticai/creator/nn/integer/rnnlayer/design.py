@@ -13,12 +13,19 @@ class RNNLayer(Design):
     def __init__(
         self,
         name: str,
+        inputs_size: int,
+        window_size: int,
+        hidden_size: int,
         cell_type: str,
         data_width: int,
         rnn_cell: object,
         work_library_name: str,
     ):
         super().__init__(name=name)
+
+        self._inputs_size = inputs_size
+        self._window_size = window_size
+        self._hidden_size = hidden_size
 
         self._data_width = data_width
         self._work_library_name = work_library_name
@@ -27,25 +34,28 @@ class RNNLayer(Design):
         self._rnn_cell = rnn_cell
         self.rnn_cell_deisgn = self._rnn_cell.create_design(name=self._rnn_cell.name)
 
-        self._x_1_count = self.rnn_cell_deisgn._x_1_count
-        self._x_2_count = self.rnn_cell_deisgn._x_2_count
-        self._y_1_count = (
-            self._rnn_cell.batch_size
-            * self._rnn_cell.window_size
-            * self._rnn_cell.hidden_size
-        )
-        self._y_2_count = self.rnn_cell_deisgn._y_2_count
+        # q_inputs
+        self._x_1_count = self._window_size * self._inputs_size
+        # q_h_prev
+        self._x_2_count = self._hidden_size
 
-        self._x_1_addr_width = self.rnn_cell_deisgn._x_1_addr_width
-        self._x_2_addr_width = self.rnn_cell_deisgn._x_2_addr_width
-        self._y_1_addr_width = calculate_address_width(self._y_3_count)
-        self._y_2_addr_width = self.rnn_cell_deisgn._y_2_addr_width
+        # q_outputs
+        self._y_1_count = self._window_size * self._hidden_size
+        # q_h_next
+        self._y_2_count = self._hidden_size
+
+        self._x_1_addr_width = calculate_address_width(self._x_1_count)
+        self._x_2_addr_width = calculate_address_width(self._x_2_count)
+        self._y_1_addr_width = calculate_address_width(self._y_2_count)
+        self._y_2_addr_width = calculate_address_width(self._y_2_count)
 
         if self._cell_type == "lstm":
-            self._x_3_count = self.rnn_cell_deisgn._x_3_count
-            self._x_3_addr_width = self.rnn_cell_deisgn._x_3_addr_width
-            self._y_3_count = self.rnn_cell_deisgn._y_3_count
-            self._y_3_addr_width = self.rnn_cell_deisgn._y_3_addr_width
+            # q_c_prev
+            self._x_3_count = self._hidden_size
+            self._x_3_addr_width = calculate_address_width(self._x_3_count)
+            # q_c_next
+            self._y_3_count = self._hidden_size
+            self._y_3_addr_width = calculate_address_width(self._y_3_count)
 
     @property
     def port(self) -> Port:

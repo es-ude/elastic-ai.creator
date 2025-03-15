@@ -37,7 +37,11 @@ class HardTanh(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> HardTanhDesign:
-        pass
+        return HardTanhDesign(
+            name=name,
+            data_width=self.quant_bits,
+            work_library_name="work",
+        )
 
     def precompute(self):
         self.quantized_one = self.inputs_QParams.quantize(torch.tensor(1.0))

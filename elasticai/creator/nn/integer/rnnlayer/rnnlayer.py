@@ -19,7 +19,7 @@ class RNNLayer(nn.Module):
         super().__init__()
 
         self.cell_type = kwargs.get("cell_type")
-        inputs_size = kwargs.get("inputs_size")
+        self.inputs_size = kwargs.get("inputs_size")
         self.hidden_size = kwargs.get("hidden_size")
         self.batch_size = kwargs.get("batch_size")
         self.window_size = kwargs.get("window_size")
@@ -32,7 +32,7 @@ class RNNLayer(nn.Module):
         if self.cell_type == "lstm":
             self.rnn_cell = LSTMCell(
                 name=f"{self.name}_lstm_cell",
-                inputs_size=inputs_size,
+                inputs_size=self.inputs_size,
                 hidden_size=self.hidden_size,
                 window_size=self.window_size,
                 quant_bits=self.quant_bits,
@@ -42,7 +42,7 @@ class RNNLayer(nn.Module):
         elif self.cell_type == "gru":
             self.rnn_cell = GRUCell(
                 name=f"{self.name}_gru_cell",
-                inputs_size=inputs_size,
+                inputs_size=self.inputs_size,
                 hidden_size=self.hidden_size,
                 window_size=self.window_size,
                 quant_bits=self.quant_bits,
@@ -76,6 +76,9 @@ class RNNLayer(nn.Module):
     def create_design(self, name: str) -> RNNLayerDesign:
         return RNNLayerDesign(
             name=name,
+            inputs_size=self.inputs_size,
+            hidden_size=self.hidden_size,
+            window_size=self.window_size,
             cell_type=self.cell_type,
             data_width=self.inputs_QParams.quant_bits,
             rnn_cell=self.rnn_cell,
@@ -117,6 +120,7 @@ class RNNLayer(nn.Module):
         save_quant_data(q_h_next, self.quant_data_dir, f"{self.name}_q_y_2")
         if q_c_next is not None:
             save_quant_data(q_c_next, self.quant_data_dir, f"{self.name}_q_y_3")
+
         return q_outputs, q_h_next, q_c_next
 
     def forward(

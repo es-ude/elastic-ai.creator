@@ -48,6 +48,7 @@ class HadamardProduct(Design):
         self._y_count = self._x_count
 
         self._x_addr_width = calculate_address_width(self._x_count)
+
         self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
@@ -87,7 +88,7 @@ class HadamardProduct(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name="hadamardproduct_tb..tpl.vhd",
+            file_name="hadamardproduct_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),

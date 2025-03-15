@@ -4,6 +4,7 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
+from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 
@@ -12,12 +13,19 @@ class StackedRNN(Design):
     def __init__(
         self,
         name: str,
+        inputs_size: int,
+        window_size: int,
+        hidden_size: int,
         data_width: int,
         rnn_layers: object,
         num_layers: int,
         work_library_name: str,
     ):
         super().__init__(name=name)
+
+        self._inputs_size = inputs_size
+        self._window_size = window_size
+        self._hidden_size = hidden_size
 
         self._data_width = data_width
         self._work_library_name = work_library_name
@@ -36,11 +44,11 @@ class StackedRNN(Design):
             name=self._rnn_layers[0].name
         )
 
-        self._x_count = self.rnn_layer_design._x_count
-        self._y_count = self.rnn_layer_design._y_count
+        self._x_count = self._window_size * self._inputs_size
+        self._y_count = self._hidden_size
 
-        self.x_addr_width = self.rnn_layer_design._x_addr_width
-        self.y_addr_width = self.rnn_layer_design._y_addr_width
+        self.x_addr_width = calculate_address_width(self._x_count)
+        self.y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:

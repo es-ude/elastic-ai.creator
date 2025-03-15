@@ -84,12 +84,17 @@ class LSTMCell(Design):
             name=self._oc_hadamard_product.name
         )
 
-        self._x_1_count = self.concatenate_design._x_1_count
-        self._x_2_count = self.concatenate_design._x_2_count
-        self._x_3_count = self.fc_hadamard_product_design._x_2_count
+        self._x_1_count = self.concatenate_design._x_1_count  # q_inputs
+        self._x_2_count = self.concatenate_design._x_2_count  # q_h_prev
+        self._x_3_count = self.fc_hadamard_product_design._x_count  # q_c_prev
+        self._y_1_count = self.oc_hadamard_product_design._y_count  # q_h_next
+        self._y_2_count = self.c_next_addition_design._y_count  # q_c_next
 
-        self._y_1_count = self.oc_hadamard_product_design._y_count
-        self._y_2_count = self.c_next_addition_design._y_count
+        self._x_1_addr_width = self.concatenate_design._x_1_addr_width
+        self._x_2_addr_width = self.concatenate_design._x_2_addr_width
+        self._x_3_addr_width = self.fc_hadamard_product_design._x_addr_width
+        self._y_1_addr_width = self.oc_hadamard_product_design._y_addr_width
+        self._y_2_addr_width = self.c_next_addition_design._y_addr_width
 
     def port(self) -> Port:
         return create_port(

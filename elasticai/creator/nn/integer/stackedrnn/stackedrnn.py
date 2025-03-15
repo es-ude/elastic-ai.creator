@@ -67,6 +67,9 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         # TODO: only support 1 rnn layer now
         return StackedRNNDesign(
             name=name,
+            inputs_size=self.inputs_size,
+            window_size=self.window_size,
+            hidden_size=self.hidden_size,
             data_width=self.inputs_QParams.quant_bits,
             rnn_layers=self.rnn_layers,
             num_layers=self.num_layers,
@@ -93,7 +96,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
-
         q_h_prev = self.q_h_prev
         q_c_prev = self.q_c_prev
 

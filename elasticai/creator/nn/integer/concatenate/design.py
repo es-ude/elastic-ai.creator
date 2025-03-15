@@ -17,7 +17,7 @@ class Concatenate(Design):
         self,
         name: str,
         data_width: int,
-        input_size: int,  #  num_features of inputs1
+        inputs_size: int,  #  num_features of inputs1
         hidden_size: int,  # num_features of inputs2
         num_dimensions: int,
         m_q_1: int,
@@ -33,7 +33,7 @@ class Concatenate(Design):
         super().__init__(name=name)
 
         self._data_width = data_width
-        self._input_size = input_size
+        self._inputs_size = inputs_size
         self._hidden_size = hidden_size
         self._num_dimensions = num_dimensions
 
@@ -53,9 +53,9 @@ class Concatenate(Design):
 
         self._m_q_data_width = max(self._m_q_1_data_width, self._m_q_2_data_width)
 
-        self._x_1_count = self._input_size * self._num_dimensions
+        self._x_1_count = self._inputs_size * self._num_dimensions
         self._x_2_count = self._hidden_size * self._num_dimensions
-        self._y_count = (self._input_size + self._hidden_size) * self._num_dimensions
+        self._y_count = (self._inputs_size + self._hidden_size) * self._num_dimensions
 
         self._x_1_addr_width = calculate_address_width(self._x_1_count)
         self._x_2_addr_width = calculate_address_width(self._x_2_count)
@@ -82,7 +82,7 @@ class Concatenate(Design):
                 x_1_addr_width=str(self._x_1_addr_width),
                 x_2_addr_width=str(self._x_2_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                x1_num_features=str(self._input_size),
+                x1_num_features=str(self._inputs_size),
                 x2_num_features=str(self._hidden_size),
                 num_dimensions=str(self._num_dimensions),
                 m_q_1=str(self._m_q_1),
@@ -111,7 +111,7 @@ class Concatenate(Design):
                 x_2_addr_width=str(self._x_2_addr_width),
                 y_addr_width=str(self._y_addr_width),
                 data_width=str(self._data_width),
-                x1_num_features=str(self._input_size),
+                x1_num_features=str(self._inputs_size),
                 x2_num_features=str(self._hidden_size),
                 num_dimensions=str(self._num_dimensions),
                 work_library_name=self._work_library_name,

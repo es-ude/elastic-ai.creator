@@ -37,7 +37,11 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> HardSigmoidDesign:
-        pass
+        return HardSigmoidDesign(
+            name=name,
+            data_width=self.quant_bits,
+            work_library_name="work",
+        )
 
     def _customized_hard_sigmoid(self, inputs: torch.FloatTensor) -> torch.FloatTensor:
         outputs = torch.where(inputs <= -3.0, torch.zeros_like(inputs), inputs)
