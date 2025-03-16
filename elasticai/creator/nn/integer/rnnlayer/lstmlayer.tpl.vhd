@@ -74,9 +74,9 @@ architecture rtl of ${name} is
     y_1_address <= lstm_cell_y_1_address;
     y_2_address <= lstm_cell_y_2_address;
     y_3_address <= lstm_cell_y_3_address;
-    lstm_cell_x_1 <= x_1
-    lstm_cell_x_2 <= x_2
-    lstm_cell_x_3 <= x_3
+    lstm_cell_x_1 <= x_1;
+    lstm_cell_x_2 <= x_2;
+    lstm_cell_x_3 <= x_3;
     y_1 <= lstm_cell_y_1;
     y_2 <= lstm_cell_y_2;
     y_3 <= lstm_cell_y_3;

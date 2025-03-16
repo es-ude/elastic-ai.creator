@@ -195,7 +195,7 @@ architecture rtl of ${name} is
     concetenate_y_address <= o_gate_linear_x_address;
     fc_hadamard_product_x_1_address <= f_gate_linear_y_address;
     x_3_address <= fc_hadamard_product_x_2_address;
-    ic_hadamard_product_x_1_address <= i_gate_linear_y_address
+    ic_hadamard_product_x_1_address <= i_gate_linear_y_address;
     ic_hadamard_product_x_2_address <= c_gate_linear_y_address;
 
     c_next_addition_x_1_address <= fc_hadamard_product_y_address;

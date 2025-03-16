@@ -40,10 +40,10 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         return HardSigmoidDesign(
             name=name,
             data_width=self.quant_bits,
-            quantized_three=self.quantized_three,
-            quantized_minus_three=self.quantized_minus_three,
-            quantized_one=self.quantized_one,
-            quantized_zero=self.quantized_zero,
+            quantized_three=int(self.quantized_three),
+            quantized_minus_three=int(self.quantized_minus_three),
+            quantized_one=int(self.quantized_one),
+            quantized_zero=int(self.quantized_zero),
             tmp=self.tmp,
             work_library_name="work",
         )
