@@ -163,48 +163,35 @@ class LSTMCell(Design):
                 i_gate_linear_y_addr_width=str(self.i_gate_linear_design._y_addr_width),
                 o_gate_linear_x_addr_width=str(self.o_gate_linear_design._x_addr_width),
                 o_gate_linear_y_addr_width=str(self.o_gate_linear_design._y_addr_width),
-                i_sigmoid_x_addr_width=str(self.i_sigmoid_design._x_addr_width),
-                i_sigmoid_y_addr_width=str(self.i_sigmoid_design._y_addr_width),
-                f_sigmoid_x_addr_width=str(self.f_sigmoid_design._x_addr_width),
-                f_sigmoid_y_addr_width=str(self.f_sigmoid_design._y_addr_width),
-                o_sigmoid_x_addr_width=str(self.o_sigmoid_design._x_addr_width),
-                o_sigmoid_y_addr_width=str(self.o_sigmoid_design._y_addr_width),
-                c_tanh_x_addr_width=str(self.c_tanh_design._x_addr_width),
-                c_tanh_y_addr_width=str(self.c_tanh_design._y_addr_width),
-                c_next_tanh_x_addr_width=str(self.c_next_tanh_design._x_addr_width),
-                c_next_tanh_y_addr_width=str(self.c_next_tanh_design._y_addr_width),
-                c_next_addition_x_1_addr_width=str(
-                    self.c_next_addition_design._x_1_addr_width
-                ),
-                c_next_addition_x_2_addr_width=str(
-                    self.c_next_addition_design._x_2_addr_width
+                c_next_addition_x_addr_width=str(
+                    self.c_next_addition_design._x_addr_width
                 ),
                 c_next_addition_y_addr_width=str(
                     self.c_next_addition_design._y_addr_width
                 ),
                 fc_hadamard_product_x_1_addr_width=str(
-                    self.fc_hadamard_product_design._x_1_addr_width
+                    self.fc_hadamard_product_design._x_addr_width
                 ),
                 fc_hadamard_product_x_2_addr_width=str(
-                    self.fc_hadamard_product_design._x_2_addr_width
+                    self.fc_hadamard_product_design._x_addr_width
                 ),
                 fc_hadamard_product_y_addr_width=str(
                     self.fc_hadamard_product_design._y_addr_width
                 ),
                 ic_hadamard_product_x_1_addr_width=str(
-                    self.ic_hadamard_product_design._x_1_addr_width
+                    self.ic_hadamard_product_design._x_addr_width
                 ),
                 ic_hadamard_product_x_2_addr_width=str(
-                    self.ic_hadamard_product_design._x_2_addr_width
+                    self.ic_hadamard_product_design._x_addr_width
                 ),
                 ic_hadamard_product_y_addr_width=str(
                     self.ic_hadamard_product_design._y_addr_width
                 ),
                 oc_hadamard_product_x_1_addr_width=str(
-                    self.oc_hadamard_product_design._x_1_addr_width
+                    self.oc_hadamard_product_design._x_addr_width
                 ),
                 oc_hadamard_product_x_2_addr_width=str(
-                    self.oc_hadamard_product_design._x_2_addr_width
+                    self.oc_hadamard_product_design._x_addr_width
                 ),
                 oc_hadamard_product_y_addr_width=str(
                     self.oc_hadamard_product_design._y_addr_width
@@ -222,25 +209,19 @@ class LSTMCell(Design):
                 data_width=str(self._data_width),
                 x_1_addr_width=str(self.concatenate_design._x_1_addr_width),
                 x_2_addr_width=str(self.concatenate_design._x_2_addr_width),
-                x_3_addr_width=str(self.fc_hadamard_product_design._x_1_addr_width),
+                x_3_addr_width=str(self.fc_hadamard_product_design._x_addr_width),
                 y_1_addr_width=str(self.oc_hadamard_product_design._y_addr_width),
                 y_2_addr_width=str(self.fc_hadamard_product_design._y_addr_width),
-                x1_num_features=str(self.concatenate_design._x1_num_features),
-                x1_num_dimensions=str(self.concatenate_design._x1_num_dimensions),
-                x2_num_features=str(self.concatenate_design._x2_num_features),
-                x2_num_dimensions=str(self.concatenate_design._x2_num_dimensions),
-                x_3_num_features=str(self.fc_hadamard_product_design._x_1_num_features),
-                x_3_num_dimensions=str(
-                    self.fc_hadamard_product_design._x_1_num_dimensions
-                ),
-                y_1_num_features=str(self.oc_hadamard_product_design._y_num_features),
-                y_1_num_dimensions=str(
-                    self.oc_hadamard_product_design._y_num_dimensions
-                ),
-                y_2_num_features=str(self.fc_hadamard_product_design._y_num_features),
-                y_2_num_dimensions=str(
-                    self.fc_hadamard_product_design._y_num_dimensions
-                ),
+                x_1_num_features=str(self._concatenate.inputs_size),
+                x_1_num_dimensions=str(self._concatenate.num_dimensions),
+                x_2_num_features=str(self._concatenate.hidden_size),
+                x_2_num_dimensions=str(self._concatenate.num_dimensions),
+                x_3_num_features=str(self._fc_hadamard_product.num_features),
+                x_3_num_dimensions=str(self._fc_hadamard_product.num_dimensions),
+                y_1_num_features=str(self._oc_hadamard_product.num_features),
+                y_1_num_dimensions=str(self._oc_hadamard_product.num_dimensions),
+                y_2_num_features=str(self._fc_hadamard_product.num_features),
+                y_2_num_dimensions=str(self._fc_hadamard_product.num_dimensions),
                 work_library_name=self._work_library_name,
             ),
         )

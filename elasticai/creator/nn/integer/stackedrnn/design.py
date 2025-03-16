@@ -47,8 +47,8 @@ class StackedRNN(Design):
         self._x_count = self._window_size * self._inputs_size
         self._y_count = self._hidden_size
 
-        self.x_addr_width = calculate_address_width(self._x_count)
-        self.y_addr_width = calculate_address_width(self._y_count)
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
@@ -72,10 +72,11 @@ class StackedRNN(Design):
             file_name="stackedrnn.tpl.vhd",
             parameters=dict(  # TODO: problems here
                 name=self.name,
-                x_addr_width=self.x_addr_width,
-                y_addr_width=self.y_addr_width,
-                x_count=self._x_count,
-                y_count=self._y_count,
+                data_width=str(self._data_width),
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 layer_name=self.rnn_layer_design.name,
                 work_library_name=self._work_library_name,
             ),
@@ -87,10 +88,11 @@ class StackedRNN(Design):
             file_name="stackedrnn_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                x_addr_width=self.x_addr_width,
-                y_addr_width=self.y_addr_width,
-                x_count=self._x_count,
-                y_count=self._y_count,
+                data_width=str(self._data_width),
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )

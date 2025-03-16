@@ -19,7 +19,8 @@ entity ${name}_tb is
         X_3_COUNT: integer := ${x_3_count};
         Y_1_COUNT: integer := ${y_1_count};
         Y_2_COUNT: integer := ${y_2_count};
-        Y_3_COUNT: integer := ${y_3_count}
+        Y_3_COUNT: integer := ${y_3_count};
+        CELL_NAME: string := ${cell_name}
     );
     port(
         clk : out std_logic

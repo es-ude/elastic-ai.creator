@@ -79,23 +79,23 @@ class RNNLayer(Design):
 
         template_params = {
             "name": self.name,
-            "data_width": self._data_width,
-            "x_1_count": self._x_1_count,
-            "x_2_count": self._x_2_count,
-            "y_1_count": self._y_1_count,
-            "y_2_count": self._y_2_count,
-            "x_1_addr_width": self._x_1_addr_width,
-            "x_2_addr_width": self._x_2_addr_width,
-            "y_1_addr_width": self._y_1_addr_width,
-            "y_2_addr_width": self._y_2_addr_width,
-            "rnn_cell_name": self.rnn_cell_deisgn.name,
+            "data_width": str(self._data_width),
+            "x_1_count": str(self._x_1_count),
+            "x_2_count": str(self._x_2_count),
+            "y_1_count": str(self._y_1_count),
+            "y_2_count": str(self._y_2_count),
+            "x_1_addr_width": str(self._x_1_addr_width),
+            "x_2_addr_width": str(self._x_2_addr_width),
+            "y_1_addr_width": str(self._y_1_addr_width),
+            "y_2_addr_width": str(self._y_2_addr_width),
+            "cell_name": self._rnn_cell.name,
             "work_library_name": self._work_library_name,
         }
         if self._cell_type == "lstm":
-            template_params["x_3_count"] = self._x_3_count
-            template_params["y_3_count"] = self._y_3_count
-            template_params["x_3_addr_width"] = self._x_3_addr_width
-            template_params["y_3_addr_width"] = self._y_3_addr_width
+            template_params["x_3_count"] = str(self._x_3_count)
+            template_params["y_3_count"] = str(self._y_3_count)
+            template_params["x_3_addr_width"] = str(self._x_3_addr_width)
+            template_params["y_3_addr_width"] = str(self._y_3_addr_width)
 
         file_name = f"{self._cell_type}layer.tpl.vhd"
         tb_file_name = f"{self._cell_type}layer_tb.tpl.vhd"
@@ -106,8 +106,6 @@ class RNNLayer(Design):
             package=module_to_package(self.__module__),
             file_name=file_name,
             parameters=template_params,
-            cell_name=self._rnn_cell.name,
-            work_library_name=self._work_library_name,
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 

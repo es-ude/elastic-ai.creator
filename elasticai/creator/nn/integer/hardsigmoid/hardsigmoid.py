@@ -40,6 +40,11 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         return HardSigmoidDesign(
             name=name,
             data_width=self.quant_bits,
+            quantized_three=self.quantized_three,
+            quantized_minus_three=self.quantized_minus_three,
+            quantized_one=self.quantized_one,
+            quantized_zero=self.quantized_zero,
+            tmp=self.tmp,
             work_library_name="work",
         )
 
@@ -58,8 +63,8 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         self.quantized_one = self.inputs_QParams.quantize(torch.tensor(1.0))
         self.quantized_zero = self.inputs_QParams.quantize(torch.tensor(0.0))
 
-        self.out_quantized_one = self.outputs_QParams.quantize(torch.tensor(1.0))
-        self.out_quantized_zero = self.outputs_QParams.quantize(torch.tensor(0.0))
+        # self.out_quantized_one = self.outputs_QParams.quantize(torch.tensor(1.0))
+        # self.out_quantized_zero = self.outputs_QParams.quantize(torch.tensor(0.0))
 
         self.tmp = (
             int(

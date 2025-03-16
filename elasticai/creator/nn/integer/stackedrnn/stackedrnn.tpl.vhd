@@ -8,7 +8,6 @@ entity ${name} is
         DATA_WIDTH : integer := ${data_width};
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        NUM_DIMENSIONS : integer := ${num_dimensions};
         X_COUNT : integer := ${x_count};
         Y_COUNT : integer := ${y_count}
     ) ;
