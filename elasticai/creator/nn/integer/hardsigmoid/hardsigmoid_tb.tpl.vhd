@@ -7,12 +7,7 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
-        DATA_WIDTH : integer := ${data_width};
-        THREE_THRESHOLD : integer := ${three_threshold};
-        MINUS_THREE_THRESHOLD : integer := ${minus_three_threshold};
-        ZERO_OUTPUT : integer := ${zero_output};
-        ONE_OUTPUT : integer := ${one_output};
-        TMP_THRESHOLD : integer := ${tmp_threshold}
+        DATA_WIDTH : integer := ${data_width}
     );
 port(
     clk : out std_logic

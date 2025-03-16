@@ -17,7 +17,7 @@ class HardSigmoid(Design):
         quantized_minus_three: int,
         quantized_one: int,
         quantized_zero: int,
-        tmp: int,  # quant bits?
+        tmp: int,  # Note: at the moment hardware side only supports 16 bits signed of TEMP.
         work_library_name: str,
     ) -> None:
         super().__init__(name=name)
@@ -61,11 +61,6 @@ class HardSigmoid(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                three_threshold=str(self._quantized_three),
-                minus_three_threshold=str(self._quantized_minus_three),
-                zero_output=str(self._quantized_zero),
-                one_output=str(self._quantized_one),
-                tmp_threshold=str(self._tmp),
                 work_library_name=self._work_library_name,
             ),
         )

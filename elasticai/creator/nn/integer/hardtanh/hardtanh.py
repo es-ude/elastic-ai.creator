@@ -40,6 +40,8 @@ class HardTanh(DesignCreatorModule, nn.Module):
         return HardTanhDesign(
             name=name,
             data_width=self.quant_bits,
+            quantized_one=int(self.quantized_one),
+            quantized_minus_one=int(self.quantized_minus_one),
             work_library_name="work",
         )
 
