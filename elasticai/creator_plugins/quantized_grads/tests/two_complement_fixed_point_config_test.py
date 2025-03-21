@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from elasticai.creator_plugins.quantized_grads.fixed_point.two_complement_fixed_point_config import (
+from elasticai.creator_plugins.quantized_grads.fixed_point import (
     FixedPointConfigV2,
 )
 
