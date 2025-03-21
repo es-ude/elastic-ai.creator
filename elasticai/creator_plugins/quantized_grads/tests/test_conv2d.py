@@ -1,5 +1,5 @@
-from elasticai.creator.nn.quantized_grads.base_modules import Conv2d
-from elasticai.creator.nn.quantized_grads.fixed_point import (
+from elasticai.creator_plugins.quantized_grads.base_modules import Conv2d
+from elasticai.creator_plugins.quantized_grads.fixed_point import (
     FixedPointConfigV2,
     QuantizeForwHTE,
     QuantizeParamToFixedPointHTE,
