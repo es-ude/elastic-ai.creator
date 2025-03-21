@@ -1,7 +1,7 @@
 # Quantized Grads
 
 This subproject can be used for emulating training in python with quantized gradients.
-
+The quantization is implemented as a fake-quantization. 
 
 ## Python
 ### Layers

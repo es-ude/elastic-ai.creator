@@ -1,7 +1,7 @@
 import torch
 
-from elasticai.creator.nn.quantized_grads.fixed_point import FixedPointConfigV2
-from elasticai.creator.nn.quantized_grads.fixed_point.quantize_to_fixed_point import (
+from elasticai.creator_plugins.quantized_grads.fixed_point import FixedPointConfigV2
+from elasticai.creator_plugins.quantized_grads.fixed_point.quantize_to_fixed_point import (
     _clamp,
     _round_to_fixed_point_hte,
     quantize_to_fxp_hte,
