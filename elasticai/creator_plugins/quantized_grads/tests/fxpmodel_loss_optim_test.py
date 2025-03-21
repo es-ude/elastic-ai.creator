@@ -9,7 +9,9 @@ from elasticai.creator_plugins.quantized_grads.fixed_point import (
     QuantizeForwHTEBackwHTE,
     QuantizeParamToFixedPointHTE,
 )
-from elasticai.creator_plugins.quantized_grads.quantized_optim import get_quantized_optimizer
+from elasticai.creator_plugins.quantized_grads.quantized_optim import (
+    get_quantized_optimizer,
+)
 
 
 class Test1:

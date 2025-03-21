@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, optim
 from torch.nn import Module
 
-from elasticai.creator.nn.quantized_grads.base_modules import parametrized_modules
+from elasticai.creator_plugins.quantized_grads.base_modules import parametrized_modules
 
 
 class _QOptim(optim.Optimizer):
