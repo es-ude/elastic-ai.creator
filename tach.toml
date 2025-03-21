@@ -105,10 +105,6 @@ depends_on = [
 ]
 
 [[modules]]
-path = "elasticai.creator.nn.quantized_grads"
-depends_on = ["elasticai.creator.base_modules"]
-
-[[modules]]
 path = "elasticai.creator.nn.fixed_point"
 depends_on = [
     "elasticai.creator.vhdl",
@@ -204,5 +200,5 @@ depends_on = [
     "elasticai.creator.file_generation",
     "elasticai.creator.nn",
     "elasticai.creator.vhdl",
-    "elasticai.creator.nn.fixed_point",
+    "elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules",
 ]
