@@ -51,6 +51,11 @@ architecture rtl of ${name} is
         end if;
         TMP_2 := shift_right(TMP_1, scaler_m_shift);
         TMP_3 := TMP_2;
+        if scaler_m_shift<DATA_WIDTH + M_Q_DATA_WIDTH  then
+            if TMP_1(scaler_m_shift-1) = '1' then
+                TMP_3 := TMP_2 + 1;
+            end if;
+        end if;
         if is_negative then
             return -resize(TMP_3, DATA_WIDTH + 1);
         else
@@ -187,7 +192,7 @@ begin
     end process ;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
 
-    ram_y : entity work.stacked_rnnrnn_layer_0_lstm_cell_concatenate_ram(rtl)
+    ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,

@@ -169,28 +169,19 @@ class LSTMCell(Design):
                 c_next_addition_y_addr_width=str(
                     self.c_next_addition_design._y_addr_width
                 ),
-                fc_hadamard_product_x_1_addr_width=str(
-                    self.fc_hadamard_product_design._x_addr_width
-                ),
-                fc_hadamard_product_x_2_addr_width=str(
+                fc_hadamard_product_x_addr_width=str(
                     self.fc_hadamard_product_design._x_addr_width
                 ),
                 fc_hadamard_product_y_addr_width=str(
                     self.fc_hadamard_product_design._y_addr_width
                 ),
-                ic_hadamard_product_x_1_addr_width=str(
-                    self.ic_hadamard_product_design._x_addr_width
-                ),
-                ic_hadamard_product_x_2_addr_width=str(
+                ic_hadamard_product_x_addr_width=str(
                     self.ic_hadamard_product_design._x_addr_width
                 ),
                 ic_hadamard_product_y_addr_width=str(
                     self.ic_hadamard_product_design._y_addr_width
                 ),
-                oc_hadamard_product_x_1_addr_width=str(
-                    self.oc_hadamard_product_design._x_addr_width
-                ),
-                oc_hadamard_product_x_2_addr_width=str(
+                oc_hadamard_product_x_addr_width=str(
                     self.oc_hadamard_product_design._x_addr_width
                 ),
                 oc_hadamard_product_y_addr_width=str(

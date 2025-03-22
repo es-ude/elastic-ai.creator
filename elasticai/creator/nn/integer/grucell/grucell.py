@@ -110,8 +110,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
         self.h_next_addition = Addition(
             name=self.name + "_add",
-            num_features=window_size,
-            num_dimensions=hidden_size,
+            num_features=hidden_size,
+            num_dimensions=1,  # TODO: check this
             quant_bits=quant_bits,
             device=device,
         )

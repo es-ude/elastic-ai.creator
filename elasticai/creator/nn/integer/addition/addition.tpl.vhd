@@ -49,8 +49,10 @@ architecture rtl of ${name} is
         end if;
         TMP_2 := shift_right(TMP_1, scaler_m_shift);
         TMP_3 := TMP_2;
-        if TMP_1(scaler_m_shift-1) = '1' then
-            TMP_3 := TMP_2 + 1;
+        if scaler_m_shift<DATA_WIDTH + M_Q_DATA_WIDTH  then
+            if TMP_1(scaler_m_shift-1) = '1' then
+                TMP_3 := TMP_2 + 1;
+            end if;
         end if;
         if is_negative then
             return -resize(TMP_3, DATA_WIDTH + 1);

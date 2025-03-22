@@ -117,9 +117,9 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
 
         self.c_next_addition = Addition(
-            name=self.name + "_add",
-            num_features=self.window_size,
-            num_dimensions=self.hidden_size,
+            name=self.name + "_c_next_addition",
+            num_features=self.hidden_size,  # TODO: check this
+            num_dimensions=1,  # TODO: check this
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
