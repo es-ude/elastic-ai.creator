@@ -153,12 +153,14 @@ begin
                 x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
+            input_rd_cnt := 0;
             while input_rd_cnt < X_2_NUM_FEATURES * X_2_NUM_DIMENSIONS loop
                 readline (fp_inputs_x2, line_num);
                 read (line_num, line_content);
                 x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
+            input_rd_cnt := 0;
             while input_rd_cnt < X_3_NUM_FEATURES * X_3_NUM_DIMENSIONS loop
                 readline (fp_inputs_x3, line_num);
                 read (line_num, line_content);
@@ -182,6 +184,7 @@ begin
                 writeline(fp_pred_y1, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
+            output_rd_cnt := 0;
             while output_rd_cnt< Y_2_NUM_FEATURES * Y_2_NUM_DIMENSIONS loop
                 readline (fp_labels_y2, line_num);
                 read (line_num, line_content);
