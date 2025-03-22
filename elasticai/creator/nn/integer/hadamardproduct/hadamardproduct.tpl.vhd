@@ -31,13 +31,22 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function scaling(x_to_scale : in signed(DATA_WIDTH downto 0);
+    function multiply(
+        a : in signed(DATA_WIDTH downto 0);
+        b : in signed(DATA_WIDTH downto 0)
+    ) return signed is
+    variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    begin
+    TMP := a * b;
+    return TMP;
+    end function; -- end of multiply
+    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1)-1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_2 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_3 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
+    variable TMP_1 : signed((2 * (DATA_WIDTH + 1)-1) + M_Q_DATA_WIDTH downto 0) := (others=>'0');
+    variable TMP_2 : signed((2 * (DATA_WIDTH + 1)-1) + M_Q_DATA_WIDTH downto 0) := (others=>'0');
+    variable TMP_3 : signed((2 * (DATA_WIDTH + 1)-1) + M_Q_DATA_WIDTH downto 0) := (others=>'0');
     variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
@@ -71,7 +80,8 @@ architecture rtl of ${name} is
     signal y_store_addr : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal sum : signed(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal product : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal product_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     x_1_int <= signed(x_1);
@@ -100,7 +110,7 @@ begin
     add : process( clock, layer_state )
         variable input_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
         variable output_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
-        variable var_y_store : signed(2 * (DATA_WIDTH + 1)-1 downto 0);
+        variable var_y_store : signed(DATA_WIDTH downto 0);
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
@@ -116,20 +126,20 @@ begin
                     when s_preload =>
                         x_1_sub_z <= to_signed(0, x_1_sub_z'length);
                         x_2_sub_z <= to_signed(0, x_2_sub_z'length);
-                        sum <= (OTHERS=>'0');
+                        product <= (OTHERS=>'0');
                         add_state <= s_sub;
                     when s_sub =>
                         x_1_sub_z <= x_1_int - to_signed(Z_X_1, x_1_sub_z'length);
                         x_2_sub_z <= x_2_int - to_signed(Z_X_2, x_2_sub_z'length);
                         add_state <= s_sum;
                     when s_sum =>
-                        sum <= sum + x_1_sub_z * x_2_sub_z;
+                        product <= multiply(x_1_sub_z, x_2_sub_z);
                         add_state <= s_scaling;
                     when s_scaling =>
-                        sum_scaled <= scaling(sum, M_Q_SIGNED, M_Q_SHIFT);
+                        product_scaled <= scaling(product, M_Q_SIGNED, M_Q_SHIFT);
                         add_state <= s_output;
                     when s_output =>
-                        var_y_store := sum_scaled + to_signed(Z_Y, sum_scaled'length);
+                        var_y_store := product_scaled + to_signed(Z_Y, product_scaled'length);
                         y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
                         y_store_addr <= output_idx;
                         y_store_en <= '1';
@@ -153,7 +163,7 @@ begin
     end process ;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
 
-    ram_y : entity ${work_library_name}.${name}_ram(rtl)
+    ram_y : entity work.stacked_rnnrnn_layer_0_lstm_cell_ic_hadamard_product_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
