@@ -83,6 +83,7 @@ class RNNLayer(nn.Module):
             data_width=self.inputs_QParams.quant_bits,
             rnn_cell=self.rnn_cell,
             work_library_name="work",
+            resource_option="auto",
         )
 
     def precompute(self):

@@ -3,6 +3,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
@@ -20,15 +21,18 @@ class RNNLayer(Design):
         data_width: int,
         rnn_cell: object,
         work_library_name: str,
+        resource_option: str,
     ):
         super().__init__(name=name)
 
         self._inputs_size = inputs_size
         self._window_size = window_size
         self._hidden_size = hidden_size
+        self._num_dimensions = self._inputs_size  # how many dimensions are in the input
 
         self._data_width = data_width
         self._work_library_name = work_library_name
+        self._resource_option = resource_option
 
         self._cell_type = cell_type
         self._rnn_cell = rnn_cell
@@ -46,7 +50,7 @@ class RNNLayer(Design):
 
         self._x_1_addr_width = calculate_address_width(self._x_1_count)
         self._x_2_addr_width = calculate_address_width(self._x_2_count)
-        self._y_1_addr_width = calculate_address_width(self._y_2_count)
+        self._y_1_addr_width = calculate_address_width(self._y_1_count)
         self._y_2_addr_width = calculate_address_width(self._y_2_count)
 
         if self._cell_type == "lstm":
@@ -77,7 +81,7 @@ class RNNLayer(Design):
     def save_to(self, destination: Path) -> None:
         self.rnn_cell_deisgn.save_to(destination)
 
-        template_params = {
+        base_params = {
             "name": self.name,
             "data_width": str(self._data_width),
             "x_1_count": str(self._x_1_count),
@@ -88,19 +92,23 @@ class RNNLayer(Design):
             "x_2_addr_width": str(self._x_2_addr_width),
             "y_1_addr_width": str(self._y_1_addr_width),
             "y_2_addr_width": str(self._y_2_addr_width),
-            "cell_name": self._rnn_cell.name,
             "work_library_name": self._work_library_name,
         }
-        if self._cell_type == "lstm":
-            template_params["x_3_count"] = str(self._x_3_count)
-            template_params["y_3_count"] = str(self._y_3_count)
-            template_params["x_3_addr_width"] = str(self._x_3_addr_width)
-            template_params["y_3_addr_width"] = str(self._y_3_addr_width)
 
-        file_name = f"{self._cell_type}layer.tpl.vhd"
+        if self._cell_type == "lstm":
+            base_params["x_3_count"] = str(self._x_3_count)
+            base_params["y_3_count"] = str(self._y_3_count)
+            base_params["x_3_addr_width"] = str(self._x_3_addr_width)
+            base_params["y_3_addr_width"] = str(self._y_3_addr_width)
+
+        test_template_params = base_params.copy()
         tb_file_name = f"{self._cell_type}layer_tb.tpl.vhd"
 
-        test_template_params = template_params.copy()
+        template_params = base_params.copy()
+        template_params["cell_name"] = self._rnn_cell.name
+        template_params["resource_option"] = self._resource_option
+        template_params["num_dimensions"] = str(self._num_dimensions)
+        file_name = f"{self._cell_type}layer.tpl.vhd"
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
@@ -108,6 +116,9 @@ class RNNLayer(Design):
             parameters=template_params,
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        ram = Ram(name=f"{self.name}_ram")
+        ram.save_to(destination)
 
         test_template = InProjectTemplate(
             package=module_to_package(self.__module__),

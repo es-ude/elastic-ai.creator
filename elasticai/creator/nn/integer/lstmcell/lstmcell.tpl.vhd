@@ -172,7 +172,6 @@ architecture rtl of ${name} is
     -- concatenate_y_address <= f_gate_linear_x_address;
     -- concatenate_y_address <= c_gate_linear_x_address;
     -- concatenate_y_address <= o_gate_linear_x_address;
-
     i_gate_linear_enable <= concatenate_done;
     i_gate_linear_clock <= clock;
     i_gate_linear_x <= concatenate_y;

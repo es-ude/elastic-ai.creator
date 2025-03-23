@@ -74,13 +74,13 @@ begin
         end if;
     end process ;
     test_main : process
-        constant file_inputs_x1:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_x_1.txt";
-        constant file_inputs_x2:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_x_2.txt";
-        constant file_inputs_x3:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_x_3.txt";
-        constant file_labels_y1:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_y_1.txt";
-        constant file_labels_y2:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_y_2.txt";
-        constant file_pred_y1:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_out_1.txt";
-        constant file_pred_y2:      string := "./data/stacked_rnnrnn_layer_0_lstm_cell_q_out_2.txt";
+        constant file_inputs_x1:      string := "./data/${name}_q_x_1.txt";
+        constant file_inputs_x2:      string := "./data/${name}_q_x_2.txt";
+        constant file_inputs_x3:      string := "./data/${name}_q_x_3.txt";
+        constant file_labels_y1:      string := "./data/${name}_q_y_1.txt";
+        constant file_labels_y2:      string := "./data/${name}_q_y_2.txt";
+        constant file_pred_y1:        string := "./data/${name}_q_out_1.txt";
+        constant file_pred_y2:        string := "./data/${name}_q_out_2.txt";
         file fp_inputs_x1:      text;
         file fp_inputs_x2:      text;
         file fp_inputs_x3:      text;
@@ -179,7 +179,7 @@ begin
                 read (line_num, line_content);
                 y_1_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_1_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_1))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_1)));
+                report "Y1: Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_1))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_1)));
                 write (line_num, to_integer(signed(y_1)));
                 writeline(fp_pred_y1, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
@@ -190,7 +190,7 @@ begin
                 read (line_num, line_content);
                 y_2_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_2_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_2))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_2)));
+                report "Y2: Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_2))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_2)));
                 write (line_num, to_integer(signed(y_2)));
                 writeline(fp_pred_y2, line_num);
                 output_rd_cnt := output_rd_cnt + 1;

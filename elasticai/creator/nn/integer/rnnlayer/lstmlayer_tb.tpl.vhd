@@ -19,8 +19,7 @@ entity ${name}_tb is
         X_3_COUNT: integer := ${x_3_count};
         Y_1_COUNT: integer := ${y_1_count};
         Y_2_COUNT: integer := ${y_2_count};
-        Y_3_COUNT: integer := ${y_3_count};
-        CELL_NAME: string := ${cell_name}
+        Y_3_COUNT: integer := ${y_3_count}
     );
     port(
         clk : out std_logic
@@ -37,16 +36,18 @@ architecture rtl of ${name}_tb is
     signal x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_3 : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x_1 is array (0 to X_1_COUNT-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x_2 is array (0 to X_2_COUNT-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x_3 is array (0 to X_3_COUNT-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x_1 is array (0 to X_1_COUNT) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x_2 is array (0 to X_2_COUNT) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x_3 is array (0 to X_3_COUNT) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_1_arr : t_array_x_1 := (others=>(others=>'0'));
     signal x_2_arr : t_array_x_2 := (others=>(others=>'0'));
     signal x_3_arr : t_array_x_3 := (others=>(others=>'0'));
     signal y_1_address : std_logic_vector(Y_1_ADDR_WIDTH - 1 downto 0);
     signal y_2_address : std_logic_vector(Y_2_ADDR_WIDTH - 1 downto 0);
+    signal y_3_address : std_logic_vector(Y_2_ADDR_WIDTH - 1 downto 0);
     signal y_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal y_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y_3 : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
 begin
     CLK_GEN : process
@@ -72,18 +73,24 @@ begin
         end if;
     end process ;
     test_main : process
-        constant file_inputs:      string := "./data/${name}_q_x_1.txt";
-        constant file_inputs:      string := "./data/${name}_q_x_2.txt";
-        constant file_inputs:      string := "./data/${name}_q_x_3.txt";
-        constant file_labels:      string := "./data/${name}_q_y_1.txt";
-        constant file_labels:      string := "./data/${name}_q_y_2.txt";
-        constant file_labels:      string := "./data/${name}_q_y_3.txt";
-        constant file_pred:      string := "./data/${name}_q_out_1.txt";
-        constant file_pred:      string := "./data/${name}_q_out_2.txt";
-        constant file_pred:      string := "./data/${name}_q_out_3.txt";
-        file fp_inputs:      text;
-        file fp_labels:      text;
-        file fp_pred:      text;
+        constant file_inputs_x1:      string := "./data/stacked_rnnrnn_layer_0_q_x_1.txt";
+        constant file_inputs_x2:      string := "./data/stacked_rnnrnn_layer_0_q_x_2.txt";
+        constant file_inputs_x3:      string := "./data/stacked_rnnrnn_layer_0_q_x_3.txt";
+        constant file_labels_y1:      string := "./data/stacked_rnnrnn_layer_0_q_y_1.txt";
+        constant file_labels_y2:      string := "./data/stacked_rnnrnn_layer_0_q_y_2.txt";
+        constant file_labels_y3:      string := "./data/stacked_rnnrnn_layer_0_q_y_3.txt";
+        constant file_pred_y1:      string := "./data/stacked_rnnrnn_layer_0_q_out_1.txt";
+        constant file_pred_y2:      string := "./data/stacked_rnnrnn_layer_0_q_out_2.txt";
+        constant file_pred_y3:      string := "./data/stacked_rnnrnn_layer_0_q_out_3.txt";
+        file fp_inputs_x1:      text;
+        file fp_inputs_x2:      text;
+        file fp_inputs_x3:      text;
+        file fp_labels_y1:      text;
+        file fp_labels_y2:      text;
+        file fp_labels_y3:      text;
+        file fp_pred_y1:      text;
+        file fp_pred_y2:      text;
+        file fp_pred_y3:      text;
         variable line_content:  integer;
         variable line_num:      line;
         variable filestatus:    file_open_status;
@@ -91,44 +98,88 @@ begin
         variable output_rd_cnt : integer := 0;
         variable v_TIME : time := 0 ns;
     begin
-        file_open (filestatus, fp_inputs, file_inputs, READ_MODE);
-        report file_inputs & LF & HT & "file_open_status = " &
+        file_open (filestatus, fp_inputs_x1, file_inputs_x1, READ_MODE);
+        report file_inputs_x1 & LF & HT & "file_open_status = " &
                     file_open_status'image(filestatus);
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        file_open (filestatus, fp_labels, file_labels, READ_MODE);
-        report file_labels & LF & HT & "file_open_status = " &
+        file_open (filestatus, fp_inputs_x2, file_inputs_x2, READ_MODE);
+        report file_inputs_x2 & LF & HT & "file_open_status = " &
                     file_open_status'image(filestatus);
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        file_open (filestatus, fp_pred, file_pred, WRITE_MODE);
-        report file_pred & LF & HT & "file_open_status = " &
+        file_open (filestatus, fp_inputs_x3, file_inputs_x3, READ_MODE);
+        report file_inputs_x3 & LF & HT & "file_open_status = " &
                     file_open_status'image(filestatus);
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        y_address <= (others=>'0');
+
+        file_open (filestatus, fp_labels_y1, file_labels_y1, READ_MODE);
+        report file_labels_y1 & LF & HT & "file_open_status = " &
+                    file_open_status'image(filestatus);
+        assert filestatus = OPEN_OK
+            report "file_open_status /= file_ok"
+            severity FAILURE;
+        file_open (filestatus, fp_labels_y2, file_labels_y2, READ_MODE);
+        report file_labels_y2 & LF & HT & "file_open_status = " &
+                    file_open_status'image(filestatus);
+        assert filestatus = OPEN_OK
+            report "file_open_status /= file_ok"
+            severity FAILURE;
+        file_open (filestatus, fp_labels_y3, file_labels_y3, READ_MODE);
+        report file_labels_y3 & LF & HT & "file_open_status = " &
+                    file_open_status'image(filestatus);
+        assert filestatus = OPEN_OK
+            report "file_open_status /= file_ok"
+            severity FAILURE;
+
+        file_open (filestatus, fp_pred_y1, file_pred_y1, WRITE_MODE);
+        report file_pred_y1 & LF & HT & "file_open_status = " &
+                    file_open_status'image(filestatus);
+        assert filestatus = OPEN_OK
+            report "file_open_status /= file_ok"
+            severity FAILURE;
+        file_open (filestatus, fp_pred_y2, file_pred_y2, WRITE_MODE);
+        report file_pred_y2 & LF & HT & "file_open_status = " &
+                    file_open_status'image(filestatus);
+        assert filestatus = OPEN_OK
+            report "file_open_status /= file_ok"
+            severity FAILURE;
+        file_open (filestatus, fp_pred_y3, file_pred_y3, WRITE_MODE);
+        report file_pred_y3 & LF & HT & "file_open_status = " &
+                    file_open_status'image(filestatus);
+        assert filestatus = OPEN_OK
+            report "file_open_status /= file_ok"
+            severity FAILURE;
+
+        y_1_address <= (others=>'0');
+        y_2_address <= (others=>'0');
+        y_3_address <= (others=>'0');
+
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
-        while not ENDFILE (fp_inputs) loop
+        while not ENDFILE (fp_inputs_x1) loop
             input_rd_cnt := 0;
             while input_rd_cnt < X_1_COUNT loop
-                readline (fp_inputs, line_num);
+                readline (fp_inputs_x1, line_num);
                 read (line_num, line_content);
                 x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
+            input_rd_cnt := 0;
             while input_rd_cnt < X_2_COUNT loop
-                readline (fp_inputs, line_num);
+                readline (fp_inputs_x2, line_num);
                 read (line_num, line_content);
                 x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
+            input_rd_cnt := 0;
             while input_rd_cnt < X_3_COUNT loop
-                readline (fp_inputs, line_num);
+                readline (fp_inputs_x3, line_num);
                 read (line_num, line_content);
                 x_3_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
@@ -141,47 +192,56 @@ begin
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
             while output_rd_cnt< Y_1_COUNT loop
-                readline (fp_labels, line_num);
+                readline (fp_labels_y1, line_num);
                 read (line_num, line_content);
-                y_1_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
+                y_1_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_1_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
-                write (line_num, to_integer(signed(y)));
-                writeline(fp_pred, line_num);
+                report "Y1: Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_1))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_1)));
+                write (line_num, to_integer(signed(y_1)));
+                writeline(fp_pred_y1, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
+            output_rd_cnt := 0;
             while output_rd_cnt< Y_2_COUNT loop
-                readline (fp_labels, line_num);
+                readline (fp_labels_y2, line_num);
                 read (line_num, line_content);
-                y_2_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
+                y_2_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_2_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
-                write (line_num, to_integer(signed(y)));
-                writeline(fp_pred, line_num);
+                report "Y2: Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_2))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_2)));
+                write (line_num, to_integer(signed(y_2)));
+                writeline(fp_pred_y2, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
+            -- assert false report "stop." severity FAILURE;
+            output_rd_cnt := 0;
             while output_rd_cnt< Y_3_COUNT loop
-                readline (fp_labels, line_num);
+                readline (fp_labels_y3, line_num);
                 read (line_num, line_content);
-                y_3_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
+                y_3_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_3_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
-                write (line_num, to_integer(signed(y)));
-                writeline(fp_pred, line_num);
+                report "Y3: Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_3))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_3)));
+                write (line_num, to_integer(signed(y_3)));
+                writeline(fp_pred_y3, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
             uut_enable <= '0';
         end loop;
         wait until falling_edge(clock);
-        file_close (fp_inputs);
-        file_close (fp_labels);
-        file_close (fp_pred);
+        file_close (fp_inputs_x1);
+        file_close (fp_inputs_x2);
+        file_close (fp_inputs_x3);
+        file_close (fp_labels_y1);
+        file_close (fp_labels_y2);
+        file_close (fp_labels_y3);
+        file_close (fp_pred_y1);
+        file_close (fp_pred_y2);
+        file_close (fp_pred_y3);
         report "All files closed.";
         report "Time taken for processing = " & time'image(v_TIME);
         report "Simulation done.";
         assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
-    uut: entity work.${name}(rtl)
+    uut: entity ${work_library_name}.${name}(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,
@@ -191,9 +251,9 @@ begin
         y_1_address => y_1_address,
         y_2_address => y_2_address,
         y_3_address => y_3_address,
-        x_1   => x_1,
-        x_2   => x_2,
-        x_3   => x_3,
+        x_1  => x_1,
+        x_2  => x_2,
+        x_3  => x_3,
         y_1  => y_1,
         y_2  => y_2,
         y_3  => y_3,
