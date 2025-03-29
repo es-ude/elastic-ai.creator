@@ -42,7 +42,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
                     window_size=self.window_size,
                     cell_type=self.cell_type,
                     batch_size=self.batch_size,
-                    name=self.name + f"rnn_layer_{i}",
+                    name=self.name + f"_rnn_layer_{i}",
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                 )
