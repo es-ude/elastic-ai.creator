@@ -67,9 +67,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         # TODO: only support 1 rnn layer now
         return StackedRNNDesign(
             name=name,
-            inputs_size=self.inputs_size,
-            window_size=self.window_size,
-            hidden_size=self.hidden_size,
             data_width=self.inputs_QParams.quant_bits,
             rnn_layers=self.rnn_layers,
             num_layers=self.num_layers,

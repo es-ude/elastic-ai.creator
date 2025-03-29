@@ -13,20 +13,13 @@ class StackedRNN(Design):
     def __init__(
         self,
         name: str,
-        inputs_size: int,
-        window_size: int,
-        hidden_size: int,
         data_width: int,
         rnn_layers: object,
         num_layers: int,
         work_library_name: str,
     ):
         super().__init__(name=name)
-
-        self._inputs_size = inputs_size
-        self._window_size = window_size
-        self._hidden_size = hidden_size
-
+        print("name", name)
         self._data_width = data_width
         self._work_library_name = work_library_name
 
@@ -40,15 +33,30 @@ class StackedRNN(Design):
         #         name=self._rnn_layers[i].name
         #     )
         assert self._num_layers == 1, "Only support 1 rnn layer now"
-        self.rnn_layer_design = self._rnn_layers[0].create_design(
+        self.rnn_layer_0_design = self._rnn_layers[0].create_design(
             name=self._rnn_layers[0].name
         )
 
-        self._x_count = self._window_size * self._inputs_size
-        self._y_count = self._hidden_size
+        self._x_1_count = self.rnn_layer_0_design._x_1_count
+        self._x_2_count = self.rnn_layer_0_design._x_2_count
+        self._y_1_count = self.rnn_layer_0_design._y_1_count
+        self._y_2_count = self.rnn_layer_0_design._y_2_count
 
-        self._x_addr_width = calculate_address_width(self._x_count)
-        self._y_addr_width = calculate_address_width(self._y_count)
+        self._x_1_addr_width = calculate_address_width(self._x_1_count)
+        self._x_2_addr_width = calculate_address_width(self._x_2_count)
+        self._y_1_addr_width = calculate_address_width(self._y_1_count)
+        self._y_2_addr_width = calculate_address_width(self._y_2_count)
+
+        if self.rnn_layer_0_design._cell_type == "lstm":
+            self._x_3_count = self.rnn_layer_0_design._x_3_count
+            self._y_3_count = self.rnn_layer_0_design._y_3_count
+            self._x_3_addr_width = calculate_address_width(self._x_3_count)
+            self._y_3_addr_width = calculate_address_width(self._y_3_count)
+
+        self._x_count = self._x_1_count
+        self._y_count = self._y_2_count
+        self._x_addr_width = self._x_1_addr_width
+        self._y_addr_width = self._y_2_addr_width
 
     @property
     def port(self) -> Port:
@@ -60,24 +68,25 @@ class StackedRNN(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        # for i in range(self._num_layers):
-        #     self.rnn_layers_design[i].save_to(destination)
-
-        self.rnn_layer_design.save_to(
-            destination.create_subpath(self.rnn_layer_design.name)
+        self.rnn_layer_0_design.save_to(
+            destination.create_subpath(self.rnn_layer_0_design.name)
         )
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="stackedrnn.tpl.vhd",
-            parameters=dict(  # TODO: problems here
+            parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                x_count=str(self._x_count),
-                y_count=str(self._y_count),
-                layer_name=self.rnn_layer_design.name,
+                x_1_count=str(self._x_1_count),
+                x_2_count=str(self._x_2_count),
+                x_3_count=str(self._x_3_count),
+                y_1_count=str(self._y_1_count),
+                y_2_count=str(self._y_2_count),
+                y_3_count=str(self._y_3_count),
+                layer_name=self.rnn_layer_0_design.name,
                 work_library_name=self._work_library_name,
             ),
         )

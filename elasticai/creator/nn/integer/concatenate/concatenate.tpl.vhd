@@ -185,8 +185,12 @@ begin
                 add_state <= s_done;
                 y_store_en <= '0';
             end if;
-            x_1_address <= std_logic_vector(to_unsigned(x1_input_idx, x_1_address'length));
-            x_2_address <= std_logic_vector(to_unsigned(x2_input_idx, x_2_address'length));
+            if x1_input_idx < X1_NUM_FEATURES then
+                x_1_address <= std_logic_vector(to_unsigned(x1_input_idx, x_1_address'length));
+            end if;
+            if x2_input_idx < X2_NUM_FEATURES then
+                x_2_address <= std_logic_vector(to_unsigned(x2_input_idx, x_2_address'length));
+            end if;
             read_x1_otherthan_x2 <= (x1_input_idx < x1_end_idx);
         end if;
     end process ;
