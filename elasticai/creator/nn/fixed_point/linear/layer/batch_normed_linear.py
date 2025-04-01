@@ -28,10 +28,14 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         self._operations = MathOperations(
             config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
         )
+        self._double_operations = MathOperations(
+            FixedPointConfig(total_bits=2 * total_bits, frac_bits=2 * frac_bits)
+        )
         self._linear = LinearBase(
             in_features=in_features,
             out_features=out_features,
             operations=self._operations,
+            double_operations=self._double_operations,
             bias=bias,
             device=device,
         )
