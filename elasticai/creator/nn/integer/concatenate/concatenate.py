@@ -45,6 +45,8 @@ class Concatenate(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name) -> ConcatenateDesign:
+        print("scale_factor_m_q_1", self.scale_factor_m_q_1)
+        print("self.scale_factor_m_q_2", self.scale_factor_m_q_2)
         return ConcatenateDesign(
             name=name,
             data_width=self.quant_bits,
