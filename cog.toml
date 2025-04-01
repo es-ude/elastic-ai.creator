@@ -1,0 +1,26 @@
+from_latest_tag = true
+ignore_merge_commits = true
+disable_changelog = false
+disable_bump_commit = false
+tag_prefix = 'v'
+branch_whitelist = []
+skip_ci = "[skip ci]"
+skip_untracked = false
+pre_bump_hooks = []
+post_bump_hooks = []
+pre_package_bump_hooks = []
+post_package_bump_hooks = []
+
+[git_hooks]
+
+[changelog]
+path = "CHANGELOG.md"
+template = "./changelog_template"
+remote = "github.com"
+owner = "es-ude"
+repository = "elastic-ai.creator"
+authors = []
+
+[bump_profiles]
+
+[packages]

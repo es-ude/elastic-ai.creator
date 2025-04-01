@@ -1,6 +1,6 @@
 from torch import Tensor
 
-from ._math_operations import MathOperations as _FlpOperations
+from .math_operations import MathOperations as _FlpOperations
 
 
 def quantize(x: Tensor, mantissa_bits: int, exponent_bits: int) -> Tensor:

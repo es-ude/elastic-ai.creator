@@ -1,20 +1,20 @@
 import subprocess
 import time
-import tomllib
 from pathlib import Path
 
 import numpy as np
 import serial  # type: ignore
+import tomllib
 import torch
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.linear import Linear
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.nn.fixed_point.linear import Linear
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
+from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
     parse_bytearray_to_fxp_tensor,
     parse_fxp_tensor_to_bytearray,
@@ -60,7 +60,7 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str) -> None:
     time.sleep(5)
     with open("./tests/system_tests/vivado_build_server_conf.toml", "rb") as f:
         config = tomllib.load(f)
-    out = subprocess.run(
+    subprocess.run(
         [
             "bash",
             "./utils/autobuild_binfile_vivado2021.1.sh",

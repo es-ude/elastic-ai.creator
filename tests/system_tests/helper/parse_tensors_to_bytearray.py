@@ -1,6 +1,6 @@
 from torch import Tensor, flatten
 
-from elasticai.creator.nn.fixed_point._two_complement_fixed_point_config import (
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
 

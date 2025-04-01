@@ -1,0 +1,43 @@
+name: User Story
+description: "Describe your imaginged user story"
+title: "[User Story] <title>"
+labels: ["user story"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## User Story
+        As a [role], I want to [action], so that [benefit].
+  - type: input
+    id: role
+    attributes:
+      label: Role
+      description: Who is the user?
+      placeholder: User
+    validations:
+      required: true
+  - type: input
+    id: action
+    attributes:
+      label: Action
+      description: What does the user want to do?
+      placeholder: Do something
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Benefit
+      description: Why does the user want to do this?
+      placeholder: Get something done
+    validations:
+      required: true
+  - type: textarea
+    id: technical
+    attributes:
+      label: Technical Notes
+      description: Please enter any technical considerations and/or ideas here.
+      placeholder: |
+        - I think we could achieve this by...
+        - A major challenge will be...
+        - I already have a small prototype that...

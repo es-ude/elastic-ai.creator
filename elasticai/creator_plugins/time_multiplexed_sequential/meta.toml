@@ -1,0 +1,7 @@
+[[plugins]]
+name = 'time_multiplexed_sequential'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'native'
+target_platform = 'native'
+generated = ["network", "sequential"]

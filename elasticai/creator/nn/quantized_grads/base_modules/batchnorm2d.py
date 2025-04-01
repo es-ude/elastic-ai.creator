@@ -1,24 +1,26 @@
-from typing import Any, Callable, Protocol
+from typing import Any
 
 from torch import Tensor
-from torch.nn import BatchNorm2d as _BatchNorm2d
-
-from elasticai.creator.base_modules.math_operations import Quantize
-
-
-class MathOperations(Quantize, Protocol): ...
+from torch.nn import BatchNorm2d as TorchBatchNorm2d
+from torch.nn import Module
+from torch.nn.utils import parametrize as P
 
 
-class BatchNorm2d(_BatchNorm2d):
-    """This module implements a 2d batch norm.
+class BatchNorm2d(TorchBatchNorm2d):
+    """A BatchNorm2d.
     The output of the batchnorm is fake quantized. The weights and bias are fake quantized during initialization.
-    To keep the weights quantized use only optimizers that apply a quantized update
+    Make sure that math_ops is a module where all needed tensors are part of it,
+    so they can be moved to the same device.
+    Make sure that weight_quantization and bias_quantization are modules that implement the forward function.
+    If you want to quantize during initialization or only apply quantized updates make sure to use a quantized optimizer
+    and implement the right_inverse method for your module.
     """
 
     def __init__(
         self,
-        operations: MathOperations,
-        param_quantization: Callable[[Tensor], Tensor],
+        math_ops: Module,
+        weight_quantization: Module,
+        bias_quantization: Module,
         num_features: int,
         eps: float = 1e-5,
         momentum: float = 0.1,
@@ -28,7 +30,6 @@ class BatchNorm2d(_BatchNorm2d):
         dtype: Any = None,
     ) -> None:
         super().__init__(
-            self,
             num_features=num_features,
             eps=eps,
             momentum=momentum,
@@ -37,11 +38,9 @@ class BatchNorm2d(_BatchNorm2d):
             device=device,
             dtype=dtype,
         )
-        self._operations = operations
-        self.param_quantization = param_quantization
-        self.weight.data = param_quantization(self.weight.data)
-        self.bias.data = param_quantization(self.bias.data)
+        P.register_parametrization(self, "weight", weight_quantization)
+        P.register_parametrization(self, "bias", bias_quantization)
+        self.add_module("math_ops", math_ops)
 
     def forward(self, x: Tensor) -> Tensor:
-        x = super().forward(x)
-        return self._operations.quantize(x)
+        return self.math_ops(super().forward(x))

@@ -1,60 +1,111 @@
-from typing import TypeAlias, Protocol, runtime_checkable, AnyStr
-from collections.abc import Sequence, Callable
-from string import Template as _pyTemplate
-from re import Match, Pattern, compile as _regex_compile
+from collections.abc import Callable
 from functools import singledispatchmethod
-
-
-TemplateParameter: TypeAlias = int | str
-
-
-class Template(Protocol):
-    def render(self, mapping: dict[str, TemplateParameter]) -> str: ...
-
-
-class _Template:
-    def __init__(self, template: _pyTemplate) -> None:
-        self._template = template
-
-    def render(self, mapping: dict[str, TemplateParameter]) -> str:
-        """Replace all parameters in the template by the values provided by mapping.
-
-        Will raise a `KeyError` if not all parameter values are defined in mapping.
-        """
-        return self._template.substitute(mapping)
+from re import Match, Pattern
+from re import compile as _regex_compile
+from typing import Iterable, Protocol, runtime_checkable
 
 
 @runtime_checkable
-class TemplateParameterType(Protocol):
+class TemplateParameter(Protocol):
     regex: str
+    """A regular expression to match what should be turned into a template parameter."""
 
-    def replace(self, m: Match[AnyStr]) -> str: ...
+    def replace(self, match: dict[str, str]) -> str:
+        """Define how to replace the matched pattern by the template parameter.
+
+        The match is a dictionary of named capture groups.
+        In the most simple cases you can just return `f"${self.name}"` to replace the
+        full match by the template parameter.
+        But you can also use the match to create a more complex replacement.
+
+        The full match is available as `match[""]`.
+        """
+        ...
 
 
 @runtime_checkable
-class AnalysingTemplateParameterType(TemplateParameterType, Protocol):
-    analyse_regex: str
+class AnalysingTemplateParameter(TemplateParameter, Protocol):
+    """A template parameter type that needs an analysis phase before the replacement.
 
-    def analyse(self, m: Match) -> None: ...
+    You could e.g., use this to find the first class definition in a python file and
+    use that class name to build the `regex` parameter and the replacement to
+    replace all occurences of that class name by a template parameter.
+
+    Example:
+    ```python
+    class ClassNameParameter:
+        name = "class_name"
+        analyse_regex = r"class (?P<name>[a-zA-Z_][a-zA-Z0-9_]*)"
+
+        def __init__(self):
+            self._class_name = None
+
+        def analyse(self, match: dict[str, str]) -> None:
+            # Store first found class name
+            if self._class_name is None:
+                self._class_name = match["name"]
+
+        @property
+        def regex(self) -> str:
+            # After analysis, look for all occurrences of the class name
+            return self._class_name
+
+        def replace(self, match: dict[str, str]) -> str:
+            # Replace with template parameter
+            return f"${self.name}"
+
+    # Usage:
+    builder = TemplateBuilder()
+    builder.set_prototype('''
+        class MyClass:
+            def method(self):
+                return MyClass()
+    ''')
+    builder.add_parameter(ClassNameParameter())
+    template = builder.build()
+    print(template.render(dict(class_name="MyNewClass"))) # Will replace all occurrences of "MyClass" with "MyNewClass"
+    ```
+    """
+
+    analyse_regex: str
+    """Will be used during the analysis phase.
+    
+    See [`analyse`](#analyse) for more information.
+    """
+
+    def analyse(self, match: dict[str, str]) -> None:
+        """Called for each match of `analyse_regex` during the analysis phase.
+
+        :param match: A dictionary of the named capture groups.
+        """
+        ...
 
 
 class TemplateBuilder:
     """Builds a template based on a given prototype.
 
-    The builder takes a prototype as a string and creates a template from it,
+    The builder takes a *prototype* as a string and creates a template from it,
     based on specified template parameter types.
     A template parameter type specifies how a pattern inside the prototype shall
     be converted into a template parameter.
 
     Two different kinds of template parameter types are supported:
 
-    `TemplateParameterType`:: will use a regular expression `.regex` to search for
+    `TemplateParameterType`
+
+    : will use a regular expression `.regex` to search for
         occurences of a pattern and replace them by the result of calling `.replace`
         on the found match. Usually the new value is a template parameter, e.g.,
         `"$my_template_param"`.
-        NOTE: in case of multiple overlapping parameter types the first one added
+        :::{note}
+        in case of multiple overlapping parameter types the first one added
         to the builder will take precedence.
-    `AnalysingTemplateParameterType`:: works like `TemplateParameterType` but will
+        :::
+
+
+    `AnalysingTemplateParameterType`
+
+    :  works like `TemplateParameterType` but will
         first go through an analysing phase. This is useful to let the regular expression
         depend on the content of the prototype. E.g., we could find the first defined
         class in a python file and replace all occurences of that class name with
@@ -66,11 +117,11 @@ class TemplateBuilder:
 
     def __init__(self) -> None:
         self._prototype = ""
-        self._parameters: dict[str, TemplateParameterType] = dict()
-        self._analysing_template_parameters: dict[
-            str, AnalysingTemplateParameterType
-        ] = dict()
-        self._template = _pyTemplate("")
+        self._parameters: dict[str, _ParameterTypeWrapper] = dict()
+        self._analysing_template_parameters: dict[str, _AnalyseParameterTypeWrapper] = (
+            dict()
+        )
+        self._template = ""
         self._cached_template_is_valid = False
 
     def set_prototype(
@@ -84,39 +135,45 @@ class TemplateBuilder:
         return self
 
     def add_parameter(
-        self, name: str, _type: TemplateParameterType
+        self, _type: TemplateParameter | AnalysingTemplateParameter
     ) -> "TemplateBuilder":
         self._invalidate_cache()
-        self._parameter_type_adder(_type)(name)
+        self._parameter_type_adder(_type)()
         return self
 
     @singledispatchmethod
     def _parameter_type_adder(
-        self, _type: TemplateParameterType | AnalysingTemplateParameterType
-    ) -> Callable[[str], None]:
+        self, _type: TemplateParameter | AnalysingTemplateParameter
+    ) -> Callable[[], None]:
         raise NotImplementedError()
 
     @_parameter_type_adder.register
-    def _(self, _type: TemplateParameterType) -> Callable[[str], None]:
-        def adder(name: str):
-            self._parameters[name] = _type
+    def _(self, _type: TemplateParameter) -> Callable[[], None]:
+        def adder():
+            name = str(len(self._parameters))
+            name = "_{name}".format(name=name)
+            self._parameters[name] = _ParameterTypeWrapperImpl(name, _type)
 
         return adder
 
     @_parameter_type_adder.register
-    def _(self, _type: AnalysingTemplateParameterType) -> Callable[[str], None]:
-        def adder(name: str):
-            self._parameters[name] = _type
-            self._analysing_template_parameters[name] = _type
+    def _(self, _type: AnalysingTemplateParameter) -> Callable[[], None]:
+        def adder():
+            name = str(len(self._parameters))
+            name = "_{name}".format(name=name)
+            wrapped = _AnalyseParameterTypeWrapper(name, _type)
+
+            self._parameters[name] = wrapped
+            self._analysing_template_parameters[name] = wrapped
 
         return adder
 
-    def build(self) -> Template:
+    def build(self) -> str:
         if not self._cached_template_is_valid:
             self._analyse()
-            regex = self._build_regex()
-            self._template = _pyTemplate(regex.sub(self._replace, self._prototype))
-        return _Template(self._template)
+            regex = self._build_replacement_regex()
+            self._template = regex.sub(self._replace, self._prototype)
+        return self._template
 
     def _replace(self, m: Match) -> str:
         type_name = m.lastgroup
@@ -143,18 +200,87 @@ class TemplateBuilder:
             return analyse
 
     def _build_analyse_regex(self) -> Pattern:
-        regex = "|".join(
-            _type.analyse_regex.format(value=name)
-            for name, _type in self._parameters.items()
-            if isinstance(_type, AnalysingTemplateParameterType)
+        return self._build_regex(
+            (name, _type.analyse_regex)
+            for name, _type in self._analysing_template_parameters.items()
         )
-        return _regex_compile(regex)
 
-    def _build_regex(self) -> Pattern:
+    def _build_replacement_regex(self) -> Pattern:
+        return self._build_regex(
+            (name, _type.regex) for name, _type in self._parameters.items()
+        )
+
+    def _build_regex(self, types: Iterable[tuple[str, str]]) -> Pattern:
         regex = "|".join(
-            _type.regex.format(value=name) for name, _type in self._parameters.items()
+            "(?P<{name}>{regex})".format(name=name, regex=type_regex)
+            for name, type_regex in types
         )
         return _regex_compile(regex)
 
     def _invalidate_cache(self) -> None:
         self._cached_template_is_valid = False
+
+
+class _ParameterTypeWrapper(Protocol):
+    @property
+    def regex(self) -> str: ...
+
+    @property
+    def name(self) -> str: ...
+
+    def replace(self, m: Match) -> str: ...
+
+
+class _ParameterTypeWrapperImpl:
+    def __init__(self, name: str, _type: TemplateParameter) -> None:
+        self._type = _type
+        self.name = name
+
+    @property
+    def regex(self) -> str:
+        return _mangle_capture_group_names(self.name, self._type.regex)
+
+    def replace(self, m: Match) -> str:
+        return self._type.replace(
+            _demangle_capture_group_names(self.name, m.groupdict())
+        )
+
+
+class _AnalyseParameterTypeWrapper:
+    def __init__(self, name: str, _type: AnalysingTemplateParameter) -> None:
+        self._type = _type
+        self.name = name
+
+    @property
+    def regex(self) -> str:
+        return _mangle_capture_group_names(self.name, self._type.regex)
+
+    @property
+    def analyse_regex(self) -> str:
+        return _mangle_capture_group_names(self.name, self._type.analyse_regex)
+
+    def analyse(self, match: Match) -> None:
+        self._type.analyse(_demangle_capture_group_names(self.name, match.groupdict()))
+
+    def replace(self, match: Match) -> str:
+        match_dict = _demangle_capture_group_names(self.name, match.groupdict())
+        return self._type.replace(match_dict)
+
+
+def _mangle_capture_group_names(name, regex: str) -> str:
+    capture_group_pattern = r"\(\?P<(?P<capture>[^>]+)>"
+
+    def replace(match: Match) -> str:
+        return f"(?P<{name}_{match['capture']}>"
+
+    return _regex_compile(capture_group_pattern).sub(replace, regex)
+
+
+def _demangle_capture_group_names(name, match: dict[str, str]) -> dict[str, str]:
+    new_dict = {}
+    for k, v in match.items():
+        if k.startswith(f"{name}"):
+            k = k.removeprefix(f"{name}")
+            k = k.removeprefix("_")
+            new_dict[k] = v
+    return new_dict

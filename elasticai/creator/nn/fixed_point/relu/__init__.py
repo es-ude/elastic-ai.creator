@@ -1,1 +1,1 @@
-from .layer import ReLU
+from .layer import ReLU as ReLU

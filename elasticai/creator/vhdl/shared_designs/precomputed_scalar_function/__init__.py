@@ -1,1 +1,1 @@
-from .design import PrecomputedScalarFunction
+from .design import PrecomputedScalarFunction as PrecomputedScalarFunction

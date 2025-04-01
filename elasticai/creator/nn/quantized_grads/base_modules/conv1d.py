@@ -1,25 +1,25 @@
-from typing import Any, Callable, Protocol
+from typing import Any
 
 from torch import Tensor
-from torch.nn import Conv1d as _Conv1d
-from torch.nn.functional import conv1d
-
-from elasticai.creator.base_modules.math_operations import Quantize
-
-
-class MathOperations(Quantize, Protocol): ...
+from torch.nn import Conv1d as TorchConv1d
+from torch.nn import Module
+from torch.nn.utils import parametrize as P
 
 
-class Conv1d(_Conv1d):
-    """This module implements a 1d convolution.
-    The output of the convolution is fake quantized. The weights and bias are fake quantized during initialization.
-    To keep the weights quantized use only optimizers that apply a quantized update
+class Conv1d(TorchConv1d):
+    """A 1d convolution.
+    The weights and bias are fake quantized during initialization.
+    Make sure that math_ops is a module where all needed tensors are part of it,
+    so they can be moved to the same device.
+    Make sure that weight_quantization and bias_quantization are modules that implement the forward function.
+    If you want to quantize during initialization or only apply quantized updates make sure to use a quantized optimizer
+    and implement the right_inverse method for your module.
     """
 
     def __init__(
         self,
-        operations: MathOperations,
-        param_quantization: Callable[[Tensor], Tensor],
+        math_ops: Module,
+        weight_quantization: Module,
         in_channels: int,
         out_channels: int,
         kernel_size: int | tuple[int],
@@ -28,9 +28,16 @@ class Conv1d(_Conv1d):
         dilation: int | tuple[int] = 1,
         groups: int = 1,
         bias: bool = True,
+        bias_quantization: Module = None,
         device: Any = None,
         dtype: Any = None,
     ) -> None:
+        if bias ^ isinstance(bias_quantization, Module):
+            raise Exception(
+                f"if bias is True, bias_quantization can needs be set. "
+                f"If not it is not allowed to be set."
+                f"You have choosen {bias=} and {bias_quantization=}."
+            )
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -44,19 +51,10 @@ class Conv1d(_Conv1d):
             device=device,
             dtype=dtype,
         )
-        self._operations = operations
-        self.param_quantization = param_quantization
-        self.weight.data = param_quantization(self.weight.data)
-        self.bias.data = param_quantization(self.bias.data)
+        P.register_parametrization(self, "weight", weight_quantization)
+        if bias:
+            P.register_parametrization(self, "bias", bias_quantization)
+        self.add_module("math_ops", math_ops)
 
     def forward(self, x: Tensor) -> Tensor:
-        convolved = conv1d(
-            input=x,
-            weight=self.weight,
-            bias=self.bias,
-            stride=self.stride,
-            padding=self.padding,
-            dilation=self.dilation,
-            groups=self.groups,
-        )
-        return self._operations.quantize(convolved)
+        return self.math_ops(super().forward(x))

@@ -1,1 +1,1 @@
-from .layer import HardSigmoid
+from .layer import HardSigmoid as HardSigmoid

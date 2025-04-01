@@ -1,1 +1,1 @@
-from .layer import HardTanh
+from .layer import HardTanh as HardTanh

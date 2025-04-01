@@ -14,11 +14,18 @@ The project is part of the elastic ai ecosystem developed by the Embedded System
 
 ## Table of contents
 
-- [Users Guide](#users-guide)
-  - [Install](#install)
-  - [Minimal Example](#minimal-example)
-  - [General Limitations](#general-limitations)
-- [Structure of the Project](#structure-of-the-project)
+- [ElasticAI.creator](#elasticaicreator)
+  - [Table of contents](#table-of-contents)
+  - [Users Guide](#users-guide)
+    - [Install](#install)
+    - [Minimal Example](#minimal-example)
+    - [Features](#features)
+      - [Supported network architectures and layers](#supported-network-architectures-and-layers)
+      - [Planned network architectures and layers supported in the future](#planned-network-architectures-and-layers-supported-in-the-future)
+      - [Modules in development:](#modules-in-development)
+      - [Deprecated modules (removal up to discussion):](#deprecated-modules-removal-up-to-discussion)
+      - [General limitations](#general-limitations)
+  - [Structure of the Project](#structure-of-the-project)
 
 
 
@@ -31,43 +38,65 @@ You can install the ElasticAI.creator as a dependency using pip:
 python3 -m pip install "elasticai.creator"
 ```
 
+On PyPi the latest tagged version is published.
+
+Currently, we do not automatically pack and push the code to PyPi.
+If you want to make sure to use the latest version from the main branch, you can install the ElasticAI.creator as a dependency via git:
+
+```bash
+python3 -m pip install git+https://github.com/es-ude/elastic-ai.creator.git@main
+```
 
 ### Minimal Example
 
-The following example shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
-
-```python
-from elasticai.creator.nn import Sequential
-from elasticai.creator.nn.fixed_point import Linear, HardSigmoid
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
+In [examples](examples/minimal_example_FPGA_with_MiddlewareV2.py) you can find a minimal example.
+It shows how to use the ElasticAI.creator to define and translate a machine learning model to VHDL. It will save the generated VHDL code to a directory called `build_dir`.
+Furthermore, it will generate a skeleton for the Elastic Node V5 that you can use to interface with your machine learning model on the FPGA via a C stub (defined in the [elastic-ai.runtime.enV5](https://github.com/es-ude/elastic-ai.runtime.enV5)).
 
 
-def main() -> None:
-    # Define a model
-    model = Sequential(
-        Linear(in_features=10, out_features=2, bias=True, total_bits=16, frac_bits=8),
-        HardSigmoid(total_bits=16, frac_bits=8),
-    )
+### Features
 
-    # Train the model
-    run_training(model)
+- Modular architecture for adding new custom VHDL components
+- Translation from IR to VHDL ([combinatorial](./docs/creator/plugins/combinatorial.md))
+- [Builtin VHDL components](./docs/creator/plugins/vhdl.md):
+  - time multiplexed networks
+  - counter
+  - shift registers
+  - sliding window
+  - grouped filters
 
-    # Save the VHDL code of the trained model
-    destination = OnDiskPath("build_dir")
-    design = model.create_design("my_model")
-    design.save_to(destination)
+#### Supported network architectures and layers
 
-
-if __name__ == "__main__":
-    main()
-```
-
-
-### General Limitations
-
-By now we only support Sequential models for our translations.
+- all sequential network architectures representable with `torch.nn.Sequential`
+- fixed-point quantized:
+  - layers: linear, linear with batch normalization, LSTM
+  - activations: hard sigmoid, hard tanh, ReLU
+    - precomputed: sigmoid, tanh, adaptable SiLU
 
 
+#### Planned network architectures and layers supported in the future
+
+- integer-only linear quantization
+- 1D convolutional layers (fixed-point)
+- gated recurrent unit (fixed-point)
+
+
+#### Modules in development:
+
+- `elasticai.creator.nn.fixed_point.conv1d`
+
+
+#### Deprecated modules (removal up to discussion):
+
+- `elasticai.creator.nn.binary` (binary quantization)
+- `elasticai.creator.nn.float` (limited-precision floating-point quantization)
+- `elasticai.creator.nn.fixed_point.mac`
+
+
+#### General limitations
+
+By now we only support sequential models for our translations.
+That excludes skip and residual connections.
 
 ## Structure of the Project
 
@@ -75,6 +104,5 @@ The structure of the project is as follows.
 The [creator](elasticai/creator) folder includes all main concepts of our project, especially the qtorch implementation which is our implementation of quantized PyTorch layer.
 It also includes the supported target representations, like the subfolder [nn](elasticai/creator/nn) is for the translation to vhdl.
 Additionally, we have unit and integration tests in the [tests](tests) folder.
-
 
 

@@ -2,16 +2,23 @@
 The skeleton id should be computed and set after all other code is generated.
 """
 
-from platform import python_version_tuple
 import logging
 from collections.abc import Iterable
-from hashlib import blake2b, file_digest
 from pathlib import Path
+from warnings import warn
+
+from elasticai.creator.hw_function_id import _HwFunctionIdHash
+
+from .hw_function_id import _replace_id_in_vhdl
 
 
 def compute_skeleton_id_hash(files: Iterable[Path]) -> bytes:
+    warn(
+        "this function will be deprecated soon, use `HwFunctionIdUpdater` instead.",
+        category=DeprecationWarning,
+    )
     logger = logging.getLogger(__name__)
-    hash = _SkeletonIdHash()
+    hash = _HwFunctionIdHash()
 
     for vhd_file in files:
         logger.debug(f"hashing {vhd_file.as_uri}")
@@ -23,26 +30,25 @@ def compute_skeleton_id_hash(files: Iterable[Path]) -> bytes:
 
 
 def replace_id_in_vhdl(code: Iterable[str], id: bytes) -> Iterable[str]:
+    warn(
+        "this function will be deprecated soon, use `HwFunctionIdUpdater` instead.",
+        category=DeprecationWarning,
+    )
     """
     Look for a line that starts with `constant SKELETON_ID` and replace it with
     the given id.
     """
 
-    def split_hex(hex: str):
-        for i in range(int(len(hex) / 2)):
-            yield hex[i : i + 2]
-
-    digest_as_hex_array = tuple(split_hex(id.hex()))
-
-    for line in code:
-        if _is_id(line):
-            yield _build_skeleton_id_line(digest_as_hex_array)
-            yield "\n"
-        else:
-            yield line
+    return _replace_id_in_vhdl(code, id)
 
 
-def update_skeleton_id_in_build_dir(build_dir: Path) -> None:
+def update_skeleton_id_in_build_dir(build_dir: Path) -> bytes:
+    warn(
+        "this function will be deprecated soon, use `HwFunctionIdUpdater` instead.",
+        category=DeprecationWarning,
+    )
+    """insert the id into the skeleton_pkg.vhd file under `build_dir`."""
+
     logger = logging.getLogger(__name__)
     logger.debug("updating skeleton id")
     skeleton_pkg = None
@@ -54,7 +60,12 @@ def update_skeleton_id_in_build_dir(build_dir: Path) -> None:
             return False
         return True
 
-    files_to_hash = filter(is_not_skeleton_pkg, build_dir.glob("*/**"))
+    def files_recursive():
+        for f in build_dir.glob("**/*"):
+            if f.is_file():
+                yield f
+
+    files_to_hash = filter(is_not_skeleton_pkg, files_recursive())
     id = compute_skeleton_id_hash(files_to_hash)
     logger.debug(f"computed id is {id!r}")
     if skeleton_pkg is None:
@@ -68,40 +79,4 @@ def update_skeleton_id_in_build_dir(build_dir: Path) -> None:
             f.write(line)
             f.write("\n")
     logger.debug("done")
-
-
-def _is_id(line: str):
-    return line.strip().startswith("constant SKELETON_ID")
-
-
-def _build_skeleton_id_line(id: Iterable[str]) -> str:
-    id_str = ", ".join(f'x"{b.upper()}"' for b in id)
-
-    return f"  constant SKELETON_ID : skeleton_id_t := ({id_str});"
-
-
-class _SkeletonIdHash:
-    SIZE: int = 16
-
-    def __init__(self):
-        self._digests = []
-
-    def _hash(self):
-        return blake2b(digest_size=self.SIZE)
-
-    def update(self, lines: Iterable[str] | Path) -> None:
-        h = self._hash()
-
-        if isinstance(lines, Path):
-            with open(lines, "rb") as f:
-                self._digests.append(file_digest(f, self._hash).digest())
-        else:
-            for line in lines:
-                h.update(line.encode())
-            self._digests.append(h.digest())
-
-    def digest(self) -> bytes:
-        h = self._hash()
-        for d in sorted(self._digests):
-            h.update(d)
-        return h.digest()
+    return id

@@ -5,51 +5,57 @@ Tout = TypeVar("Tout")
 FN = TypeVar("FN", bound=Callable)
 
 
-class FunctionDecoratorFactory(Generic[FN, Tout]):
+class FunctionDecorator(Generic[FN, Tout]):
     """Apply a callback to functions and either their own or custom names.
 
-    IMPORTANT: if you want to use this as a decorator, do not forget to
+
+
+
+    :param: `callback`: will be called as `callback(name, fn)`
+
+    :::{important}
+    if you want to use this as a decorator, do not forget to
     return the wrapped function from your callback.
+    :::
 
-    Parameters
-    ----------
-    callback : will be called as `callback(name, fn)`
-
-
-    Example
-    -------
+    *Examples*:
+    ```python
     >>> registry = dict()
     >>> def register_fn(name, fn):
     ...  registry[name] = fn
     ...  return fn
     ...
-    >>> register = FunctionDecoratorFactory(register_fn)
+    >>> register = FunctionDecorator(register_fn)
     >>> def my_fn(x):
     ...   print(x)
     ...
     >>> register(my_fn)
     >>> registry["my_fn"]("hello, world!")
     "hello, world!"
+    ```
 
-
-    another example could look like this
+    another example could look like this:
 
     ```python
-    registry = dict()
-    def register_fn(name, fn):
-      registry[name] = fn
-      return fn
 
-    register = FunctionDecoratorFactory(register_fn)
+    registry = dict()
+
+    def register_fn(name, fn):
+        registry[name] = fn
+        return fn
+
+    register = FunctionDecorator(register_fn)
 
     @register("other_name")
     @register
     def my_fn(x):
-      print(x)
+        print(x)
     ```
 
-    This will add `my_fn` to the registry using the
-    name `"my_fn"` and the name `"other_name"`.
+    This will add ``my_fn`` to the registry using the
+    name ``"my_fn"`` and the name ``"other_name"``.
+
+
 
     """
 
@@ -66,9 +72,19 @@ class FunctionDecoratorFactory(Generic[FN, Tout]):
         """Register `fn` using its own name."""
         ...
 
-    def __call__(self, arg: FN | str, /) -> Tout | Callable[[FN], Tout]:
+    @overload
+    def __call__(self, name: str, fn: FN, /) -> Callable[[FN], Tout]:
+        """Register function by name."""
+        ...
+
+    def __call__(
+        self, arg: FN | str, arg2: FN | None = None, /
+    ) -> Tout | Callable[[FN], Tout]:
         if isinstance(arg, str):
-            return self.__reg_by_name(arg)
+            if arg2 is None:
+                return self.__reg_by_name(arg)
+            else:
+                return self.__reg_by_name(arg)(arg2)
         return self.__reg(arg)
 
     def __reg_by_name(self, name: str) -> Callable[[FN], Tout]:
@@ -82,12 +98,12 @@ class FunctionDecoratorFactory(Generic[FN, Tout]):
 
 
 class RegisterDescriptor(Generic[Tin, Tout]):
-    """Automatically connect the `FunctionDecoratorFactory` to a callback and make it look like a method.
+    """Automatically connect the `FunctionDecorator` to a callback and make it look like a method.
 
     The owning instance needs to define a callback that has the name `f"_{name}_callback"`,
     where `name` is the name of the field assigned to this descriptor.
 
-    For an example see the `MultiArgDispatcher` below.
+    For an example see the `KeyedFunctionDispatcher` below.
     """
 
     def __set_name__(self, instance, name):
@@ -95,14 +111,14 @@ class RegisterDescriptor(Generic[Tin, Tout]):
 
     def __get__(
         self, instance, owner=None
-    ) -> FunctionDecoratorFactory[Callable[[Tin], Tout], Callable[[Tin], Tout]]:
+    ) -> FunctionDecorator[Callable[[Tin], Tout], Callable[[Tin], Tout]]:
         cb = getattr(instance, self._cb_name)
 
         def wrapped(name: str, fn: Callable[[Tin], Tout]) -> Callable[[Tin], Tout]:
             cb(name, fn)
             return fn
 
-        return FunctionDecoratorFactory(wrapped)
+        return FunctionDecorator(wrapped)
 
 
 class KeyedFunctionDispatcher(Generic[Tin, Tout]):
@@ -132,6 +148,8 @@ class KeyedFunctionDispatcher(Generic[Tin, Tout]):
         return self._key_fn(item) in self
 
     def call(self, arg: Tin) -> Tout:
+        if not self.can_dispatch(arg):
+            raise ValueError("cannot dispatch function call for {}".format(repr(arg)))
         return self._fns[self._key_fn(arg)](arg)
 
     def __call__(self, arg: Tin) -> Tout:
