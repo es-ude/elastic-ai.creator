@@ -1,50 +1,65 @@
-[tool.poetry]
+[project]
 name = "elasticai.creator"
-version = "0.59.2"
+version = "0.60.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 repository = "https://github.com/es-ude/elastic-ai.creator"
-authors = ["Department Embedded Systems - University Duisburg Essen"]
-packages = [{ include = "elasticai/" }]
-exclude = ["elasticai/**/*_test.py", "elasticai/**/test_*.py"]
+authors = [{name= "Department Embedded Systems - University Duisburg Essen"}]
+maintainers = [{name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de"}]
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=1.11",
+  "numpy>=1.23.0",
+  "tomlkit>=0.13.2",
+  "click>=8.1.7",
+]
 
 
-[tool.poetry.dependencies]
-python = ">= 3.10, <4.0"
-torch = ">=1.11"
-numpy = "^1.23.0"
-setuptools = "^67.5.1"
-mypy = "^1.1.1"
-pytest-cov = "^4.1.0"
+[project.scripts]
+eai-run-ghdl-tbs-for-plugins = "elasticai.creator.utils.run_ghdl_tbs_for_plugins:main"
 
-
-[tool.poetry.dev-dependencies]
-python-language-server = "^0.36.2"
-black = ">21.12"
-prospector = { extras = ["with_mypy"], version = "^1.7.7" }
-pre-commit = "^3.0.0"
-wily = "^1.24.0"
-import-linter = "^1.7.0"
-impulse = "^1.0"
-pylint = "^2.16.2"
-pytest = "^7.2.2"
-setuptools = "^67.5.1"
-elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
-
+[dependency-groups]
+dev = [
+    "build>=1.2.2.post1",
+    "pre-commit>=4.0.1"
+]
+release = ["git-cliff>=2.7.0"]
+testing = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "coverage>=7.6.9",
+]
+utils = [
+    "rust-just>=1.38.0",
+]
+versioning = [
+    "towncrier>=24.8.0",
+]
+lint = [
+    "mypy>=1.13.0",
+    "ruff>=0.8.2",
+]
+lsp = [
+    "pylsp-mypy>=0.6.9",
+    "pylsp-rope>=0.1.17",
+    "python-lsp-server>=1.12.0",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["elasticai"]
+exclude = ["*_test.py", "test_*.py"]
 
 
-[tool.pylint]
-max-line-length = 88
-accept-no-raise-doc = "False"
-disable = "C0115, C0116, C0114" # disable missing docstring messages as they incourage adding noise comments
+[tool.uv]
+default-groups = ["utils", "testing", "lint", "dev"]
 
 
-[tool.black]
-preview = true
+[tool.uv.sources]
+elasticai-runtime-env5 = {git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61"}
 
 
 [tool.pytest.ini_options]
@@ -52,7 +67,7 @@ minversion = "6.0"
 markers = [
   "simulation: possibly slow running integration tests including hw simulation",
 ]
-testpaths = ["elasticai", "tests"]
+testpaths = ["elasticai/creator/", "tests"]
 python_files = ["*_test.py", "test_*.py"]
 
 
@@ -61,37 +76,146 @@ omit = [
   "elasticai/creator/examples/*py",
   "elasticai/creator/tests/*py",
   "elasticai/creator/*Tests/*py",
+  "elasticai/creator/**/*_test.py",
   "elasticai/**/__init__.py",
 ]
 source = ["elasticai/creator"]
-command_line = "-m unittest discover ."
+command_line = "-m pytest -m 'not simulation'"
 
 
-[tool.importlinter]
-root_package = "elasticai"
-contract_types = [
-  "package_private_modules: import_contract.PackagePrivateModules",
+
+[tool.ruff]
+include = ["pyproject.toml", "elasticai/**/*.py", "elasticai/**/*.pyi", "elasticai/**/*.py"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  ".devenv",
 ]
 
+# Same as Black.
+line-length = 88
+indent-width = 4
 
-[[tool.importlinter.contracts]]
-name = "package private"
-type = "package_private_modules"
-targets = ["elasticai.creator"]
-sources = ["elasticai.creator"]
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = [
+    "D101", 
+    "D102",
+    "E741", # ambiguous variable names
+    "F401", # unused import, add symbol to __all__
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
 
 
-[tool.semantic_release]
-version_toml = ["pyproject.toml:tool.poetry.version"]
-major_on_zero = false
-repository = "pypi"
-upload_to_release = true
-build_command = "python3 -m pip install poetry && poetry build"
-branch = "main"
-parser_angular_allowed_types = "chore,docs,feat,style,fix,refactor,wip,perf,revert"
-parser_angular_minor_types = "feat"
-parser_angular_patch_types = "fix,perf"
+[tool.git-cliff.changelog]
+body = """
+{% if version %}\
+    ## {{ version | trim_start_matches(pat="v") }} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## Unreleased
+{% endif %}\
+{% if previous %}\
+    {% if previous.commit_id and commit_id %}
+        [{{ previous.commit_id | truncate(length=7, end="") }}]({{ previous.commit_id }})...\
+            [{{ commit_id | truncate(length=7, end="") }}]({{ commit_id }})
+    {% endif %}\
+{% endif %}\
+{% for group, commits in commits | unique(attribute="message")  | group_by(attribute="group") %}
+    ### {{ group | upper_first }}
+    {% for commit in commits %}
+        - {{ commit.message | split(pat="\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}]({{ commit.id }}))\
+          {% for footer in commit.footers -%}
+            , {{ footer.token }}{{ footer.separator }}{{ footer.value }}\
+          {% endfor %}\
+    {% endfor %}
+{% endfor %}\n
+"""
+#  """
+# {% if version %}\
+#     ## {{ version | trim_start_matches(pat="v") }} - {{ timestamp | date(format="%Y-%m-%d") }}
+# {% else %}\
+#     ## Unreleased
+# {% endif %}\
+# {% for group, commits in commits | unique(attribute="message") | group_by(attribute="group") %}
+#     ### {{ group | upper_first }}
+#     {% for commit in commits
+#     | filter(attribute="scope")
+#     | sort(attribute="scope") %}
+#         - *({{commit.scope}})* {{ commit.message | upper_first }}
+#         {%- if commit.breaking %}
+#         {% raw %}  {% endraw %}- **BREAKING**: {{commit.breaking_description}}
+#         {%- endif -%}
+#     {%- endfor -%}
+#     {% raw %}\n{% endraw %}\
+#     {%- for commit in commits %}
+#         {%- if commit.scope -%}
+#         {% else -%}
+#             - {{ commit.message | upper_first }}
+#             {% if commit.breaking -%}
+#             {% raw %}  {% endraw %}- **BREAKING**: {{commit.breaking_description}}
+#             {% endif -%}
+#         {% endif -%}
+#     {% endfor -%}
+#     {% raw %}\n{% endraw %}\
+# {% endfor %}\n
+# """
 
-
-[tool.isort]
-profile = "black"
+[tool.git-cliff.git]
+conventional_commits = true
+filter_unconventional = true
+commit_preprocessors = [
+  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/es-ude/elastic-ai.creator/issues/${1}))"},  # replace #NR by link to issue
+  { pattern = "([ \\n])(([a-f0-9]{7})[a-f0-9]*)", replace = "${1}commit # [${3}](https://github.com/es-ude/elastic-ai.creator/commit/${2})"}  # replace commit hash by link to commit
+]
+commit_parsers = [
+  { message = "^wip", skip = true },  # ignore commits of type wip
+]

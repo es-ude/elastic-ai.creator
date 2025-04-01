@@ -1,5 +1,5 @@
 from .ir_data_meta import IrDataMeta
-from .required_field import RequiredField
+from .required_field import RequiredField, ReadOnlyField
 from .ir_data import IrData
 import pytest
 
@@ -117,3 +117,10 @@ def test_can_increment_counter_saved_as_string() -> None:
     n.counter = n.counter + 2
     assert n.counter == 3
     assert n.data["counter"] == "3"
+
+
+def test_read_only_field_is_detected() -> None:
+    class Node(IrData):
+        name: ReadOnlyField[str, str] = ReadOnlyField(lambda x: x)
+
+    assert "name" in Node.required_fields

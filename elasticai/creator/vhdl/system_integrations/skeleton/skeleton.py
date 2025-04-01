@@ -33,8 +33,8 @@ class Skeleton:
         if skeleton_version == "v1":
             warnings.warn(
                 (
-                    f"Skeleton V1 might be deprecated in the future. Consider using"
-                    f" Skeleton V2 instead."
+                    "Skeleton V1 might be deprecated in the future. Consider using"
+                    " Skeleton V2 instead."
                 ),
                 FutureWarning,
             )

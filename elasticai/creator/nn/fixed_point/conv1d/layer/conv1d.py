@@ -1,6 +1,5 @@
 from typing import Any, cast
 
-import torch
 
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule

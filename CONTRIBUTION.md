@@ -1,4 +1,128 @@
 # Contribution Guide
+## Development Environment
+
+### uv
+
+We rely on [uv](https://docs.astral.sh/uv/) to manage the venv and dependencies.
+Install uv by following their [install guide](https://docs.astral.sh/uv/getting-started/installation/).
+Git clone our repository
+
+```bash
+$ git clone https://github.com/es-ude/elastic-ai.creator.git
+```
+
+or
+
+```bash
+$ git clone git@github.com:es-ude/elastic-ai.creator.git
+```
+
+move into the just cloned repository and run
+
+```bash
+$ uv sync
+```
+
+This install all runtime as well as most of the
+development dependencies. There are more (optional)
+development dependency groups that you can install,
+e.g., the `lsp` group containing 
+python-language-server and pylsp-mypy
+
+```bash
+$ uv sync --group lsp
+```
+
+### devenv
+
+To share not only python packages for the development environment, but also
+other tools we offer a [devenv](https://devenv.sh) configuration.
+After installing the nix package manager and [nix](https://nix.dev/install-nix)
+and [installing devenv](https://devenv.sh/getting-started/#2-install-devenv) you
+can startup a development environment with
+```bash
+$ devenv shell
+```
+For more convenience we recommend combining this workflow with direnv for
+automatica shell activation as explained [here](https://devenv.sh/automatic-shell-activation/).
+
+Devenv will automatically give you access to all other relevant tools
+
+ * git
+ * uv
+ * ghdl for hw simulations (run via rosetta on apple silicon)
+ * gtkwave for visualizing waveforms produced by ghdl
+ * act for testing github workflows locally
+ * and more...
+
+for a full list of installed tools have a look at the `devenv.nix` file.
+
+
+## Pull Requests and Commits
+Use conventional commit types especially (`feat`, `fix`) and mark `BREAKING CHANGES`
+in commit messages.
+Please try to use rebasing and squashing to make sure your commits are atomic.
+By atomic we mean, that each commit should make sense on its own.
+As an example let's assume you have been working on a new feature `A` and
+during that work you were also performing some refactoring and fixed a small
+bug that you discovered. Ideally your history would more or less like this:
+
+#### Do
+
+```
+* feat: introduce A
+
+  Adds several new modules, that enable a new
+  workflow using feature A.
+
+  This was necessary because, ...
+  This improves ....
+
+
+* fix: fix a bug where call to function b() would not return
+
+  We only found that now, because there was no test for this
+  bug. This commit also adds a new corresponding test.
+
+
+* refactor: use an adapter to decouple C and D
+
+  This is necessary to allow easier introduction of
+  feature A in a later commit.
+```
+
+What we want to avoid is a commit history like that one
+
+#### Don't
+```
+* feat: realize changes requested by reviewer
+
+* feat: finish feature A
+
+* refactor: adjust adapter
+
+* wip: working on feature A
+
+* fix: fix a bug (this time for real)
+
+* fix: fix a bug
+
+* refactor: had to add an adapter
+
+* fix: fix some typos as requested by reviewer
+
+```
+
+If a commit introduces a new feature, 
+it should ideally also contain the test coverage, documentation, etc.
+If there are changes that are not directly related to that feature, 
+they should go into a different commit.
+
+### Conventional Commit Rules
+
+We use conventional commits (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)). The following commit types are allowed. The message scope is optional.
+
+
 ## Concepts
 The `elasticai.creator` aims to support
     1. the design and training of hardware optimization aware neural networks
@@ -25,7 +149,100 @@ The code-base is composed out of the following packages
   - package for public layer api; hosting translatable layers of different categories
   - layers within a subpackage of `nn`, e.g. `nn.fixed_point` are supposed to be compatible with each other
 
-## Adding a new translatable layer
+
+### Glossary
+
+ - **fxp/Fxp**: prefix for fixed point
+ - **flp/Flp**: prefix for floating point
+ - **x**: parameter input tensor for layer with single input tensor
+ - **y**: output value/tensor for layer with single output
+ - **_bits**: suffix to denote the number of bits, e.g. `total_bits`, `frac_bits`, in python context
+ - **_width**: suffix to denote the number of bits used for a data bus in vhdl, e.g. `total_width`, `frac_width`
+ - **MathOperations/operations**: definition of how to perform mathematical operations (quantization, addition, matrix multiplication, ...)
+
+
+
+
+## Tests
+
+Our implementation is tested with unit and integration.
+You can run one explicit test with the following statement:
+
+```bash
+python3 -m pytest ./tests/path/to/specific/test.py
+```
+
+If you want to run all tests, give the path to the tests:
+
+```bash
+python3 -m pytest ./tests
+```
+
+If you want to add more tests please refer to the Test Guidelines in the following.
+
+
+### Test Style Guidelines
+
+#### File IO
+
+In general try to avoid interaction with the filesystem. In most cases instead of writing to or reading from a file you can use a StringIO object or a StringReader.
+If you absolutely have to create files, be sure to use pythons [tempfile](https://docs.python.org/3.9/library/tempfile.html) module and cleanup after the tests.
+In most cases you can use the [`InMemoryPath`](elasticai/creator/file_generation/in_memory_path.py) class to write files to the RAM instead of writing them to the hard disc (especially for testing the generated VHDL files of a certain layer).
+
+
+#### Directory structure and file names
+
+Files containing tests for a python module should be located in a test directory for the sake of separation of concerns.
+Each file in the test directory should contain tests for one and only one class/function defined in the module.
+Files containing tests should be named according to the rubric
+`test_<class_name>.py`.
+Next, if needed for more specific tests define a class. Then subclass it.
+It avoids introducing the category of bugs associated with copying and pasting code for reuse.
+This class should be named similarly to the file name.
+There's a category of bugs that appear if  the initialization parameters defined at the top of the test file are directly used: some tests require the initialization parameters to be changed slightly.
+Its possible to define a parameter and have it change in memory as a result of a test.
+Subsequent tests will therefore throw errors.
+Each class contains methods that implement a test.
+These methods are named according to the rubric
+`test_<name>_<condition>`
+
+
+#### Unit tests
+
+In those tests each functionality of each function in the module is tested, it is the entry point  when adding new functions.
+It assures that the function behaves correctly independently of others.
+Each test has to be fast, so use of heavier libraries is discouraged.
+The input used is the minimal one needed to obtain a reproducible output.
+Dependencies should be replaced with mocks as needed.
+
+#### Integration Tests
+
+Here the functions' behaviour with other modules is tested.
+In this repository each integration function is in the correspondent folder.
+Then the integration with a single class of the target, or the minimum amount of classes for a functionality, is tested in each separated file.
+
+#### System tests
+
+Those tests will use every component of the system, comprising multiple classes.
+Those tests include expected use cases and unexpected or stress tests.
+
+#### Adding new functionalities and tests required
+
+When adding new functions to an existing module, add unit tests in the correspondent file in the same order of the module, if a new module is created a new file should be created.
+When a bug is solved created the respective regression test to ensure that it will not return.
+Proceed similarly with integration tests.
+Creating a new file if a functionality completely different from the others is created e.g. support for a new layer.
+System tests are added if support for a new library is added.
+
+#### Updating tests
+
+If new functionalities are changed or removed the tests are expected to reflect that, generally the ordering is unit tests -> integration tests-> system tests.
+Also, unit tests that change the dependencies should be checked, since this system is fairly small the internal dependencies are not always mocked.
+
+references: https://jrsmith3.github.io/python-testing-style-guidelines.html
+
+## Adding a new translatable layer (subject to change)
+
 Adding a new layer involves three main tasks:
 1. define the new ml framework module, typically you want to inherit from `pytorch.nn.Module` and optionally use one
         of our layers from `base_module`
@@ -42,7 +259,7 @@ Adding a new layer involves three main tasks:
     - this step might involve calling `create_design` on submodules and inject them into the design from 2.
 
 
-### Ports and automatically combining layers
+### Ports and automatically combining layers (subject to change)
 The algorithm for combining layers lives in `elasticai.creator.vhdl.auto_wire_protocols`.
 Currently, we support two types of interfaces: a) bufferless design, b) buffered design.
 
