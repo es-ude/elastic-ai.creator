@@ -52,7 +52,9 @@ class PointConv1dBN(Design):
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
-        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
+        self._m_q_data_width = (
+            int(np.ceil(np.log2(self._m_q))) + 1 if self._m_q != 0 else 1
+        )
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
