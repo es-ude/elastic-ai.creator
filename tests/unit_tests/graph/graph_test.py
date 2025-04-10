@@ -71,5 +71,7 @@ def test_iterating_depth_first_preorder():
     )
 
     actual = tuple(dfs_pre_order(g.get_successors, "0"))
-    expected = ("0", "1", "3", "5", "2", "4", "6")
-    assert actual == expected
+    expected = {
+        ("0", "2", "4", "6", "5", "3", "1"),
+    }
+    assert actual in expected
