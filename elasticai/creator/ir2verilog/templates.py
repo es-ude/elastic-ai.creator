@@ -42,6 +42,19 @@ class _IdParameter(tpl.TemplateParameter):
         return f"{m['prefix']}{d}{self.name}{m['suffix']}"
 
 
+class _ModuleOfInstance(tpl.TemplateParameter):
+    def __init__(self, name: str, delimiter: str):
+        self.name = name
+        self.delimiter = delimiter
+        self.regex = r"(?P<prefix>{name}(#\(.*\))? )[a-zA-Z0-9_]+(?=\()".format(
+            name=name
+        )
+
+    def replace(self, m: dict[str, str]) -> str:
+        d = self.delimiter
+        return f"{m['prefix']}{d}{self.name}"
+
+
 class _DefineSwitch(tpl.TemplateParameter):
     def __init__(self, name: str, delimiter: str):
         self.name = name
@@ -100,6 +113,10 @@ class TemplateDirector:
 
     def localparam(self, name: str) -> Self:
         self._builder.add_parameter(_LocalParameter(name, self._delimiter))
+        return self
+
+    def replace_module_of_instance(self, name: str) -> Self:
+        self._builder.add_parameter(_ModuleOfInstance(name, self._delimiter))
         return self
 
     def define_scoped_switch(self, name: str, default=True) -> Self:

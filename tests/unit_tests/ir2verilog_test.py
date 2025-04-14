@@ -128,3 +128,59 @@ class TestVerilogTemplate:
             .build()
         )
         assert template.substitute({"DATA": "'d5"}) == "localparam DATA = 'd5;"
+
+    def test_replace_module_of_instance_with_parameter(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""FILT_BIQUAD#(BITWIDTH_DATA, LENGTH) DUT(
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);""")
+            .replace_module_of_instance("FILT_BIQUAD")
+            .build()
+        )
+        assert (
+            template.substitute({"FILT_BIQUAD": "MyModule"})
+            == """FILT_BIQUAD#(BITWIDTH_DATA, LENGTH) MyModule(
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);"""
+        )
+
+    def test_replace_module_of_instance_without_parameter(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""FILT_BIQUAD DUT(
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);""")
+            .replace_module_of_instance("FILT_BIQUAD")
+            .build()
+        )
+        assert (
+            template.substitute({"FILT_BIQUAD": "MyModule"})
+            == """FILT_BIQUAD MyModule(
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);"""
+        )
