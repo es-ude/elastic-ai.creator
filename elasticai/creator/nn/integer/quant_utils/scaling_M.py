@@ -10,9 +10,21 @@ def scaling_M(M: torch.FloatTensor, m_q_shift_limit=32):
     while m_q_shift.item() < m_q_shift_limit:
         m_q = torch.round(M * (2**m_q_shift)).type(torch.int32)
 
+        if torch.any(M == 0):
+            raise ValueError(
+                "M contains zero values, which may cause division by zero."
+            )
+
         error = (M - m_q * (2 ** (-m_q_shift.item()))) / M
+
+        if torch.any(torch.isnan(error)):
+            raise ValueError(
+                "Error contains NaN values, check input M or computation logic."
+            )
+
         if torch.all(error > 0.0001) or torch.all(error < 0):
             m_q_shift += 1
         else:
             break
+
     return m_q_shift, m_q
