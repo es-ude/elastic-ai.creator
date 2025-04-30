@@ -83,9 +83,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
             "cuda"
         )
-        noise = torch.randn_like(h_prev) * 1e-3
-        h_prev = h_prev + noise
-        c_prev = c_prev + noise
 
         self.q_h_prev = self.h_prev_QParams.quantize(h_prev).to("cpu")
         self.q_c_prev = self.c_prev_QParams.quantize(c_prev).to("cpu")
@@ -131,9 +128,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
             inputs.device
         )
-        noise = torch.randn_like(h_prev) * 1e-3
-        h_prev = h_prev + noise
-        c_prev = c_prev + noise
 
         if self.training:
             self.h_prev_QParams.update_quant_params(h_prev)
