@@ -1,12 +1,15 @@
 # Time Multiplexed Sequential
 
+**Translation Stage**: *high level ir* to *low level ir*
+
+
 This plugin creates a time multiplexed sequential model. 
 It supports the following IR graph types:
 
 - `sequential`
 - `network`
 
-and the following node types:
+and the following node types
 
 - `grouped_filter`
 

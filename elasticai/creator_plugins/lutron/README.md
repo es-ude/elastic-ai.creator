@@ -1,5 +1,8 @@
 # Lutron Plugin
 
+**Translation Stage**: *low level ir* to *vhdl*
+
+
 The Lutron plugin provides functionality to generate VHDL code for lookup tables (LUTs). It allows you to define truth tables that map input values to output values.
 
 ## Overview

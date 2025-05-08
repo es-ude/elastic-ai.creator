@@ -1,5 +1,8 @@
 # Striding Shift Register
 
+**Translation Stage**: *low level ir* to *vhdl*
+
+
 A VHDL implementation of a shift register with configurable stride, useful for implementing strided operations in hardware designs, particularly for neural network architectures.
 
 ## Features

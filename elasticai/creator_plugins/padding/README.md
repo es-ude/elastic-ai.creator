@@ -1,5 +1,7 @@
 # Padding plugin
 
+**Translation Stage**: *low level ir* to *vhdl*
+
 The plugin adds two vhdl hardware designs.
 Both rely completely on combinational logic.
 

@@ -1,5 +1,7 @@
 # Counter
 
+**Translation Stage**: *low level ir* to *vhdl*
+
 The plugin provides a counter implemented in vhdl.
 
 :::
