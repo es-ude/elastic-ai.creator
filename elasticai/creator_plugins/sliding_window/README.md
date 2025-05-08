@@ -1,5 +1,8 @@
 # Sliding Window Plugin
 
+**Translation Stage**: *low level ir* to *vhdl*
+
+
 A VHDL implementation of a sliding window mechanism commonly used in convolutional neural networks and signal processing.
 
 ## Features

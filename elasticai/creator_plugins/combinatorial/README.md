@@ -1,5 +1,7 @@
 # Combinatorial Plugin
 
+**Translation Stage**: *low level ir* to *vhdl*
+
 **Defined `PluginSymbol`s:**
 
 * `clocked_combinatorial`

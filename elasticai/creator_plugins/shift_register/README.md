@@ -1,5 +1,8 @@
 # Shift Register Plugin
 
+**Translation Stage**: *low level ir* to *vhdl*
+
+
 This plugin implements a shift register in VHDL. 
 The shift register is a digital circuit that can store and shift data.
 The plugin is parameterized by the width of the data points (`WIDTH`) and 
