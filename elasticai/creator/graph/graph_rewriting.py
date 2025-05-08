@@ -122,8 +122,11 @@ def rewrite(
         will have to pass a custom matcher and change it before running the rewrite on a new
         graph. E.g. to perform two subsequent rewrites you might have to:
         ```python
+        import elasticai.creator.graph as g
+
         matcher = MyMatcher()
         matcher.set_graph(graph)
+
         rewriter = GraphRewriter(
             pattern=pattern,
             interface=interface,

@@ -197,3 +197,37 @@ def test_can_handle_same_object_under_different_hierarchy_paths():
             "nodes": {},
         },
     ]
+
+
+def test_can_handle_nested_hierarchies():
+    model = Sequential(OrderedDict(top=Sequential(OrderedDict(nested=Linear(1, 1)))))
+    assert convert(model) == [
+        {
+            "name": "",
+            "type": "module",
+            "nodes": {
+                "input_1": {
+                    "type": "input",
+                    "implementation": "input",
+                },
+                "top_nested": {
+                    "type": "linear",
+                    "implementation": "top.nested",
+                },
+                "output": {
+                    "type": "output",
+                    "implementation": "output",
+                },
+            },
+            "edges": {"input_1": {"top_nested": {}}, "top_nested": {"output": {}}},
+        },
+        {
+            "name": "top.nested",
+            "type": "linear",
+            "in_features": 1,
+            "out_features": 1,
+            "bias": True,
+            "edges": {},
+            "nodes": {},
+        },
+    ]
