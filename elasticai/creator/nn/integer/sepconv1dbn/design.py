@@ -54,13 +54,10 @@ class SepConv1dBN(Design):
             file_name="sepconv1dbn.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
                 x_addr_width=str(self.depthconv1d_design._x_addr_width),
+                depth_y_aaddr_width=str(self.depthconv1d_design._y_addr_width),
                 y_addr_width=str(self.pointconv1dbn_design._y_addr_width),
-                num_dimensions=str(self.depthconv1d_design._num_dimensions),
-                depthconv1d_in_features=str(self.depthconv1d_design._in_features),
-                depthconv1d_out_features=str(self.depthconv1d_design._out_features),
-                pointconv1dbn_out_features=str(self.pointconv1dbn_design._out_features),
+                data_width=str(self._data_width),
                 work_library_name=self._work_library_name,
             ),
         )
@@ -74,10 +71,20 @@ class SepConv1dBN(Design):
                 data_width=str(self._data_width),
                 x_addr_width=str(self.depthconv1d_design._x_addr_width),
                 y_addr_width=str(self.pointconv1dbn_design._y_addr_width),
-                num_dimensions=str(self.depthconv1d_design._num_dimensions),
-                in_features=str(self.depthconv1d_design._in_features),
-                out_features=str(self.depthconv1d_design._out_features),
+                in_channels=str(self.depthconv1d_design._in_channels),
+                seq_len=str(self.depthconv1d_design._seq_len),
+                kernel_size=str(self.depthconv1d_design._kernel_size),
                 work_library_name=self._work_library_name,
             ),
         )
         destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)
+
+
+def _flatten_params(params):
+    flat_list = []
+    for p in params:
+        if isinstance(p, list):
+            flat_list.extend(_flatten_params(p))
+        else:
+            flat_list.append(p)
+    return flat_list

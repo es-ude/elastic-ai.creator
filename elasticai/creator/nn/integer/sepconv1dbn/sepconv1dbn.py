@@ -1,13 +1,12 @@
 import torch
 from torch import nn
 
-from elasticai.creator.nn.integer.depthconv1d import DepthConv1d
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.pointconv1dbn import PointConv1dBN
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
 )
+from elasticai.creator.nn.integer.sepconv1dbn import DepthConv1d, PointConv1dBN
 from elasticai.creator.nn.integer.sepconv1dbn.design import (
     SepConv1dBN as SepConv1dBNDesign,
 )
