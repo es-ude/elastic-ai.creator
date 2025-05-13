@@ -100,8 +100,11 @@ class SepResidualBlock(Design):
 
         template_file_name = "sepresidualblock_no_shortcut.tpl.vhd"
 
-        # TODO: shortcut is not flexible enough
         if hasattr(self, "shortcut_design"):
+            # TODO: support multiple shortcut with more submodules
+            assert (
+                len(self.shortcut_design) == 2
+            ), "Only shortcut with 2 submodules is supported"
             template_parameters["shortcut_depthconv1d_x_addr_width"] = str(
                 self.shortcut_design[0]._x_addr_width
             )

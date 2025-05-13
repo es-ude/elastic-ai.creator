@@ -10,8 +10,6 @@ entity ${name} is
         SEPCONV1DBN_0_Y_ADDR_WIDTH : integer := ${sepconv1dbn_0_y_addr_width}
         SEPCONV1DBN_1_X_ADDR_WIDTH : integer := ${sepconv1dbn_1_x_addr_width};
         SEPCONV1DBN_1_Y_ADDR_WIDTH : integer := ${sepconv1dbn_1_y_addr_width};
-        SHORTCUT_X_ADDR_WIDTH : integer := ${shortcut_x_addr_width};
-        SHORTCUT_Y_ADDR_WIDTH : integer := ${shortcut_y_addr_width};
         ADD_X_ADDR_WIDTH : integer := ${add_x_addr_width};
         ADD_Y_ADDR_WIDTH : integer := ${add_y_addr_width}
     ) ;
@@ -58,13 +56,6 @@ architecture rtl of ${name} is
     signal sepconv1dbn_1_y: std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal sepconv1dbn_1_done : std_logic;
 
-    signal shortcut_enable : std_logic;
-    signal shortcut_clock : std_logic;
-    signal shortcut_x_address : std_logic_vector(SHORTCUT_X_ADDR_WIDTH - 1 downto 0);
-    signal shortcut_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_y_address : std_logic_vector(SHORTCUT_Y_ADDR_WIDTH - 1 downto 0);
-    signal shortcut_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_done : std_logic;
     signal add_enable : std_logic;
     signal add_clock : std_logic;
     signal add_x_1_address : std_logic_vector(ADD_X_ADDR_WIDTH - 1 downto 0);
@@ -80,31 +71,27 @@ architecture rtl of ${name} is
     signal relu_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     begin
     sepconv1dbn_0_enable <= enable;
-    shortcut_enable <= sepconv1dbn_0_done;
     sepconv1dbn_0_relu_enable <= sepconv1dbn_0_done;
     sepconv1dbn_1_enable <= sepconv1dbn_0_relu_done;
-    add_enable <= sepconv1dbn_1_done and shortcut_done;
+    add_enable <= sepconv1dbn_1_done;
     relu_enable <= add_done;
     done <= add_done;
 
     sepconv1dbn_0_clock <= clock;
-    shortcut_clock <= clock;
     sepconv1dbn_0_relu_clock <= clock;
     sepconv1dbn_1_clock <= clock;
     add_clock <= clock;
     relu_clock <= clock;
 
-    x_address <= shortcut_x_address when sepconv1dbn_0_done='1' else sepconv1dbn_0_x_address;
+    x_address <= add_x_1_address when sepconv1dbn_0_done='1' else sepconv1dbn_0_x_address;
     sepconv1dbn_0_y_address <= sepconv1dbn_1_x_address;
-    shortcut_y_address <= add_x_1_address;
     sepconv1dbn_1_y_address <= add_x_2_address;
     add_y_address <= y_address;
 
     sepconv1dbn_0_x <= x;
-    shortcut_x <= x;
+    add_x_1 <= x;
     sepconv1dbn_0_relu_x <= sepconv1dbn_0_y;
     sepconv1dbn_0_x <= sepconv1dbn_0_relu_y;
-    add_x_1 <= shortcut_y;
     add_x_2 <= sepconv1dbn_1_y;
     relu_x <= add_y;
     y <= relu_y;
@@ -117,16 +104,6 @@ architecture rtl of ${name} is
         x  => sepconv1dbn_0_x,
         y => sepconv1dbn_0_y,
         done  => sepconv1dbn_0_done
-    );
-    inst_${name}_shortcut: entity ${work_library_name}.${name}_shortcut(rtl)
-    port map (
-        enable => shortcut_enable,
-        clock  => shortcut_clock,
-        x_address  => shortcut_x_address,
-        y_address  => shortcut_y_address,
-        x  => shortcut_x,
-        y => shortcut_y,
-        done  => shortcut_done
     );
     inst_${name}_sepconv1dbn_0_relu: entity ${work_library_name}.${name}_sepconv1dbn_0_relu(rtl)
     port map (

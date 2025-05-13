@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
-from elasticai.creator.nn.integer.conv1d import Conv1d
 from elasticai.creator.nn.integer.depthconv1d import DepthConv1d
 from elasticai.creator.nn.integer.pointconv1dbn import PointConv1dBN
 from elasticai.creator.nn.integer.quant_utils import (
