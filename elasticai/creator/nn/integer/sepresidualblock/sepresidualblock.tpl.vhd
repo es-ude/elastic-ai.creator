@@ -61,6 +61,7 @@ architecture rtl of ${name} is
     signal pointconv1dbn_0_relu_clock : std_logic;
     signal pointconv1dbn_0_relu_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal pointconv1dbn_0_relu_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal pointconv1dbn_0_relu_done : std_logic;
     signal depthconv1d_1_enable : std_logic;
     signal depthconv1d_1_clock : std_logic;
     signal depthconv1d_1_x_address : std_logic_vector(DEPTHCONV1D_1_X_ADDR_WIDTH - 1 downto 0);

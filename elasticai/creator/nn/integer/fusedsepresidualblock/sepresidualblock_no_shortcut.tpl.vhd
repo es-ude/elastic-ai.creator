@@ -7,7 +7,7 @@ entity ${name} is
     generic (
         DATA_WIDTH : integer := ${data_width};
         SEPCONV1DBN_0_X_ADDR_WIDTH : integer := ${sepconv1dbn_0_x_addr_width};
-        SEPCONV1DBN_0_Y_ADDR_WIDTH : integer := ${sepconv1dbn_0_y_addr_width}
+        SEPCONV1DBN_0_Y_ADDR_WIDTH : integer := ${sepconv1dbn_0_y_addr_width};
         SEPCONV1DBN_1_X_ADDR_WIDTH : integer := ${sepconv1dbn_1_x_addr_width};
         SEPCONV1DBN_1_Y_ADDR_WIDTH : integer := ${sepconv1dbn_1_y_addr_width};
         ADD_X_ADDR_WIDTH : integer := ${add_x_addr_width};
@@ -72,7 +72,7 @@ architecture rtl of ${name} is
     begin
     sepconv1dbn_0_enable <= enable;
     sepconv1dbn_0_relu_enable <= sepconv1dbn_0_done;
-    sepconv1dbn_1_enable <= sepconv1dbn_0_relu_done;
+    sepconv1dbn_1_enable <= sepconv1dbn_0_done;
     add_enable <= sepconv1dbn_1_done;
     relu_enable <= add_done;
     done <= add_done;

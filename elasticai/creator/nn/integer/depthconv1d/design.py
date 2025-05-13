@@ -7,11 +7,9 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.math_operations import (
-    get_padded_count,
-    get_vhdl_templates,
-)
+from elasticai.creator.nn.integer.math_operations import get_padded_count
 from elasticai.creator.nn.integer.ram.design import Ram
+from elasticai.creator.nn.integer.vhdl_test_automation import get_vhdl_templates
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design

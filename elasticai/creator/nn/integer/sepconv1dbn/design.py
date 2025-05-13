@@ -32,13 +32,19 @@ class SepConv1dBN(Design):
             name=self._pointconv1dbn.name
         )
 
+        self._x_count = self.depthconv1d_design._x_count
+        self._y_count = self.pointconv1dbn_design._y_count
+
+        self._x_addr_width = self.depthconv1d_design._x_addr_width
+        self._y_addr_width = self.pointconv1dbn_design._y_addr_width
+
     @property
     def port(self) -> Port:
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self.depthconv1d_design._x_count,
-            y_count=self.pointconv1dbn_design._y_count,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
@@ -55,7 +61,7 @@ class SepConv1dBN(Design):
             parameters=dict(
                 name=self.name,
                 x_addr_width=str(self.depthconv1d_design._x_addr_width),
-                depth_y_aaddr_width=str(self.depthconv1d_design._y_addr_width),
+                depth_y_addr_width=str(self.depthconv1d_design._y_addr_width),
                 y_addr_width=str(self.pointconv1dbn_design._y_addr_width),
                 data_width=str(self._data_width),
                 work_library_name=self._work_library_name,

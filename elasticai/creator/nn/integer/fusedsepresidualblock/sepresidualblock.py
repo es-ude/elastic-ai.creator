@@ -2,16 +2,15 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
-from elasticai.creator.nn.integer.conv1d import Conv1d
+from elasticai.creator.nn.integer.fusedsepresidualblock.design import (
+    SepResidualBlock as SepResidualBlockDesign,
+)
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
 )
 from elasticai.creator.nn.integer.relu import ReLU
 from elasticai.creator.nn.integer.sepconv1dbn import SepConv1dBN
-from elasticai.creator.nn.integer.sepresidualblock.design import (
-    SepResidualBlock as SepResidualBlockDesign,
-)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )

@@ -19,11 +19,11 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
-        in_channels = kwargs.get("in_channels")
+        self.in_channels = kwargs.get("in_channels")
         out_channels = kwargs.get("out_channels")
         kernel_size = kwargs.get("kernel_size")
         padding = kwargs.get("padding")
-        seq_len = kwargs.get("seq_len")
+        self.seq_len = kwargs.get("seq_len")
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
@@ -31,19 +31,19 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
         device = kwargs.get("device")
 
         self.depthconv1d = DepthConv1d(
-            in_channels=in_channels,
+            in_channels=self.in_channels,
             kernel_size=kernel_size,  # 3
             padding=padding,  # 1
-            seq_len=seq_len,
+            seq_len=self.seq_len,
             name=self.name + "_depthconv1d_0",
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.pointconv1dbn = PointConv1dBN(
-            in_channels=in_channels,
+            in_channels=self.in_channels,
             out_channels=out_channels,
-            seq_len=seq_len,
+            seq_len=self.seq_len,
             name=self.name + "_pointconv1dbn_0",
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -64,7 +64,7 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
             name=name,
             data_width=self.quant_bits,
             depthconv1d=self.depthconv1d,
-            pointconv1d=self.pointconv1dbn,
+            pointconv1dbn=self.pointconv1dbn,
             work_library_name="work",
         )
 

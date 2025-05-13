@@ -7,7 +7,7 @@ entity ${name} is
     generic (
         DATA_WIDTH : integer := ${data_width};
         SEPCONV1DBN_0_X_ADDR_WIDTH : integer := ${sepconv1dbn_0_x_addr_width};
-        SEPCONV1DBN_0_Y_ADDR_WIDTH : integer := ${sepconv1dbn_0_y_addr_width}
+        SEPCONV1DBN_0_Y_ADDR_WIDTH : integer := ${sepconv1dbn_0_y_addr_width};
         SEPCONV1DBN_1_X_ADDR_WIDTH : integer := ${sepconv1dbn_1_x_addr_width};
         SEPCONV1DBN_1_Y_ADDR_WIDTH : integer := ${sepconv1dbn_1_y_addr_width};
         SHORTCUT_X_ADDR_WIDTH : integer := ${shortcut_x_addr_width};
@@ -82,7 +82,7 @@ architecture rtl of ${name} is
     sepconv1dbn_0_enable <= enable;
     shortcut_enable <= sepconv1dbn_0_done;
     sepconv1dbn_0_relu_enable <= sepconv1dbn_0_done;
-    sepconv1dbn_1_enable <= sepconv1dbn_0_relu_done;
+    sepconv1dbn_1_enable <= sepconv1dbn_0_done;
     add_enable <= sepconv1dbn_1_done and shortcut_done;
     relu_enable <= add_done;
     done <= add_done;
@@ -133,7 +133,7 @@ architecture rtl of ${name} is
         enable => sepconv1dbn_0_relu_enable,
         clock  => sepconv1dbn_0_relu_clock,
         x  => sepconv1dbn_0_relu_x,
-        y  => sepconv1dbn_0_relu_y
+        y  => sepconv1dbn_0_relu_y,
     );
     inst_${name}_sepconv1dbn_1: entity ${work_library_name}.${name}_sepconv1dbn_1(rtl)
     port map (
