@@ -19,11 +19,11 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
-        seq_len = kwargs.get("seq_len")
         in_channels = kwargs.get("in_channels")
         out_channels = kwargs.get("out_channels")
         kernel_size = kwargs.get("kernel_size")
         padding = kwargs.get("padding")
+        seq_len = kwargs.get("seq_len")
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")

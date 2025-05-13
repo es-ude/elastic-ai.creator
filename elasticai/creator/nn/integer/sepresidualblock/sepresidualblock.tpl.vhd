@@ -103,6 +103,7 @@ architecture rtl of ${name} is
     add_enable <= pointconv1dbn_1_done and shortcut_conv1d_done;
     relu_enable <= add_done;
     done <= add_done;
+
     depthconv1d_0_clock <= clock;
     shortcut_conv1d_clock <= clock;
     pointconv1dbn_0_clock <= clock;
