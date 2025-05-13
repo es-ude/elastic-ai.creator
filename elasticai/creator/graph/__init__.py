@@ -14,7 +14,7 @@ from .graph_rewriting import (
     rewrite,
 )
 from .name_generation import NameRegistry
-from .subgraph_matching import find_all_subgraphs, find_subgraph
+from .subgraph_matching import NodeConstraintFn, find_all_subgraphs, find_subgraph
 
 __all__ = [
     "BaseGraph",
@@ -31,4 +31,5 @@ __all__ = [
     "RewriteResult",
     "produces_dangling_edge",
     "DanglingEdgeError",
+    "NodeConstraintFn",
 ]
