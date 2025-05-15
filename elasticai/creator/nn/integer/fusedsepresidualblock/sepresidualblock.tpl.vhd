@@ -133,7 +133,7 @@ architecture rtl of ${name} is
         enable => sepconv1dbn_0_relu_enable,
         clock  => sepconv1dbn_0_relu_clock,
         x  => sepconv1dbn_0_relu_x,
-        y  => sepconv1dbn_0_relu_y,
+        y  => sepconv1dbn_0_relu_y
     );
     inst_${name}_sepconv1dbn_1: entity ${work_library_name}.${name}_sepconv1dbn_1(rtl)
     port map (
