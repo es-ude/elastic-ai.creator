@@ -65,6 +65,7 @@ architecture rtl of ${name} is
     signal add_y_address : std_logic_vector(ADD_Y_ADDR_WIDTH - 1 downto 0);
     signal add_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal add_done : std_logic;
+
     signal relu_enable : std_logic;
     signal relu_clock : std_logic;
     signal relu_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -91,7 +92,7 @@ architecture rtl of ${name} is
     sepconv1dbn_0_x <= x;
     add_x_1 <= x;
     sepconv1dbn_0_relu_x <= sepconv1dbn_0_y;
-    sepconv1dbn_0_x <= sepconv1dbn_0_relu_y;
+    sepconv1dbn_1_x <= sepconv1dbn_0_relu_y;
     add_x_2 <= sepconv1dbn_1_y;
     relu_x <= add_y;
     y <= relu_y;

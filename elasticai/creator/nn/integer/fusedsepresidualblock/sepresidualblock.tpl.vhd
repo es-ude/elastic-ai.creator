@@ -103,7 +103,7 @@ architecture rtl of ${name} is
     sepconv1dbn_0_x <= x;
     shortcut_x <= x;
     sepconv1dbn_0_relu_x <= sepconv1dbn_0_y;
-    sepconv1dbn_0_x <= sepconv1dbn_0_relu_y;
+    sepconv1dbn_1_x <= sepconv1dbn_0_relu_y;
     add_x_1 <= shortcut_y;
     add_x_2 <= sepconv1dbn_1_y;
     relu_x <= add_y;
