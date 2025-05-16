@@ -15,6 +15,8 @@ __all__ = [
     "StaticMethodField",
     "ReadOnlyField",
     "GraphProtocol",
+    "Rewriter",
+    "RewriteRule",
 ]
 from .base import (
     Attribute,
@@ -38,3 +40,4 @@ from .core import (
 from .core import (
     Graph as GraphProtocol,
 )
+from .rewriting import Rewriter, RewriteRule
