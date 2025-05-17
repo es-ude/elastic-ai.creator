@@ -33,6 +33,7 @@ class SepResidualBlock(nn.Module):
 
         self.depthconv1d_0 = DepthConv1d(
             in_channels=in_channels,
+            out_channels=in_channels,
             kernel_size=kernel_size,
             seq_len=seq_len,
             padding=1,
@@ -60,6 +61,7 @@ class SepResidualBlock(nn.Module):
 
         self.depthconv1d_1 = DepthConv1d(
             in_channels=out_channels,
+            out_channels=out_channels,
             kernel_size=kernel_size,
             seq_len=seq_len,
             padding=1,
@@ -84,24 +86,27 @@ class SepResidualBlock(nn.Module):
             self.shortcut.append(
                 DepthConv1d(
                     in_channels=in_channels,
+                    out_channels=in_channels,
                     kernel_size=kernel_size,
                     seq_len=seq_len,
                     padding=1,
                     groups=in_channels,
-                    name=self.name + "shortcut_depthconv1d_0",
+                    name=self.name + "_shortcut_depthconv1d_0",
                     quant_bits=self.quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
-                ),
+                )
+            )
+            self.shortcut.append(
                 PointConv1dBN(
                     in_channels=in_channels,
                     out_channels=out_channels,
                     seq_len=seq_len,
-                    name=self.name + "shortcut_pointconv1dbn_0",
+                    name=self.name + "_shortcut_pointconv1dbn_0",
                     quant_bits=self.quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
-                ),
+                )
             )
 
         self.add = Addition(

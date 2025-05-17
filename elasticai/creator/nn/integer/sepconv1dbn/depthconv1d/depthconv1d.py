@@ -28,7 +28,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
     def __init__(self, **kwargs):
         super().__init__(
             in_channels=kwargs.get("in_channels"),
-            out_channels=kwargs.get("in_channels"),
+            out_channels=kwargs.get("out_channels"),
             kernel_size=kwargs.get("kernel_size"),
             padding=kwargs.get("padding"),
             groups=kwargs.get("in_channels"),
@@ -62,6 +62,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             name=name,
             data_width=self.quant_bits,
             in_channels=self.in_channels,
+            out_channels=self.out_channels,
             seq_len=self.seq_len,
             kernel_size=self.kernel_size[0],
             padding=self.padding,

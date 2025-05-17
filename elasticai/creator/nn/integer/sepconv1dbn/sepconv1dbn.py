@@ -32,6 +32,7 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
 
         self.depthconv1d = DepthConv1d(
             in_channels=self.in_channels,
+            out_channels=self.in_channels,
             kernel_size=kernel_size,  # 3
             padding=padding,  # 1
             seq_len=self.seq_len,

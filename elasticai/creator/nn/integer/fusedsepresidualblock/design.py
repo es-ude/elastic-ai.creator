@@ -43,10 +43,10 @@ class SepResidualBlock(Design):
             name=self._sepconv1dbn_1.name
         )
         if len(self._shortcut) > 0:
-            i = 0
-            self.shortcut_design = [None] * len(self._shortcut)
-            for submodule in self._shortcut:
-                self.shortcut_design[i] = submodule.create_design(name=submodule.name)
+            self.shortcut_design = [
+                submodule.create_design(name=submodule.name)
+                for submodule in self._shortcut
+            ]
         self.add_deisgn = self._add.create_design(name=self._add.name)
         self.relu_deisgn = self._relu.create_design(name=self._relu.name)
 
@@ -64,8 +64,8 @@ class SepResidualBlock(Design):
         self.sepconv1dbn_0_relu_deisgn.save_to(destination)
         self.sepconv1dbn_1_deisgn.save_to(destination)
         if len(self._shortcut) > 0:
-            for i, submodule in enumerate(self._shortcut):
-                self.shortcut_design[i].save_to(destination)
+            for design in self.shortcut_design:
+                design.save_to(destination)
         self.add_deisgn.save_to(destination)
         self.relu_deisgn.save_to(destination)
 

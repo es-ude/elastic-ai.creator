@@ -22,6 +22,7 @@ class DepthConv1d(Design):
         name: str,
         data_width: int,
         in_channels: int,
+        out_channels: int,
         seq_len: int,
         padding: tuple[int, int] or str,
         padding_len: int,
@@ -41,6 +42,7 @@ class DepthConv1d(Design):
 
         self._data_width = data_width
         self._in_channels = in_channels
+        self._out_channels = out_channels
         self._seq_len = seq_len
         self._kernel_size = kernel_size
         self._padding = padding
@@ -69,7 +71,7 @@ class DepthConv1d(Design):
             padding=self._padding,
             kernel_size=self._kernel_size,
             in_channels=self._in_channels,
-            out_channels=self._in_channels,
+            out_channels=self._out_channels,
             seq_len=self._seq_len,
         )
 
@@ -95,6 +97,7 @@ class DepthConv1d(Design):
             y_addr_width=str(self._y_addr_width),
             data_width=str(self._data_width),
             in_channels=str(self._in_channels),
+            out_channels=str(self._out_channels),
             seq_len=str(self._seq_len),
             kernel_size=str(self._kernel_size),
             m_q=str(self._m_q),
