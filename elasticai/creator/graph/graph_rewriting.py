@@ -118,31 +118,9 @@ def rewrite(
     - The nodes from the replacement graph that aren't part of the interface will be
         automatically renamed to avoid conflicts with nodes in the original graph.
     - Interface nodes serve as connection points between the original graph and replacement.
-    - In many cases where you want the matcher to compare graph and pattern attributes, you
-        will have to pass a custom matcher and change it before running the rewrite on a new
-        graph. E.g. to perform two subsequent rewrites you might have to:
-        ```python
-        import elasticai.creator.graph as g
 
-        matcher = MyMatcher()
-        matcher.set_graph(graph)
-
-        rewriter = GraphRewriter(
-            pattern=pattern,
-            interface=interface,
-            replacement=replacement,
-            match=matcher,
-            lhs=lhs,
-            rhs=rhs,
-        )
-        result = rewriter.rewrite(graph)
-        matcher.set_graph(result.new_graph)
-        result = rewriter.rewrite(result.new_graph)
-        ```
     :::
 
-
-    :param interface: The interface graph that defines which nodes should be preserved during rewriting.
     :param replacement: The graph that will replace the matched pattern in the original graph.
     :param graph: The original graph where the pattern will be replaced.
     :param match: A dictionary mapping nodes from pattern to nodes in the original graph.
