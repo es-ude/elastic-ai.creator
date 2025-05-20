@@ -2,6 +2,7 @@ from typing import TypeVar
 
 from elasticai.creator.graph._types import NodeConstraintFn
 
+from .graph import Graph
 from .vf2 import find_all_matches, match
 
 TP = TypeVar("TP")
@@ -14,12 +15,12 @@ class SubGraphMatchError(Exception):
 
 
 def find_subgraph(
-    pattern, graph, node_constraint: NodeConstraintFn[TP, T]
+    pattern: Graph[TP], graph: Graph[T], node_constraint: NodeConstraintFn[TP, T]
 ) -> dict[TP, T]:
     return match(pattern, graph, node_constraint)
 
 
 def find_all_subgraphs(
-    pattern, graph, node_constraint: NodeConstraintFn[TP, T]
+    pattern: Graph[TP], graph: Graph[T], node_constraint: NodeConstraintFn[TP, T]
 ) -> list[dict[TP, T]]:
     return find_all_matches(pattern, graph, node_constraint)
