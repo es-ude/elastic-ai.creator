@@ -89,3 +89,10 @@ def test_is_json_serializable(graph: Graph) -> None:
     assert result == (
         r'{"nodes": {"x": {"type": "t"}, "y": {"type": "t"}, "z": {"type": "t"}}, "edges": {"x": {"y": {}}, "y": {"z": {"extra": "e"}}}}'
     )
+
+
+def test_change_node_attribute() -> None:
+    impl = Implementation(graph=_Graph())
+    impl.add_node(node(name="a", type="t"))
+    impl.nodes["a"].data.update({"x": "y"})
+    assert "y" == impl.nodes["a"].attributes["x"]
