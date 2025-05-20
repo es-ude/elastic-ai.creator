@@ -241,6 +241,39 @@ class Implementation(IrData, Generic[N, E], create_init=False):
 
         return data
 
+    def sync_data_with_graph(self) -> Self:
+        """Removes nodes/edges from data that are not in the graph, add empty fields for new nodes/edges."""
+        nodes_to_remove = set()
+        for n in self.data["nodes"]:
+            if n not in self.graph.nodes:
+                nodes_to_remove.add(n)
+        for n in nodes_to_remove:
+            del self.data["nodes"][n]
+        for n in self.graph.nodes:
+            if n not in self.data["nodes"]:
+                self.data["nodes"][n] = {}
+
+        edges_to_remove = set()
+        edges_to_keep = set(self.graph.iter_edges())
+        for src in self.data["edges"]:
+            for dst in self.data["edges"][src]:
+                if (src, dst) not in edges_to_keep:
+                    edges_to_remove.add((src, dst))
+
+        for src, sink in edges_to_remove:
+            if src in self.data["edges"]:
+                del self.data["edges"][src][sink]
+            if len(self.data["edges"][src]) == 0:
+                del self.data["edges"][src]
+
+        for src, sink in edges_to_keep:
+            if src not in self.data["edges"]:
+                self.data["edges"][src] = {}
+            if sink not in self.data["edges"][src]:
+                self.data["edges"][src][sink] = {}
+
+        return self
+
     def load_from_dict(
         self,
         d: dict[str, Any],
