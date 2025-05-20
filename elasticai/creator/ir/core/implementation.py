@@ -38,6 +38,8 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         "graph",
         "_node_fn",
         "_edge_fn",
+        "_nodes",
+        "_edges",
     )
 
     name: str
@@ -122,6 +124,12 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         super().__init__(data)
 
         self.graph = graph
+        self._nodes: dict[str, Attribute] = cast(
+            dict[str, Attribute], self.data["nodes"]
+        )
+        self._edges: dict[str, dict[str, Attribute]] = cast(
+            dict[str, dict[str, Attribute]], self.data["edges"]
+        )
 
         self._node_fn = node_fn
         self._edge_fn = edge_fn
@@ -240,6 +248,39 @@ class Implementation(IrData, Generic[N, E], create_init=False):
         data["edges"] = cast(Attribute, edges)
 
         return data
+
+    def sync_data_with_graph(self) -> Self:
+        """Removes nodes/edges from data that are not in the graph, add empty fields for new nodes/edges."""
+        nodes_to_remove = set()
+        for n in self._nodes:
+            if n not in self.graph.nodes:
+                nodes_to_remove.add(n)
+        for n in nodes_to_remove:
+            del self._nodes[n]
+        for n in self.graph.nodes:
+            if n not in self._nodes:
+                self._nodes[n] = {}
+
+        edges_to_remove = set()
+        edges_to_keep = set(self.graph.iter_edges())
+        for src in self._edges:
+            for dst in self._edges[src]:
+                if (src, dst) not in edges_to_keep:
+                    edges_to_remove.add((src, dst))
+
+        for src, sink in edges_to_remove:
+            if src in self._edges:
+                del self._edges[src][sink]
+            if len(self._edges[src]) == 0:
+                del self._edges[src]
+
+        for src, sink in edges_to_keep:
+            if src not in self._edges:
+                self._edges[src] = {}
+            if sink not in self._edges[src]:
+                self._edges[src][sink] = {}
+
+        return self
 
     def load_from_dict(
         self,
