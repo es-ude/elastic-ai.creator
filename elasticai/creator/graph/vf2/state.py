@@ -99,13 +99,6 @@ class State(Generic[T, TP]):
             if matched_node is not None:
                 yield node, matched_node
 
-    def contains_node_with_lower_id(self, node: T) -> bool:
-        node_id = self.order[node]
-        for other_id, matched_node in enumerate(self.core):
-            if other_id < node_id and matched_node is not None:
-                return True
-        return False
-
     def add_pair(self, a: T, b: TP) -> None:
         self.core[self.order[a]] = b
         self.in_nodes[self.order[a]] = self.current_depth
