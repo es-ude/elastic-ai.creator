@@ -152,7 +152,7 @@ architecture rtl of ${name} is
         y => depthconv1d_0_y,
         done  => depthconv1d_0_done
     );
-    inst_${name}_shortcut_depthconv1d: entity ${work_library_name}.${name}_shortcut_depthconv1d(rtl)
+    inst_${name}_shortcut_depthconv1d: entity ${work_library_name}.${name}_shortcut_depthconv1d_0(rtl)
     port map (
         enable => shortcut_depthconv1d_enable,
         clock  => shortcut_depthconv1d_clock,
@@ -162,7 +162,7 @@ architecture rtl of ${name} is
         y => shortcut_depthconv1d_y,
         done  => shortcut_depthconv1d_done
     );
-    inst_${name}_shortcut_pointconv1dbn: entity ${work_library_name}.${name}_shortcut_pointconv1dbn(rtl)
+    inst_${name}_shortcut_pointconv1dbn: entity ${work_library_name}.${name}_shortcut_pointconv1dbn_0(rtl)
     port map (
         enable => shortcut_pointconv1dbn_enable,
         clock  => shortcut_pointconv1dbn_clock,
