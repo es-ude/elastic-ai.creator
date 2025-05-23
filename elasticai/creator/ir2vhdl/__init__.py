@@ -56,5 +56,4 @@ __all__ = [
     "EntityTemplateParameter",
     "ValueTemplateParameter",
     "EntityTemplateDirector",
-    "Template",
 ]
