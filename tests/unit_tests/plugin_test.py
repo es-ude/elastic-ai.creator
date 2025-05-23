@@ -16,7 +16,7 @@ def test_importing_plugin_with_missing_fields_raises_meaningful_error():
     }
     with pytest.raises(
         p.MissingFieldError,
-        match="missing required fields {'name'} for plugin spec 'PluginSpec'\n\tmake sure you are trying to load the correct plugin and the meta.toml file is correct!",
+        match="missing required fields {'name'} for plugin spec 'PluginSpec'\n\tAre you sure you are loading the correct plugin\?\n\tIs the meta.toml file correct\?",
     ):
         p.build_plugin_spec(config_from_file, p.PluginSpec)
 
