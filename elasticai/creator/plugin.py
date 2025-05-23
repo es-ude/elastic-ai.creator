@@ -297,5 +297,5 @@ def read_plugin_dicts_from_package(package: str) -> Iterable[PluginDict]:
 class MissingFieldError(Exception):
     def __init__(self, field_names: set[str], plugin_type: type[PluginSpecT]):
         super().__init__(
-            f"missing required fields {field_names} for plugin spec '{plugin_type.__qualname__}'\n\tmake sure you are trying to load the correct plugin and the meta.toml file is correct!"
+            f"missing required fields {field_names} for plugin spec '{plugin_type.__qualname__}'\n\tAre you sure you are loading the correct plugin?\n\tIs the meta.toml file correct?"
         )
