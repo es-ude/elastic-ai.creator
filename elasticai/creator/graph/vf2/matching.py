@@ -182,13 +182,25 @@ def _match(
                 graph_unseen_succ
             ) >= len(pattern_unseen_succ)
 
+        _in_check = in_check()
+
+        _out_check = out_check()
+
+        _predecessor_check = predecessors_check()
+
+        _successors_check = successors_check()
+
+        _new_check = new_check()
+
+        _constraint = node_constraint(pn, gn)
+
         result = (
-            in_check()
-            and out_check()
-            and predecessors_check()
-            and successors_check()
-            and new_check()
-            and node_constraint(pn, gn)
+            _in_check
+            and _out_check
+            and _predecessor_check
+            and _successors_check
+            and _new_check
+            and _constraint
         )
 
         return result
@@ -199,9 +211,13 @@ def _match(
             return
         pattern_state.next_depth()
         graph_state.next_depth()
+        candidate_pairs = list(
+            compute_candidate_pairs(pattern_state, graph_state, depth=depth)
+        )
 
-        for pn, gn in compute_candidate_pairs(pattern_state, graph_state, depth=depth):
-            if pattern_state.contains_node_with_lower_id(pn):
+        order = {pn: i for i, (pn, _) in enumerate(candidate_pairs)}
+        for pn, gn in candidate_pairs:
+            if any(n in pattern.nodes and order[n] < order[pn] for n in order):
                 continue
             if is_feasible(pn, gn):
                 pattern_state.add_pair(pn, gn)
@@ -209,6 +225,7 @@ def _match(
                 yield from do_match(depth=depth + 1)
                 pattern_state.remove_pair(pn, gn)
                 graph_state.remove_pair(gn, pn)
+
         pattern_state.restore()
         graph_state.restore()
 
