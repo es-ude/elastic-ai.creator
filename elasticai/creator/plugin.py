@@ -38,7 +38,8 @@ The following table lists these required fields:
   - The name of the plugin, used to identify the plugin
 * - **target platform**
   - `str`
-  - A string describing the target platform for the plugin.
+  - A string describing the target platform for the plugin, ie.
+    the lowering pass it should be loaded into.
     Currently there is no strict definition of the semantics of this string.
 * - **target runtime**
   - `str`

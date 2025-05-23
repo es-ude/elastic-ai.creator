@@ -1,8 +1,10 @@
 # Plugin system
 
 The plugin system ([`elasticai.creator.plugin`]()) is
-the way to extend the functionality of the ElasticAI Creator. At its
-core the system is not limited to any specific kind of plugins.
+the way to extend automated lowering passes ([`LoweringPass`]()). At its
+core the system is not limited to any specific target.
+E.g., it can be used to extend the following passes: Ir2Ir, Ir2Verilog, Ir2Torch, Ir2Vhdl, etc.
+
 Currently its main purpose is providing a base for adding new hardware
 components as plugins to the [`Ir2Vdhl`]() translation
 pass.
