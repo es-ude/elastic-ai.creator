@@ -1,4 +1,5 @@
 import importlib.resources as res
+from string import Template
 
 from elasticai.creator.ir2vhdl import (
     Code,
@@ -6,7 +7,6 @@ from elasticai.creator.ir2vhdl import (
     Implementation,
     Ir2Vhdl,
     PluginSymbol,
-    Template,
 )
 
 
