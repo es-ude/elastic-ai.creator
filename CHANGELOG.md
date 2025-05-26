@@ -35,6 +35,26 @@
     `sink` as a keyword param or attribute
 
 - - -
+## [v0.64.0](https://github.com/es-ude/elastic-ai.creator/compare/23a43230dd4ab43e3e6f90fbc1a999bea23cbeb6..v0.64.0) - 2025-05-26
+#### Features
+- **(ir)** introduce RewriteRules and rewriting for Implementations - ([39baf11](https://github.com/es-ude/elastic-ai.creator/commit/39baf11d6349466cb2265c04d456dfabec7325e9))
+- **(ir)** add function to sync implementation data with underlying graph - ([56c198f](https://github.com/es-ude/elastic-ai.creator/commit/56c198f4650d33de98f0eccf2c1661c49f12e190))
+- **(ir2torch)** support nested module hierarchies - ([23a4323](https://github.com/es-ude/elastic-ai.creator/commit/23a43230dd4ab43e3e6f90fbc1a999bea23cbeb6))
+#### Bug Fixes
+- **(graph)** fix bug that was preventing matches in some edge cases - ([2c31179](https://github.com/es-ude/elastic-ai.creator/commit/2c311799b7e8790b047228daaf204f53c5ef03c6))
+- **(ir2vhdl)** stop importing non-existent Template class in skeleton - ([a0f7663](https://github.com/es-ude/elastic-ai.creator/commit/a0f766355fd485bb50660431e368ea8ddc3d8d9e))
+#### Miscellaneous Chores
+- **(plugin)** improve error message for missing fields in meta.toml - ([fabf3bb](https://github.com/es-ude/elastic-ai.creator/commit/fabf3bb0e5d70ce1eac76c493ffd43f3f1b5cd82))
+#### Documentation
+- **(graph)** remove outdated docstring - ([6ab932b](https://github.com/es-ude/elastic-ai.creator/commit/6ab932b2f844d96672ebdff2444d6eaf7ecff4f8))
+- **(plugins)** clarify purpose of the plugin system - ([11db978](https://github.com/es-ude/elastic-ai.creator/commit/11db978d217621257360cc3afc2d5d4f08095211))
+- **(plugins)** name plugin translation stages - ([0d497f4](https://github.com/es-ude/elastic-ai.creator/commit/0d497f402c5c0e75fa28bf343dec37922c883114))
+#### Refactoring
+- **(graph)** add a few missing type hints - ([47344be](https://github.com/es-ude/elastic-ai.creator/commit/47344be1c1353367d25f32ef1da7957085489d0c))
+- **(graph)** publicly expose NodeConstraintFn protocol - ([9934fd5](https://github.com/es-ude/elastic-ai.creator/commit/9934fd594ae2d243d495f0f4112b02898d8544ba))
+
+- - -
+
 
 ## [v0.62.0](https://github.com/es-ude/elastic-ai.creator/compare/v0.61.0..v0.62.0) - 2025-05-08
 #### Features
