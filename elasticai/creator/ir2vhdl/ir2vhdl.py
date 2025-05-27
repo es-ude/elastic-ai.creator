@@ -299,7 +299,7 @@ class Ir2Vhdl(LoweringPass[Implementation, Code]):
         for name, content in super().__call__(args):
             yield f"{name}.vhd", content
         for name, fn in self.__static_files.items():
-            yield name, fn()
+            yield name, [fn()]
 
 
 class Signal(ABC):
