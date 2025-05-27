@@ -189,7 +189,12 @@ class Rewriter:
         for ctx in contexts:
             for node_name in ctx.replacement.nodes:
                 if node_name not in rule.interface:
-                    initialize = rule.replacement.nodes[node_name].attributes["init"]
+                    try:
+                        initialize = rule.replacement.nodes[node_name].data["init"]
+                    except KeyError:
+                        raise ValueError(
+                            f"Node {node_name} in replacement does not have an initializer."
+                        )
                     node = ctx.replacement.nodes[node_name]
                     node.data.update(initialize(ctx.match))
 
