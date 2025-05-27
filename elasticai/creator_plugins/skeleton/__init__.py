@@ -1,4 +1,5 @@
 import importlib.resources as res
+from string import Template
 
 from elasticai.creator.ir2vhdl import (
     Code,
@@ -6,7 +7,6 @@ from elasticai.creator.ir2vhdl import (
     Implementation,
     Ir2Vhdl,
     PluginSymbol,
-    Template,
 )
 
 from ._skeleton import skeleton as skeleton
@@ -18,7 +18,7 @@ class _BufferedNetworkWrapper(PluginSymbol):
 
     def __call__(self, args: Implementation) -> Code:
         def _iter():
-            yield self._template.render(
+            yield self._template.substitute(
                 dict(entity=args.name) | args.attributes["generic_map"]
             )
 

@@ -23,7 +23,7 @@ class _Skeleton(PluginSymbol):
 
     def __call__(self, arg: Implementation) -> Code:
         def _iter():
-            yield self._template.render(
+            yield self._template.substitute(
                 arg.attributes["generic_map"] | dict(entity=arg.name)
             )
 
