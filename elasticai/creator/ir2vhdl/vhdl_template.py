@@ -55,14 +55,6 @@ class ValueTemplateParameter(TemplateParameter):
         return f"{match['def']} := ${self.name}"
 
 
-class _Template:
-    def __init__(self, data: str):
-        self._data = _pyTemplate(data)
-
-    def render(self, parameters: dict[str, str]) -> str:
-        return self._data.substitute(parameters)
-
-
 class EntityTemplateDirector:
     def __init__(self):
         self._builder = TemplateBuilder()
@@ -78,5 +70,5 @@ class EntityTemplateDirector:
         self._builder.add_parameter(ValueTemplateParameter(name))
         return self
 
-    def build(self) -> _Template:
-        return _Template(self._builder.build())
+    def build(self) -> _pyTemplate:
+        return _pyTemplate(self._builder.build())

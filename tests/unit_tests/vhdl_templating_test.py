@@ -35,7 +35,7 @@ class TestVhdlTemplating:
         type_handler = (
             EntityTemplateDirector().set_prototype(dummy_vhdl_prototype).build()
         )
-        code = type_handler.render(
+        code = type_handler.substitute(
             {
                 "entity": "my_first_hw_component",
             }
@@ -56,7 +56,7 @@ generic (
 """)
             .build()
         )
-        code = type_handler.render(dict(data_width=5)).splitlines()
+        code = type_handler.substitute(dict(data_width=5)).splitlines()
         assert "  DATA_WIDTH : natural := 5" == code[2]
 
     def test_replace_first_of_two_generics(self) -> None:
@@ -71,7 +71,7 @@ generic (
             .add_generic("data_width")
             .build()
         )
-        code = type_handler.render(dict(data_width=5)).splitlines()
+        code = type_handler.substitute(dict(data_width=5)).splitlines()
         assert "    DATA_WIDTH : natural := 5;" == code[2]
 
     def test_can_change_assigned_value(self) -> None:
@@ -85,7 +85,7 @@ generic (
             .add_generic("data_width")
             .build()
         )
-        code = type_handler.render(dict(data_width=5)).splitlines()
+        code = type_handler.substitute(dict(data_width=5)).splitlines()
         assert "    DATA_WIDTH : natural := 5" == code[2]
 
     def test_can_replace_two_parameters(self) -> None:
@@ -101,6 +101,6 @@ generic (
             .add_generic("data_depth")
             .build()
         )
-        code = type_handler.render(dict(data_width=5, data_depth=3)).splitlines()
+        code = type_handler.substitute(dict(data_width=5, data_depth=3)).splitlines()
         assert "    DATA_WIDTH : natural := 5;" == code[2]
         assert "    DATA_DEPTH : natural := 3" == code[3]
