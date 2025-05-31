@@ -3,8 +3,8 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.fusedffn.design import FFN as FFNDesign
-from elasticai.creator.nn.integer.linear import Linear
-from elasticai.creator.nn.integer.linearrelu import LinearReLU
+from elasticai.creator.nn.integer.fusedffn.fc1relu import LinearReLU
+from elasticai.creator.nn.integer.fusedffn.fc2 import Linear
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -14,7 +14,7 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 )
 
 
-class FeedForwardNetwork(DesignCreatorModule, nn.Module):
+class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
@@ -61,7 +61,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         return FFNDesign(
             name=name,
             data_width=self.quant_bits,
-            fc1=self.fc1relu,
+            fc1relu=self.fc1relu,
             fc2=self.fc2,
             work_library_name="work",
         )

@@ -25,7 +25,7 @@ class FFN(Design):
 
         self._work_library_name = work_library_name
 
-        self.fc1_design = self._fc1relu.create_design(name=self._fc1relu.name)
+        self.fc1relu_design = self._fc1relu.create_design(name=self._fc1relu.name)
         self.fc2_design = self._fc2.create_design(name=self._fc2.name)
 
     @property
@@ -33,12 +33,12 @@ class FFN(Design):
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self.fc1_design._x_count,
+            x_count=self.fc1relu_design._x_count,
             y_count=self.fc2_design._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
-        self.fc1_design.save_to(destination.create_subpath(self._fc1relu.name))
+        self.fc1relu_design.save_to(destination.create_subpath(self._fc1relu.name))
         self.fc2_design.save_to(destination.create_subpath(self._fc2.name))
 
         template = InProjectTemplate(
@@ -47,11 +47,11 @@ class FFN(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                x_addr_width=str(self.fc1_design._x_addr_width),
+                x_addr_width=str(self.fc1relu_design._x_addr_width),
                 y_addr_width=str(self.fc2_design._y_addr_width),
-                num_dimensions=str(self.fc1_design._num_dimensions),
-                fc1_in_features=str(self.fc1_design._in_features),
-                fc1_out_features=str(self.fc1_design._out_features),
+                num_dimensions=str(self.fc1relu_design._num_dimensions),
+                fc1_in_features=str(self.fc1relu_design._in_features),
+                fc1_out_features=str(self.fc1relu_design._out_features),
                 fc2_out_features=str(self.fc2_design._out_features),
                 work_library_name=self._work_library_name,
             ),
@@ -64,11 +64,11 @@ class FFN(Design):
             parameters=dict(
                 name=self.name,
                 data_width=str(self._data_width),
-                x_addr_width=str(self.fc1_design._x_addr_width),
+                x_addr_width=str(self.fc1relu_design._x_addr_width),
                 y_addr_width=str(self.fc2_design._y_addr_width),
-                num_dimensions=str(self.fc1_design._num_dimensions),
-                in_features=str(self.fc1_design._in_features),
-                out_features=str(self.fc1_design._out_features),
+                num_dimensions=str(self.fc1relu_design._num_dimensions),
+                in_features=str(self.fc1relu_design._in_features),
+                out_features=str(self.fc1relu_design._out_features),
                 work_library_name=self._work_library_name,
             ),
         )

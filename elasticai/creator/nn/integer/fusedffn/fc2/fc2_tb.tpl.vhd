@@ -7,16 +7,16 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
-        DATA_WIDTH : integer := ${data_width};
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
+        DATA_WIDTH : integer := ${data_width};
         NUM_DIMENSIONS : integer := ${num_dimensions};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features}
     );
-    port(
-        clk : out std_logic
-        );
+port(
+    clk : out std_logic
+    );
 end entity;
 architecture rtl of ${name}_tb is
     constant C_CLK_PERIOD : time := 10 ns;
@@ -25,11 +25,13 @@ architecture rtl of ${name}_tb is
     signal uut_enable : std_logic := '0';
     signal x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x is array (0 to IN_FEATURES * NUM_DIMENSIONS - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal x_arr : t_array_x := (others=>(others=>'0'));
     signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
+    signal valid : std_logic;
+    signal ready : std_logic;
+    type t_array_x is array (0 to IN_FEATURES - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process
     begin
@@ -63,9 +65,9 @@ begin
         variable filestatus:    file_open_status;
         variable input_rd_cnt : integer := 0;
         variable output_rd_cnt : integer := 0;
+        variable line_rd_cnt : integer := 0;
         variable v_TIME : time := 0 ns;
     begin
-
         file_open (filestatus, fp_inputs, file_inputs, READ_MODE);
         report file_inputs & LF & HT & "file_open_status = " &
                     file_open_status'image(filestatus);
@@ -86,24 +88,32 @@ begin
             severity FAILURE;
         y_address <= (others=>'0');
         uut_enable <= '0';
+        valid <= '0';
         wait until reset='0';
-        wait for 5*C_CLK_PERIOD;
+        uut_enable <= '1';
+        wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < NUM_DIMENSIONS * IN_FEATURES loop
-                readline (fp_inputs, line_num);
-                read (line_num, line_content);
-                x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
-                input_rd_cnt := input_rd_cnt + 1;
+            while input_rd_cnt < IN_FEATURES*NUM_DIMENSIONS loop
+                line_rd_cnt := 0;
+                while line_rd_cnt < IN_FEATURES loop
+                    readline (fp_inputs, line_num);
+                    read (line_num, line_content);
+                    x_arr(line_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                    line_rd_cnt := line_rd_cnt + 1;
+                    input_rd_cnt := input_rd_cnt + 1;
+                end loop;
+                wait for 10*C_CLK_PERIOD; -- psuedo delay to simulate the time taken for reading a line
+                v_TIME := now;
+                valid <= '1';
+                wait for 1*C_CLK_PERIOD;
+                wait until ready='1';
+                valid <= '0';
+                v_TIME := now - v_TIME;
             end loop;
-            wait for C_CLK_PERIOD;
-            v_TIME := now;
-            uut_enable <= '1';
-            wait for C_CLK_PERIOD;
             wait until done='1';
-            v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt< NUM_DIMENSIONS * OUT_FEATURES loop
+            while output_rd_cnt<NUM_DIMENSIONS*OUT_FEATURES loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
@@ -131,7 +141,9 @@ begin
         x_address => x_address,
         y_address => y_address,
         x   => x,
-        y  => y,
-        done   => done
+        y   => y,
+        done   => done,
+        valid => valid,  -- in
+        ready => ready   -- out
     );
 end architecture;

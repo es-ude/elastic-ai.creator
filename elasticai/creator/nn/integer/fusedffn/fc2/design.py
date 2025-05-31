@@ -58,12 +58,8 @@ class Linear(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        if self._num_dimensions is None:
-            self._x_count = self._in_features
-            self._y_count = self._out_features
-        else:
-            self._x_count = self._in_features * self._num_dimensions
-            self._y_count = self._out_features * self._num_dimensions
+        self._x_count = self._in_features  # one row
+        self._y_count = self._out_features * self._num_dimensions
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
@@ -80,58 +76,29 @@ class Linear(Design):
     def save_to(self, destination: Path) -> None:
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
-        template_parameters = dict(
-            name=self.name,
-            x_addr_width=str(self._x_addr_width),
-            y_addr_width=str(self._y_addr_width),
-            data_width=str(self._data_width),
-            m_q_data_width=str(self._m_q_data_width),
-            in_features=str(self._in_features),
-            out_features=str(self._out_features),
-            num_dimensions=str(self._num_dimensions),
-            z_x=str(self._z_x),
-            z_w=str(self._z_w),
-            z_b=str(self._z_b),
-            z_y=str(self._z_y),
-            m_q=str(self._m_q),
-            m_q_shift=str(self._m_q_shift),
-            weights_rom_name=rom_name["weights"],
-            bias_rom_name=rom_name["bias"],
-            work_library_name=self._work_library_name,
-            resource_option=self._resource_option,
-        )
-
-        test_template_parameters = dict(
-            name=self.name,
-            x_addr_width=str(self._x_addr_width),
-            y_addr_width=str(self._y_addr_width),
-            data_width=str(self._data_width),
-            in_features=str(self._in_features),
-            out_features=str(self._out_features),
-            num_dimensions=str(self._num_dimensions),
-            work_library_name=self._work_library_name,
-        )
-
-        if self._num_dimensions is None:
-            file_name = "linearrelu.tpl.vhd"
-            test_file_name = "linearrelu_tb.tpl.vhd"
-        else:
-            raise NotImplementedError(
-                "2D linear+ReLU design is not implemented yet. Please use 1D"
-                " linear+ReLU design."
-            )
-            # if self._in_features != 1:
-            #     file_name = "linear_2d.tpl.vhd"
-            # else:
-            #     file_name = "linear_2d_feature1.tpl.vhd"
-            # test_file_name = "linear_2d_tb.tpl.vhd"
-            # template_parameters["num_dimensions"] = str(self._num_dimensions)
-            # test_template_parameters["num_dimensions"] = str(self._num_dimensions)
-
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name=file_name,
-            parameters=template_parameters,
+            file_name="fc2.tpl.vhd",
+            parameters=dict(
+                name=self.name,
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                data_width=str(self._data_width),
+                m_q_data_width=str(self._m_q_data_width),
+                in_features=str(self._in_features),
+                out_features=str(self._out_features),
+                num_dimensions=str(self._num_dimensions),
+                z_x=str(self._z_x),
+                z_w=str(self._z_w),
+                z_b=str(self._z_b),
+                z_y=str(self._z_y),
+                m_q=str(self._m_q),
+                m_q_shift=str(self._m_q_shift),
+                weights_rom_name=rom_name["weights"],
+                bias_rom_name=rom_name["bias"],
+                work_library_name=self._work_library_name,
+                resource_option=self._resource_option,
+            ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
@@ -154,8 +121,17 @@ class Linear(Design):
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name=test_file_name,
-            parameters=test_template_parameters,
+            file_name="fc2_tb.tpl.vhd",
+            parameters=dict(
+                name=self.name,
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                data_width=str(self._data_width),
+                in_features=str(self._in_features),
+                out_features=str(self._out_features),
+                num_dimensions=str(self._num_dimensions),
+                work_library_name=self._work_library_name,
+            ),
         )
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             template_test

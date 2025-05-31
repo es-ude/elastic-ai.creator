@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.encoderlayer.design import (
     EncoderLayer as EncoderLayerDesign,
 )
 from elasticai.creator.nn.integer.ffn import FeedForwardNetwork
+from elasticai.creator.nn.integer.fusedffn import FusedFeedForwardNetwork
 from elasticai.creator.nn.integer.mha import MultiHeadAttention
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -31,8 +32,13 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
+        enable_fused_ffn = kwargs.get("enable_fused_ffn", False)
+
+        mha_name = self.name + "_mha"
+        ffn_name = self.name + "_fusedffn" if enable_fused_ffn else self.name + "_ffn"
+
         self.mha = MultiHeadAttention(
-            name=self.name + "_mha",
+            name=mha_name,
             nhead=nhead,
             d_model=d_model,
             window_size=window_size,
@@ -41,7 +47,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             device=device,
         )
         self.mha_add = Addition(
-            name=self.name + "_mha_add",
+            name=mha_name + "_add",
             num_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
@@ -50,7 +56,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         )
 
         self.mha_norm = BatchNorm1d(
-            name=self.name + "_mha_norm",
+            name=mha_name + "_norm",
             norm_dim=d_model,
             in_features=d_model,
             out_features=d_model,
@@ -64,17 +70,27 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             device=device,
         )
 
-        self.ffn = FeedForwardNetwork(
-            name=self.name + "_ffn",
-            num_dimensions=window_size,
-            d_model=d_model,
-            quant_bits=self.quant_bits,
-            quant_data_dir=self.quant_data_dir,
-            device=device,
-        )
+        if enable_fused_ffn:
+            self.ffn = FusedFeedForwardNetwork(
+                name=ffn_name,
+                num_dimensions=window_size,
+                d_model=d_model,
+                quant_bits=self.quant_bits,
+                quant_data_dir=self.quant_data_dir,
+                device=device,
+            )
+        else:
+            self.ffn = FeedForwardNetwork(
+                name=ffn_name,
+                num_dimensions=window_size,
+                d_model=d_model,
+                quant_bits=self.quant_bits,
+                quant_data_dir=self.quant_data_dir,
+                device=device,
+            )
 
         self.ffn_add = Addition(
-            name=self.name + "_ffn_add",
+            name=ffn_name + "_add",
             num_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
@@ -83,7 +99,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         )
 
         self.ffn_norm = BatchNorm1d(
-            name=self.name + "_ffn_norm",
+            name=ffn_name + "_norm",
             norm_dim=d_model,
             in_features=d_model,
             out_features=d_model,
