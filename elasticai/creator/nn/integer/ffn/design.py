@@ -72,7 +72,7 @@ class FFN(Design):
                 y_addr_width=str(self.fc2_design._y_addr_width),
                 num_dimensions=str(self.fc1_design._num_dimensions),
                 in_features=str(self.fc1_design._in_features),
-                out_features=str(self.fc1_design._out_features),
+                out_features=str(self.fc2_design._out_features),
                 work_library_name=self._work_library_name,
             ),
         )
