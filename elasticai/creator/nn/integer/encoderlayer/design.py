@@ -71,6 +71,12 @@ class EncoderLayer(Design):
             file_name="encoderlayer.tpl.vhd",
             parameters=dict(
                 name=self.name,
+                mha_name=self._mha.name,
+                mha_add_name=self._mha_add.name,
+                mha_norm_name=self._mha_norm.name,
+                ffn_name=self._ffn.name,
+                ffn_add_name=self._ffn_add.name,
+                ffn_norm_name=self._ffn_norm.name,
                 data_width=str(self._data_width),
                 x_addr_width=str(self.mha_design._x_addr_width),
                 y_addr_width=str(self.ffn_norm_design._y_addr_width),

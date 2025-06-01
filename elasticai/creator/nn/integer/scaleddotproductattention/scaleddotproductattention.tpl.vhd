@@ -83,7 +83,7 @@ begin
     matmul_att_x_2 <= x_3;
     y <= matmul_att_y;
     done <= matmul_att_done;
-    inst_${name}_matmul_score: entity ${work_library_name}.${name}_matmul_score(rtl)
+    inst_${name}_matmul_score: entity ${work_library_name}.${matmul_score_name}(rtl)
     port map (
         enable => matmul_score_enable,
         clock => matmul_score_clock,
@@ -95,7 +95,7 @@ begin
         y => matmul_score_y,
         done => matmul_score_done
     );
-    inst_${name}_softmax: entity ${work_library_name}.${name}_softmax(rtl)
+    inst_${name}_softmax: entity ${work_library_name}.${softmax_name}(rtl)
     port map (
         enable => softmax_enable,
         clock => softmax_clock,
@@ -105,7 +105,7 @@ begin
         y => softmax_y,
         done => softmax_done
     );
-    inst_${name}_matmul_att: entity ${work_library_name}.${name}_matmul_att(rtl)
+    inst_${name}_matmul_att: entity ${work_library_name}.${matmul_att_name}(rtl)
     port map (
         enable => matmul_att_enable,
         clock => matmul_att_clock,

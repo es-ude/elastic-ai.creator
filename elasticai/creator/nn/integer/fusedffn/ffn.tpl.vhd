@@ -67,7 +67,7 @@ architecture rtl of ${name} is
     done <= fc2_done;
     fc2_valid <= fc1_valid;
     fc1_ready <= fc2_ready;
-    inst_${name}_fc1: entity ${work_library_name}.${name}_fc1relu(rtl)
+    inst_${name}_fc1: entity ${work_library_name}.${fc1relu_name}(rtl)
     port map (
         enable => fc1_enable,
         clock  => fc1_clock,
@@ -79,7 +79,7 @@ architecture rtl of ${name} is
         valid => fc1_valid, -- out
         ready => fc1_ready  -- in
     );
-    inst_${name}_fc2: entity ${work_library_name}.${name}_fc2(rtl)
+    inst_${name}_fc2: entity ${work_library_name}.${fc2_name}(rtl)
     port map (
         enable => fc2_enable,
         clock  => fc2_clock,
