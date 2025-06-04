@@ -117,27 +117,57 @@ class _RemappedData(Mapping[str, N]):
         return key in self._remapping
 
 
-class RewritingContext:
+class _RewritingContext:
     def __init__(
-        self, match, rule: "RewriteRule", original_impl, replacement_map, new_impl
+        self,
+        match,
+        rule: "RewriteRule",
+        original_impl,
+        replacement_map=None,
+        new_impl=None,
     ):
-        self.match = RemappedSubImplementation(
+        self.replacement_map = replacement_map
+        self.matched_impl = RemappedSubImplementation(
             mapping=match,
             graph=rule.pattern.graph,
             data=original_impl.data["nodes"],  # type: ignore
             node_fn=Node,
         )
-        self.replacement = RemappedSubImplementation(
-            mapping=replacement_map,
-            graph=rule.replacement.graph,
-            data=new_impl.data["nodes"],  # type: ignore
+        self.match = match
+        self.replacement = rule.replacement(self.matched_impl)
+        self._new_impl: Implementation | None = new_impl
+
+    @property
+    def new_impl(self) -> Implementation:
+        if self._new_impl is None:
+            raise ValueError("New implementation has not been set yet.")
+        return self._new_impl
+
+    @new_impl.setter
+    def new_impl(self, value: Implementation) -> None:
+        if self.replacement_map is None:
+            raise ValueError("Replacement map has not been set yet.")
+        self._new_impl = RemappedSubImplementation(
+            mapping=self.replacement_map,
+            graph=self.replacement.graph,
+            data=value.data["nodes"],  # type: ignore
             node_fn=Node,
         )
 
 
 class Rewriter:
-    def __init__(self):
-        self._rules = []
+    """Apply list of `RewriteRule`s to an `Implementation`.
+
+    The result is a new implementation. The original implementation is not modified.
+    The rules are applied in the order they were added.
+    For more information on how to create rules, see `RewriteRule`.
+    """
+
+    def __init__(self) -> None:
+        self._rules: list["RewriteRule"] = []
+        self._current_rule: "RewriteRule" | None = None
+        self._current_impl: Implementation | None = None
+        self._current_contexts: list[_RewritingContext] = []
 
     def add_rule(self, rule: "RewriteRule") -> Self:
         self._rules.append(rule)
@@ -155,6 +185,9 @@ class Rewriter:
         return lifted
 
     def _apply_rule(self, impl: Implementation, rule: "RewriteRule") -> Implementation:
+        self._current_rule = rule
+        self._current_impl = impl
+        self._current_contexts = []
         matches = find_all_subgraphs(
             graph=impl.graph,
             pattern=rule.pattern.graph,
@@ -162,43 +195,62 @@ class Rewriter:
                 fn=rule.node_constraint, impl=impl, pattern=rule.pattern
             ),
         )
-        replacement_maps = []
-        rewritten = impl.graph
-        for match in matches:
-            rewritten, replacement_map = rewrite(
-                replacement=rule.replacement.graph,
-                original=rewritten,
-                match=match,
-                lhs={x: x for x in rule.interface},
-                rhs={x: x for x in rule.interface},
-            )
-            replacement_maps.append(replacement_map)
+        self._prepare_contexts(matches)
+        rewritten = self._rewrite_raw_graphs()
+
         new_impl = Implementation(graph=rewritten, data=copy.deepcopy(impl.data))
         new_impl.sync_data_with_graph()
-        contexts = []
-        for match, replacement_map in zip(matches, replacement_maps):
-            context = RewritingContext(
-                replacement_map=replacement_map,
-                match=match,
-                rule=rule,
-                original_impl=impl,
-                new_impl=new_impl,
-            )
-            contexts.append(context)
 
-        for ctx in contexts:
-            for node_name in ctx.replacement.nodes:
-                if node_name not in rule.interface:
-                    try:
-                        initialize = rule.replacement.nodes[node_name].data["init"]
-                    except KeyError:
-                        raise ValueError(
-                            f"Node {node_name} in replacement does not have an initializer."
-                        )
-                    node = ctx.replacement.nodes[node_name]
-                    node.data.update(initialize(ctx.match))
+        self._set_new_impl_for_contexts(new_impl)
+        self._copy_node_data_from_replacements_to_new_impl()
 
         return new_impl
+
+    def _set_new_impl_for_contexts(self, new_impl: Implementation) -> None:
+        for ctx in self._current_contexts:
+            ctx.new_impl = new_impl
+
+    def _prepare_contexts(self, matches: list[dict[str, str]]) -> None:
+        for match in matches:
+            if self._current_rule is None or self._current_impl is None:
+                raise ValueError(
+                    "Current rule or implementation is not set. "
+                    "This should not happen, please report a bug."
+                )
+            self._current_contexts.append(
+                _RewritingContext(
+                    match=match,
+                    rule=self._current_rule,
+                    original_impl=self._current_impl,
+                )
+            )
+
+    def _rewrite_raw_graphs(self):
+        rewritten = self._current_impl.graph
+        for ctx in self._current_contexts:
+            rewritten, replacement_map = rewrite(
+                replacement=ctx.replacement.graph,
+                original=rewritten,
+                match=ctx.match,
+                lhs={x: x for x in self._current_rule.interface},
+                rhs={x: x for x in self._current_rule.interface},
+            )
+            ctx.replacement_map = replacement_map
+
+        return rewritten
+
+    def _copy_node_data_from_replacements_to_new_impl(
+        self,
+    ) -> None:
+        if self._current_rule is None:
+            raise ValueError(
+                "Current rule is not set. This should not happen, please report a bug."
+            )
+        for ctx in self._current_contexts:
+            for node_name in ctx.replacement.nodes:
+                if node_name not in self._current_rule.interface:
+                    node = ctx.replacement.nodes[node_name]
+                    ctx.new_impl.nodes[node_name].data.update(node.data)
 
     def apply(self, impl: Implementation) -> Implementation:
         for rule in self._rules:
@@ -207,12 +259,40 @@ class Rewriter:
 
 
 class RewriteRule:
+    """Specifies how `Rewriter` should create a new `Implementation` from an existing one.
+
+    A rule consists of
+
+    - a pattern to match in the original implementation. Which
+    attributes these nodes should have depends on your
+    implementation of the `node_constraint` function.
+    - a replacement to apply when the pattern is matched. The
+    `Rewriter` will use the `replacement` function to create a
+    new `Implementation`. The function receives the matched
+    part of the implementation as an argument, so you can build
+    the replacement based on the parameters found in your
+    matched pattern. The node names in this matched
+    subimplementation are remapped from the original graph to
+    the pattern graph, so you can access the data dictionary
+    using the names from the pattern graph. E.g., if the
+    pattern specifies a node `'conv'` you can acces the data of
+    the original implementation that this node corresponds to
+    using `matched.nodes['conv'].data`.
+    - a node constraint to check if a pattern node matches a
+    node in the original implementation
+    - an interface that specifies which nodes are part of the
+    pattern and of the replacement, nodes that are part of the
+    interface are neither replaced nor initialized.
+    Instead they are used to connect the pattern and the
+    replacement.
+    """
+
     def __init__(
         self,
-        pattern,
-        replacement,
-        node_constraint,
-        interface,
+        pattern: Implementation,
+        replacement: Callable[[RemappedSubImplementation], Implementation],
+        node_constraint: Callable[[Node, Node], bool],
+        interface: set[str],
     ):
         self.pattern = pattern
         self.replacement = replacement

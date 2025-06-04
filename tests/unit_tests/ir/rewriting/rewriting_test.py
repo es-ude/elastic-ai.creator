@@ -18,23 +18,22 @@ def test_replace_prelu():
         .add_edge(edge("start", "prelu"))
         .add_edge(edge("prelu", "end"))
     )
-    replacement = (
-        make_replacement()
-        .add_node(
-            node(
-                "binarize",
-                "binarize",
-                {
-                    "init": lambda ctx: {
-                        "type": "binarize",
+
+    def replacement(match):
+        return (
+            make_replacement()
+            .add_node(
+                node(
+                    "binarize",
+                    "binarize",
+                    {
                         "implementation": "binarize",
-                    }
-                },
+                    },
+                )
             )
+            .add_edge(edge("start", "binarize"))
+            .add_edge(edge("binarize", "end"))
         )
-        .add_edge(edge("start", "binarize", {"init": lambda ctx, e: {}}))
-        .add_edge(edge("binarize", "end", {"init": lambda ctx, e: {}}))
-    )
 
     def node_constraint(pattern_node: Node, original_node: Node) -> bool:
         if pattern_node.name in ("start", "end"):
@@ -89,25 +88,26 @@ def test_merge_layers():
         )
     )
 
-    def fuse_conv(match):
-        bnorm = match.nodes["bnorm"].data
-        conv1d = match.nodes["conv"].data
-        fused = copy.deepcopy(conv1d)
+    def replacement(match):
+        def fuse_conv():
+            bnorm = match.nodes["bnorm"].data
+            conv1d = match.nodes["conv"].data
+            fused = copy.deepcopy(conv1d)
 
-        def dummy_combine_bnorm_and_conv_weights(conv_weights, bnorm_weights):
-            return conv_weights + bnorm_weights
+            def dummy_combine_bnorm_and_conv_weights(conv_weights, bnorm_weights):
+                return conv_weights + bnorm_weights
 
-        fused["parameters"]["weight"] = dummy_combine_bnorm_and_conv_weights(
-            conv1d["parameters"]["weight"], bnorm["parameters"]["weight"]
+            fused["parameters"]["weight"] = dummy_combine_bnorm_and_conv_weights(
+                conv1d["parameters"]["weight"], bnorm["parameters"]["weight"]
+            )
+            return fused
+
+        return (
+            make_replacement()
+            .add_node(Node("fused_conv", fuse_conv()))
+            .add_edge(edge("start", "fused_conv"))
+            .add_edge(edge("fused_conv", "end"))
         )
-        return fused
-
-    replacement = (
-        make_replacement()
-        .add_node(node("fused_conv", type="conv1d", attributes={"init": fuse_conv}))
-        .add_edge(edge("start", "fused_conv"))
-        .add_edge(edge("fused_conv", "end"))
-    )
 
     def node_constraint(pattern_node: Node, original_node: Node) -> bool:
         if pattern_node.name in ("start", "end"):

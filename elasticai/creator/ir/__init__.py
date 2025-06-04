@@ -17,6 +17,7 @@ __all__ = [
     "GraphProtocol",
     "Rewriter",
     "RewriteRule",
+    "RemappedSubImplementation",
 ]
 from .base import (
     Attribute,
@@ -40,4 +41,4 @@ from .core import (
 from .core import (
     Graph as GraphProtocol,
 )
-from .rewriting import Rewriter, RewriteRule
+from .rewriting import RemappedSubImplementation, Rewriter, RewriteRule
