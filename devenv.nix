@@ -14,7 +14,7 @@ in {
   };
 
   packages = [
-    pkgs.git
+    pkgs.git-cliff
     pkgs.pikchr
     unstablePkgs.jujutsu
     pkgs.gtkwave # visualize wave forms from hw simulations

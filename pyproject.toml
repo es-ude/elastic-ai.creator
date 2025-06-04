@@ -60,8 +60,8 @@ lint = ["mypy>=1.13.0", "ruff>=0.9.0"]
 lsp = [
     "esbonio>=0.16.5",
     "pylsp-mypy>=0.6.9",
- "pylsp-rope>=0.1.17",
- "python-lsp-server>=1.12.0",
+    "pylsp-rope>=0.1.17",
+    "python-lsp-server>=1.12.0",
 ]
 
 [build-system]
@@ -210,3 +210,51 @@ module = [
     "elasticai.creator.base_modules.linear",
 ]
 ignore_errors = true
+
+
+[tool.git-cliff.changelog]
+body = """
+{% if version %}\
+    ## {{ version | trim_start_matches(pat="v") }} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## Unreleased
+{% endif %}\
+{% if previous %}\
+    {% if previous.commit_id and commit_id %}
+        [{{ previous.commit_id | truncate(length=7, end="") }}]({{ previous.commit_id }})...\
+            [{{ commit_id | truncate(length=7, end="") }}]({{ commit_id }})
+    {% endif %}\
+{% endif %}\
+{% for group, commits in commits | unique(attribute="message")  | group_by(attribute="group") %}
+    ### {{ group | upper_first }}
+    {% for commit in commits %}
+        - {{ commit.message | split(pat="\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}]( $REPO/commit/{{ commit.id }})) - {{ commit.author }}\
+          {% for footer in commit.footers -%}
+            {% if footer.token == "BREAKING CHANGE" %}\
+            , {{ footer.token }}{{ footer.separator }}{{ footer.value }}\
+            {% endif %}\
+          {% endfor %}\
+    {% endfor %}
+{% endfor %}\n
+"""
+
+postprocessors = [
+    # Replace the placeholder `<REPO>` with a URL.
+    { pattern = '\$REPO', replace = "https://github.com/es-ude/elastic-ai.creator" }, # replace repository URL
+]
+
+
+[tool.git-cliff.git]
+conventional_commits = true
+filter_unconventional = true
+commit_preprocessors = [
+    { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/es-ude/elastic-ai.creator/issues/${1}))" },                            # replace #NR by link to issue
+    { pattern = "([ \\n])(([a-f0-9]{7})[a-f0-9]*)", replace = "${1}commit # [${3}](https://github.com/es-ude/elastic-ai.creator/commit/${2})" }, # replace commit hash by link to commit
+]
+commit_parsers = [
+    { message = "^wip", skip = true }, # ignore commits of type wip
+]
+
+[tool.git-cliff.bump]
+breaking_always_bump_major = false
+features_always_bump_minor = true
