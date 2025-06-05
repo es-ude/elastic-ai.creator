@@ -24,6 +24,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         super().__init__()
 
         d_model = kwargs.get("d_model")
+        ffn_dim = kwargs.get("ffn_dim")
         window_size = kwargs.get("window_size")
         nhead = kwargs.get("nhead")
 
@@ -75,6 +76,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 name=ffn_name,
                 num_dimensions=window_size,
                 d_model=d_model,
+                ffn_dim=ffn_dim,
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
@@ -84,6 +86,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 name=ffn_name,
                 num_dimensions=window_size,
                 d_model=d_model,
+                ffn_dim=ffn_dim,
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,

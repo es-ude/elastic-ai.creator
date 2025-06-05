@@ -20,6 +20,7 @@ class Encoder(nn.Module):
 
         window_size = kwargs.get("window_size")
         d_model = kwargs.get("d_model")
+        ffn_dim = kwargs.get("ffn_dim")
         nhead = kwargs.get("nhead")
         num_enc_layers = kwargs.get("num_enc_layers")
 
@@ -37,6 +38,7 @@ class Encoder(nn.Module):
                     name=f"encoderlayer_{i}",
                     enable_fused_ffn=enable_fused_ffn,
                     d_model=d_model,
+                    ffn_dim=ffn_dim if ffn_dim is not None else d_model * 4,
                     nhead=nhead,
                     window_size=window_size,
                     quant_bits=self.quant_bits,

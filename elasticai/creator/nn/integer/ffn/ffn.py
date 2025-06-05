@@ -19,6 +19,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         super().__init__()
 
         d_model = kwargs.get("d_model")
+        ffn_dim = kwargs.get("ffn_dim")
         num_dimensions = kwargs.get("num_dimensions")
 
         self.name = kwargs.get("name")
@@ -29,7 +30,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.fc1 = Linear(
             name=self.name + "_fc1",
             in_features=d_model,
-            out_features=d_model * 4,
+            out_features=ffn_dim,
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
@@ -46,7 +47,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
 
         self.fc2 = Linear(
             name=self.name + "_fc2",
-            in_features=d_model * 4,
+            in_features=ffn_dim,
             out_features=d_model,
             num_dimensions=num_dimensions,
             bias=True,
