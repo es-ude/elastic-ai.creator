@@ -84,9 +84,6 @@ class ScaledDotProductAttention(Design):
             file_name="scaleddotproductattention.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                matmul_score_name=self._matrix_multi_score.name,
-                softmax_name=self._softmax.name,
-                matmul_att_name=self._matrix_multi_att.name,
                 data_width=str(self._data_width),
                 x_1_addr_width=str(self._x_1_addr_width),
                 x_2_addr_width=str(self._x_2_addr_width),

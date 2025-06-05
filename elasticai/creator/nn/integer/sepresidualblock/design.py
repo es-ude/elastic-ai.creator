@@ -52,11 +52,7 @@ class SepResidualBlock(Design):
         self.pointconv1dbn_1_deisgn = self._pointconv1dbn_1.create_design(
             name=self._pointconv1dbn_1.name
         )
-        if len(self._shortcut) > 0:
-            self.shortcut_design = [
-                submodule.create_design(name=submodule.name)
-                for submodule in self._shortcut
-            ]
+        self.shortcut_deisgn = self._shortcut.create_design(name=self._shortcut.name)
         self.add_deisgn = self._add.create_design(name=self._add.name)
         self.relu_deisgn = self._relu.create_design(name=self._relu.name)
 
@@ -70,58 +66,62 @@ class SepResidualBlock(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        # self.depthconv1d_0_deisgn.save_to(
+        #     destination.create_subpath(self._depthconv1d_0.name)
+        # )
+        # self.pointconv1dbn_0_deisgn.save_to(
+        #     destination.create_subpath(self._pointconv1dbn_0.name)
+        # )
+        # self.pointconv1dbn_0_relu_deisgn.save_to(
+        #     destination.create_subpath(self._pointconv1dbn_0_relu.name)
+        # )
+        # self.depthconv1d_1_deisgn.save_to(
+        #     destination.create_subpath(self._depthconv1d_1.name)
+        # )
+        # self.pointconv1dbn_1_deisgn.save_to(
+        #     destination.create_subpath(self._pointconv1dbn_1.name)
+        # )
+        # self.shortcut_deisgn.save_to(destination.create_subpath(self._shortcut.name))
+        # self.add_deisgn.save_to(destination.create_subpath(self._add.name))
+        # self.relu_deisgn.save_to(destination.create_subpath(self._relu.name))
+
         self.depthconv1d_0_deisgn.save_to(destination)
         self.pointconv1dbn_0_deisgn.save_to(destination)
         self.pointconv1dbn_0_relu_deisgn.save_to(destination)
         self.depthconv1d_1_deisgn.save_to(destination)
         self.pointconv1dbn_1_deisgn.save_to(destination)
-        if len(self._shortcut) > 0:
-            for design in self.shortcut_design:
-                design.save_to(destination)
+        self.shortcut_deisgn.save_to(destination)
         self.add_deisgn.save_to(destination)
         self.relu_deisgn.save_to(destination)
 
-        template_parameters = dict(
-            name=self.name,
-            data_width=str(self._data_width),
-            depthconv1d_0_x_addr_width=str(self.depthconv1d_0_deisgn._x_addr_width),
-            depthconv1d_0_y_addr_width=str(self.depthconv1d_0_deisgn._y_addr_width),
-            pointconv1dbn_0_x_addr_width=str(self.pointconv1dbn_0_deisgn._x_addr_width),
-            pointconv1dbn_0_y_addr_width=str(self.pointconv1dbn_0_deisgn._y_addr_width),
-            depthconv1d_1_x_addr_width=str(self.depthconv1d_1_deisgn._x_addr_width),
-            depthconv1d_1_y_addr_width=str(self.depthconv1d_1_deisgn._y_addr_width),
-            pointconv1dbn_1_x_addr_width=str(self.pointconv1dbn_1_deisgn._x_addr_width),
-            pointconv1dbn_1_y_addr_width=str(self.pointconv1dbn_1_deisgn._y_addr_width),
-            add_x_addr_width=str(self.add_deisgn._x_addr_width),
-            add_y_addr_width=str(self.add_deisgn._y_addr_width),
-            work_library_name=self._work_library_name,
-        )
-
-        template_file_name = "sepresidualblock_no_shortcut.tpl.vhd"
-
-        if hasattr(self, "shortcut_design"):
-            # TODO: support multiple shortcut with more submodules
-            assert (
-                len(self.shortcut_design) == 2
-            ), "Only shortcut with 2 submodules is supported"
-            template_parameters["shortcut_depthconv1d_x_addr_width"] = str(
-                self.shortcut_design[0]._x_addr_width
-            )
-            template_parameters["shortcut_depthconv1d_y_addr_width"] = str(
-                self.shortcut_design[0]._y_addr_width
-            )
-            template_parameters["shortcut_pointconv1dbn_x_addr_width"] = str(
-                self.shortcut_design[1]._x_addr_width
-            )
-            template_parameters["shortcut_pointconv1dbn_y_addr_width"] = str(
-                self.shortcut_design[1]._y_addr_width
-            )
-            template_file_name = "sepresidualblock.tpl.vhd"
-
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
-            file_name=template_file_name,
-            parameters=template_parameters,
+            file_name="sepresidualblock.tpl.vhd",
+            parameters=dict(
+                name=self.name,
+                data_width=str(self._data_width),
+                depthconv1d_0_x_addr_width=str(self.depthconv1d_0_deisgn._x_addr_width),
+                depthconv1d_0_y_addr_width=str(self.depthconv1d_0_deisgn._y_addr_width),
+                pointconv1dbn_0_x_addr_width=str(
+                    self.pointconv1dbn_0_deisgn._x_addr_width
+                ),
+                pointconv1dbn_0_y_addr_width=str(
+                    self.pointconv1dbn_0_deisgn._y_addr_width
+                ),
+                depthconv1d_1_x_addr_width=str(self.depthconv1d_1_deisgn._x_addr_width),
+                depthconv1d_1_y_addr_width=str(self.depthconv1d_1_deisgn._y_addr_width),
+                pointconv1dbn_1_x_addr_width=str(
+                    self.pointconv1dbn_1_deisgn._x_addr_width
+                ),
+                pointconv1dbn_1_y_addr_width=str(
+                    self.pointconv1dbn_1_deisgn._y_addr_width
+                ),
+                shortcut_conv1d_x_addr_width=str(self.shortcut_deisgn._x_addr_width),
+                shortcut_conv1d_y_addr_width=str(self.shortcut_deisgn._y_addr_width),
+                add_x_addr_width=str(self.add_deisgn._x_addr_width),
+                add_y_addr_width=str(self.add_deisgn._y_addr_width),
+                work_library_name=self._work_library_name,
+            ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 

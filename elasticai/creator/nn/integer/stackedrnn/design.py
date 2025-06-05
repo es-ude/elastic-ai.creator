@@ -19,6 +19,7 @@ class StackedRNN(Design):
         work_library_name: str,
     ):
         super().__init__(name=name)
+        print("name", name)
         self._data_width = data_width
         self._work_library_name = work_library_name
 

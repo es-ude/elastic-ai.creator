@@ -97,7 +97,7 @@ begin
     output_linear_x <= inner_attn_y;
     y <= output_linear_y;
     done <= output_linear_done;
-    inst_${name}_q_linear : entity ${work_library_name}.${q_linear_name}(rtl)
+    inst_${name}_q_linear : entity ${work_library_name}.${name}_q_linear(rtl)
     port map (
         enable => q_linear_enable,
         clock => q_linear_clock,
@@ -107,7 +107,7 @@ begin
         y => q_linear_y,
         done => q_linear_done
     );
-    inst_${name}_k_linear : entity ${work_library_name}.${k_linear_name}(rtl)
+    inst_${name}_k_linear : entity ${work_library_name}.${name}_k_linear(rtl)
     port map (
         enable => k_linear_enable,
         clock => k_linear_clock,
@@ -117,7 +117,7 @@ begin
         y => k_linear_y,
         done => k_linear_done
     );
-    inst_${name}_v_linear : entity ${work_library_name}.${v_linear_name}(rtl)
+    inst_${name}_v_linear : entity ${work_library_name}.${name}_v_linear(rtl)
     port map (
         enable => v_linear_enable,
         clock => v_linear_clock,
@@ -127,7 +127,7 @@ begin
         y => v_linear_y,
         done => v_linear_done
     );
-    inst_${name}_inner_attn : entity ${work_library_name}.${inner_attn_module_name}(rtl)
+    inst_${name}_inner_attn : entity ${work_library_name}.${name}_inner_attn(rtl)
     port map (
         enable => inner_attn_enable,
         clock => inner_attn_clock,
@@ -141,7 +141,7 @@ begin
         y => inner_attn_y,
         done => inner_attn_done
     );
-    inst_${name}_output_linear : entity ${work_library_name}.${output_linear_name}(rtl)
+    inst_${name}_output_linear : entity ${work_library_name}.${name}_output_linear(rtl)
     port map (
         enable => output_linear_enable,
         clock => output_linear_clock,

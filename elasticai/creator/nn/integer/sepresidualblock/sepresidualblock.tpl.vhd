@@ -14,10 +14,8 @@ entity ${name} is
         DEPTHCONV1D_1_Y_ADDR_WIDTH : integer := ${depthconv1d_1_y_addr_width};
         POINTCONV1DBN_1_X_ADDR_WIDTH : integer := ${pointconv1dbn_1_x_addr_width};
         POINTCONV1DBN_1_Y_ADDR_WIDTH : integer := ${pointconv1dbn_1_y_addr_width};
-        SHORTCUT_DEPTHCONV1D_X_ADDR_WIDTH : integer := ${shortcut_depthconv1d_x_addr_width};
-        SHORTCUT_DEPTHCONV1D_Y_ADDR_WIDTH : integer := ${shortcut_depthconv1d_y_addr_width};
-        SHORTCUT_POINTCONV1DBN_X_ADDR_WIDTH : integer := ${shortcut_pointconv1dbn_x_addr_width};
-        SHORTCUT_POINTCONV1DBN_Y_ADDR_WIDTH : integer := ${shortcut_pointconv1dbn_y_addr_width};
+        SHORTCUT_CONV1D_X_ADDR_WIDTH : integer := ${shortcut_conv1d_x_addr_width};
+        SHORTCUT_CONV1D_Y_ADDR_WIDTH : integer := ${shortcut_conv1d_y_addr_width};
         ADD_X_ADDR_WIDTH : integer := ${add_x_addr_width};
         ADD_Y_ADDR_WIDTH : integer := ${add_y_addr_width}
     ) ;
@@ -61,7 +59,6 @@ architecture rtl of ${name} is
     signal pointconv1dbn_0_relu_clock : std_logic;
     signal pointconv1dbn_0_relu_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal pointconv1dbn_0_relu_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal pointconv1dbn_0_relu_done : std_logic;
     signal depthconv1d_1_enable : std_logic;
     signal depthconv1d_1_clock : std_logic;
     signal depthconv1d_1_x_address : std_logic_vector(DEPTHCONV1D_1_X_ADDR_WIDTH - 1 downto 0);
@@ -76,20 +73,13 @@ architecture rtl of ${name} is
     signal pointconv1dbn_1_y_address : std_logic_vector(POINTCONV1DBN_1_Y_ADDR_WIDTH - 1 downto 0);
     signal pointconv1dbn_1_y: std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal pointconv1dbn_1_done : std_logic;
-    signal shortcut_depthconv1d_enable : std_logic;
-    signal shortcut_depthconv1d_clock : std_logic;
-    signal shortcut_depthconv1d_x_address : std_logic_vector(SHORTCUT_DEPTHCONV1D_X_ADDR_WIDTH - 1 downto 0);
-    signal shortcut_depthconv1d_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_depthconv1d_y_address : std_logic_vector(SHORTCUT_DEPTHCONV1D_Y_ADDR_WIDTH - 1 downto 0);
-    signal shortcut_depthconv1d_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_depthconv1d_done : std_logic;
-    signal shortcut_pointconv1dbn_enable : std_logic;
-    signal shortcut_pointconv1dbn_clock : std_logic;
-    signal shortcut_pointconv1dbn_x_address : std_logic_vector(SHORTCUT_POINTCONV1DBN_X_ADDR_WIDTH - 1 downto 0);
-    signal shortcut_pointconv1dbn_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_pointconv1dbn_y_address : std_logic_vector(SHORTCUT_POINTCONV1DBN_Y_ADDR_WIDTH - 1 downto 0);
-    signal shortcut_pointconv1dbn_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal shortcut_pointconv1dbn_done : std_logic;
+    signal shortcut_conv1d_enable : std_logic;
+    signal shortcut_conv1d_clock : std_logic;
+    signal shortcut_conv1d_x_address : std_logic_vector(SHORTCUT_CONV1D_X_ADDR_WIDTH - 1 downto 0);
+    signal shortcut_conv1d_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal shortcut_conv1d_y_address : std_logic_vector(SHORTCUT_CONV1D_Y_ADDR_WIDTH - 1 downto 0);
+    signal shortcut_conv1d_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal shortcut_conv1d_done : std_logic;
     signal add_enable : std_logic;
     signal add_clock : std_logic;
     signal add_x_1_address : std_logic_vector(ADD_X_ADDR_WIDTH - 1 downto 0);
@@ -105,40 +95,36 @@ architecture rtl of ${name} is
     signal relu_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     begin
     depthconv1d_0_enable <= enable;
-    shortcut_depthconv1d_enable <= depthconv1d_0_done;
+    shortcut_conv1d_enable <= depthconv1d_0_done;
     pointconv1dbn_0_enable <= depthconv1d_0_done;
-    shortcut_pointconv1dbn_enable <= shortcut_depthconv1d_done;
     pointconv1dbn_0_relu_enable <= pointconv1dbn_0_done;
     depthconv1d_1_enable <= pointconv1dbn_0_done;
     pointconv1dbn_1_enable <= depthconv1d_1_done;
-    add_enable <= pointconv1dbn_1_done and shortcut_pointconv1dbn_done;
+    add_enable <= pointconv1dbn_1_done and shortcut_conv1d_done;
     relu_enable <= add_done;
     done <= add_done;
     depthconv1d_0_clock <= clock;
-    shortcut_depthconv1d_clock <= clock;
-    shortcut_pointconv1dbn_clock <= clock;
+    shortcut_conv1d_clock <= clock;
     pointconv1dbn_0_clock <= clock;
     pointconv1dbn_0_relu_clock <= clock;
     depthconv1d_1_clock <= clock;
     pointconv1dbn_1_clock <= clock;
     add_clock <= clock;
     relu_clock <= clock;
-    x_address <= shortcut_depthconv1d_x_address when depthconv1d_0_done='1' else depthconv1d_0_x_address;
+    x_address <= shortcut_conv1d_x_address when depthconv1d_0_done='1' else depthconv1d_0_x_address;
     depthconv1d_0_y_address <= pointconv1dbn_0_x_address;
     pointconv1dbn_0_y_address <= depthconv1d_1_x_address;
     depthconv1d_1_y_address <= pointconv1dbn_1_x_address;
-    shortcut_depthconv1d_y_address <= shortcut_pointconv1dbn_x_address;
-    shortcut_pointconv1dbn_y_address <= add_x_1_address;
+    shortcut_conv1d_y_address <= add_x_1_address;
     pointconv1dbn_1_y_address <= add_x_2_address;
     add_y_address <= y_address;
     depthconv1d_0_x <= x;
-    shortcut_depthconv1d_x <= x;
-    shortcut_pointconv1dbn_x <= shortcut_depthconv1d_y;
+    shortcut_conv1d_x <= x;
     pointconv1dbn_0_x <= depthconv1d_0_y;
     pointconv1dbn_0_relu_x <= pointconv1dbn_0_y;
     depthconv1d_1_x <= pointconv1dbn_0_relu_y;
     pointconv1dbn_1_x <= depthconv1d_1_y;
-    add_x_1 <= shortcut_depthconv1d_y;
+    add_x_1 <= shortcut_conv1d_y;
     add_x_2 <= pointconv1dbn_1_y;
     relu_x <= add_y;
     y <= relu_y;
@@ -152,25 +138,15 @@ architecture rtl of ${name} is
         y => depthconv1d_0_y,
         done  => depthconv1d_0_done
     );
-    inst_${name}_shortcut_depthconv1d: entity ${work_library_name}.${name}_shortcut_depthconv1d_0(rtl)
+    inst_${name}_shortcut_conv1d: entity ${work_library_name}.${name}_shortcut_conv1d(rtl)
     port map (
-        enable => shortcut_depthconv1d_enable,
-        clock  => shortcut_depthconv1d_clock,
-        x_address  => shortcut_depthconv1d_x_address,
-        y_address  => shortcut_depthconv1d_y_address,
-        x  => shortcut_depthconv1d_x,
-        y => shortcut_depthconv1d_y,
-        done  => shortcut_depthconv1d_done
-    );
-    inst_${name}_shortcut_pointconv1dbn: entity ${work_library_name}.${name}_shortcut_pointconv1dbn_0(rtl)
-    port map (
-        enable => shortcut_pointconv1dbn_enable,
-        clock  => shortcut_pointconv1dbn_clock,
-        x_address  => shortcut_pointconv1dbn_x_address,
-        y_address  => shortcut_pointconv1dbn_y_address,
-        x  => shortcut_pointconv1dbn_x,
-        y => shortcut_pointconv1dbn_y,
-        done  => shortcut_pointconv1dbn_done
+        enable => shortcut_conv1d_enable,
+        clock  => shortcut_conv1d_clock,
+        x_address  => shortcut_conv1d_x_address,
+        y_address  => shortcut_conv1d_y_address,
+        x  => shortcut_conv1d_x,
+        y => shortcut_conv1d_y,
+        done  => shortcut_conv1d_done
     );
     inst_${name}_pointconv1dbn_0: entity ${work_library_name}.${name}_pointconv1dbn_0(rtl)
     port map (

@@ -68,7 +68,7 @@ architecture rtl of ${name} is
     fc2_x <= relu_y;
     y <= fc2_y;
     done <= fc2_done;
-    inst_${name}_fc1: entity ${work_library_name}.${fc1_name}(rtl)
+    inst_${name}_fc1: entity ${work_library_name}.${name}_fc1(rtl)
     port map (
         enable => fc1_enable,
         clock  => fc1_clock,
@@ -78,14 +78,14 @@ architecture rtl of ${name} is
         y => fc1_y,
         done  => fc1_done
     );
-    inst_${name}_relu: entity ${work_library_name}.${relu_name}(rtl)
+    inst_${name}_relu: entity ${work_library_name}.${name}_relu(rtl)
     port map (
         enable => relu_enable,
         clock  => relu_clock,
         x  => relu_x,
         y => relu_y
     );
-    inst_${name}_fc2: entity ${work_library_name}.${fc2_name}(rtl)
+    inst_${name}_fc2: entity ${work_library_name}.${name}_fc2(rtl)
     port map (
         enable => fc2_enable,
         clock  => fc2_clock,

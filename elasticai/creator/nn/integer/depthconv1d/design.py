@@ -7,9 +7,11 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.math_operations import get_padded_count
+from elasticai.creator.nn.integer.math_operations import (
+    get_padded_count,
+    get_vhdl_templates,
+)
 from elasticai.creator.nn.integer.ram.design import Ram
-from elasticai.creator.nn.integer.vhdl_test_automation import get_vhdl_templates
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
@@ -22,7 +24,6 @@ class DepthConv1d(Design):
         name: str,
         data_width: int,
         in_channels: int,
-        out_channels: int,
         seq_len: int,
         padding: tuple[int, int] or str,
         padding_len: int,
@@ -42,7 +43,6 @@ class DepthConv1d(Design):
 
         self._data_width = data_width
         self._in_channels = in_channels
-        self._out_channels = out_channels
         self._seq_len = seq_len
         self._kernel_size = kernel_size
         self._padding = padding
@@ -60,9 +60,7 @@ class DepthConv1d(Design):
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
-        self._m_q_data_width = (
-            int(np.ceil(np.log2(self._m_q))) + 1 if self._m_q != 0 else 1
-        )
+        self._m_q_data_width = int(np.ceil(np.log2(self._m_q))) + 1
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
@@ -71,7 +69,7 @@ class DepthConv1d(Design):
             padding=self._padding,
             kernel_size=self._kernel_size,
             in_channels=self._in_channels,
-            out_channels=self._out_channels,
+            out_channels=self._in_channels,
             seq_len=self._seq_len,
         )
 
@@ -96,7 +94,6 @@ class DepthConv1d(Design):
             y_addr_width=str(self._y_addr_width),
             data_width=str(self._data_width),
             in_channels=str(self._in_channels),
-            out_channels=str(self._out_channels),
             seq_len=str(self._seq_len),
             kernel_size=str(self._kernel_size),
             m_q=str(self._m_q),
@@ -151,7 +148,6 @@ class DepthConv1d(Design):
                 y_addr_width=str(self._y_addr_width),
                 data_width=str(self._data_width),
                 in_channels=str(self._in_channels),
-                out_channels=str(self._out_channels),
                 seq_len=str(self._seq_len),
                 kernel_size=str(self._kernel_size),
                 work_library_name=self._work_library_name,

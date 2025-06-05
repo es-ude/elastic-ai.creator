@@ -29,13 +29,10 @@ class Encoder(nn.Module):
         self.do_int_forward = kwargs.get("do_int_forward")
         device = kwargs.get("device")
 
-        enable_fused_ffn = kwargs.get("enable_fused_ffn", False)
-
         self.encoder_layers = nn.ModuleList(
             [
                 EncoderLayer(
                     name=f"encoderlayer_{i}",
-                    enable_fused_ffn=enable_fused_ffn,
                     d_model=d_model,
                     nhead=nhead,
                     window_size=window_size,

@@ -120,7 +120,7 @@ begin
     ffn_add_x_2 <= ffn_y;
     ffn_norm_x  <= ffn_add_y;
     y <= ffn_norm_y;
-    inst_${name}_mha : entity ${work_library_name}.${mha_name}(rtl)
+    inst_${name}_mha : entity ${work_library_name}.${name}_mha(rtl)
     port map (
         enable => mha_enable,
         clock => mha_clock,
@@ -134,7 +134,7 @@ begin
         y => mha_y,
         done => mha_done
     );
-    inst_${name}_mha_add : entity ${work_library_name}.${mha_add_name}(rtl)
+    inst_${name}_mha_add : entity ${work_library_name}.${name}_mha_add(rtl)
     port map (
         enable => mha_add_enable,
         clock => mha_add_clock,
@@ -146,7 +146,7 @@ begin
         y => mha_add_y,
         done => mha_add_done
     );
-    inst_${name}_mha_norm : entity ${work_library_name}.${mha_norm_name}(rtl)
+    inst_${name}_mha_norm : entity ${work_library_name}.${name}_mha_norm(rtl)
     port map (
         enable => mha_norm_enable,
         clock => mha_norm_clock,
@@ -156,7 +156,7 @@ begin
         y => mha_norm_y,
         done => mha_norm_done
     );
-    inst_${name}_ffn : entity ${work_library_name}.${ffn_name}(rtl)
+    inst_${name}_ffn : entity ${work_library_name}.${name}_ffn(rtl)
     port map (
         enable => ffn_enable,
         clock => ffn_clock,
@@ -166,7 +166,7 @@ begin
         y => ffn_y,
         done => ffn_done
     );
-    inst_${name}_ffn_add : entity ${work_library_name}.${ffn_add_name}(rtl)
+    inst_${name}_ffn_add : entity ${work_library_name}.${name}_ffn_add(rtl)
     port map (
         enable => ffn_add_enable,
         clock => ffn_add_clock,
@@ -178,7 +178,7 @@ begin
         y => ffn_add_y,
         done => ffn_add_done
     );
-    inst_${name}_ffn_norm : entity ${work_library_name}.${ffn_norm_name}(rtl)
+    inst_${name}_ffn_norm : entity ${work_library_name}.${name}_ffn_norm(rtl)
     port map (
         enable => ffn_norm_enable,
         clock => ffn_norm_clock,

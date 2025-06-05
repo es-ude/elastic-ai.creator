@@ -75,12 +75,7 @@ class MHA(Design):
             file_name="mha.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                q_linear_name=self._q_linear.name,
-                k_linear_name=self._k_linear.name,
-                v_linear_name=self._v_linear.name,
                 data_width=str(self._data_width),
-                inner_attn_module_name=self._inner_attn_module.name,
-                output_linear_name=self._output_linear.name,
                 q_linear_x_addr_width=str(self.q_linear_design._x_addr_width),
                 k_linear_x_addr_width=str(self.k_linear_design._x_addr_width),
                 v_linear_x_addr_width=str(self.v_linear_design._x_addr_width),

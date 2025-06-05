@@ -11,7 +11,6 @@ entity ${name}_tb is
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         DATA_WIDTH : integer := ${data_width};
         IN_CHANNELS : integer := ${in_channels};
-        OUT_CHANNELS : integer := ${out_channels};
         IN_SEQ_LEN : integer := ${seq_len};
         KERNEL_SIZE : integer := ${kernel_size}
     );
@@ -104,7 +103,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<OUT_CHANNELS*OUT_SEQ_LEN loop
+            while output_rd_cnt<IN_CHANNELS*OUT_SEQ_LEN loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));

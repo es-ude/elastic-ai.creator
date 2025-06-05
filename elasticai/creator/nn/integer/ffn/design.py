@@ -50,9 +50,6 @@ class FFN(Design):
             file_name="ffn.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                fc1_name=self._fc1.name,
-                relu_name=self._relu.name,
-                fc2_name=self._fc2.name,
                 data_width=str(self._data_width),
                 x_addr_width=str(self.fc1_design._x_addr_width),
                 y_addr_width=str(self.fc2_design._y_addr_width),
@@ -75,7 +72,7 @@ class FFN(Design):
                 y_addr_width=str(self.fc2_design._y_addr_width),
                 num_dimensions=str(self.fc1_design._num_dimensions),
                 in_features=str(self.fc1_design._in_features),
-                out_features=str(self.fc2_design._out_features),
+                out_features=str(self.fc1_design._out_features),
                 work_library_name=self._work_library_name,
             ),
         )

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
+from elasticai.creator.nn.integer.conv1d import Conv1d
 from elasticai.creator.nn.integer.depthconv1d import DepthConv1d
 from elasticai.creator.nn.integer.pointconv1dbn import PointConv1dBN
 from elasticai.creator.nn.integer.quant_utils import (
@@ -32,20 +33,19 @@ class SepResidualBlock(nn.Module):
         device = kwargs.get("device")
 
         self.depthconv1d_0 = DepthConv1d(
-            in_channels=in_channels,
-            out_channels=in_channels,
-            kernel_size=kernel_size,
+            in_channels=kwargs.get("in_channels"),
+            kernel_size=kwargs.get("kernel_size"),
             seq_len=seq_len,
             padding=1,
-            groups=in_channels,
+            groups=kwargs.get("in_channels"),
             name=self.name + "_depthconv1d_0",
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.pointconv1dbn_0 = PointConv1dBN(
-            in_channels=in_channels,
-            out_channels=out_channels,
+            in_channels=kwargs.get("in_channels"),
+            out_channels=kwargs.get("out_channels"),
             seq_len=seq_len,
             name=self.name + "_pointconv1dbn_0",
             quant_bits=self.quant_bits,
@@ -61,11 +61,10 @@ class SepResidualBlock(nn.Module):
 
         self.depthconv1d_1 = DepthConv1d(
             in_channels=out_channels,
-            out_channels=out_channels,
             kernel_size=kernel_size,
             seq_len=seq_len,
             padding=1,
-            groups=in_channels,
+            groups=kwargs.get("in_channels"),
             name=self.name + "_depthconv1d_1",
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -81,33 +80,17 @@ class SepResidualBlock(nn.Module):
             device=device,
         )
 
-        self.shortcut = nn.ModuleList()
-        if in_channels != out_channels:
-            self.shortcut.append(
-                DepthConv1d(
-                    in_channels=in_channels,
-                    out_channels=in_channels,
-                    kernel_size=kernel_size,
-                    seq_len=seq_len,
-                    padding=1,
-                    groups=in_channels,
-                    name=self.name + "_shortcut_depthconv1d_0",
-                    quant_bits=self.quant_bits,
-                    quant_data_dir=self.quant_data_dir,
-                    device=device,
-                )
-            )
-            self.shortcut.append(
-                PointConv1dBN(
-                    in_channels=in_channels,
-                    out_channels=out_channels,
-                    seq_len=seq_len,
-                    name=self.name + "_shortcut_pointconv1dbn_0",
-                    quant_bits=self.quant_bits,
-                    quant_data_dir=self.quant_data_dir,
-                    device=device,
-                )
-            )
+        self.shortcut = Conv1d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            seq_len=seq_len,
+            kernel_size=1,
+            padding="same",
+            name=self.name + "_shortcut_conv1d",
+            quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
+            device=device,
+        )
 
         self.add = Addition(
             name=self.name + "_add",
@@ -155,10 +138,7 @@ class SepResidualBlock(nn.Module):
         self.depthconv1d_1.precompute()
         self.pointconv1dbn_1.precompute()
 
-        if len(self.shortcut) > 0:
-            for submodule in self.shortcut:
-                if hasattr(submodule, "precompute"):
-                    submodule.precompute()
+        self.shortcut.precompute()
         self.add.precompute()
 
         self.precomputed = True
@@ -178,12 +158,7 @@ class SepResidualBlock(nn.Module):
         q_outputs = self.depthconv1d_1.int_forward(q_outputs)
         q_outputs = self.pointconv1dbn_1.int_forward(q_outputs)
 
-        if len(self.shortcut) > 0:
-            for submodule in self.shortcut:
-                q_shortcut_outputs = submodule.int_forward(q_residual)
-                q_residual = q_shortcut_outputs
-        else:
-            q_shortcut_outputs = q_residual
+        q_shortcut_outputs = self.shortcut.int_forward(q_residual)
 
         q_add_outputs = self.add.int_forward(
             q_inputs1=q_shortcut_outputs, q_inputs2=q_outputs
@@ -225,27 +200,14 @@ class SepResidualBlock(nn.Module):
             inputs=outputs, given_inputs_QParams=self.depthconv1d_1.outputs_QParams
         )
 
-        shortcut_given_inputs_QParams = self.inputs_QParams
-        shortcut_inputs = residual
-        if len(self.shortcut) > 0:
-            for submodule in self.shortcut:
-                shortcut_outputs = submodule.forward(
-                    inputs=shortcut_inputs,
-                    given_inputs_QParams=shortcut_given_inputs_QParams,
-                )
-                shortcut_inputs = shortcut_outputs
-                shortcut_given_inputs_QParams = submodule.outputs_QParams
-        else:
-            shortcut_outputs = shortcut_inputs
+        shortcut_outputs = self.shortcut.forward(
+            inputs=residual, given_inputs_QParams=self.inputs_QParams
+        )
 
         add_outputs = self.add.forward(
             inputs1=shortcut_outputs,
             inputs2=outputs,
-            given_inputs1_QParams=(
-                self.shortcut[-1].outputs_QParams
-                if len(self.shortcut) > 0
-                else self.inputs_QParams
-            ),
+            given_inputs1_QParams=self.shortcut.outputs_QParams,
             given_inputs2_QParams=self.pointconv1dbn_1.outputs_QParams,
         )
 

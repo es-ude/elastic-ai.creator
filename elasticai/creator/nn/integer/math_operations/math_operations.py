@@ -60,8 +60,6 @@ class MathOperations:
         tmp = F.linear(x, w)
 
         tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
-        # TODO: should be dynamic, need to be solved in the future
-        tmp_quant_bits = tmp_quant_bits + 1
         self.clamp_result(tmp, tmp_quant_bits)
 
         if b is not None:

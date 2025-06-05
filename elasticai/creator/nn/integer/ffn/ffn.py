@@ -75,7 +75,6 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         )
 
     def precompute(self):
-        assert not self.training, "int_forward should be called in eval mode"
         self.fc1.precompute()
         self.fc2.precompute()
         self.precomputed = True

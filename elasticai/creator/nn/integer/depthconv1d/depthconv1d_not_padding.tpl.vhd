@@ -9,7 +9,6 @@ entity ${name} is
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         DATA_WIDTH : integer := ${data_width};
         IN_CHANNELS : integer := ${in_channels};
-        OUT_CHANNELS : integer := ${out_channels};
         IN_SEQ_LEN : integer := ${seq_len};
         KERNEL_SIZE : integer := ${kernel_size};
         M_Q : integer := ${m_q};
@@ -130,7 +129,7 @@ begin
         variable cnt_in_kernel : integer range 0 to KERNEL_SIZE := 0;
         variable cnt_in_row : integer range 0 to IN_SEQ_LEN := 0;
         variable cnt_channel : integer range 0 to IN_CHANNELS := 0;
-        variable y_idx : integer range 0 to OUT_CHANNELS * OUT_SEQ_LEN := 0;
+        variable y_idx : integer range 0 to IN_CHANNELS * OUT_SEQ_LEN := 0;
         variable var_b_add_z_b : integer range -2**(2*(DATA_WIDTH+1)-1) to 2**(2*(DATA_WIDTH+1)-1)-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
     begin
