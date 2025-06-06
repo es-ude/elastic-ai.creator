@@ -151,3 +151,71 @@ def make_replacement() -> Implementation:
         .add_node(node("start", "interface"))
         .add_node(node("end", "interface"))
     )
+
+
+def test_remove_layers_from_matches_with_overlapping_interface_nodes():
+    rewrite = Rewriter()
+    impl = (
+        make_network()
+        .add_nodes(
+            (
+                node("conv0", "conv1d"),
+                node("bnorm0", "batchnorm1d"),
+                node("activation0", "relu"),
+                node("conv1", "conv1d"),
+                node("bnorm1", "batchnorm1d"),
+                node("activation1", "relu"),
+            )
+        )
+        .add_edges(
+            (
+                edge("input", "conv0"),
+                edge("conv0", "bnorm0"),
+                edge("bnorm0", "activation0"),
+                edge("activation0", "conv1"),
+                edge("conv1", "bnorm1"),
+                edge("bnorm1", "activation1"),
+                edge("activation1", "output"),
+            )
+        )
+    )
+    pattern = (
+        make_pattern()
+        .add_nodes(
+            (node("conv", "conv1d"), node("bnorm", "batchnorm1d"), node("act", "relu"))
+        )
+        .add_edges(
+            (
+                edge("start", "conv"),
+                edge("conv", "bnorm"),
+                edge("bnorm", "act"),
+                edge("act", "end"),
+            )
+        )
+    )
+
+    def replacement(match):
+        return (
+            make_replacement()
+            .add_node(node("fused_conv", "conv1d"))
+            .add_node(node("activation", "relu"))
+            .add_edge(edge("start", "fused_conv"))
+            .add_edge(edge("fused_conv", "activation"))
+            .add_edge(edge("activation", "end"))
+        )
+
+    def node_constraint(pattern_node: Node, original_node: Node) -> bool:
+        if pattern_node.name in ("start", "end"):
+            return True
+        constraint = pattern_node.type == original_node.type
+        return constraint
+
+    rule = RewriteRule(
+        pattern=pattern,
+        replacement=replacement,
+        node_constraint=node_constraint,
+        interface={"start", "end"},
+    )
+    rewrite.add_rule(rule)
+    new_impl = rewrite.apply(impl)
+    assert len(tuple(new_impl.nodes)) == len(tuple(impl.nodes)) - 1
