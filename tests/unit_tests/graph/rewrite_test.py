@@ -141,19 +141,71 @@ def test_raise_error_if_rewrite_would_produce_dangling_edge():
     )
     raised = False
     try:
-        new_graph, new_names = gr.rewrite(
+        gr.rewrite(
             replacement=gr.BaseGraph().add_edge("i0", "r").add_edge("r", "i1"),
             original=g,
             match={"i0": "a", "p0": "b", "p1": "c", "i1": "d"},
             lhs={"i0": "i0", "i1": "i1"},
             rhs={"i0": "i0", "i1": "i1"},
         )
-        print(new_graph.successors)
-        print(new_names)
     except gr.DanglingEdgeError:
         raised = True
 
     assert raised
+
+
+@pytest.fixture
+def graph_for_multiple_matches():
+    graph = gr.BaseGraph()
+    sequence = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    for e in zip(sequence[:-1], sequence[1:]):
+        graph.add_edge(e[0], e[1])
+    return graph
+
+
+def test_replacing_all_matches_fails(graph_for_multiple_matches):
+    sequence = ("a", "b", "c", "d", "e", "f", "g", "h")
+    all_matches = list(zip(sequence[:-2], sequence[1:-1], sequence[2:]))
+    all_matches = [{"0": x, "1": y, "2": z} for x, y, z in all_matches]
+    replacement = gr.BaseGraph().add_edge("r0", "r1").add_edge("r1", "r2")
+    lhs = {"i0": "0", "i1": "2"}
+    rhs = {"i0": "r0", "i1": "r2"}
+    result = graph_for_multiple_matches
+    raised = False
+    try:
+        for i, match in enumerate(all_matches):
+            result, replacement_map = gr.rewrite(
+                replacement=replacement,
+                original=result,
+                match=match,
+                lhs=lhs,
+                rhs=rhs,
+            )
+    except gr.DanglingEdgeError:
+        raised = True
+
+    assert (
+        raised and i == 1
+    ), "Expected to raise DanglingEdgeError when rewriting second match, but did not."
+
+
+def test_can_replace_multiple_matches(graph_for_multiple_matches):
+    graph = graph_for_multiple_matches
+    safe_matches = [("a", "b", "c"), ("c", "d", "e"), ("e", "f", "g")]
+    safe_matches = [{"0": x, "1": y, "2": z} for x, y, z in safe_matches]
+    replacement = gr.BaseGraph().add_edge("r0", "r1").add_edge("r1", "r2")
+    result = graph
+    for match in safe_matches:
+        result, replacement_map = gr.rewrite(
+            replacement=replacement,
+            original=result,
+            match=match,
+            lhs={"i0": "0", "i1": "2"},
+            rhs={"i0": "r0", "i1": "r2"},
+        )
+    expected_sequence = ["a", "r1", "c", "r1_1", "e", "r1_2", "g", "h"]
+    expected_edges = set(zip(expected_sequence[:-1], expected_sequence[1:]))
+    assert set(result.iter_edges()) == expected_edges
 
 
 class TestRewriteResult:
