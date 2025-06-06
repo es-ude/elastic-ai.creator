@@ -29,4 +29,11 @@ def test_start_counting_from_highest_suffix():
 def test_count_either_no_suffix_or_zero_as_one():
     reg = NameRegistry()
     reg.prepopulate(["a", "a_0"])
-    assert reg.get_unique_name("a") == "a_2"
+    assert reg.get_unique_name("a") == "a_1"
+
+
+def test_use_maximum_of_suffixes():
+    reg = NameRegistry()
+    reg.prepopulate(["a", "a_3", "a_2"])
+
+    assert reg.get_unique_name("a") == "a_4"
