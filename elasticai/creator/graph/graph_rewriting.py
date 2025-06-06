@@ -58,12 +58,20 @@ def get_rewriteable_matches(
 
     """
     interface_nodes = set(interface_nodes)
-    matched_nodes: set[T] = set()
+    matched_nodes_wo_interfaces: set[T] = set()
+
     for match in matches:
         if not produces_dangling_edge(original, match, interface_nodes):
             new_matched_nodes = set(match.values())
-            if new_matched_nodes.isdisjoint(matched_nodes):
-                matched_nodes.update(match.values())
+            new_matched_interface_nodes = {
+                match[interface_node] for interface_node in interface_nodes
+            }
+            new_matched_nodes_wo_interfaces = (
+                new_matched_nodes - new_matched_interface_nodes
+            )
+
+            if new_matched_nodes.isdisjoint(matched_nodes_wo_interfaces):
+                matched_nodes_wo_interfaces.update(new_matched_nodes_wo_interfaces)
                 yield match
 
 
