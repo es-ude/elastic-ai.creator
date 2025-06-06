@@ -2,7 +2,13 @@ import copy
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Any, Generic, Self, TypeVar, overload
 
-from elasticai.creator.graph import Graph, NodeConstraintFn, find_all_subgraphs, rewrite
+from elasticai.creator.graph import (
+    Graph,
+    NodeConstraintFn,
+    find_all_subgraphs,
+    get_rewriteable_matches,
+    rewrite,
+)
 from elasticai.creator.ir.base.attribute import Attribute
 
 from ..core import Edge, Implementation, Node
@@ -194,6 +200,9 @@ class Rewriter:
             node_constraint=self._lift_constraint_fn(
                 fn=rule.node_constraint, impl=impl, pattern=rule.pattern
             ),
+        )
+        matches = get_rewriteable_matches(
+            matches=matches, original=impl.graph, interface_nodes=rule.interface
         )
         self._prepare_contexts(matches)
         rewritten = self._rewrite_raw_graphs()
