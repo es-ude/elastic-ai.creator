@@ -123,9 +123,7 @@ begin
                     when s_preload =>
                         x_1_sub_z <= to_signed(0, x_1_sub_z'length);
                         x_2_sub_z <= to_signed(0, x_2_sub_z'length);
-                        sum <= (OTHERS=>'0');
                         add_state <= s_sub;
-
                     when s_sub =>
                         x_1_sub_z <= x_1_int - to_signed(Z_X_1, x_1_sub_z'length);
                         x_2_sub_z <= x_2_int - to_signed(Z_X_2, x_2_sub_z'length);
@@ -136,7 +134,7 @@ begin
                         add_state <= s_sum;
 
                     when s_sum =>
-                        sum <= sum + x_1_scaled + x_2_scaled;
+                        sum <= x_1_scaled + x_2_scaled;
                         add_state <= s_output;
                     when s_output =>
                         var_y_store := sum + to_signed(Z_Y, sum'length);
