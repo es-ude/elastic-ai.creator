@@ -170,7 +170,11 @@ begin
                 mac_state <= s_done;
                 y_store_en <= '0';
             end if;
-            x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
+            if input_idx < IN_FEATURES*IN_NUM_DIMENSIONS then
+                x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
+            else
+                x_address <= (others=>'0');
+            end if;
         end if;
     end process ;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));

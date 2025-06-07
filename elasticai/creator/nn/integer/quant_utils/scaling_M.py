@@ -18,7 +18,7 @@ def scaling_M(M: torch.FloatTensor, m_q_shift_limit=32):
                 raise ValueError(
                     "Error contains NaN values, check input M or computation logic."
                 )
-
+            # if torch.all(error > 0.01) or torch.all(error < 0):
             if torch.all(error > 0.0001) or torch.all(error < 0):
                 m_q_shift += 1
             else:

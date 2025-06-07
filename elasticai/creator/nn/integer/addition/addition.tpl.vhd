@@ -55,9 +55,9 @@ architecture rtl of ${name} is
             end if;
         end if;
         if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
+            return -resize(TMP_3, DATA_WIDTH + 2);
         else
-            return resize(TMP_3, DATA_WIDTH + 1);
+            return resize(TMP_3, DATA_WIDTH + 2);
         end if;
     end function;
     signal n_clock : std_logic;
@@ -70,15 +70,15 @@ architecture rtl of ${name} is
     signal add_state : t_add_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_1_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal x_1_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal x_1_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal x_2_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal x_2_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_store_addr : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal sum : signed(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal sum : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     x_1_int <= signed(x_1);
@@ -106,14 +106,12 @@ begin
     end process fsm;
     add : process( clock, layer_state )
         variable input_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
-        variable output_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
-        variable var_y_store : signed(2 * (DATA_WIDTH + 1)-1 downto 0);
+        variable var_y_store : signed(DATA_WIDTH + 1 downto 0);
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
                 add_state <= s_init;
                 input_idx := 0;
-                output_idx := 0;
                 y_store_en <= '0';
             elsif layer_state=s_forward then
                 case add_state is
@@ -129,21 +127,20 @@ begin
                         x_2_sub_z <= x_2_int - to_signed(Z_X_2, x_2_sub_z'length);
                         add_state <= s_scaling;
                     when s_scaling =>
-                        x_1_scaled <= scaling(x_1_sub_z, M_Q_1_SIGNED, M_Q_1_SHIFT);
+                        sum <= scaling(x_1_sub_z, M_Q_1_SIGNED, M_Q_1_SHIFT);
                         x_2_scaled <= scaling(x_2_sub_z, M_Q_2_SIGNED, M_Q_2_SHIFT);
                         add_state <= s_sum;
-
                     when s_sum =>
-                        sum <= x_1_scaled + x_2_scaled;
+                        -- sum <= resize(x_1_scaled,sum'length) + resize(x_2_scaled,sum'length);
+                        sum <= sum + x_2_scaled;
                         add_state <= s_output;
                     when s_output =>
                         var_y_store := sum + to_signed(Z_Y, sum'length);
                         y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
-                        y_store_addr <= output_idx;
+                        y_store_addr <= input_idx;
                         y_store_en <= '1';
                         if input_idx < NUM_DIMENSIONS * NUM_FEATURES-1 then
                             input_idx := input_idx + 1;
-                            output_idx := output_idx + 1;
                             add_state <= s_init;
                         else
                             add_state <= s_done;
