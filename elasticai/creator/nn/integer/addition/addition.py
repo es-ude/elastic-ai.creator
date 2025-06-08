@@ -65,11 +65,12 @@ class Addition(DesignCreatorModule, nn.Module):
         self.scale_factor_M_2 = (
             self.inputs2_QParams.scale_factor / self.outputs_QParams.scale_factor
         )
+        error_threshold = 10 ** (-(self.quant_bits - 2))
         self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1 = scaling_M(
-            self.scale_factor_M_1
+            self.scale_factor_M_1, error_threshold
         )
         self.scale_factor_m_q_2_shift, self.scale_factor_m_q_2 = scaling_M(
-            self.scale_factor_M_2
+            self.scale_factor_M_2, error_threshold
         )
         self.precomputed = True
 
