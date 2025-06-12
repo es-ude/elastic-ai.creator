@@ -170,24 +170,31 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         return q_outputs, dq_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs1_QParams.update_quant_params(inputs)
-            else:
-                self.inputs1_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs1_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs1_QParams = given_inputs_QParams
 
         max_input = inputs.max(dim=-1, keepdim=True)[0]
         inputs = inputs - max_input
 
-        if self.training:
-            self.inputs2_QParams.update_quant_params(inputs)
+        if enable_simquant:
+            if self.training:
+                self.inputs2_QParams.update_quant_params(inputs)
 
-        inputs = SimQuant.apply(inputs, self.inputs2_QParams)
+            inputs = SimQuant.apply(inputs, self.inputs2_QParams)
+
         outputs = torch.softmax(inputs, dim=-1)
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

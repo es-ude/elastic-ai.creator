@@ -38,11 +38,11 @@ class StackedRNN(DesignCreatorModule, nn.Module):
                 RNNLayer(
                     inputs_size=self.inputs_size if i == 0 else self.hidden_size,
                     hidden_size=self.hidden_size,
-                    quant_bits=self.quant_bits,
                     window_size=self.window_size,
                     cell_type=self.cell_type,
                     batch_size=self.batch_size,
                     name=self.name + f"_rnn_layer_{i}",
+                    quant_bits=self.quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                 )
@@ -113,14 +113,14 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         self,
         inputs: torch.FloatTensor,
         given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is not None:
-                self.inputs_QParams = given_inputs_QParams
-            else:
-                self.inputs_QParams.update_quant_params(inputs)
-
-        self.batch_size = inputs.size(0)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is not None:
+                    self.inputs_QParams = given_inputs_QParams
+                else:
+                    self.inputs_QParams.update_quant_params(inputs)
 
         h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
             inputs.device
@@ -129,9 +129,10 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             inputs.device
         )
 
-        if self.training:
-            self.h_prev_QParams.update_quant_params(h_prev)
-            self.c_prev_QParams.update_quant_params(c_prev)
+        if enable_simquant:
+            if self.training:
+                self.h_prev_QParams.update_quant_params(h_prev)
+                self.c_prev_QParams.update_quant_params(c_prev)
 
         given_inputs_QParams = self.inputs_QParams
         given_h_prev_QParams = self.h_prev_QParams
@@ -145,6 +146,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
                 given_inputs_QParams=given_inputs_QParams,
                 given_h_prev_QParams=given_h_prev_QParams,
                 given_c_prev_QParams=given_c_prev_QParams,
+                enable_simquant=enable_simquant,
             )
             inputs = outputs
             h_prev = h_next

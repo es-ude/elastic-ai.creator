@@ -269,12 +269,14 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         h_prev: torch.FloatTensor,
         c_prev: torch.FloatTensor,
         given_inputs_QParams: torch.nn.Module,
+        enable_simquant: bool = True,
     ) -> torch.Tensor:
-        self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            self.inputs_QParams = given_inputs_QParams
 
-        if self.training:
-            self.h_prev_QParams.update_quant_params(h_prev)
-            self.c_prev_QParams.update_quant_params(c_prev)
+            if self.training:
+                self.h_prev_QParams.update_quant_params(h_prev)
+                self.c_prev_QParams.update_quant_params(c_prev)
 
         # concatenate inputs and h_prev
         concated_inputs = self.concatenate.forward(
@@ -282,42 +284,51 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             inputs2=h_prev,
             given_inputs1_QParams=self.inputs_QParams,
             given_inputs2_QParams=self.h_prev_QParams,
+            enable_simquant=enable_simquant,
         )
 
         # gate linear transformations
         i_gate_outputs = self.i_gate_linear.forward(
             inputs=concated_inputs,
             given_inputs_QParams=self.concatenate.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         f_gate_outputs = self.f_gate_linear.forward(
             inputs=concated_inputs,
             given_inputs_QParams=self.concatenate.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         o_gate_outputs = self.o_gate_linear.forward(
             inputs=concated_inputs,
             given_inputs_QParams=self.concatenate.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         c_gate_outputs = self.c_gate_linear.forward(
             inputs=concated_inputs,
             given_inputs_QParams=self.concatenate.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         # gate activations
         i_gate_sigmoid_outputs = self.i_sigmoid.forward(
             inputs=i_gate_outputs,
             given_inputs_QParams=self.i_gate_linear.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         f_gate_sigmoid_outputs = self.f_sigmoid.forward(
             inputs=f_gate_outputs,
             given_inputs_QParams=self.f_gate_linear.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         o_gate_sigmoid_outputs = self.o_sigmoid.forward(
             inputs=o_gate_outputs,
             given_inputs_QParams=self.o_gate_linear.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         c_gate_tanh_outputs = self.c_tanh.forward(
             inputs=c_gate_outputs,
             given_inputs_QParams=self.c_gate_linear.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         # next cell state
@@ -326,6 +337,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             inputs2=c_prev,
             given_inputs1_QParams=self.f_sigmoid.outputs_QParams,
             given_inputs2_QParams=self.c_prev_QParams,
+            enable_simquant=enable_simquant,
         )
 
         c_next_inputs2 = self.ic_hadamard_product.forward(
@@ -333,25 +345,31 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             inputs2=c_gate_tanh_outputs,
             given_inputs1_QParams=self.i_sigmoid.outputs_QParams,
             given_inputs2_QParams=self.c_tanh.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         c_next = self.c_next_addition.forward(
             inputs1=c_next_inputs1,
             inputs2=c_next_inputs2,
             given_inputs1_QParams=self.fc_hadamard_product.outputs_QParams,
             given_inputs2_QParams=self.ic_hadamard_product.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         # next hidden state
         c_next_tanh_outputs = self.c_next_tanh.forward(
-            inputs=c_next, given_inputs_QParams=self.c_next_addition.outputs_QParams
+            inputs=c_next,
+            given_inputs_QParams=self.c_next_addition.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         h_next = self.oc_hadamard_product.forward(
             inputs1=o_gate_sigmoid_outputs,
             inputs2=c_next_tanh_outputs,
             given_inputs1_QParams=self.o_sigmoid.outputs_QParams,
             given_inputs2_QParams=self.c_next_tanh.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
-        self.h_next_QParams = self.oc_hadamard_product.outputs_QParams
-        self.c_next_QParams = self.c_next_addition.outputs_QParams
+        if enable_simquant:
+            self.h_next_QParams = self.oc_hadamard_product.outputs_QParams
+            self.c_next_QParams = self.c_next_addition.outputs_QParams
 
         return h_next, c_next

@@ -102,20 +102,25 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
+            inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         # assume that (batch_size, channels, seq_len) is the shape of inputs
         outputs = F.avg_pool1d(inputs, kernel_size=inputs.size(2))
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
 
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs.squeeze(2)

@@ -26,6 +26,7 @@ class Encoder(nn.Module):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.do_int_forward = kwargs.get("do_int_forward")
         device = kwargs.get("device")
@@ -73,15 +74,20 @@ class Encoder(nn.Module):
         self,
         inputs: torch.FloatTensor,
         given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is not None:
-                self.inputs_QParams = given_inputs_QParams
-            else:
-                self.inputs_QParams.update_quant_params
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is not None:
+                    self.inputs_QParams = given_inputs_QParams
+                else:
+                    self.inputs_QParams.update_quant_params
 
         outputs = self.sequential.forward(
-            inputs, given_inputs_QParams=self.inputs_QParams
+            inputs,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
         )
-        self.outputs_QParams = self.sequential.submodules[-1].outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.sequential.submodules[-1].outputs_QParams
         return outputs

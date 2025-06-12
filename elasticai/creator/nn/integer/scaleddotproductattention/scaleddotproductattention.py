@@ -29,6 +29,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
@@ -57,8 +58,8 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             dim_a=nhead,
             dim_b=window_size,
             dim_c=window_size,
-            quant_data_dir=self.quant_data_dir,
             quant_bits=self.quant_bits,
+            quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
@@ -157,36 +158,43 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         given_inputs_q_QParams: object = None,
         given_inputs_k_QParams: object = None,
         given_inputs_v_QParams: object = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_q_QParams is not None:
-                self.inputs_q_QParams = given_inputs_q_QParams
-            else:
-                self.inputs_q_QParams.update_quant_params(q)
-            if given_inputs_k_QParams is not None:
-                self.inputs_k_QParams = given_inputs_k_QParams
-            else:
-                self.inputs_k_QParams.update_quant_params(k)
-            if given_inputs_v_QParams is not None:
-                self.inputs_v_QParams = given_inputs_v_QParams
-            else:
-                self.inputs_v_QParams.update_quant_params(v)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_q_QParams is not None:
+                    self.inputs_q_QParams = given_inputs_q_QParams
+                else:
+                    self.inputs_q_QParams.update_quant_params(q)
+                if given_inputs_k_QParams is not None:
+                    self.inputs_k_QParams = given_inputs_k_QParams
+                else:
+                    self.inputs_k_QParams.update_quant_params(k)
+                if given_inputs_v_QParams is not None:
+                    self.inputs_v_QParams = given_inputs_v_QParams
+                else:
+                    self.inputs_v_QParams.update_quant_params(v)
 
         scores = self.matrix_multi_score.forward(
             inputs1=q,
             inputs2=k,
             given_inputs1_QParams=self.inputs_q_QParams,
             given_inputs2_QParams=self.inputs_k_QParams,
+            enable_simquant=enable_simquant,
         )
         att = self.softmax.forward(
-            inputs=scores, given_inputs_QParams=self.matrix_multi_score.outputs_QParams
+            inputs=scores,
+            given_inputs_QParams=self.matrix_multi_score.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         context = self.matrix_multi_att.forward(
             inputs1=att,
             inputs2=v,
             given_inputs1_QParams=self.softmax.outputs_QParams,
             given_inputs2_QParams=self.inputs_v_QParams,
+            enable_simquant=enable_simquant,
         )
         context = context.contiguous()
-        self.outputs_QParams = self.matrix_multi_att.outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.matrix_multi_att.outputs_QParams
         return context, att

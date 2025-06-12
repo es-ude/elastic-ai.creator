@@ -92,22 +92,30 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
         return q_f2_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is not None:
-                self.inputs_QParams = given_inputs_QParams
-            else:
-                self.inputs_QParams.update_quant_params(inputs)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is not None:
+                    self.inputs_QParams = given_inputs_QParams
+                else:
+                    self.inputs_QParams.update_quant_params(inputs)
 
         f1relu_outputs = self.fc1relu.forward(
-            inputs=inputs, given_inputs_QParams=self.inputs_QParams
+            inputs=inputs,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         f2_outputs = self.fc2.forward(
             inputs=f1relu_outputs,
             given_inputs_QParams=self.fc1relu.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
-        self.outputs_QParams = self.fc2.outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.fc2.outputs_QParams
 
         return f2_outputs

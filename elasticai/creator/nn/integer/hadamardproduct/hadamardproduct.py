@@ -110,25 +110,28 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
         inputs2: torch.FloatTensor,
         given_inputs1_QParams: torch.nn.Module = None,
         given_inputs2_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs1_QParams is None:
-                self.inputs1_QParams.update_quant_params(inputs1)
-            else:
-                self.inputs1_QParams = given_inputs1_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs1_QParams is None:
+                    self.inputs1_QParams.update_quant_params(inputs1)
+                else:
+                    self.inputs1_QParams = given_inputs1_QParams
 
-            if given_inputs2_QParams is None:
-                self.inputs2_QParams.update_quant_params(inputs2)
-            else:
-                self.inputs2_QParams = given_inputs2_QParams
+                if given_inputs2_QParams is None:
+                    self.inputs2_QParams.update_quant_params(inputs2)
+                else:
+                    self.inputs2_QParams = given_inputs2_QParams
 
-        inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
-        inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
+            inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
+            inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
 
         outputs = inputs1 * inputs2
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
 
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

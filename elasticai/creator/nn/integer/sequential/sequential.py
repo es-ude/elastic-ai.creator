@@ -20,12 +20,20 @@ class Sequential(_SequentialBase):
         self.precomputed = False
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
         outputs = inputs
         for submodule in self.submodules:
-            outputs = submodule(outputs, given_inputs_QParams=given_inputs_QParams)
-            given_inputs_QParams = submodule.outputs_QParams
+            outputs = submodule(
+                outputs,
+                given_inputs_QParams=given_inputs_QParams,
+                enable_simquant=enable_simquant,
+            )
+            if enable_simquant:
+                given_inputs_QParams = submodule.outputs_QParams
         return outputs
 
     def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:

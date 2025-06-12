@@ -170,14 +170,18 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
+            inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         if self.training:
             tmp_outputs = F.conv1d(
@@ -204,19 +208,21 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
         fused_bias = gamma_ * self.conv1d.bias - gamma_ * mean + self.bn1d.bias
 
-        if self.training:
-            self.weight_QParams.update_quant_params(fused_weight)
-            self.bias_QParams.update_quant_params(fused_bias)
+        if enable_simquant:
+            if self.training:
+                self.weight_QParams.update_quant_params(fused_weight)
+                self.bias_QParams.update_quant_params(fused_bias)
 
-        fused_weight = SimQuant.apply(fused_weight, self.weight_QParams)
-        fused_bias = SimQuant.apply(fused_bias, self.bias_QParams)
+            fused_weight = SimQuant.apply(fused_weight, self.weight_QParams)
+            fused_bias = SimQuant.apply(fused_bias, self.bias_QParams)
 
         outputs = F.conv1d(
             inputs, fused_weight, fused_bias, padding=self.conv1d.padding
         )
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
 
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

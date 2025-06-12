@@ -175,15 +175,19 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: object
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: object,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
 
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
+            inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         if self.training:
             mean = inputs.mean(dim=(0, 1), keepdim=False)
@@ -201,17 +205,22 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
 
         std = torch.sqrt(var + self.eps)
 
-        if self.training:
-            self.weight_QParams.update_quant_params(self.weight)
-            self.bias_QParams.update_quant_params(self.bias)
+        if enable_simquant:
+            if self.training:
+                self.weight_QParams.update_quant_params(self.weight)
+                self.bias_QParams.update_quant_params(self.bias)
 
-        weight = SimQuant.apply(self.weight, self.weight_QParams)
-        bias = SimQuant.apply(self.bias, self.bias_QParams)
+            weight = SimQuant.apply(self.weight, self.weight_QParams)
+            bias = SimQuant.apply(self.bias, self.bias_QParams)
+        else:
+            weight = self.weight
+            bias = self.bias
 
         normed_input = (inputs - mean) / std
         outputs = weight * normed_input + bias
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

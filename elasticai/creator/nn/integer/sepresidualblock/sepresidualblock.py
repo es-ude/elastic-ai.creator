@@ -194,35 +194,47 @@ class SepResidualBlock(nn.Module):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
 
         residual = inputs
         outputs = self.depthconv1d_0.forward(
-            inputs=inputs, given_inputs_QParams=self.inputs_QParams
+            inputs=inputs,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         outputs = self.pointconv1dbn_0.forward(
-            inputs=outputs, given_inputs_QParams=self.depthconv1d_0.outputs_QParams
+            inputs=outputs,
+            given_inputs_QParams=self.depthconv1d_0.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         outputs = self.pointconv1dbn_0_relu.forward(
             inputs=outputs,
             given_inputs_QParams=self.pointconv1dbn_0.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         outputs = self.depthconv1d_1.forward(
             inputs=outputs,
             given_inputs_QParams=self.pointconv1dbn_0_relu.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         outputs = self.pointconv1dbn_1.forward(
-            inputs=outputs, given_inputs_QParams=self.depthconv1d_1.outputs_QParams
+            inputs=outputs,
+            given_inputs_QParams=self.depthconv1d_1.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         shortcut_given_inputs_QParams = self.inputs_QParams
@@ -232,6 +244,7 @@ class SepResidualBlock(nn.Module):
                 shortcut_outputs = submodule.forward(
                     inputs=shortcut_inputs,
                     given_inputs_QParams=shortcut_given_inputs_QParams,
+                    enable_simquant=enable_simquant,
                 )
                 shortcut_inputs = shortcut_outputs
                 shortcut_given_inputs_QParams = submodule.outputs_QParams
@@ -247,11 +260,14 @@ class SepResidualBlock(nn.Module):
                 else self.inputs_QParams
             ),
             given_inputs2_QParams=self.pointconv1dbn_1.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         outputs = self.relu.forward(
-            inputs=add_outputs, given_inputs_QParams=self.add.outputs_QParams
+            inputs=add_outputs,
+            given_inputs_QParams=self.add.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
-
-        self.outputs_QParams = self.relu.outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.relu.outputs_QParams
         return outputs

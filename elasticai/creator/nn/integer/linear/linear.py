@@ -148,30 +148,39 @@ class Linear(DesignCreatorModule, nn.Linear):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
 
-            self.weight_QParams.update_quant_params(self.weight)
+                self.weight_QParams.update_quant_params(self.weight)
+                if self.bias is not None:
+                    self.bias_QParams.update_quant_params(self.bias)
+
+            inputs = SimQuant.apply(inputs, self.inputs_QParams)
+            weight = SimQuant.apply(self.weight, self.weight_QParams)
             if self.bias is not None:
-                self.bias_QParams.update_quant_params(self.bias)
-
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
-        weight = SimQuant.apply(self.weight, self.weight_QParams)
-        if self.bias is not None:
-            bias = SimQuant.apply(self.bias, self.bias_QParams)
-
-        if self.bias is not None:
-            outputs = F.linear(inputs, weight, bias)
+                bias = SimQuant.apply(self.bias, self.bias_QParams)
         else:
-            outputs = F.linear(inputs, weight)
+            weight = self.weight
+            bias = self.bias
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
+        outputs = (
+            F.linear(inputs, weight, bias)
+            if bias is not None
+            else F.linear(inputs, weight)
+        )
 
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
+
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

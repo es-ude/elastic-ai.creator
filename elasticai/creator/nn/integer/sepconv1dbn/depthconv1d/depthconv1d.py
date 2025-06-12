@@ -38,6 +38,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
@@ -175,32 +176,39 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
 
-            self.weight_QParams.update_quant_params(self.weight)
+                self.weight_QParams.update_quant_params(self.weight)
+                if self.bias is not None:
+                    self.bias_QParams.update_quant_params(self.bias)
+
+            inputs = SimQuant.apply(inputs, self.inputs_QParams)
+            weight = SimQuant.apply(self.weight, self.weight_QParams)
             if self.bias is not None:
-                self.bias_QParams.update_quant_params(self.bias)
-
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
-        weight = SimQuant.apply(self.weight, self.weight_QParams)
-        if self.bias is not None:
-            bias = SimQuant.apply(self.bias, self.bias_QParams)
-
-        if self.bias is not None:
-            outputs = F.conv1d(
-                inputs, weight, bias, padding=self.padding, groups=self.groups
-            )
+                bias = SimQuant.apply(self.bias, self.bias_QParams)
         else:
-            outputs = F.conv1d(inputs, weight, padding=self.padding, groups=self.groups)
+            weight = self.weight
+            bias = self.bias
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
+        outputs = (
+            F.conv1d(inputs, weight, bias, padding=self.padding, groups=self.groups)
+            if self.bias is not None
+            else F.conv1d(inputs, weight, padding=self.padding, groups=self.groups)
+        )
 
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
+
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
         return outputs

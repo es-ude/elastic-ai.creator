@@ -163,20 +163,34 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         k: torch.FloatTensor,
         v: torch.FloatTensor,
         given_inputs_QParams: object = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is not None:
-                self.inputs_QParams = given_inputs_QParams
-            else:
-                self.inputs_QParams.update_quant_params(q)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is not None:
+                    self.inputs_QParams = given_inputs_QParams
+                else:
+                    self.inputs_QParams.update_quant_params(q)
 
         B = q.shape[0]
         L = q.shape[1]
         H = self.nhead
 
-        q = self.q_linear.forward(inputs=q, given_inputs_QParams=self.inputs_QParams)
-        k = self.k_linear.forward(inputs=k, given_inputs_QParams=self.inputs_QParams)
-        v = self.v_linear.forward(inputs=v, given_inputs_QParams=self.inputs_QParams)
+        q = self.q_linear.forward(
+            inputs=q,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
+        )
+        k = self.k_linear.forward(
+            inputs=k,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
+        )
+        v = self.v_linear.forward(
+            inputs=v,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
+        )
 
         q = q.view(B, L, H, -1)  # B,L,E -> B,L,H,E/H
         k = k.view(B, L, H, -1)
@@ -189,6 +203,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             given_inputs_q_QParams=self.q_linear.outputs_QParams,
             given_inputs_k_QParams=self.k_linear.outputs_QParams,
             given_inputs_v_QParams=self.v_linear.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         # concat heads
@@ -197,8 +212,10 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         outputs = self.output_linear.forward(
             inputs=context,
             given_inputs_QParams=self.inner_attn_module.matrix_multi_att.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
-        self.outputs_QParams = self.output_linear.outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.output_linear.outputs_QParams
 
         return outputs, attn_weights

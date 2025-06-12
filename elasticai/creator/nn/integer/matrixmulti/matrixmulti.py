@@ -145,23 +145,24 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         inputs2: torch.FloatTensor,
         given_inputs1_QParams: object,
         given_inputs2_QParams: object,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
         assert inputs1.ndim == 4, "Input must be a 4D tensor"
         assert inputs2.ndim == 4, "Input must be a 4D tensor"
+        if enable_simquant:
+            if self.training:
+                if given_inputs1_QParams is None:
+                    self.inputs1_QParams.update_quant_params(inputs1)
+                else:
+                    self.inputs1_QParams = given_inputs1_QParams
 
-        if self.training:
-            if given_inputs1_QParams is None:
-                self.inputs1_QParams.update_quant_params(inputs1)
-            else:
-                self.inputs1_QParams = given_inputs1_QParams
+                if given_inputs2_QParams is None:
+                    self.inputs2_QParams.update_quant_params(inputs2)
+                else:
+                    self.inputs2_QParams = given_inputs2_QParams
 
-            if given_inputs2_QParams is None:
-                self.inputs2_QParams.update_quant_params(inputs2)
-            else:
-                self.inputs2_QParams = given_inputs2_QParams
-
-        inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
-        inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
+            inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
+            inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
 
         outputs = self.math_ops.matmul_4d(
             inputs1=inputs1, inputs2=inputs2, operation_mode=self.operation_mode
@@ -170,9 +171,10 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         if self.additional_scale is not None:
             outputs = outputs * self.additional_scale
 
-        if self.training:
-            self.outputs_QParams.update_quant_params(outputs)
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
 
-        outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
 
         return outputs

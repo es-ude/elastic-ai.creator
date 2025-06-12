@@ -185,16 +185,24 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         return q_ffn_norm_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: object = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: object = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is not None:
-                self.inputs_QParams = given_inputs_QParams
-            else:
-                self.inputs_QParams.update_quant_params(inputs)
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is not None:
+                    self.inputs_QParams = given_inputs_QParams
+                else:
+                    self.inputs_QParams.update_quant_params(inputs)
 
         mha_outputs, mha_attns = self.mha.forward(
-            q=inputs, k=inputs, v=inputs, given_inputs_QParams=self.inputs_QParams
+            q=inputs,
+            k=inputs,
+            v=inputs,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         mha_add_outputs = self.mha_add.forward(
@@ -202,27 +210,33 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             inputs2=mha_outputs,
             given_inputs1_QParams=self.inputs_QParams,
             given_inputs2_QParams=self.mha.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         mha_norm_outputs = self.mha_norm.forward(
             inputs=mha_add_outputs,
             given_inputs_QParams=self.mha_add.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
 
         ffn_outputs = self.ffn.forward(
             inputs=mha_norm_outputs,
             given_inputs_QParams=self.mha_norm.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         ffn_add_outputs = self.ffn_add.forward(
             inputs1=mha_norm_outputs,
             inputs2=ffn_outputs,
             given_inputs1_QParams=self.mha_norm.outputs_QParams,
             given_inputs2_QParams=self.ffn.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
         ffn_norm_outputs = self.ffn_norm.forward(
             inputs=ffn_add_outputs,
             given_inputs_QParams=self.ffn_add.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
-        self.outputs_QParams = self.ffn_norm.outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.ffn_norm.outputs_QParams
 
         return ffn_norm_outputs

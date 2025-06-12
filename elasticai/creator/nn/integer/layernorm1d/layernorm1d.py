@@ -28,6 +28,7 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         self.device = kwargs.get("device")
         self.norm_dim = kwargs.get("norm_dim")
         self.quant_bits = kwargs.get("quant_bits")
+
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.weight_QParams = AsymmetricSignedQParams(
@@ -163,19 +164,23 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         return output.to(self.device)
 
     def forward(
-        self, input: torch.FloatTensor, given_input_QParams: object
+        self,
+        input: torch.FloatTensor,
+        given_input_QParams: object,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
         assert input.dtype == torch.FloatTensor, "input must be a torch.FloatTensor"
-        if self.training:
-            if given_input_QParams is None:
-                self.input_QParams.update_quant_params(input)
-            else:
-                self.input_QParams = given_input_QParams
+        if enable_simquant:
+            if self.training:
+                if given_input_QParams is None:
+                    self.input_QParams.update_quant_params(input)
+                else:
+                    self.input_QParams = given_input_QParams
 
-            self.weight_QParams.update_quant_params(self.weight)
-            self.bias_QParams.update_quant_params(self.bias)
+                self.weight_QParams.update_quant_params(self.weight)
+                self.bias_QParams.update_quant_params(self.bias)
 
-        input = SimQuant.apply(input, self.input_QParams)
+            input = SimQuant.apply(input, self.input_QParams)
 
         mean_input = torch.sum(input, dim=-1, keepdim=True) / self.norm_dim
         numerator = input - mean_input
@@ -184,19 +189,21 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
 
         normed_input = numerator / denominator
 
-        if self.training:
-            self.normed_input_QParams.update_quant_params(normed_input)
-        normed_input = SimQuant.apply(normed_input, self.normed_input_QParams)
+        if enable_simquant:
+            if self.training:
+                self.normed_input_QParams.update_quant_params(normed_input)
+            normed_input = SimQuant.apply(normed_input, self.normed_input_QParams)
 
-        weight = SimQuant.apply(self.weight.to(self.device), self.weight_QParams)
-        bias = SimQuant.apply(self.bias.to(self.device), self.bias_QParams)
+            weight = SimQuant.apply(self.weight.to(self.device), self.weight_QParams)
+            bias = SimQuant.apply(self.bias.to(self.device), self.bias_QParams)
 
         output = normed_input * weight + bias
 
-        if self.training:
-            self.output_QParams.update_quant_params(output)
+        if enable_simquant:
+            if self.training:
+                self.output_QParams.update_quant_params(output)
 
-        output = SimQuant.apply(output, self.output_QParams)
+            output = SimQuant.apply(output, self.output_QParams)
 
         assert output.dtype == torch.FloatTensor, "output must be a torch.FloatTensor"
 

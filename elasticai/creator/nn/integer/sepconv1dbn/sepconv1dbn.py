@@ -96,21 +96,29 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
         return q_pointconv1dbn_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
 
         DepthConv1d_outputs = self.depthconv1d.forward(
-            inputs=inputs, given_inputs_QParams=self.inputs_QParams
+            inputs=inputs,
+            given_inputs_QParams=self.inputs_QParams,
+            enable_simquant=enable_simquant,
         )
         PointConv1dBN_outputs = self.pointconv1dbn.forward(
             inputs=DepthConv1d_outputs,
             given_inputs_QParams=self.depthconv1d.outputs_QParams,
+            enable_simquant=enable_simquant,
         )
-        self.outputs_QParams = self.pointconv1dbn.outputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.pointconv1dbn.outputs_QParams
 
         return PointConv1dBN_outputs

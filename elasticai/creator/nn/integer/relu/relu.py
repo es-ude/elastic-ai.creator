@@ -50,17 +50,22 @@ class ReLU(DesignCreatorModule):
         return q_outputs
 
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
+        self,
+        inputs: torch.FloatTensor,
+        given_inputs_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if self.training:
-            if given_inputs_QParams is None:
-                self.inputs_QParams.update_quant_params(inputs)
-            else:
-                self.inputs_QParams = given_inputs_QParams
+        if enable_simquant:
+            if self.training:
+                if given_inputs_QParams is None:
+                    self.inputs_QParams.update_quant_params(inputs)
+                else:
+                    self.inputs_QParams = given_inputs_QParams
 
-        inputs = SimQuant.apply(inputs, self.inputs_QParams)
+            inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         outputs = F.relu(inputs)
 
-        self.outputs_QParams = self.inputs_QParams
+        if enable_simquant:
+            self.outputs_QParams = self.inputs_QParams
         return outputs
