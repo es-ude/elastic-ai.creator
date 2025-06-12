@@ -173,7 +173,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         self,
         inputs: torch.FloatTensor,
         given_inputs_QParams: torch.nn.Module = None,
-        enable_simquant: bool = False,
+        enable_simquant: bool = True,
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:

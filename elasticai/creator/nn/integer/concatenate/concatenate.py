@@ -69,7 +69,6 @@ class Concatenate(DesignCreatorModule, nn.Module):
         self.scale_factor_M_2 = (
             self.inputs2_QParams.scale_factor / self.outputs_QParams.scale_factor
         )
-
         self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1 = scaling_M(
             self.scale_factor_M_1
         )

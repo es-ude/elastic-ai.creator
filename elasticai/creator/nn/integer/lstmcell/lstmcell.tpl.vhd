@@ -288,7 +288,7 @@ architecture rtl of ${name} is
     c_gate_linear_y_address <= ic_hadamard_product_x_2_address;
     ic_hadamard_product_x_1 <= i_sigmoid_y;
     ic_hadamard_product_x_2 <= c_tanh_y;
-    inst_${name}_ic_hadamard_product: entity ${work_library_name}.${ic_hadamard_product}(rtl)
+    inst_${name}_ic_hadamard_product: entity ${work_library_name}.${ic_hadamard_product_name}(rtl)
     port map (
         enable => ic_hadamard_product_enable,
         clock  => ic_hadamard_product_clock,
@@ -321,7 +321,7 @@ architecture rtl of ${name} is
     c_next_tanh_enable <= c_next_addition_done;
     c_next_tanh_clock <= clock;
     c_next_tanh_x <= c_next_addition_y;
-    inst_${name}_c_next_tanh: entity ${work_library_name}.${c_next_tanh}(rtl)
+    inst_${name}_c_next_tanh: entity ${work_library_name}.${c_next_tanh_name}(rtl)
     port map (
         enable => c_next_tanh_enable,
         clock  => c_next_tanh_clock,

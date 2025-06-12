@@ -273,7 +273,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
     ) -> torch.Tensor:
         if enable_simquant:
             self.inputs_QParams = given_inputs_QParams
-
             if self.training:
                 self.h_prev_QParams.update_quant_params(h_prev)
                 self.c_prev_QParams.update_quant_params(c_prev)
@@ -368,6 +367,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             given_inputs2_QParams=self.c_next_tanh.outputs_QParams,
             enable_simquant=enable_simquant,
         )
+
         if enable_simquant:
             self.h_next_QParams = self.oc_hadamard_product.outputs_QParams
             self.c_next_QParams = self.c_next_addition.outputs_QParams

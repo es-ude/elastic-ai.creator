@@ -70,7 +70,7 @@ architecture rtl of ${name} is
     signal cell_state : t_cell_state;
     signal loop_counter : integer range 0 to X_1_COUNT := 0;
     signal reset : std_logic;
-    signal lstm_cell_x_1_address_offset : integer range 0 to X_1_COUNT := 0;
+    signal lstm_cell_x_1_address_offset : integer range 0 to (X_1_COUNT-NUM_DIMENSIONS)  := 0;
     signal read_out_done : std_logic;
     signal y1_rd_out_data, cell_y1_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal y1_rd_out_addr : std_logic_vector(Y_1_ADDR_WIDTH - 1 downto 0);
@@ -118,7 +118,10 @@ begin
                             else
                                 cell_state <= s_start;
                                 loop_counter <= loop_counter + 1;
-                                lstm_cell_x_1_address_offset <= lstm_cell_x_1_address_offset + NUM_DIMENSIONS;
+                                if lstm_cell_x_1_address_offset < (X_1_COUNT-NUM_DIMENSIONS) then
+                                    lstm_cell_x_1_address_offset <= lstm_cell_x_1_address_offset + NUM_DIMENSIONS;
+                                end if;
+                                -- lstm_cell_x_1_address_offset <= lstm_cell_x_1_address_offset + NUM_DIMENSIONS;
                                 lstm_cell_enable <= '0';
                             end if;
                         end if;
