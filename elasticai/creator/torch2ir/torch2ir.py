@@ -114,10 +114,10 @@ class Torch2Ir:
         impl = ir_node.implementation
         if impl not in self._registry and impl not in ("input", "output"):
             self._registry[impl] = Implementation(
+                name=impl,
+                type=ir_node.type,
                 graph=BaseGraph(),
-                data=dict(
-                    name=impl, type=ir_node.type, **self._extract_attributes(node)
-                ),
+                data=dict(**self._extract_attributes(node)),
             )
 
         for successor in self._get_successors(node):

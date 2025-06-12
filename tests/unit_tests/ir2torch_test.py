@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import hypothesis.strategies as st
+import torch
 from hypothesis import given
 from torch.nn import Linear, ReLU, Sequential
 
@@ -64,3 +65,11 @@ def test_create_parent_modules_for_implemantations_with_dots():
     original_params = to_native_python(original.named_parameters())
     rebuilt_params = to_native_python(rebuilt.named_parameters())
     assert original_params == rebuilt_params
+
+
+def test_perform_inference():
+    original = model()
+    ir = convert(original)
+    rebuilt = ir2torch_converter().convert(ir)
+    print(rebuilt.graph)
+    rebuilt(torch.randn((1, 1)))
