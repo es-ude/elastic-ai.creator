@@ -73,15 +73,15 @@ begin
         end if;
     end process ;
     test_main : process
-        constant file_inputs_x1:      string := "./data/stacked_rnnrnn_layer_0_q_x_1.txt";
-        constant file_inputs_x2:      string := "./data/stacked_rnnrnn_layer_0_q_x_2.txt";
-        constant file_inputs_x3:      string := "./data/stacked_rnnrnn_layer_0_q_x_3.txt";
-        constant file_labels_y1:      string := "./data/stacked_rnnrnn_layer_0_q_y_1.txt";
-        constant file_labels_y2:      string := "./data/stacked_rnnrnn_layer_0_q_y_2.txt";
-        constant file_labels_y3:      string := "./data/stacked_rnnrnn_layer_0_q_y_3.txt";
-        constant file_pred_y1:      string := "./data/stacked_rnnrnn_layer_0_q_out_1.txt";
-        constant file_pred_y2:      string := "./data/stacked_rnnrnn_layer_0_q_out_2.txt";
-        constant file_pred_y3:      string := "./data/stacked_rnnrnn_layer_0_q_out_3.txt";
+        constant file_inputs_x1:      string := "./data/${name}_q_x_1.txt";
+        constant file_inputs_x2:      string := "./data/${name}_q_x_2.txt";
+        constant file_inputs_x3:      string := "./data/${name}_q_x_3.txt";
+        constant file_labels_y1:      string := "./data/${name}_q_y_1.txt";
+        constant file_labels_y2:      string := "./data/${name}_q_y_2.txt";
+        constant file_labels_y3:      string := "./data/${name}_q_y_3.txt";
+        constant file_pred_y1:      string := "./data/${name}_q_out_1.txt";
+        constant file_pred_y2:      string := "./data/${name}_q_out_2.txt";
+        constant file_pred_y3:      string := "./data/${name}_q_out_3.txt";
         file fp_inputs_x1:      text;
         file fp_inputs_x2:      text;
         file fp_inputs_x3:      text;

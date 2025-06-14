@@ -19,6 +19,7 @@ entity ${name} is
         Y_1_COUNT : integer := ${y_1_count};
         Y_2_COUNT : integer := ${y_2_count};
         Y_3_COUNT : integer := ${y_3_count};
+        LOOP_COUNT : integer := ${loop_count};
         RESOURCE_OPTION : string := "${resource_option}"
     );
     port
@@ -68,7 +69,7 @@ architecture rtl of ${name} is
     signal read_states_from_prev_iter : boolean := false;
     type t_cell_state is (s_stop, s_start, s_wait, s_read_out, s_done);
     signal cell_state : t_cell_state;
-    signal loop_counter : integer range 0 to X_1_COUNT := 0;
+    signal loop_counter : integer range 0 to LOOP_COUNT := 0;
     signal reset : std_logic;
     signal lstm_cell_x_1_address_offset : integer range 0 to (X_1_COUNT-NUM_DIMENSIONS)  := 0;
     signal read_out_done : std_logic;
@@ -113,15 +114,12 @@ begin
                         end if;
                     when s_read_out =>
                         if read_out_done = '1' then
-                            if loop_counter = X_1_COUNT-1 then
+                            if loop_counter = LOOP_COUNT-1 then
                                 cell_state <= s_done;
                             else
                                 cell_state <= s_start;
                                 loop_counter <= loop_counter + 1;
-                                if lstm_cell_x_1_address_offset < (X_1_COUNT-NUM_DIMENSIONS) then
-                                    lstm_cell_x_1_address_offset <= lstm_cell_x_1_address_offset + NUM_DIMENSIONS;
-                                end if;
-                                -- lstm_cell_x_1_address_offset <= lstm_cell_x_1_address_offset + NUM_DIMENSIONS;
+                                lstm_cell_x_1_address_offset <= lstm_cell_x_1_address_offset + NUM_DIMENSIONS;
                                 lstm_cell_enable <= '0';
                             end if;
                         end if;
@@ -148,10 +146,11 @@ begin
                     if read_out_done='0' then
                         if read_out_counter < Y_2_COUNT-1 then
                             read_out_counter := read_out_counter + 1;
-                            var_y_store_counter := var_y_store_counter + 1;
                             delay := 1;
                         else
                             read_out_done <= '1';
+                        end if;
+                        if var_y_store_counter < Y_1_COUNT-1 then
                             var_y_store_counter := var_y_store_counter + 1;
                         end if;
                     end if;

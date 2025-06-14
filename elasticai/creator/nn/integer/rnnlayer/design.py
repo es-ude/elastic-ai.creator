@@ -53,6 +53,8 @@ class RNNLayer(Design):
         self._y_1_addr_width = calculate_address_width(self._y_1_count)
         self._y_2_addr_width = calculate_address_width(self._y_2_count)
 
+        self.loop_count = self._window_size
+
         if self._cell_type == "lstm":
             # q_c_prev
             self._x_3_count = self._hidden_size
@@ -108,6 +110,7 @@ class RNNLayer(Design):
         template_params["cell_name"] = self._rnn_cell.name
         template_params["resource_option"] = self._resource_option
         template_params["num_dimensions"] = str(self._num_dimensions)
+        template_params["loop_count"] = str(self.loop_count)
         file_name = f"{self._cell_type}layer.tpl.vhd"
 
         template = InProjectTemplate(
