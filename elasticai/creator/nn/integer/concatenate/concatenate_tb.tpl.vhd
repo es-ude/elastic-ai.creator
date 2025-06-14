@@ -110,6 +110,7 @@ begin
                 x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
+            input_rd_cnt := 0;
             while input_rd_cnt < NUM_DIMENSIONS * X2_NUM_FEATURES loop
                 readline (fp_inputs_2, line_num);
                 read (line_num, line_content);

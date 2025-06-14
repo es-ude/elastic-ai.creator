@@ -70,7 +70,7 @@ architecture rtl of ${name} is
     signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_sum, s_output, s_done);
+    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_output, s_done);
     signal add_state : t_add_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
@@ -82,7 +82,6 @@ architecture rtl of ${name} is
     signal y_store_addr : integer range 0 to (X1_NUM_FEATURES+X2_NUM_FEATURES) * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal sum : signed(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
     signal read_x1_otherthan_x2 : boolean := true;
     signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_m_q_signed: signed(M_Q_DATA_WIDTH - 1 downto 0);
@@ -119,7 +118,7 @@ begin
         variable x1_input_idx, x1_end_idx : integer  range 0 to X1_NUM_FEATURES * NUM_DIMENSIONS := 0;
         variable x2_input_idx, x2_end_idx : integer  range 0 to X2_NUM_FEATURES * NUM_DIMENSIONS := 0;
         variable output_idx : integer  range 0 to (X1_NUM_FEATURES + X2_NUM_FEATURES) * NUM_DIMENSIONS := 0;
-        variable var_y_store : signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+        variable var_y_store : signed( DATA_WIDTH  downto 0);
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
@@ -161,7 +160,7 @@ begin
                         x_scaled <= scaling(x_sub_z, x_m_q_signed, x_m_q_shift);
                         add_state <= s_output;
                     when s_output =>
-                        var_y_store := x_scaled + to_signed(Z_Y, sum'length);
+                        var_y_store := x_scaled + to_signed(Z_Y, x_scaled'length);
                         y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
                         y_store_addr <= output_idx;
                         y_store_en <= '1';
