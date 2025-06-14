@@ -106,16 +106,18 @@ begin
         end if;
     end process fsm;
     mac : process( clock, layer_state )
-        variable neuron_idx : integer range 0 to OUT_NUM_DIMENSIONS := 0;
-        variable input_idx : integer  range 0 to IN_FEATURES*IN_NUM_DIMENSIONS := 0;
-        variable mac_cnt : integer range 0 to IN_FEATURES := 0;
-        variable output_idx : integer  range 0 to OUT_FEATURES*OUT_NUM_DIMENSIONS := 0;
+        variable dimension_idx : integer range 0 to IN_NUM_DIMENSIONS-1 := 0;
+        variable neuron_idx : integer range 0 to OUT_FEATURES-1 := 0;
+        variable input_idx : integer  range 0 to IN_FEATURES*IN_NUM_DIMENSIONS-1 := 0;
+        variable mac_cnt : integer range 0 to IN_NUM_DIMENSIONS+1 := 0;
+        variable output_idx : integer  range 0 to OUT_FEATURES*OUT_NUM_DIMENSIONS-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
         variable input_offset : integer;
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
                 mac_state <= s_init;
+                dimension_idx := 0;
                 neuron_idx := 0;
                 input_idx := 0;
                 output_idx := 0;
@@ -132,15 +134,15 @@ begin
                     when s_preload =>
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         acc_sum <= (OTHERS=>'0');
-                        input_idx := input_idx + 1;
+                        input_idx := input_idx + IN_FEATURES; --- IMPORTANT PART
                         mac_state <= s_accumulate;
                     when s_accumulate =>
                         x_sub_z <= x_int - to_signed(Z_X, x_sub_z'length);
                         acc_sum <= acc_sum + x_sub_z;
-                        if mac_cnt<IN_FEATURES then
-                            mac_cnt := mac_cnt + 1;
-                            if mac_cnt<IN_FEATURES then
-                                input_idx := input_idx + 1;
+                        mac_cnt := mac_cnt + 1;
+                        if mac_cnt<=IN_NUM_DIMENSIONS then
+                            if mac_cnt<IN_NUM_DIMENSIONS-1 then
+                                input_idx := input_idx + IN_FEATURES;
                             end if;
                             mac_state <= s_accumulate;
                         else
@@ -154,15 +156,14 @@ begin
                         y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
                         y_store_addr <= output_idx;
                         y_store_en <= '1';
-                        if neuron_idx<OUT_NUM_DIMENSIONS-1 then
+                        if neuron_idx<OUT_FEATURES-1 then
                             neuron_idx := neuron_idx + 1;
                             mac_state <= s_init;
                             output_idx := output_idx + 1;
-                            input_offset:= input_offset + IN_FEATURES;
+                            input_offset:= input_offset + 1;
                         else
                             mac_state <= s_done;
                         end if;
-
                     when others =>
                         mac_state <= s_done;
                 end case;
@@ -170,11 +171,7 @@ begin
                 mac_state <= s_done;
                 y_store_en <= '0';
             end if;
-            if input_idx < IN_FEATURES*IN_NUM_DIMENSIONS then
-                x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
-            else
-                x_address <= (others=>'0');
-            end if;
+            x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
         end if;
     end process ;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
@@ -195,7 +192,7 @@ begin
         wea    => y_store_en,
         enb    => '1',
         rstb   => '0',
-        regceb => '1',
+        regceb => '0',
         doutb  => y
     );
 end architecture;
