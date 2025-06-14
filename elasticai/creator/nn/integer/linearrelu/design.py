@@ -15,7 +15,7 @@ from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
-class Linear(Design):
+class LinearReLU(Design):
     def __init__(
         self,
         name: str,
@@ -88,7 +88,6 @@ class Linear(Design):
             m_q_data_width=str(self._m_q_data_width),
             in_features=str(self._in_features),
             out_features=str(self._out_features),
-            num_dimensions=str(self._num_dimensions),
             z_x=str(self._z_x),
             z_w=str(self._z_w),
             z_b=str(self._z_b),
@@ -108,7 +107,6 @@ class Linear(Design):
             data_width=str(self._data_width),
             in_features=str(self._in_features),
             out_features=str(self._out_features),
-            num_dimensions=str(self._num_dimensions),
             work_library_name=self._work_library_name,
         )
 
@@ -116,17 +114,13 @@ class Linear(Design):
             file_name = "linearrelu.tpl.vhd"
             test_file_name = "linearrelu_tb.tpl.vhd"
         else:
-            raise NotImplementedError(
-                "2D linear+ReLU design is not implemented yet. Please use 1D"
-                " linear+ReLU design."
-            )
-            # if self._in_features != 1:
-            #     file_name = "linear_2d.tpl.vhd"
-            # else:
-            #     file_name = "linear_2d_feature1.tpl.vhd"
-            # test_file_name = "linear_2d_tb.tpl.vhd"
-            # template_parameters["num_dimensions"] = str(self._num_dimensions)
-            # test_template_parameters["num_dimensions"] = str(self._num_dimensions)
+            if self._in_features != 1:
+                file_name = "linearrelu_2d.tpl.vhd"
+            else:
+                file_name = "linearrelu_2d_feature1.tpl.vhd"
+            test_file_name = "linearrelu_2d_tb.tpl.vhd"
+            template_parameters["num_dimensions"] = str(self._num_dimensions)
+            test_template_parameters["num_dimensions"] = str(self._num_dimensions)
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

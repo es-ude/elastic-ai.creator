@@ -3,7 +3,9 @@ from torch import nn
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.linearrelu.design import Linear as LinearReLUDesign
+from elasticai.creator.nn.integer.linearrelu.design import (
+    LinearReLU as LinearReLUDesign,
+)
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -144,7 +146,8 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         )
 
         q_outputs = torch.maximum(
-            q_outputs, self.outputs_QParams.zero_point.clone().detach()
+            q_outputs,
+            self.outputs_QParams.zero_point.clone().detach().to(q_outputs.device),
         )  # ReLU
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

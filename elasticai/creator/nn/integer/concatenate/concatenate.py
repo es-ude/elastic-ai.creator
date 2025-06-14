@@ -87,6 +87,9 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
         save_quant_data(q_inputs1, self.quant_data_dir, f"{self.name}_q_x_1")
         save_quant_data(q_inputs2, self.quant_data_dir, f"{self.name}_q_x_2")
+        print("---------------------------")
+        print("concatenate x1", q_inputs1)
+        print("concatenate x2", q_inputs2)
 
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
@@ -112,6 +115,7 @@ class Concatenate(DesignCreatorModule, nn.Module):
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        print("concatenate y", q_outputs)
 
         return q_outputs
 
