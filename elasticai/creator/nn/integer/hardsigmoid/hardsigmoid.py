@@ -77,6 +77,9 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
 
         self.precomputed = True
 
+    def _div_trunc(self, x: torch.Tensor, y: int) -> torch.Tensor:
+        return torch.where(x >= 0, x // y, -((-x) // y))
+
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
@@ -97,7 +100,8 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
 
         q_outputs = torch.where(
             (q_inputs > self.quantized_minus_three) & (q_inputs < self.quantized_three),
-            (q_outputs + self.tmp) // 8,
+            # (q_outputs + self.tmp) // 8,
+            self._div_trunc(q_outputs + self.tmp, 8),
             q_outputs,
         )
 
