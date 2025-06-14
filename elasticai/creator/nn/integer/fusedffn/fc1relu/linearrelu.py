@@ -185,11 +185,12 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
             else F.linear(inputs, weight)
         )
 
-        outputs = F.relu(outputs)
-
         if enable_simquant:
             if self.training:
                 self.outputs_QParams.update_quant_params(outputs)
 
             outputs = SimQuant.apply(outputs, self.outputs_QParams)
+
+        outputs = F.relu(outputs)
+
         return outputs

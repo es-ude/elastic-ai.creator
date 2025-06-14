@@ -20,8 +20,8 @@ architecture rtl of ${name}_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
 begin
     CLK_GEN : process
     begin
