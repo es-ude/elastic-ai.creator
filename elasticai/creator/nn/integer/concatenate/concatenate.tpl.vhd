@@ -70,8 +70,8 @@ architecture rtl of ${name} is
     signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_output, s_done);
-    signal add_state : t_add_state;
+    type t_concat_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_output, s_done);
+    signal concat_state : t_concat_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
 
@@ -102,7 +102,7 @@ begin
             if layer_state=s_stop then
                 layer_state <= s_forward;
             elsif layer_state=s_forward then
-                if add_state=s_done then
+                if concat_state=s_done then
                     layer_state <= s_finished;
                 else
                     layer_state <= s_forward;
@@ -113,7 +113,7 @@ begin
             end if;
         end if;
     end process fsm;
-    add : process( clock, layer_state )
+    concat : process( clock, layer_state )
         variable dimension_idx : integer  range 0 to NUM_DIMENSIONS - 1 := 0;
         variable x1_input_idx, x1_end_idx : integer  range 0 to X1_NUM_FEATURES * NUM_DIMENSIONS := 0;
         variable x2_input_idx, x2_end_idx : integer  range 0 to X2_NUM_FEATURES * NUM_DIMENSIONS := 0;
@@ -122,7 +122,7 @@ begin
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
-                add_state <= s_init;
+                concat_state <= s_init;
                 x1_input_idx := 0;
                 x2_input_idx := 0;
                 x1_end_idx := X1_NUM_FEATURES;
@@ -131,9 +131,9 @@ begin
                 y_store_en <= '0';
                 read_x1_otherthan_x2 <= true;
             elsif layer_state=s_forward then
-                case add_state is
+                case concat_state is
                     when s_init =>
-                        add_state <= s_preload;
+                        concat_state <= s_preload;
                         y_store_en <= '0';
 
                     when s_preload =>
@@ -150,38 +150,34 @@ begin
                             x_sub_z <= MINUS_X2_Z;
                             x_int <= x_2_int;
                         end if;
-
-                        add_state <= s_sub;
-
+                        concat_state <= s_sub;
                     when s_sub =>
                         x_sub_z <= x_sub_z + x_int;
-                        add_state <= s_scaling;
+                        concat_state <= s_scaling;
                     when s_scaling =>
                         x_scaled <= scaling(x_sub_z, x_m_q_signed, x_m_q_shift);
-                        add_state <= s_output;
+                        concat_state <= s_output;
                     when s_output =>
                         var_y_store := x_scaled + to_signed(Z_Y, x_scaled'length);
                         y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
                         y_store_addr <= output_idx;
                         y_store_en <= '1';
-
                         output_idx := output_idx + 1;
                         if x2_input_idx < x2_end_idx then
-                            add_state <= s_preload;
+                            concat_state <= s_preload;
                         else
                             if x2_end_idx < X2_NUM_FEATURES*NUM_DIMENSIONS then
                                 x1_end_idx := x1_end_idx + X1_NUM_FEATURES;
                                 x2_end_idx := x2_end_idx + X2_NUM_FEATURES;
                             else
-                                add_state <= s_done;
+                                concat_state <= s_done;
                             end if;
                         end if;
-
                     when others =>
-                        add_state <= s_done;
+                        concat_state <= s_done;
                 end case;
             else
-                add_state <= s_done;
+                concat_state <= s_done;
                 y_store_en <= '0';
             end if;
             if x1_input_idx < X1_NUM_FEATURES then
@@ -194,7 +190,6 @@ begin
         end if;
     end process ;
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
-
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
         RAM_WIDTH => DATA_WIDTH,
