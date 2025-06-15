@@ -335,7 +335,7 @@ architecture rtl of ${name} is
     o_gate_linear_y_address <= oc_hadamard_product_x_1_address;
 
     -- C next can be used to update hidden state, can also be read out
-    c_next_addition_y_address <= y_2_address when oc_hadamard_product_done='1' else oc_hadamard_product_x_2_address;
+    c_next_addition_y_address <= oc_hadamard_product_x_2_address when (oc_hadamard_product_enable='1'and oc_hadamard_product_done='0') else y_2_address;
 
     inst_${name}_oc_hadamard_product: entity ${work_library_name}.${oc_hadamard_product_name}(rtl)
     port map (
