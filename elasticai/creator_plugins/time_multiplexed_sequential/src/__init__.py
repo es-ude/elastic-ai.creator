@@ -197,13 +197,15 @@ class _Sequential:
                 generic_map=dict(),
             )
 
-    def input(self, impl: Implementation) -> None:
-        input_shape = self._determine_required_input_shape(impl)
+    def input(self, impl: Implementation, input_node: str) -> None:
+        input_shape = self._determine_required_input_shape(impl, input_node)
         self._impl.data["top_kernel_size"] = input_shape.size()
         self.add_input(input_shape)
 
-    def _determine_required_input_shape(self, impl: Implementation):
-        first_node_after_input = tuple(impl.successors("input").values())[0]
+    def _determine_required_input_shape(
+        self, impl: Implementation, input_node: str
+    ) -> Shape:
+        first_node_after_input = tuple(impl.successors(input_node).values())[0]
         match first_node_after_input.type:
             case "filter":
                 n = _FilterNode(
@@ -211,7 +213,7 @@ class _Sequential:
                 )
                 return Shape(n.params.in_channels, n.params.kernel_size)
             case _:
-                return impl.nodes["input"].output_shape
+                return impl.nodes[input_node].output_shape
 
     def set_runtime_input_shape(self, s: Shape) -> None:
         self._impl.data["runtime_input_shape"] = s.to_tuple()
@@ -237,8 +239,12 @@ def sequential(impl: Implementation) -> Implementation:
     seq = _Sequential(impl.name)
 
     def iter_nodes():
+        for input_node in impl.nodes.values():
+            if input_node.type == "input":
+                break
+
         def iterator():
-            yield from dfs_iter(impl.successors, "input")
+            yield from dfs_iter(impl.successors, input_node.name)
 
         return impl.get_node_mapping(iterator)
 
@@ -248,7 +254,7 @@ def sequential(impl: Implementation) -> Implementation:
                 seq.filter(n)
             case "input":
                 seq.set_runtime_input_shape(n.input_shape)
-                seq.input(impl)
+                seq.input(impl, n.name)
             case "output":
                 seq.set_runtime_output_shape(n.output_shape)
                 seq.finish()
