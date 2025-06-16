@@ -44,7 +44,7 @@ _iterable_type_handler = FunctionDecorator(_iterable_type_handler_fn)
 
 
 class _FilterNode(Node):
-    params: RequiredField[dict, FilterParameters] = RequiredField(
+    filter_parameters: RequiredField[dict, FilterParameters] = RequiredField(
         set_convert=lambda x: x.as_dict(), get_convert=FilterParameters.from_dict
     )
 
@@ -101,15 +101,19 @@ class _Sequential:
     def filter(self, n: Node):
         node = _FilterNode(n.name, n.data)
         attributes = n.attributes
-        params = node.params
+        params = node.filter_parameters
         if "top_stride" not in self._impl.attributes:
             self._impl.data.update(
                 {
                     "top_stride": params.in_channels * params.stride,
                 }
             )
-        elif self._last_node is not None and "params" in self._last_node.data:
-            old_params = _FilterNode(self._last_node.name, self._last_node.data).params
+        elif (
+            self._last_node is not None and "filter_parameters" in self._last_node.data
+        ):
+            old_params = _FilterNode(
+                self._last_node.name, self._last_node.data
+            ).filter_parameters
             if params.kernel_size != 1 or params.stride != 1:
                 self.strided_shift_register(
                     output_shape=(
@@ -123,8 +127,8 @@ class _Sequential:
         self._append_node(
             name=n.name,
             type="unclocked_combinatorial",
-            implementation=n.name,
-            output_shape=Shape(attributes["params"]["out_channels"], 1),
+            implementation=n.implementation,
+            output_shape=Shape(attributes["filter_parameters"]["out_channels"], 1),
             attributes=attributes,
             node_fn=vhdl_node,
         )
@@ -211,7 +215,9 @@ class _Sequential:
                 n = _FilterNode(
                     first_node_after_input.name, first_node_after_input.data
                 )
-                return Shape(n.params.in_channels, n.params.kernel_size)
+                return Shape(
+                    n.filter_parameters.in_channels, n.filter_parameters.kernel_size
+                )
             case _:
                 return impl.nodes[input_node].output_shape
 

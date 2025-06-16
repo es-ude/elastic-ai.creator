@@ -64,7 +64,7 @@ def grouped_filter(impl: Implementation) -> Implementation:
     result: Implementation[Node, Edge] = Implementation(
         name=impl.name, type="unclocked_combinatorial", data={}
     )
-    params = FilterParameters.from_dict(impl.attributes["params"])
+    params = FilterParameters.from_dict(impl.attributes["filter_parameters"])
     result.add_node(
         vhdl_node(
             name="input",
