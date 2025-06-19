@@ -1,8 +1,8 @@
 import subprocess
+import tomllib
 from pathlib import Path
 
 import serial
-import tomllib
 import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
