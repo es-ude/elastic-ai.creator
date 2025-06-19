@@ -11,10 +11,25 @@ package padding_pkg is
 
   function padded_size(size: integer) return integer;
   function padding_bits(size: integer) return integer;
+  function clog2(n: integer) return positive;
+
+  procedure write_unpadded(
+    variable data_id : inout integer;
+    signal rst : in std_logic;
+    signal data_buffer: out std_logic_vector;
+    signal d_out : in std_logic_vector;
+    signal valid_out : in std_logic;
+    constant DATA_DEPTH : in positive;
+    constant DATA_WIDTH : in positive
+  );
 end package;
 
 
 package body padding_pkg is
+  function clog2(n: integer) return positive is
+  begin
+    return positive(ceil(log2(real(n))));
+  end function;
 
   function size_in_bytes(size: integer) return integer is
     begin
@@ -30,5 +45,27 @@ package body padding_pkg is
     begin
       return padded_size(size) - size;
   end function;
+
+    
+  procedure write_unpadded(
+    variable data_id : inout integer;
+    signal rst : in std_logic;
+    signal data_buffer: out std_logic_vector;
+    signal d_out : in std_logic_vector;
+    signal valid_out : in std_logic;
+    constant DATA_DEPTH : in positive;
+    constant DATA_WIDTH : in positive
+  ) is
+  begin
+      if rst = '1' then
+        data_id := 0;
+      end if;
+      if valid_out = '1' then
+        if data_id < DATA_DEPTH then
+          data_buffer(DATA_WIDTH*(data_id+1) - 1 downto DATA_WIDTH*data_id) <= d_out;
+          data_id := data_id + 1;
+        end if;
+      end if;
+  end procedure;
 
 end package body;
