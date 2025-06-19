@@ -3,7 +3,7 @@ from abc import abstractmethod
 from collections.abc import Callable, Collection
 from typing import Protocol
 
-from elasticai.creator.graph import get_rewriteable_matches, find_all_subgraphs
+from elasticai.creator.graph import find_all_subgraphs, get_rewriteable_matches
 from elasticai.creator.ir.attribute import AttributeMapping
 from elasticai.creator.ir.datagraph import DataGraph as _DGraph
 from elasticai.creator.ir.datagraph import Edge, Node

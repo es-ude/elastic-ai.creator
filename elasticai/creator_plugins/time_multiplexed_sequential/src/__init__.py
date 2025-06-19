@@ -367,10 +367,12 @@ def network(
 ) -> tuple[DataGraph, Registry]:
     network, registry = sequential(_factory.graph(other=impl), registry)
     network = network.with_attributes(network.attributes | dict(name="network"))
-    # network.attributes["top_kernel_size"]
-    # network.attributes["top_stride"]
-    input_shape = network.nodes["input"].input_shape
-    output_shape = network.nodes["output"].output_shape
+    for node in impl.nodes.values():
+        if node.type == "input":
+            input_shape = node.input_shape
+    kernel_size = network.attributes["top_kernel_size"]
+    stride = network.attributes["top_stride"]
+    output_shape = impl.nodes["output"].input_shape
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
     skeleton_attrs = {}
@@ -379,11 +381,12 @@ def network(
         "DATA_IN_DEPTH": str(input_depth),
         "DATA_OUT_WIDTH": str(output_width),
         "DATA_OUT_DEPTH": str(output_depth),
+        "STRIDE": str(stride),
+        "KERNEL_SIZE": str(kernel_size),
     }
 
     registry = registry | dict(
         skeleton=_factory.graph(ir.attribute(skeleton_attrs), type="skeleton"),
-        buffered_network_wrapper=_factory.graph(type="buffered_network_wrapper"),
     )
 
     return network, registry
