@@ -48,6 +48,8 @@ class SlidingWindowNode(ClockedInstance):
             stride = node.attributes["generic_map"]["stride"]  # pyright: ignore
         else:
             stride = node.attributes["stride"]  # pyright: ignore
+
+        stride = stride * node.output_shape.depth
         super().__init__(
             node,
             input_width=data_width,

@@ -152,7 +152,7 @@ class TestSlidingWindow:
         expected = (
             "a: entity work.impl(rtl)",
             "generic map (",
-            "STRIDE => 2,",
+            "STRIDE => 8,",
             "INPUT_WIDTH => 8,",
             "OUTPUT_WIDTH => 4",
             ")",
