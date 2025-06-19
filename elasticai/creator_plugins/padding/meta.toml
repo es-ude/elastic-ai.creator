@@ -7,8 +7,9 @@ target_runtime = 'vhdl'
 target_platform = ''
 generated = []
 static_files = [
-  "padder.vhd",
   "padding_pkg.vhd",
-  "padding_remover.vhd",
+  "dynamic_padder.vhd",
+  "dynamic_padding_remover.vhd",
+  "fifo_buffer.vhd",
 ]
 
