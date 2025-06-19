@@ -1,10 +1,10 @@
 import subprocess
 import time
+import tomllib
 from pathlib import Path
 
 import numpy as np
 import serial  # type: ignore
-import tomllib
 import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
