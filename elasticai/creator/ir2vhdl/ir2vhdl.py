@@ -86,7 +86,9 @@ class Shape:
 
     @property
     def depth(self) -> int:
-        return self._data[0]
+        if len(self._data) > 1:
+            return self._data[0]
+        return 1
 
     def __eq__(self, other):
         if isinstance(other, tuple):
@@ -101,7 +103,7 @@ class Shape:
         if len(self._data) > 1:
             return self._data[1]
         else:
-            return 1
+            return self._data[0]
 
     @property
     def height(self) -> int:
