@@ -16,8 +16,8 @@ class SlidingWindowNode(ClockedInstance):
         self,
         node: VhdlNode,
     ):
-        data_width = node.input_shape.depth
-        num_points = node.output_shape.depth
+        data_width = node.input_shape.size()
+        num_points = node.output_shape.size()
         if (
             "generic_map" in node.attributes  #  pyright: ignore
             and "stride" in node.attributes["generic_map"]  #  pyright: ignore
@@ -25,6 +25,8 @@ class SlidingWindowNode(ClockedInstance):
             stride = node.attributes["generic_map"]["stride"]  # pyright: ignore
         else:
             stride = node.attributes["stride"]  # pyright: ignore
+
+        stride = stride * node.output_shape.depth
         super().__init__(
             node,
             input_width=data_width,
