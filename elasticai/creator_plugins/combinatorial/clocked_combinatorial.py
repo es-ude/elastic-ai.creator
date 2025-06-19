@@ -81,7 +81,7 @@ def _get_valid_in_out_pairs(impl: Implementation) -> dict[str, str]:
         def succ(node: str):
             return impl.successors(node)
 
-        for node in gr.bfs_iter_down(successors=succ, predecessors=pred, start=node):
+        for node in gr.bfs_iter_up(successors=succ, predecessors=pred, start=node):
             yield impl.nodes[node]
 
     adjacency: dict[str, str] = {}
