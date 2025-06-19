@@ -68,10 +68,12 @@ def test_convolution_is_translated_to_unclocked_combinatorial():
 
 
 def test_inserts_conv_node():
-    lowered = sequential(network(input_shape=(1, 10), kernel_size=3, out_channels=1))
+    lowered = sequential(
+        network(input_shape=(1, 10), kernel_size=3, out_channels=1, stride=1)
+    )
 
     expected = vhdl_node(
-        name="conv0_i0",
+        name="sliding_window",
         input_shape=(
             1,
             3,
@@ -88,7 +90,7 @@ def test_inserts_conv_node():
                 in_channels=1,
                 out_channels=1,
                 output_size=1,
-                stride=2,
+                stride=1,
             ).as_dict()
         },
     )
