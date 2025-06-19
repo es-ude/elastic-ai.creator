@@ -231,7 +231,7 @@ class _Sequential:
 
     def input(self, impl: Implementation, input_node: str) -> None:
         input_shape = self._determine_required_input_shape(impl, input_node)
-        self._impl.data["top_kernel_size"] = input_shape.size()
+        self._impl.data["top_kernel_size"] = input_shape.width
         self.add_input(input_shape)
 
     def _determine_required_input_shape(
@@ -305,10 +305,12 @@ def sequential(impl: Implementation) -> Implementation:
 @_iterable_type_handler
 def network(impl: Implementation) -> Iterable[Implementation]:
     network = sequential(impl)
-    network.attributes["top_kernel_size"]
-    network.attributes["top_stride"]
-    input_shape = network.nodes["input"].input_shape
-    output_shape = network.nodes["output"].output_shape
+    for node in impl.nodes.values():
+        if node.type == "input":
+            input_shape = node.input_shape
+    kernel_size = network.attributes["top_kernel_size"]
+    stride = network.attributes["top_stride"]
+    output_shape = impl.nodes["output"].input_shape
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
 
@@ -318,10 +320,8 @@ def network(impl: Implementation) -> Iterable[Implementation]:
         "DATA_IN_DEPTH": str(input_depth),
         "DATA_OUT_WIDTH": str(output_width),
         "DATA_OUT_DEPTH": str(output_depth),
+        "STRIDE": str(stride),
+        "KERNEL_SIZE": str(kernel_size),
     }
 
-    buffered_network_wrapper: Implementation = Implementation(
-        name="buffered_network_wrapper",
-        type="buffered_network_wrapper",
-    )
-    return network, skeleton, buffered_network_wrapper
+    return network, skeleton
