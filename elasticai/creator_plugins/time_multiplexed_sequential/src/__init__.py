@@ -85,6 +85,7 @@ class _Sequential:
             vhdl_node
         )
         self._num_registers: int = 0
+        self._last_stride = 1
 
     def add_input(self, shape: Shape):
         self._impl.add_node(
@@ -98,6 +99,22 @@ class _Sequential:
         )
         self._last_node = self._impl.nodes["input"]
 
+    def _need_shift_register(self, params: FilterParameters) -> bool:
+        if self._last_node is None:
+            return False
+        consuming_more_than_last_node_produces = (
+            self._last_node.output_shape.width < params.kernel_size
+        )
+        return consuming_more_than_last_node_produces
+
+    def _need_sliding_window(self, params: FilterParameters) -> bool:
+        if self._last_node is None:
+            return False
+        consuming_less_than_last_node_produces = (
+            self._last_node.output_shape.width > params.kernel_size
+        )
+        return consuming_less_than_last_node_produces
+
     def filter(self, n: Node):
         node = _FilterNode(n.name, n.data)
         attributes = n.attributes
@@ -108,20 +125,21 @@ class _Sequential:
                     "top_stride": params.in_channels * params.stride,
                 }
             )
-        elif (
-            self._last_node is not None and "filter_parameters" in self._last_node.data
-        ):
+        if self._need_shift_register(params):
             old_params = _FilterNode(
                 self._last_node.name, self._last_node.data
             ).filter_parameters
-            if params.kernel_size != 1 or params.stride != 1:
-                self.strided_shift_register(
-                    output_shape=(
-                        params.in_channels,
-                        params.kernel_size,
-                    ),
-                    stride=old_params.stride,
-                )
+            self.strided_shift_register(
+                output_shape=(
+                    params.in_channels,
+                    params.kernel_size,
+                ),
+                stride=old_params.stride,
+            )
+        elif self._need_sliding_window(params):
+            self._sliding_window(params)
+        elif self._last_node is not None:
+            pass
         else:
             raise ValueError("expected last node to be not None")
         self._append_node(
@@ -131,6 +149,16 @@ class _Sequential:
             output_shape=Shape(attributes["filter_parameters"]["out_channels"], 1),
             attributes=attributes,
             node_fn=vhdl_node,
+        )
+
+    def _sliding_window(self, params: FilterParameters) -> None:
+        self._append_static(
+            "sliding_window",
+            "sliding_window",
+            output_shape=Shape(
+                params.in_channels,
+                params.kernel_size,
+            ),
         )
 
     def _append_node(
@@ -230,7 +258,9 @@ class _Sequential:
     def get_impl(self) -> Implementation:
         return self._impl
 
-    def finish(self):
+    def output(self, n):
+        if self._last_node.output_shape.width < n.input_shape.width:
+            self.shift_register("shift_register", n.output_shape)
         self._append_node(
             name="output",
             output_shape=self._last_node.output_shape,
@@ -263,7 +293,7 @@ def sequential(impl: Implementation) -> Implementation:
                 seq.input(impl, n.name)
             case "output":
                 seq.set_runtime_output_shape(n.output_shape)
-                seq.finish()
+                seq.output(n)
             case _:
                 raise Exception(
                     f"Can't handle unknown type {n.type} during generation of time multiplexed sequential"
@@ -275,10 +305,10 @@ def sequential(impl: Implementation) -> Implementation:
 @_iterable_type_handler
 def network(impl: Implementation) -> Iterable[Implementation]:
     network = sequential(impl)
-    input_shape = network.attributes["runtime_input_shape"]
-    output_shape = network.attributes["runtime_output_shape"]
-    kernel_size = network.attributes["top_kernel_size"]
-    stride = network.attributes["top_stride"]
+    network.attributes["top_kernel_size"]
+    network.attributes["top_stride"]
+    input_shape = network.nodes["input"].input_shape
+    output_shape = network.nodes["output"].output_shape
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
 
@@ -294,8 +324,4 @@ def network(impl: Implementation) -> Iterable[Implementation]:
         name="buffered_network_wrapper",
         type="buffered_network_wrapper",
     )
-    buffered_network_wrapper.data["generic_map"] = {
-        "KERNEL_SIZE": str(kernel_size),
-        "STRIDE": str(stride),
-    }
     return network, skeleton, buffered_network_wrapper
