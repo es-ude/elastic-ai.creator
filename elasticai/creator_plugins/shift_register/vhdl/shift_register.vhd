@@ -20,40 +20,37 @@ end entity;
 
 architecture rtl of shift_register is
   signal q_i : std_logic_vector(d_out'range);
-  signal counter_enable : std_logic := '0';
-  signal counter : std_logic_vector(clog2(NUM_POINTS + 1) - 1 downto 0);
+  signal count : natural range d_out'range;
 begin
 
-    counter_i : entity work.counter
-      generic map (
-        MAX_VALUE => NUM_POINTS
-      )
-      port map (
-        rst => rst,
-        enable => counter_enable,
-        d_out => counter,
-        clk => clk
-    );
-
-
-
-  counter_enable <= '1' when valid_in = '1' and unsigned(counter) < NUM_POINTS
-                    else '0';
-
-  valid_out <= '1' when unsigned(counter) = NUM_POINTS
-               else '0';
 
   d_out <= q_i;
 
+  process (count) is begin
+    if count = d_out'high then
+      valid_out <= '1';
+    else
+      valid_out <= '0';
+    end if;
+  end process;
 
-  process(clk, rst)
+  process (clk, rst) is
   begin
     if rst = '1' then
-        q_i <= (others => '0');
+      count <= d_out'low;
     elsif rising_edge(clk) then
-        if valid_in = '1' then
-            q_i <= q_i(DATA_WIDTH*(NUM_POINTS-1) - 1 downto 0) & d_in;
-        end if;
+      if valid_in = '1' and count < d_out'high then
+        count <= count + 1; 
+      end if;
+    end if;
+  end process;
+
+  process(clk) is
+  begin
+    if rising_edge(clk) then
+      if rst = '0' and valid_in = '1' then
+          q_i <= q_i(DATA_WIDTH*(NUM_POINTS-1) - 1 downto 0) & d_in;
+      end if;
     end if;
   end process;
 
