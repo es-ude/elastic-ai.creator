@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from elasticai.creator.ir2vhdl import Shape, VhdlNode
@@ -140,8 +142,8 @@ class TestSlidingWindow:
         return new_node(
             name="a",
             type="sliding_window",
-            input_shape=Shape(4),
-            output_shape=Shape(2),
+            input_shape=Shape(4, 2),
+            output_shape=Shape(4, 1),
             implementation="impl",
             attributes={"stride": 2},
         )
@@ -151,8 +153,8 @@ class TestSlidingWindow:
             "a: entity work.impl(rtl)",
             "generic map (",
             "STRIDE => 2,",
-            "INPUT_WIDTH => 4,",
-            "OUTPUT_WIDTH => 2",
+            "INPUT_WIDTH => 8,",
+            "OUTPUT_WIDTH => 4",
             ")",
             "port map (",
             "clk => clk,",
@@ -166,13 +168,35 @@ class TestSlidingWindow:
         actual = tuple(line.strip() for line in node.instantiate())
         assert actual == expected
 
-    def test_can_define_signals(self, node):
-        expected = (
-            "signal d_in_a : std_logic_vector(4 - 1 downto 0) := (others => '0');",
-            "signal d_out_a : std_logic_vector(2 - 1 downto 0) := (others => '0');",
-            "signal valid_in_a : std_logic := '0';",
-            "signal valid_out_a : std_logic := '0';",
+    def test_raise_error_for_incompatible_shapes(self):
+        node_with_incompatible_shapes = new_node(
+            name="a",
+            type="sliding_window",
+            input_shape=Shape(5, 2),
+            output_shape=Shape(3, 2),
+            implementation="impl",
+            attributes={"stride": 2},
         )
-        signals = tuple(line for line in node.define_signals())
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                "Found incompatible input output shapes for sliding_window. Total input size has to be an integer multiple of total output size, but found output=Shape(depth=3, width=2) and input=Shape(depth=5, width=2)."
+            ),
+        ):
+            InstanceFactoryForCombinatorial(node_with_incompatible_shapes).instantiate()
 
-        assert signals == expected
+    def test_warn_about_technically_compatible_but_semantically_wrong_shapes(self):
+        node_with_incompatible_shapes = new_node(
+            name="a",
+            type="sliding_window",
+            input_shape=Shape(2, 4),
+            output_shape=Shape(1, 2),
+            implementation="impl",
+            attributes={"stride": 2},
+        )
+        with pytest.warns(
+            match=re.escape(
+                'Detected mismatching input output shapes for sliding_window for node "a". Depth of output and input shape should usually be equal, but found output=Shape(depth=1, width=2) and input=Shape(depth=2, width=4).'
+            ),
+        ):
+            InstanceFactoryForCombinatorial(node_with_incompatible_shapes).instantiate()
