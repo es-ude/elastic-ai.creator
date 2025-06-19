@@ -1,6 +1,8 @@
 from elasticai.creator.ir2vhdl import VhdlNode
 
-from .node_factory import InstanceFactoryForCombinatorial
+from .node_factory import (
+    InstanceFactoryForCombinatorial,
+)
 from .shift_register import ShiftRegister
 
 
