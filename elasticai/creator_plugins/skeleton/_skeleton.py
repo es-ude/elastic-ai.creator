@@ -38,6 +38,8 @@ class _Skeleton(PluginSymbol):
             .add_generic("DATA_IN_DEPTH")
             .add_generic("DATA_OUT_WIDTH")
             .add_generic("DATA_OUT_DEPTH")
+            .add_generic("STRIDE")
+            .add_generic("NETWORK_IN_SIZE")
             .build()
         )
         skeleton = cls(template)
