@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.integer.relu.test_relu import inputs, relu_layer
+from elasticai.creator.nn.integer.relu.relu_test import inputs, relu_layer
 
 
 @pytest.fixture

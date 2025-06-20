@@ -5,7 +5,7 @@ from torch import nn
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.sequential.sequential import Sequential
-from elasticai.creator.nn.integer.sequential.test_sequential import (
+from elasticai.creator.nn.integer.sequential.sequential_test import (
     eps,
     inputs,
     linear_layer_0,
