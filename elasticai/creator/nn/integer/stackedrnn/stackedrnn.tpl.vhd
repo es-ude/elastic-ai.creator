@@ -13,7 +13,9 @@ entity ${name} is
         X_3_COUNT : integer := ${x_3_count};
         Y_1_COUNT : integer := ${y_1_count};
         Y_2_COUNT : integer := ${y_2_count};
-        Y_3_COUNT : integer := ${y_3_count}
+        Y_3_COUNT : integer := ${y_3_count};
+        X_2_ZERO : integer := ${z_x2};
+        X_3_ZERO : integer := ${z_x3}
     ) ;
     port (
         enable : in std_logic;
@@ -64,8 +66,8 @@ architecture rtl of ${name} is
     -- we don't need to use them, since the x2 and x3 will be always 0 for the first layer
     -- rnn_layer_0_x2_address leave to open
     -- rnn_layer_0_x3_address leave to open
-    rnn_layer_0_x2 <= (others => '0');
-    rnn_layer_0_x3 <= (others => '0');
+    rnn_layer_0_x2 <= std_logic_vector(to_signed(X_2_ZERO, DATA_WIDTH));
+    rnn_layer_0_x3 <= std_logic_vector(to_signed(X_3_ZERO, DATA_WIDTH));
 
     -- the stacked_rnn_0 doesn't provide information about the y1 and y3,
     -- so we always assign their address to 0

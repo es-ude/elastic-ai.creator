@@ -40,6 +40,10 @@ class StackedRNN(Design):
         self._x_2_count = self.rnn_layer_0_design._x_2_count
         self._y_1_count = self.rnn_layer_0_design._y_1_count
         self._y_2_count = self.rnn_layer_0_design._y_2_count
+        self._z_x2 = self.rnn_layer_0_design.rnn_cell_deisgn.concatenate_design._z_x2
+        self._z_x3 = (
+            self.rnn_layer_0_design.rnn_cell_deisgn.fc_hadamard_product_design._z_x2
+        )
 
         self._x_1_addr_width = calculate_address_width(self._x_1_count)
         self._x_2_addr_width = calculate_address_width(self._x_2_count)
@@ -54,6 +58,8 @@ class StackedRNN(Design):
 
         self._x_count = self._x_1_count
         self._y_count = self._y_2_count
+        self.z_x2 = self._z_x2
+        self.z_x3 = self._z_x3
         self._x_addr_width = self._x_1_addr_width
         self._y_addr_width = self._y_2_addr_width
 
@@ -85,6 +91,8 @@ class StackedRNN(Design):
                 y_1_count=str(self._y_1_count),
                 y_2_count=str(self._y_2_count),
                 y_3_count=str(self._y_3_count),
+                z_x2=str(self.z_x2),
+                z_x3=str(self.z_x3),
                 layer_name=self.rnn_layer_0_design.name,
                 work_library_name=self._work_library_name,
             ),
