@@ -24,7 +24,6 @@ entity striding_shift_register is
 end entity;
 
 architecture rtl of striding_shift_register is
-    signal reg_valid : std_logic;
     signal intern_valid_in : std_logic := '1';
     signal counter : std_logic_vector(clog2(STRIDE) - 1 downto 0);
   begin
