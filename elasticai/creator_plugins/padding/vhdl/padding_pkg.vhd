@@ -13,7 +13,7 @@ package padding_pkg is
   function padding_bits(size: integer) return integer;
   function clog2(n: integer) return positive;
 
-  procedure write_unpadded(
+  procedure read_from_padding_component(
     variable data_id : inout integer;
     signal rst : in std_logic;
     signal data_buffer: out std_logic_vector;
@@ -46,8 +46,7 @@ package body padding_pkg is
       return padded_size(size) - size;
   end function;
 
-    
-  procedure write_unpadded(
+  procedure read_from_padding_component(
     variable data_id : inout integer;
     signal rst : in std_logic;
     signal data_buffer: out std_logic_vector;
