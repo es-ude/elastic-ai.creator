@@ -4,14 +4,14 @@ use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 package counter_pkg is
-  function clog2(n : positive) return positive;
+  function clog2(n : natural) return natural;
  end package;
  
  package body counter_pkg is
  
-    function clog2(n : positive) return positive is
+    function clog2(n : natural) return natural is
     begin
-        return positive(ceil(log2(real(n))));
+        return natural(ceil(log2(real(n))));
     end function;
     
  end package body;
