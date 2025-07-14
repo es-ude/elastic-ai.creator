@@ -12,6 +12,7 @@ from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_p
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
+from elasticai.creator.vhdl.shared_designs.multi_value_rom import MultiValueRom
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
@@ -33,6 +34,8 @@ class Linear(Design):
         work_library_name: str,
         resource_option: str,
         num_dimensions: int = None,
+        parallelised_template: bool = False,
+        unroll_factor: int = 1,
     ) -> None:
         super().__init__(name=name)
 
@@ -40,6 +43,11 @@ class Linear(Design):
         self._in_features = in_features
         self._out_features = out_features
         self._num_dimensions = num_dimensions
+        self._parallelised_template = parallelised_template
+        if out_features < unroll_factor:
+            self._unroll_factor = out_features
+        else:
+            self._unroll_factor = unroll_factor
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -98,6 +106,7 @@ class Linear(Design):
             bias_rom_name=rom_name["bias"],
             work_library_name=self._work_library_name,
             resource_option=self._resource_option,
+            unroll_factor=str(self._unroll_factor),
         )
 
         test_template_parameters = dict(
@@ -115,9 +124,17 @@ class Linear(Design):
             test_file_name = "linear_tb.tpl.vhd"
         else:
             if self._in_features != 1:
-                file_name = "linear_2d.tpl.vhd"
+                if not self._parallelised_template:
+                    file_name = "linear_2d.tpl.vhd"
+                else:
+                    file_name = "linear_2d_parallel.tpl.vhd"
             else:
-                file_name = "linear_2d_feature1.tpl.vhd"
+                if not self._parallelised_template:
+                    file_name = "linear_2d_feature1.tpl.vhd"
+                else:
+                    assert (
+                        self._num_dimensions == 1
+                    ), "Parallelised template for input with 1 feature is not supported"
             test_file_name = "linear_2d_tb.tpl.vhd"
             template_parameters["num_dimensions"] = str(self._num_dimensions)
             test_template_parameters["num_dimensions"] = str(self._num_dimensions)
@@ -129,19 +146,38 @@ class Linear(Design):
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        rom_weights = Rom(
-            name=rom_name["weights"],
-            data_width=self._data_width,
-            values_as_integers=_flatten_params(self._weights),
-        )
-        rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
+        if not self._parallelised_template:
+            rom_weights = Rom(
+                name=rom_name["weights"],
+                data_width=self._data_width,
+                values_as_integers=_flatten_params(self._weights),
+            )
+            rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
-        rom_bias = Rom(
-            name=rom_name["bias"],
-            data_width=(self._data_width + 1) * 2,
-            values_as_integers=self._bias,
-        )
-        rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
+            rom_bias = Rom(
+                name=rom_name["bias"],
+                data_width=(self._data_width + 1) * 2,
+                values_as_integers=self._bias,
+            )
+            rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
+        else:
+            rom_weights = MultiValueRom(
+                name=rom_name["weights"],
+                data_width=self._data_width,
+                values_as_integers=_flatten_params(self._weights),
+                number_per_row=self._in_features,
+                unroll_factor=self._unroll_factor,
+            )
+            rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
+
+            rom_bias = MultiValueRom(
+                name=rom_name["bias"],
+                data_width=(self._data_width + 1) * 2,
+                values_as_integers=self._bias,
+                number_per_row=1,  # for bias, we only have one value per row
+                unroll_factor=self._unroll_factor,
+            )
+            rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
 
         ram = Ram(name=f"{self.name}_ram")
         ram.save_to(destination)

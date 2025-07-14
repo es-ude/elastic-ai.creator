@@ -78,10 +78,10 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             layer.precompute()
 
         h_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
-            "cuda"
+            "cpu"
         )
         c_prev = torch.zeros(self.batch_size, self.hidden_size, dtype=torch.float32).to(
-            "cuda"
+            "cpu"
         )
 
         self.q_h_prev = self.h_prev_QParams.quantize(h_prev).to("cpu")

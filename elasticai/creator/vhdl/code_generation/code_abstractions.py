@@ -96,3 +96,29 @@ def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
     two_complement = _to_unsigned(number, number_of_bits)
 
     return f'"{two_complement:0{number_of_bits}b}"'
+
+
+def multi_values_to_vhdl_binary_string(number: list[int], number_of_bits: int) -> str:
+    def _to_unsigned(value: int, total_bits: int) -> int:
+        def invert(value: int) -> int:
+            return value ^ int("1" * total_bits, 2)
+
+        def discard_leading_bits(value: int) -> int:
+            return value & int("1" * total_bits, 2)
+
+        if value < 0:
+            value = discard_leading_bits(invert(abs(value)) + 1)
+
+        return value
+
+    merged_two_complements = ""
+    for num in number:
+        if abs(num) >= 2**number_of_bits:
+            raise ValueError(
+                f"Value '{num}' cannot be represented with {number_of_bits} bits."
+            )
+
+        two_complement = _to_unsigned(num, number_of_bits)
+        merged_two_complements += f"{two_complement:0{number_of_bits}b}"
+
+    return f'"{merged_two_complements}"'
