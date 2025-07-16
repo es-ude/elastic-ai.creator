@@ -17,11 +17,14 @@
   config,
   ...
 }: let
-  unstablePkgs = import inputs.nixpkgs-unstable {system = pkgs.stdenv.system;};
+  # choose 24.11 release for ghdl as later releases are broken due to gnat-{13, 14}
+  # not building for x86_64-darwin
+  # see https://github.com/NixOS/nixpkgs/issues/385174
+  pkgsForGhdl = import inputs.nixpkgs-24-11 {system = pkgs.stdenv.system;};
   rosettaPkgs =
-    if unstablePkgs.stdenv.isDarwin && unstablePkgs.stdenv.isAarch64
-    then unstablePkgs.pkgsx86_64Darwin
-    else unstablePkgs;
+    if pkgsForGhdl.stdenv.isDarwin && pkgsForGhdl.stdenv.isAarch64
+    then pkgsForGhdl.pkgsx86_64Darwin
+    else pkgsForGhdl;
 in {
   options = {
     languages.vhdl = {
