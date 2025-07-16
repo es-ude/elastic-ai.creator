@@ -250,7 +250,7 @@ Temporary Items
 # Ignore .pyc files
 *.pyc
 /vhdl93-bnf.html
-.devenv*
+.devenv/
 .direnv/
 devenv.local.nix
 build/
