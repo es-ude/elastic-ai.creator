@@ -1,3 +1,4 @@
+import math
 from functools import partial
 
 from elasticai.creator.file_generation.savable import Path
@@ -23,25 +24,11 @@ class MultiValueRom:
         self._name = name
         self._data_width = data_width
         self._rom_data_width = data_width * unroll_factor
-        number_of_values = len(values_as_integers) // unroll_factor
+        number_of_values = math.ceil(len(values_as_integers) / unroll_factor)
         self._address_width = self._bits_required_to_address_n_values(number_of_values)
         self._unroll_factor = unroll_factor
         self._number_per_row = number_per_row
         self._restructured_values = self._restructure_values(values_as_integers)
-        # self._restructured_values = []
-        # num_of_rows = len(values_as_integers) // (number_per_row * unroll_factor)
-
-        # for row in range(num_of_rows):
-        #     index_start = row * number_per_row * unroll_factor
-        #     for i in range(number_per_row):
-        #         index = index_start + i
-        #         if index < len(values_as_integers):
-        #             grouped_values = []
-        #             for j in range(unroll_factor):
-        #                 grouped_values.append(values_as_integers[index + j * number_per_row])
-        #             grouped_values.reverse()
-        #             self._restructured_values.append(grouped_values) # reverse the order is designed for the hardware behavior
-
         self._values = [
             multi_values_to_vhdl_binary_string(x, self._data_width)
             for x in self._append_zeros_to_fill_addressable_memory(
