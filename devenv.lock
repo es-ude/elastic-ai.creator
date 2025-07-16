@@ -102,6 +102,21 @@
         "type": "github"
       }
     },
+    "nixpkgs-24-11": {
+      "locked": {
+        "lastModified": 1751290243,
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5ab036a8d97cb9476fbe81b09076e6e91d15e1b6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "release-24.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-python": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -142,6 +157,7 @@
         "devenv": "devenv",
         "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-24-11": "nixpkgs-24-11",
         "nixpkgs-python": "nixpkgs-python",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "pre-commit-hooks": [
