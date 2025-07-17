@@ -50,6 +50,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_parallelised_template=kwargs.get("use_parallelised_template", False),
+            unroll_factor=kwargs.get("unroll_factor", 1),
         )
         self.c_gate_linear = Linear(
             name=self.name + "_c_gate_linear",
@@ -60,6 +62,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_parallelised_template=kwargs.get("use_parallelised_template", False),
+            unroll_factor=kwargs.get("unroll_factor", 1),
         )
 
         self.i_gate_linear = Linear(
@@ -71,6 +75,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_parallelised_template=kwargs.get("use_parallelised_template", False),
+            unroll_factor=kwargs.get("unroll_factor", 1),
         )
 
         self.o_gate_linear = Linear(
@@ -82,6 +88,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_parallelised_template=kwargs.get("use_parallelised_template", False),
+            unroll_factor=kwargs.get("unroll_factor", 1),
         )
 
         self.i_sigmoid = HardSigmoid(

@@ -38,6 +38,10 @@ class RNNLayer(nn.Module):
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
+                use_parallelised_template=kwargs.get(
+                    "use_parallelised_template", False
+                ),
+                unroll_factor=kwargs.get("unroll_factor", 1),
             )
         elif self.cell_type == "gru":
             self.rnn_cell = GRUCell(
