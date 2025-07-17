@@ -34,7 +34,7 @@ class Linear(Design):
         work_library_name: str,
         resource_option: str,
         num_dimensions: int = None,
-        parallelised_template: bool = False,
+        use_parallelised_template: bool = False,
         unroll_factor: int = 1,
     ) -> None:
         super().__init__(name=name)
@@ -43,7 +43,7 @@ class Linear(Design):
         self._in_features = in_features
         self._out_features = out_features
         self._num_dimensions = num_dimensions
-        self._parallelised_template = parallelised_template
+        self._use_parallelised_template = use_parallelised_template
         if out_features < unroll_factor:
             self._unroll_factor = out_features
         else:
@@ -88,7 +88,7 @@ class Linear(Design):
     def save_to(self, destination: Path) -> None:
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
-        if not self._parallelised_template:
+        if not self._use_parallelised_template:
             template_parameters = dict(
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
@@ -145,12 +145,12 @@ class Linear(Design):
             test_file_name = "linear_tb.tpl.vhd"
         else:
             if self._in_features != 1:
-                if not self._parallelised_template:
+                if not self._use_parallelised_template:
                     file_name = "linear_2d.tpl.vhd"
                 else:
                     file_name = "linear_2d_parallel.tpl.vhd"
             else:
-                if not self._parallelised_template:
+                if not self._use_parallelised_template:
                     file_name = "linear_2d_feature1.tpl.vhd"
                 else:
                     assert (
@@ -167,7 +167,7 @@ class Linear(Design):
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        if not self._parallelised_template:
+        if not self._use_parallelised_template:
             rom_weights = Rom(
                 name=rom_name["weights"],
                 data_width=self._data_width,

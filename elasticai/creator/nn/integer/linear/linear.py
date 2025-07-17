@@ -48,6 +48,9 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.math_ops = MathOperations()
         self.precomputed = False
 
+        self.use_parallelised_template = kwargs.get("use_parallelised_template", False)
+        self.unroll_factor = kwargs.get("unroll_factor", 1)
+
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
             name=name,
@@ -65,6 +68,8 @@ class Linear(DesignCreatorModule, nn.Linear):
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
+            use_parallelised_template=self.use_parallelised_template,
+            unroll_factor=self.unroll_factor,
         )
 
     def _get_quantized_weights(self) -> torch.IntTensor:
