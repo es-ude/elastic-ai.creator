@@ -38,6 +38,10 @@ class _BufferedNetworkWrapper(PluginSymbol):
             .set_prototype(load_file())
             .add_generic("KERNEL_SIZE")
             .add_generic("STRIDE")
+            .add_generic("DATA_IN_WIDTH")
+            .add_generic("DATA_OUT_WIDTH")
+            .add_generic("DATA_IN_DEPTH")
+            .add_generic("DATA_OUT_DEPTH")
         ).build()
         receiver.register("buffered_network_wrapper", cls(template))
 
