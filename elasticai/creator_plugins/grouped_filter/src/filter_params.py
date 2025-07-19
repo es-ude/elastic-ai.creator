@@ -32,16 +32,31 @@ class FilterParameters:
         input_size: int | None = None,
         output_size: int = 1,
     ):
-        self.kernel_size = kernel_size
         self._in_channels = in_channels
         self._out_channels = out_channels
         self._stride = stride
         self._groups = groups
+        self.kernel_size = kernel_size
         self._check_group_validity()
         if input_size is None:
             input_size = kernel_size
         self.input_size = input_size
         self.output_size = output_size
+
+    def _handle_kernel_size(self, kernel_size: int | tuple[int, ...]) -> int:
+        if isinstance(kernel_size, tuple):
+            if len(kernel_size) > 1:
+                raise ValueError("unsupported 2d kernel, only 1d kernels are supported")
+            kernel_size = kernel_size[0]
+        return kernel_size
+
+    @property
+    def kernel_size(self) -> int:
+        return self._kernel_size
+
+    @kernel_size.setter
+    def kernel_size(self, kernel_size: int | tuple[int]) -> None:
+        self._kernel_size = self._handle_kernel_size(kernel_size)
 
     def _check_group_validity(self):
         if not (
