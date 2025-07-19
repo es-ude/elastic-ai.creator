@@ -2,6 +2,8 @@ library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
 use ieee.MATH_REAL.all;
+use ieee.math_real.all;
+
 
 package skeleton_pkg is
   type skeleton_id_t is array (0 to 15) of std_logic_vector(7 downto 0);
@@ -11,6 +13,9 @@ package skeleton_pkg is
   function fmin(L: integer; R: integer) return integer;
   function log2(val: integer) return natural;
   function get_width_in_bytes(val: integer) return integer;
+  function size_in_bytes(size: integer) return integer;
+
+
 end package;
 
 package body skeleton_pkg is
@@ -52,3 +57,12 @@ package body skeleton_pkg is
 
 end package body;
 
+
+package body skeleton_pkg is
+  function size_in_bytes(size: integer) return integer is
+  begin
+    return integer(ceil(real(size) / 8.0));
+  end function;
+
+
+end package body;
