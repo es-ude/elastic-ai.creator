@@ -375,8 +375,8 @@ def network(
     output_shape = impl.nodes["output"].input_shape
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
-    skeleton_attrs = {}
-    skeleton_attrs["generic_map"] = {
+    wrapper_attrs = {}
+    wrapper_attrs["generic_map"] = {
         "DATA_IN_WIDTH": str(input_width),
         "DATA_IN_DEPTH": str(input_depth),
         "DATA_OUT_WIDTH": str(output_width),
@@ -386,7 +386,7 @@ def network(
     }
 
     registry = registry | dict(
-        skeleton=_factory.graph(ir.attribute(skeleton_attrs), type="skeleton"),
+        buffered_network_wrapper=_factory.graph(ir.attribute(skeleton_attrs), type="buffered_network_wrapper"),
     )
 
     return network, registry
