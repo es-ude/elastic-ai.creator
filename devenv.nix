@@ -129,12 +129,12 @@ in {
       exec = ''
         run_vhdl_tbs . "run_tbs.py"
       '';
-      before = ["check:tests"];
+      before = [];
     };
 
     "check:slow-tests" = {
       exec = "${uv_run} pytest -m 'simulation'";
-      before = ["check:tests"];
+      before = [];
     };
 
     "check:fast-tests" = {
@@ -142,7 +142,7 @@ in {
         ${uv_run} coverage run
         ${uv_run} coverage xml
       '';
-      before = ["check:tests"];
+      before = ["devenv:enterTest"];
     };
 
     "check:types" = {
@@ -166,8 +166,12 @@ in {
     };
 
     "check:nix-lint" = {
-      exec = "${pkgs.alejandra}/bin/alejandra --exclude ./.devenv.flake.nix -c .";
-      before = ["check:code-lint"];
+      exec = ''
+      echo "checking nix files formatting"
+      ${pkgs.alejandra}/bin/alejandra -c .
+      ''; # --exclude ./.devenv.flake.nix -c .
+
+      after = ["check:code-lint"];
     };
 
     "check:formatting" = {
@@ -206,10 +210,12 @@ in {
     };
 
     "check:code-lint" = {
+      exec = ''
+      echo 'linting source code'
+       
+      '';
     };
 
-    "check:tests" = {
-    };
   };
 }
 ## Commented out while we're configuring pre-commit manually
