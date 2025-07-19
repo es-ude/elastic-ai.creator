@@ -4,5 +4,5 @@ target_platform = "elastic-node-v5-spartan7-xc15"
 target_runtime = "vhdl"
 version = "0.1"
 api_version = "0.1"
-generated = ["skeleton"]
-static_files = ["skeleton_pkg.vhd"]
+generated = [ "buffered_network_wrapper"]
+static_files = ["skeleton_pkg.vhd", "skeleton.vhd", "input_buffer.vhd", "output_buffer.vhd"]
