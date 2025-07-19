@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterable, Iterator
 
 import pytest
@@ -16,7 +17,9 @@ def test_importing_plugin_with_missing_fields_raises_meaningful_error():
     }
     with pytest.raises(
         p.MissingFieldError,
-        match=r"missing required fields {'name'} for plugin spec 'PluginSpec'\n\tAre you sure you are loading the correct plugin\?\n\tIs the meta.toml file correct\?",
+        match=re.escape(
+            "missing required fields {'name'} for plugin spec 'PluginSpec'\n\tAre you sure you are loading the correct plugin?\n\tIs the meta.toml file correct?"
+        ),
     ):
         p.build_plugin_spec(config_from_file, p.PluginSpec)
 
