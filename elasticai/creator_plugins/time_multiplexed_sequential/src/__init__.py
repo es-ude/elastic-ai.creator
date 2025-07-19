@@ -314,8 +314,10 @@ def network(impl: Implementation) -> Iterable[Implementation]:
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
 
-    skeleton: Implementation = Implementation(name="skeleton", type="skeleton")
-    skeleton.data["generic_map"] = {
+    wrapper: Implementation = Implementation(
+        name="buffered_network_wrapper", type="buffered_network_wrapper"
+    )
+    wrapper.data["generic_map"] = {
         "DATA_IN_WIDTH": str(input_width),
         "DATA_IN_DEPTH": str(input_depth),
         "DATA_OUT_WIDTH": str(output_width),
@@ -324,4 +326,4 @@ def network(impl: Implementation) -> Iterable[Implementation]:
         "KERNEL_SIZE": str(kernel_size),
     }
 
-    return network, skeleton
+    return network, wrapper
