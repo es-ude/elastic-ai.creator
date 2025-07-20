@@ -33,32 +33,19 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function scaling(x_to_scale : in signed(DATA_WIDTH downto 0);
-    scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
+    function shift_with_rounding(
+        product : in signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_2 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_3 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
+        variable shifted : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable round_bit : std_logic;
     begin
-        if is_negative then
-            TMP_1 := -x_to_scale * scaler_m;
-        else
-            TMP_1 := x_to_scale * scaler_m;
+        round_bit := product(scaler_m_shift - 1);
+        shifted := shift_right(product, scaler_m_shift);
+        if round_bit = '1' then
+            shifted := shifted + 1;
         end if;
-        TMP_2 := shift_right(TMP_1, scaler_m_shift);
-        TMP_3 := TMP_2;
-        if scaler_m_shift<DATA_WIDTH + M_Q_DATA_WIDTH  then
-            if TMP_1(scaler_m_shift-1) = '1' then
-                TMP_3 := TMP_2 + 1;
-            end if;
-        end if;
-        if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 2);
-        else
-            return resize(TMP_3, DATA_WIDTH + 2);
-        end if;
+        return resize(shifted, DATA_WIDTH + 2);
     end function;
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
@@ -66,13 +53,18 @@ architecture rtl of ${name} is
     signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_sum, s_output, s_done);
+    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling_1, s_scaling_2, s_sum, s_output, s_done);
     signal add_state : t_add_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_1_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal x_1_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
+
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+
+    signal x_1_product_to_scaling : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_2_product_to_scaling : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
+
+    signal x_1_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
     signal x_2_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_store_addr : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS;
@@ -119,20 +111,21 @@ begin
                         add_state <= s_preload;
                         y_store_en <= '0';
                     when s_preload =>
-                        x_1_sub_z <= to_signed(0, x_1_sub_z'length);
-                        x_2_sub_z <= to_signed(0, x_2_sub_z'length);
                         add_state <= s_sub;
                     when s_sub =>
                         x_1_sub_z <= x_1_int - to_signed(Z_X_1, x_1_sub_z'length);
                         x_2_sub_z <= x_2_int - to_signed(Z_X_2, x_2_sub_z'length);
-                        add_state <= s_scaling;
-                    when s_scaling =>
-                        sum <= scaling(x_1_sub_z, M_Q_1_SIGNED, M_Q_1_SHIFT);
-                        x_2_scaled <= scaling(x_2_sub_z, M_Q_2_SIGNED, M_Q_2_SHIFT);
+                        add_state <= s_scaling_1;
+                    when s_scaling_1 =>
+                        x_1_product_to_scaling <= x_1_sub_z * M_Q_1_SIGNED;
+                        x_2_product_to_scaling <= x_2_sub_z * M_Q_2_SIGNED;
+                        add_state <= s_scaling_2;
+                    when s_scaling_2 =>
+                        x_1_scaled <= shift_with_rounding(x_1_product_to_scaling, M_Q_1_SHIFT);
+                        x_2_scaled <= shift_with_rounding(x_2_product_to_scaling, M_Q_2_SHIFT);
                         add_state <= s_sum;
                     when s_sum =>
-                        -- sum <= resize(x_1_scaled,sum'length) + resize(x_2_scaled,sum'length);
-                        sum <= sum + x_2_scaled;
+                        sum <= resize(x_1_scaled,sum'length) + resize(x_2_scaled,sum'length);
                         add_state <= s_output;
                     when s_output =>
                         var_y_store := sum + to_signed(Z_Y, sum'length);

@@ -40,37 +40,28 @@ architecture rtl of ${name} is
     TMP := a * b;
     return TMP;
     end function; -- end of multiply
-    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1)-1 downto 0);
-    scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
+    function shift_with_rounding(
+        product : in signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH - 1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed((2 * (DATA_WIDTH + 1)-1) + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_2 : signed((2 * (DATA_WIDTH + 1)-1) + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_3 : signed((2 * (DATA_WIDTH + 1)-1) + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
+        variable shifted : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH - 1 downto 0);
+        variable round_bit : std_logic;
     begin
-        if is_negative then
-            TMP_1 := -x_to_scale * scaler_m;
-        else
-            TMP_1 := x_to_scale * scaler_m;
+
+        round_bit := product(scaler_m_shift - 1);
+        shifted := shift_right(product, scaler_m_shift);
+        if round_bit = '1' then
+            shifted := shifted + 1;
         end if;
-        TMP_2 := shift_right(TMP_1, scaler_m_shift);
-        TMP_3 := TMP_2;
-        if TMP_1(scaler_m_shift-1) = '1' then
-            TMP_3 := TMP_2 + 1;
-        end if;
-        if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
-        else
-            return resize(TMP_3, DATA_WIDTH + 1);
-        end if;
+
+        return resize(shifted, DATA_WIDTH + 1);
     end function;
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
     signal M_Q_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_sum, s_output, s_done);
+    type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling_1, s_scaling_2, s_sum, s_output, s_done);
     signal add_state : t_add_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_1_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
@@ -82,6 +73,8 @@ architecture rtl of ${name} is
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal product : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     signal product_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    constant PRODUCT_SCALING_WIDTH : integer := 2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH;
+    signal product_to_scaling : signed(PRODUCT_SCALING_WIDTH - 1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     x_1_int <= signed(x_1);
@@ -124,8 +117,6 @@ begin
                         add_state <= s_preload;
                         y_store_en <= '0';
                     when s_preload =>
-                        x_1_sub_z <= to_signed(0, x_1_sub_z'length);
-                        x_2_sub_z <= to_signed(0, x_2_sub_z'length);
                         product <= (OTHERS=>'0');
                         add_state <= s_sub;
                     when s_sub =>
@@ -134,9 +125,12 @@ begin
                         add_state <= s_sum;
                     when s_sum =>
                         product <= multiply(x_1_sub_z, x_2_sub_z);
-                        add_state <= s_scaling;
-                    when s_scaling =>
-                        product_scaled <= scaling(product, M_Q_SIGNED, M_Q_SHIFT);
+                        add_state <= s_scaling_1;
+                    when s_scaling_1 =>
+                        product_to_scaling <= product * M_Q_SIGNED;
+                        add_state <= s_scaling_2;
+                    when s_scaling_2 =>
+                        product_scaled <= shift_with_rounding(product_to_scaling, M_Q_SHIFT);
                         add_state <= s_output;
                     when s_output =>
                         var_y_store := product_scaled + to_signed(Z_Y, product_scaled'length);

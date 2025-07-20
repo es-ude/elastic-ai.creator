@@ -35,33 +35,23 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function scaling(x_to_scale : in signed(DATA_WIDTH downto 0);
-    scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
+    function shift_with_rounding(
+        product : in signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_2 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable TMP_3 : signed(DATA_WIDTH + M_Q_DATA_WIDTH downto 0) := (others=>'0');
-    variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
+        variable shifted : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable round_bit : std_logic;
     begin
-        if is_negative then
-            TMP_1 := -x_to_scale * scaler_m;
-        else
-            TMP_1 := x_to_scale * scaler_m;
+
+        round_bit := product(scaler_m_shift - 1);
+        shifted := shift_right(product, scaler_m_shift);
+        if round_bit = '1' then
+            shifted := shifted + 1;
         end if;
-        TMP_2 := shift_right(TMP_1, scaler_m_shift);
-        TMP_3 := TMP_2;
-        if scaler_m_shift<DATA_WIDTH + M_Q_DATA_WIDTH  then
-            if TMP_1(scaler_m_shift-1) = '1' then
-                TMP_3 := TMP_2 + 1;
-            end if;
-        end if;
-        if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
-        else
-            return resize(TMP_3, DATA_WIDTH + 1);
-        end if;
+
+        return resize(shifted, DATA_WIDTH + 1);
     end function;
+
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
     constant MINUS_X1_Z : signed(DATA_WIDTH downto 0) := to_signed(-Z_X_1, DATA_WIDTH+1);
@@ -70,7 +60,7 @@ architecture rtl of ${name} is
     signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_concat_state is (s_stop, s_init, s_preload, s_sub, s_scaling, s_output, s_done);
+    type t_concat_state is (s_stop, s_init, s_preload, s_sub, s_scaling_1, s_scaling_2, s_output, s_done);
     signal concat_state : t_concat_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
@@ -86,6 +76,8 @@ architecture rtl of ${name} is
     signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_m_q_signed: signed(M_Q_DATA_WIDTH - 1 downto 0);
     signal x_m_q_shift: integer;
+    constant PRODUCT_SCALING_WIDTH : integer := DATA_WIDTH + 1 + M_Q_DATA_WIDTH;
+    signal product_to_scaling : signed(PRODUCT_SCALING_WIDTH - 1 downto 0) := (others=>'0');
 
 begin
     n_clock <= not clock;
@@ -153,9 +145,12 @@ begin
                         concat_state <= s_sub;
                     when s_sub =>
                         x_sub_z <= x_sub_z + x_int;
-                        concat_state <= s_scaling;
-                    when s_scaling =>
-                        x_scaled <= scaling(x_sub_z, x_m_q_signed, x_m_q_shift);
+                        concat_state <= s_scaling_1;
+                    when s_scaling_1 =>
+                        product_to_scaling <= x_sub_z * x_m_q_signed;
+                        concat_state <= s_scaling_2;
+                    when s_scaling_2 =>
+                        x_scaled <= shift_with_rounding(product_to_scaling, x_m_q_shift);
                         concat_state <= s_output;
                     when s_output =>
                         var_y_store := x_scaled + to_signed(Z_Y, x_scaled'length);
