@@ -1,8 +1,8 @@
-import torch.nn
+from torch.nn import Identity
 from torch import Tensor
 
 
-class Identity(torch.nn.Identity):
+class Identity(Identity):
     @staticmethod
     def right_inverse(x: Tensor) -> Tensor:
         return x
