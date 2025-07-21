@@ -34,6 +34,10 @@ end ${name};
 architecture rtl of ${name} is
     constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
     constant PRODUCT_SCALING_WIDTH : integer := MACC_OUT_WIDTH + M_Q_DATA_WIDTH;
+    function ceil_div(a : integer; b : integer) return integer is
+    begin
+        return (a + b - 1) / b;
+    end function;
     function shift_with_rounding(
         product : in signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0);
         scaler_m_shift : in integer
@@ -71,13 +75,13 @@ architecture rtl of ${name} is
     signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal w_in : std_logic_vector(UNROLL_FACTOR*DATA_WIDTH-1 downto 0) := (others=>'0');
-    signal w_addr : std_logic_vector(log2(IN_FEATURES*OUT_FEATURES/UNROLL_FACTOR) - 1 downto 0) := (others=>'0');
+    signal w_addr : std_logic_vector(log2(IN_FEATURES*ceil_div(OUT_FEATURES, UNROLL_FACTOR)) - 1 downto 0) := (others=>'0');
     type w_int_array_t is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH-1 downto 0);
     signal w_int : w_int_array_t := (others=>(others=>'0'));
     type w_sub_z_array_t is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH downto 0);
     signal w_sub_z_array : w_sub_z_array_t := (others=>(others=>'0'));
     signal b_in : std_logic_vector(UNROLL_FACTOR * 2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
-    signal b_addr : std_logic_vector(log2(OUT_FEATURES/UNROLL_FACTOR) - 1 downto 0) := (others=>'0');
+    signal b_addr : std_logic_vector(log2(ceil_div(OUT_FEATURES, UNROLL_FACTOR)) - 1 downto 0) := (others=>'0');
     type b_int_array is array (0 to UNROLL_FACTOR-1) of signed( 2 * (DATA_WIDTH + 1) - 1 downto 0);
     signal b_int : b_int_array := (others=>(others=>'0'));
     signal y_store_en : std_logic;
@@ -142,9 +146,9 @@ begin
         variable mac_cnt : integer range 0 to IN_FEATURES+1 := 0;
         variable input_offset : integer;
         variable var_product : signed(DATA_WIDTH - 1 downto 0);
-        type var_b_add_z_b_array_t is array (0 to 4-1) of integer;
+        type var_b_add_z_b_array_t is array (0 to UNROLL_FACTOR-1) of integer;
         variable var_b_add_z_b : var_b_add_z_b_array_t;
-        type var_y_store_array_t is array (0 to 4-1) of signed(DATA_WIDTH downto 0);
+        type var_y_store_array_t is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH downto 0);
         variable var_y_store_array : var_y_store_array_t := (others=>(others=>'0'));
     begin
         if rising_edge(clock) then
@@ -174,7 +178,7 @@ begin
                         input_idx := input_idx + 1;
                         weight_idx := weight_idx + 1;
                         mac_state <= s_accumulate;
-                        x_sub_z <= to_signed(0, x_sub_z'length);
+                        -- x_sub_z <= to_signed(0, x_sub_z'length); -- commenting this line avoids combinational logic by vivado
                         w_sub_z_array <= (others=>(others=>'0'));
                         macc_product <= (others=>(others=>'0'));
                     when s_accumulate =>

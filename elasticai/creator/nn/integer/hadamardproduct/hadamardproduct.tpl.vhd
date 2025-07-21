@@ -117,7 +117,7 @@ begin
                         add_state <= s_preload;
                         y_store_en <= '0';
                     when s_preload =>
-                        product <= (OTHERS=>'0');
+                        -- product <= (OTHERS=>'0');
                         add_state <= s_sub;
                     when s_sub =>
                         x_1_sub_z <= x_1_int - to_signed(Z_X_1, x_1_sub_z'length);
