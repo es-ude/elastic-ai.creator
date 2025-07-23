@@ -81,7 +81,7 @@ architecture rtl of addressable_input_buffer is
 
     connect_unpadded_d_out:
     for i in 0 to DATA_OUT_DEPTH - 1 generate
-            d_out(i*DATA_WIDTH + DATA_WIDTH - 1 downto i*DATA_WIDTH) <= unpadded_d_out(i);
+            d_out(i*DATA_WIDTH + DATA_WIDTH - 1 downto i*DATA_WIDTH) <= unpadded_d_out(DATA_OUT_DEPTH - 1 - i);
     end generate;
     
     write_data: process(clk) is
