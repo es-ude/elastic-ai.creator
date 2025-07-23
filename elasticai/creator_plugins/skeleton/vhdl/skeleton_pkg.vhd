@@ -9,6 +9,8 @@ package skeleton_pkg is
   constant SKELETON_ID : skeleton_id_t := (others => x"00");
   function size_in_bytes(size: integer) return integer;
 
+  function min_fn(a: integer; b: integer) return integer;
+  function max_fn(a: integer; b: integer) return integer;
 
 end package;
 
@@ -19,4 +21,21 @@ package body skeleton_pkg is
   end function;
 
 
+  function min_fn(a: integer; b: integer) return integer is
+  begin
+    if a < b then
+      return a;
+    else
+      return b;
+    end if;
+  end function;
+
+  function max_fn(a: integer; b: integer) return integer is
+  begin
+    if a > b then
+      return a;
+    else
+      return b;
+    end if;
+  end function;
 end package body;
