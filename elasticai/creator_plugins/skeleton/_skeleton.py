@@ -29,17 +29,7 @@ class _Skeleton(PluginSymbol):
 
     @classmethod
     def load_into(cls, loader: Ir2Vhdl) -> None:
-        template = (
-            EntityTemplateDirector()
-            .set_prototype(_load_vhd("skeleton"))
-            .add_generic("DATA_IN_WIDTH")
-            .add_generic("DATA_IN_DEPTH")
-            .add_generic("DATA_OUT_WIDTH")
-            .add_generic("DATA_OUT_DEPTH")
-            .add_generic("STRIDE")
-            .add_generic("NETWORK_IN_SIZE")
-            .build()
-        )
+        template = EntityTemplateDirector().set_prototype(_load_vhd("skeleton")).build()
         skeleton = cls(template)
         loader.register("skeleton", skeleton)
 
