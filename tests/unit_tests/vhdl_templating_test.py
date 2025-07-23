@@ -88,6 +88,20 @@ generic (
         code = type_handler.substitute(dict(data_width=5)).splitlines()
         assert "    DATA_WIDTH : natural := 5" == code[2]
 
+    def test_can_change_value_of_positive_type(self) -> None:
+        type_handler = (
+            EntityTemplateDirector()
+            .set_prototype("""
+generic (
+    DATA_WIDTH : positive := 8
+    );
+""")
+            .add_generic("data_width")
+            .build()
+        )
+        code = type_handler.substitute(dict(data_width=5)).splitlines()
+        assert "    DATA_WIDTH : positive := 5" == code[2]
+
     def test_can_replace_two_parameters(self) -> None:
         type_handler = (
             EntityTemplateDirector()
