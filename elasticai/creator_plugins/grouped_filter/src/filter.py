@@ -78,7 +78,7 @@ def grouped_filter(
         )
     )
     output_offset = 0
-    for kernel, wires_per_step in zip(kernels, g.as_tuple_by_groups()):
+    for kernel, wires_per_step in zip(reversed(kernels), g.as_tuple_by_groups()):
         wires = wires_per_step[0]
         node = nc(
             kernel,
