@@ -26,16 +26,25 @@ end entity;
 architecture rtl of striding_shift_register is
     signal intern_valid_in : std_logic := '1';
     signal stride_count : natural range 0 to STRIDE - 1 := 0;
+    signal last_intern_valid_in : std_logic;
+    signal intern_valid_out : std_logic;
   begin
 
 
+    valid_out <= intern_valid_out and last_intern_valid_in;
 
     process (stride_count, valid_in) is begin
-      if stride_count = STRIDE - 1 and valid_in = '1' then
+      if stride_count = 0 and valid_in = '1' then
         intern_valid_in <= '1';
       else
         intern_valid_in <= '0';
       end if;
+    end process;
+
+    process(clk) is begin
+     if rising_edge(clk) then
+      last_intern_valid_in <= intern_valid_in;
+     end if;
     end process;
 
     process (clk, rst) is begin
@@ -63,7 +72,7 @@ architecture rtl of striding_shift_register is
         rst => rst,
         d_out => d_out,
         valid_in => intern_valid_in,
-        valid_out => valid_out
+        valid_out => intern_valid_out
       );
 
 end architecture;
