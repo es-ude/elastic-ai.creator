@@ -110,6 +110,7 @@ class _Sequential:
             return False
         consuming_more_than_last_node_produces = (
             self._last_node.output_shape.width < params.kernel_size
+            or self._last_node.output_shape.depth < params.in_channels
         )
         return consuming_more_than_last_node_produces
 
@@ -128,7 +129,7 @@ class _Sequential:
         if "top_stride" not in self._impl.attributes:
             self._impl.data.update(
                 {
-                    "top_stride": params.in_channels * params.stride,
+                    "top_stride": params.stride,
                 }
             )
         if self._need_shift_register(params):
@@ -289,8 +290,7 @@ class _Sequential:
         return self._impl
 
     def output(self, n):
-        if self._last_node.output_shape.width < n.input_shape.width:
-            self.shift_register("shift_register", n.output_shape)
+        self.set_runtime_output_shape(self._last_node.output_shape)
         self._append_node(
             name="output",
             output_shape=self._last_node.output_shape,
@@ -322,7 +322,6 @@ def sequential(impl: Implementation) -> Implementation:
                 seq.set_runtime_input_shape(n.input_shape)
                 seq.input(impl, n.name)
             case "output":
-                seq.set_runtime_output_shape(n.output_shape)
                 seq.output(n)
             case _:
                 raise Exception(
