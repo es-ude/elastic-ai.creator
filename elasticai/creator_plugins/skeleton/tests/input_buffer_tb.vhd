@@ -3,8 +3,188 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.all;
 use ieee.math_real.all;
+use work.skeleton_pkg.all;
+
+package input_buffer_tb_pkg is
+
+  type config_t is record
+    data_width: positive;
+    data_depth: positive;
+    data_out_depth: positive;
+    num_writes: natural;
+    num_reads: natural;
+    stride : positive;
+  end record;
+
+  type result_t is array(integer range <>) of std_logic_vector;
+  function create_config(
+    data_width: positive;
+    data_depth: positive;
+    data_out_depth: positive;
+    stride: positive
+  ) return config_t;
+end package;
+
+package body input_buffer_tb_pkg is
+
+
+  function create_config(
+        data_width: positive;
+        data_depth: positive;
+        data_out_depth: positive;
+        stride : positive
+    ) return config_t is
+    variable result : config_t := (
+        DATA_WIDTH => data_width,
+        DATA_DEPTH => data_depth,
+        DATA_OUT_DEPTH => data_out_depth,
+        NUM_WRITES => 1,
+        NUM_READS => 1,
+        STRIDE => stride
+    );
+  begin
+    result.NUM_WRITES := size_in_bytes(DATA_WIDTH)*DATA_DEPTH;
+    result.NUM_READS := DATA_DEPTH/DATA_OUT_DEPTH;
+    return result;
+  end function;
+
+
+end package body;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use std.env.all;
+use ieee.math_real.all;
+use work.skeleton_pkg.all;
+use work.input_buffer_tb_pkg.all;
+
+entity buffer_client is
+    generic (
+        config: config_t
+    );
+    port (
+        signal enable: in std_logic;
+        signal done: out std_logic;
+        signal rst: in std_logic;
+        signal clk: in std_logic;
+        signal data_input: out std_logic_vector(7 downto 0);
+        signal address: out std_logic_vector(15 downto 0);
+        signal buffer_valid: in std_logic;
+        signal read_buffer: out std_logic;
+        signal write_buffer: out std_logic;
+        signal buffer_data : in std_logic_vector(config.data_width*config.data_out_depth - 1 downto 0);
+        signal result: out result_t(0 to config.num_reads - 1)(config.data_width*config.data_out_depth - 1 downto 0)
+    );
+end entity;
+
+architecture behaviour of buffer_client is
+
+  signal address_int : integer range 0 to 2**16 -1 := 0;
+  type tb_state_t is (starting, writing_data, writing_finished, fetching_result, finished);
+  signal last_tb_state : tb_state_t := starting;
+  signal tb_state : tb_state_t := starting;
+    signal fetch_counter : integer range 0 to config.num_reads := 0;
+begin
+    address <= std_logic_vector(to_unsigned(address_int, address'length));
+    done <= '1' when last_tb_state = finished else '0';
+    read_buffer <= '1' when tb_state = fetching_result else '0';
+    write_buffer <= '1' when last_tb_state = writing_data else '0';
+
+    write_d_in:
+    process (clk) is
+        constant last_byte : integer := size_in_bytes(config.data_width) - 1;
+        variable current_value_i : integer range 0 to 2**config.data_width - 1 := 0;
+        variable byte_id : integer range 0 to size_in_bytes(config.data_width) - 1 := 0;
+        variable current_value : std_logic_vector(size_in_bytes(config.data_width)*8 - 1 downto 0);
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                byte_id := 0;
+                current_value_i := 0;
+            elsif tb_state = writing_data then
+                current_value := std_logic_vector(to_unsigned(current_value_i, 16));
+                data_input <= current_value((byte_id + 1)*8 - 1 downto (byte_id)*8);
+                
+                if byte_id = last_byte then
+                    current_value_i := current_value_i + 1;
+                    byte_id := 0;
+                else
+                    byte_id := byte_id + 1;
+                end if;
+            end if;
+        end if;
+    end process;
+
+    update_address:
+    process (clk) is
+    begin
+        if rising_edge(clk) then
+            address_int <= 0;
+            if last_tb_state = writing_data then
+                if address_int < config.NUM_WRITES - 1 then
+                    address_int <= address_int + 1;
+                end if;
+            end if;
+        end if;
+    end process;
+
+    update_state:
+    process(clk) is
+        variable write_count: integer range 0 to config.num_writes - 1 := 0;
+    begin
+        if rising_edge(clk) then
+            if tb_state = starting then
+                if enable = '1' then
+                    tb_state <= writing_data;
+                end if;
+            elsif tb_state = writing_data then
+                if write_count < config.num_writes - 1 then
+                    write_count := write_count + 1;
+                else
+                    tb_state <= fetching_result;
+                end if;
+            elsif tb_state = fetching_result then
+                if buffer_valid = '0' then
+                    tb_state <= finished;
+                end if;
+            else
+                tb_state <= finished;
+            end if;
+        end if;
+    end process;
+
+    update_last_state:
+    process (clk) is
+    begin
+        if rising_edge(clk) then
+            last_tb_state <= tb_state;
+        end if;
+    end process;
+
+    fetch_result:
+    process (clk) is
+    begin
+        if rising_edge(clk) then
+            if tb_state = fetching_result then
+                result(fetch_counter) <= buffer_data;
+                fetch_counter <= fetch_counter + 1;
+            end if;
+        end if;
+    end process;
+    
+end architecture;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use std.env.all;
+use ieee.math_real.all;
 library vunit_lib;
 context vunit_lib.vunit_context;
+use work.skeleton_pkg.all;
+use work.input_buffer_tb_pkg.all;
+
 
 entity input_buffer_tb is
   generic (
@@ -14,79 +194,72 @@ end entity;
 
 architecture behav of input_buffer_tb is
 
-
-  constant DATA_DEPTH : integer := 6;
-  constant DATA_WIDTH : integer := 12;
-  constant DATA_OUT_DEPTH : integer := 1;
-  constant STRIDE : integer := 1;
+  constant CFG : config_t := create_config(
+    data_width => 12,
+    data_depth => 6,
+    data_out_depth => 1,
+    stride => 1
+  );
+  signal enable_client : std_logic;
   signal write_enable : std_logic;
+  signal read_enable : std_logic;
+  subtype d_out_t is std_logic_vector(CFG.data_width*CFG.data_out_depth - 1 downto 0);
 
-  subtype buffer_d_t is std_logic_vector(DATA_WIDTH - 1 downto 0);
-  subtype byte_t is std_logic_vector(7 downto 0);
-  type byte_array_t is array (natural range <>) of byte_t;
-  signal buffer_d_out : buffer_d_t := (others => 'X');
-  
-  signal bytes_d_in : byte_t;
+  signal d_in : std_logic_vector(7 downto 0);
+  signal d_out : d_out_t;
 
 
-  signal read_enable : std_logic := '0';
   signal clk : std_logic := '0';
   signal rst : std_logic := '0';
-  constant half_period : time := 1 fs;
   signal address : std_logic_vector(15 downto 0) := (others => '0');
-  signal address_int : integer range 0 to 2**16 -1 := 0;
   signal valid_out : std_logic;
-begin
 
-    clocking : process is
-    begin
-        clk <= '0';
-        wait for half_period;
-        clk <= '1';
-        wait for half_period;
-    end process;
+  signal done : std_logic := '0';
+  signal result : result_t(0 to CFG.num_reads - 1)(CFG.data_width * CFG.data_out_depth - 1 downto 0);
+
+begin
+    clk <= not clk after 1 fs;
+
     
-    address <= std_logic_vector(to_unsigned(address_int, address'length));
 
     input_buffer : entity work.addressable_input_buffer(rtl)
         generic map (
-            DATA_WIDTH => DATA_WIDTH,
-            DATA_DEPTH => DATA_DEPTH,
-            DATA_OUT_DEPTH => DATA_OUT_DEPTH,
-            STRIDE => STRIDE
+            DATA_WIDTH => cfg.data_width,
+            DATA_DEPTH => cfg.data_depth,
+            DATA_OUT_DEPTH => cfg.data_out_depth,
+            STRIDE => cfg.stride
         )
         port map (
             write_enable => write_enable,
             address => address,
-            d_in => bytes_d_in,
-            d_out => buffer_d_out,
+            d_in => d_in,
+            d_out => d_out,
             ready_in => read_enable,
             valid_out => valid_out,
             clk => clk,
             rst => rst
         );
-    
+
+    client : entity work.buffer_client(behaviour)
+        generic map (
+            config => CFG
+        )
+        port map (
+            data_input => d_in,
+            rst => rst,
+            clk => clk,
+            done => done,
+            enable => enable_client,
+            buffer_valid => valid_out,
+            read_buffer => read_enable,
+            write_buffer => write_enable,
+            buffer_data => d_out,
+            result => result,
+            address => address
+        );
+
     stimulus : process is
         variable counter : integer := 0;
-        procedure write_data_to_buffer(data: in byte_array_t) is
-        begin
-            for i in data'range loop
-                bytes_d_in <= data(i);
-                debug("writing to " & integer'image(i));
-                address_int <= i;
-                write_enable <= '1';
-                wait until rising_edge(clk);
-            end loop;
-            write_enable <= '0';
-        end procedure;
-        
-        procedure check_output(expected: in buffer_d_t) is
-        begin
-            read_enable <= '1';
-            wait until rising_edge(clk);
-            check_equal(buffer_d_out, expected);
-            read_enable <= '0';
-        end procedure;
     begin
         test_runner_setup(runner, runner_cfg);
         rst <= '1';
@@ -94,44 +267,20 @@ begin
         
         rst <= '0';
         wait until rising_edge(clk);
+        enable_client <= '1';
+        wait until rising_edge(clk);
 
-        -- Test writing and reading from the buffer
-        if run("can write 01_00 and read 00_01") then
-            write_data_to_buffer((x"01", x"00"));
-            wait until rising_edge(clk); -- wait until next rising edge for ram value to become available at d_out
-            check_output(b"0000_0000_0001");
-        end if;
-
-        if run("can write DE_AD_BE_EF read D_DE_F_BE") then
-            write_data_to_buffer((x"DE",  x"AD", x"BE", x"EF"));
-            check_output(x"D_DE"); -- don't need to wait here cause we've been writing twice
-            check_output(x"F_BE");
-        end if;
-
-        if run("fill buffer, read full buffer and check control signals") then
-            write_data_to_buffer((
-                x"01",
-                x"00",
-                x"02",
-                x"00",
-                x"03",
-                x"00",
-                x"04",
-                x"00",
-                x"05",
-                x"00",
-                x"06",
-                x"00"
-            ));
-            read_enable <= '1';
-            while valid_out = '1' and counter < 10 loop
-                counter := counter + 1;
-                wait until rising_edge(clk);
-            end loop;
-            check_equal(counter, 6);
-        end if;
-
-
+        while counter < 3000 loop
+            if done = '1' then
+                counter := 3000;
+            end if;
+            counter := counter + 1;
+            wait until rising_edge(clk);
+        end loop;
+        
+        for i in 0  to CFG.num_reads - 1 loop
+            check_equal(to_integer(unsigned(result(i))), i);
+        end loop;
     
         test_runner_cleanup(runner);
     end process;
