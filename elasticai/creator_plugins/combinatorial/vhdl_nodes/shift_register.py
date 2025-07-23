@@ -36,8 +36,14 @@ class ShiftRegister(ClockedInstance):
     def __init__(self, node: VhdlNode):
         _check_input_output_shape_compatibility(node)
         data_width = node.input_shape.size()
-        num_points = node.output_shape.width
         output_width = node.output_shape.size()
+        if output_width % data_width != 0:
+            raise ValueError(
+                "incompatible shapes input: {}  output: {}".format(
+                    node.input_shape, node.output_shape
+                )
+            )
+        num_points = output_width // data_width
         super().__init__(
             node,
             input_width=data_width,
