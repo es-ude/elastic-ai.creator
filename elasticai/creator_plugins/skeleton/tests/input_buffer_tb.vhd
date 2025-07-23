@@ -44,7 +44,7 @@ package body input_buffer_tb_pkg is
     );
   begin
     result.NUM_WRITES := size_in_bytes(DATA_WIDTH)*DATA_DEPTH;
-    result.NUM_READS := DATA_DEPTH/DATA_OUT_DEPTH;
+    result.NUM_READS := DATA_DEPTH/STRIDE - DATA_OUT_DEPTH + 1;
     return result;
   end function;
 
@@ -103,7 +103,7 @@ begin
                 byte_id := 0;
                 current_value_i := 0;
             elsif tb_state = writing_data then
-                current_value := std_logic_vector(to_unsigned(current_value_i, 16));
+                current_value := std_logic_vector(to_unsigned(current_value_i, size_in_bytes(config.data_width)*8));
                 data_input <= current_value((byte_id + 1)*8 - 1 downto (byte_id)*8);
                 
                 if byte_id = last_byte then
@@ -197,7 +197,7 @@ architecture behav of input_buffer_tb is
   constant CFG : config_t := create_config(
     data_width => 12,
     data_depth => 6,
-    data_out_depth => 1,
+    data_out_depth => 2,
     stride => 1
   );
   signal enable_client : std_logic;
@@ -260,8 +260,17 @@ begin
 
     stimulus : process is
         variable counter : integer := 0;
+        function build_exp_result(read_index: integer) return integer is
+            variable internal_result : std_logic_vector(CFG.DATA_WIDTH*CFG.DATA_OUT_DEPTH - 1 downto 0);
+        begin
+            for i in 0 to CFG.DATA_OUT_DEPTH - 1 loop
+                internal_result((i+1)*CFG.DATA_WIDTH - 1 downto i * CFG.DATA_WIDTH) := std_logic_vector(to_unsigned(CFG.DATA_OUT_DEPTH - 1 + read_index - i, CFG.DATA_WIDTH));
+            end loop;
+            return to_integer(unsigned(internal_result));
+        end function;
     begin
         test_runner_setup(runner, runner_cfg);
+        info("num reads: " & integer'image(CFG.num_reads) & " num writes: " & integer'image(CFG.num_writes));
         rst <= '1';
         wait until rising_edge(clk);
         
@@ -270,16 +279,13 @@ begin
         enable_client <= '1';
         wait until rising_edge(clk);
 
-        while counter < 3000 loop
-            if done = '1' then
-                counter := 3000;
-            end if;
+        while counter < 3000 and done = '0' loop
             counter := counter + 1;
             wait until rising_edge(clk);
         end loop;
         
         for i in 0  to CFG.num_reads - 1 loop
-            check_equal(to_integer(unsigned(result(i))), i);
+            check_equal(to_integer(unsigned(result(i))), build_exp_result(i));
         end loop;
     
         test_runner_cleanup(runner);
