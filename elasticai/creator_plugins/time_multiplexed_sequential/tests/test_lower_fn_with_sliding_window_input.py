@@ -50,7 +50,8 @@ def test_inserts_striding_shift_register():
         type=type,
         attributes={"generic_map": {"stride": 2}},
     ).data
-
+    for n in lowered.nodes.values():
+        print(n)
     assert lowered.nodes[name].data == expected
 
 
