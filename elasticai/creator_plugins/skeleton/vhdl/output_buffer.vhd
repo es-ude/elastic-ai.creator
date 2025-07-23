@@ -23,7 +23,7 @@ end entity;
 architecture rtl of addressable_output_buffer is
     constant REQUIRED_PADDING : natural := 8*size_in_bytes(DATA_WIDTH) - DATA_WIDTH;
     constant padding : std_logic_vector(REQUIRED_PADDING - 1 downto 0) := (others => '0');
-    constant MAX_WRITES : natural := DATA_DEPTH/DATA_IN_DEPTH;
+    constant MAX_WRITES : positive := DATA_DEPTH/DATA_IN_DEPTH;
     constant DATA_WIDTH_BYTES : natural := size_in_bytes(DATA_WIDTH);
     constant NUM_IN_BYTES : natural := DATA_WIDTH_BYTES*DATA_IN_DEPTH;
 
@@ -38,8 +38,10 @@ architecture rtl of addressable_output_buffer is
     signal input_bytes_matrix : input_bytes_matrix_t;
     signal input_bytes_vector : input_bytes_vector_t;
     signal unpadded_in : unpadded_in_t;
-    subtype write_count_t is natural range 0 to MAX_WRITES - 1;
+    subtype write_count_t is natural range 0 to MAX_WRITES;
     signal write_count : write_count_t := 0;
+    type write_heads_t is array(0 to DATA_IN_DEPTH - 1) of write_count_t;
+    signal write_heads : write_heads_t;
     signal last_write_count : write_count_t := 0;
     signal ram : ram_t;
     signal intern_valid_out : std_logic;
@@ -50,7 +52,7 @@ architecture rtl of addressable_output_buffer is
         count : natural;
         valid_in : std_logic) return natural is
     begin
-        if valid_in = '1' and count < MAX_WRITES - 1 then
+        if valid_in = '1' and count < MAX_WRITES then
             return count + 1;
         else
             return count;
@@ -94,13 +96,16 @@ begin
     end generate;
 
     update_ram:
-    process (clk) is
-    begin
-        if rising_edge(clk) and valid_in = '1' and intern_valid_out = '0' and write_count < MAX_WRITES then
-            ram(write_count*NUM_IN_BYTES to (write_count+1)*NUM_IN_BYTES - 1)
-                <= input_bytes_vector;
-        end if;
-    end process;
+    for i in write_heads_t'range generate -- workaround using generate as vivado fails to recognize constant range expression for ram assignment
+        update_ram_for_write_head:
+        process (clk) is
+        begin
+            if rising_edge(clk) and valid_in = '1' and intern_valid_out = '0' and write_count < MAX_WRITES then
+                ram(write_heads(i))
+                    <= input_bytes_vector(i);
+            end if;
+        end process;
+     end generate;
 
 
     update_d_out:
@@ -116,7 +121,7 @@ begin
     begin
         if rst = '1' then
             last_write_count <= 0;
-        elsif rising_edge(clk) then
+        elsif rising_edge(clk) and valid_in = '1' then
             last_write_count <= write_count;
         end if;
     end process;
@@ -130,11 +135,16 @@ begin
             write_count <= next_write_count(write_count, valid_in);
         end if;
     end process;
+    
+    assign_all_write_heads:
+    for i in write_heads_t'range generate
+        write_heads(i) <= write_count + i;
+    end generate;
 
     update_valid_out:
     process (write_count, last_write_count) is
     begin
-        if write_count =  MAX_WRITES - 1 and last_write_count = MAX_WRITES - 1 then
+        if write_count =  write_count_t'high and last_write_count = write_count_t'high then
             intern_valid_out <= '1';
         else
             intern_valid_out <= '0';
@@ -142,3 +152,4 @@ begin
     end process;
 end architecture;
     
+
