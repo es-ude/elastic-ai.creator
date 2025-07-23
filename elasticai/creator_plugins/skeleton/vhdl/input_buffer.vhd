@@ -38,6 +38,25 @@ architecture rtl of addressable_input_buffer is
 
     signal ram : ram_t;
     signal read_ptr : index_t := 0;
+    type read_ptr_list_t is array(0 to TOTAL_OUT_BYTES - 1) of integer range 0 to DATA_WIDTH*DATA_DEPTH - 1;
+
+    function create_read_ptr_list(index: index_t) return read_ptr_list_t is
+        variable result : read_ptr_list_t := (others => 0);
+    begin
+        for i in read_ptr_list_t'range loop
+            result(i) := index + i;
+        end loop;
+        return result;
+    end function;
+
+    procedure assign_ram_to_output(read_ptr: in index_t; signal ram: in ram_t; signal output: out byte_array_t) is
+        constant read_ptr_list: read_ptr_list_t := create_read_ptr_list(read_ptr);
+    begin
+        for i in read_ptr_list_t'range loop
+            output(i) <= ram(read_ptr_list(i));
+        end loop;
+    end procedure;
+    
 
     signal address_int : integer range 0 to 2**16 - 1 := 0;
 
@@ -106,7 +125,7 @@ architecture rtl of addressable_input_buffer is
     process(clk) is
     begin
         if rising_edge(clk) then
-            padded_d_out <= ram(next_read_ptr(read_ptr, ready_in) to next_read_ptr(read_ptr, ready_in) + TOTAL_OUT_BYTES - 1);
+            assign_ram_to_output(next_read_ptr(read_ptr, ready_in), ram, padded_d_out);
         end if;
     end process;
 
