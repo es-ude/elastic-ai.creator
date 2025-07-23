@@ -44,10 +44,9 @@ class ValueTemplateParameter(TemplateParameter):
     """
 
     def __init__(self, name: str):
-        self.regex = (
-            r"(?P<def>(?i:{name}\s*:\s*(natural|integer)))\s*(:=\s*.*)?\b".format(
-                name=name
-            )
+        types = ["natural", "integer", "positive"]
+        self.regex = r"(?P<def>(?i:{name}\s*:\s*({types})))\s*(:=\s*.*)?\b".format(
+            name=name, types="|".join(types)
         )
         self.name = name
 
