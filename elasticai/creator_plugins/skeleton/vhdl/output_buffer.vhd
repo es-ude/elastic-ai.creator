@@ -42,7 +42,6 @@ architecture rtl of addressable_output_buffer is
     signal write_count : write_count_t := 0;
     type write_heads_t is array(0 to DATA_IN_DEPTH - 1) of write_count_t;
     signal write_heads : write_heads_t;
-    signal last_write_count : write_count_t := 0;
     signal ram : ram_t;
     signal intern_valid_out : std_logic;
 
@@ -116,16 +115,6 @@ begin
         end if;
     end process;
 
-    update_last_write_count:
-    process (clk, rst) is
-    begin
-        if rst = '1' then
-            last_write_count <= 0;
-        elsif rising_edge(clk) and valid_in = '1' then
-            last_write_count <= write_count;
-        end if;
-    end process;
-
     update_write_count:
     process (clk, rst) is
     begin
@@ -142,9 +131,9 @@ begin
     end generate;
 
     update_valid_out:
-    process (write_count, last_write_count) is
+    process (write_count) is
     begin
-        if write_count =  write_count_t'high and last_write_count = write_count_t'high then
+        if write_count =  write_count_t'high then
             intern_valid_out <= '1';
         else
             intern_valid_out <= '0';
