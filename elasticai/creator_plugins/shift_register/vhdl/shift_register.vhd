@@ -20,26 +20,21 @@ end entity;
 
 architecture rtl of shift_register is
   signal q_i : std_logic_vector(d_out'range);
-  signal count : natural range d_out'range;
+  subtype count_t is integer range 0 to NUM_POINTS;
+  signal count : count_t := 0;
 begin
 
 
   d_out <= q_i;
 
-  process (count) is begin
-    if count = d_out'high then
-      valid_out <= '1';
-    else
-      valid_out <= '0';
-    end if;
-  end process;
 
+  valid_out <= '1' when count = count_t'high else '0';
   process (clk, rst) is
   begin
     if rst = '1' then
-      count <= d_out'low;
+      count <= count_t'low;
     elsif rising_edge(clk) then
-      if valid_in = '1' and count < d_out'high then
+      if valid_in = '1' and count < count_t'high then
         count <= count + 1; 
       end if;
     end if;
@@ -48,7 +43,7 @@ begin
   process(clk) is
   begin
     if rising_edge(clk) then
-      if rst = '0' and valid_in = '1' then
+      if valid_in = '1' then
           q_i <= q_i(DATA_WIDTH*(NUM_POINTS-1) - 1 downto 0) & d_in;
       end if;
     end if;
