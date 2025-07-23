@@ -22,13 +22,22 @@ architecture rtl of shift_register is
   signal q_i : std_logic_vector(d_out'range);
   subtype count_t is integer range 0 to NUM_POINTS;
   signal count : count_t := 0;
+  signal last_valid_in : std_logic := '0';
 begin
 
 
   d_out <= q_i;
 
+  process (clk) is
+  begin
+    if rising_edge(clk) then
+      last_valid_in <= valid_in;
+    end if;
+  end process;
 
-  valid_out <= '1' when count = count_t'high else '0';
+
+  valid_out <= '1' when count = count_t'high and last_valid_in = '1' else '0';
+
   process (clk, rst) is
   begin
     if rst = '1' then
