@@ -38,21 +38,45 @@ architecture rtl of ${name} is
     begin
         return (a + b - 1) / b;
     end function;
-    function shift_with_rounding(
+    -- Shift and round, keep original width
+    function shift_with_rounding_fullwidth(
         product : in signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0);
         scaler_m_shift : in integer
     ) return signed is
         variable shifted : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0);
         variable round_bit : std_logic;
+        variable temp_result : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0);
     begin
-
-        round_bit := product(scaler_m_shift - 1);
+        if scaler_m_shift > 0 and scaler_m_shift <= product'length then
+            round_bit := product(scaler_m_shift - 1);
+        else
+            round_bit := '0';
+        end if;
         shifted := shift_right(product, scaler_m_shift);
         if round_bit = '1' then
-            shifted := shifted + 1;
+            temp_result := shifted + 1;
+        else
+            temp_result := shifted;
         end if;
+        return temp_result;
+    end function;
 
-        return resize(shifted, DATA_WIDTH + 1);
+    -- Clamp to DATA_WIDTH+1 bits
+    function clamp_signed(
+        value : in signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0)
+    ) return signed is
+        variable result : signed(DATA_WIDTH downto 0);
+        constant MAX_VAL : signed(DATA_WIDTH downto 0) := to_signed(2**(DATA_WIDTH) - 1, DATA_WIDTH + 1);
+        constant MIN_VAL : signed(DATA_WIDTH downto 0) := to_signed(-(2**(DATA_WIDTH)), DATA_WIDTH + 1);
+    begin
+        if value > resize(MAX_VAL, value'length) then
+            result := MAX_VAL;
+        elsif value < resize(MIN_VAL, value'length) then
+            result := MIN_VAL;
+        else
+            result := resize(value, DATA_WIDTH + 1);
+        end if;
+        return result;
     end function;
     function log2(val : INTEGER) return natural is
         variable result : natural;
@@ -70,7 +94,7 @@ architecture rtl of ${name} is
     signal reset : std_logic := '0';
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling_0, s_scaling_1, s_scaling_2, s_output, s_done);
+    type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling_0, s_scaling_1, s_scaling_2, s_scaling_3, s_output, s_done);
     signal mac_state : t_mac_state;
     signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
@@ -85,6 +109,8 @@ architecture rtl of ${name} is
     type b_int_array is array (0 to UNROLL_FACTOR-1) of signed( 2 * (DATA_WIDTH + 1) - 1 downto 0);
     signal b_int : b_int_array := (others=>(others=>'0'));
     signal y_store_en : std_logic;
+    type y_shifted_array is array (0 to UNROLL_FACTOR-1) of signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0);
+    signal y_shifted : y_shifted_array := (others=>(others=>'0'));
     type y_scaled_array is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH downto 0);
     signal y_scaled : y_scaled_array := (others=>(others=>'0'));
     signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;
@@ -212,7 +238,12 @@ begin
                         mac_state <= s_scaling_2;
                     when s_scaling_2 =>
                         for i in 0 to UNROLL_FACTOR-1 loop
-                            y_scaled(i) <= shift_with_rounding(product_to_scaling(i), M_Q_SHIFT);
+                            y_shifted(i) <= shift_with_rounding_fullwidth(product_to_scaling(i), M_Q_SHIFT);
+                        end loop;
+                        mac_state <= s_scaling_3;
+                    when s_scaling_3 =>
+                        for i in 0 to UNROLL_FACTOR-1 loop
+                            y_scaled(i) <= clamp_signed(y_shifted(i));
                         end loop;
                         mac_state <= s_output;
                     when s_output =>

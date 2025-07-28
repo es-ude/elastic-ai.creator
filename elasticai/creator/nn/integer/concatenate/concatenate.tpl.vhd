@@ -35,21 +35,45 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function shift_with_rounding(
+    -- Shift and round, keep original width
+    function shift_with_rounding_fullwidth(
         product : in signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
-    scaler_m_shift : in integer
+        scaler_m_shift : in integer
     ) return signed is
         variable shifted : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
         variable round_bit : std_logic;
+        variable temp_result : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
     begin
-
-        round_bit := product(scaler_m_shift - 1);
+        if scaler_m_shift > 0 and scaler_m_shift <= product'length then
+            round_bit := product(scaler_m_shift - 1);
+        else
+            round_bit := '0';
+        end if;
         shifted := shift_right(product, scaler_m_shift);
         if round_bit = '1' then
-            shifted := shifted + 1;
+            temp_result := shifted + 1;
+        else
+            temp_result := shifted;
         end if;
+        return temp_result;
+    end function;
 
-        return resize(shifted, DATA_WIDTH + 1);
+    -- Clamp to DATA_WIDTH+1 bits
+    function clamp_signed(
+        value : in signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0)
+    ) return signed is
+        variable result : signed(DATA_WIDTH downto 0);
+        constant MAX_VAL : signed(DATA_WIDTH downto 0) := to_signed(2**(DATA_WIDTH) - 1, DATA_WIDTH + 1);
+        constant MIN_VAL : signed(DATA_WIDTH downto 0) := to_signed(-(2**(DATA_WIDTH)), DATA_WIDTH + 1);
+    begin
+        if value > resize(MAX_VAL, value'length) then
+            result := MAX_VAL;
+        elsif value < resize(MIN_VAL, value'length) then
+            result := MIN_VAL;
+        else
+            result := resize(value, DATA_WIDTH + 1);
+        end if;
+        return result;
     end function;
 
     signal n_clock : std_logic;
@@ -60,13 +84,14 @@ architecture rtl of ${name} is
     signal M_Q_2_SIGNED:signed(M_Q_DATA_WIDTH - 1 downto 0) := to_signed(M_Q_2, M_Q_DATA_WIDTH);
     type t_layer_state is (s_stop, s_forward, s_finished);
     signal layer_state : t_layer_state;
-    type t_concat_state is (s_stop, s_init, s_preload, s_sub, s_scaling_1, s_scaling_2, s_output, s_done);
+    type t_concat_state is (s_stop, s_init, s_preload, s_sub, s_scaling_1, s_scaling_2, s_scaling_3,s_output, s_done);
     signal concat_state : t_concat_state;
     signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-
+    signal minus_z : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal x_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal x_shifted_fullwidth : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
 
     signal y_store_en : std_logic;
     signal y_store_addr : integer range 0 to (X1_NUM_FEATURES+X2_NUM_FEATURES) * NUM_DIMENSIONS;
@@ -105,6 +130,11 @@ begin
             end if;
         end if;
     end process fsm;
+
+    -- x_m_q_signed <= M_Q_1_SIGNED when read_x1_otherthan_x2 else M_Q_2_SIGNED;
+    -- x_m_q_shift <= M_Q_1_SHIFT when read_x1_otherthan_x2 else M_Q_2_SHIFT;
+    -- minus_z <= MINUS_X1_Z when read_x1_otherthan_x2 else MINUS_X2_Z;
+
     concat : process( clock, layer_state )
         variable dimension_idx : integer  range 0 to NUM_DIMENSIONS - 1 := 0;
         variable x1_input_idx, x1_end_idx : integer  range 0 to X1_NUM_FEATURES * NUM_DIMENSIONS := 0;
@@ -133,24 +163,27 @@ begin
                             x1_input_idx := x1_input_idx + 1;
                             x_m_q_signed <= M_Q_1_SIGNED;
                             x_m_q_shift <= M_Q_1_SHIFT;
-                            x_sub_z <= MINUS_X1_Z;
+                            minus_z <= MINUS_X1_Z;
                             x_int <= x_1_int;
                         else
                             x2_input_idx := x2_input_idx + 1;
                             x_m_q_signed <= M_Q_2_SIGNED;
                             x_m_q_shift <= M_Q_2_SHIFT;
-                            x_sub_z <= MINUS_X2_Z;
+                            minus_z <= MINUS_X2_Z;
                             x_int <= x_2_int;
                         end if;
                         concat_state <= s_sub;
                     when s_sub =>
-                        x_sub_z <= x_sub_z + x_int;
+                        x_sub_z <= minus_z + x_int;
                         concat_state <= s_scaling_1;
                     when s_scaling_1 =>
                         product_to_scaling <= x_sub_z * x_m_q_signed;
                         concat_state <= s_scaling_2;
                     when s_scaling_2 =>
-                        x_scaled <= shift_with_rounding(product_to_scaling, x_m_q_shift);
+                        x_shifted_fullwidth <= shift_with_rounding_fullwidth(product_to_scaling, x_m_q_shift);
+                        concat_state <= s_scaling_3;
+                    when s_scaling_3 =>
+                        x_scaled <= clamp_signed(x_shifted_fullwidth);
                         concat_state <= s_output;
                     when s_output =>
                         var_y_store := x_scaled + to_signed(Z_Y, x_scaled'length);

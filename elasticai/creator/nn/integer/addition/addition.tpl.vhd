@@ -35,17 +35,34 @@ end ${name};
 architecture rtl of ${name} is
     function shift_with_rounding(
         product : in signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
-    scaler_m_shift : in integer
+        scaler_m_shift : in integer
     ) return signed is
         variable shifted : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
         variable round_bit : std_logic;
+        variable temp_result : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable result : signed(DATA_WIDTH+1 downto 0);
+        -- For DATA_WIDTH + 2 bits signed: range is -(2**(DATA_WIDTH+1)) to (2**(DATA_WIDTH+1) - 1)
+        constant MAX_VAL : integer := 2**(DATA_WIDTH+1) - 1;
+        constant MIN_VAL : integer := -(2**(DATA_WIDTH+1));
     begin
         round_bit := product(scaler_m_shift - 1);
         shifted := shift_right(product, scaler_m_shift);
         if round_bit = '1' then
-            shifted := shifted + 1;
+            temp_result := shifted + 1;
+        else
+            temp_result := shifted;
         end if;
-        return resize(shifted, DATA_WIDTH + 2);
+
+        -- Saturate/clamp the result
+        if temp_result > MAX_VAL then
+            result := to_signed(MAX_VAL, DATA_WIDTH + 2);
+        elsif temp_result < MIN_VAL then
+            result := to_signed(MIN_VAL, DATA_WIDTH + 2);
+        else
+            result := resize(temp_result, DATA_WIDTH + 2);
+        end if;
+
+        return result;
     end function;
     signal n_clock : std_logic;
     signal reset : std_logic := '0';

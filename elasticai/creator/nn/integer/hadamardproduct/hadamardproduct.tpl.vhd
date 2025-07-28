@@ -42,19 +42,40 @@ architecture rtl of ${name} is
     end function; -- end of multiply
     function shift_with_rounding(
         product : in signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH - 1 downto 0);
-    scaler_m_shift : in integer
+        scaler_m_shift : in integer
     ) return signed is
         variable shifted : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH - 1 downto 0);
         variable round_bit : std_logic;
+        variable temp_result : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH - 1 downto 0);
+        variable result : signed(DATA_WIDTH downto 0);
+        -- For DATA_WIDTH + 1 bits signed: range is -(2^DATA_WIDTH) to (2^DATA_WIDTH - 1)
+        constant MAX_VAL : signed(DATA_WIDTH downto 0) := to_signed(2**(DATA_WIDTH) - 1, DATA_WIDTH + 1);
+        constant MIN_VAL : signed(DATA_WIDTH downto 0) := to_signed(-(2**(DATA_WIDTH)), DATA_WIDTH + 1);
     begin
-
-        round_bit := product(scaler_m_shift - 1);
-        shifted := shift_right(product, scaler_m_shift);
-        if round_bit = '1' then
-            shifted := shifted + 1;
+        -- Safe bit extraction for rounding
+        if scaler_m_shift > 0 and scaler_m_shift <= product'length then
+            round_bit := product(scaler_m_shift - 1);
+        else
+            round_bit := '0';  -- No rounding if shift is invalid
         end if;
 
-        return resize(shifted, DATA_WIDTH + 1);
+        shifted := shift_right(product, scaler_m_shift);
+        if round_bit = '1' then
+            temp_result := shifted + 1;
+        else
+            temp_result := shifted;
+        end if;
+
+        -- Saturate/clamp the result with proper type matching
+        if temp_result > resize(MAX_VAL, temp_result'length) then
+            result := MAX_VAL;
+        elsif temp_result < resize(MIN_VAL, temp_result'length) then
+            result := MIN_VAL;
+        else
+            result := resize(temp_result, DATA_WIDTH + 1);
+        end if;
+
+        return result;
     end function;
     signal n_clock : std_logic;
     signal reset : std_logic := '0';
