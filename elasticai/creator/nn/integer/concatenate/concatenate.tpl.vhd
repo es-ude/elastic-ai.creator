@@ -131,10 +131,6 @@ begin
         end if;
     end process fsm;
 
-    -- x_m_q_signed <= M_Q_1_SIGNED when read_x1_otherthan_x2 else M_Q_2_SIGNED;
-    -- x_m_q_shift <= M_Q_1_SHIFT when read_x1_otherthan_x2 else M_Q_2_SHIFT;
-    -- minus_z <= MINUS_X1_Z when read_x1_otherthan_x2 else MINUS_X2_Z;
-
     concat : process( clock, layer_state )
         variable dimension_idx : integer  range 0 to NUM_DIMENSIONS - 1 := 0;
         variable x1_input_idx, x1_end_idx : integer  range 0 to X1_NUM_FEATURES * NUM_DIMENSIONS := 0;
