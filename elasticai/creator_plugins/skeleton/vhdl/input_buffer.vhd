@@ -52,7 +52,7 @@ architecture rtl of addressable_input_buffer is
     signal read_ptr_list : read_ptr_list_t := create_read_ptr_list(0);
 
 
-    signal address_int : integer range 0 to 2**16 - 1 := 0;
+    signal address_int : integer range ram_t'range := 0;
 
     type unpadded_t is array (0 to DATA_OUT_DEPTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal unpadded_d_out : unpadded_t;
@@ -75,7 +75,7 @@ architecture rtl of addressable_input_buffer is
 
     begin
 
-    address_int <= to_integer(unsigned(address)); 
+    address_int <= min_fn(ram_t'high, to_integer(unsigned(address))); 
 
     remove_padding:
     for i in 0 to DATA_OUT_DEPTH - 1 generate
