@@ -31,6 +31,7 @@ architecture rtl of skeleton is
     constant RESERVED_ADDRESS : natural := 17;
     constant DATA_SEGMENT_START : natural := 18;
     constant skeleton_id_str : skeleton_id_t := SKELETON_ID;
+    signal skeleton_address_i : integer range skeleton_id_t'range;
     signal network_address : std_logic_vector(15 downto 0);
     signal network_address_i : integer range 0 to 2**16 - 1;
     signal network_enable : std_logic := '0';
@@ -52,7 +53,8 @@ begin
     
     network_address_i <= max_fn(address_in_i - DATA_SEGMENT_START, 0);
     network_wr <= '1' when write_state = wr_network else '0';
-    current_skeleton_id_byte <= skeleton_id_str(address_in_i) when read_state = rd_skeleton_id else (others => 'X');
+    skeleton_address_i <= min_fn(address_in_i, skeleton_id_t'high);
+    current_skeleton_id_byte <= skeleton_id_str(skeleton_address_i) when read_state = rd_skeleton_id else (others => 'X');
 
     update_write_state:
     process (wr, address_in_i) is
