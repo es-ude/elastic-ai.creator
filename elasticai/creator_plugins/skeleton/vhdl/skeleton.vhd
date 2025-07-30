@@ -125,4 +125,5 @@ begin
         );
 
     busy <= not done;
+    wake_up <= done;
 end rtl;
