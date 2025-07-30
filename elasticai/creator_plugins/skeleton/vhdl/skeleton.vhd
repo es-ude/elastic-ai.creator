@@ -106,7 +106,7 @@ begin
         case read_state is
             when rd_skeleton_id => data_out <= current_skeleton_id_byte;
             when rd_network => data_out <= network_d_out;
-            when others => data_out <= (others => 'X');
+            when others => data_out <= (others => 'Z');
         end case;
     end process;
 
