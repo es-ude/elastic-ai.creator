@@ -38,12 +38,12 @@ begin
 
   valid_out <= '1' when count = count_t'high and last_valid_in = '1' else '0';
 
-  process (clk, rst) is
+  process (clk) is
   begin
-    if rst = '1' then
-      count <= count_t'low;
-    elsif rising_edge(clk) then
-      if valid_in = '1' and count < count_t'high then
+    if rising_edge(clk) then
+      if rst = '1' then
+        count <= count_t'low;
+      elsif valid_in = '1' and count < count_t'high then
         count <= count + 1; 
       end if;
     end if;
