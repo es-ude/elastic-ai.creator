@@ -99,9 +99,11 @@ begin
         update_ram_for_write_head:
         process (clk) is
         begin
-            if rising_edge(clk) and valid_in = '1' and intern_valid_out = '0' and write_count < MAX_WRITES then
+            if rising_edge(clk) then
+              if valid_in = '1' and intern_valid_out = '0' and write_count < MAX_WRITES then
                 ram(write_heads(i))
                     <= input_bytes_vector(i);
+              end if;
             end if;
         end process;
      end generate;
@@ -116,12 +118,14 @@ begin
     end process;
 
     update_write_count:
-    process (clk, rst) is
+    process (clk) is
     begin
-        if rst = '1' then
-            write_count <= 0;
-        elsif rising_edge(clk) then
-            write_count <= next_write_count(write_count, valid_in);
+        if rising_edge(clk) then
+            if rst = '1' then
+                write_count <= 0;
+            else
+                write_count <= next_write_count(write_count, valid_in);
+            end if;
         end if;
     end process;
     

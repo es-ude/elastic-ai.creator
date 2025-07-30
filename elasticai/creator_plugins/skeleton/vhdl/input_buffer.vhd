@@ -106,12 +106,14 @@ architecture rtl of addressable_input_buffer is
         end if;
     end process;
 
-    update_read_ptr: process(clk, rst) is
+    update_read_ptr: process(clk) is
     begin
-        if rst = '1' then
-            read_ptr <= index_t'low;
-        elsif rising_edge(clk) then
-            read_ptr <= next_read_ptr(read_ptr, ready_in);
+        if rising_edge(clk) then
+            if rst = '1' then
+                read_ptr <= index_t'low;
+            else
+                read_ptr <= next_read_ptr(read_ptr, ready_in);
+            end if;
         end if;
     end process;
 

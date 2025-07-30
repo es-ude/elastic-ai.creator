@@ -44,19 +44,25 @@ architecture rtl of buffered_network_wrapper is
   signal network_rd_address_i : integer range 0 to OUT_DEPTH_BYTES - 1;
   type network_state_t is (idle, start, running, finished);
   signal network_state : network_state_t := idle;
+  signal rst_cycles : integer range 0 to 1 := 0;
   signal internal_rst : std_logic := '1';
   begin
 
   update_network_state:
-  process(rst, clk) is
+  process(clk) is
   begin
-    if rst = '1' then
-      network_state <= idle;
-    elsif rising_edge(clk) then
-      if network_state = idle and enable = '1' then
+    if rising_edge(clk) then
+      if rst = '1' then
+        network_state <= idle;
+      elsif network_state = idle and enable = '1' then
         network_state <= start;
       elsif network_state = start then
-        network_state <= running;
+        if rst_cycles = 1 then
+          network_state <= running;
+          rst_cycles <= 0;
+        else
+          rst_cycles <= rst_cycles + 1;
+        end if;
       elsif network_state = running and out_buffer_valid_out = '1' then
         network_state <= finished;
       elsif network_state = finished and enable = '0' then
