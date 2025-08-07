@@ -58,7 +58,7 @@ class _ModuleOfInstance(tpl.TemplateParameter):
 class _DefineSwitch(tpl.TemplateParameter):
     def __init__(self, name: str, delimiter: str):
         self.name = name
-        self.regex = r"`define\s+{name}()(?=\s)".format(name=name)
+        self.regex = r"(\\\\+)?`define\s+{name}(?=\s)".format(name=name)
         self.delimiter = delimiter
 
     def replace(self, m: dict[str, str]) -> str:
