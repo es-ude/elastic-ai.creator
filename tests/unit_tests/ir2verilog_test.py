@@ -84,6 +84,29 @@ class TestVerilogTemplate:
         template.define("DATA_WIDTH")
         assert template.substitute({}) == "`define DATA_WIDTH 8"
 
+    def test_can_define_data_width(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("\\\\`define DATA_WIDTH 8")
+            .define_scoped_switch("DATA_WIDTH")
+            .build()
+        )
+        template.define("DATA_WIDTH")
+        assert template.substitute({}) == "`define DATA_WIDTH 8"
+
+    def test_can_leave_data_width_undefined(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("\\\\`define DATA_WIDTH 8")
+            .define_scoped_switch("DATA_WIDTH")
+            .build()
+        )
+        template.undef("DATA_WIDTH")
+        assert (
+            template.substitute({})
+            == """// automatically disabled\n// `define DATA_WIDTH 8"""
+        )
+
     def test_can_replace_module_name(self):
         template = (
             TemplateDirector()
