@@ -23,6 +23,8 @@ in {
     unstablePkgs.vale # syntax aware linter for prose
     unstablePkgs.act # run github workflows locally
     pkgs.alejandra # nix formatter
+    pkgs.zlib # needed as dependency cocotb/ghdl under circumstances
+    pkgs.iverilog
   ];
 
   languages.c.enable = true;
