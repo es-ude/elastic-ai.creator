@@ -53,6 +53,7 @@ testing = [
     "pytest-cov>=6.0.0",
     "coverage>=7.6.9",
     "vunit-hdl>=5.0.0.dev5",
+    "cocotb>=1.9.2",
 ]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
