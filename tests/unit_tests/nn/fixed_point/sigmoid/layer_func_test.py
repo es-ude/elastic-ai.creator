@@ -1,4 +1,5 @@
-import matplotlib.pyplot as plt
+from os import environ
+
 import numpy as np
 import pytest
 from torch import Tensor
@@ -11,7 +12,7 @@ from elasticai.creator.nn import fixed_point as nn_creator
     "total_bits, frac_bits", [(4, 3), (6, 4), (8, 5), (10, 6), (12, 7), (12, 8)]
 )
 def test_sigmoid_compared_torch(total_bits: int, frac_bits: int) -> None:
-    plot_results = True
+    plot_results = environ.get(["PLOT_TESTING"], "off") == "on"
     num_steps = 2 ** (total_bits + 1)
     range = (
         -(2 ** (total_bits - frac_bits - 1)),
@@ -25,6 +26,8 @@ def test_sigmoid_compared_torch(total_bits: int, frac_bits: int) -> None:
     out1 = act1(Tensor(stimulus))
 
     if plot_results:
+        from matplotlib import pyplot as plt
+
         plt.title(f"Sigmoid (n={total_bits}, {frac_bits})")
         plt.plot(stimulus, out0, color="k", label="Torch", marker=".", markersize=4)
         plt.step(
