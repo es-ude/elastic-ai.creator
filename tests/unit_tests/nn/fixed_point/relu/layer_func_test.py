@@ -1,5 +1,5 @@
 import numpy as np
-from torch import Tensor, sum
+from torch import Tensor
 from torch import nn as nn_torch
 
 from elasticai.creator.nn import fixed_point as nn_creator
@@ -21,8 +21,8 @@ def relu_compared_torch(total_bits: int, frac_bits: int) -> None:
     act2 = nn_creator.ReLU(total_bits, True)
     out2 = act2(Tensor(stimulus))
 
-    assert abs(float(sum(out1 - out0))) < 1e-6
-    assert abs(float(sum(out2 - out0))) < 1e-6
+    assert float(sum(abs(out1 - out0))) < 1e-6
+    assert float(sum(abs(out2 - out0))) < 1e-6
 
 
 def test_relu_comparison_4bit_2bit() -> None:
