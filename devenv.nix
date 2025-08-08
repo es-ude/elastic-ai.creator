@@ -32,7 +32,7 @@ in {
   languages.nix.enable = true;
   languages.python = {
     enable = true;
-    package = pkgs.python311;
+    package = pkgs.python312;
     uv.enable = true;
     uv.package = unstablePkgs.uv;
     uv.sync.enable = true;
