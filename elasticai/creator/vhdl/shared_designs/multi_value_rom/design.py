@@ -45,7 +45,7 @@ class MultiValueRom:
                 rom_addr_bitwidth=str(self._address_width),
                 rom_data_bitwidth=str(self._rom_data_width),
                 name=self._name,
-                resource_option="auto",
+                resource_option="distributed",
             ),
         )
         destination.as_file(".vhd").write(template)
@@ -55,7 +55,9 @@ class MultiValueRom:
 
     def _restructure_values(self, values: list[int]) -> list[list[int]]:
         restructured_values = []
-        num_of_rows = len(values) // (self._number_per_row * self._unroll_factor)
+        num_of_rows = math.ceil(
+            len(values) / (self._number_per_row * self._unroll_factor)
+        )
 
         for row in range(num_of_rows):
             index_start = row * self._number_per_row * self._unroll_factor
@@ -64,7 +66,12 @@ class MultiValueRom:
                 if index < len(values):
                     grouped_values = []
                     for j in range(self._unroll_factor):
-                        grouped_values.append(values[index + j * self._number_per_row])
+                        if index + j * self._number_per_row < len(values):
+                            grouped_values.append(
+                                values[index + j * self._number_per_row]
+                            )
+                        else:
+                            grouped_values.append(0)
                     grouped_values.reverse()
                     restructured_values.append(grouped_values)
         return restructured_values

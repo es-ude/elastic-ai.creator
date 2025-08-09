@@ -28,11 +28,13 @@ class LSTMCell(Design):
         ic_hadamard_product: object,
         oc_hadamard_product: object,
         work_library_name: str,
+        use_pipeline_template: bool = False,
     ):
         super().__init__(name=name)
 
         self._data_width = data_width
         self._work_library_name = work_library_name
+        self._use_pipeline_template = use_pipeline_template
 
         self._concatenate = concatenate
         self._f_gate_linear = f_gate_linear
@@ -145,66 +147,167 @@ class LSTMCell(Design):
         self.oc_hadamard_product_design.save_to(
             destination.create_subpath(self._oc_hadamard_product.name)
         )
+        if not self._use_pipeline_template:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="lstmcell.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    concatenate_name=self._concatenate.name,
+                    i_gate_linear_name=self._i_gate_linear.name,
+                    i_sigmoid_name=self._i_sigmoid.name,
+                    f_gate_linear_name=self._f_gate_linear.name,
+                    f_sigmoid_name=self._f_sigmoid.name,
+                    c_gate_linear_name=self._c_gate_linear.name,
+                    c_tanh_name=self._c_tanh.name,
+                    o_gate_linear_name=self._o_gate_linear.name,
+                    o_sigmoid_name=self._o_sigmoid.name,
+                    fc_hadamard_product_name=self._fc_hadamard_product.name,
+                    ic_hadamard_product_name=self._ic_hadamard_product.name,
+                    c_next_addition_name=self._c_next_addition.name,
+                    c_next_tanh_name=self._c_next_tanh.name,
+                    oc_hadamard_product_name=self._oc_hadamard_product.name,
+                    data_width=str(self._data_width),
+                    concatenate_x_1_addr_width=str(
+                        self.concatenate_design._x_1_addr_width
+                    ),
+                    concatenate_x_2_addr_width=str(
+                        self.concatenate_design._x_2_addr_width
+                    ),
+                    concatenate_y_addr_width=str(self.concatenate_design._y_addr_width),
+                    f_gate_linear_x_addr_width=str(
+                        self.f_gate_linear_design._x_addr_width
+                    ),
+                    f_gate_linear_y_addr_width=str(
+                        self.f_gate_linear_design._y_addr_width
+                    ),
+                    c_gate_linear_x_addr_width=str(
+                        self.c_gate_linear_design._x_addr_width
+                    ),
+                    c_gate_linear_y_addr_width=str(
+                        self.c_gate_linear_design._y_addr_width
+                    ),
+                    i_gate_linear_x_addr_width=str(
+                        self.i_gate_linear_design._x_addr_width
+                    ),
+                    i_gate_linear_y_addr_width=str(
+                        self.i_gate_linear_design._y_addr_width
+                    ),
+                    o_gate_linear_x_addr_width=str(
+                        self.o_gate_linear_design._x_addr_width
+                    ),
+                    o_gate_linear_y_addr_width=str(
+                        self.o_gate_linear_design._y_addr_width
+                    ),
+                    c_next_addition_x_addr_width=str(
+                        self.c_next_addition_design._x_addr_width
+                    ),
+                    c_next_addition_y_addr_width=str(
+                        self.c_next_addition_design._y_addr_width
+                    ),
+                    fc_hadamard_product_x_addr_width=str(
+                        self.fc_hadamard_product_design._x_addr_width
+                    ),
+                    fc_hadamard_product_y_addr_width=str(
+                        self.fc_hadamard_product_design._y_addr_width
+                    ),
+                    ic_hadamard_product_x_addr_width=str(
+                        self.ic_hadamard_product_design._x_addr_width
+                    ),
+                    ic_hadamard_product_y_addr_width=str(
+                        self.ic_hadamard_product_design._y_addr_width
+                    ),
+                    oc_hadamard_product_x_addr_width=str(
+                        self.oc_hadamard_product_design._x_addr_width
+                    ),
+                    oc_hadamard_product_y_addr_width=str(
+                        self.oc_hadamard_product_design._y_addr_width
+                    ),
+                    work_library_name=self._work_library_name,
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="lstmcell.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                concatenate_name=self._concatenate.name,
-                i_gate_linear_name=self._i_gate_linear.name,
-                i_sigmoid_name=self._i_sigmoid.name,
-                f_gate_linear_name=self._f_gate_linear.name,
-                f_sigmoid_name=self._f_sigmoid.name,
-                c_gate_linear_name=self._c_gate_linear.name,
-                c_tanh_name=self._c_tanh.name,
-                o_gate_linear_name=self._o_gate_linear.name,
-                o_sigmoid_name=self._o_sigmoid.name,
-                fc_hadamard_product_name=self._fc_hadamard_product.name,
-                ic_hadamard_product_name=self._ic_hadamard_product.name,
-                c_next_addition_name=self._c_next_addition.name,
-                c_next_tanh_name=self._c_next_tanh.name,
-                oc_hadamard_product_name=self._oc_hadamard_product.name,
-                data_width=str(self._data_width),
-                concatenate_x_1_addr_width=str(self.concatenate_design._x_1_addr_width),
-                concatenate_x_2_addr_width=str(self.concatenate_design._x_2_addr_width),
-                concatenate_y_addr_width=str(self.concatenate_design._y_addr_width),
-                f_gate_linear_x_addr_width=str(self.f_gate_linear_design._x_addr_width),
-                f_gate_linear_y_addr_width=str(self.f_gate_linear_design._y_addr_width),
-                c_gate_linear_x_addr_width=str(self.c_gate_linear_design._x_addr_width),
-                c_gate_linear_y_addr_width=str(self.c_gate_linear_design._y_addr_width),
-                i_gate_linear_x_addr_width=str(self.i_gate_linear_design._x_addr_width),
-                i_gate_linear_y_addr_width=str(self.i_gate_linear_design._y_addr_width),
-                o_gate_linear_x_addr_width=str(self.o_gate_linear_design._x_addr_width),
-                o_gate_linear_y_addr_width=str(self.o_gate_linear_design._y_addr_width),
-                c_next_addition_x_addr_width=str(
-                    self.c_next_addition_design._x_addr_width
+        else:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="lstmcell_pipeline.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    concatenate_name=self._concatenate.name,
+                    i_gate_linear_name=self._i_gate_linear.name,
+                    i_sigmoid_name=self._i_sigmoid.name,
+                    f_gate_linear_name=self._f_gate_linear.name,
+                    f_sigmoid_name=self._f_sigmoid.name,
+                    c_gate_linear_name=self._c_gate_linear.name,
+                    c_tanh_name=self._c_tanh.name,
+                    o_gate_linear_name=self._o_gate_linear.name,
+                    o_sigmoid_name=self._o_sigmoid.name,
+                    fc_hadamard_product_name=self._fc_hadamard_product.name,
+                    ic_hadamard_product_name=self._ic_hadamard_product.name,
+                    c_next_addition_name=self._c_next_addition.name,
+                    c_next_tanh_name=self._c_next_tanh.name,
+                    oc_hadamard_product_name=self._oc_hadamard_product.name,
+                    data_width=str(self._data_width),
+                    concatenate_x_1_addr_width=str(
+                        self.concatenate_design._x_1_addr_width
+                    ),
+                    concatenate_x_2_addr_width=str(
+                        self.concatenate_design._x_2_addr_width
+                    ),
+                    concatenate_y_addr_width=str(self.concatenate_design._y_addr_width),
+                    f_gate_linear_x_addr_width=str(
+                        self.f_gate_linear_design._x_addr_width
+                    ),
+                    f_gate_linear_y_addr_width=str(
+                        self.f_gate_linear_design._y_addr_width
+                    ),
+                    c_gate_linear_x_addr_width=str(
+                        self.c_gate_linear_design._x_addr_width
+                    ),
+                    c_gate_linear_y_addr_width=str(
+                        self.c_gate_linear_design._y_addr_width
+                    ),
+                    i_gate_linear_x_addr_width=str(
+                        self.i_gate_linear_design._x_addr_width
+                    ),
+                    i_gate_linear_y_addr_width=str(
+                        self.i_gate_linear_design._y_addr_width
+                    ),
+                    o_gate_linear_x_addr_width=str(
+                        self.o_gate_linear_design._x_addr_width
+                    ),
+                    o_gate_linear_y_addr_width=str(
+                        self.o_gate_linear_design._y_addr_width
+                    ),
+                    c_next_addition_x_addr_width=str(
+                        self.c_next_addition_design._x_addr_width
+                    ),
+                    c_next_addition_y_addr_width=str(
+                        self.c_next_addition_design._y_addr_width
+                    ),
+                    fc_hadamard_product_x_addr_width=str(
+                        self.fc_hadamard_product_design._x_addr_width
+                    ),
+                    fc_hadamard_product_y_addr_width=str(
+                        self.fc_hadamard_product_design._y_addr_width
+                    ),
+                    ic_hadamard_product_x_addr_width=str(
+                        self.ic_hadamard_product_design._x_addr_width
+                    ),
+                    ic_hadamard_product_y_addr_width=str(
+                        self.ic_hadamard_product_design._y_addr_width
+                    ),
+                    oc_hadamard_product_x_addr_width=str(
+                        self.oc_hadamard_product_design._x_addr_width
+                    ),
+                    oc_hadamard_product_y_addr_width=str(
+                        self.oc_hadamard_product_design._y_addr_width
+                    ),
+                    work_library_name=self._work_library_name,
                 ),
-                c_next_addition_y_addr_width=str(
-                    self.c_next_addition_design._y_addr_width
-                ),
-                fc_hadamard_product_x_addr_width=str(
-                    self.fc_hadamard_product_design._x_addr_width
-                ),
-                fc_hadamard_product_y_addr_width=str(
-                    self.fc_hadamard_product_design._y_addr_width
-                ),
-                ic_hadamard_product_x_addr_width=str(
-                    self.ic_hadamard_product_design._x_addr_width
-                ),
-                ic_hadamard_product_y_addr_width=str(
-                    self.ic_hadamard_product_design._y_addr_width
-                ),
-                oc_hadamard_product_x_addr_width=str(
-                    self.oc_hadamard_product_design._x_addr_width
-                ),
-                oc_hadamard_product_y_addr_width=str(
-                    self.oc_hadamard_product_design._y_addr_width
-                ),
-                work_library_name=self._work_library_name,
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
 
         template_test = InProjectTemplate(
             package=module_to_package(self.__module__),

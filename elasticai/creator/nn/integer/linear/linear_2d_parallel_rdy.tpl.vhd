@@ -28,7 +28,8 @@ entity ${name} is
         x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
         y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-        done   : out std_logic
+        done   : out std_logic;
+        ready: out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
@@ -275,10 +276,10 @@ begin
                         end if;
                     when others =>
                         mac_state <= s_done;
+                        y_store_en <= '0';
                 end case;
             else
                 mac_state <= s_done;
-                y_store_en <= '0';
             end if;
             x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
             w_addr <= std_logic_vector(to_unsigned(weight_idx, w_addr'length));
@@ -310,15 +311,18 @@ begin
                         store_count := store_count + 1;
                     else
                         store_active := false;             -- Stop storing if out of range
+                        ready <= '1';                      -- Indicate that the operation is ready
                     end if;
 
                 else
                     store_active := false;             -- Pause after 2 values
                     store_count := 0;
                     ram_write_en <= '0';               -- Disable RAM write
+                    ready <= '1';                      -- Indicate that the operation is ready
                 end if;
             else
                 ram_write_en <= '0';                   -- Ensure RAM write is disabled
+                ready <= '0';
             end if;
 
             -- Update previous value for edge detection

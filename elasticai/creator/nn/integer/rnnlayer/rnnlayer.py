@@ -28,6 +28,7 @@ class RNNLayer(nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.use_buffer_template = kwargs.get("use_buffer_template", False)
 
         if self.cell_type == "lstm":
             self.rnn_cell = LSTMCell(
@@ -88,6 +89,7 @@ class RNNLayer(nn.Module):
             rnn_cell=self.rnn_cell,
             work_library_name="work",
             resource_option="auto",
+            use_buffer_template=self.use_buffer_template,
         )
 
     def precompute(self):

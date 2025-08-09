@@ -50,6 +50,7 @@ class Linear(DesignCreatorModule, nn.Linear):
 
         self.use_parallelised_template = kwargs.get("use_parallelised_template", False)
         self.unroll_factor = kwargs.get("unroll_factor", 1)
+        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
 
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
@@ -67,9 +68,10 @@ class Linear(DesignCreatorModule, nn.Linear):
             z_b=self.bias_QParams.zero_point.item(),
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
-            resource_option="auto",
+            resource_option="distributed",
             use_parallelised_template=self.use_parallelised_template,
             unroll_factor=self.unroll_factor,
+            use_pipeline_template=self.use_pipeline_template,
         )
 
     def _get_quantized_weights(self) -> torch.IntTensor:

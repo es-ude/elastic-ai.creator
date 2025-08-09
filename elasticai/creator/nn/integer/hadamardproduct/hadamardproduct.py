@@ -42,6 +42,8 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
 
         self.math_ops = MathOperations()
         self.precomputed = False
+        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
+        self.unroll_factor = kwargs.get("unroll_factor", 1)
 
     def create_design(self, name: str) -> HadamardProductDesign:
         return HadamardProductDesign(
@@ -56,6 +58,8 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
+            use_pipeline_template=self.use_pipeline_template,
+            unroll_factor=self.unroll_factor,
         )
 
     def precompute(self):

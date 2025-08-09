@@ -27,6 +27,8 @@ class Addition(DesignCreatorModule, nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
+        self.unroll_factor = kwargs.get("unroll_factor", 1)
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -56,6 +58,8 @@ class Addition(DesignCreatorModule, nn.Module):
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
+            use_pipeline_template=self.use_pipeline_template,
+            unroll_factor=self.unroll_factor,
         )
 
     def precompute(self) -> None:

@@ -22,6 +22,7 @@ class RNNLayer(Design):
         rnn_cell: object,
         work_library_name: str,
         resource_option: str,
+        use_buffer_template: bool = False,
     ):
         super().__init__(name=name)
 
@@ -62,6 +63,8 @@ class RNNLayer(Design):
             # q_c_next
             self._y_3_count = self._hidden_size
             self._y_3_addr_width = calculate_address_width(self._y_3_count)
+
+            self.use_buffer_template = use_buffer_template
 
     @property
     def port(self) -> Port:
@@ -111,7 +114,10 @@ class RNNLayer(Design):
         template_params["resource_option"] = self._resource_option
         template_params["num_dimensions"] = str(self._num_dimensions)
         template_params["loop_count"] = str(self.loop_count)
-        file_name = f"{self._cell_type}layer.tpl.vhd"
+        if not self.use_buffer_template:
+            file_name = f"{self._cell_type}layer.tpl.vhd"
+        else:
+            file_name = f"{self._cell_type}layer_buf_h_c.tpl.vhd"
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),

@@ -29,6 +29,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
         device = kwargs.get("device")
 
         self.concatenate = Concatenate(
@@ -52,6 +53,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             device=device,
             use_parallelised_template=kwargs.get("use_parallelised_template", False),
             unroll_factor=kwargs.get("unroll_factor", 1),
+            use_pipeline_template=self.use_pipeline_template,
         )
         self.c_gate_linear = Linear(
             name=self.name + "_c_gate_linear",
@@ -64,6 +66,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             device=device,
             use_parallelised_template=kwargs.get("use_parallelised_template", False),
             unroll_factor=kwargs.get("unroll_factor", 1),
+            use_pipeline_template=self.use_pipeline_template,
         )
 
         self.i_gate_linear = Linear(
@@ -77,6 +80,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             device=device,
             use_parallelised_template=kwargs.get("use_parallelised_template", False),
             unroll_factor=kwargs.get("unroll_factor", 1),
+            use_pipeline_template=self.use_pipeline_template,
         )
 
         self.o_gate_linear = Linear(
@@ -90,6 +94,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             device=device,
             use_parallelised_template=kwargs.get("use_parallelised_template", False),
             unroll_factor=kwargs.get("unroll_factor", 1),
+            use_pipeline_template=self.use_pipeline_template,
         )
 
         self.i_sigmoid = HardSigmoid(
@@ -131,6 +136,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_pipeline_template=self.use_pipeline_template,
+            unroll_factor=1,  # is one since the component before it does one by one
         )
 
         self.fc_hadamard_product = HadamardProduct(
@@ -140,6 +147,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_pipeline_template=self.use_pipeline_template,
+            unroll_factor=kwargs.get("unroll_factor", 1),  # same as the gate linear
         )
         self.ic_hadamard_product = HadamardProduct(
             name=self.name + "_ic_hadamard_product",
@@ -148,6 +157,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_pipeline_template=self.use_pipeline_template,
+            unroll_factor=kwargs.get("unroll_factor", 1),  # same as the gate linear
         )
         self.oc_hadamard_product = HadamardProduct(
             name=self.name + "_oc_hadamard_product",
@@ -156,6 +167,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            use_pipeline_template=self.use_pipeline_template,
+            unroll_factor=1,  # is one since the component before it does one by one
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -195,6 +208,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             ic_hadamard_product=self.ic_hadamard_product,
             oc_hadamard_product=self.oc_hadamard_product,
             work_library_name="work",
+            use_pipeline_template=self.use_pipeline_template,
         )
 
     def precompute(self) -> None:

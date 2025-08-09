@@ -28,6 +28,8 @@ class Addition(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
+        use_pipeline_template: bool = False,
+        unroll_factor: int = 1,
     ) -> None:
         super().__init__(name=name)
 
@@ -60,6 +62,8 @@ class Addition(Design):
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
+        self._use_pipeline_template = use_pipeline_template
+        self._unroll_factor = unroll_factor
 
     @property
     def port(self) -> Port:
@@ -71,46 +75,93 @@ class Addition(Design):
         )
 
     def save_to(self, destination: Path) -> None:
-        template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="addition.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                num_features=str(self._num_features),
-                num_dimensions=str(self._num_dimensions),
-                m_q_1=str(self._m_q_1),
-                m_q_1_shift=str(self._m_q_1_shift),
-                m_q_2=str(self._m_q_2),
-                m_q_2_shift=str(self._m_q_2_shift),
-                m_q_data_width=str(self._m_q_data_width),
-                z_x_1=str(self._z_x1),
-                z_x_2=str(self._z_x2),
-                z_y=str(self._z_y),
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+        if not self._use_pipeline_template:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="addition.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    x_addr_width=str(self._x_addr_width),
+                    y_addr_width=str(self._y_addr_width),
+                    data_width=str(self._data_width),
+                    num_features=str(self._num_features),
+                    num_dimensions=str(self._num_dimensions),
+                    m_q_1=str(self._m_q_1),
+                    m_q_1_shift=str(self._m_q_1_shift),
+                    m_q_2=str(self._m_q_2),
+                    m_q_2_shift=str(self._m_q_2_shift),
+                    m_q_data_width=str(self._m_q_data_width),
+                    z_x_1=str(self._z_x1),
+                    z_x_2=str(self._z_x2),
+                    z_y=str(self._z_y),
+                    work_library_name=self._work_library_name,
+                    resource_option=self._resource_option,
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        ram = Ram(name=f"{self.name}_ram")
-        ram.save_to(destination)
+            ram = Ram(name=f"{self.name}_ram")
+            ram.save_to(destination)
 
-        template_test = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="addition_tb.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                num_features=str(self._num_features),
-                num_dimensions=str(self._num_dimensions),
-                work_library_name=self._work_library_name,
-            ),
-        )
-        destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
-            template_test
-        )
+            template_test = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="addition_tb.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    x_addr_width=str(self._x_addr_width),
+                    y_addr_width=str(self._y_addr_width),
+                    data_width=str(self._data_width),
+                    num_features=str(self._num_features),
+                    num_dimensions=str(self._num_dimensions),
+                    work_library_name=self._work_library_name,
+                ),
+            )
+            destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
+                template_test
+            )
+        else:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="addition_valid_rdy.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    x_addr_width=str(self._x_addr_width),
+                    y_addr_width=str(self._y_addr_width),
+                    data_width=str(self._data_width),
+                    num_features=str(self._num_features),
+                    num_dimensions=str(self._num_dimensions),
+                    m_q_1=str(self._m_q_1),
+                    m_q_1_shift=str(self._m_q_1_shift),
+                    m_q_2=str(self._m_q_2),
+                    m_q_2_shift=str(self._m_q_2_shift),
+                    m_q_data_width=str(self._m_q_data_width),
+                    z_x_1=str(self._z_x1),
+                    z_x_2=str(self._z_x2),
+                    z_y=str(self._z_y),
+                    work_library_name=self._work_library_name,
+                    resource_option=self._resource_option,
+                    unroll_factor=str(self._unroll_factor),
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+            ram = Ram(name=f"{self.name}_ram")
+            ram.save_to(destination)
+
+            template_test = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="addition_valid_rdy_tb.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    x_addr_width=str(self._x_addr_width),
+                    y_addr_width=str(self._y_addr_width),
+                    data_width=str(self._data_width),
+                    num_features=str(self._num_features),
+                    num_dimensions=str(self._num_dimensions),
+                    work_library_name=self._work_library_name,
+                    unroll_factor=str(self._unroll_factor),
+                ),
+            )
+            destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
+                template_test
+            )

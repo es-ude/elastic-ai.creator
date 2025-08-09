@@ -36,6 +36,7 @@ class Linear(Design):
         num_dimensions: int = None,
         use_parallelised_template: bool = False,
         unroll_factor: int = 1,
+        use_pipeline_template: bool = False,
     ) -> None:
         super().__init__(name=name)
 
@@ -75,6 +76,7 @@ class Linear(Design):
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
+        self.use_pipeline_template = use_pipeline_template
 
     @property
     def port(self) -> Port:
@@ -148,7 +150,10 @@ class Linear(Design):
                 if not self._use_parallelised_template:
                     file_name = "linear_2d.tpl.vhd"
                 else:
-                    file_name = "linear_2d_parallel.tpl.vhd"
+                    if self.use_pipeline_template:
+                        file_name = "linear_2d_parallel_rdy.tpl.vhd"
+                    else:
+                        file_name = "linear_2d_parallel.tpl.vhd"
             else:
                 if not self._use_parallelised_template:
                     file_name = "linear_2d_feature1.tpl.vhd"
@@ -157,6 +162,11 @@ class Linear(Design):
                         self._num_dimensions == 1
                     ), "Parallelised template for input with 1 feature is not supported"
             test_file_name = "linear_2d_tb.tpl.vhd"
+            if self.use_pipeline_template:
+                test_file_name = (  # override the test file name for pipeline template
+                    "linear_2d_parallel_rdy_tb.tpl.vhd"
+                )
+
             template_parameters["num_dimensions"] = str(self._num_dimensions)
             test_template_parameters["num_dimensions"] = str(self._num_dimensions)
 
