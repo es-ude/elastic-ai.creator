@@ -13,7 +13,7 @@ TESTBENCHFILE = ${{TESTBENCH}}_tb
 TESTBENCHPATH = $(shell find -type f -name "${{TESTBENCH}}_tb.vhd")
 
 # GHDL configuration
-GHDL_CMD = ghdl
+GHDL_CMD = ghdl3
 GHDL_FLAGS  = --ieee=synopsys --warn-no-vital-generic
 
 # simulation configuration
