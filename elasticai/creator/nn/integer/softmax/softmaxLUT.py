@@ -39,6 +39,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
+        self.device = device
         self.math_ops = MathOperations()
         self.precomputed = False
 
@@ -65,58 +66,75 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         )
 
     def precompute(self):
-        # prepare all possible quantised input
+        # 1. Enumerate all possible integer inputs
         min_quant = self.inputs2_QParams.min_quant.item()
         max_quant = self.inputs2_QParams.max_quant.item()
         q_inputs = torch.arange(min_quant, max_quant + 1, 1).to("cpu")
 
-        # subtract max_quant from q_inputs
-        q_inputs_offset = (
-            q_inputs.to(self.inputs2_QParams.zero_point.device)
-            - self.inputs2_QParams.zero_point
-        )  # q_x - zero_point
-        inputs = (
-            q_inputs_offset * self.inputs2_QParams.scale_factor
-        )  # s_x * (q_x - zero_point)
+        # 2. Dequantize the q_inputs into float inputs by s_x * (q_x - zero_point)
+        q_inputs = q_inputs.to(self.inputs2_QParams.zero_point.device)
+        q_inputs_offset = q_inputs - self.inputs2_QParams.zero_point
+        inputs = q_inputs_offset * self.inputs2_QParams.scale_factor
 
+        # 3. Get exponential of inputs
         tmp = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
 
+        # 4. Identify quant_bits of tmp
         tmp_quant_bits = (
             3 * self.quant_bits if self.quant_bits <= 4 else 2 * self.quant_bits
         )
+        # get scale factor of tmp
         tmp_scale_factor = (1.0 - 0.0) / (
             ((2 ** (tmp_quant_bits - 1) - 1) - (-(2 ** (tmp_quant_bits - 1))))
             // ((self.dim_b * self.dim_c) * self.nhead)  # self.dim_c
-        )  # get scale_factor factor of tmp
-        tmp_zero_point = (2 ** (tmp_quant_bits - 1) - 1) - (
-            1.0 / tmp_scale_factor
-        )  # get zero point of tmp
+        )
+        # get zero point of tmp
+        tmp_zero_point = (2 ** (tmp_quant_bits - 1) - 1) - (1.0 / tmp_scale_factor)
         tmp_zero_point = torch.tensor(tmp_zero_point, dtype=torch.int32)
         self.tmp_zero_point = tmp_zero_point.round_().clamp(
             -(2 ** (tmp_quant_bits - 1)), 2 ** (tmp_quant_bits - 1) - 1
         )
+
+        # 5. Quantize tmp
         q_tmp = (tmp / tmp_scale_factor + self.tmp_zero_point).to(torch.int32)
         q_tmp = q_tmp.round_().clamp(
             -(2 ** (tmp_quant_bits - 1)), 2 ** (tmp_quant_bits - 1) - 1
         )
 
-        # for denominator
+        # 6. Create LUTs for denominator
         self.Qinput2QDenominator_LUT_dict = {}
         for i in range(len(q_tmp)):
             self.Qinput2QDenominator_LUT_dict[q_inputs[i].item()] = int(q_tmp[i].item())
 
-        # for numerator
+        # 7. Create LUTs for numerator
         q_numerator = tmp / (tmp_scale_factor * self.outputs_QParams.scale_factor)
         q_numerator = q_numerator.to(torch.int32)
         q_numerator = q_numerator.round_().clamp(
             -(2 ** (self.quant_bits * 3 - 1)), 2 ** (self.quant_bits * 3 - 1) - 1
         )
-
         self.Qinput2QNumerator_LUT_dict = {}
         for i in range(len(q_numerator)):
             self.Qinput2QNumerator_LUT_dict[q_inputs[i].item()] = int(
                 q_numerator[i].item()
             )
+
+        # 8. Speeding up lookup by creating a mapping tensor
+        # define the range of indices
+        min_idx = min(self.Qinput2QNumerator_LUT_dict.keys())
+        max_idx = max(self.Qinput2QNumerator_LUT_dict.keys())
+        # create the mapping tensors
+        numerator_mapping = torch.zeros(max_idx - min_idx + 1, dtype=torch.int32)
+        denominator_mapping = torch.zeros(max_idx - min_idx + 1, dtype=torch.int32)
+        # fill the mapping tensors
+        for k, v in self.Qinput2QNumerator_LUT_dict.items():
+            numerator_mapping[k - min_idx] = v
+        for k, v in self.Qinput2QDenominator_LUT_dict.items():
+            denominator_mapping[k - min_idx] = v
+        # move the mapping tensors to the device
+        self.numerator_mapping = numerator_mapping.to(self.device)
+        self.denominator_mapping = denominator_mapping.to(self.device)
+        self.mapping_offset = min_idx
+
         self.precomputed = True
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
@@ -125,37 +143,41 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
+        # 1. Compute q_inputs
         max_q_inputs = q_inputs.max(dim=-1, keepdim=True)[0]
-
         q_inputs = self.math_ops.intsub(
             q_inputs, max_q_inputs, self.inputs2_QParams.quant_bits + 1
         )
-
         q_inputs = self.math_ops.intadd(
             q_inputs,
             self.inputs2_QParams.zero_point,
             self.inputs2_QParams.quant_bits + 1,
         )
 
-        q_numerator = q_inputs.clone()  # tmp / (S_soft * S_t)
-        for i in range(q_inputs.shape[0]):
-            for j in range(q_inputs.shape[1]):
-                for k in range(q_inputs.shape[2]):
-                    for l in range(q_inputs.shape[3]):
-                        q_numerator[i][j][k][l] = self.Qinput2QNumerator_LUT_dict[
-                            q_inputs[i][j][k][l].item()
-                        ]
-        q_denominator = q_inputs.clone()
-        for i in range(q_inputs.shape[0]):
-            for j in range(q_inputs.shape[1]):
-                for k in range(q_inputs.shape[2]):
-                    for l in range(q_inputs.shape[3]):
-                        q_denominator[i][j][k][l] = (
-                            self.Qinput2QDenominator_LUT_dict[
-                                q_inputs[i][j][k][l].item()
-                            ]
-                            - self.tmp_zero_point
-                        )
+        # q_numerator = q_inputs.clone()  # tmp / (S_soft * S_t)
+        # for i in range(q_inputs.shape[0]):
+        #     for j in range(q_inputs.shape[1]):
+        #         for k in range(q_inputs.shape[2]):
+        #             for l in range(q_inputs.shape[3]):
+        #                 q_numerator[i][j][k][l] = self.Qinput2QNumerator_LUT_dict[
+        #                     q_inputs[i][j][k][l].item()
+        #                 ]
+        # q_denominator = q_inputs.clone()
+        # for i in range(q_inputs.shape[0]):
+        #     for j in range(q_inputs.shape[1]):
+        #         for k in range(q_inputs.shape[2]):
+        #             for l in range(q_inputs.shape[3]):
+        #                 q_denominator[i][j][k][l] = (
+        #                     self.Qinput2QDenominator_LUT_dict[
+        #                         q_inputs[i][j][k][l].item()
+        #                     ]
+        #                     - self.tmp_zero_point
+        #                 )
+
+        indices = q_inputs - self.mapping_offset
+        q_numerator = self.numerator_mapping[indices]
+        q_denominator = self.denominator_mapping[indices] - self.tmp_zero_point
+
         q_denominator = q_denominator.sum(dim=-1, keepdim=True)  # sum(Q_t - Z_t)
 
         tmp = self.math_ops.int_division(
@@ -165,8 +187,11 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.quant_bits
         )
-        dq_outputs = self.outputs_QParams.dequantize(q_outputs)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+
+        dq_outputs = self.outputs_QParams.dequantize(
+            q_outputs
+        )  # just for attention heatmap
         return q_outputs, dq_outputs
 
     def forward(
