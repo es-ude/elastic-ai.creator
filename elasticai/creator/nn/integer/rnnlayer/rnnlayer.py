@@ -28,8 +28,8 @@ class RNNLayer(nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
-        self.use_buffer_template = kwargs.get("use_buffer_template", False)
-
+        self.lstm_use_pipeline_template = kwargs.get("use_pipeline_template", False)
+        print("in RNNLayer.py use_pipeline_template:", self.lstm_use_pipeline_template)
         if self.cell_type == "lstm":
             self.rnn_cell = LSTMCell(
                 name=f"{self.name}_lstm_cell",
@@ -43,6 +43,7 @@ class RNNLayer(nn.Module):
                     "use_parallelised_template", False
                 ),
                 unroll_factor=kwargs.get("unroll_factor", 1),
+                lstm_use_pipeline_template=self.lstm_use_pipeline_template,
             )
         elif self.cell_type == "gru":
             self.rnn_cell = GRUCell(
@@ -89,7 +90,7 @@ class RNNLayer(nn.Module):
             rnn_cell=self.rnn_cell,
             work_library_name="work",
             resource_option="auto",
-            use_buffer_template=self.use_buffer_template,
+            use_pipeline_template=self.lstm_use_pipeline_template,
         )
 
     def precompute(self):
