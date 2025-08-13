@@ -99,6 +99,7 @@ def run_cocotb_sim(
     if language == "verilog":
         build_call = partial(runner.build, verilog_sources=design_sources)
     else:
+        top_module_name = top_module_name.lower()
         build_call = partial(runner.build, vhdl_sources=design_sources)
 
     build_call(
