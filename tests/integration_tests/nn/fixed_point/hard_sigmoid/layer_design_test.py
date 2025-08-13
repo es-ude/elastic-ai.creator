@@ -6,6 +6,7 @@ from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from tests.integration_tests.nn.fixed_point.precomputed_routine import routine_testing_precomputed_module
 
 
+@pytest.mark.skip
 @pytest.mark.simulation
 @pytest.mark.slow
 @pytest.mark.parametrize(

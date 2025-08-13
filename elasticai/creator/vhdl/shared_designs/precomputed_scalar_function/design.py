@@ -56,12 +56,12 @@ class PrecomputedScalarFunction(Design):
         pairs = self._compute_io_pairs()
         input_value, output_value = pairs[0]
         process_content.append(
-            f"if signed_x <= {input_value} then "
+            f"if signed_x <= to_signed({input_value}, {self._output_width}) then "
             f"signed_y <= to_signed({output_value}, {self._output_width});"
         )
         for input_value, output_value in pairs[1:-1]:
             process_content.append(
-                f"elsif signed_x <= {input_value} then "
+                f"elsif signed_x <= to_signed({input_value}, {self._output_width}) then "
                 f"signed_y <= to_signed({output_value}, {self._output_width});"
             )
         _, output = pairs[-1]

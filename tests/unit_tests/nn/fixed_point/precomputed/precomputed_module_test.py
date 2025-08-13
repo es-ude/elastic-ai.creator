@@ -30,9 +30,9 @@ begin
     y <= std_logic_vector(signed_y);
     precomputed_process : process(x)
     begin
-        if signed_x <= -128 then signed_y <= to_signed(-4, 8);
-        elsif signed_x <= -43 then signed_y <= to_signed(-4, 8);
-        elsif signed_x <= 42 then signed_y <= to_signed(0, 8);
+        if signed_x <= to_signed(-128, 8) then signed_y <= to_signed(-4, 8);
+        elsif signed_x <= to_signed(-43, 8) then signed_y <= to_signed(-4, 8);
+        elsif signed_x <= to_signed(42, 8) then signed_y <= to_signed(0, 8);
         else signed_y <= to_signed(4, 8);
         end if;
     end process;

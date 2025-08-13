@@ -25,7 +25,7 @@ def test_build_test_relu_design(
         num_steps=2*num_steps,
         fxp=fxp,
         file_name=file_name,
-        file_suffix='vhd'
+        file_suffix='v'
     )
 
 
