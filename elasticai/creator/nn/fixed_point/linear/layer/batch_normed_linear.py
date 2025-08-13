@@ -76,7 +76,7 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
-            return self._operations.config.as_integer(value)
+            return self._operations.config.cut_as_integer(value)
 
         bn_mean = cast(torch.Tensor, self._batch_norm.running_mean)
         bn_variance = cast(torch.Tensor, self._batch_norm.running_var)

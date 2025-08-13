@@ -33,7 +33,7 @@ class Linear(DesignCreatorModule, LinearBase):
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
-            return self._config.as_integer(value)
+            return self._config.cut_as_integer(value)
 
         bias = [0] * self.out_features if self.bias is None else self.bias.tolist()
         signed_int_weights = cast(

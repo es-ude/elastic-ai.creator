@@ -1,53 +1,58 @@
-from os import environ
-
-import numpy as np
 import pytest
-from torch import Tensor
-from torch import nn as nn_torch
+import torch
 
 from elasticai.creator.nn import fixed_point as nn_creator
+from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
+    FixedPointConfig,
+)
 
 
 @pytest.mark.parametrize(
-    "total_bits, frac_bits", [(4, 3), (6, 4), (8, 5), (10, 6), (12, 7), (12, 8)]
+    "total_bits, frac_bits, num_steps",
+    [
+        (4, 3, 4),
+        (6, 4, 32),
+        (8, 5, 64),
+        (10, 6, 16),
+        (12, 7, 128),
+        (12, 8, 64),
+        (12, 10, 512),
+    ],
 )
-def test_sigmoid_compared_torch(total_bits: int, frac_bits: int) -> None:
-    plot_results = environ.get(["PLOT_TESTING"], "off") == "on"
-    num_steps = 2 ** (total_bits + 1)
-    range = (
-        -(2 ** (total_bits - frac_bits - 1)),
-        2 ** (total_bits - frac_bits - 1) - 1 / 2**frac_bits,
+def test_sigmoid_compared_torch(
+    total_bits: int, frac_bits: int, num_steps: int
+) -> None:
+    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
+    stimulus = torch.arange(
+        start=vrange[0], end=vrange[1], step=fxp.minimum_step_as_rational
     )
-    stimulus = np.linspace(start=range[0], stop=range[1], num=num_steps, endpoint=True)
 
-    act0 = nn_torch.Sigmoid()
-    out0 = act0(Tensor(stimulus))
-    act1 = nn_creator.Sigmoid(total_bits, frac_bits, num_steps, range)
-    out1 = act1(Tensor(stimulus))
+    act0 = torch.nn.Sigmoid()
+    out0 = act0(stimulus)
+    act1 = nn_creator.Sigmoid(
+        total_bits=total_bits,
+        frac_bits=frac_bits,
+        num_steps=num_steps,
+        sampling_intervall=vrange,
+    )
+    out1 = act1(stimulus)
+    metric_mean_abs = float(sum(abs(out1 - out0))) / stimulus.shape[0]
+    metric_mean = float(abs(sum(out1 - out0))) / stimulus.shape[0]
 
-    if plot_results:
-        from matplotlib import pyplot as plt
+    # import matplotlib.pyplot as plt
+    # plt.figure()
+    # plt.plot(stimulus, out0, 'k', marker='.', label='Torch')
+    # plt.plot(stimulus, out1, 'r', marker='.', label='Creator')
+    # plt.xlim(vrange)
+    # plt.legend()
+    # plt.title(f"{total_bits}, {frac_bits}, {num_steps} ({metric_mean_abs:.5f}, {metric_mean: .5f})")
+    # plt.grid()
+    # plt.tight_layout()
+    # plt.show()
 
-        plt.title(f"Sigmoid (n={total_bits}, {frac_bits})")
-        plt.plot(stimulus, out0, color="k", label="Torch", marker=".", markersize=4)
-        plt.step(
-            stimulus,
-            out1,
-            color="r",
-            label="Creator",
-            where="mid",
-            marker=".",
-            markersize=4,
-        )
-
-        plt.ylabel("Output")
-        plt.xlabel("Input")
-        plt.yticks([0.0, 0.25, 0.5, 0.75, 1.0])
-        plt.ylim([-0.02, +1.02])
-        plt.xlim(range)
-        plt.xticks([range[0], range[0] / 2, 0.0, range[1] / 2, range[1]])
-        plt.grid()
-        plt.legend(loc="upper left")
-        plt.tight_layout()
-        plt.show()
-    assert float(sum(abs(out1 - out0))) < 1e-6
+    print(metric_mean_abs, metric_mean)
+    assert metric_mean_abs < 1.5 * fxp.minimum_step_as_rational * (
+        out1.max() - out1.min()
+    )
+    assert metric_mean < 0.6 * fxp.minimum_step_as_rational

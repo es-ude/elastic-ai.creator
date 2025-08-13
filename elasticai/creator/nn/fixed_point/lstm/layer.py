@@ -110,7 +110,7 @@ class FixedPointLSTMWithHardActivations(DesignCreatorModule, LSTM):
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
-            return self._config.as_integer(value)
+            return self._config.cut_as_integer(value)
 
         def cast_weights(x):
             return cast(list[list[list[int]]], x)

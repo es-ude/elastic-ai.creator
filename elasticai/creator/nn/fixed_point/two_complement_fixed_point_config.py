@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Protocol, TypeVar, Union, cast, overload, runtime_checkable
 
+import torch
+
 T = TypeVar("T", bound="ConvertableToFixedPointValues")
 
 
@@ -45,6 +47,10 @@ class FixedPointConfig:
         return -1 * (1 << (self.total_bits - 1)) / (1 << self.frac_bits)
 
     @property
+    def minimum_step_as_rational(self) -> float:
+        return 1 / (1 << self.frac_bits)
+
+    @property
     def maximum_as_rational(self) -> float:
         return int("1" * (self.total_bits - 1), 2) / (1 << self.frac_bits)
 
@@ -55,15 +61,28 @@ class FixedPointConfig:
         return (number < self.minimum_as_rational) | (number > self.maximum_as_rational)
 
     @overload
-    def as_integer(self, number: float | int) -> int: ...
+    def cut_as_integer(self, number: float | int) -> int: ...
 
     @overload
-    def as_integer(self, number: T) -> T: ...
+    def cut_as_integer(self, number: T) -> T: ...
 
-    def as_integer(self, number: float | int | T) -> int | T:
+    def cut_as_integer(self, number: float | int | T) -> int | T:
+        """Cutting input number to integer directly (more like in hardware)"""
         if isinstance(number, ConvertableToFixedPointValues):
-            return self._convert_T_to_integer(cast(T, number))
-        return self._convert_float_or_int_to_integer(number)
+            return self._cut_T_to_integer(cast(T, number))
+        return self._cut_float_or_int_to_integer(number)
+
+    @overload
+    def round_to_integer(self, number: float | int) -> int: ...
+
+    @overload
+    def round_to_integer(self, number: T) -> T: ...
+
+    def round_to_integer(self, number: float | int | T) -> int | T:
+        """Mathematical Round function for number"""
+        if isinstance(number, ConvertableToFixedPointValues):
+            return self._round_T_to_integer(cast(T, number))
+        return self._round_float_or_int_to_integer(number)
 
     @overload
     def as_rational(self, number: float | int) -> float: ...
@@ -74,8 +93,14 @@ class FixedPointConfig:
     def as_rational(self, number: float | int | T) -> float | T:
         return number / (1 << self.frac_bits)
 
-    def _convert_T_to_integer(self, number: T) -> T:
+    def _round_T_to_integer(self, number: T) -> T:
+        return torch.round(number * (1 << self.frac_bits)).int().float()
+
+    def _round_float_or_int_to_integer(self, number: float | int) -> int:
+        return round(number * (1 << self.frac_bits))
+
+    def _cut_T_to_integer(self, number: T) -> T:
         return (number * (1 << self.frac_bits)).int().float()
 
-    def _convert_float_or_int_to_integer(self, number: float | int) -> int:
-        return round(number * (1 << self.frac_bits))
+    def _cut_float_or_int_to_integer(self, number: float | int) -> int:
+        return int(number * (1 << self.frac_bits))

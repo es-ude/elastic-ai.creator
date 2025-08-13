@@ -51,3 +51,20 @@ def read_text_from_path(path: PathType, encoding: str = "utf-8") -> str:
 def save_text_to_path(text: str, path: PathType, encoding: str = "utf-8") -> None:
     with open(path, "w", encoding=encoding) as out_file:
         out_file.write(text)
+
+
+def find_project_root(max_levels: int = 10):
+    cwd = Path(".").absolute()
+    current = cwd
+
+    def is_project_root(p):
+        return (p / "pyproject.toml").exists()
+
+    for _ in range(max_levels):
+        if is_project_root(current):
+            return current
+        current = current.parent
+
+    if is_project_root(current):
+        return current
+    return cwd

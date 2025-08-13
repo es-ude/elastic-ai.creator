@@ -44,3 +44,142 @@ class FixedPointMathOperationsTest(TensorTestCase):
         actual = self.operations.mul(a, b)
         expected = [-0.25, 1.75, 0.5]
         self.assertTensorEqual(expected, actual)
+
+    def test_config_float_to_integer_2_2(self) -> None:
+        config = FixedPointConfig(total_bits=2, frac_bits=2)
+        chck = [config.minimum_as_integer, -1, 0, +1, config.maximum_as_integer]
+        stimuli = [
+            config.minimum_as_rational,
+            -config.minimum_step_as_rational,
+            0,
+            config.minimum_step_as_rational,
+            config.maximum_as_rational,
+        ]
+        rslt = [config.cut_as_integer(val) for val in stimuli]
+        self.assertListEqual(rslt, chck)
+
+    def test_config_float_to_integer_4_3(self) -> None:
+        config = FixedPointConfig(total_bits=4, frac_bits=3)
+        chck = [config.minimum_as_integer, -1, 0, +1, config.maximum_as_integer]
+        stimuli = [
+            config.minimum_as_rational,
+            -config.minimum_step_as_rational,
+            0,
+            config.minimum_step_as_rational,
+            config.maximum_as_rational,
+        ]
+        rslt = [config.cut_as_integer(val) for val in stimuli]
+        self.assertListEqual(rslt, chck)
+
+    def test_config_float_to_integer_8_4(self) -> None:
+        config = FixedPointConfig(total_bits=8, frac_bits=4)
+        chck = [config.minimum_as_integer, -1, 0, +1, config.maximum_as_integer]
+        stimuli = [
+            config.minimum_as_rational,
+            -config.minimum_step_as_rational,
+            0,
+            config.minimum_step_as_rational,
+            config.maximum_as_rational,
+        ]
+        rslt = [config.cut_as_integer(val) for val in stimuli]
+        self.assertListEqual(rslt, chck)
+
+    def test_config_T_to_integer_2_2(self) -> None:
+        config = FixedPointConfig(total_bits=2, frac_bits=2)
+
+        chck = torch.Tensor(
+            [config.minimum_as_integer, -1, 0, +1, config.maximum_as_integer]
+        )
+        stimuli = torch.Tensor(
+            [
+                config.minimum_as_rational,
+                -config.minimum_step_as_rational,
+                0,
+                config.minimum_step_as_rational,
+                config.maximum_as_rational,
+            ]
+        )
+        rslt = config.cut_as_integer(stimuli)
+        self.assertTensorEqual(rslt, chck)
+
+    def test_config_T_to_integer_4_3(self) -> None:
+        config = FixedPointConfig(total_bits=4, frac_bits=3)
+
+        chck = torch.Tensor(
+            [config.minimum_as_integer, -1, 0, +1, config.maximum_as_integer]
+        )
+        stimuli = torch.Tensor(
+            [
+                config.minimum_as_rational,
+                -config.minimum_step_as_rational,
+                0,
+                config.minimum_step_as_rational,
+                config.maximum_as_rational,
+            ]
+        )
+        rslt = config.cut_as_integer(stimuli)
+        self.assertTensorEqual(rslt, chck)
+
+    def test_config_T_to_integer_8_4(self) -> None:
+        config = FixedPointConfig(total_bits=8, frac_bits=4)
+
+        chck = torch.Tensor(
+            [config.minimum_as_integer, -1, 0, +1, config.maximum_as_integer]
+        )
+        stimuli = torch.Tensor(
+            [
+                config.minimum_as_rational,
+                -config.minimum_step_as_rational,
+                0,
+                config.minimum_step_as_rational,
+                config.maximum_as_rational,
+            ]
+        )
+        rslt = config.cut_as_integer(stimuli)
+        self.assertTensorEqual(rslt, chck)
+
+    def test_config_x_to_integer_4_3(self) -> None:
+        config = FixedPointConfig(total_bits=4, frac_bits=3)
+
+        stimuli_tensor = torch.Tensor(
+            [
+                config.minimum_as_rational,
+                -config.minimum_step_as_rational,
+                0,
+                config.minimum_step_as_rational,
+                config.maximum_as_rational,
+            ]
+        )
+        stimuli_float = [
+            config.minimum_as_rational,
+            -config.minimum_step_as_rational,
+            0,
+            config.minimum_step_as_rational,
+            config.maximum_as_rational,
+        ]
+        rslt_tensor = config.cut_as_integer(stimuli_tensor).tolist()
+        rslt_float = [config.cut_as_integer(val) for val in stimuli_float]
+        self.assertListEqual(rslt_tensor, rslt_float)
+
+    def test_config_x_to_integer_8_4(self) -> None:
+        config = FixedPointConfig(total_bits=8, frac_bits=4)
+
+        stimuli_tensor = torch.Tensor(
+            [
+                config.minimum_as_rational,
+                -config.minimum_step_as_rational,
+                0,
+                config.minimum_step_as_rational,
+                config.maximum_as_rational,
+            ]
+        )
+        stimuli_float = [
+            config.minimum_as_rational,
+            -config.minimum_step_as_rational,
+            0,
+            config.minimum_step_as_rational,
+            config.maximum_as_rational,
+        ]
+        rslt_tensor = config.cut_as_integer(stimuli_tensor).tolist()
+        rslt_float = [config.cut_as_integer(val) for val in stimuli_float]
+        self.assertListEqual(rslt_tensor, rslt_float)

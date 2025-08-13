@@ -4,7 +4,7 @@ from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMem
 from elasticai.creator.nn.fixed_point.hard_tanh.layer import HardTanh
 
 
-def test_vhdl_code_matches_expected() -> None:
+def test_vhdl_code_matches_expected_hardtanh() -> None:
     expected = """-- This is the hard_sigmoid implementation for fixed point data
 -- followed by the logic from pytorch:
 -- https://pytorch.org/docs/stable/generated/torch.nn.Hardtanh.html

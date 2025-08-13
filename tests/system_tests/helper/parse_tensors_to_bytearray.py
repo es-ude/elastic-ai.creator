@@ -10,7 +10,7 @@ def parse_fxp_tensor_to_bytearray(
 ) -> list[bytearray]:
     tensor = flatten(tensor.permute([0, 2, 1]), start_dim=1)
     fxp_config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-    ints = fxp_config.as_integer(tensor).tolist()
+    ints = fxp_config.cut_as_integer(tensor).tolist()
     data = list()
     for i, batch in enumerate(ints):
         data.append(bytearray())
