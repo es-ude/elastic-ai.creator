@@ -1,4 +1,5 @@
 import json
+from os import makedirs
 from os.path import exists, join
 
 import pytest
@@ -24,6 +25,7 @@ def test_build_test_hardtanh_design(total_bits: int, frac_bits: int) -> None:
     val_output = dut(val_input)
 
     testpattern = {"in": val_input.tolist(), "out": val_output.tolist()}
+    makedirs(f"{find_project_root()}/build_test", exist_ok=True)
     with open(f"{find_project_root()}/build_test/{file_name}.json", "w") as f:
         json.dump(testpattern, f, indent=1)
 
