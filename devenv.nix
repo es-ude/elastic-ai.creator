@@ -10,14 +10,13 @@ in {
   # override these in your devenv.local.nix as needed
   languages.vhdl = {
     enable = lib.mkDefault true;
-    vivado.enable = lib.mkDefault false;
   };
+  languages.verilog.enable = true;
 
   packages = [
     pkgs.git-cliff
     pkgs.pikchr
     unstablePkgs.jujutsu
-    pkgs.gtkwave # visualize wave forms from hw simulations
     pkgs.graphviz
     pkgs.cocogitto
     unstablePkgs.mypy # python type checker

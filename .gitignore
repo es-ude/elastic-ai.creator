@@ -285,3 +285,6 @@ work-obj*.cf
 
 # ignore the folder used to store artifacts for cocotb
 build_sim/
+
+# ignore folder for external tools, e.g., ghdl
+external/
