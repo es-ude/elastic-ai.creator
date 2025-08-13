@@ -22,13 +22,12 @@ async def precomputed_test(dut):
     await RisingEdge(dut.clock)
 
     chck = list()
-    idx = 0
     for sig_in, ref_out in zip(data["in"], data["out"]):
         dut.x.value = sig_in
         for _ in range(2):
             await RisingEdge(dut.clock)
 
-        chck.append(dut.y.value.signed_integer in [data["out"][idx - 1], ref_out])
+        chck.append(dut.y.value.signed_integer == ref_out)
         if not chck[-1]:
             print(
                 f"x={dut.x.value.signed_integer} -> y_pred={dut.y.value.signed_integer}, y_true={ref_out}"

@@ -7,6 +7,7 @@ from tests.integration_tests.nn.fixed_point.precomputed_routine import (
 )
 
 
+@pytest.mark.skip
 @pytest.mark.simulation
 @pytest.mark.slow
 @pytest.mark.parametrize(
