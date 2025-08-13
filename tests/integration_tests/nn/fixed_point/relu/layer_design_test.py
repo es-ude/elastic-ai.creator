@@ -22,5 +22,9 @@ def test_build_test_relu_design(
         total_bits=total_bits,
     )
     routine_testing_precomputed_module(
-        dut=dut, num_steps=2 * num_steps, fxp=fxp, file_name=file_name, file_suffix="v"
+        dut=dut,
+        num_steps=2 * num_steps,
+        fxp=fxp,
+        file_name=file_name,
+        file_suffix="vhd",
     )

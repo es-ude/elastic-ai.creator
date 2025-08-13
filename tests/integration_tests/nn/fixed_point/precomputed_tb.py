@@ -33,6 +33,9 @@ async def precomputed_test(dut):
                 f"x={dut.x.value.signed_integer} -> y_pred={dut.y.value.signed_integer}, y_true={ref_out}"
             )
 
+        for _ in range(2):
+            await RisingEdge(dut.clock)
+
     accuracy = sum(chck) / len(chck)
     print(f"Accuracy of {accuracy * 100:.2f}%")
     assert accuracy >= 0.98
