@@ -10,6 +10,12 @@ from cocotb.runner import get_runner
 from elasticai.creator.file_generation import find_project_root
 
 
+def get_and_create_sim_build_dir(folder_name: str) -> Path:
+    build = find_project_root() / folder_name
+    build.mkdir(exist_ok=True)
+    return build
+
+
 def run_cocotb_sim_for_src_dir(
     src_files: Iterable[str] | Iterable[Path],
     top_module_name: str,
