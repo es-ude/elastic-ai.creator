@@ -1,42 +1,30 @@
-import json
-from os import makedirs
-from os.path import exists, join
-
 import pytest
-import torch
 
 import elasticai.creator.nn.fixed_point as nn_creator
-from elasticai.creator.file_generation import find_project_root
-from elasticai.creator.file_generation.on_disk_path import OnDiskPath
-from elasticai.creator.testing.cocotb_runner import run_cocotb_sim
+from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
+from tests.integration_tests.nn.fixed_point.precomputed_routine import (
+    routine_testing_precomputed_module,
+)
 
 
 @pytest.mark.simulation
 @pytest.mark.slow
-@pytest.mark.parametrize("total_bits, num_steps", [(4, 8), (6, 32), (8, 64), (10, 128)])
-def test_build_test_relu_test(total_bits: int, num_steps: int) -> None:
-    file_name = f"TestRelu_{total_bits}"
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, num_steps", [(6, 4, 32), (8, 4, 32), (10, 9, 64)]
+)
+def test_build_test_relu_design(
+    total_bits: int, frac_bits: int, num_steps: int
+) -> None:
+    file_name = f"TestReLU_{total_bits}_{frac_bits}_{num_steps}"
+    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
 
-    fxp = nn_creator.FixedPointConfig(total_bits=total_bits, frac_bits=1)
-    dut = nn_creator.ReLU(total_bits=total_bits)
-    val_input = torch.linspace(
-        start=fxp.minimum_as_rational, end=fxp.maximum_as_rational, steps=num_steps
+    dut = nn_creator.ReLU(
+        total_bits=total_bits,
     )
-    val_output = dut(val_input)
-
-    testpattern = {"in": val_input.tolist(), "out": val_output.tolist()}
-    makedirs(f"{find_project_root()}/build_test", exist_ok=True)
-    with open(f"{find_project_root()}/build_test/{file_name}.json", "w") as f:
-        json.dump(testpattern, f, indent=1)
-
-    output_dir = "build_test"
-    destination = OnDiskPath(output_dir, parent=find_project_root())
-    dut.create_design(file_name).save_to(destination)
-    assert exists(join(find_project_root(), output_dir, f"{file_name}.vhd"))
-
-    set0 = dict(
-        src_files=[join(find_project_root(), output_dir, f"{file_name}.vhd")],
-        top_module_name=file_name,
-        cocotb_test_module="tests.integration_tests.nn.fixed_point.precomputed_tb",
+    routine_testing_precomputed_module(
+        dut=dut,
+        num_steps=2 * num_steps,
+        fxp=fxp,
+        file_name=file_name,
+        file_suffix="vhd",
     )
-    run_cocotb_sim(**set0)
