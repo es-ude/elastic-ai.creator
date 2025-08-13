@@ -7,23 +7,7 @@ from typing import Any
 
 from cocotb.runner import get_runner
 
-
-def _find_project_root(max_levels: int = 10) -> Path:
-    cwd = Path(".").absolute()
-    current = cwd
-
-    def is_project_root(p):
-        return (p / "pyproject.toml").exists()
-
-    for _ in range(max_levels):
-        if is_project_root(current):
-            return current
-        current = current.parent
-
-    if is_project_root(current):
-        return current
-
-    return cwd
+from elasticai.creator.file_generation import find_project_root
 
 
 def run_cocotb_sim_for_src_dir(
@@ -33,7 +17,7 @@ def run_cocotb_sim_for_src_dir(
     path2src: str = "",
     defines: dict = {},
     params: dict = {},
-    timescale: tuple[str, str] = ("1ns", "100ps"),
+    timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
     build_waveforms: bool = False,
 ) -> None:
@@ -76,7 +60,7 @@ def run_cocotb_sim(
     cocotb_test_module: str,
     defines: dict[str, Any] = {},
     params: dict[str, Any] = {},
-    timescale: tuple[str, str] = ("1ns", "100ps"),
+    timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
     build_waveforms: bool = False,
 ) -> None:
@@ -112,7 +96,6 @@ def run_cocotb_sim(
     environ["COCOTB_REDUCED_LOG_FMT"] = "0" if en_debug_mode else "1"
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
 
-    default_path = _find_project_root()
     if language == "verilog":
         build_call = partial(runner.build, verilog_sources=design_sources)
     else:
@@ -126,9 +109,8 @@ def run_cocotb_sim(
         defines=defines,
         parameters=params,
         timescale=timescale,
-        build_dir=default_path / "build_sim",
+        build_dir=find_project_root() / "build_sim",
     )
-
     runner.test(
         hdl_toplevel=top_module_name,
         test_module=[cocotb_test_module],
@@ -137,6 +119,6 @@ def run_cocotb_sim(
         waves=build_waveforms,
         parameters=params,
         timescale=timescale,
-        build_dir=join(default_path, "build_sim"),
-        test_dir=join(default_path, "build_sim"),
+        build_dir=join(find_project_root(), "build_sim"),
+        test_dir=join(find_project_root(), "build_sim"),
     )

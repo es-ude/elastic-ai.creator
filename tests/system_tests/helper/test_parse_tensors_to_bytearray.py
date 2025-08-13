@@ -14,7 +14,7 @@ def test_tensors_to_bytearray():
     total_bits = 8
     frac_bits = 2
     fxp_conf = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-    tensor = fxp_conf.as_rational(fxp_conf.as_integer(torch.randn(2, 3, 4)))
+    tensor = fxp_conf.as_rational(fxp_conf.cut_as_integer(torch.randn(2, 3, 4)))
     result = parse_fxp_tensor_to_bytearray(tensor, total_bits, frac_bits)
     expected = [
         bytearray(b"\xfc\x03\x01\xfc\x02\x00\xff\xff\x05\xff\xf8\x01"),
@@ -33,6 +33,6 @@ def test_bytearray_to_tensor():
     torch.manual_seed(0)
     fxp_conf = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
     dimensions = (2, 3, 4)
-    expected = fxp_conf.as_rational(fxp_conf.as_integer(torch.randn(dimensions)))
+    expected = fxp_conf.as_rational(fxp_conf.cut_as_integer(torch.randn(dimensions)))
     result = parse_bytearray_to_fxp_tensor(input, total_bits, frac_bits, dimensions)
     assert torch.equal(result, expected)

@@ -4,7 +4,7 @@ from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMem
 from elasticai.creator.nn.fixed_point.hard_sigmoid.layer import HardSigmoid
 
 
-def test_vhdl_code_matches_expected() -> None:
+def test_vhdl_code_matches_expected_hardsigmoid() -> None:
     expected = """-- This is the hard_sigmoid implementation for fixed point data
 -- it has to use DSP slices to finish the arithmetic computation
 -- Prefetching data is necessary since this layer is clocked
@@ -23,7 +23,7 @@ entity sigmoid is
         ONE : integer := 256;
         ZERO_THRESHOLD : integer := -768;
         ONE_THRESHOLD : integer := 768;
-        SLOPE : integer := 43;
+        SLOPE : integer := 42;
         Y_INTERCEPT: integer := 128
     );
     port (

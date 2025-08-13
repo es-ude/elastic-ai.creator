@@ -148,7 +148,7 @@ def test_no_overflow_after_multiplication(
     conv.weight.data = 3.5 * torch.ones_like(conv.weight)
     prediction = conv(to_1d_input_tensor([3.5, -3]))
     expected = to_1d_input_tensor(
-        1.5
+        [1.5]
     ).tolist()  # quantize(3.5 * 3.5 - 3 * 3.5) == quantize(1.75) == 1.5
     assert expected == prediction.tolist()
 

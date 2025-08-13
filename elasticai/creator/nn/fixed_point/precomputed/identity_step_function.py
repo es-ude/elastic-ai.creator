@@ -11,7 +11,6 @@ class IdentityStepFunction(torch.autograd.Function):
                 "apply() takes exactly two arguments "
                 "(x: torch.Tensor, step_lut: torch.Tensor)"
             )
-
         x: torch.Tensor = args[0]
         step_lut: torch.Tensor = args[1]
 
@@ -26,7 +25,6 @@ class IdentityStepFunction(torch.autograd.Function):
         for step_idx in range(1, len(step_lut)):
             prev_step, curr_step = step_lut[step_idx - 1], step_lut[step_idx]
             x[(x > prev_step) & (x <= curr_step)] = curr_step
-
         return x
 
     @staticmethod
