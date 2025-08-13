@@ -1,5 +1,4 @@
 import json
-from os import makedirs
 from os.path import exists, join
 
 import torch
@@ -33,14 +32,14 @@ def routine_testing_precomputed_module(
 
     output_dir = "build_test"
     build_dir = get_and_create_sim_build_dir(output_dir)
-    with open(f"{build_dir}/{file_name}.json", "w") as f0:
+    with open(f"{build_dir}/{file_name}.json".lower(), "w") as f0:
         json.dump(testpattern, f0, indent=1)
 
     # Check if design is available
     destination = OnDiskPath(output_dir, parent=find_project_root())
     dut.create_design(file_name).save_to(destination)
     assert exists(join(find_project_root(), output_dir, f"{file_name}.{file_suffix}"))
-    assert exists(join(find_project_root(), output_dir, f"{file_name}.json"))
+    assert exists(join(find_project_root(), output_dir, f"{file_name}.json".lower()))
 
     # Prepare cocotb runner
     set0 = dict(
