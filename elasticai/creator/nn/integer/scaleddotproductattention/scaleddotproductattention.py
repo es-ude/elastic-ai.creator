@@ -32,6 +32,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.matrix_multi_score = MatrixMulti(
             name=self.name + "_matmul_score",
@@ -49,6 +50,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             operation_mode="score",
             addtion_scale=1 / np.sqrt(d_model),
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.softmax = SoftmaxLUT(
@@ -61,6 +63,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.matrix_multi_att = MatrixMulti(
@@ -79,6 +82,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             operation_mode="att",
             addtion_scale=None,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_q_QParams = AsymmetricSignedQParams(
@@ -148,6 +152,12 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         q_context = q_context.contiguous()
 
         save_quant_data(q_context, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.matrix_multi_att.outputs_QParams.dequantize(q_context),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_context, att
 
     def forward(
@@ -197,4 +207,10 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         context = context.contiguous()
         if enable_simquant:
             self.outputs_QParams = self.matrix_multi_att.outputs_QParams
+            if self.enable_error_analysis:
+                save_quant_data(
+                    context,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return context, att

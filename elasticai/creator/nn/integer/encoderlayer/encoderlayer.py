@@ -34,6 +34,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         device = kwargs.get("device")
 
         enable_fused_ffn = kwargs.get("enable_fused_ffn", False)
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         mha_name = self.name + "_mha"
         ffn_name = self.name + "_fusedffn" if enable_fused_ffn else self.name + "_ffn"
@@ -46,6 +47,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
         self.mha_add = Addition(
             name=mha_name + "_add",
@@ -54,6 +56,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.mha_norm = BatchNorm1d(
@@ -69,6 +72,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         if enable_fused_ffn:
@@ -80,6 +84,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
+                enable_error_analysis=self.enable_error_analysis,
             )
         else:
             self.ffn = FeedForwardNetwork(
@@ -90,6 +95,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
+                enable_error_analysis=self.enable_error_analysis,
             )
 
         self.ffn_add = Addition(
@@ -99,6 +105,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.ffn_norm = BatchNorm1d(
@@ -114,6 +121,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -182,6 +190,12 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         )
 
         save_quant_data(q_ffn_norm_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.ffn_norm.outputs_QParams.dequantize(q_ffn_norm_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_ffn_norm_outputs
 
     def forward(
@@ -238,5 +252,11 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         )
         if enable_simquant:
             self.outputs_QParams = self.ffn_norm.outputs_QParams
+            if self.enable_error_analysis:
+                save_quant_data(
+                    ffn_norm_outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
 
         return ffn_norm_outputs

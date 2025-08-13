@@ -26,6 +26,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.fc1 = Linear(
             name=self.name + "_fc1",
@@ -36,6 +37,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.relu = ReLU(
@@ -43,6 +45,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.fc2 = Linear(
@@ -54,6 +57,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -97,6 +101,12 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             q_inputs=q_relu_outputs,
         )
         save_quant_data(q_f2_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_f2_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_f2_outputs
 
     def forward(
@@ -130,4 +140,10 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         )
         if enable_simquant:
             self.outputs_QParams = self.fc2.outputs_QParams
+            if self.enable_error_analysis:
+                save_quant_data(
+                    f2_outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return f2_outputs

@@ -29,6 +29,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
@@ -144,7 +145,12 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
-
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_outputs
 
     def forward(
@@ -183,4 +189,10 @@ class Linear(DesignCreatorModule, nn.Linear):
                 self.outputs_QParams.update_quant_params(outputs)
 
             outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return outputs

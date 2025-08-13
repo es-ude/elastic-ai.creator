@@ -39,6 +39,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -171,7 +172,12 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
-        # print("q_outputs: ", q_outputs)
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_outputs
 
     def forward(
@@ -223,4 +229,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             if self.training:
                 self.outputs_QParams.update_quant_params(outputs)
             outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return outputs
