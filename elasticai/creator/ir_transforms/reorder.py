@@ -16,7 +16,7 @@ def build_sequential_pattern(
     for node in sequence:
         pattern.add_node(node)
         if previous is not None:
-            pattern.add_edge(src=previous, dst=node.name)
+            pattern.add_edge(src=previous, dst=node.name, data={})
         previous = node.name
 
     return pattern
