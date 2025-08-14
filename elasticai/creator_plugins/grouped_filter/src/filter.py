@@ -75,6 +75,12 @@ def grouped_filter(impl: Implementation) -> Implementation:
         )
     )
     kernels = impl.attributes["kernel_per_group"]
+    if len(kernels) != params.groups:
+        raise ValueError(
+            "number of kernels per group should match the number of groups but found {}  and {}".format(
+                len(kernels), params.groups
+            )
+        )
     g = GroupedFilterIndexGenerator(
         params=FilterParameters(
             kernel_size=params.kernel_size,
@@ -86,7 +92,7 @@ def grouped_filter(impl: Implementation) -> Implementation:
         )
     )
     output_offset = 0
-    for kernel, wires_per_step in zip(kernels, g.as_tuple_by_groups()):
+    for kernel, wires_per_step in zip(reversed(kernels), g.as_tuple_by_groups()):
         wires = wires_per_step[0]
         node = nc(
             name=kernel,

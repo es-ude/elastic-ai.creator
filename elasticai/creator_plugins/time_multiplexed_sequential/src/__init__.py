@@ -81,10 +81,12 @@ class _Sequential:
             type="clocked_combinatorial",
         )
         self._last_node: Node | None = None
+        self._last_filter_parameters: None | FilterParameters = None
         self._counting_node_constructor = append_counter_suffix_before_construction(
             vhdl_node
         )
         self._num_registers: int = 0
+        self._last_stride = 1
 
     def add_input(self, shape: Shape):
         self._impl.add_node(
@@ -98,6 +100,23 @@ class _Sequential:
         )
         self._last_node = self._impl.nodes["input"]
 
+    def _need_shift_register(self, params: FilterParameters) -> bool:
+        if self._last_node is None:
+            return False
+        consuming_more_than_last_node_produces = (
+            self._last_node.output_shape.width < params.kernel_size
+            or self._last_node.output_shape.depth < params.in_channels
+        )
+        return consuming_more_than_last_node_produces
+
+    def _need_sliding_window(self, params: FilterParameters) -> bool:
+        if self._last_node is None:
+            return False
+        consuming_less_than_last_node_produces = (
+            self._last_node.output_shape.width > params.kernel_size
+        )
+        return consuming_less_than_last_node_produces
+
     def filter(self, n: Node):
         node = _FilterNode(n.name, n.data)
         attributes = n.attributes
@@ -105,23 +124,22 @@ class _Sequential:
         if "top_stride" not in self._impl.attributes:
             self._impl.data.update(
                 {
-                    "top_stride": params.in_channels * params.stride,
+                    "top_stride": params.stride,
                 }
             )
-        elif (
-            self._last_node is not None and "filter_parameters" in self._last_node.data
-        ):
-            old_params = _FilterNode(
-                self._last_node.name, self._last_node.data
-            ).filter_parameters
-            if params.kernel_size != 1 or params.stride != 1:
-                self.strided_shift_register(
-                    output_shape=(
-                        params.in_channels,
-                        params.kernel_size,
-                    ),
-                    stride=old_params.stride,
-                )
+        if self._need_shift_register(params):
+            old_params = self._last_filter_parameters
+            self.strided_shift_register(
+                output_shape=(
+                    params.in_channels,
+                    params.kernel_size,
+                ),
+                stride=old_params.stride,
+            )
+        elif self._need_sliding_window(params):
+            self._sliding_window(params)
+        elif self._last_node is not None:
+            pass
         else:
             raise ValueError("expected last node to be not None")
         self._append_node(
@@ -131,6 +149,16 @@ class _Sequential:
             output_shape=Shape(attributes["filter_parameters"]["out_channels"], 1),
             attributes=attributes,
             node_fn=vhdl_node,
+        )
+
+    def _sliding_window(self, params: FilterParameters) -> None:
+        self._append_static(
+            "sliding_window",
+            "sliding_window",
+            output_shape=Shape(
+                params.in_channels,
+                params.kernel_size,
+            ),
         )
 
     def _append_node(
@@ -156,6 +184,31 @@ class _Sequential:
         )
         self._impl.add_node(new_node)
         self._last_node = new_node
+        if (
+            "filter_parameters" in new_node.data
+            and self._last_filter_parameters is not None
+        ):
+            params = _FilterNode(new_node.name, new_node.data).filter_parameters
+
+            if params.kernel_size == 1:
+                self._last_filter_parameters = FilterParameters(
+                    kernel_size=params.kernel_size,
+                    in_channels=params.in_channels,
+                    out_channels=params.out_channels,
+                    groups=params.groups,
+                    stride=self._last_filter_parameters.stride * params.stride,
+                    input_size=params.input_size,
+                    output_size=params.output_size,
+                )
+            else:
+                self._last_filter_parameters = params
+        elif self._last_filter_parameters is None:
+            self._last_filter_parameters = FilterParameters(
+                kernel_size=1,
+                in_channels=new_node.input_shape.depth,
+                out_channels=new_node.output_shape.depth,
+            )
+
         if old_node is not None:
             self._impl.add_edge(
                 edge(
@@ -203,7 +256,7 @@ class _Sequential:
 
     def input(self, impl: Implementation, input_node: str) -> None:
         input_shape = self._determine_required_input_shape(impl, input_node)
-        self._impl.data["top_kernel_size"] = input_shape.size()
+        self._impl.data["top_kernel_size"] = input_shape.width
         self.add_input(input_shape)
 
     def _determine_required_input_shape(
@@ -230,7 +283,8 @@ class _Sequential:
     def get_impl(self) -> Implementation:
         return self._impl
 
-    def finish(self):
+    def output(self, n):
+        self.set_runtime_output_shape(self._last_node.output_shape)
         self._append_node(
             name="output",
             output_shape=self._last_node.output_shape,
@@ -262,8 +316,7 @@ def sequential(impl: Implementation) -> Implementation:
                 seq.set_runtime_input_shape(n.input_shape)
                 seq.input(impl, n.name)
             case "output":
-                seq.set_runtime_output_shape(n.output_shape)
-                seq.finish()
+                seq.output(n)
             case _:
                 raise Exception(
                     f"Can't handle unknown type {n.type} during generation of time multiplexed sequential"
@@ -275,27 +328,25 @@ def sequential(impl: Implementation) -> Implementation:
 @_iterable_type_handler
 def network(impl: Implementation) -> Iterable[Implementation]:
     network = sequential(impl)
-    input_shape = network.attributes["runtime_input_shape"]
-    output_shape = network.attributes["runtime_output_shape"]
+    for node in impl.nodes.values():
+        if node.type == "input":
+            input_shape = node.input_shape
     kernel_size = network.attributes["top_kernel_size"]
     stride = network.attributes["top_stride"]
+    output_shape = impl.nodes["output"].input_shape
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
 
-    skeleton: Implementation = Implementation(name="skeleton", type="skeleton")
-    skeleton.data["generic_map"] = {
+    wrapper: Implementation = Implementation(
+        name="buffered_network_wrapper", type="buffered_network_wrapper"
+    )
+    wrapper.data["generic_map"] = {
         "DATA_IN_WIDTH": str(input_width),
         "DATA_IN_DEPTH": str(input_depth),
         "DATA_OUT_WIDTH": str(output_width),
         "DATA_OUT_DEPTH": str(output_depth),
+        "STRIDE": str(stride),
+        "KERNEL_SIZE": str(kernel_size),
     }
 
-    buffered_network_wrapper: Implementation = Implementation(
-        name="buffered_network_wrapper",
-        type="buffered_network_wrapper",
-    )
-    buffered_network_wrapper.data["generic_map"] = {
-        "KERNEL_SIZE": str(kernel_size),
-        "STRIDE": str(stride),
-    }
-    return network, skeleton, buffered_network_wrapper
+    return network, wrapper

@@ -31,10 +31,12 @@ in {
     enable = true;
     package = pkgs.python311;
     uv.enable = true;
-    uv.package = unstablePkgs.uv;
+    uv.package = pkgs.uv;
     uv.sync.enable = true;
     uv.sync.allExtras = true;
   };
+
+  # env.UV_PYTHON = lib.mkForce "";
 
   processes = {
     serve_docs.exec = "serve_docs";

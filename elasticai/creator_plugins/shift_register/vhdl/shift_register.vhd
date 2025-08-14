@@ -20,40 +20,41 @@ end entity;
 
 architecture rtl of shift_register is
   signal q_i : std_logic_vector(d_out'range);
-  signal counter_enable : std_logic := '0';
-  signal counter : std_logic_vector(clog2(NUM_POINTS + 1) - 1 downto 0);
+  subtype count_t is integer range 0 to NUM_POINTS;
+  signal count : count_t := 0;
+  signal last_valid_in : std_logic := '0';
 begin
 
-    counter_i : entity work.counter
-      generic map (
-        MAX_VALUE => NUM_POINTS
-      )
-      port map (
-        rst => rst,
-        enable => counter_enable,
-        d_out => counter,
-        clk => clk
-    );
-
-
-
-  counter_enable <= '1' when valid_in = '1' and unsigned(counter) < NUM_POINTS
-                    else '0';
-
-  valid_out <= '1' when unsigned(counter) = NUM_POINTS
-               else '0';
 
   d_out <= q_i;
 
-
-  process(clk, rst)
+  process (clk) is
   begin
-    if rst = '1' then
-        q_i <= (others => '0');
-    elsif rising_edge(clk) then
-        if valid_in = '1' then
-            q_i <= q_i(DATA_WIDTH*(NUM_POINTS-1) - 1 downto 0) & d_in;
-        end if;
+    if rising_edge(clk) then
+      last_valid_in <= valid_in;
+    end if;
+  end process;
+
+
+  valid_out <= '1' when count = count_t'high and last_valid_in = '1' else '0';
+
+  process (clk) is
+  begin
+    if rising_edge(clk) then
+      if rst = '1' then
+        count <= count_t'low;
+      elsif valid_in = '1' and count < count_t'high then
+        count <= count + 1; 
+      end if;
+    end if;
+  end process;
+
+  process(clk) is
+  begin
+    if rising_edge(clk) then
+      if valid_in = '1' then
+          q_i <= q_i(DATA_WIDTH*(NUM_POINTS-1) - 1 downto 0) & d_in;
+      end if;
     end if;
   end process;
 

@@ -24,15 +24,35 @@ entity striding_shift_register is
 end entity;
 
 architecture rtl of striding_shift_register is
-    signal reg_valid : std_logic;
     signal intern_valid_in : std_logic := '1';
-    signal counter : std_logic_vector(clog2(STRIDE) - 1 downto 0);
+    signal stride_count : natural range 0 to STRIDE - 1 := 0;
+    signal last_intern_valid_in : std_logic;
+    signal intern_valid_out : std_logic;
   begin
 
 
-    intern_valid_in <= '1' when  (counter = std_logic_vector(to_unsigned(0, counter'length))) and valid_in = '1'
-                    else '0';
+    valid_out <= intern_valid_out and last_intern_valid_in;
+    intern_valid_in <= '1' when stride_count = 0 and valid_in = '1' else '0';
 
+    process(clk) is begin
+     if rising_edge(clk) then
+      last_intern_valid_in <= intern_valid_in;
+     end if;
+    end process;
+
+    process (clk) is begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          stride_count <= 0;
+        elsif valid_in = '1' then
+          if stride_count < STRIDE - 1 then
+            stride_count <= stride_count + 1;
+          else
+            stride_count <= 0;
+          end if;
+        end if;
+      end if;
+    end process;
 
     reg_i : entity work.shift_register
       generic map (
@@ -45,17 +65,7 @@ architecture rtl of striding_shift_register is
         rst => rst,
         d_out => d_out,
         valid_in => intern_valid_in,
-        valid_out => valid_out
+        valid_out => intern_valid_out
       );
 
-    counter_i : entity work.counter
-      generic map (
-        MAX_VALUE => (STRIDE - 1)
-      )
-      port map (
-        clk => clk,
-        d_out => counter,
-        enable => valid_in,
-        rst => rst
-      );
 end architecture;
