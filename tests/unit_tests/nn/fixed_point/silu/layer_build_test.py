@@ -7,29 +7,38 @@ from elasticai.creator.nn.fixed_point.precomputed.silu import SiLU
 def test_vhdl_code_matches_expected_silu() -> None:
     expected = """library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
+use ieee.numeric_std.all;
 
 entity sigmoid is
+    generic (
+        BITWIDTH_INPUT : integer := 8;
+        BITWIDTH_OUTPUT : integer := 8
+    );
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x      : in std_logic_vector(8-1 downto 0);
-        y      : out std_logic_vector(8-1 downto 0)
+        x      : in std_logic_vector(BITWIDTH_INPUT-1 downto 0);
+        y      : out std_logic_vector(BITWIDTH_OUTPUT-1 downto 0)
     );
 end sigmoid;
 
 architecture rtl of sigmoid is
-    signal signed_x : signed(8-1 downto 0) := (others=>'0');
-    signal signed_y : signed(8-1 downto 0) := (others=>'0');
+    signal signed_x : signed(BITWIDTH_INPUT-1 downto 0) := (others=>'0');
+    signal signed_y : signed(BITWIDTH_OUTPUT-1 downto 0) := (others=>'0');
 begin
     signed_x <= signed(x);
     y <= std_logic_vector(signed_y);
-    sigmoid_process : process(x)
+
+    sigmoid_process : process(signed_x)
     begin
-        if signed_x <= to_signed(-128, 8) then signed_y <= to_signed(-1, 8);
-        elsif signed_x <= to_signed(-43, 8) then signed_y <= to_signed(-6, 8);
-        elsif signed_x <= to_signed(42, 8) then signed_y <= to_signed(0, 8);
-        else signed_y <= to_signed(79, 8);
+        if enable = '0' then
+            signed_y <= to_signed(0, BITWIDTH_OUTPUT);
+        else
+            if signed_x <= to_signed(-128, BITWIDTH_OUTPUT) then signed_y <= to_signed(-1, BITWIDTH_OUTPUT);
+            elsif signed_x <= to_signed(-43, BITWIDTH_OUTPUT) then signed_y <= to_signed(-6, BITWIDTH_OUTPUT);
+            elsif signed_x <= to_signed(42, BITWIDTH_OUTPUT) then signed_y <= to_signed(0, BITWIDTH_OUTPUT);
+            else signed_y <= to_signed(79, BITWIDTH_OUTPUT);
+            end if;
         end if;
     end process;
 end rtl;
@@ -44,4 +53,6 @@ end rtl;
     design = actfunc.create_design("sigmoid")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["sigmoid"]).text
+    for text in actual:
+        print(text)
     assert actual == expected

@@ -43,9 +43,9 @@ def routine_testing_precomputed_module(
     assert exists(join(find_project_root(), output_dir, f"{file_name}.json".lower()))
 
     # Prepare cocotb runner
-    set0 = dict(
+    run_cocotb_sim(
         src_files=[join(find_project_root(), output_dir, f"{file_name}.{file_suffix}")],
         top_module_name=file_name,
         cocotb_test_module="tests.integration_tests.nn.fixed_point.precomputed_tb",
+        build_waveforms=True,
     )
-    run_cocotb_sim(**set0)

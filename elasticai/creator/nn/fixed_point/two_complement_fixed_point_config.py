@@ -54,10 +54,22 @@ class FixedPointConfig:
     def maximum_as_rational(self) -> float:
         return int("1" * (self.total_bits - 1), 2) / (1 << self.frac_bits)
 
-    def integer_out_of_bounds(self, number: T) -> T:
+    @overload
+    def integer_out_of_bounds(self, number: T) -> T: ...
+
+    @overload
+    def integer_out_of_bounds(self, number: float | int) -> bool: ...
+
+    def integer_out_of_bounds(self, number: float | int | T) -> bool | T:
         return (number < self.minimum_as_integer) | (number > self.maximum_as_integer)
 
-    def rational_out_of_bounds(self, number: T) -> T:
+    @overload
+    def rational_out_of_bounds(self, number: T) -> T: ...
+
+    @overload
+    def rational_out_of_bounds(self, number: float | int) -> bool: ...
+
+    def rational_out_of_bounds(self, number: float | int | T) -> bool | T:
         return (number < self.minimum_as_rational) | (number > self.maximum_as_rational)
 
     @overload

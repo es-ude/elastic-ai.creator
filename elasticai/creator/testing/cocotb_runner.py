@@ -104,8 +104,10 @@ def run_cocotb_sim(
 
     if language == "verilog":
         build_call = partial(runner.build, verilog_sources=design_sources)
+        plus_args = []
     else:
         top_module_name = top_module_name.lower()
+        plus_args = [f"--vcd={top_module_name}.vcd"] if build_waveforms else []
         build_call = partial(runner.build, vhdl_sources=design_sources)
 
     build_call(
@@ -123,6 +125,7 @@ def run_cocotb_sim(
         test_module=[cocotb_test_module],
         hdl_toplevel_lang=language,
         gui=False,
+        plusargs=plus_args,
         waves=build_waveforms,
         parameters=params,
         timescale=timescale,

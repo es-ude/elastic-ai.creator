@@ -24,6 +24,11 @@ class HardTanh(DesignCreatorModule, HardTanhBase):
         super().__init__(min_val, max_val)
         self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
 
+        if self._config.rational_out_of_bounds(min_val):
+            self.min_val = self._config.minimum_as_rational
+        if self._config.rational_out_of_bounds(max_val):
+            self.max_val = self._config.maximum_as_rational
+
     def create_design(self, name: str) -> HardTanhDesign:
         return HardTanhDesign(
             name=name,
