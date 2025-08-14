@@ -40,18 +40,6 @@ def test_prelu_compared_torch(total_bits: int, frac_bits: int, num_steps: int) -
     metric_mean_abs = float(sum(abs(out1 - out0))) / stimulus.shape[0]
     metric_mean = float(abs(sum(out1 - out0))) / stimulus.shape[0]
 
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.plot(stimulus, out0, 'k', marker='.', label='Torch')
-    # plt.plot(stimulus, out1, 'r', marker='.', label='Creator')
-    # plt.xlim(vrange)
-    # plt.legend()
-    # plt.title(f"{total_bits}, {frac_bits}, {num_steps} ({metric_mean_abs:.5f}, {metric_mean: .5f})")
-    # plt.grid()
-    # plt.tight_layout()
-    # plt.show()
-
-    print(metric_mean_abs, metric_mean)
     assert metric_mean_abs < 1.5 * fxp.minimum_step_as_rational * (
         out1.max() - out1.min()
     )
