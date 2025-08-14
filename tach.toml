@@ -151,7 +151,7 @@ depends_on = ["elasticai.creator.ir2vhdl"]
 
 [[modules]]
 path = "elasticai.creator_plugins.combinatorial"
-depends_on = ["elasticai.creator.ir2vhdl"]
+depends_on = ["elasticai.creator.ir2vhdl", "elasticai.creator.graph"]
 
 [[modules]]
 path = "elasticai.creator_plugins.grouped_filter"

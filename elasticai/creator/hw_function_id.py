@@ -11,7 +11,7 @@ class HwFunctionIdUpdater:
         target_file: str | Path,
         replace_id_fn: Callable[[Iterable[str], bytes], Iterator[str]],
     ):
-        self._target_file = Path(target_file).relative_to(build_dir)
+        self._target_file = Path(target_file)
         self._build_dir = build_dir
         self._id = bytes()
         self._replace_id_fn = replace_id_fn

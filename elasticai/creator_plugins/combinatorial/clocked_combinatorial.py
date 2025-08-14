@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from itertools import chain
 
+from elasticai.creator import graph as gr
 from elasticai.creator.ir2vhdl import Implementation, type_handler
 
 from .combinatorial import (
@@ -73,6 +74,16 @@ def _get_valid_in_out_pairs(impl: Implementation) -> dict[str, str]:
             "shift_register",
         ]
 
+    def iterate(node: str):
+        def pred(node: str):
+            return impl.predecessors(node)
+
+        def succ(node: str):
+            return impl.successors(node)
+
+        for node in gr.bfs_iter_down(successors=succ, predecessors=pred, start=node):
+            yield impl.nodes[node]
+
     adjacency: dict[str, str] = {}
     last_clocked_node = "input"
     for node in filter(is_clocked, impl.nodes.values()):
@@ -82,7 +93,7 @@ def _get_valid_in_out_pairs(impl: Implementation) -> dict[str, str]:
         else:
             for pred in filter(
                 is_clocked,
-                impl.iterate_bfs_up_from(node.name),
+                iterate(node.name),
             ):
                 adjacency[node.name] = pred.name
                 break

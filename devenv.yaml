@@ -11,4 +11,4 @@ inputs:
   nixpkgs-24-11:
     url: github:nixos/nixpkgs/release-24.11
 imports:
-  - ./devenv_modules/ghdl/
+  - ./devenv_modules/hdl/

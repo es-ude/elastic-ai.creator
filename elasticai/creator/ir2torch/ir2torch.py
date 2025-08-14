@@ -53,11 +53,44 @@ class Ir2Torch(LoweringPass[Implementation, nn.Module]):
 
         graph = fx.Graph()
         ir_root = _ir[root]
-        for ir_node in ir_root.nodes.values():
+        nodes: dict[str, fx.Node] = {}
+
+        def _add_node(ir_node) -> None:
             if ir_node.type not in ("input", "output"):
-                graph.call_module(
-                    ir_node.implementation, tuple(ir_root.predecessors(ir_node))
+                predecessors = tuple(
+                    nodes[node] for node in ir_root.predecessors(ir_node)
                 )
+                node = graph.create_node(
+                    op="call_module",
+                    target=ir_node.data["implementation"],
+                    args=predecessors,
+                    name=ir_node.name,
+                )
+                nodes[ir_node.name] = node
+            elif ir_node.type == "input":
+                n = graph.create_node(
+                    op="placeholder", name=ir_node.name, target=ir_node.name
+                )
+                nodes[ir_node.name] = n
+            elif ir_node.type == "output":
+                predecessors = tuple(
+                    nodes[node] for node in ir_root.predecessors(ir_node)
+                )
+                n = graph.create_node(
+                    op="output",
+                    target=ir_node.name,
+                    args=predecessors,
+                )
+                nodes[ir_node.name] = n
+
+        def visit_node(ir_node):
+            if ir_node.name not in nodes:
+                for pred in ir_root.predecessors(ir_node).values():
+                    visit_node(pred)
+                if ir_node.name not in nodes:
+                    _add_node(ir_node)
+
+        visit_node(ir_root.nodes["output"])
 
         module = fx.GraphModule(root_module, graph)
 
