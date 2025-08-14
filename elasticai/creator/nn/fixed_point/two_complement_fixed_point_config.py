@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Protocol, TypeVar, Union, cast, overload, runtime_checkable
 
-import torch
-
 T = TypeVar("T", bound="ConvertableToFixedPointValues")
 
 
@@ -106,7 +104,7 @@ class FixedPointConfig:
         return number / (1 << self.frac_bits)
 
     def _round_T_to_integer(self, number: T) -> T:
-        return torch.round(number * (1 << self.frac_bits)).int().float()
+        return (number * (1 << self.frac_bits)).round().int().float()
 
     def _round_float_or_int_to_integer(self, number: float | int) -> int:
         return round(number * (1 << self.frac_bits))

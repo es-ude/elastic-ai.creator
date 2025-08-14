@@ -1,11 +1,10 @@
 from collections.abc import Iterable
 from functools import partial
 from os import environ
-from os.path import join
 from pathlib import Path
 from typing import Any
 
-from cocotb.runner import get_runner
+from cocotb.runner import get_runner  # type: ignore
 
 from elasticai.creator.file_generation import find_project_root
 
@@ -39,9 +38,9 @@ def run_cocotb_sim_for_src_dir(
     :param build_waveforms:     Boolean for building the waveforms of the stimuli (will be saved in build_sim folder)
     :return:                    None
     """
-    path2src = Path(path2src)
+    _path2src = Path(path2src)
     return run_cocotb_sim(
-        src_files=[path2src / f for f in src_files],
+        src_files=[_path2src / f for f in src_files],
         top_module_name=top_module_name,
         cocotb_test_module=cocotb_test_module,
         defines=defines,
@@ -82,6 +81,7 @@ def run_cocotb_sim(
     :return:                    None
     """
     design_sources = [Path(m) for m in src_files]
+    project_root = find_project_root()
     if len(design_sources) == 0:
         raise ValueError("no design sources specified")
 
@@ -101,6 +101,7 @@ def run_cocotb_sim(
     environ["COCOTB_LOG_LEVEL"] = "INFO" if en_debug_mode else "WARNING"
     environ["COCOTB_REDUCED_LOG_FMT"] = "0" if en_debug_mode else "1"
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
+    build_sim_dir = project_root / "build_sim"
 
     if language == "verilog":
         build_call = partial(runner.build, verilog_sources=design_sources)
@@ -118,7 +119,7 @@ def run_cocotb_sim(
         defines=defines,
         parameters=params,
         timescale=timescale,
-        build_dir=find_project_root() / "build_sim",
+        build_dir=build_sim_dir,
     )
     runner.test(
         hdl_toplevel=top_module_name,
@@ -129,6 +130,6 @@ def run_cocotb_sim(
         waves=build_waveforms,
         parameters=params,
         timescale=timescale,
-        build_dir=join(find_project_root(), "build_sim"),
-        test_dir=join(find_project_root(), "build_sim"),
+        build_dir=build_sim_dir,
+        test_dir=build_sim_dir,
     )
