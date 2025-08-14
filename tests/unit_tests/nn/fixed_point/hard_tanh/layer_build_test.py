@@ -5,12 +5,13 @@ from elasticai.creator.nn.fixed_point.hard_tanh.layer import HardTanh
 
 
 def test_vhdl_code_matches_expected_hardtanh() -> None:
-    expected = """-- This is the hard_sigmoid implementation for fixed point data
+    expected = """-- This is the hard_tanh implementation for fixed point data
 -- followed by the logic from pytorch:
 -- https://pytorch.org/docs/stable/generated/torch.nn.Hardtanh.html
--- Version: 1.0
+-- Version: 1.1
 -- Created by: Chao
--- Last modified date: 2023.01.31
+-- Changed by: AE
+-- Last modified date: 2025.08.11
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -38,15 +39,14 @@ begin
     fxp_input <= signed(x);
     y <= std_logic_vector(fxp_output);
 
-    main_process : process (enable, clock)
+    main_process : process(fxp_input)
     begin
         if (enable = '0') then
             fxp_output <= to_signed(0, DATA_WIDTH);
-        elsif (rising_edge(clock)) then
-
-            if fxp_input <= to_signed(MIN_VAL, DATA_WIDTH) then
+        else
+            if fxp_input < to_signed(MIN_VAL, DATA_WIDTH) then
                 fxp_output <= to_signed(MIN_VAL, DATA_WIDTH);
-            elsif fxp_input >= to_signed(MAX_VAL, DATA_WIDTH) then
+            elsif fxp_input > to_signed(MAX_VAL, DATA_WIDTH) then
                 fxp_output <= to_signed(MAX_VAL, DATA_WIDTH);
             else
                 fxp_output <= fxp_input;
@@ -60,4 +60,6 @@ end architecture rtl;
     design = tanh.create_design("tanh")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["tanh"]).text
+    for text in actual:
+        print(text)
     assert actual == expected

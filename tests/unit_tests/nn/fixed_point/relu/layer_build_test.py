@@ -8,9 +8,10 @@ def test_vhdl_code_matches_expected() -> None:
     expected = """-- This is the ReLU implementation for fixed-point data
 -- it only checks the highest bit of the input data
 -- when the CLOCK_OPTION is enabled, please notice the data only updates until the clock arises.
--- Version: 1.0
+-- Version: 1.1
 -- Created by: Chao
--- Last modified date: 2022.11.06
+-- Changed by: AE
+-- Last modified date: 2025.08.11
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -37,25 +38,26 @@ begin
     y <= std_logic_vector(fxp_output);
 
     clocked: if CLOCK_OPTION generate
-        main_process : process (enable, clock)
+        main_process : process (clock)
         begin
             if (enable = '0') then
                 fxp_output <= to_signed(0, DATA_WIDTH);
-            elsif (rising_edge(clock)) then
-
-                if fxp_input < 0 then
-                    fxp_output <= to_signed(0, DATA_WIDTH);
-                else
-                    fxp_output <= fxp_input;
+            else
+                if (rising_edge(clock)) then
+                    if fxp_input < 0 then
+                        fxp_output <= to_signed(0, DATA_WIDTH);
+                    else
+                        fxp_output <= fxp_input;
+                    end if;
                 end if;
             end if;
         end process;
     end generate;
 
     async: if (not CLOCK_OPTION) generate
-        process (enable, fxp_input)
+        process (fxp_input)
         begin
-            if enable = '0' then
+            if (enable = '0') then
                 fxp_output <= to_signed(0, DATA_WIDTH);
             else
                 if fxp_input < 0 then
@@ -73,4 +75,6 @@ end architecture rtl;
     design = relu.create_design("relu")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["relu"]).text
+    for text in actual:
+        print(text)
     assert actual == expected

@@ -11,29 +11,38 @@ from elasticai.creator.nn.fixed_point.precomputed.precomputed_module import (
 def test_vhdl_code_matches_expected_for_precomputed_module() -> None:
     expected = """library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;               -- for type conversions
+use ieee.numeric_std.all;
 
 entity precomputed is
+    generic (
+        BITWIDTH_INPUT : integer := 8;
+        BITWIDTH_OUTPUT : integer := 8
+    );
     port (
         enable : in std_logic;
         clock  : in std_logic;
-        x      : in std_logic_vector(8-1 downto 0);
-        y      : out std_logic_vector(8-1 downto 0)
+        x      : in std_logic_vector(BITWIDTH_INPUT-1 downto 0);
+        y      : out std_logic_vector(BITWIDTH_OUTPUT-1 downto 0)
     );
 end precomputed;
 
 architecture rtl of precomputed is
-    signal signed_x : signed(8-1 downto 0) := (others=>'0');
-    signal signed_y : signed(8-1 downto 0) := (others=>'0');
+    signal signed_x : signed(BITWIDTH_INPUT-1 downto 0) := (others=>'0');
+    signal signed_y : signed(BITWIDTH_OUTPUT-1 downto 0) := (others=>'0');
 begin
     signed_x <= signed(x);
     y <= std_logic_vector(signed_y);
-    precomputed_process : process(x)
+
+    precomputed_process : process(signed_x)
     begin
-        if signed_x <= to_signed(-128, 8) then signed_y <= to_signed(-4, 8);
-        elsif signed_x <= to_signed(-43, 8) then signed_y <= to_signed(-4, 8);
-        elsif signed_x <= to_signed(42, 8) then signed_y <= to_signed(0, 8);
-        else signed_y <= to_signed(4, 8);
+        if enable = '0' then
+            signed_y <= to_signed(0, BITWIDTH_OUTPUT);
+        else
+            if signed_x <= to_signed(-128, BITWIDTH_OUTPUT) then signed_y <= to_signed(-4, BITWIDTH_OUTPUT);
+            elsif signed_x <= to_signed(-43, BITWIDTH_OUTPUT) then signed_y <= to_signed(-4, BITWIDTH_OUTPUT);
+            elsif signed_x <= to_signed(42, BITWIDTH_OUTPUT) then signed_y <= to_signed(0, BITWIDTH_OUTPUT);
+            else signed_y <= to_signed(4, BITWIDTH_OUTPUT);
+            end if;
         end if;
     end process;
 end rtl;

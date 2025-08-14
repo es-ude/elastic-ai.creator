@@ -6,11 +6,10 @@ from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from tests.integration_tests.nn.fixed_point.precomputed_routine import routine_testing_precomputed_module
 
 
-@pytest.mark.skip
 @pytest.mark.simulation
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "total_bits, frac_bits, num_steps", [(6, 4, 32), (8, 4, 32), (10, 9, 64)]
+    "total_bits, frac_bits, num_steps", [(6, 3, 32), (6, 4, 32), (8, 4, 32), (10, 9, 64)]
 )
 def test_build_test_hardsigmoid_design(
     total_bits: int, frac_bits: int, num_steps: int
