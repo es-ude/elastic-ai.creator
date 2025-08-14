@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from os import environ
 from elasticai.creator.nn import fixed_point as nn_creator
 from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 
@@ -36,18 +37,21 @@ def test_silu_compared_torch(total_bits: int, frac_bits: int, num_steps: int) ->
     metric_mean_abs = float(sum(abs(out1 - out0))) / stimulus.shape[0]
     metric_mean = float(abs(sum(out1 - out0))) / stimulus.shape[0]
 
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.plot(stimulus, out0, 'k', marker='.', label='Torch')
-    # plt.plot(stimulus, out1, 'r', marker='.', label='Creator')
-    # plt.xlim(vrange)
-    # plt.legend()
-    # plt.title(f"{total_bits}, {frac_bits}, {num_steps} ({metric_mean_abs:.5f}, {metric_mean: .5f})")
-    # plt.grid()
-    # plt.tight_layout()
-    # plt.show()
+    if environ.get("PLOT_FOR_TESTS", "off") == "on":
+        import matplotlib.pyplot as plt
 
-    print(metric_mean_abs, metric_mean)
+        plt.figure()
+        plt.plot(stimulus, out0, "k", marker=".", label="Torch")
+        plt.plot(stimulus, out1, "r", marker=".", label="Creator")
+        plt.xlim(vrange)
+        plt.legend()
+        plt.title(
+            f"{total_bits}, {frac_bits}, {num_steps} ({metric_mean_abs:.5f}, {metric_mean: .5f})"
+        )
+        plt.grid()
+        plt.tight_layout()
+        plt.show()
+
     assert metric_mean_abs < 1.2 * fxp.minimum_step_as_rational * (
         out1.max() - out1.min()
     )

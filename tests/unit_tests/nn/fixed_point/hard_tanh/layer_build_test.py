@@ -60,6 +60,4 @@ end architecture rtl;
     design = tanh.create_design("tanh")
     design.save_to(build_path)
     actual = cast(InMemoryFile, build_path["tanh"]).text
-    for text in actual:
-        print(text)
     assert actual == expected
