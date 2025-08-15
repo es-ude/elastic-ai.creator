@@ -1,12 +1,16 @@
+from os.path import exists, join
 from pathlib import Path
 
 import pytest
 
-from os.path import join, exists
-
-from elasticai.creator.file_generation.resource_utils import get_full_path, find_project_root
-from elasticai.creator.testing.cocotb_runner import run_cocotb_sim_for_src_dir, run_cocotb_sim
-
+from elasticai.creator.file_generation.resource_utils import (
+    find_project_root,
+    get_full_path,
+)
+from elasticai.creator.testing.cocotb_runner import (
+    run_cocotb_sim,
+    run_cocotb_sim_for_src_dir,
+)
 
 _path2src = str(Path(
     get_full_path("tests.unit_tests.testing", "cocotb_runner_tb.py")

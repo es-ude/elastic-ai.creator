@@ -11,7 +11,7 @@ from elasticai.creator.file_generation import find_project_root
 
 def get_and_create_sim_build_dir(folder_name: str) -> Path:
     build = find_project_root() / folder_name
-    build.mkdir(exist_ok=True)
+    build.mkdir(exist_ok=True, parents=True)
     return build
 
 
