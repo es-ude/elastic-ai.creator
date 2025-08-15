@@ -18,6 +18,8 @@ coverage.xml
 htmlcov
 do_not_commit/*
 .hypothesis/
+**/build_dir
+**/build_test
 
 # python build output
 dist/
@@ -287,6 +289,4 @@ external/
 
 
 # ignore cocotb build sim folder no matter where
-**/build_sim
-**/build_dir
-**/build_test
+**/build_sim/

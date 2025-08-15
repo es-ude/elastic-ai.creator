@@ -104,8 +104,8 @@ def run_cocotb_sim(
     build_sim_dir = project_root / "build_sim"
 
     if language == "verilog":
-        plus_args = []
         build_call = partial(runner.build, verilog_sources=design_sources)
+        plus_args = []
     else:
         top_module_name = top_module_name.lower()
         plus_args = [f"--vcd={top_module_name}.vcd"] if build_waveforms else []

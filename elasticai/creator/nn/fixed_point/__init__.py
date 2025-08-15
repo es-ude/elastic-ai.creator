@@ -10,4 +10,5 @@ from .precomputed import PReLU as PReLU
 from .precomputed import Sigmoid as Sigmoid
 from .precomputed import SiLU as SiLU
 from .precomputed import Tanh as Tanh
+from .quantization import quantize as quantize
 from .relu import ReLU as ReLU
