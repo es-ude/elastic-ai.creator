@@ -1,5 +1,5 @@
 import json
-from os.path import exists, join
+from os.path import exists
 
 import torch
 
@@ -31,20 +31,20 @@ def routine_testing_precomputed_module(
         "out": fxp.round_to_integer(val_output).int().tolist(),
     }
 
-    output_dir = "build_test"
+    output_dir = f"build_test/{file_name.lower()}"
     build_dir = get_and_create_sim_build_dir(output_dir)
-    with open(f"{build_dir}/{file_name}.json".lower(), "w") as f0:
+    with open(build_dir / f"{file_name}.json".lower(), "w") as f0:
         json.dump(testpattern, f0, indent=1)
 
     # Check if design is available
     destination = OnDiskPath(output_dir, parent=find_project_root())
     dut.create_design(file_name).save_to(destination)
-    assert exists(join(find_project_root(), output_dir, f"{file_name}.{file_suffix}"))
-    assert exists(join(find_project_root(), output_dir, f"{file_name}.json".lower()))
+    assert exists(build_dir / f"{file_name}.{file_suffix}")
+    assert exists(build_dir / f"{file_name}.json".lower())
 
     # Prepare cocotb runner
     run_cocotb_sim(
-        src_files=[join(find_project_root(), output_dir, f"{file_name}.{file_suffix}")],
+        src_files=[build_dir / f"{file_name}.{file_suffix}"],
         top_module_name=file_name,
         cocotb_test_module="tests.integration_tests.nn.fixed_point.precomputed_tb",
         build_waveforms=True,

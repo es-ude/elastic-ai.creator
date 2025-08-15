@@ -11,7 +11,7 @@ from elasticai.creator.file_generation import find_project_root
 
 def get_and_create_sim_build_dir(folder_name: str) -> Path:
     build = find_project_root() / folder_name
-    build.mkdir(exist_ok=True)
+    build.mkdir(exist_ok=True, parents=True)
     return build
 
 
@@ -104,8 +104,8 @@ def run_cocotb_sim(
     build_sim_dir = project_root / "build_sim"
 
     if language == "verilog":
-        build_call = partial(runner.build, verilog_sources=design_sources)
         plus_args = []
+        build_call = partial(runner.build, verilog_sources=design_sources)
     else:
         top_module_name = top_module_name.lower()
         plus_args = [f"--vcd={top_module_name}.vcd"] if build_waveforms else []
