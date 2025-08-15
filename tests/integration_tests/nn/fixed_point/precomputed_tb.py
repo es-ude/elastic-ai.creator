@@ -9,7 +9,9 @@ from elasticai.creator.file_generation import find_project_root
 
 @cocotb.test()
 async def precomputed_test(dut):
-    with open(f"{find_project_root()}/build_test/{dut._name}/{dut._name}.json".lower(), "r") as f:
+    with open(
+        f"{find_project_root()}/build_test/{dut._name}/{dut._name}.json".lower(), "r"
+    ) as f:
         data = json.load(f)
 
     clock_period_ns = 10
