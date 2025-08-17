@@ -35,28 +35,26 @@ architecture rtl of addressable_input_buffer is
     type byte_array_t is array (integer range <>) of byte_t;
     subtype ram_t is byte_array_t(0 to TOTAL_NUM_BYTES - 1);
     subtype index_t is integer range 0 to ram_t'high - (TOTAL_OUT_BYTES - 1);
-
+    signal delayed_input : std_logic_vector(7 downto 0);
+    signal delayed_write_enable : std_logic;
+    signal delayed_address : integer range ram_t'range := 0;
     signal ram : ram_t;
     signal read_ptr : index_t := 0;
-    type read_ptr_list_t is array(0 to TOTAL_OUT_BYTES - 1) of integer range 0 to DATA_WIDTH*DATA_DEPTH - 1;
-
-    function create_read_ptr_list(index: index_t) return read_ptr_list_t is
-        variable result : read_ptr_list_t := (others => 0);
-    begin
-        for i in read_ptr_list_t'range loop
-            result(i) := index + i;
-        end loop;
-        return result;
-    end function;
-
-    signal read_ptr_list : read_ptr_list_t := create_read_ptr_list(0);
-
+    
+    -- Add synthesis attributes for better timing
+    attribute ram_style : string;
+    attribute ram_style of ram : signal is "block";
+    attribute use_dsp : string;
+    attribute use_dsp of read_ptr : signal is "no";
+    attribute max_fanout : integer;
+    attribute max_fanout of read_ptr : signal is 32;
 
     signal address_int : integer range ram_t'range := 0;
 
     type unpadded_t is array (0 to DATA_OUT_DEPTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal unpadded_d_out : unpadded_t;
     signal padded_d_out : byte_array_t(0 to DATA_OUT_DEPTH * DATA_WIDTH_BYTES - 1);
+    signal valid_out_reg : std_logic := '0';
 
 
     function next_read_ptr(current: index_t; reading: std_logic) return index_t is
@@ -75,7 +73,7 @@ architecture rtl of addressable_input_buffer is
 
     begin
 
-    address_int <= min_fn(ram_t'high, to_integer(unsigned(address))); 
+    address_int <= to_integer(unsigned(address)); 
 
     remove_padding:
     for i in 0 to DATA_OUT_DEPTH - 1 generate
@@ -100,9 +98,18 @@ architecture rtl of addressable_input_buffer is
     write_data: process(clk) is
     begin
         if rising_edge(clk) then
-            if write_enable = '1' then
-                ram(address_int) <= d_in;
+            if delayed_write_enable = '1' then
+                ram(delayed_address) <= delayed_input;
             end if;
+        end if;
+    end process;
+
+    delay_signals: process(clk) is
+    begin
+        if rising_edge(clk) then
+            delayed_input <= d_in;
+            delayed_write_enable <= write_enable;
+            delayed_address <= address_int;
         end if;
     end process;
 
@@ -117,29 +124,39 @@ architecture rtl of addressable_input_buffer is
         end if;
     end process;
 
-    update_read_ptr_list:
-    for i in read_ptr_list_t'range generate
-        read_ptr_list(i) <= read_ptr + i;
-    end generate;
-
     update_padded_d_out:
-    for i in read_ptr_list_t'range generate
+    
         process(clk) is
+            variable next_read : index_t;
         begin
             if rising_edge(clk) then
-                padded_d_out(i) <= ram(next_read_ptr(read_ptr, ready_in) + i);
+                if ready_in = '1' and read_ptr + STRIDE_IN_BYTES <= index_t'high then
+                    next_read := read_ptr + STRIDE_IN_BYTES;
+                else
+                    next_read := read_ptr; -- No change if not reading
+                end if;
+                for i in 0 to TOTAL_OUT_BYTES - 1 loop
+                    padded_d_out(i) <= ram(next_read + i);
+                end loop;
             end if;
         end process;
-    end generate;
 
-    update_valid_out: process(read_ptr) is
+    update_valid_out: process(clk) is
     begin
-        if read_ptr + STRIDE_IN_BYTES <= index_t'high then
-            valid_out <= '1';
-        else
-            valid_out <= '0';
+        if rising_edge(clk) then
+            if rst = '1' then
+                valid_out_reg <= '0';
+            else
+                if read_ptr + STRIDE_IN_BYTES <= index_t'high then
+                    valid_out_reg <= '1';
+                else
+                    valid_out_reg <= '0';
+                end if;
+            end if;
         end if;
     end process;
+
+    valid_out <= valid_out_reg;
 
 
 end architecture;

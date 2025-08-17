@@ -5,8 +5,8 @@ use work.skeleton_pkg.all;
 
 entity buffered_network_wrapper is
   generic (
-    DATA_IN_WIDTH : positive := 1;
-    DATA_IN_DEPTH : positive := 1;
+    DATA_IN_WIDTH : positive := 12;
+    DATA_IN_DEPTH : positive := 5071;
     DATA_OUT_WIDTH : positive := 1;
     DATA_OUT_DEPTH : positive := 1;
     STRIDE : positive := 1;
@@ -40,8 +40,8 @@ architecture rtl of buffered_network_wrapper is
 
   constant OUT_DEPTH_BYTES : integer := size_in_bytes(DATA_OUT_WIDTH)*DATA_OUT_DEPTH;
   constant IN_DEPTH_BYTES : integer := size_in_bytes(DATA_IN_WIDTH)*DATA_IN_DEPTH;
-  signal network_wr_address_i : integer range 0 to IN_DEPTH_BYTES - 1;
-  signal network_rd_address_i : integer range 0 to OUT_DEPTH_BYTES - 1;
+  signal network_wr_address_i : integer range 0 to 2**16-1;
+  signal network_rd_address_i : integer range 0 to 2**16-1;
   type network_state_t is (idle, start, running, finished);
   signal network_state : network_state_t := idle;
   signal rst_cycles : integer range 0 to 1 := 0;
@@ -79,10 +79,10 @@ architecture rtl of buffered_network_wrapper is
   address_i <= to_integer(unsigned(address));
 
   
-  network_wr_address_i <= min_fn(IN_DEPTH_BYTES - 1, address_i);
+  network_wr_address_i <= address_i;
   network_wr_address <= std_logic_vector(to_unsigned(network_wr_address_i, network_wr_address'length));
 
-  network_rd_address_i <= min_fn(OUT_DEPTH_BYTES - 1, address_i);
+  network_rd_address_i <= address_i;
   network_rd_address <= std_logic_vector(to_unsigned(network_rd_address_i, network_rd_address'length));
 
 
