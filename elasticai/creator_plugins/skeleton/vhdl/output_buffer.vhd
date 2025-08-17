@@ -40,12 +40,15 @@ architecture rtl of addressable_output_buffer is
     signal unpadded_in : unpadded_in_t;
     subtype write_count_t is natural range 0 to MAX_WRITES;
     signal write_count : write_count_t := 0;
-    type write_heads_t is array(0 to DATA_IN_DEPTH - 1) of write_count_t;
-    signal write_heads : write_heads_t;
     signal ram : ram_t;
     signal intern_valid_out : std_logic;
+    
+    -- Add synthesis attributes for better timing
+    attribute ram_style : string;
+    attribute ram_style of ram : signal is "block";
 
-    signal address_int : index_t;
+    signal address_int : integer range 0 to 2**16 - 1 := 0;
+    signal address_reg : index_t;  -- Optional pipeline stage for address
 
     function next_write_count(
         count : natural;
@@ -72,8 +75,21 @@ architecture rtl of addressable_output_buffer is
     end function;
 
 begin
-    address_int <= min_fn(to_integer(unsigned(address)), index_t'high);
+    address_int <= to_integer(unsigned(address));
     valid_out <= intern_valid_out;
+
+    -- Optional: Pipeline the address for maximum timing margin
+    -- Uncomment for 2-cycle latency if needed for timing closure
+    process (clk) is
+    begin
+        if rising_edge(clk) then
+            if address_int <= ram_t'right then 
+                address_reg <= address_int;
+            else
+                address_reg <= 0;
+            end if;
+        end if;
+    end process;
 
     connect_input_matrix_to_vector:
     for i in 0 to DATA_IN_DEPTH - 1 generate
@@ -95,25 +111,25 @@ begin
     end generate;
 
     update_ram:
-    for i in write_heads_t'range generate -- workaround using generate as vivado fails to recognize constant range expression for ram assignment
-        update_ram_for_write_head:
-        process (clk) is
-        begin
-            if rising_edge(clk) then
-              if valid_in = '1' and intern_valid_out = '0' and write_count < MAX_WRITES then
-                ram(write_heads(i))
-                    <= input_bytes_vector(i);
-              end if;
+    process (clk) is
+    begin
+        if rising_edge(clk) then
+            if valid_in = '1' and intern_valid_out = '0' and write_count < MAX_WRITES then
+                -- Direct memory access - write all bytes at once
+                for i in 0 to DATA_IN_DEPTH - 1 loop
+                    ram(write_count * DATA_IN_DEPTH + i) <= input_bytes_vector(i);
+                end loop;
             end if;
-        end process;
-     end generate;
+        end if;
+    end process;
 
 
     update_d_out:
     process (clk) is
     begin
         if rising_edge(clk) then
-            d_out <= ram(address_int);
+            -- Use address_int for 1-cycle latency, address_reg for 2-cycle latency
+            d_out <= ram(address_reg); -- or ram(address_int) if not pipelined
         end if;
     end process;
 
@@ -128,16 +144,11 @@ begin
             end if;
         end if;
     end process;
-    
-    assign_all_write_heads:
-    for i in write_heads_t'range generate
-        write_heads(i) <= write_count + i;
-    end generate;
 
     update_valid_out:
     process (write_count) is
     begin
-        if write_count =  write_count_t'high then
+        if write_count = write_count_t'high then
             intern_valid_out <= '1';
         else
             intern_valid_out <= '0';
