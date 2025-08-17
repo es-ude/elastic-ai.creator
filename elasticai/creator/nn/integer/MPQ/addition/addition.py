@@ -36,6 +36,11 @@ class Addition(DesignCreatorModule, nn.Module):
         self.math_ops = MathOperations()
         self.precomputed = False
 
+        # MPQ related attributes
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")  # "inheritance", "requantizer"
+        self.prev_inputs1_QParams = None
+        self.prev_inputs2_QParams = None
+
     def set_quant_bits_from_config(self, quant_configs):
         quant_bits_per_element = {}
         for element in self.quantizable_elements:
@@ -84,6 +89,7 @@ class Addition(DesignCreatorModule, nn.Module):
         self.scale_factor_M_2 = (
             self.inputs2_QParams.scale_factor / self.outputs_QParams.scale_factor
         )
+
         # error_threshold = 10 ** (-(self.quant_bits - 2))
         # self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1 = scaling_M(
         #     self.scale_factor_M_1, error_threshold
@@ -98,7 +104,54 @@ class Addition(DesignCreatorModule, nn.Module):
         self.scale_factor_m_q_2_shift, self.scale_factor_m_q_2 = scaling_M(
             self.scale_factor_M_2
         )
+
+        if self.MPQ_strategy == "requantizer":
+            assert (
+                self.prev_inputs1_QParams is not None
+            ), "prev_inputs1_QParams must be set for requantizer strategy"
+            assert (
+                self.prev_inputs2_QParams is not None
+            ), "prev_inputs2_QParams must be set for requantizer strategy"
+
+            requantizer_M_1 = (
+                self.prev_inputs1_QParams.scale_factor
+                / self.inputs1_QParams.scale_factor
+            )
+            requantizer_M_2 = (
+                self.prev_inputs2_QParams.scale_factor
+                / self.inputs2_QParams.scale_factor
+            )
+            (
+                self.requantizer_m_q_1_shift,
+                self.requantizer_m_q_1,
+            ) = scaling_M(requantizer_M_1)
+
+            self.requantizer_m_q_2_shift, self.requantizer_m_q_2 = scaling_M(
+                requantizer_M_2
+            )
+
         self.precomputed = True
+
+    def _requantize_inputs(
+        self,
+        prev_q_inputs: torch.IntTensor,
+        prev_QParams: object,
+        m_q_1_shift: int,
+        m_q_1: int,
+    ) -> torch.IntTensor:
+        prev_q_inputs = self.math_ops.intsub(
+            prev_q_inputs,
+            prev_QParams.zero_point,
+            prev_QParams.quant_bits + 1,
+        )
+
+        q_inputs = simulate_bitshifting(
+            prev_q_inputs,
+            m_q_1_shift,
+            m_q_1,
+        )
+        # (q2-z2) = s1/s2(q1_z1)
+        return q_inputs
 
     def int_forward(
         self, q_inputs1: torch.IntTensor, q_inputs2: torch.IntTensor
@@ -109,24 +162,37 @@ class Addition(DesignCreatorModule, nn.Module):
         save_quant_data(q_inputs1, self.quant_data_dir, f"{self.name}_q_x_1")
         save_quant_data(q_inputs2, self.quant_data_dir, f"{self.name}_q_x_2")
 
-        q_inputs1 = self.math_ops.intsub(
-            q_inputs1,
-            self.inputs1_QParams.zero_point,
-            self.inputs1_QParams.quant_bits + 1,
-        )
+        if self.MPQ_strategy == "requantizer":
+            q_inputs1 = self._requantize_inputs(
+                prev_q_inputs=q_inputs1,
+                prev_QParams=self.prev_inputs1_QParams,
+                m_q_1_shift=self.requantizer_m_q_1_shift,
+                m_q_1=self.requantizer_m_q_1,
+            )
+            q_inputs2 = self._requantize_inputs(
+                prev_q_inputs=q_inputs2,
+                prev_QParams=self.prev_inputs2_QParams,
+                m_q_1_shift=self.requantizer_m_q_2_shift,
+                m_q_1=self.requantizer_m_q_2,
+            )
+        else:
+            q_inputs1 = self.math_ops.intsub(
+                q_inputs1,
+                self.inputs1_QParams.zero_point,
+                self.inputs1_QParams.quant_bits + 1,
+            )
+            q_inputs2 = self.math_ops.intsub(
+                q_inputs2,
+                self.inputs2_QParams.zero_point,
+                self.inputs2_QParams.quant_bits + 1,
+            )
+
         q_inputs1 = simulate_bitshifting(
             q_inputs1, self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1
-        )
-
-        q_inputs2 = self.math_ops.intsub(
-            q_inputs2,
-            self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits + 1,
         )
         q_inputs2 = simulate_bitshifting(
             q_inputs2, self.scale_factor_m_q_2_shift, self.scale_factor_m_q_2
         )
-
         tmp = self.math_ops.intadd(
             q_inputs1,
             q_inputs2,
@@ -147,6 +213,23 @@ class Addition(DesignCreatorModule, nn.Module):
 
         return q_outputs
 
+    def _handle_input_qparams(
+        self, inputs, given_QParams, QParams_attr, prev_QParams_attr
+    ):
+        current_qparams = getattr(self, QParams_attr)
+
+        if given_QParams is None:
+            current_qparams.update_quant_params(inputs)
+        else:
+            if given_QParams.quant_bits != current_qparams.quant_bits:
+                if self.MPQ_strategy == "requantizer":
+                    current_qparams.update_quant_params(inputs)
+                    setattr(self, prev_QParams_attr, given_QParams)
+                elif self.MPQ_strategy == "inheritance":
+                    setattr(self, QParams_attr, given_QParams)
+            else:
+                setattr(self, QParams_attr, given_QParams)
+
     def forward(
         self,
         inputs1: torch.FloatTensor,
@@ -157,15 +240,18 @@ class Addition(DesignCreatorModule, nn.Module):
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:
-                if given_inputs1_QParams is None:
-                    self.inputs1_QParams.update_quant_params(inputs1)
-                else:
-                    self.inputs1_QParams = given_inputs1_QParams
-
-                if given_inputs2_QParams is None:
-                    self.inputs2_QParams.update_quant_params(inputs2)
-                else:
-                    self.inputs2_QParams = given_inputs2_QParams
+                self._handle_input_qparams(
+                    inputs1,
+                    given_inputs1_QParams,
+                    "inputs1_QParams",
+                    "prev_inputs1_QParams",
+                )
+                self._handle_input_qparams(
+                    inputs2,
+                    given_inputs2_QParams,
+                    "inputs2_QParams",
+                    "prev_inputs2_QParams",
+                )
 
             inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
             inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
