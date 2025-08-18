@@ -91,6 +91,8 @@ architecture rtl of ${name} is
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal sum : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
+
+    signal valid_to_read_num : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS + UNROLL_FACTOR := 0;
 begin
     n_clock <= not clock;
     x_1_int <= signed(x_1);
@@ -119,7 +121,6 @@ begin
     add : process( clock, layer_state )
         variable input_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
         variable var_y_store : signed(DATA_WIDTH + 1 downto 0);
-        variable valid_to_read_num : integer range 0 to NUM_FEATURES*NUM_DIMENSIONS+UNROLL_FACTOR := 0;
         variable valid_prev : std_logic := '0';
     begin
         if rising_edge(clock) then
@@ -127,10 +128,10 @@ begin
                 add_state <= s_init;
                 input_idx := 0;
                 y_store_en <= '0';
-                valid_to_read_num := 0;
+                valid_to_read_num <= 0;
             elsif layer_state=s_forward then
-                if valid = '0' and valid_prev = '1' then
-                    valid_to_read_num := valid_to_read_num + UNROLL_FACTOR;
+                if valid = '1' and valid_prev = '0' then
+                    valid_to_read_num <= valid_to_read_num + UNROLL_FACTOR;
                 end if;
 
                 case add_state is

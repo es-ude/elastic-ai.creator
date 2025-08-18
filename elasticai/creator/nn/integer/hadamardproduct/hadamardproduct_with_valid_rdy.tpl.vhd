@@ -100,6 +100,7 @@ architecture rtl of ${name} is
     signal product_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     constant PRODUCT_SCALING_WIDTH : integer := 2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH;
     signal product_to_scaling : signed(PRODUCT_SCALING_WIDTH - 1 downto 0) := (others=>'0');
+    signal valid_to_read_num : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS + UNROLL_FACTOR := 0;
 begin
     n_clock <= not clock;
     x_1_int <= signed(x_1);
@@ -129,7 +130,6 @@ begin
         variable input_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
         variable output_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
         variable var_y_store : signed(DATA_WIDTH downto 0);
-        variable valid_to_read_num : integer range 0 to NUM_FEATURES*NUM_DIMENSIONS+UNROLL_FACTOR := 0;
         variable valid_prev : std_logic := '0';
     begin
         if rising_edge(clock) then
@@ -139,11 +139,11 @@ begin
                 output_idx := 0;
                 y_store_en <= '0';
                 ready <= '0';
-                valid_to_read_num := 0;
+                valid_to_read_num <= 0;
             elsif layer_state=s_forward then
 
-                if valid = '0' and valid_prev = '1' then
-                    valid_to_read_num := valid_to_read_num + UNROLL_FACTOR;
+                if valid = '1' and valid_prev = '0' then
+                    valid_to_read_num <= valid_to_read_num + UNROLL_FACTOR;
                 end if;
 
                 case add_state is

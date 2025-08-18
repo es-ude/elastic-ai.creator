@@ -68,7 +68,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             z_b=self.bias_QParams.zero_point.item(),
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
-            resource_option="auto",
+            resource_option="distributed",
             use_parallelised_template=self.use_parallelised_template,
             unroll_factor=self.unroll_factor,
             use_pipeline_template=self.use_pipeline_template,
