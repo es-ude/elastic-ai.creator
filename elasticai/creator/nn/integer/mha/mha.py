@@ -29,6 +29,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+
         self.q_linear = Linear(
             name=self.name + "_q_linear",
             in_features=d_model,
@@ -38,6 +40,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.k_linear = Linear(
@@ -49,6 +52,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
+            enable_error_analysis=self.enable_error_analysis,
         )
         self.v_linear = Linear(
             name=self.name + "_v_linear",
@@ -59,6 +63,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inner_attn_module = ScaledDotProductAttention(
@@ -68,6 +73,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             d_model=d_model,
+            enable_error_analysis=self.enable_error_analysis,
         )
         self.output_linear = Linear(
             name=self.name + "_output_linear",
@@ -78,6 +84,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
+            enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -154,6 +161,12 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.output_linear.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
 
         return q_outputs, attn_weights
 
@@ -217,5 +230,11 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
 
         if enable_simquant:
             self.outputs_QParams = self.output_linear.outputs_QParams
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
 
         return outputs, attn_weights

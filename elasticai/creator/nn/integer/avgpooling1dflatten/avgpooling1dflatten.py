@@ -32,6 +32,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -99,6 +100,13 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         )
         q_outputs = q_outputs.squeeze(2)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_outputs
 
     def forward(
@@ -123,4 +131,10 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
                 self.outputs_QParams.update_quant_params(outputs)
 
             outputs = SimQuant.apply(outputs, self.outputs_QParams)
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return outputs.squeeze(2)

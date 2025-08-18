@@ -21,6 +21,7 @@ class ReLU(DesignCreatorModule):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits,
@@ -47,6 +48,12 @@ class ReLU(DesignCreatorModule):
         zero_point = self.inputs_QParams.zero_point.to(q_inputs.device)
         q_outputs = torch.maximum(q_inputs, zero_point.clone().detach())
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_outputs
 
     def forward(
@@ -68,4 +75,10 @@ class ReLU(DesignCreatorModule):
 
         if enable_simquant:
             self.outputs_QParams = self.inputs_QParams
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return outputs

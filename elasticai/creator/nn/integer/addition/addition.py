@@ -27,8 +27,10 @@ class Addition(DesignCreatorModule, nn.Module):
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
+
         self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
         self.unroll_factor = kwargs.get("unroll_factor", 1)
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -123,6 +125,12 @@ class Addition(DesignCreatorModule, nn.Module):
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
 
         return q_outputs
 
@@ -157,4 +165,10 @@ class Addition(DesignCreatorModule, nn.Module):
 
             outputs = SimQuant.apply(outputs, self.outputs_QParams)
 
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return outputs

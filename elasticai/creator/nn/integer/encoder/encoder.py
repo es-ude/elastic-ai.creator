@@ -32,6 +32,7 @@ class Encoder(nn.Module):
         device = kwargs.get("device")
 
         enable_fused_ffn = kwargs.get("enable_fused_ffn", False)
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.encoder_layers = nn.ModuleList(
             [
@@ -45,6 +46,7 @@ class Encoder(nn.Module):
                     quant_bits=self.quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
+                    enable_error_analysis=self.enable_error_analysis,
                 )
                 for i in range(num_enc_layers)
             ]
@@ -68,6 +70,12 @@ class Encoder(nn.Module):
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
         q_outputs = self.sequential.int_forward(q_inputs)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.sequential[-1].outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
         return q_outputs
 
     def forward(
@@ -90,4 +98,10 @@ class Encoder(nn.Module):
         )
         if enable_simquant:
             self.outputs_QParams = self.sequential.submodules[-1].outputs_QParams
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
         return outputs
