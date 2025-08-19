@@ -125,3 +125,22 @@ def test_round_x_to_integer(total_bits: int, frac_bits: int) -> None:
     rslt_tensor = config.round_to_integer(stimuli_tensor).tolist()
     rslt_float = [config.round_to_integer(val) for val in stimuli_float]
     assert rslt_tensor == rslt_float
+
+
+@pytest.mark.parametrize(
+    "total_bits, number, check",
+    [
+        (2, 1, "01"),
+        (2, -1, "11"),
+        (4, 1, "0001"),
+        (4, -1, "1111"),
+        (4, -3, "1101"),
+        (8, -101, "10011011"),
+        (8, 35, "00100011"),
+    ],
+)
+def test_convert_integer_to_string(total_bits: int, number: int, check: str) -> None:
+    rslt = FixedPointConfig(
+        total_bits=total_bits, frac_bits=total_bits - 1
+    ).integer_to_binary_string(number)
+    assert rslt == check
