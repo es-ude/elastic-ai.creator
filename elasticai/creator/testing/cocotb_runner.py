@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from functools import partial
 from os import environ
 from pathlib import Path
+from shutil import rmtree
 from typing import Any
 
 from cocotb.runner import get_runner  # type: ignore
@@ -9,10 +10,18 @@ from cocotb.runner import get_runner  # type: ignore
 from elasticai.creator.file_generation import find_project_root
 
 
-def get_and_create_sim_build_dir(folder_name: str) -> Path:
-    build = find_project_root() / folder_name
-    build.mkdir(exist_ok=True, parents=True)
-    return build
+def _create_iverilog_dump_file(
+    top_module_name: str, path: Path, dump_dst: Path
+) -> Path:
+    dumpfile_path = path / "waveforms.vcd"
+    with open(dump_dst / "dump.v", "w") as f:
+        f.write("module cocotb_iverilog_dump_v2();\n")
+        f.write("initial begin\n")
+        f.write(f'    $dumpfile("{dumpfile_path}");\n')
+        f.write(f"    $dumpvars(0, {top_module_name});\n")
+        f.write("end\n")
+        f.write("endmodule\n")
+    return dump_dst / "dump.v"
 
 
 def run_cocotb_sim_for_src_dir(
@@ -24,8 +33,8 @@ def run_cocotb_sim_for_src_dir(
     params: dict = {},
     timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
-    build_waveforms: bool = False,
-) -> None:
+    waveform_save_dst: str = "",
+) -> Path:
     """Function for running Verilog/VHDL Simulation using COCOTB environment
     :param src_files:           List with source files of each used Verilog/VHDL file
     :param top_module_name:     Name of the top module (from file)
@@ -35,8 +44,8 @@ def run_cocotb_sim_for_src_dir(
     :param params:              Dictionary of parameters to pass to the module [key: value, ...] - value will be ignored
     :param timescale:           Tuple with Timescale value for simulation (step, accuracy)
     :param en_debug_mode:       Enable debug mode
-    :param build_waveforms:     Boolean for building the waveforms of the stimuli (will be saved in build_sim folder)
-    :return:                    None
+    :param waveform_save_dst:   Path to the destination folder for saving waveform file
+    :return:                    Path to folder which includes waveform file [Default: simulation output folder]
     """
     _path2src = Path(path2src)
     return run_cocotb_sim(
@@ -47,7 +56,7 @@ def run_cocotb_sim_for_src_dir(
         params=params,
         timescale=timescale,
         en_debug_mode=en_debug_mode,
-        build_waveforms=build_waveforms,
+        waveform_save_dest=waveform_save_dst,
     )
 
 
@@ -67,8 +76,8 @@ def run_cocotb_sim(
     params: dict[str, Any] = {},
     timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
-    build_waveforms: bool = False,
-) -> None:
+    waveform_save_dest: str = "",
+) -> Path:
     """Function for running Verilog/VHDL Simulation using COCOTB environment
     :param src_files:           List with source files of each used Verilog/VHDL file
     :param top_module_name:     Name of the top module (from file)
@@ -77,11 +86,10 @@ def run_cocotb_sim(
     :param params:              Dictionary of parameters to pass to the module [key: value, ...] - value will be ignored
     :param timescale:           Tuple with Timescale value for simulation (step, accuracy)
     :param en_debug_mode:       Enable debug mode
-    :param build_waveforms:     Boolean for building the waveforms of the stimuli (will be saved in build_sim folder)
-    :return:                    None
+    :param waveform_save_dest:  Path to the destination folder for saving waveform file
+    :return:                    Path to folder which includes waveform file [Default: simulation output folder]
     """
     design_sources = [Path(m) for m in src_files]
-    project_root = find_project_root()
     if len(design_sources) == 0:
         raise ValueError("no design sources specified")
 
@@ -101,35 +109,55 @@ def run_cocotb_sim(
     environ["COCOTB_LOG_LEVEL"] = "INFO" if en_debug_mode else "WARNING"
     environ["COCOTB_REDUCED_LOG_FMT"] = "0" if en_debug_mode else "1"
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
-    build_sim_dir = project_root / "build_sim"
 
+    build_sim_dir = find_project_root() / "build_sim"
+    rmtree(build_sim_dir)
+    build_sim_dir.mkdir(exist_ok=True, parents=True)
+    build_waveform_dir = (
+        build_sim_dir.absolute()
+        if waveform_save_dest == ""
+        else Path(waveform_save_dest).absolute()
+    )
+    build_waveform_dir.mkdir(exist_ok=True, parents=True)
     if language == "verilog":
+        # --- Building new dump file for getting vcd file
         plus_args = []
+        build_args = ["-s", "cocotb_iverilog_dump_v2"]
+        dump_file_src = _create_iverilog_dump_file(
+            top_module_name=top_module_name,
+            dump_dst=build_sim_dir,
+            path=build_waveform_dir,
+        )
+        design_sources.append(dump_file_src)
         build_call = partial(runner.build, verilog_sources=design_sources)
     else:
         top_module_name = top_module_name.lower()
-        plus_args = [f"--vcd={top_module_name}.vcd"] if build_waveforms else []
+        build_args = []
+        plus_args = [f"--vcd={build_waveform_dir / 'waveforms'}.vcd"]
         build_call = partial(runner.build, vhdl_sources=design_sources)
 
     build_call(
         hdl_toplevel=top_module_name,
         always=True,
-        clean=True,
-        waves=build_waveforms,
+        clean=False,
+        waves=True,
+        build_args=build_args,
         defines=defines,
         parameters=params,
         timescale=timescale,
         build_dir=build_sim_dir,
     )
+
     runner.test(
         hdl_toplevel=top_module_name,
         test_module=[cocotb_test_module],
         hdl_toplevel_lang=language,
         gui=False,
         plusargs=plus_args,
-        waves=build_waveforms,
+        waves=True,
         parameters=params,
         timescale=timescale,
         build_dir=build_sim_dir,
         test_dir=build_sim_dir,
     )
+    return build_waveform_dir.absolute()
