@@ -76,23 +76,13 @@ def bin_representation(bin_value: str) -> str:
 
 
 def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
-    if abs(number) >= 2**number_of_bits:
+    max_val = 2 ** (number_of_bits - 1)
+    if (number < -max_val) | (number > max_val - 1):
         raise ValueError(
             f"Value '{number}' cannot be represented with {number_of_bits} bits."
         )
-
-    def _to_unsigned(value: int, total_bits: int) -> int:
-        def invert(value: int) -> int:
-            return value ^ int("1" * total_bits, 2)
-
-        def discard_leading_bits(value: int) -> int:
-            return value & int("1" * total_bits, 2)
-
-        if value < 0:
-            value = discard_leading_bits(invert(abs(value)) + 1)
-
-        return value
-
-    two_complement = _to_unsigned(number, number_of_bits)
-
-    return f'"{two_complement:0{number_of_bits}b}"'
+    if number < 0:
+        twos = (1 << number_of_bits) + number
+    else:
+        twos = number
+    return f'"{twos:0{number_of_bits}b}"'
