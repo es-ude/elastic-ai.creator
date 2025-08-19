@@ -149,7 +149,7 @@ class FPLSTMCell(Design):
                 data_width=self.total_bits,
                 values_as_integers=values,
             )
-            rom.save_to(destination.create_subpath(name))
+            rom.save_to(destination)
 
     def _save_hardtanh(self, destination: Path) -> None:
         self._htanh.save_to(destination)

@@ -125,11 +125,11 @@ class Conv1dDesign(Design, Conv1dDesignProtocol):
             data_width=self._total_bits,
             values_as_integers=self._flatten_params(self._weights),
         )
-        weights_rom.save_to(destination.create_subpath(rom_name["weights"]))
+        weights_rom.save_to(destination)
 
         bias_rom = Rom(
             name=rom_name["bias"],
             data_width=self._total_bits,
             values_as_integers=self._bias,
         )
-        bias_rom.save_to(destination.create_subpath(rom_name["bias"]))
+        bias_rom.save_to(destination)

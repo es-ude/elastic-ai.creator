@@ -88,7 +88,6 @@ class LinearDesign(Design, LinearDesignProtocol):
 
     def save_to(self, destination: Path):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
-
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="linear.tpl.vhd",
@@ -104,16 +103,13 @@ class LinearDesign(Design, LinearDesignProtocol):
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        weights_rom = Rom(
+        Rom(
             name=rom_name["weights"],
             data_width=self.data_width,
             values_as_integers=self._flatten_params(self.weights),
-        )
-        weights_rom.save_to(destination.create_subpath(rom_name["weights"]))
-
-        bias_rom = Rom(
+        ).save_to(destination)
+        Rom(
             name=rom_name["bias"],
             data_width=self.data_width,
             values_as_integers=self.bias,
-        )
-        bias_rom.save_to(destination.create_subpath(rom_name["bias"]))
+        ).save_to(destination)

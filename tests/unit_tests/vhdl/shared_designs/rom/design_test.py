@@ -63,7 +63,7 @@ def build_root() -> InMemoryPath:
 def rom_code(
     rom_name: str, build_root: InMemoryPath
 ) -> Callable[[list[int]], list[str]]:
-    destination = build_root.create_subpath(rom_name)
+    destination = build_root
 
     def generate_code(values_as_integers: list[int]) -> list[str]:
         rom = Rom(name=rom_name, data_width=8, values_as_integers=values_as_integers)
@@ -79,9 +79,7 @@ def address_width(rom_code) -> Callable[[list[int]], int]:
         text = rom_code(values_as_integers)
         actual = 0
         for line in text:
-            match = re.match(
-                r"\s+addr\s?:\s?in std_logic_vector\((\d+)-1 downto 0\);", line
-            )
+            match = re.match(r"\s+ROM_ADDR_WIDTH : integer :=\s+(\d+);", line)
             if match:
                 actual = int(match.group(1))
                 break
@@ -95,7 +93,7 @@ class TestRomDesign:
         ("values_as_integers", "expected_rom_values"),
         [
             ([0, 0], ("00000000", "00000000")),
-            ([175, 187], ("10101111", "10111011")),
+            ([-81, -69], ("10101111", "10111011")),
         ],
     )
     def test_generating_correct_rom_values(
