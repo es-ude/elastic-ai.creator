@@ -29,25 +29,26 @@ class Linear(DesignCreatorModule, LinearBase):
             device=device,
         )
 
-    def create_design(self, name: str) -> LinearDesign:
-        def float_to_signed_int(value: float | list) -> int | list:
-            if isinstance(value, list):
-                return list(map(float_to_signed_int, value))
-            return self._config.cut_as_integer(value)
-
+    def get_params(self) -> tuple[list[list[float]], list[float]]:
         bias = [0] * self.out_features if self.bias is None else self.bias.tolist()
-        signed_int_weights = cast(
-            list[list[int]], float_to_signed_int(self.weight.tolist())
-        )
-        signed_int_bias = cast(list[int], float_to_signed_int(bias))
+        weights = self.weight.tolist()
+        return weights, bias
 
+    def get_params_quant(self) -> tuple[list[list[int]], list[int]]:
+        weights, bias = self.get_params()
+        q_weights = cast(list[list[int]], self._config.cut_as_integer(weights))
+        q_bias = cast(list[int], self._config.cut_as_integer(bias))
+        return q_weights, q_bias
+
+    def create_design(self, name: str) -> LinearDesign:
+        q_weights, q_bias = self.get_params_quant()
         return LinearDesign(
             frac_bits=self._config.frac_bits,
             total_bits=self._config.total_bits,
             in_feature_num=self.in_features,
             out_feature_num=self.out_features,
-            weights=signed_int_weights,
-            bias=signed_int_bias,
+            weights=q_weights,
+            bias=q_bias,
             name=name,
         )
 
