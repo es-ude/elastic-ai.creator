@@ -1,19 +1,13 @@
-import json
-
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-from elasticai.creator.file_generation import find_project_root
+from elasticai.creator.testing.cocotb_testpattern import read_testpattern
 
 
 @cocotb.test()
 async def precomputed_test(dut):
-    with open(
-        f"{find_project_root()}/build_test/{dut._name}/{dut._name}.json".lower(), "r"
-    ) as f:
-        data = json.load(f)
-
+    data = read_testpattern(dut._name, "")
     clock_period_ns = 10
     dut.enable.value = 1  # Has no impact
     dut.clock.value = 0  # has no impact
