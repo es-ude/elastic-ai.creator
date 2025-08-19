@@ -18,14 +18,21 @@ class Linear(torch.nn.Linear):
         device: Any = None,
         dtype: Any = None,
     ) -> None:
-        super().__init__(in_features, out_features, bias, device, dtype)
+        super().__init__(
+            in_features=in_features,
+            out_features=out_features,
+            bias=bias,
+            device=device,
+            dtype=dtype,
+        )
         self._operations = operations
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         weight = self._operations.quantize(self.weight)
-
-        if self.bias is not None:
-            bias = self._operations.quantize(self.bias)
-            return self._operations.add(self._operations.matmul(x, weight.T), bias)
-
-        return self._operations.matmul(x, weight.T)
+        if self.bias is None:
+            return self._operations.matmul(x, weight.T)
+        else:
+            return self._operations.add(
+                self._operations.matmul(x, weight.T),
+                self._operations.quantize(self.bias),
+            )
