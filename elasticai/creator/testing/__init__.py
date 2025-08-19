@@ -1,3 +1,4 @@
-from .cocotb_runner import get_and_create_sim_build_dir, run_cocotb_sim
+from .cocotb_runner import run_cocotb_sim
+from .cocotb_testpattern import build_report_folder_and_testpattern, read_testpattern
 
-__all__ = ["run_cocotb_sim", "get_and_create_sim_build_dir"]
+__all__ = ["run_cocotb_sim", "build_report_folder_and_testpattern", "read_testpattern"]
