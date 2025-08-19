@@ -76,11 +76,19 @@ class FixedPointConfig:
     @overload
     def cut_as_integer(self, number: T) -> T: ...
 
-    def cut_as_integer(self, number: float | int | T) -> int | T:
+    def cut_as_integer(self, number: float | int | list | T) -> int | list | T:
         """Cutting input number to integer directly (more like in hardware)"""
         if isinstance(number, ConvertableToFixedPointValues):
             return self._cut_T_to_integer(cast(T, number))
+        elif isinstance(number, list):
+            return list(map(self.cut_as_integer, number))
         return self._cut_float_or_int_to_integer(number)
+
+    def _cut_T_to_integer(self, number: T) -> T:
+        return (number * (1 << self.frac_bits)).int().float()
+
+    def _cut_float_or_int_to_integer(self, number: float | int) -> int:
+        return int(number * (1 << self.frac_bits))
 
     @overload
     def round_to_integer(self, number: float | int) -> int: ...
@@ -94,6 +102,12 @@ class FixedPointConfig:
             return self._round_T_to_integer(cast(T, number))
         return self._round_float_or_int_to_integer(number)
 
+    def _round_T_to_integer(self, number: T) -> T:
+        return (number * (1 << self.frac_bits)).round().int().float()
+
+    def _round_float_or_int_to_integer(self, number: float | int) -> int:
+        return round(number * (1 << self.frac_bits))
+
     @overload
     def as_rational(self, number: float | int) -> float: ...
 
@@ -103,14 +117,13 @@ class FixedPointConfig:
     def as_rational(self, number: float | int | T) -> float | T:
         return number / (1 << self.frac_bits)
 
-    def _round_T_to_integer(self, number: T) -> T:
-        return (number * (1 << self.frac_bits)).round().int().float()
-
-    def _round_float_or_int_to_integer(self, number: float | int) -> int:
-        return round(number * (1 << self.frac_bits))
-
-    def _cut_T_to_integer(self, number: T) -> T:
-        return (number * (1 << self.frac_bits)).int().float()
-
-    def _cut_float_or_int_to_integer(self, number: float | int) -> int:
-        return int(number * (1 << self.frac_bits))
+    def integer_to_binary_string(self, number: int) -> str:
+        if self.integer_out_of_bounds(number):
+            raise ValueError(
+                f"Value '{number}' cannot be represented with {self.total_bits} bits."
+            )
+        if number < 0:
+            twos = (1 << self.total_bits) + number
+        else:
+            twos = number
+        return f"{twos:0{self.total_bits}b}"
