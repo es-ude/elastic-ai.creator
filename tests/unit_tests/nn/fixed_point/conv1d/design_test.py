@@ -45,28 +45,31 @@ def test_saved_design_contains_needed_files(conv1d_design: Conv1dDesign) -> None
 
 def test_weight_rom_code_generated_correctly(conv1d_design: Conv1dDesign) -> None:
     expected_code = """library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+
 entity conv1d_w_rom is
+    generic (
+        ROM_ADDR_WIDTH : integer := 3;
+        ROM_DATA_WIDTH : integer := 16
+    );
     port (
         clk : in std_logic;
         en : in std_logic;
-        addr : in std_logic_vector(3-1 downto 0);
-        data : out std_logic_vector(16-1 downto 0)
+        addr : in std_logic_vector(ROM_ADDR_WIDTH-1 downto 0);
+        data : out std_logic_vector(ROM_DATA_WIDTH-1 downto 0)
     );
 end entity conv1d_w_rom;
 architecture rtl of conv1d_w_rom is
-    type conv1d_w_rom_array_t is array (0 to 2**3-1) of std_logic_vector(16-1 downto 0);
-    signal ROM : conv1d_w_rom_array_t:=("0000000000000001","0000000000000001","0000000000000001","0000000000000001","0000000000000001","0000000000000001","0000000000000000","0000000000000000");
+    type conv1d_w_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);
+    signal ROM : conv1d_w_rom_array_t:=("0000000000000001", "0000000000000001", "0000000000000001", "0000000000000001", "0000000000000001", "0000000000000001", "0000000000000000", "0000000000000000");
     attribute rom_style : string;
     attribute rom_style of ROM : signal is "auto";
 begin
-    ROM_process: process(clk)
+    ROM_process: process(addr)
     begin
-        if rising_edge(clk) then
-            if (en = '1') then
-                data <= ROM(conv_integer(addr));
-            end if;
+        if (en = '1') then
+            data <= ROM(to_integer(unsigned(addr)));
         end if;
     end process ROM_process;
 end architecture rtl;"""
@@ -77,31 +80,35 @@ end architecture rtl;"""
 
 def test_bias_rom_code_generated_correctly(conv1d_design: Conv1dDesign) -> None:
     expected_code = """library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+
 entity conv1d_b_rom is
+    generic (
+        ROM_ADDR_WIDTH : integer := 1;
+        ROM_DATA_WIDTH : integer := 16
+    );
     port (
         clk : in std_logic;
         en : in std_logic;
-        addr : in std_logic_vector(1-1 downto 0);
-        data : out std_logic_vector(16-1 downto 0)
+        addr : in std_logic_vector(ROM_ADDR_WIDTH-1 downto 0);
+        data : out std_logic_vector(ROM_DATA_WIDTH-1 downto 0)
     );
 end entity conv1d_b_rom;
 architecture rtl of conv1d_b_rom is
-    type conv1d_b_rom_array_t is array (0 to 2**1-1) of std_logic_vector(16-1 downto 0);
-    signal ROM : conv1d_b_rom_array_t:=("0000000000000001","0000000000000001");
+    type conv1d_b_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);
+    signal ROM : conv1d_b_rom_array_t:=("0000000000000001", "0000000000000001");
     attribute rom_style : string;
     attribute rom_style of ROM : signal is "auto";
 begin
-    ROM_process: process(clk)
+    ROM_process: process(addr)
     begin
-        if rising_edge(clk) then
-            if (en = '1') then
-                data <= ROM(conv_integer(addr));
-            end if;
+        if (en = '1') then
+            data <= ROM(to_integer(unsigned(addr)));
         end if;
     end process ROM_process;
 end architecture rtl;"""
     saved_files = save_design(conv1d_design)
     actual_code = saved_files["conv1d_b_rom.vhd"]
+    print(actual_code)
     assert expected_code == actual_code

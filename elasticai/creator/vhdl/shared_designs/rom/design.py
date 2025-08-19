@@ -15,8 +15,7 @@ class Rom:
     ) -> None:
         self._name = name
         self._data_width = data_width
-        number_of_values = len(values_as_integers)
-        self._address_width = self._bits_required_to_address_n_values(number_of_values)
+        self._address_width = calculate_address_width(len(values_as_integers))
         self._values = [
             to_vhdl_binary_string(x, self._data_width)
             for x in self._append_zeros_to_fill_addressable_memory(values_as_integers)
@@ -34,18 +33,11 @@ class Rom:
                 resource_option="auto",
             ),
         )
-        destination.as_file(".vhd").write(template)
+        destination.create_subpath(self._name).as_file(".vhd").write(template)
 
     def _rom_values(self) -> str:
-        return ",".join(self._values)
+        return ", ".join(self._values)
 
     def _append_zeros_to_fill_addressable_memory(self, values: list[int]) -> list[int]:
         missing_number_of_zeros = 2**self._address_width - len(values)
-        return values + _zeros(missing_number_of_zeros)
-
-    def _bits_required_to_address_n_values(self, n: int) -> int:
-        return calculate_address_width(n)
-
-
-def _zeros(n: int) -> list[int]:
-    return [0] * n
+        return values + [0] * missing_number_of_zeros
