@@ -3,6 +3,7 @@ from pathlib import Path
 
 import torch
 
+from elasticai.creator.nn import Sequential
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
@@ -13,7 +14,7 @@ from elasticai.creator.testing import (
 
 
 def routine_testing_precomputed_module(
-    dut, num_steps: int, fxp: FixedPointConfig, file_name: str, file_suffix: str = "vhd"
+    dut: Sequential, num_steps: int, fxp: FixedPointConfig, file_name: str, file_suffix: str = "vhd"
 ) -> None:
     # Build test pattern
     val_input = fxp.as_rational(
@@ -25,6 +26,7 @@ def routine_testing_precomputed_module(
             )
         )
     )
+    dut.eval()
     with torch.no_grad():
         val_output = dut(val_input)
 

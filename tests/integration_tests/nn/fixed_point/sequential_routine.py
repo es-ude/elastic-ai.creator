@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from elasticai.creator.nn import Sequential
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
@@ -15,7 +16,7 @@ from elasticai.creator.testing import (
 
 
 def routine_testing_sequential_module(
-    dut, feat_in: int, fxp: FixedPointConfig, file_name: str, check_quant: bool = True
+    dut: Sequential, feat_in: int, fxp: FixedPointConfig, file_name: str, check_quant: bool = True
 ) -> None:
     # Build pattern and write into file
     val_input = fxp.as_rational(
@@ -37,6 +38,7 @@ def routine_testing_sequential_module(
         assert np.all(np.abs(error_b) < fxp.minimum_step_as_rational)
 
     # --- Build testpattern data and model params
+    dut.eval()
     with torch.no_grad():
         val_output = dut(val_input)
     output_dir = build_report_folder_and_testpattern(
