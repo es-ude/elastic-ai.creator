@@ -46,8 +46,10 @@ class _ModuleOfInstance(tpl.TemplateParameter):
     def __init__(self, name: str, delimiter: str):
         self.name = name
         self.delimiter = delimiter
-        self.regex = r"(?P<prefix>{name}(#\(.*\))? )[a-zA-Z0-9_]+(?=\()".format(
-            name=name
+        self.regex = (
+            r"\s*(?P<prefix>{name}(\s*#\(.*\))? )[a-zA-Z0-9_]+(?=\s*\()".format(
+                name=name
+            )
         )
 
     def replace(self, m: dict[str, str]) -> str:
@@ -55,10 +57,27 @@ class _ModuleOfInstance(tpl.TemplateParameter):
         return f"{m['prefix']}{d}{self.name}"
 
 
+class _InstanceName(tpl.TemplateParameter):
+    def __init__(self, name: str, delimiter: str):
+        self.name = name
+        self.delimiter = delimiter
+        self.regex = (
+            r"\s*{name}(?P<prefix>(\s*#\(.*\))? [a-zA-Z0-9_]+(?=\s*\())".format(
+                name=name
+            )
+        )
+
+    def replace(self, m: dict[str, str]) -> str:
+        d = self.delimiter
+        pos = m[""].find(self.name)
+        chck = m[""][:pos] + d + m[""][pos:]
+        return chck
+
+
 class _DefineSwitch(tpl.TemplateParameter):
     def __init__(self, name: str, delimiter: str):
         self.name = name
-        self.regex = r"(\\\\+)?`define\s+{name}(?=\s)".format(name=name)
+        self.regex = r"(//+)?\s*`define\s+{name}(?=\s)?".format(name=name)
         self.delimiter = delimiter
 
     def replace(self, m: dict[str, str]) -> str:
@@ -69,10 +88,10 @@ class _DefineSwitch(tpl.TemplateParameter):
 class _ModuleName(tpl.AnalysingTemplateParameter):
     def __init__(self, delimiter: str):
         self._pre_analysis_regex = (
-            r"(?P<prefix>[^_a-zA-Z0-9]){name}(?P<suffix>[^_a-zA-Z0-9])"
+            r"\s*(?P<prefix>[^_a-zA-Z0-9]){name}(?P<suffix>[^_a-zA-Z0-9])"
         )
         self.regex = ""
-        self.analyse_regex = r"module\s+(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)"
+        self.analyse_regex = r"\s*module\s+(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)"
         self._analysed = False
         self._delimiter = delimiter
 
@@ -96,11 +115,13 @@ class TemplateDirector:
     def __init__(self) -> None:
         self._builder = tpl.TemplateBuilder()
         self._define_switches: dict[str, bool] = {}
+        self._module_name: dict[str, str] = {}
         self._delimiter = "§"
 
     def reset(self) -> Self:
         self._builder = tpl.TemplateBuilder()
         self._define_switches = {}
+        self._module_name = {}
         return self
 
     def set_prototype(self, prototype: str) -> Self:
@@ -115,17 +136,24 @@ class TemplateDirector:
         self._builder.add_parameter(_LocalParameter(name, self._delimiter))
         return self
 
-    def replace_module_of_instance(self, name: str) -> Self:
-        self._builder.add_parameter(_ModuleOfInstance(name, self._delimiter))
+    def replace_module_of_instance(self, module_name: str, new_name: str) -> Self:
+        self._builder.add_parameter(_ModuleOfInstance(module_name, self._delimiter))
+        self._module_name[module_name] = new_name
         return self
 
-    def define_scoped_switch(self, name: str, default=True) -> Self:
+    def replace_instance_name(self, module_name: str, new_name: str) -> Self:
+        self._builder.add_parameter(_InstanceName(module_name, self._delimiter))
+        self._module_name[module_name] = new_name
+        return self
+
+    def define_scoped_switch(self, name: str, default: bool) -> Self:
         """Add a switch for a define that is scoped to the module name.
 
         The switch will be prefixed with the value that users provide as `module_name` to the render call.
+        :param name:        String with name of the switch/define name
+        :param default:     Setting switch for defining output state (True=set, False=undefine)
         """
-        switch = _DefineSwitch(name, self._delimiter)
-        self._builder.add_parameter(switch)
+        self._builder.add_parameter(_DefineSwitch(name, self._delimiter))
         self._builder.add_parameter(_IdParameter(name, self._delimiter))
         self._define_switches[name] = default
         return self
@@ -139,22 +167,22 @@ class TemplateDirector:
             "MyStrTemplate", (_pyTemplate,), {"delimiter": self._delimiter}
         )
         return VerilogTemplate(
-            MyStrTemplate(self._builder.build()), self._define_switches
+            MyStrTemplate(self._builder.build()),
+            self._define_switches,
+            self._module_name,
         )
 
 
 class VerilogTemplate:
-    def __init__(self, template: _pyTemplate, defines: dict[str, bool]) -> None:
+    def __init__(
+        self,
+        template: _pyTemplate,
+        defines: dict[str, bool],
+        module_name: dict[str, str],
+    ) -> None:
         self._template = template
         self._defines = defines.copy()
-
-    def undef(self, name: str):
-        """Disable a define switch, ie. comment out the define statement"""
-        self._defines[name] = False
-
-    def define(self, name: str):
-        """Enable a define switch, ie. uncomment the define statement"""
-        self._defines[name] = True
+        self._modules = module_name.copy()
 
     def substitute(self, params: Mapping[str, str | bool]) -> str:
         new_params: dict[str, str] = {}
@@ -172,12 +200,19 @@ class VerilogTemplate:
             if name in self._defines and isinstance(enabled, bool):
                 defines[name] = enabled
 
+        modules: dict[str, str] = self._modules.copy()
+        for module, name in params.items():
+            if module in self._modules and isinstance(name, str):
+                modules[module] = name
+
         for name, enabled in defines.items():
             defname = f"def{name}"
             new_params[defname] = f"`define {module_prefix}{name}"
             new_params[name] = f"{module_prefix}{name}"
             if not enabled:
-                new_params[defname] = "// automatically disabled\n// " + cast(
-                    str, new_params[defname]
-                )
+                new_params[defname] = "//" + cast(str, new_params[defname])
+
+        for module, name in modules.items():
+            new_params[module] = name
+
         return self._template.substitute(new_params)
