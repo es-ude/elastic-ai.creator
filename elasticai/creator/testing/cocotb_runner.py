@@ -111,7 +111,10 @@ def run_cocotb_sim(
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
 
     build_sim_dir = find_project_root() / "build_sim"
-    rmtree(build_sim_dir)
+    try:
+        rmtree(build_sim_dir)
+    except FileNotFoundError:
+        pass
     build_sim_dir.mkdir(exist_ok=True, parents=True)
     build_waveform_dir = (
         build_sim_dir.absolute()
