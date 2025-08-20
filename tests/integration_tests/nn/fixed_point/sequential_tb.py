@@ -72,7 +72,7 @@ async def layer_computation_test(dut):
 
 @cocotb.test()
 async def layer_params_test(dut):
-    layer_name = fnmatch.filter(dir(dut), "i_*_0")
+    layer_name = fnmatch.filter(dir(dut), "i_*linear_0")
     dut_rom = getattr(dut, layer_name[0])
     print(layer_name)
 
