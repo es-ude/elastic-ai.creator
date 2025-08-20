@@ -25,9 +25,8 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         device: Any = None,
     ) -> None:
         super().__init__()
-        self._operations = MathOperations(
-            config=FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
-        )
+        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._operations = MathOperations(config=self._config)
         self._linear = LinearBase(
             in_features=in_features,
             out_features=out_features,
@@ -69,15 +68,9 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         x = self._linear(x)
         x = self._batch_norm(x)
         x = self._operations.quantize(x)
-
         return x.view(*output_shape)
 
-    def create_design(self, name: str) -> LinearDesign:
-        def float_to_signed_int(value: float | list) -> int | list:
-            if isinstance(value, list):
-                return list(map(float_to_signed_int, value))
-            return self._operations.config.cut_as_integer(value)
-
+    def get_params(self) -> tuple[list[list[float]], list[float]]:
         bn_mean = cast(torch.Tensor, self._batch_norm.running_mean)
         bn_variance = cast(torch.Tensor, self._batch_norm.running_var)
         bn_epsilon = self._batch_norm.eps
@@ -89,19 +82,27 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         )
 
         std = torch.sqrt(bn_variance + bn_epsilon)
-        weights = lin_weight / std
+        weights = lin_weight / std[:, None]
         bias = (lin_bias - bn_mean) / std
-
         if self._batch_norm.affine:
             weights = (self._batch_norm.weight * weights.t()).t()
             bias = self._batch_norm.weight * bias + self._batch_norm.bias
+        return weights.tolist(), bias.tolist()
 
+    def get_params_quant(self) -> tuple[list[list[int]], list[int]]:
+        weights, bias = self.get_params()
+        q_weights = cast(list[list[int]], self._config.cut_as_integer(weights))
+        q_bias = cast(list[int], self._config.cut_as_integer(bias))
+        return q_weights, q_bias
+
+    def create_design(self, name: str) -> LinearDesign:
+        weights, bias = self.get_params_quant()
         return LinearDesign(
             in_feature_num=self._linear.in_features,
             out_feature_num=self._linear.out_features,
             total_bits=self._operations.config.total_bits,
             frac_bits=self._operations.config.frac_bits,
-            weights=cast(list[list[int]], float_to_signed_int(weights.tolist())),
-            bias=cast(list[int], float_to_signed_int(bias.tolist())),
+            weights=weights,
+            bias=bias,
             name=name,
         )
