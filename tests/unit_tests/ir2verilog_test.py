@@ -28,84 +28,88 @@ class TestVerilogTemplate:
             == "parameter DATA_WIDTH = 'h16,"
         )
 
-    def test_keep_new_line_between_define_switches(self):
-        template = (
-            TemplateDirector()
-            .set_prototype("`define DATA_WIDTH\n`define DATA_LENGTH")
-            .define_scoped_switch("DATA_WIDTH")
-            .define_scoped_switch("DATA_LENGTH")
-            .build()
-        )
-
-        assert (
-            template.substitute(
-                {
-                    "DATA_WIDTH": True,
-                    "DATA_LENGTH": True,
-                }
-            )
-            == "`define DATA_WIDTH\n`define DATA_LENGTH"
-        )
-
     def test_can_set_parameter_before_new_line(self):
         template = (
             TemplateDirector()
-            .set_prototype("""parameter DATA_WIDTH = 4'd8
-""")
+            .set_prototype("""parameter DATA_WIDTH = 4'd8""")
             .parameter("DATA_WIDTH")
             .build()
         )
-
         assert (
-            template.substitute({"DATA_WIDTH": "'h16"})
-            == "parameter DATA_WIDTH = 'h16\n"
+            template.substitute({"DATA_WIDTH": "'h16"}) == "parameter DATA_WIDTH = 'h16"
         )
+
+    def test_can_define(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("//`define DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", True)
+            .build()
+        )
+        assert template.substitute({}) == "`define DATA_WIDTH"
+
+    def test_can_undefine(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("`define DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", False)
+            .build()
+        )
+        assert template.substitute({}) == "//`define DATA_WIDTH"
+
+    def test_can_leave_defined(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("`define DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", True)
+            .build()
+        )
+        assert template.substitute({}) == "`define DATA_WIDTH"
+
+    def test_can_leave_undefined(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("//`define DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", False)
+            .build()
+        )
+        assert template.substitute({}) == "//`define DATA_WIDTH"
+
+    def test_can_define_data_width(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("// `define DATA_WIDTH 8")
+            .define_scoped_switch("DATA_WIDTH", True)
+            .build()
+        )
+        assert template.substitute({}) == "`define DATA_WIDTH 8"
 
     def test_can_undefine_data_width(self):
         template = (
             TemplateDirector()
             .set_prototype("`define DATA_WIDTH 8")
-            .define_scoped_switch("DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", False)
             .build()
         )
-        template.undef("DATA_WIDTH")
-        assert (
-            template.substitute({})
-            == """// automatically disabled\n// `define DATA_WIDTH 8"""
-        )
+        assert template.substitute({}) == """//`define DATA_WIDTH 8"""
 
     def test_can_leave_data_width_defined(self):
         template = (
             TemplateDirector()
             .set_prototype("`define DATA_WIDTH 8")
-            .define_scoped_switch("DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", True)
             .build()
         )
-        template.define("DATA_WIDTH")
-        assert template.substitute({}) == "`define DATA_WIDTH 8"
-
-    def test_can_define_data_width(self):
-        template = (
-            TemplateDirector()
-            .set_prototype("\\\\`define DATA_WIDTH 8")
-            .define_scoped_switch("DATA_WIDTH")
-            .build()
-        )
-        template.define("DATA_WIDTH")
         assert template.substitute({}) == "`define DATA_WIDTH 8"
 
     def test_can_leave_data_width_undefined(self):
         template = (
             TemplateDirector()
-            .set_prototype("\\\\`define DATA_WIDTH 8")
-            .define_scoped_switch("DATA_WIDTH")
+            .set_prototype("//`define DATA_WIDTH 8")
+            .define_scoped_switch("DATA_WIDTH", False)
             .build()
         )
-        template.undef("DATA_WIDTH")
-        assert (
-            template.substitute({})
-            == """// automatically disabled\n// `define DATA_WIDTH 8"""
-        )
+        assert template.substitute({}) == "//`define DATA_WIDTH 8"
 
     def test_can_replace_module_name(self):
         template = (
@@ -123,7 +127,7 @@ class TestVerilogTemplate:
         template = (
             TemplateDirector()
             .set_prototype("`define DATA_WIDTH 8")
-            .define_scoped_switch("DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", True)
             .build()
         )
         assert (
@@ -135,7 +139,7 @@ class TestVerilogTemplate:
         template = (
             TemplateDirector()
             .set_prototype("`define DATA_WIDTH 8\nDATA_WIDTH + 10")
-            .define_scoped_switch("DATA_WIDTH")
+            .define_scoped_switch("DATA_WIDTH", True)
             .build()
         )
         assert (
@@ -164,11 +168,11 @@ class TestVerilogTemplate:
 	  .DATA_OUT(dout),
 	  .DATA_VALID(filter_rdy)
 );""")
-            .replace_module_of_instance("FILT_BIQUAD")
+            .replace_module_of_instance("FILT_BIQUAD", "MyModule")
             .build()
         )
         assert (
-            template.substitute({"FILT_BIQUAD": "MyModule"})
+            template.substitute({})
             == """FILT_BIQUAD#(BITWIDTH_DATA, LENGTH) MyModule(
     .CLK(clk_sys),
 	  .nRST(nrst),
@@ -185,6 +189,34 @@ class TestVerilogTemplate:
             TemplateDirector()
             .set_prototype("""FILT_BIQUAD DUT(
     .CLK(clk_sys),
+    .nRST(nrst),
+    .EN(en_dut),
+    .START_FLAG(clk_adc),
+    .DATA_IN(filter_in),
+    .DATA_OUT(dout),
+    .DATA_VALID(filter_rdy)
+);""")
+            .replace_module_of_instance("FILT_BIQUAD", "MyModule")
+            .build()
+        )
+        assert (
+            template.substitute({})
+            == """FILT_BIQUAD MyModule(
+    .CLK(clk_sys),
+    .nRST(nrst),
+    .EN(en_dut),
+    .START_FLAG(clk_adc),
+    .DATA_IN(filter_in),
+    .DATA_OUT(dout),
+    .DATA_VALID(filter_rdy)
+);"""
+        )
+
+    def test_replace_module_of_instance_with_space(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""   FILT_BIQUAD #(4) DUT (
+    .CLK(clk_sys),
 	  .nRST(nrst),
 	  .EN(en_dut),
 	  .START_FLAG(clk_adc),
@@ -192,12 +224,68 @@ class TestVerilogTemplate:
 	  .DATA_OUT(dout),
 	  .DATA_VALID(filter_rdy)
 );""")
-            .replace_module_of_instance("FILT_BIQUAD")
+            .replace_module_of_instance("FILT_BIQUAD", "MyModule")
             .build()
         )
         assert (
-            template.substitute({"FILT_BIQUAD": "MyModule"})
-            == """FILT_BIQUAD MyModule(
+            template.substitute({})
+            == """FILT_BIQUAD #(4) MyModule (
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);"""
+        )
+
+    def test_replace_instance_name_of_module(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""   FILT_BIQUAD#(4) DUT (
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);""")
+            .replace_instance_name("FILT_BIQUAD", "MyModule")
+            .build()
+        )
+        assert (
+            template.substitute({})
+            == """   MyModule#(4) DUT (
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);"""
+        )
+
+    def test_replace_instance_name_of_module_with_space(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""  FILT_BIQUAD #(4) DUT (
+    .CLK(clk_sys),
+	  .nRST(nrst),
+	  .EN(en_dut),
+	  .START_FLAG(clk_adc),
+	  .DATA_IN(filter_in),
+	  .DATA_OUT(dout),
+	  .DATA_VALID(filter_rdy)
+);""")
+            .replace_instance_name("FILT_BIQUAD", "MyModule")
+            .build()
+        )
+        assert (
+            template.substitute({})
+            == """  MyModule #(4) DUT (
     .CLK(clk_sys),
 	  .nRST(nrst),
 	  .EN(en_dut),
