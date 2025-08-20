@@ -9,8 +9,14 @@ class Tanh(PrecomputedModule):
         total_bits: int,
         frac_bits: int,
         num_steps: int,
-        sampling_intervall: tuple[float, float] = (-5, 5),
+        sampling_intervall: tuple[float, float] = (-float("inf"), float("inf")),
     ) -> None:
+        """Quantized Activation Function for Tanh
+        :param total_bits:          Total number of bits
+        :param frac_bits:           Fraction of bits
+        :param num_steps:           Number of LUT size / total steps in LUT of LUT inbetween sampling intervall
+        :param sampling_intervall:  Floating tuple with input sampling interval (Note default is [-inf, inf] will be transformed into [-2.0, 1.75] for FxP(4, 2))
+        """
         super().__init__(
             base_module=TanhBase(),
             total_bits=total_bits,

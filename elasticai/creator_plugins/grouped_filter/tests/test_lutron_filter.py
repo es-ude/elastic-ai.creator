@@ -46,7 +46,7 @@ def high_level_ir(groups: int) -> Implementation:
         name="filter",
         type="lutron_filter",
         data={
-            "params": p.as_dict(),
+            "filter_parameters": p.as_dict(),
             "kernel_per_group": tuple(f"lutron_{i}" for i in range(groups)),
         },
     )
@@ -67,7 +67,7 @@ def high_level_ir(groups: int) -> Implementation:
 class TestLutronFilterWithSingleGroup:
     def test_has_correct_edges(self) -> None:
         hl_ir = high_level_ir(1)
-        p = FilterParameters.from_dict(hl_ir.attributes["params"])
+        p = FilterParameters.from_dict(hl_ir.attributes["filter_parameters"])
         expected_edges: set[Edge] = set()
         expected_edges.add(
             edge(
@@ -98,7 +98,7 @@ class TestLutronFilterWithSingleGroup:
 class TestLutronFilterWithTwoGroups:
     def test_has_correct_edges(self) -> None:
         hl_ir = high_level_ir(2)
-        FilterParameters.from_dict(hl_ir.attributes["params"])
+        FilterParameters.from_dict(hl_ir.attributes["filter_parameters"])
         expected_edges: set[Edge] = set()
         expected_edges = expected_edges.union(
             (

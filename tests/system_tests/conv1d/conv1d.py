@@ -1,8 +1,8 @@
 import subprocess
+import tomllib
 from pathlib import Path
 
 import serial
-import tomllib
 import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     # inputs = fxp_conf.as_rational(fxp_conf.as_integer(torch.rand(batches, num_in_channels, num_inputs)))
     inputs = fxp_conf.as_rational(
-        fxp_conf.as_integer(
+        fxp_conf.cut_as_integer(
             torch.Tensor(
                 [
                     [[0.0, 0.0, 0.0, 0.0, 0.0]],

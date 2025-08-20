@@ -82,6 +82,45 @@ IMPORTANT: To use the `elasticai.creator` with cuda you might have to disable `d
 We hope to find a workaround or get a fix from upstream in the near future.
 
 
+### jujutsu
+
+In case you're using [jj](https://jj-vcs.github.io/jj/latest/) for versioning.
+You can use ruff to fix previous changes with by adding the following content to your repo config
+
+```toml
+[fix.tools.1-ruff-check]
+command = ["ruff", "check", "--fix", "--stdin-filename=$path"]
+patterns = [
+  "glob:'**/*.py'",
+  "glob:'**/*.pyi'",
+]
+
+[fix.tools.2-ruff-format]
+command = ["ruff", "format", "--stdin-filename=$path"]
+patterns = [
+  "glob:'**/*.py'",
+  "glob:'**/*.pyi'",
+]
+
+[fix.tools.alejandra]
+command = ["alejandra", "-"]
+patterns = [
+  "glob:'**/*.nix'",
+]
+
+[fix.tools.3-ruff-check]
+command = ["uv","run", "ruff", "check", "--select", "I", "--fix", "--stdin-filename=$path"]
+patterns = [
+  "glob:'**/*.py'",
+  "glob:'**/*.pyi'",
+]
+```
+
+You can access the repository config by running `jj config edit --repo`.
+The snippet above will use ruff to check and fix linted problems, then reformat files and then order imports.
+This will be applied to each change that is mutable, ie. changes belonging to your own branches.
+
+
 ## Pull Requests and Commits
 Use conventional commit types (see [here](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#summary)) especially (`feat`, `fix`) and mark `BREAKING CHANGE`s
 in commit messages. The message scope is optional.
@@ -385,6 +424,3 @@ For a buffered design we define the following signals:
 - Your different `layer.py` files for every `elasticai.creator.nn.<quantization_scheme>` can then inherit from `elasticai.creator.base_modules.<module>.py`
 
 
-### Adding new quantization scheme of an existing module
-
-TODO

@@ -1,10 +1,10 @@
 import subprocess
 import time
+import tomllib
 from pathlib import Path
 
 import numpy as np
 import serial  # type: ignore
-import tomllib
 import torch
 
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     fxp_conf = FixedPointConfig(total_bits, frac_bits)
     # inputs = fxp_conf.as_rational(fxp_conf.as_integer(torch.rand(batches, 1, num_inputs)))
-    inputs = fxp_conf.as_rational(fxp_conf.as_integer(input_tensor))
+    inputs = fxp_conf.as_rational(fxp_conf.cut_as_integer(input_tensor))
     batches = inputs.shape[0]
     expected_outputs = nn(inputs)
 

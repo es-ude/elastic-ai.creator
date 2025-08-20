@@ -14,6 +14,7 @@ from elasticai.creator_plugins.quantized_grads.quantized_optim import (
 )
 
 
+@pytest.mark.slow
 class Test1:
     def test_pred(self, pred: torch.Tensor) -> None:
         expected_pred = torch.Tensor([0.5, 2])
@@ -143,6 +144,7 @@ class Test1:
         optimizer.step()
 
 
+@pytest.mark.slow
 class Test2:
     def test_pred(self, pred: torch.Tensor) -> None:
         expected_pred = torch.Tensor([1.25, 3.75])

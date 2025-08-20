@@ -81,9 +81,9 @@ def test_inserts_conv_node():
             1,
         ),
         type="unclocked_combinatorial",
-        implementation="conv0_i0",
+        implementation="conv0",
         attributes={
-            "params": FilterParameters(
+            "filter_parameters": FilterParameters(
                 kernel_size=3,
                 in_channels=1,
                 out_channels=1,

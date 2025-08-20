@@ -2,7 +2,13 @@ import copy
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Any, Generic, Self, TypeVar, overload
 
-from elasticai.creator.graph import Graph, NodeConstraintFn, find_all_subgraphs, rewrite
+from elasticai.creator.graph import (
+    Graph,
+    NodeConstraintFn,
+    find_all_subgraphs,
+    get_rewriteable_matches,
+    rewrite,
+)
 from elasticai.creator.ir.base.attribute import Attribute
 
 from ..core import Edge, Implementation, Node
@@ -188,12 +194,15 @@ class Rewriter:
         self._current_rule = rule
         self._current_impl = impl
         self._current_contexts = []
-        matches = find_all_subgraphs(
+        matches: Iterable[dict[str, str]] = find_all_subgraphs(
             graph=impl.graph,
             pattern=rule.pattern.graph,
             node_constraint=self._lift_constraint_fn(
                 fn=rule.node_constraint, impl=impl, pattern=rule.pattern
             ),
+        )
+        matches = get_rewriteable_matches(
+            matches=matches, original=impl.graph, interface_nodes=rule.interface
         )
         self._prepare_contexts(matches)
         rewritten = self._rewrite_raw_graphs()
@@ -210,7 +219,7 @@ class Rewriter:
         for ctx in self._current_contexts:
             ctx.new_impl = new_impl
 
-    def _prepare_contexts(self, matches: list[dict[str, str]]) -> None:
+    def _prepare_contexts(self, matches: Iterable[dict[str, str]]) -> None:
         for match in matches:
             if self._current_rule is None or self._current_impl is None:
                 raise ValueError(

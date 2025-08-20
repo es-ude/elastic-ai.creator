@@ -10,27 +10,28 @@ in {
   # override these in your devenv.local.nix as needed
   languages.vhdl = {
     enable = lib.mkDefault true;
-    vivado.enable = lib.mkDefault false;
   };
+  languages.verilog.enable = true;
 
   packages = [
     pkgs.git-cliff
     pkgs.pikchr
     unstablePkgs.jujutsu
-    pkgs.gtkwave # visualize wave forms from hw simulations
     pkgs.graphviz
     pkgs.cocogitto
     unstablePkgs.mypy # python type checker
     unstablePkgs.vale # syntax aware linter for prose
     unstablePkgs.act # run github workflows locally
     pkgs.alejandra # nix formatter
+    pkgs.zlib # needed as dependency cocotb/ghdl under circumstances
+    pkgs.iverilog
   ];
 
   languages.c.enable = true;
   languages.nix.enable = true;
   languages.python = {
     enable = true;
-    package = pkgs.python311;
+    package = pkgs.python312;
     uv.enable = true;
     uv.package = unstablePkgs.uv;
     uv.sync.enable = true;

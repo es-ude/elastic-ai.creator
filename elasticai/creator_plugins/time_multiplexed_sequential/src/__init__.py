@@ -44,7 +44,7 @@ _iterable_type_handler = FunctionDecorator(_iterable_type_handler_fn)
 
 
 class _FilterNode(Node):
-    params: RequiredField[dict, FilterParameters] = RequiredField(
+    filter_parameters: RequiredField[dict, FilterParameters] = RequiredField(
         set_convert=lambda x: x.as_dict(), get_convert=FilterParameters.from_dict
     )
 
@@ -101,15 +101,19 @@ class _Sequential:
     def filter(self, n: Node):
         node = _FilterNode(n.name, n.data)
         attributes = n.attributes
-        params = node.params
+        params = node.filter_parameters
         if "top_stride" not in self._impl.attributes:
             self._impl.data.update(
                 {
                     "top_stride": params.in_channels * params.stride,
                 }
             )
-        elif self._last_node is not None and "params" in self._last_node.data:
-            old_params = _FilterNode(self._last_node.name, self._last_node.data).params
+        elif (
+            self._last_node is not None and "filter_parameters" in self._last_node.data
+        ):
+            old_params = _FilterNode(
+                self._last_node.name, self._last_node.data
+            ).filter_parameters
             if params.kernel_size != 1 or params.stride != 1:
                 self.strided_shift_register(
                     output_shape=(
@@ -123,8 +127,8 @@ class _Sequential:
         self._append_node(
             name=n.name,
             type="unclocked_combinatorial",
-            implementation=n.name,
-            output_shape=Shape(attributes["params"]["out_channels"], 1),
+            implementation=n.implementation,
+            output_shape=Shape(attributes["filter_parameters"]["out_channels"], 1),
             attributes=attributes,
             node_fn=vhdl_node,
         )
@@ -197,21 +201,25 @@ class _Sequential:
                 generic_map=dict(),
             )
 
-    def input(self, impl: Implementation) -> None:
-        input_shape = self._determine_required_input_shape(impl)
+    def input(self, impl: Implementation, input_node: str) -> None:
+        input_shape = self._determine_required_input_shape(impl, input_node)
         self._impl.data["top_kernel_size"] = input_shape.size()
         self.add_input(input_shape)
 
-    def _determine_required_input_shape(self, impl: Implementation):
-        first_node_after_input = tuple(impl.successors("input").values())[0]
+    def _determine_required_input_shape(
+        self, impl: Implementation, input_node: str
+    ) -> Shape:
+        first_node_after_input = tuple(impl.successors(input_node).values())[0]
         match first_node_after_input.type:
             case "filter":
                 n = _FilterNode(
                     first_node_after_input.name, first_node_after_input.data
                 )
-                return Shape(n.params.in_channels, n.params.kernel_size)
+                return Shape(
+                    n.filter_parameters.in_channels, n.filter_parameters.kernel_size
+                )
             case _:
-                return impl.nodes["input"].output_shape
+                return impl.nodes[input_node].output_shape
 
     def set_runtime_input_shape(self, s: Shape) -> None:
         self._impl.data["runtime_input_shape"] = s.to_tuple()
@@ -237,8 +245,12 @@ def sequential(impl: Implementation) -> Implementation:
     seq = _Sequential(impl.name)
 
     def iter_nodes():
+        for input_node in impl.nodes.values():
+            if input_node.type == "input":
+                break
+
         def iterator():
-            yield from dfs_iter(impl.successors, "input")
+            yield from dfs_iter(impl.successors, input_node.name)
 
         return impl.get_node_mapping(iterator)
 
@@ -248,7 +260,7 @@ def sequential(impl: Implementation) -> Implementation:
                 seq.filter(n)
             case "input":
                 seq.set_runtime_input_shape(n.input_shape)
-                seq.input(impl)
+                seq.input(impl, n.name)
             case "output":
                 seq.set_runtime_output_shape(n.output_shape)
                 seq.finish()

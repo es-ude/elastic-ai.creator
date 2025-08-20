@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 import elasticai.creator.graph as gr
@@ -141,19 +143,71 @@ def test_raise_error_if_rewrite_would_produce_dangling_edge():
     )
     raised = False
     try:
-        new_graph, new_names = gr.rewrite(
+        gr.rewrite(
             replacement=gr.BaseGraph().add_edge("i0", "r").add_edge("r", "i1"),
             original=g,
             match={"i0": "a", "p0": "b", "p1": "c", "i1": "d"},
             lhs={"i0": "i0", "i1": "i1"},
             rhs={"i0": "i0", "i1": "i1"},
         )
-        print(new_graph.successors)
-        print(new_names)
     except gr.DanglingEdgeError:
         raised = True
 
     assert raised
+
+
+@pytest.fixture
+def graph_for_multiple_matches():
+    graph = gr.BaseGraph()
+    sequence = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    for e in zip(sequence[:-1], sequence[1:]):
+        graph.add_edge(e[0], e[1])
+    return graph
+
+
+def test_replacing_all_matches_fails(graph_for_multiple_matches):
+    sequence = ("a", "b", "c", "d", "e", "f", "g", "h")
+    all_matches = list(zip(sequence[:-2], sequence[1:-1], sequence[2:]))
+    all_matches = [{"0": x, "1": y, "2": z} for x, y, z in all_matches]
+    replacement = gr.BaseGraph().add_edge("r0", "r1").add_edge("r1", "r2")
+    lhs = {"i0": "0", "i1": "2"}
+    rhs = {"i0": "r0", "i1": "r2"}
+    result = graph_for_multiple_matches
+    raised = False
+    try:
+        for i, match in enumerate(all_matches):
+            result, replacement_map = gr.rewrite(
+                replacement=replacement,
+                original=result,
+                match=match,
+                lhs=lhs,
+                rhs=rhs,
+            )
+    except gr.DanglingEdgeError:
+        raised = True
+
+    assert raised and i == 1, (
+        "Expected to raise DanglingEdgeError when rewriting second match, but did not."
+    )
+
+
+def test_can_replace_multiple_matches(graph_for_multiple_matches):
+    graph = graph_for_multiple_matches
+    safe_matches = [("a", "b", "c"), ("c", "d", "e"), ("e", "f", "g")]
+    safe_matches = [{"0": x, "1": y, "2": z} for x, y, z in safe_matches]
+    replacement = gr.BaseGraph().add_edge("r0", "r1").add_edge("r1", "r2")
+    result = graph
+    for match in safe_matches:
+        result, replacement_map = gr.rewrite(
+            replacement=replacement,
+            original=result,
+            match=match,
+            lhs={"i0": "0", "i1": "2"},
+            rhs={"i0": "r0", "i1": "r2"},
+        )
+    expected_sequence = ["a", "r1", "c", "r1_1", "e", "r1_2", "g", "h"]
+    expected_edges = set(zip(expected_sequence[:-1], expected_sequence[1:]))
+    assert set(result.iter_edges()) == expected_edges
 
 
 class TestRewriteResult:
@@ -231,3 +285,252 @@ class TestRewriteResult:
                 new_graph.data[new_node] = graph.data[new_node]
 
         assert new_graph.data == {"a": "1", "r1": "202", "c": "3"}
+
+
+def create_real_world_graph_with_data() -> tuple[
+    gr.Graph[str], dict[str, dict[str, str]]
+]:
+    data = {
+        "input_1": {
+            "type": "input",
+        },
+        "conv0_0": {
+            "type": "conv1d",
+        },
+        "conv0_1": {
+            "type": "maxpool1d",
+        },
+        "conv0_2": {
+            "type": "batchnorm1d",
+        },
+        "conv0_3": {
+            "type": "binarize",
+        },
+        "conv1_0": {
+            "type": "conv1d",
+        },
+        "conv1_1": {
+            "type": "maxpool1d",
+        },
+        "conv1_2": {
+            "type": "batchnorm1d",
+        },
+        "conv1_3": {
+            "type": "binarize",
+        },
+        "conv2_0": {
+            "type": "conv1d",
+        },
+        "conv2_1": {
+            "type": "maxpool1d",
+        },
+        "conv2_2": {
+            "type": "batchnorm1d",
+        },
+        "conv2_3": {
+            "type": "binarize",
+        },
+        "conv3_0": {
+            "type": "conv1d",
+        },
+        "conv3_1": {
+            "type": "maxpool1d",
+        },
+        "conv3_2": {
+            "type": "batchnorm1d",
+        },
+        "conv3_3": {
+            "type": "binarize",
+        },
+        "conv4_0": {
+            "type": "conv1d",
+        },
+        "conv4_1": {
+            "type": "maxpool1d",
+        },
+        "conv4_2": {
+            "type": "batchnorm1d",
+        },
+        "conv4_3": {
+            "type": "binarize",
+        },
+        "flatten": {
+            "type": "flatten",
+        },
+        "lin": {
+            "type": "linear",
+        },
+        "sigmoid": {
+            "type": "sigmoid",
+        },
+        "flatten1": {
+            "type": "flatten",
+        },
+        "output": {
+            "type": "output",
+        },
+    }
+    g: gr.Graph[str] = gr.BaseGraph()
+    original_edges = {
+        "input_1": {"conv0_0"},
+        "conv0_0": {"conv0_1"},
+        "conv0_1": {"conv0_2"},
+        "conv0_2": {"conv0_3"},
+        "conv0_3": {"conv1_0"},
+        "conv1_0": {"conv1_1"},
+        "conv1_1": {"conv1_2"},
+        "conv1_2": {"conv1_3"},
+        "conv1_3": {"conv2_0"},
+        "conv2_0": {"conv2_1"},
+        "conv2_1": {"conv2_2"},
+        "conv2_2": {"conv2_3"},
+        "conv2_3": {"conv3_0"},
+        "conv3_0": {"conv3_1"},
+        "conv3_1": {"conv3_2"},
+        "conv3_2": {"conv3_3"},
+        "conv3_3": {"conv4_0"},
+        "conv4_0": {"conv4_1"},
+        "conv4_1": {"conv4_2"},
+        "conv4_2": {"conv4_3"},
+        "conv4_3": {"flatten"},
+        "flatten": {"lin"},
+        "lin": {"sigmoid"},
+        "sigmoid": {"flatten1"},
+        "flatten1": {"output"},
+    }
+    for src in original_edges:
+        for dst in original_edges[src]:
+            g.add_edge(src, dst)
+
+    return g, data
+
+
+@pytest.fixture
+def expected_edges_after_complex_reordering():
+    expected_edges = {
+        "input_1": {"conv0_0"},
+        "conv0_0": {"batchnorm1d"},
+        "batchnorm1d": {"binarize"},
+        "binarize": {"maxpool1d"},
+        "maxpool1d": {"conv1_0"},
+        "conv1_0": {"batchnorm1d_1"},
+        "batchnorm1d_1": {"binarize_1"},
+        "binarize_1": {"maxpool1d_1"},
+        "maxpool1d_1": {"conv2_0"},
+        "conv2_0": {"batchnorm1d_2"},
+        "batchnorm1d_2": {"binarize_2"},
+        "binarize_2": {"maxpool1d_2"},
+        "maxpool1d_2": {"conv3_0"},
+        "conv3_0": {"batchnorm1d_3"},
+        "batchnorm1d_3": {"binarize_3"},
+        "binarize_3": {"maxpool1d_3"},
+        "maxpool1d_3": {"conv4_0"},
+        "conv4_0": {"batchnorm1d_4"},
+        "batchnorm1d_4": {"binarize_4"},
+        "binarize_4": {"maxpool1d_4"},
+        "maxpool1d_4": {"flatten"},
+        "flatten": {"lin"},
+        "lin": {"sigmoid"},
+        "sigmoid": {"flatten1"},
+        "flatten1": {"output"},
+        "output": set(),
+    }
+    return expected_edges
+
+
+def test_can_reorder_complex_layer_sequence(expected_edges_after_complex_reordering):
+    logger = logging.getLogger("elasticai.creator.graph")
+
+    def make_pattern(data):
+        """Also consider the corresponding constraint for this pattern.
+
+        The pattern is defined in such a way that we declare potentially
+        matched convolutional layers to be part of the interface:
+        'start', 'end'. Thus, we "promise" that we will not edit
+        convolutional layers. Instead, we will only reorder
+        maxpool1d, batchnorm1d, and binarize layers.
+        """
+        pattern = gr.BaseGraph()
+        pattern_sequence = [
+            "start",
+            "maxpool1d",
+            "batchnorm1d",
+            "binarize",
+            "end",
+        ]
+
+        for src, dst in zip(pattern_sequence[:-1], pattern_sequence[1:]):
+            pattern.add_edge(src, dst)
+
+        def constraint(pattern_node: str, graph_node: str) -> bool:
+            match pattern_node:
+                case "start":
+                    return data[graph_node]["type"] in ("input", "conv1d")
+                case "end":
+                    return data[graph_node]["type"] in ("output", "conv1d", "flatten")
+                case _:
+                    return data[graph_node]["type"] == pattern_node
+
+        return pattern, constraint
+
+    def make_replacement():
+        replacement_sequence = [
+            "start",
+            "batchnorm1d",
+            "binarize",
+            "maxpool1d",
+            "end",
+        ]
+        replacement = gr.BaseGraph()
+
+        for src, dst in zip(replacement_sequence[:-1], replacement_sequence[1:]):
+            replacement.add_edge(src, dst)
+        return replacement
+
+    g, data = create_real_world_graph_with_data()
+    pattern, constraint = make_pattern(data)
+    matches = list(
+        gr.find_all_subgraphs(
+            pattern=pattern,
+            graph=g,
+            node_constraint=constraint,
+        )
+    )
+
+    def log(msg):
+        logger.log(logging.DEBUG, msg)
+
+    log(f"Found {len(matches)} matches")
+    for match in matches:
+        log(f"Match: {match}")
+
+    lhs = {"i0": "start", "i1": "end"}
+    safe_matches = list(
+        gr.get_rewriteable_matches(g, matches, interface_nodes=lhs.values())
+    )
+
+    log(f"Safe matches: {len(safe_matches)}")
+    for match in safe_matches:
+        log(f"Match: {match}")
+
+    def rewrite_all_matches(g, matches, replacement, lhs, rhs):
+        result = g
+        for match in matches:
+            result, replacement_map = gr.rewrite(
+                replacement=replacement, original=result, match=match, lhs=lhs, rhs=rhs
+            )
+        return result
+
+    def visit_nodes(graph, node, visited):
+        if node not in visited:
+            visited.add(node)
+            log(node)
+            for successor in graph.successors[node]:
+                visit_nodes(graph, successor, visited)
+
+    replacement = make_replacement()
+    rhs = lhs
+    result = rewrite_all_matches(g, safe_matches, replacement, lhs, rhs)
+
+    visit_nodes(result, "input_1", set())
+    assert expected_edges_after_complex_reordering == dict(result.successors)

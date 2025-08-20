@@ -86,7 +86,7 @@ class BatchNormedConv1d(DesignCreatorModule):
         def float_to_signed_int(value: float | list) -> int | list:
             if isinstance(value, list):
                 return list(map(float_to_signed_int, value))
-            return self._operations.config.as_integer(value)
+            return self._operations.config.cut_as_integer(value)
 
         def flatten_tuple(x: int | tuple[int, ...]) -> int:
             return x[0] if isinstance(x, tuple) else x

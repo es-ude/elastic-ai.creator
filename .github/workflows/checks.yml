@@ -19,7 +19,7 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run python linting
-        run: devenv shell devenv tasks run check:code-lint
+        run: devenv shell devenv tasks run check:code-lint --mode before
 
   check-commit-lint:
     name: Lint Commits
@@ -35,7 +35,7 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run commit linting
-        run: devenv shell devenv tasks run check:commit-lint
+        run: devenv shell devenv tasks run check:commit-lint --mode before
 
   check-package-build:
     name: Check that package builds
@@ -49,7 +49,7 @@ jobs:
         uses: ./.github/actions/prepare-devenv
 
       - name: run build check
-        run: devenv shell devenv tasks run package:build
+        run: devenv shell devenv tasks run package:build --mode before
 
   check-docs-build:
     name: check that docs build
@@ -67,7 +67,7 @@ jobs:
       - name: run docs build check
         shell: devenv shell bash -- -e {0}
         run: |
-          devenv tasks run docs:single-page
+          devenv tasks run docs:single-page --mode before
           nix run nixpkgs#monolith -- build/docs/index.html > build/docs/single_page.html
       - name: Upload docs preview
         uses: actions/upload-artifact@v4
@@ -98,7 +98,7 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run tests
-        run: devenv shell devenv tasks run check:tests
+        run: devenv shell devenv tasks run check:tests --mode before
       - name: Publish coverage report
         uses: orgoro/coverage@v3.1
         with:

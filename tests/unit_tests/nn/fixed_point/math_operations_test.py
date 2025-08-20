@@ -9,20 +9,9 @@ from tests.tensor_test_case import TensorTestCase
 
 class FixedPointMathOperationsTest(TensorTestCase):
     def setUp(self) -> None:
-        self.config: FixedPointConfig = FixedPointConfig(total_bits=4, frac_bits=2)
-        self.operations = MathOperations(config=self.config)
-
-    def test_quantize_clamps_minus5_to_minus2(self) -> None:
-        a = torch.tensor([-5.0])
-        actual = self.operations.quantize(a)
-        expected = [-2.0]
-        self.assertTensorEqual(expected, actual)
-
-    def test_quantize_rounds_1_1_to_1_0(self) -> None:
-        a = torch.tensor([1.1])
-        actual = self.operations.quantize(a)
-        expected = [1.0]
-        self.assertTensorEqual(expected, actual)
+        self.operations = MathOperations(
+            config=FixedPointConfig(total_bits=4, frac_bits=2)
+        )
 
     def test_add(self) -> None:
         a = torch.tensor([-0.25, 0.5, 1.0])
@@ -40,7 +29,31 @@ class FixedPointMathOperationsTest(TensorTestCase):
 
     def test_mul(self) -> None:
         a = torch.tensor([-0.5, 1.5, 0.5])
-        b = torch.tensor([0.5, 1.5, 1.25])
+        b = torch.tensor([0.5, 1.5, 1.2])
         actual = self.operations.mul(a, b)
         expected = [-0.25, 1.75, 0.5]
+        self.assertTensorEqual(expected, actual)
+
+    def test_quantize_clamps_minus5_to_minus2(self) -> None:
+        a = torch.tensor([-5.0])
+        actual = self.operations.quantize(a)
+        expected = [-2.0]
+        self.assertTensorEqual(expected, actual)
+
+    def test_quantize_rounds_1_1_to_1_0(self) -> None:
+        a = torch.tensor([1.1])
+        actual = self.operations.quantize(a)
+        expected = [1.0]
+        self.assertTensorEqual(expected, actual)
+
+    def test_round(self) -> None:
+        a = torch.tensor([-0.5, 1.5, 0.5, 0.65])
+        actual = self.operations.round(a)
+        expected = [-0.5, 1.5, 0.5, 0.75]
+        self.assertTensorEqual(expected, actual)
+
+    def test_quantize(self) -> None:
+        a = torch.tensor([-0.5, 1.5, 0.5, 0.65])
+        actual = self.operations.quantize(a)
+        expected = [-0.5, 1.5, 0.5, 0.5]
         self.assertTensorEqual(expected, actual)

@@ -4,8 +4,11 @@ from .hard_sigmoid import HardSigmoid as HardSigmoid
 from .hard_tanh import HardTanh as HardTanh
 from .linear import BatchNormedLinear as BatchNormedLinear
 from .linear import Linear as Linear
+from .math_operations import FixedPointConfig as FixedPointConfig
 from .precomputed import AdaptableSiLU as AdaptableSiLU
+from .precomputed import PReLU as PReLU
 from .precomputed import Sigmoid as Sigmoid
+from .precomputed import SiLU as SiLU
 from .precomputed import Tanh as Tanh
 from .quantization import quantize as quantize
 from .relu import ReLU as ReLU
