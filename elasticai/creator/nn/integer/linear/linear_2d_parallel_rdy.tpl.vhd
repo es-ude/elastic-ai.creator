@@ -287,46 +287,52 @@ begin
         end if;
     end process ;
 
-    save : process( y_store_en, clock )
+    save : process(reset, y_store_en, clock )
     variable y_store_en_prev : std_logic := '0';
     variable store_active : boolean := false;
     variable store_count : integer range 0 to UNROLL_FACTOR := 0;
     variable v_ram_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS+UNROLL_FACTOR := 0;
     begin
         if rising_edge(clock) then
-            -- Detect rising edge of y_store_en
-            if y_store_en = '1' and y_store_en_prev = '0' then
-                store_active := true;
-                store_count := 0;
-            end if;
-
-            -- Store two values sequentially
-            if store_active then
-                if store_count < UNROLL_FACTOR then
-                    v_ram_addr := y_store_addr + store_count;
-                    if v_ram_addr <= OUT_FEATURES * NUM_DIMENSIONS then
-                        ram_addr <= v_ram_addr;  -- Sequential addresses
-                        ram_data <= y_store_data(store_count);  -- Use the selected data
-                        ram_write_en <= '1';               -- Enable RAM write
-                        store_count := store_count + 1;
-                    else
-                        store_active := false;             -- Stop storing if out of range
-                        ready <= '1';                      -- Indicate that the operation is ready
-                    end if;
-
-                else
-                    store_active := false;             -- Pause after 2 values
-                    store_count := 0;
-                    ram_write_en <= '0';               -- Disable RAM write
-                    ready <= '1';                      -- Indicate that the operation is ready
-                end if;
-            else
-                ram_write_en <= '0';                   -- Ensure RAM write is disabled
+            if reset = '1' then
+                y_store_en_prev := '0';
+                store_active := false;
+                ram_write_en <= '0';
                 ready <= '0';
-            end if;
+            else
+                -- Detect rising edge of y_store_en
+                if y_store_en = '1' and y_store_en_prev = '0' then
+                    store_active := true;
+                    store_count := 0;
+                end if;
 
-            -- Update previous value for edge detection
-            y_store_en_prev := y_store_en;
+                -- Store two values sequentially
+                if store_active then
+                    if store_count < UNROLL_FACTOR then
+                        v_ram_addr := y_store_addr + store_count;
+                        if v_ram_addr <= OUT_FEATURES*NUM_DIMENSIONS-1 then
+                            ram_addr <= v_ram_addr;  -- Sequential addresses
+                            ram_data <= y_store_data(store_count);  -- Use the selected data
+                            ram_write_en <= '1';               -- Enable RAM write
+                            ready <= '1';
+                            store_count := store_count + 1;
+                        else
+                            store_active := false;             -- Stop storing if out of range
+                        end if;
+
+                    else
+                        store_active := false;             -- Pause after 2 values
+                        store_count := 0;
+                        ram_write_en <= '0';               -- Disable RAM write
+                    end if;
+                else
+                    ram_write_en <= '0';                   -- Ensure RAM write is disabled
+                    ready <= '0';
+                end if;
+
+                -- Update previous value for edge detection
+                y_store_en_prev := y_store_en;
+            end if;
         end if;
     end process save;
 
