@@ -118,7 +118,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> EncoderLayerDesign:
         return EncoderLayerDesign(
             name=name,
-            data_width=self.mha.q_linear["inputs"],  # TODO
+            data_width=self.mha.q_linear.quant_bits_per_element["inputs"],  # TODO
             mha=self.mha,
             mha_add=self.mha_add,
             mha_norm=self.mha_norm,

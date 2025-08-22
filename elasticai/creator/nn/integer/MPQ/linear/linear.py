@@ -34,10 +34,6 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         self.device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
-        self.use_parallelised_template = kwargs.get("use_parallelised_template", False)
-        self.unroll_factor = kwargs.get("unroll_factor", 1)
-        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
-
         self.math_ops = MathOperations()
         self._init_mpq_attributes(**kwargs)  # MPQ
         self.precomputed = False
@@ -89,9 +85,6 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
-            use_parallelised_template=self.use_parallelised_template,
-            unroll_factor=self.unroll_factor,
-            use_pipeline_template=self.use_pipeline_template,
         )
 
     def _get_quantized_weights(self) -> torch.IntTensor:

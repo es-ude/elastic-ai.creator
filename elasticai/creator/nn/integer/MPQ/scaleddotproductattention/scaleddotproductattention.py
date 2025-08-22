@@ -101,7 +101,9 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> ScaledDotProductAttentionDesign:
         return ScaledDotProductAttentionDesign(
             name=name,
-            data_width=self.matrix_multi_score["inputs1"],  # TODO
+            data_width=self.matrix_multi_score.quant_bits_per_element[
+                "inputs1"
+            ],  # TODO
             matrix_multi_score=self.matrix_multi_score,
             softmax=self.softmax,
             matrix_multi_att=self.matrix_multi_att,
