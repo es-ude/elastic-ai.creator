@@ -110,17 +110,18 @@ class Linear(Design):
             work_library_name=self._work_library_name,
         )
 
-        if self._num_dimensions is None:
-            file_name = "linear.tpl.vhd"
-            test_file_name = "linear_tb.tpl.vhd"
-        else:
-            if self._in_features != 1:
-                file_name = "linear_2d.tpl.vhd"
-            else:
-                file_name = "linear_2d_feature1.tpl.vhd"
-            test_file_name = "linear_2d_tb.tpl.vhd"
-            template_parameters["num_dimensions"] = str(self._num_dimensions)
-            test_template_parameters["num_dimensions"] = str(self._num_dimensions)
+        file_name = (
+            "linear_2d_feature1.tpl.vhd"
+            if self._in_features == 1
+            else "linear_2d.tpl.vhd"
+        )
+        test_file_name = "linear_2d_tb.tpl.vhd"
+        template_parameters["num_dimensions"] = str(self._num_dimensions)
+        test_template_parameters["num_dimensions"] = str(self._num_dimensions)
+
+        print(f"---------{self.name}---------")
+        print("file_name:", file_name)
+        print("test_file_name:", test_file_name)
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
