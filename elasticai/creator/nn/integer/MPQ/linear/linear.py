@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.MPQ.linear.design import Linear as LinearDesig
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    MPQSupport,
     SimQuant,
     SymmetricSignedQParams,
     scaling_M,
@@ -18,7 +19,7 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 )
 
 
-class Linear(DesignCreatorModule, nn.Linear):
+class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
     def __init__(self, **kwargs):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
@@ -33,12 +34,13 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
-        self.math_ops = MathOperations()
-        self.precomputed = False
-
         self.use_parallelised_template = kwargs.get("use_parallelised_template", False)
         self.unroll_factor = kwargs.get("unroll_factor", 1)
         self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
+
+        self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
+        self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
         quant_bits_per_element = {}
@@ -137,6 +139,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
+
+        self._precompute_requantizer_params()
         self.precomputed = True
 
     def int_forward(
@@ -147,6 +151,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         assert self.precomputed, "precompute should be called before int_forward"
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
+        q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
@@ -186,10 +192,12 @@ class Linear(DesignCreatorModule, nn.Linear):
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:
-                if given_inputs_QParams is None:
-                    self.inputs_QParams.update_quant_params(inputs)
-                else:
-                    self.inputs_QParams = given_inputs_QParams
+                self._handle_input_QParams(
+                    inputs,
+                    given_inputs_QParams,
+                    "inputs_QParams",
+                    "prev_inputs_QParams",
+                )
 
                 self.weight_QParams.update_quant_params(self.weight)
                 if self.bias is not None:

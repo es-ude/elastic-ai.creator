@@ -150,6 +150,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self,
         q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "precompute should be called before int_forward"
+
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_inputs = self.math_ops.intsub(

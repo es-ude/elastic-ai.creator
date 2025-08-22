@@ -9,6 +9,7 @@ from elasticai.creator.nn.integer.MPQ.softmax.design import (
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    MPQSupport,
     SimQuant,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -16,7 +17,7 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 )
 
 
-class SoftmaxLUT(DesignCreatorModule, nn.Module):
+class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
     def __init__(self, **kwargs) -> None:
         super().__init__()
 
@@ -35,6 +36,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
 
         self.device = device
         self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -154,6 +156,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.denominator_mapping = denominator_mapping.to(self.device)
         self.mapping_offset = min_idx
 
+        self._precompute_requantizer_params()
         self.precomputed = True
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
@@ -161,6 +164,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         assert self.precomputed, "precompute should be called before int_forward"
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
+        q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         # 1. Compute q_inputs
         max_q_inputs = q_inputs.max(dim=-1, keepdim=True)[0]
@@ -227,10 +232,12 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:
-                if given_inputs_QParams is None:
-                    self.inputs1_QParams.update_quant_params(inputs)
-                else:
-                    self.inputs1_QParams = given_inputs_QParams
+                self._handle_input_QParams(
+                    inputs,
+                    given_inputs_QParams,
+                    "inputs1_QParams",
+                    "prev_inputs1_QParams",
+                )
 
         max_input = inputs.max(dim=-1, keepdim=True)[0]
         inputs = inputs - max_input

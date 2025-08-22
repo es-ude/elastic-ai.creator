@@ -2,10 +2,12 @@ import torch
 import torch.nn.functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
+from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.MPQ.relu.design import ReLU as ReLUDesign
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    MPQSupport,
     SimQuant,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -13,7 +15,7 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 )
 
 
-class ReLU(DesignCreatorModule):
+class ReLU(DesignCreatorModule, MPQSupport):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -23,6 +25,10 @@ class ReLU(DesignCreatorModule):
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+
+        self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
+        self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
         quant_bits_per_element = {}
@@ -52,9 +58,18 @@ class ReLU(DesignCreatorModule):
             work_library_name="work",
         )
 
+    def precompute(self) -> None:
+        self._precompute_requantizer_params()
+        self.precomputed = True
+
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "Precompute the model before running int_forward"
+
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
+        q_inputs = self._apply_requantizer(q_inputs, "inputs")
+
         zero_point = self.inputs_QParams.zero_point.to(q_inputs.device)
         q_outputs = torch.maximum(q_inputs, zero_point.clone().detach())
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -74,10 +89,12 @@ class ReLU(DesignCreatorModule):
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:
-                if given_inputs_QParams is None:
-                    self.inputs_QParams.update_quant_params(inputs)
-                else:
-                    self.inputs_QParams = given_inputs_QParams
+                self._handle_input_QParams(
+                    inputs,
+                    given_inputs_QParams,
+                    "inputs_QParams",
+                    "prev_inputs_QParams",
+                )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
 

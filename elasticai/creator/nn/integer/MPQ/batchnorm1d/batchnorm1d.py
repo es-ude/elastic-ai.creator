@@ -11,6 +11,7 @@ from elasticai.creator.nn.integer.MPQ.batchnorm1d.design import (
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    MPQSupport,
     SimQuant,
     SymmetricSignedQParams,
     scaling_M,
@@ -21,7 +22,7 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 )
 
 
-class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
+class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
     def __init__(self, **kwargs):
         super().__init__(
             kwargs.get("norm_dim"),
@@ -48,6 +49,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -163,14 +165,19 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
-
+        self._precompute_requantizer_params()
         self.precomputed = True
 
     def int_forward(
         self,
         q_inputs: torch.IntTensor,
     ) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "precompute should be called before int_forward"
+
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
+        q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
@@ -208,10 +215,12 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:
-                if given_inputs_QParams is None:
-                    self.inputs_QParams.update_quant_params(inputs)
-                else:
-                    self.inputs_QParams = given_inputs_QParams
+                self._handle_input_QParams(
+                    inputs,
+                    given_inputs_QParams,
+                    "inputs_QParams",
+                    "prev_inputs_QParams",
+                )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
 

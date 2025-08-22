@@ -55,7 +55,6 @@ class Encoder(nn.Module):
             name=self.name,
             quant_data_dir=self.quant_data_dir,
         )
-
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -78,6 +77,7 @@ class Encoder(nn.Module):
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+
         q_outputs = self.sequential.int_forward(q_inputs)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         if self.enable_error_analysis:

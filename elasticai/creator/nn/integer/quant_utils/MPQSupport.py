@@ -1,6 +1,5 @@
 import torch
 
-from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import scaling_M, simulate_bitshifting
 
 
