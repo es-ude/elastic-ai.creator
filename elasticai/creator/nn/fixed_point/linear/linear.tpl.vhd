@@ -77,10 +77,10 @@ architecture rtl of ${layer_name} is
     signal addr_b   : unsigned(Y_ADDR_WIDTH-1 downto 0) := (others => '0');
     signal addr_x   : unsigned(X_ADDR_WIDTH-1 downto 0) := (others => '0');
 
-    signal w_in, b_in           : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
-    signal fxp_x, fxp_w, fxp_b  : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
-    signal buf_x, buf_w, buf_b  : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
-    signal mac_y                : signed(2*DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal rom_p        : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
+    signal fxp_x, fxp_p : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal buf_x, buf_p : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal mac_y        : signed(2*DATA_WIDTH-1 downto 0) := (others=>'0');
     signal enable_mac, reset_mac, done_int : std_logic;
 
     -- simple solution for the output buffer
@@ -90,9 +90,8 @@ architecture rtl of ${layer_name} is
     attribute rom_style of y_ram    : signal is RESOURCE_OPTION;
 begin
     -- connecting signals to ports
-    fxp_w <= signed(w_in);
     fxp_x <= signed(x);
-    fxp_b <= signed(b_in);
+    fxp_p <= signed(rom_p);
 
     done <= done_int;
     x_address <= std_logic_vector(addr_x);
@@ -104,21 +103,18 @@ begin
         if rising_edge(clock) then
             if (enable_mac = '0') then
                 buf_x <= (others => '0');
-                buf_w <= (others => '0');
-                buf_b <= (others => '0');
+                buf_p <= (others => '0');
                 mac_y <= (others => '0');
             else
                 if (reset_mac = '1') then
                     buf_x <= (others => '0');
-                    buf_w <= (others => '0');
-                    buf_b <= (others => '0');
+                    buf_p <= (others => '0');
                     mac_y <= (others => '0');
-                    y_ram(to_integer(unsigned(addr_b))) <= std_logic_vector(FXP_ROUNDING(mac_y + buf_w * buf_x + SHIFT_LEFT(RESIZE(buf_b, 2*DATA_WIDTH), FRAC_WIDTH)));
+                    y_ram(to_integer(unsigned(addr_b))) <= std_logic_vector(FXP_ROUNDING(mac_y + buf_p * buf_x + SHIFT_LEFT(RESIZE(fxp_p, 2*DATA_WIDTH), FRAC_WIDTH)));
                 else
                     buf_x <= fxp_x;
-                    buf_w <= fxp_w;
-                    buf_b <= fxp_b;
-                    mac_y <= mac_y + (buf_w * buf_x);
+                    buf_p <= fxp_p;
+                    mac_y <= mac_y + (buf_p * buf_x);
                 end if;
             end if;
         end if;
@@ -136,6 +132,7 @@ begin
                 reset_mac <= '0';
             else
                 if (done_int <= '0') then
+                    addr_w <= addr_w + 1;
                     if (addr_x = IN_FEATURE_NUM-1) then
                         if (reset_mac = '0') then
                             reset_mac <= '1';
@@ -145,11 +142,9 @@ begin
                             addr_x <= (others => '0');
                             if (addr_b = OUT_FEATURE_NUM-1) then
                                 addr_b <= (others => '0');
-                                addr_w <= (others => '0');
                                 done_int <= '1';
                             else
                                 addr_b <= addr_b + 1;
-                                addr_w <= addr_w + 1;
                                 done_int <= '0';
                             end if;
                         end if;
@@ -157,12 +152,10 @@ begin
                         done_int <= '0';
                         addr_x <= addr_x + 1;
                         addr_b <= addr_b;
-                        addr_w <= addr_w + 1;
                     end if;
                 else
                     done_int <= '1';
                     addr_x <= (others => '0');
-                    addr_w <= (others => '0');
                     addr_b <= (others => '0');
                 end if;
             end if;
@@ -179,21 +172,12 @@ begin
         end if;
     end process y_reading;
 
-    -- Weights
-    rom_w : entity ${work_library_name}.${weights_rom_name}(rtl)
+    -- Model Params [w_00, w_01, ... w_0N, b_0, w_10, ... w_1N, ... w_MN]
+    rom_w : entity ${work_library_name}.${params_rom_name}(rtl)
     port map  (
         clk  => clock,
         en   => '1',
         addr => std_logic_vector(addr_w),
-        data => w_in
-    );
-
-    -- Bias
-    rom_b : entity ${work_library_name}.${bias_rom_name}(rtl)
-    port map  (
-        clk  => clock,
-        en   => '1',
-        addr => std_logic_vector(addr_b),
-        data => b_in
+        data => rom_p
     );
 end architecture rtl;

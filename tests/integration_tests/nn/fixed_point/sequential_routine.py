@@ -1,4 +1,5 @@
 from glob import glob
+from itertools import chain
 from os.path import exists
 from pathlib import Path
 
@@ -48,8 +49,9 @@ def routine_testing_sequential_module(
         testdata={
             "in": fxp.cut_as_integer(val_input).int().tolist(),
             "out": fxp.round_to_integer(val_output).int().tolist(),
-            "bias": bias_q,
-            "weights": np.array(weights_q).flatten().tolist(),
+            "params": list(
+                chain.from_iterable([a + [b] for a, b in zip(weights_q, bias_q)])
+            ),
         },
     )
 

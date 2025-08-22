@@ -4,7 +4,7 @@ from elasticai.creator.nn.fixed_point.number_converter import FXPParams
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
 )
-from elasticai.creator.testing.simulated_layer import SimulatedLayer
+from elasticai.creator.testing import SimulatedLayer
 
 from .design import MacDesign
 from .mactestbench import MacTestBench

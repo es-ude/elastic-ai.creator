@@ -9,8 +9,8 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
+from elasticai.creator.testing import Testbench
 from elasticai.creator.vhdl.design.ports import Port
-from elasticai.creator.testing.simulated_layer import Testbench
 
 
 class Conv1dDesignProtocol(Protocol):

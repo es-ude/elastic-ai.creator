@@ -110,7 +110,7 @@ depends_on = [
     "elasticai.creator.vhdl",
     "elasticai.creator.nn.design_creator_module",
     "elasticai.creator.file_generation",
-    "elasticai.creator.base_modules",
+    "elasticai.creator.base_modules", "elasticai.creator.testing",
 ]
 
 [[modules]]
@@ -193,6 +193,10 @@ depends_on = [
     'elasticai.creator.graph',
     'elasticai.creator.template',
 ]
+
+[[modules]]
+path = "elasticai.creator.testing"
+depends_on = ["elasticai.creator.file_generation"]
 
 [[modules]]
 path = "<root>"

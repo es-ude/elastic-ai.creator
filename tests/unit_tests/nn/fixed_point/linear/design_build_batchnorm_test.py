@@ -28,8 +28,7 @@ def test_saved_design_contains_needed_files(
 ) -> None:
     saved_files = save_design(batchnorm_linear_design)
     expected_files = {
-        "batchnorm_linear_w_rom.vhd",
-        "batchnorm_linear_b_rom.vhd",
+        "batchnorm_linear_rom.vhd",
         "batchnorm_linear.vhd",
     }
     actual_files = set(saved_files.keys())

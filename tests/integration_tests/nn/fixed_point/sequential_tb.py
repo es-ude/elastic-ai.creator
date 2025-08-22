@@ -80,8 +80,5 @@ async def layer_params_test(dut):
     dut.y_address.value = 0
     dut.x.value = 0
 
-    for rom_b, json_b in zip(dut_rom.rom_b.ROM.value, params["bias"]):
-        assert rom_b.signed_integer == json_b
-
-    for rom_w, json_w in zip(dut_rom.rom_w.ROM.value, params["weights"]):
+    for rom_w, json_w in zip(dut_rom.rom_w.ROM.value, params["params"]):
         assert rom_w.signed_integer == json_w
