@@ -10,10 +10,6 @@ from elasticai.creator.nn.integer.MPQ.scaleddotproductattention.design import (
     ScaledDotProductAttention as ScaledDotProductAttentionDesign,
 )
 from elasticai.creator.nn.integer.MPQ.softmax import SoftmaxLUT
-from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
-    GlobalMinMaxObserver,
-)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -28,9 +24,6 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         nhead = kwargs.get("nhead")
 
         self.name = kwargs.get("name")
-        self.quantizable_elements = ["inputs_q", "inputs_k", "inputs_v", "outputs"]
-        self.quant_bits_per_element = None
-
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
 
@@ -89,36 +82,26 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         )
         self.precomputed = False
 
-    def set_quant_bits_from_config(self, quant_configs):
-        quant_bits_per_element = {}
-        for element in self.quantizable_elements:
-            key = f"{self.name}.{element}"
-            quant_bits_per_element[element] = quant_configs.get(key)
-        self.quant_bits_per_element = quant_bits_per_element
-        self._init_element_Qparams()
+    @property
+    def inputsq_QParams(self):
+        return self.matrix_multi_score.inputs1_QParams
 
-    def _init_element_Qparams(self):
-        self.inputs_q_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["inputs_q"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.inputs_k_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["inputs_k"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.inputs_v_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["inputs_v"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["outputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
+    @property
+    def inputs_k_QParams(self):
+        return self.matrix_multi_score.inputs2_QParams
+
+    @property
+    def inputs_v_QParams(self):
+        return self.matrix_multi_att.inputs2_QParams
+
+    @property
+    def outputs_QParams(self):
+        return self.matrix_multi_att.outputs_QParams
 
     def create_design(self, name: str) -> ScaledDotProductAttentionDesign:
         return ScaledDotProductAttentionDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs_q"],  # TODO
+            data_width=self.matrix_multi_score["inputs1"],  # TODO
             matrix_multi_score=self.matrix_multi_score,
             softmax=self.softmax,
             matrix_multi_att=self.matrix_multi_att,
@@ -186,26 +169,11 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         given_inputs_v_QParams: object = None,
         enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if enable_simquant:
-            if self.training:
-                if given_inputs_q_QParams is not None:
-                    self.inputs_q_QParams = given_inputs_q_QParams
-                else:
-                    self.inputs_q_QParams.update_quant_params(q)
-                if given_inputs_k_QParams is not None:
-                    self.inputs_k_QParams = given_inputs_k_QParams
-                else:
-                    self.inputs_k_QParams.update_quant_params(k)
-                if given_inputs_v_QParams is not None:
-                    self.inputs_v_QParams = given_inputs_v_QParams
-                else:
-                    self.inputs_v_QParams.update_quant_params(v)
-
         scores = self.matrix_multi_score.forward(
             inputs1=q,
             inputs2=k,
-            given_inputs1_QParams=self.inputs_q_QParams,
-            given_inputs2_QParams=self.inputs_k_QParams,
+            given_inputs1_QParams=given_inputs_q_QParams,
+            given_inputs2_QParams=given_inputs_k_QParams,
             enable_simquant=enable_simquant,
         )
         att = self.softmax.forward(
@@ -217,16 +185,15 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             inputs1=att,
             inputs2=v,
             given_inputs1_QParams=self.softmax.outputs_QParams,
-            given_inputs2_QParams=self.inputs_v_QParams,
+            given_inputs2_QParams=given_inputs_v_QParams,
             enable_simquant=enable_simquant,
         )
         context = context.contiguous()
-        if enable_simquant:
-            self.outputs_QParams = self.matrix_multi_att.outputs_QParams
-            if self.enable_error_analysis:
-                save_quant_data(
-                    context,
-                    self.quant_data_dir,
-                    f"{self.name}_y",
-                )
+
+        if self.enable_error_analysis:
+            save_quant_data(
+                context,
+                self.quant_data_dir,
+                f"{self.name}_y",
+            )
         return context, att

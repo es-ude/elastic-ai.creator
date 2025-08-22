@@ -9,10 +9,6 @@ from elasticai.creator.nn.integer.MPQ.encoderlayer.design import (
 )
 from elasticai.creator.nn.integer.MPQ.ffn import FeedForwardNetwork
 from elasticai.creator.nn.integer.MPQ.mha import MultiHeadAttention
-from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
-    GlobalMinMaxObserver,
-)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -28,8 +24,6 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         nhead = kwargs.get("nhead")
 
         self.name = kwargs.get("name")
-        self.quantizable_elements = ["inputs", "outputs"]
-        self.quant_bits_per_element = None
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
 
@@ -111,30 +105,20 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             enable_error_analysis=self.enable_error_analysis,
             MPQ_strategy=self.MPQ_strategy,
         )
-
-    def set_quant_bits_from_config(self, quant_configs):
-        quant_bits_per_element = {}
-        for element in self.quantizable_elements:
-            key = f"{self.name}.{element}"
-            quant_bits_per_element[element] = quant_configs.get(key)
-        self.quant_bits_per_element = quant_bits_per_element
-        self._init_element_Qparams()
-
-    def _init_element_Qparams(self):
-        self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["inputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["outputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
         self.precomputed = False
+
+    @property
+    def inputs_QParams(self):
+        return self.mha.inputs_q_QParams
+
+    @property
+    def outputs_QParams(self):
+        return self.ffn.outputs_QParams
 
     def create_design(self, name: str) -> EncoderLayerDesign:
         return EncoderLayerDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            data_width=self.mha.q_linear["inputs"],  # TODO
             mha=self.mha,
             mha_add=self.mha_add,
             mha_norm=self.mha_norm,
@@ -203,26 +187,19 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         given_inputs_QParams: object = None,
         enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if enable_simquant:
-            if self.training:
-                if given_inputs_QParams is not None:
-                    self.inputs_QParams = given_inputs_QParams
-                else:
-                    self.inputs_QParams.update_quant_params(inputs)
-
         mha_outputs, mha_attns = self.mha.forward(
             q=inputs,
             k=inputs,
             v=inputs,
-            given_inputs_QParams=self.inputs_QParams,
+            given_inputs_QParams=given_inputs_QParams,
             enable_simquant=enable_simquant,
         )
 
         mha_add_outputs = self.mha_add.forward(
             inputs1=inputs,
             inputs2=mha_outputs,
-            given_inputs1_QParams=self.inputs_QParams,
-            given_inputs2_QParams=self.mha.outputs_QParams,
+            given_inputs1_QParams=given_inputs_QParams,
+            given_inputs2_QParams=self.mha.output_linear.outputs_QParams,
             enable_simquant=enable_simquant,
         )
 
@@ -241,7 +218,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             inputs1=mha_norm_outputs,
             inputs2=ffn_outputs,
             given_inputs1_QParams=self.mha_norm.outputs_QParams,
-            given_inputs2_QParams=self.ffn.outputs_QParams,
+            given_inputs2_QParams=self.ffn.fc2.outputs_QParams,
             enable_simquant=enable_simquant,
         )
         ffn_norm_outputs = self.ffn_norm.forward(
@@ -249,13 +226,12 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             given_inputs_QParams=self.ffn_add.outputs_QParams,
             enable_simquant=enable_simquant,
         )
-        if enable_simquant:
-            self.outputs_QParams = self.ffn_norm.outputs_QParams
-            if self.enable_error_analysis:
-                save_quant_data(
-                    ffn_norm_outputs,
-                    self.quant_data_dir,
-                    f"{self.name}_y",
-                )
+
+        if self.enable_error_analysis:
+            save_quant_data(
+                ffn_norm_outputs,
+                self.quant_data_dir,
+                f"{self.name}_y",
+            )
 
         return ffn_norm_outputs
