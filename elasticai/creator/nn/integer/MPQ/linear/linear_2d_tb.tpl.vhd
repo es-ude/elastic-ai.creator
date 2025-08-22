@@ -9,7 +9,8 @@ entity ${name}_tb is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
+        X_DATA_WIDTH : integer := ${x_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         NUM_DIMENSIONS : integer := ${num_dimensions};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features}
@@ -24,11 +25,11 @@ architecture rtl of ${name}_tb is
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
     signal x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(X_DATA_WIDTH - 1 downto 0);
     signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
-    type t_array_x is array (0 to IN_FEATURES * NUM_DIMENSIONS - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to IN_FEATURES * NUM_DIMENSIONS - 1) of std_logic_vector(X_DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process
@@ -92,7 +93,7 @@ begin
             while input_rd_cnt < NUM_DIMENSIONS * IN_FEATURES loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
-                x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             wait for C_CLK_PERIOD;

@@ -71,7 +71,9 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            x_data_width=self.quant_bits_per_element["inputs"],
+            w_data_width=self.quant_bits_per_element["weights"],
+            y_data_width=self.quant_bits_per_element["outputs"],
             in_features=self.in_features,
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,

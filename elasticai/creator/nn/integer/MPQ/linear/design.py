@@ -1,5 +1,3 @@
-from itertools import chain
-
 import numpy as np
 
 from elasticai.creator.file_generation.savable import Path
@@ -8,6 +6,7 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.nn.integer.ram.design import Ram
+from elasticai.creator.nn.integer.vhdl_test_automation import flatten_params
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
@@ -19,7 +18,9 @@ class Linear(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
+        x_data_width: int,
+        w_data_width: int,
+        y_data_width: int,
         in_features: int,
         out_features: int,
         weights: list[list[int]],
@@ -36,7 +37,11 @@ class Linear(Design):
     ) -> None:
         super().__init__(name=name)
 
-        self._data_width = data_width
+        self._x_data_width = x_data_width
+        self._w_data_width = w_data_width
+        self._b_data_width = (w_data_width + 1) + (x_data_width + 1)
+        self._y_data_width = y_data_width
+
         self._in_features = in_features
         self._out_features = out_features
         self._num_dimensions = num_dimensions
@@ -58,21 +63,16 @@ class Linear(Design):
         self._work_library_name = work_library_name
         self._resource_option = resource_option
 
-        if self._num_dimensions is None:
-            self._x_count = self._in_features
-            self._y_count = self._out_features
-        else:
-            self._x_count = self._in_features * self._num_dimensions
-            self._y_count = self._out_features * self._num_dimensions
-
+        self._x_count = self._in_features * self._num_dimensions
+        self._y_count = self._out_features * self._num_dimensions
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
 
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
+            x_width=self._x_data_width,
+            y_width=self._y_data_width,
             x_count=self._x_count,
             y_count=self._y_count,
         )
@@ -84,7 +84,10 @@ class Linear(Design):
             name=self.name,
             x_addr_width=str(self._x_addr_width),
             y_addr_width=str(self._y_addr_width),
-            data_width=str(self._data_width),
+            x_data_width=str(self._x_data_width),
+            w_data_width=str(self._w_data_width),
+            b_data_width=str(self._b_data_width),
+            y_data_width=str(self._y_data_width),
             m_q_data_width=str(self._m_q_data_width),
             in_features=str(self._in_features),
             out_features=str(self._out_features),
@@ -104,7 +107,8 @@ class Linear(Design):
             name=self.name,
             x_addr_width=str(self._x_addr_width),
             y_addr_width=str(self._y_addr_width),
-            data_width=str(self._data_width),
+            x_data_width=str(self._x_data_width),
+            y_data_width=str(self._y_data_width),
             in_features=str(self._in_features),
             out_features=str(self._out_features),
             work_library_name=self._work_library_name,
@@ -119,10 +123,6 @@ class Linear(Design):
         template_parameters["num_dimensions"] = str(self._num_dimensions)
         test_template_parameters["num_dimensions"] = str(self._num_dimensions)
 
-        print(f"---------{self.name}---------")
-        print("file_name:", file_name)
-        print("test_file_name:", test_file_name)
-
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name=file_name,
@@ -132,14 +132,14 @@ class Linear(Design):
 
         rom_weights = Rom(
             name=rom_name["weights"],
-            data_width=self._data_width,
-            values_as_integers=_flatten_params(self._weights),
+            data_width=self._w_data_width,
+            values_as_integers=flatten_params(self._weights),
         )
         rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
         rom_bias = Rom(
             name=rom_name["bias"],
-            data_width=(self._data_width + 1) * 2,
+            data_width=self._b_data_width,
             values_as_integers=self._bias,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
@@ -155,7 +155,3 @@ class Linear(Design):
         destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
             template_test
         )
-
-
-def _flatten_params(params: list[list[int]]) -> list[int]:
-    return list(chain(*params))
