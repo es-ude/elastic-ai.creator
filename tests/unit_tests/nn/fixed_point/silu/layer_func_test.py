@@ -1,7 +1,8 @@
+from os import environ
+
 import pytest
 import torch
 
-from os import environ
 from elasticai.creator.nn import fixed_point as nn_creator
 from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 
