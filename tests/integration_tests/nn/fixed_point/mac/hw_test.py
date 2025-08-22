@@ -3,7 +3,7 @@ import torch
 
 from elasticai.creator.nn.fixed_point.mac.layer import MacLayer
 from elasticai.creator.nn.fixed_point.number_converter import FXPParams
-from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
+from elasticai.creator.testing.ghdl_simulation import GHDLSimulator
 
 integer_test_data = [
     (FXPParams(4, 0), x1, x2)

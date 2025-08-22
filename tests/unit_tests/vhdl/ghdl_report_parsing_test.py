@@ -1,4 +1,4 @@
-from elasticai.creator.vhdl.ghdl_report_parsing import parse_report
+from elasticai.creator.testing.ghdl_report_parsing import parse_report
 
 
 def test_parse_ghdl_simulation_results_one_liner():

@@ -3,7 +3,6 @@ from typing import Any, cast
 from elasticai.creator.base_modules.linear import Linear as LinearBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
-from elasticai.creator.nn.fixed_point.linear.testbench import LinearTestbench
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
 from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
     FixedPointConfig,
@@ -51,6 +50,3 @@ class Linear(DesignCreatorModule, LinearBase):
             bias=q_bias,
             name=name,
         )
-
-    def create_testbench(self, name: str, uut: LinearDesign) -> LinearTestbench:
-        return LinearTestbench(name, uut)
