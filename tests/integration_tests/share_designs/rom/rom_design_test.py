@@ -8,7 +8,7 @@ from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from elasticai.creator.testing import (
-    build_report_folder_and_testpattern,
+    build_report_folder_and_testdata,
     run_cocotb_sim,
 )
 from elasticai.creator.vhdl.shared_designs.rom.design import Rom
@@ -40,9 +40,9 @@ def test_build_test_rom(
         .tolist()
     )
 
-    output_dir = build_report_folder_and_testpattern(
+    output_dir = build_report_folder_and_testdata(
         dut_name=file_name,
-        testpattern={
+        testdata={
             "data": val_input,
         },
     )
@@ -54,12 +54,12 @@ def test_build_test_rom(
         destination
     )
     assert exists(output_dir / f"{file_name}.vhd")
-    assert exists(output_dir / f"{file_name}.json".lower())
+    assert exists(output_dir / "testdata.json")
 
     # Prepare cocotb runner and save waveforms
     run_cocotb_sim(
         src_files=[output_dir / f"{file_name}.vhd"],
         top_module_name=file_name,
         cocotb_test_module="tests.integration_tests.share_designs.rom.rom_tb",
-        waveform_save_dest=str(output_dir),
+        waveform_save_dst=str(output_dir),
     )

@@ -2,12 +2,12 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-from elasticai.creator.testing.cocotb_testpattern import read_testpattern
+from elasticai.creator.testing.cocotb_prepare import read_testdata
 
 
 @cocotb.test()
 async def precomputed_test(dut):
-    data = read_testpattern(dut._name, "")
+    data = read_testdata(dut._name)
     clock_period_ns = 10
     dut.enable.value = 1  # Has no impact
     dut.clock.value = 0  # has no impact
@@ -33,6 +33,5 @@ async def precomputed_test(dut):
             await RisingEdge(dut.clock)
 
     accuracy = sum(chck) / len(chck)
-    print(f"Accuracy of {accuracy * 100:.2f}%")
     limit = 0.65 if "hardsigmoid" in dut._name else 0.98
-    assert accuracy >= limit
+    assert accuracy >= limit, f"Accuracy of {accuracy * 100:.2f}%"

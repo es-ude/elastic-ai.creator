@@ -4,16 +4,15 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge, RisingEdge, Timer
 
-from elasticai.creator.testing.cocotb_testpattern import read_testpattern
+from elasticai.creator.testing.cocotb_prepare import read_testdata
 
 
 @cocotb.test()
 async def layer_computation_test(dut):
-    data = read_testpattern(dut._name, "")
+    data = read_testdata(dut._name)
     num_feat_output = len(data["out"][-1])
     clock_period_ns = 10
 
-    print(dir(dut))
     dut.enable.value = 0  # Has no impact
     dut.clock.value = 0  # has no impact
     dut.x_address.value = 0
@@ -65,18 +64,16 @@ async def layer_computation_test(dut):
             await RisingEdge(dut.clock)
 
     accuracy = sum(chck_test) / len(chck_test)
-    print(f"Accuracy of {accuracy * 100:.2f}%")
     limit = 0.9
-    assert accuracy >= limit
+    assert accuracy >= limit, f"Accuracy of {accuracy * 100:.2f}%"
 
 
 @cocotb.test()
 async def layer_params_test(dut):
     layer_name = fnmatch.filter(dir(dut), "i_*linear_0")
     dut_rom = getattr(dut, layer_name[0])
-    print(layer_name)
 
-    params = read_testpattern(dut._name, "")
+    params = read_testdata(dut._name)
     dut.enable.value = 0
     dut.clock.value = 0
     dut.x_address.value = 0

@@ -17,7 +17,7 @@ def test_to_vhdl_binary_string_raises_error_if_value_not_representable(
     number: int, number_of_bits: int
 ) -> None:
     with pytest.raises(ValueError):
-        _ = to_vhdl_binary_string(-8, 3)
+        _ = to_vhdl_binary_string(number, number_of_bits)
 
 
 @pytest.mark.parametrize(

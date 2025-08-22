@@ -2,7 +2,6 @@ from collections.abc import Iterable
 from functools import partial
 from os import environ
 from pathlib import Path
-from shutil import rmtree
 from typing import Any
 
 from cocotb.runner import get_runner  # type: ignore
@@ -56,7 +55,7 @@ def run_cocotb_sim_for_src_dir(
         params=params,
         timescale=timescale,
         en_debug_mode=en_debug_mode,
-        waveform_save_dest=waveform_save_dst,
+        waveform_save_dst=waveform_save_dst,
     )
 
 
@@ -76,7 +75,7 @@ def run_cocotb_sim(
     params: dict[str, Any] = {},
     timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
-    waveform_save_dest: str = "",
+    waveform_save_dst: str = "",
 ) -> Path:
     """Function for running Verilog/VHDL Simulation using COCOTB environment
     :param src_files:           List with source files of each used Verilog/VHDL file
@@ -86,7 +85,7 @@ def run_cocotb_sim(
     :param params:              Dictionary of parameters to pass to the module [key: value, ...] - value will be ignored
     :param timescale:           Tuple with Timescale value for simulation (step, accuracy)
     :param en_debug_mode:       Enable debug mode
-    :param waveform_save_dest:  Path to the destination folder for saving waveform file
+    :param waveform_save_dst:   Path to the destination folder for saving waveform file
     :return:                    Path to folder which includes waveform file [Default: simulation output folder]
     """
     design_sources = [Path(m) for m in src_files]
@@ -111,15 +110,11 @@ def run_cocotb_sim(
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
 
     build_sim_dir = find_project_root() / "build_sim"
-    try:
-        rmtree(build_sim_dir)
-    except FileNotFoundError:
-        pass
     build_sim_dir.mkdir(exist_ok=True, parents=True)
     build_waveform_dir = (
         build_sim_dir.absolute()
-        if waveform_save_dest == ""
-        else Path(waveform_save_dest).absolute()
+        if waveform_save_dst == ""
+        else Path(waveform_save_dst).absolute()
     )
     build_waveform_dir.mkdir(exist_ok=True, parents=True)
     if language == "verilog":
