@@ -2,12 +2,12 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-from elasticai.creator.testing.cocotb_testpattern import read_testpattern
+from elasticai.creator.testing.cocotb_prepare import read_testdata
 
 
 @cocotb.test()
 async def rom_call_test(dut):
-    data = read_testpattern(dut._name, "")
+    data = read_testdata(dut._name)
     clock_period_ns = 10
 
     dut.en.value = 0
@@ -31,7 +31,7 @@ async def rom_call_test(dut):
 
 @cocotb.test()
 async def rom_content_read(dut):
-    data = read_testpattern(dut._name, "")
+    data = read_testdata(dut._name)
     dut.en.value = 0
     dut.clk.value = 0
     dut.addr.value = 0

@@ -10,7 +10,7 @@ from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from elasticai.creator.testing import (
-    build_report_folder_and_testpattern,
+    build_report_folder_and_testdata,
     run_cocotb_sim,
 )
 
@@ -22,7 +22,6 @@ def routine_testing_sequential_module(
     file_name: str,
     check_quant: bool = True,
 ) -> None:
-    # Build pattern and write into file
     val_input = fxp.as_rational(
         torch.randint(
             low=-(2 ** (fxp.total_bits - 2)),
@@ -30,7 +29,7 @@ def routine_testing_sequential_module(
             size=(20, feat_in),
         )
     )
-    # --- Checking quantization scheme
+
     weights_q, bias_q = dut[0].get_params_quant()
     if check_quant:
         weights_f, bias_f = dut[0].get_params()
@@ -41,14 +40,13 @@ def routine_testing_sequential_module(
         error_b = np.array(bias_f) - np.array(bias_q) * fxp.minimum_step_as_rational
         assert np.all(np.abs(error_b) < fxp.minimum_step_as_rational)
 
-    # --- Build testpattern data and model params
     dut.eval()
     with torch.no_grad():
         val_output = dut(val_input)
-    output_dir = build_report_folder_and_testpattern(
+    output_dir = build_report_folder_and_testdata(
         dut_name=file_name,
         file_appendix="",
-        testpattern={
+        testdata={
             "in": fxp.cut_as_integer(val_input).int().tolist(),
             "out": fxp.round_to_integer(val_output).int().tolist(),
             "bias": bias_q,
@@ -56,7 +54,6 @@ def routine_testing_sequential_module(
         },
     )
 
-    # --- Build design and check if files are available
     output_dir_sub = Path(*output_dir.parts[len(find_project_root().parts) :])
     destination = OnDiskPath(str(output_dir_sub), parent=find_project_root())
     dut.create_design(file_name).save_to(destination)
@@ -72,5 +69,5 @@ def routine_testing_sequential_module(
         src_files=src_files,
         top_module_name=file_name,
         cocotb_test_module="tests.integration_tests.nn.fixed_point.sequential_tb",
-        waveform_save_dest=str(output_dir),
+        waveform_save_dst=str(output_dir),
     )
