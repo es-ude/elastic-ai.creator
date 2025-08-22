@@ -34,6 +34,8 @@ class Encoder(nn.Module):
 
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
+
         self.encoder_layers = nn.ModuleList(
             [
                 EncoderLayer(
@@ -45,6 +47,7 @@ class Encoder(nn.Module):
                     quant_data_dir=self.quant_data_dir,
                     device=self.device,
                     enable_error_analysis=self.enable_error_analysis,
+                    MPQ_strategy=self.MPQ_strategy,
                 )
                 for i in range(num_enc_layers)
             ]

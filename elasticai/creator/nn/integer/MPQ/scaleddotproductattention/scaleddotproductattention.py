@@ -33,7 +33,9 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
+
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
 
         self.matrix_multi_score = MatrixMulti(
             name=self.name + "_matmul_score",
@@ -51,6 +53,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             addtion_scale=1 / np.sqrt(d_model),
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.softmax = SoftmaxLUT(
@@ -63,6 +66,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.matrix_multi_att = MatrixMulti(
@@ -81,6 +85,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             addtion_scale=None,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
         self.precomputed = False
 

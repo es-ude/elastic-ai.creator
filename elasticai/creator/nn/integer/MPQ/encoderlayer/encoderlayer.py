@@ -34,6 +34,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         self.device = kwargs.get("device")
 
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
 
         mha_name = self.name + "_mha"
         ffn_name = self.name + "_ffn"
@@ -46,6 +47,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
         self.mha_add = Addition(
             name=mha_name + "_add",
@@ -54,6 +56,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.mha_norm = BatchNorm1d(
@@ -69,6 +72,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.ffn = FeedForwardNetwork(
@@ -79,6 +83,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.ffn_add = Addition(
@@ -88,6 +93,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.ffn_norm = BatchNorm1d(
@@ -103,6 +109,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
     def set_quant_bits_from_config(self, quant_configs):

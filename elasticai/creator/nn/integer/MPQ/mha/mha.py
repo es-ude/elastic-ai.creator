@@ -31,6 +31,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.device = kwargs.get("device")
 
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
 
         self.q_linear = Linear(
             name=self.name + "_q_linear",
@@ -41,6 +42,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.k_linear = Linear(
@@ -52,6 +54,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
         self.v_linear = Linear(
             name=self.name + "_v_linear",
@@ -62,6 +65,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.inner_attn_module = ScaledDotProductAttention(
@@ -71,6 +75,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             d_model=d_model,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
         self.output_linear = Linear(
             name=self.name + "_output_linear",
@@ -81,6 +86,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.precomputed = False

@@ -29,6 +29,8 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
+
         self.fc1 = Linear(
             name=self.name + "_fc1",
             in_features=d_model,
@@ -38,6 +40,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.relu = ReLU(
@@ -45,6 +48,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.fc2 = Linear(
@@ -56,6 +60,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.precomputed = False
@@ -91,6 +96,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
     def precompute(self):
         assert not self.training, "int_forward should be called in eval mode"
         self.fc1.precompute()
+        self.relu.precompute()
         self.fc2.precompute()
         self.precomputed = True
 
