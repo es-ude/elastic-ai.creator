@@ -30,8 +30,6 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
 
-        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
-        self.unroll_factor = kwargs.get("unroll_factor", 1)
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.math_ops = MathOperations()
@@ -63,7 +61,9 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AdditionDesign:
         return AdditionDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs1"],  # TODO
+            x_1_data_width=self.quant_bits_per_element["inputs1"],
+            x_2_data_width=self.quant_bits_per_element["inputs2"],
+            y_data_width=self.quant_bits_per_element["outputs"],
             num_features=self.num_features,
             num_dimensions=self.num_dimensions,
             m_q_1=self.scale_factor_m_q_1.item(),
@@ -75,8 +75,6 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
-            use_pipeline_template=self.use_pipeline_template,
-            unroll_factor=self.unroll_factor,
         )
 
     def precompute(self) -> None:

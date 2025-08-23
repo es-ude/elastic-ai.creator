@@ -7,7 +7,9 @@ entity ${name} is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
+        X_1_DATA_WIDTH : integer := ${x_1_data_width};
+        X_2_DATA_WIDTH : integer := ${x_2_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         NUM_FEATURES : integer := ${num_features};
         NUM_DIMENSIONS : integer := ${num_dimensions};
         M_Q_1 : integer := ${m_q_1};
@@ -26,24 +28,24 @@ entity ${name} is
         x_1_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
         x_2_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        x_1 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        x_2 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x_1 : in std_logic_vector(X_1_DATA_WIDTH - 1 downto 0);
+        x_2 : in std_logic_vector(X_2_DATA_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
     function shift_with_rounding(
-        product : in signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        product : in signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
         scaler_m_shift : in integer
     ) return signed is
-        variable shifted : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable shifted : signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
         variable round_bit : std_logic;
-        variable temp_result : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
-        variable result : signed(DATA_WIDTH+1 downto 0);
+        variable temp_result : signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable result : signed(X_1_DATA_WIDTH + 1 downto 0);
         -- For DATA_WIDTH + 2 bits signed: range is -(2**(DATA_WIDTH+1)) to (2**(DATA_WIDTH+1) - 1)
-        constant MAX_VAL : integer := 2**(DATA_WIDTH+1) - 1;
-        constant MIN_VAL : integer := -(2**(DATA_WIDTH+1));
+        constant MAX_VAL : integer := 2**(Y_DATA_WIDTH+1) - 1;
+        constant MIN_VAL : integer := -(2**(Y_DATA_WIDTH+1));
     begin
         round_bit := product(scaler_m_shift - 1);
         shifted := shift_right(product, scaler_m_shift);
@@ -55,11 +57,11 @@ architecture rtl of ${name} is
 
         -- Saturate/clamp the result
         if temp_result > MAX_VAL then
-            result := to_signed(MAX_VAL, DATA_WIDTH + 2);
+            result := to_signed(MAX_VAL, Y_DATA_WIDTH + 2);
         elsif temp_result < MIN_VAL then
-            result := to_signed(MIN_VAL, DATA_WIDTH + 2);
+            result := to_signed(MIN_VAL, Y_DATA_WIDTH + 2);
         else
-            result := resize(temp_result, DATA_WIDTH + 2);
+            result := resize(temp_result, Y_DATA_WIDTH + 2);
         end if;
 
         return result;
@@ -72,22 +74,22 @@ architecture rtl of ${name} is
     signal layer_state : t_layer_state;
     type t_add_state is (s_stop, s_init, s_preload, s_sub, s_scaling_1, s_scaling_2, s_sum, s_output, s_done);
     signal add_state : t_add_state;
-    signal x_1_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_1_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal x_1_int : signed(X_1_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_1_sub_z : signed(X_1_DATA_WIDTH downto 0) := (others=>'0');
 
-    signal x_2_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_2_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal x_2_int : signed(X_2_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_2_sub_z : signed(X_2_DATA_WIDTH downto 0) := (others=>'0');
 
-    signal x_1_product_to_scaling : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_2_product_to_scaling : signed(DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_1_product_to_scaling : signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_2_product_to_scaling : signed(X_2_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0) := (others=>'0');
 
-    signal x_1_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
-    signal x_2_scaled : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
+    signal x_1_scaled : signed(Y_DATA_WIDTH + 1 downto 0) := (others=>'0');
+    signal x_2_scaled : signed(Y_DATA_WIDTH + 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_store_addr : integer range 0 to NUM_FEATURES * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal sum : signed(DATA_WIDTH + 1 downto 0) := (others=>'0');
+    signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
+    signal sum : signed(Y_DATA_WIDTH + 1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     x_1_int <= signed(x_1);
@@ -115,7 +117,7 @@ begin
     end process fsm;
     add : process( clock, layer_state )
         variable input_idx : integer  range 0 to NUM_FEATURES * NUM_DIMENSIONS-1 := 0;
-        variable var_y_store : signed(DATA_WIDTH + 1 downto 0);
+        variable var_y_store : signed(Y_DATA_WIDTH + 1 downto 0);
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
@@ -169,7 +171,7 @@ begin
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
-        RAM_WIDTH => DATA_WIDTH,
+        RAM_WIDTH => Y_DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,
