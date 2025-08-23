@@ -70,7 +70,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
             denominator_out_data_width = self.quant_bits_per_element["inputs"] * 2
         return SoftmaxLUTDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            x_data_width=self.quant_bits_per_element["inputs"],
+            y_data_width=self.quant_bits_per_element["outputs"],
             dim_a=self.dim_a,
             dim_b=self.dim_b,
             dim_c=self.dim_c,
