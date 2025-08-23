@@ -69,8 +69,9 @@ class Addition(Design):
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
+            x_1_width=self._x_1_data_width,
+            x_2_width=self._x_2_data_width,
+            y_width=self._y_data_width,
             x_count=self._x_count,
             y_count=self._y_count,
         )
