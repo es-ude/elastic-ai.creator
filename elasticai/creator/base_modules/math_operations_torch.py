@@ -10,10 +10,10 @@ class TorchMathOperations(LinearOps, Conv1dOps, LSTMOps):
         return a
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return a + b
+        return torch.add(a, b)
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return a * b
+        return torch.mul(a, b)
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return torch.matmul(a, b)
