@@ -7,7 +7,10 @@ entity ${name} is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
+        X_DATA_WIDTH : integer := ${x_data_width};
+        W_DATA_WIDTH : integer := ${w_data_width};
+        B_DATA_WIDTH : integer := ${b_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         NUM_DIMENSIONS : integer := ${num_dimensions};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features};
@@ -24,20 +27,20 @@ entity ${name} is
         enable : in std_logic;
         clock  : in std_logic;
         x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x   : in std_logic_vector(X_DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
-    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    constant MACC_OUT_WIDTH : integer := (X_DATA_WIDTH+1)+(W_DATA_WIDTH+1) + 1;
     function multiply_accumulate(
-                    w : in signed(DATA_WIDTH downto 0);
-                    x_in : in signed(DATA_WIDTH downto 0);
+                    w : in signed(W_DATA_WIDTH downto 0);
+                    x_in : in signed(X_DATA_WIDTH downto 0);
                     y_out : in signed(MACC_OUT_WIDTH - 1 downto 0)
             ) return signed is
-        variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+        variable TMP : signed((X_DATA_WIDTH+1)+(W_DATA_WIDTH+1) - 1 downto 0) := (others=>'0');
     begin
         TMP := w * x_in;
         return TMP + y_out;
@@ -62,9 +65,9 @@ architecture rtl of ${name} is
             TMP_3 := TMP_2 + 1;
         end if;
         if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
+            return -resize(TMP_3, Y_DATA_WIDTH + 1);
         else
-            return resize(TMP_3, DATA_WIDTH + 1);
+            return resize(TMP_3, Y_DATA_WIDTH + 1);
         end if;
     end function;
     function log2(val : INTEGER) return natural is
@@ -85,20 +88,24 @@ architecture rtl of ${name} is
     signal layer_state : t_layer_state;
     type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling, s_output, s_done);
     signal mac_state : t_mac_state;
-    signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+
+    signal x_int : signed(X_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_sub_z : signed(X_DATA_WIDTH downto 0) := (others=>'0');
+
     signal w_addr : std_logic_vector(log2(OUT_FEATURES)-1 downto 0) := (others=>'0');
-    signal w_in : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal w_int: signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal w_in : std_logic_vector(W_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal w_int: signed(W_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal w_sub_z : signed(W_DATA_WIDTH downto 0) := (others=>'0');
+
     signal b_addr : std_logic_vector(log2(OUT_FEATURES)-1 downto 0) := (others=>'0');
-    signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
-    signal b_int : signed(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal b_in : std_logic_vector(2 * (B_DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal b_int : signed(2 * (B_DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+
     signal y_store_en : std_logic;
-    signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal y_scaled : signed(Y_DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal mac_sum : signed(MACC_OUT_WIDTH-1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
@@ -134,8 +141,8 @@ begin
         variable bias_idx : integer range 0 to OUT_FEATURES - 1 := 0;
         variable output_idx : integer  range 0 to OUT_FEATURES * NUM_DIMENSIONS - 1 := 0;
         variable var_b_add_z_b : integer;
-        variable var_product : signed(DATA_WIDTH - 1 downto 0);
-        variable var_y_store : signed(DATA_WIDTH downto 0);
+        variable var_product : signed(Y_DATA_WIDTH - 1 downto 0);
+        variable var_y_store : signed(Y_DATA_WIDTH downto 0);
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
@@ -205,7 +212,7 @@ begin
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
-        RAM_WIDTH => DATA_WIDTH,
+        RAM_WIDTH => Y_DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,

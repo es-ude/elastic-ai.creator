@@ -85,7 +85,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
     def create_design(self, name: str) -> BatchNorm1dDesign:
         return BatchNorm1dDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            x_data_width=self.quant_bits_per_element["inputs"],
+            w_data_width=self.quant_bits_per_element["weights"],
+            y_data_width=self.quant_bits_per_element["outputs"],
             num_dimensions=self.num_dimensions,
             in_features=self.in_features,
             out_features=self.out_features,
