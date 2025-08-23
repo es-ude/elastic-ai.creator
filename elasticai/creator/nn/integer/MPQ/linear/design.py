@@ -91,6 +91,7 @@ class Linear(Design):
             m_q_data_width=str(self._m_q_data_width),
             in_features=str(self._in_features),
             out_features=str(self._out_features),
+            num_dimensions=str(self._num_dimensions),
             z_x=str(self._z_x),
             z_w=str(self._z_w),
             z_b=str(self._z_b),
@@ -109,8 +110,8 @@ class Linear(Design):
             y_addr_width=str(self._y_addr_width),
             x_data_width=str(self._x_data_width),
             y_data_width=str(self._y_data_width),
-            in_features=str(self._in_features),
-            out_features=str(self._out_features),
+            x_count=str(self._x_count),
+            y_count=str(self._y_count),
             work_library_name=self._work_library_name,
         )
 
@@ -120,8 +121,6 @@ class Linear(Design):
             else "linear_2d.tpl.vhd"
         )
         test_file_name = "linear_2d_tb.tpl.vhd"
-        template_parameters["num_dimensions"] = str(self._num_dimensions)
-        test_template_parameters["num_dimensions"] = str(self._num_dimensions)
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
