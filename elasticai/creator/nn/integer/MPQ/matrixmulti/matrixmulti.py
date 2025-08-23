@@ -74,7 +74,9 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         return MatrixMultiDesign(
             name=name,
             is_score_mode="true" if self.operation_mode == "score" else "false",
-            data_width=self.quant_bits_per_element["inputs1"],  # TODO
+            x_1_data_width=self.quant_bits_per_element["inputs1"],
+            x_2_data_width=self.quant_bits_per_element["inputs2"],
+            y_data_width=self.quant_bits_per_element["outputs"],
             x_1_dim_a=self.x_1_dim_a,
             x_1_dim_b=self.x_1_dim_b,
             x_1_dim_c=self.x_1_dim_c,
