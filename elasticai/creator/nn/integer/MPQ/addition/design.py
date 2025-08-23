@@ -116,8 +116,8 @@ class Addition(Design):
                 x_1_data_width=str(self._x_1_data_width),
                 x_2_data_width=str(self._x_2_data_width),
                 y_data_width=str(self._y_data_width),
-                num_features=str(self._num_features),
-                num_dimensions=str(self._num_dimensions),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )
