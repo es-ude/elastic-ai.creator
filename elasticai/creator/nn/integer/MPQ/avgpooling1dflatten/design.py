@@ -105,10 +105,8 @@ class AVGPooling1dFlatten(Design):
                 y_addr_width=str(self._y_addr_width),
                 x_data_width=str(self._x_data_width),
                 y_data_width=str(self._y_data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                in_num_dimensions=str(self._in_num_dimensions),
-                out_num_dimensions=str(self._out_num_dimensions),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )
