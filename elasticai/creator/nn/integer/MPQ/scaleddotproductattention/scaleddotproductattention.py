@@ -101,13 +101,10 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> ScaledDotProductAttentionDesign:
         return ScaledDotProductAttentionDesign(
             name=name,
-            data_width=self.matrix_multi_score.quant_bits_per_element[
-                "inputs1"
-            ],  # TODO
+            work_library_name="work",
             matrix_multi_score=self.matrix_multi_score,
             softmax=self.softmax,
             matrix_multi_att=self.matrix_multi_att,
-            work_library_name="work",
         )
 
     def _save_quant_data(self, tensor, file_dir: Path, file_name: str):

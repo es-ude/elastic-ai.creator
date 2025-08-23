@@ -3,7 +3,7 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
-from elasticai.creator.nn.integer.matrixmulti.design import (
+from elasticai.creator.nn.integer.MPQ.matrixmulti.design import (
     MatrixMulti as MatrixMultiDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
