@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator.base_modules.torch_math_operations import TorchMathOperations
+from elasticai.creator.base_modules.math_operations_torch import TorchMathOperations
 from tests.tensor_test_case import TensorTestCase
 
 
