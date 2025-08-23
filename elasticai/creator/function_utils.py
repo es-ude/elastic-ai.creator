@@ -154,7 +154,3 @@ class KeyedFunctionDispatcher(Generic[Tin, Tout]):
 
     def __call__(self, arg: Tin) -> Tout:
         return self.call(arg)
-
-
-class FunctionRegistry(KeyedFunctionDispatcher):
-    """DEPRECATED: use the MultiArgDispatcher instead!"""
