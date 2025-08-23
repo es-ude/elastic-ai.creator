@@ -12,7 +12,6 @@ class MHA(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
         q_linear: object,
         k_linear: object,
         v_linear: object,
@@ -22,52 +21,60 @@ class MHA(Design):
     ) -> None:
         super().__init__(name=name)
 
-        self._data_width = data_width
-        self._q_linear = q_linear
-        self._k_linear = k_linear
-        self._v_linear = v_linear
-        self._inner_attn_module = inner_attn_module
-        self._output_linear = output_linear
-
         self._work_library_name = work_library_name
+        self._q_linear_name = q_linear.name
+        self._k_linear_name = k_linear.name
+        self._v_linear_name = v_linear.name
+        self._inner_attn_module_name = inner_attn_module.name
+        self._output_linear_name = output_linear.name
 
-        self.q_linear_design = self._q_linear.create_design(name=self._q_linear.name)
-        self.k_linear_design = self._k_linear.create_design(name=self._k_linear.name)
-        self.v_linear_design = self._v_linear.create_design(name=self._v_linear.name)
-        self.inner_attn_module_design = self._inner_attn_module.create_design(
-            name=self._inner_attn_module.name
+        self._q_linear_design = q_linear.create_design(name=self._q_linear_name)
+        self._k_linear_design = k_linear.create_design(name=self._k_linear_name)
+        self._v_linear_design = v_linear.create_design(name=self._v_linear_name)
+        self._inner_attn_module_design = inner_attn_module.create_design(
+            name=self._inner_attn_module_name
         )
-        self.output_linear_design = self._output_linear.create_design(
-            name=self._output_linear.name
+        self.output_linear_design = output_linear.create_design(
+            name=self._output_linear_name
         )
 
-        self._x_addr_width = self.q_linear_design._x_addr_width
-        self._num_dimensions = self.q_linear_design._num_dimensions
-        self._in_features = self.q_linear_design._in_features
+        self._x_1_data_width = self._q_linear_design._x_data_width
+        self._x_2_data_width = self._k_linear_design._x_data_width
+        self._x_3_data_width = self._v_linear_design._x_data_width
+        self._y_data_width = self.output_linear_design._y_data_width
+
+        self._x_1_addr_width = self._q_linear_design._x_addr_width
+        self._x_2_addr_width = self._k_linear_design._x_addr_width
+        self._x_3_addr_width = self._v_linear_design._x_addr_width
         self._y_addr_width = self.output_linear_design._y_addr_width
-        self._out_features = self.output_linear_design._out_features
 
-        self._x_count = self.q_linear_design._x_count
+        self._x_1_count = self._q_linear_design._x_count
+        self._x_2_count = self._k_linear_design._x_count
+        self._x_3_count = self._v_linear_design._x_count
         self._y_count = self.output_linear_design._y_count
 
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
-            x_count=self.q_linear_design._x_count,
-            y_count=self.output_linear_design._y_count,
+            x_1_width=self._x_1_data_width,
+            x_2_width=self._x_2_data_width,
+            x_3_width=self._x_3_data_width,
+            y_width=self._y_data_width,
+            x_1_count=self._x_1_count,
+            x_2_count=self._x_2_count,
+            x_3_count=self._x_3_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
-        self.q_linear_design.save_to(destination.create_subpath(self._q_linear.name))
-        self.k_linear_design.save_to(destination.create_subpath(self._k_linear.name))
-        self.v_linear_design.save_to(destination.create_subpath(self._v_linear.name))
+        self._q_linear_design.save_to(destination.create_subpath(self._q_linear_name))
+        self._k_linear_design.save_to(destination.create_subpath(self._k_linear_name))
+        self._v_linear_design.save_to(destination.create_subpath(self._v_linear_name))
         self.inner_attn_module_design.save_to(
-            destination.create_subpath(self._inner_attn_module.name)
+            destination.create_subpath(self._inner_attn_module_name)
         )
         self.output_linear_design.save_to(
-            destination.create_subpath(self._output_linear.name)
+            destination.create_subpath(self._output_linear_name)
         )
 
         template = InProjectTemplate(
@@ -75,22 +82,51 @@ class MHA(Design):
             file_name="mha.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                q_linear_name=self._q_linear.name,
-                k_linear_name=self._k_linear.name,
-                v_linear_name=self._v_linear.name,
-                data_width=str(self._data_width),
-                inner_attn_module_name=self._inner_attn_module.name,
-                output_linear_name=self._output_linear.name,
-                q_linear_x_addr_width=str(self.q_linear_design._x_addr_width),
-                k_linear_x_addr_width=str(self.k_linear_design._x_addr_width),
-                v_linear_x_addr_width=str(self.v_linear_design._x_addr_width),
-                q_linear_y_addr_width=str(self.q_linear_design._y_addr_width),
-                k_linear_y_addr_width=str(self.k_linear_design._y_addr_width),
-                v_linear_y_addr_width=str(self.v_linear_design._y_addr_width),
-                inner_attn_y_address_width=str(
+                q_linear_name=self._q_linear_name,
+                k_linear_name=self._k_linear_name,
+                v_linear_name=self._v_linear_name,
+                inner_attn_module_name=self._inner_attn_module_name,
+                output_linear_name=self._output_linear_name,
+                x_1_addr_width=str(self._x_1_addr_width),
+                x_2_addr_width=str(self._x_2_addr_width),
+                x_3_addr_width=str(self._x_3_addr_width),
+                q_linear_y_addr_width=str(self._q_linear_design._y_addr_width),
+                k_linear_y_addr_width=str(self._k_linear_design._y_addr_width),
+                v_linear_y_addr_width=str(self._v_linear_design._y_addr_width),
+                inner_attn_x_1_addr_width=str(
+                    self.inner_attn_module_design._x_1_addr_width
+                ),
+                inner_attn_x_2_addr_width=str(
+                    self.inner_attn_module_design._x_2_addr_width
+                ),
+                inner_attn_x_3_addr_width=str(
+                    self.inner_attn_module_design._x_3_addr_width
+                ),
+                inner_attn_y_addr_width=str(
                     self.inner_attn_module_design._y_addr_width
                 ),
                 output_linear_y_addr_width=str(self.output_linear_design._y_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x_1_data_width=str(self._x_1_data_width),
+                x_2_data_width=str(self._x_2_data_width),
+                x_3_data_width=str(self._x_3_data_width),
+                q_linear_y_data_width=str(self._q_linear_design._y_data_width),
+                k_linear_y_data_width=str(self._k_linear_design._y_data_width),
+                v_linear_y_data_width=str(self._v_linear_design._y_data_width),
+                inner_attn_x_1_data_width=str(
+                    self.inner_attn_module_design._x_1_data_width
+                ),
+                inner_attn_x_2_data_width=str(
+                    self.inner_attn_module_design._x_2_data_width
+                ),
+                inner_attn_x_3_data_width=str(
+                    self.inner_attn_module_design._x_3_data_width
+                ),
+                inner_attn_y_data_width=str(
+                    self.inner_attn_module_design._y_data_width
+                ),
+                output_linear_x_data_width=str(self.output_linear_design._x_data_width),
+                y_data_width=str(self._y_data_width),
                 work_library_name=self._work_library_name,
             ),
         )
@@ -102,21 +138,18 @@ class MHA(Design):
             file_name="mha_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
-                q_linear_x_addr_width=str(self.q_linear_design._x_addr_width),
-                q_linear_num_dimensions=str(self.q_linear_design._num_dimensions),
-                q_linear_in_features=str(self.q_linear_design._in_features),
-                k_linear_x_addr_width=str(self.k_linear_design._x_addr_width),
-                k_linear_num_dimensions=str(self.k_linear_design._num_dimensions),
-                k_linear_in_features=str(self.k_linear_design._in_features),
-                v_linear_x_addr_width=str(self.v_linear_design._x_addr_width),
-                v_linear_num_dimensions=str(self.v_linear_design._num_dimensions),
-                v_linear_in_features=str(self.v_linear_design._in_features),
-                output_linear_y_addr_width=str(self.output_linear_design._y_addr_width),
-                output_linear_num_dimensions=str(
-                    self.output_linear_design._num_dimensions
-                ),
-                output_linear_out_features=str(self.output_linear_design._out_features),
+                x_1_data_width=str(self._x_1_data_width),
+                x_2_data_width=str(self._x_2_data_width),
+                x_3_data_width=str(self._x_3_data_width),
+                y_data_width=str(self._y_data_width),
+                x_1_addr_width=str(self._x_1_addr_width),
+                x_2_addr_width=str(self._x_2_addr_width),
+                x_3_addr_width=str(self._x_3_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x_1_count=str(self._x_1_count),
+                x_2_count=str(self._x_2_count),
+                x_3_count=str(self._x_3_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )

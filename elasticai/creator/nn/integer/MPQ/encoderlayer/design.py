@@ -40,13 +40,13 @@ class EncoderLayer(Design):
         self.ffn_add_design = self._ffn_add.create_design(name=self._ffn_add.name)
         self.ffn_norm_design = self._ffn_norm.create_design(name=self._ffn_norm.name)
 
-        self._x_addr_width = self.mha_design._x_addr_width
+        self._x_addr_width = self.mha_design._x_1_addr_width
         self._num_dimensions = self.mha_design._num_dimensions
         self._in_features = self.mha_design._in_features
         self._y_addr_width = self.ffn_norm_design._y_addr_width
         self._out_features = self.ffn_norm_design._out_features
 
-        self._x_count = self.mha_design._x_count
+        self._x_count = self.mha_design._x_1_count
         self._y_count = self.ffn_norm_design._y_count
 
     @property
@@ -54,8 +54,8 @@ class EncoderLayer(Design):
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
-            x_count=self.mha_design._x_count,
-            y_count=self.ffn_norm_design._y_count,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:

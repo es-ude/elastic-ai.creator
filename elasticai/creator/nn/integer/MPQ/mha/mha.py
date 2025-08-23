@@ -103,13 +103,12 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> MHADesign:
         return MHADesign(
             name=name,
-            data_width=self.q_linear.quant_bits_per_element["inputs"],  # TODO
+            work_library_name="work",
             q_linear=self.q_linear,
             k_linear=self.k_linear,
             v_linear=self.v_linear,
             inner_attn_module=self.inner_attn_module,
             output_linear=self.output_linear,
-            work_library_name="work",
         )
 
     def precompute(self) -> None:

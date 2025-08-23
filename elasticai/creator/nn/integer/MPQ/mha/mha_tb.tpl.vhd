@@ -7,19 +7,18 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
-        DATA_WIDTH : integer := ${data_width};
-        Q_LINEAR_X_ADDR_WIDTH : integer := ${q_linear_x_addr_width};
-        Q_LINEAR_NUM_DIMENSIONS : integer := ${q_linear_num_dimensions};
-        Q_LINEAR_IN_FEATURES : integer := ${q_linear_in_features};
-        K_LINEAR_X_ADDR_WIDTH : integer := ${k_linear_x_addr_width};
-        K_LINEAR_NUM_DIMENSIONS : integer := ${k_linear_num_dimensions};
-        K_LINEAR_IN_FEATURES : integer := ${k_linear_in_features};
-        V_LINEAR_X_ADDR_WIDTH : integer := ${v_linear_x_addr_width};
-        V_LINEAR_NUM_DIMENSIONS : integer := ${v_linear_num_dimensions};
-        V_LINEAR_IN_FEATURES : integer := ${v_linear_in_features};
-        OUTPUT_LINEAR_Y_ADDR_WIDTH : integer := ${output_linear_y_addr_width};
-        OUTPUT_LINEAR_NUM_DIMENSIONS : integer := ${output_linear_num_dimensions};
-        OUTPUT_LINEAR_OUT_FEATURES : integer := ${output_linear_out_features}
+        X_1_DATA_WIDTH : integer := ${x_1_data_width}; -- q_linear
+        X_2_DATA_WIDTH : integer := ${x_2_data_width}; -- k_linear
+        X_3_DATA_WIDTH : integer := ${x_3_data_width}; -- v_linear
+        Y_DATA_WIDTH : integer := ${y_data_width};
+        X_1_ADDR_WIDTH : integer := ${x_1_addr_width};
+        X_2_ADDR_WIDTH : integer := ${x_2_addr_width};
+        X_3_ADDR_WIDTH : integer := ${x_3_addr_width};
+        Y_ADDR_WIDTH : integer := ${y_addr_width};
+        X_1_COUNT : integer := ${x_1_count};
+        X_2_COUNT : integer := ${x_2_count};
+        X_3_COUNT : integer := ${x_3_count};
+        Y_COUNT : integer := ${y_count}
     );
     port (
         clk : out std_logic
@@ -30,20 +29,20 @@ architecture rtl of ${name}_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_1_address : std_logic_vector(Q_LINEAR_X_ADDR_WIDTH-1 downto 0) := (others => '0');
-    signal x_1 : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
-    type t_array_x_1 is array (0 to Q_LINEAR_NUM_DIMENSIONS * Q_LINEAR_IN_FEATURES -1) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal x_1_address : std_logic_vector(X_1_ADDR_WIDTH-1 downto 0) := (others => '0');
+    signal x_1 : std_logic_vector(X_1_DATA_WIDTH-1 downto 0) := (others => '0');
+    type t_array_x_1 is array (0 to X_1_COUNT -1) of std_logic_vector(X_1_DATA_WIDTH-1 downto 0);
     signal x_1_arr : t_array_x_1 := (others => (others => '0'));
-    signal x_2_address : std_logic_vector(K_LINEAR_X_ADDR_WIDTH-1 downto 0) := (others => '0');
-    signal x_2 : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
-    type t_array_x_2 is array (0 to K_LINEAR_NUM_DIMENSIONS * K_LINEAR_IN_FEATURES -1) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal x_2_address : std_logic_vector(X_2_ADDR_WIDTH-1 downto 0) := (others => '0');
+    signal x_2 : std_logic_vector(X_2_DATA_WIDTH-1 downto 0) := (others => '0');
+    type t_array_x_2 is array (0 to X_2_COUNT -1) of std_logic_vector(X_2_DATA_WIDTH-1 downto 0);
     signal x_2_arr : t_array_x_2 := (others => (others => '0'));
-    signal x_3_address : std_logic_vector(V_LINEAR_X_ADDR_WIDTH-1 downto 0) := (others => '0');
-    signal x_3 : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
-    type t_array_x_3 is array (0 to V_LINEAR_NUM_DIMENSIONS * V_LINEAR_IN_FEATURES -1) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal x_3_address : std_logic_vector(X_3_ADDR_WIDTH-1 downto 0) := (others => '0');
+    signal x_3 : std_logic_vector(X_3_DATA_WIDTH-1 downto 0) := (others => '0');
+    type t_array_x_3 is array (0 to X_3_COUNT -1) of std_logic_vector(X_3_DATA_WIDTH-1 downto 0);
     signal x_3_arr : t_array_x_3 := (others => (others => '0'));
-    signal y_address : std_logic_vector(OUTPUT_LINEAR_Y_ADDR_WIDTH-1 downto 0) := (others => '0');
-    signal y : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
+    signal y_address : std_logic_vector(Y_ADDR_WIDTH-1 downto 0) := (others => '0');
+    signal y : std_logic_vector(Y_DATA_WIDTH-1 downto 0) := (others => '0');
     signal done : std_logic;
     begin
         CLK_GEN : process
@@ -123,24 +122,24 @@ architecture rtl of ${name}_tb is
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs_1) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < Q_LINEAR_NUM_DIMENSIONS * Q_LINEAR_IN_FEATURES loop
+            while input_rd_cnt < X_1_COUNT loop
                 readline(fp_inputs_1, line_num);
                 read(line_num, line_content);
-                x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_1_DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             input_rd_cnt := 0;
-            while input_rd_cnt < K_LINEAR_NUM_DIMENSIONS * K_LINEAR_IN_FEATURES loop
+            while input_rd_cnt < X_2_COUNT loop
                 readline(fp_inputs_2, line_num);
                 read(line_num, line_content);
-                x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_2_DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             input_rd_cnt := 0;
-            while input_rd_cnt < V_LINEAR_NUM_DIMENSIONS * V_LINEAR_IN_FEATURES loop
+            while input_rd_cnt < X_3_COUNT loop
                 readline(fp_inputs_3, line_num);
                 read(line_num, line_content);
-                x_3_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_3_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_3_DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             wait for C_CLK_PERIOD;
@@ -150,7 +149,7 @@ architecture rtl of ${name}_tb is
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt < OUTPUT_LINEAR_NUM_DIMENSIONS * OUTPUT_LINEAR_OUT_FEATURES loop
+            while output_rd_cnt < Y_COUNT loop
                 readline(fp_labels, line_num);
                 read(line_num, line_content);
                 y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));

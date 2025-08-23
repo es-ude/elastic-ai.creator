@@ -96,10 +96,10 @@ begin
         enable => matmul_score_enable,
         clock => matmul_score_clock,
         x_1_address => matmul_score_x_1_address,
-        x_1 => matmul_score_x_1,
         x_2_address => matmul_score_x_2_address,
-        x_2 => matmul_score_x_2,
         y_address => matmul_score_y_address,
+        x_1 => matmul_score_x_1,
+        x_2 => matmul_score_x_2,
         y => matmul_score_y,
         done => matmul_score_done
     );
@@ -108,8 +108,8 @@ begin
         enable => softmax_enable,
         clock => softmax_clock,
         x_address => softmax_x_address,
-        x => softmax_x,
         y_address => softmax_y_address,
+        x => softmax_x,
         y => softmax_y,
         done => softmax_done
     );
@@ -118,10 +118,10 @@ begin
         enable => matmul_att_enable,
         clock => matmul_att_clock,
         x_1_address => matmul_att_x_1_address,
-        x_1 => matmul_att_x_1,
         x_2_address => matmul_att_x_2_address,
-        x_2 => matmul_att_x_2,
         y_address => matmul_att_y_address,
+        x_1 => matmul_att_x_1,
+        x_2 => matmul_att_x_2,
         y => matmul_att_y,
         done => matmul_att_done
     );

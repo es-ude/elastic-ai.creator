@@ -5,69 +5,85 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name} is
     generic (
-        DATA_WIDTH : integer := ${data_width};
-        Q_LINEAR_X_ADDR_WIDTH : integer := ${q_linear_x_addr_width};
+        X_1_DATA_WIDTH : integer := ${x_1_data_width};
+        X_2_DATA_WIDTH : integer := ${x_2_data_width};
+        X_3_DATA_WIDTH : integer := ${x_3_data_width};
+        Q_LINEAR_Y_DATA_WIDTH : integer := ${q_linear_y_data_width};
+        K_LINEAR_Y_DATA_WIDTH : integer := ${k_linear_y_data_width};
+        V_LINEAR_Y_DATA_WIDTH : integer := ${v_linear_y_data_width};
+        INNER_ATTN_X_1_DATA_WIDTH : integer := ${inner_attn_x_1_data_width};
+        INNER_ATTN_X_2_DATA_WIDTH : integer := ${inner_attn_x_2_data_width};
+        INNER_ATTN_X_3_DATA_WIDTH : integer := ${inner_attn_x_3_data_width};
+        INNER_ATTN_Y_DATA_WIDTH : integer := ${inner_attn_y_data_width};
+        OUTPUT_LINEAR_X_DATA_WIDTH : integer := ${output_linear_x_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
+        X_1_ADDR_WIDTH : integer := ${x_1_addr_width};
+        X_2_ADDR_WIDTH : integer := ${x_2_addr_width};
+        X_3_ADDR_WIDTH : integer := ${x_3_addr_width};
         Q_LINEAR_Y_ADDR_WIDTH : integer := ${q_linear_y_addr_width};
-        K_LINEAR_X_ADDR_WIDTH : integer := ${k_linear_x_addr_width};
         K_LINEAR_Y_ADDR_WIDTH : integer := ${k_linear_y_addr_width};
-        V_LINEAR_X_ADDR_WIDTH : integer := ${v_linear_x_addr_width};
         V_LINEAR_Y_ADDR_WIDTH : integer := ${v_linear_y_addr_width};
         INNER_ATTN_Y_ADDR_WIDTH : integer := ${inner_attn_y_address_width};
-        OUTPUT_LINEAR_Y_ADDR_WIDTH : integer := ${output_linear_y_addr_width}
+        Y_ADDR_WIDTH : integer := ${y_addr_width}
     );
     port (
         enable : in std_logic;
         clock : in std_logic;
-        x_1_address : out std_logic_vector(Q_LINEAR_X_ADDR_WIDTH-1 downto 0);
-        x_2_address : out std_logic_vector(K_LINEAR_X_ADDR_WIDTH-1 downto 0);
-        x_3_address : out std_logic_vector(V_LINEAR_X_ADDR_WIDTH-1 downto 0);
-        y_address : in std_logic_vector(OUTPUT_LINEAR_Y_ADDR_WIDTH-1 downto 0);
-        x_1 : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        x_2 : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        x_3 : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y : out std_logic_vector(DATA_WIDTH-1 downto 0);
+        x_1_address : out std_logic_vector(X_1_ADDR_WIDTH-1 downto 0);
+        x_2_address : out std_logic_vector(X_2_ADDR_WIDTH-1 downto 0);
+        x_3_address : out std_logic_vector(X_3_ADDR_WIDTH-1 downto 0);
+        y_address : in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+        x_1 : in std_logic_vector(X_1_DATA_WIDTH-1 downto 0);
+        x_2 : in std_logic_vector(X_2_DATA_WIDTH-1 downto 0);
+        x_3 : in std_logic_vector(X_3_DATA_WIDTH-1 downto 0);
+        y : out std_logic_vector(Y_DATA_WIDTH-1 downto 0);
         done : out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
+
     signal q_linear_enable : std_logic;
     signal q_linear_clock : std_logic;
-    signal q_linear_x_address : std_logic_vector(Q_LINEAR_X_ADDR_WIDTH-1 downto 0);
+    signal q_linear_x_address : std_logic_vector(X_1_ADDR_WIDTH-1 downto 0);
     signal q_linear_y_address : std_logic_vector(Q_LINEAR_Y_ADDR_WIDTH-1 downto 0);
-    signal q_linear_x : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal q_linear_y : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal q_linear_x : std_logic_vector(X_1_DATA_WIDTH-1 downto 0);
+    signal q_linear_y : std_logic_vector(Q_LINEAR_Y_DATA_WIDTH-1 downto 0);
     signal q_linear_done : std_logic;
+
     signal k_linear_enable : std_logic;
     signal k_linear_clock : std_logic;
-    signal k_linear_x_address : std_logic_vector(K_LINEAR_X_ADDR_WIDTH-1 downto 0);
+    signal k_linear_x_address : std_logic_vector(X_2_ADDR_WIDTH-1 downto 0);
     signal k_linear_y_address : std_logic_vector(K_LINEAR_Y_ADDR_WIDTH-1 downto 0);
-    signal k_linear_x : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal k_linear_y : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal k_linear_x : std_logic_vector(X_2_DATA_WIDTH-1 downto 0);
+    signal k_linear_y : std_logic_vector(K_LINEAR_Y_DATA_WIDTH-1 downto 0);
     signal k_linear_done : std_logic;
+
     signal v_linear_enable : std_logic;
     signal v_linear_clock : std_logic;
-    signal v_linear_x_address : std_logic_vector(V_LINEAR_X_ADDR_WIDTH-1 downto 0);
+    signal v_linear_x_address : std_logic_vector(X_3_ADDR_WIDTH-1 downto 0);
     signal v_linear_y_address : std_logic_vector(V_LINEAR_Y_ADDR_WIDTH-1 downto 0);
-    signal v_linear_x : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal v_linear_y : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal v_linear_x : std_logic_vector(X_3_DATA_WIDTH-1 downto 0);
+    signal v_linear_y : std_logic_vector(V_LINEAR_Y_DATA_WIDTH-1 downto 0);
     signal v_linear_done : std_logic;
+
     signal inner_attn_enable : std_logic;
     signal inner_attn_clock : std_logic;
     signal inner_attn_x_1_address : std_logic_vector(Q_LINEAR_Y_ADDR_WIDTH-1 downto 0);
     signal inner_attn_x_2_address : std_logic_vector(K_LINEAR_Y_ADDR_WIDTH-1 downto 0);
     signal inner_attn_x_3_address : std_logic_vector(V_LINEAR_Y_ADDR_WIDTH-1 downto 0);
     signal inner_attn_y_address : std_logic_vector(INNER_ATTN_Y_ADDR_WIDTH-1 downto 0);
-    signal inner_attn_x_1 : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal inner_attn_x_2 : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal inner_attn_x_3 : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal inner_attn_y : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal inner_attn_x_1 : std_logic_vector(INNER_ATTN_X_1_DATA_WIDTH-1 downto 0);
+    signal inner_attn_x_2 : std_logic_vector(INNER_ATTN_X_2_DATA_WIDTH-1 downto 0);
+    signal inner_attn_x_3 : std_logic_vector(INNER_ATTN_X_3_DATA_WIDTH-1 downto 0);
+    signal inner_attn_y : std_logic_vector(INNER_ATTN_Y_DATA_WIDTH-1 downto 0);
     signal inner_attn_done : std_logic;
+
     signal output_linear_enable : std_logic;
     signal output_linear_clock : std_logic;
     signal output_linear_x_address : std_logic_vector(INNER_ATTN_Y_ADDR_WIDTH-1 downto 0);
-    signal output_linear_y_address : std_logic_vector(OUTPUT_LINEAR_Y_ADDR_WIDTH-1 downto 0);
-    signal output_linear_x : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal output_linear_y : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal output_linear_y_address : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+    signal output_linear_x : std_logic_vector(OUTPUT_LINEAR_X_DATA_WIDTH-1 downto 0);
+    signal output_linear_y : std_logic_vector(Y_DATA_WIDTH-1 downto 0);
     signal output_linear_done : std_logic;
 begin
     q_linear_enable <= enable;
