@@ -130,11 +130,10 @@ class BatchNorm1d(Design):
                 name=self.name,
                 x_data_width=str(self._x_data_width),
                 y_data_width=str(self._y_data_width),
-                num_dimensions=str(self._num_dimensions),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )
