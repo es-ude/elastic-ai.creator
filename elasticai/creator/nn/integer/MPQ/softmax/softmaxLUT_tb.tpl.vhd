@@ -11,9 +11,8 @@ entity ${name}_tb is
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         X_DATA_WIDTH : integer := ${x_data_width};
         Y_DATA_WIDTH : integer := ${y_data_width};
-        DIM_A: integer := ${dim_a};
-        DIM_B: integer := ${dim_b};
-        DIM_C: integer := ${dim_c};
+        X_COUNT : integer := ${x_count};
+        Y_COUNT : integer := ${y_count};
         NUMERATOR_LUT_OUT_DATA_WIDTH: integer := ${numberator_lut_out_data_width};
         DENOMINATOR_LUT_OUT_DATA_WIDTH: integer := ${denominator_lut_out_data_width}
     );
@@ -31,7 +30,7 @@ architecture rtl of ${name}_tb is
     signal y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal done : std_logic;
-    type t_array_x is array (0 to DIM_A*DIM_B*DIM_C-1) of std_logic_vector(X_DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to X_COUNT - 1) of std_logic_vector(X_DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process
@@ -92,7 +91,7 @@ begin
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt<DIM_A*DIM_B*DIM_C loop
+            while input_rd_cnt < X_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_DATA_WIDTH));
@@ -105,7 +104,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<DIM_A*DIM_B*DIM_C loop
+            while output_rd_cnt < Y_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
