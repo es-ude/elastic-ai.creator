@@ -7,12 +7,12 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
-        DATA_WIDTH : integer := ${data_width};
+        X_DATA_WIDTH : integer := ${x_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        NUM_DIMENSIONS : integer := ${num_dimensions};
-        IN_FEATURES : integer := ${in_features};
-        OUT_FEATURES : integer := ${out_features}
+        X_COUNT : integer := ${x_count};
+        Y_COUNT : integer := ${y_count}
     );
     port(
         clk : out std_logic
@@ -24,11 +24,11 @@ architecture rtl of ${name}_tb is
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
     signal x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x is array (0 to IN_FEATURES * NUM_DIMENSIONS - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(X_DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to X_COUNT - 1) of std_logic_vector(X_DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
     signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
 begin
     CLK_GEN : process
@@ -90,7 +90,7 @@ begin
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < NUM_DIMENSIONS * IN_FEATURES loop
+            while input_rd_cnt < X_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -103,7 +103,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt< NUM_DIMENSIONS * OUT_FEATURES loop
+            while output_rd_cnt < Y_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));

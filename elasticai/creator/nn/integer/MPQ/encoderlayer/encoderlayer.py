@@ -118,14 +118,13 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> EncoderLayerDesign:
         return EncoderLayerDesign(
             name=name,
-            data_width=self.mha.q_linear.quant_bits_per_element["inputs"],  # TODO
+            work_library_name="work",
             mha=self.mha,
             mha_add=self.mha_add,
             mha_norm=self.mha_norm,
             ffn=self.ffn,
             ffn_add=self.ffn_add,
             ffn_norm=self.ffn_norm,
-            work_library_name="work",
         )
 
     def precompute(self) -> None:

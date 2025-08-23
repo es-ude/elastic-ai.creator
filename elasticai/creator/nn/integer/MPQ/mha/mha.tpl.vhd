@@ -23,7 +23,7 @@ entity ${name} is
         Q_LINEAR_Y_ADDR_WIDTH : integer := ${q_linear_y_addr_width};
         K_LINEAR_Y_ADDR_WIDTH : integer := ${k_linear_y_addr_width};
         V_LINEAR_Y_ADDR_WIDTH : integer := ${v_linear_y_addr_width};
-        INNER_ATTN_Y_ADDR_WIDTH : integer := ${inner_attn_y_address_width};
+        INNER_ATTN_Y_ADDR_WIDTH : integer := ${inner_attn_y_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width}
     );
     port (

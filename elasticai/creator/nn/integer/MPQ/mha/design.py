@@ -70,7 +70,7 @@ class MHA(Design):
         self._q_linear_design.save_to(destination.create_subpath(self._q_linear_name))
         self._k_linear_design.save_to(destination.create_subpath(self._k_linear_name))
         self._v_linear_design.save_to(destination.create_subpath(self._v_linear_name))
-        self.inner_attn_module_design.save_to(
+        self._inner_attn_module_design.save_to(
             destination.create_subpath(self._inner_attn_module_name)
         )
         self.output_linear_design.save_to(
@@ -87,25 +87,16 @@ class MHA(Design):
                 v_linear_name=self._v_linear_name,
                 inner_attn_module_name=self._inner_attn_module_name,
                 output_linear_name=self._output_linear_name,
+                work_library_name=self._work_library_name,
                 x_1_addr_width=str(self._x_1_addr_width),
                 x_2_addr_width=str(self._x_2_addr_width),
                 x_3_addr_width=str(self._x_3_addr_width),
                 q_linear_y_addr_width=str(self._q_linear_design._y_addr_width),
                 k_linear_y_addr_width=str(self._k_linear_design._y_addr_width),
                 v_linear_y_addr_width=str(self._v_linear_design._y_addr_width),
-                inner_attn_x_1_addr_width=str(
-                    self.inner_attn_module_design._x_1_addr_width
-                ),
-                inner_attn_x_2_addr_width=str(
-                    self.inner_attn_module_design._x_2_addr_width
-                ),
-                inner_attn_x_3_addr_width=str(
-                    self.inner_attn_module_design._x_3_addr_width
-                ),
                 inner_attn_y_addr_width=str(
-                    self.inner_attn_module_design._y_addr_width
+                    self._inner_attn_module_design._y_addr_width
                 ),
-                output_linear_y_addr_width=str(self.output_linear_design._y_addr_width),
                 y_addr_width=str(self._y_addr_width),
                 x_1_data_width=str(self._x_1_data_width),
                 x_2_data_width=str(self._x_2_data_width),
@@ -114,20 +105,19 @@ class MHA(Design):
                 k_linear_y_data_width=str(self._k_linear_design._y_data_width),
                 v_linear_y_data_width=str(self._v_linear_design._y_data_width),
                 inner_attn_x_1_data_width=str(
-                    self.inner_attn_module_design._x_1_data_width
+                    self._inner_attn_module_design._x_1_data_width
                 ),
                 inner_attn_x_2_data_width=str(
-                    self.inner_attn_module_design._x_2_data_width
+                    self._inner_attn_module_design._x_2_data_width
                 ),
                 inner_attn_x_3_data_width=str(
-                    self.inner_attn_module_design._x_3_data_width
+                    self._inner_attn_module_design._x_3_data_width
                 ),
                 inner_attn_y_data_width=str(
-                    self.inner_attn_module_design._y_data_width
+                    self._inner_attn_module_design._y_data_width
                 ),
                 output_linear_x_data_width=str(self.output_linear_design._x_data_width),
                 y_data_width=str(self._y_data_width),
-                work_library_name=self._work_library_name,
             ),
         )
 

@@ -69,11 +69,10 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> FFNDesign:
         return FFNDesign(
             name=name,
-            data_width=self.fc1.quant_bits_per_element["inputs"],  # TODO
+            work_library_name="work",
             fc1=self.fc1,
             relu=self.relu,
             fc2=self.fc2,
-            work_library_name="work",
         )
 
     def precompute(self):
