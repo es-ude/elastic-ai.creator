@@ -7,7 +7,8 @@ entity ${name} is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
+        X_DATA_WIDTH : integer := ${x_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features};
         IN_NUM_DIMENSIONS : integer := ${in_num_dimensions};
@@ -23,20 +24,20 @@ entity ${name} is
         enable : in std_logic;
         clock  : in std_logic;
         x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x   : in std_logic_vector(X_DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
-    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(2 * (X_DATA_WIDTH + 1) - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(2 * (X_DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_2 : signed(2 * (X_DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_3 : signed(2 * (X_DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
@@ -50,9 +51,9 @@ architecture rtl of ${name} is
             TMP_3 := TMP_2 + 1;
         end if;
         if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
+            return -resize(TMP_3,Y_DATA_WIDTH + 1);
         else
-            return resize(TMP_3, DATA_WIDTH + 1);
+            return resize(TMP_3, Y_DATA_WIDTH + 1);
         end if;
     end function;
     function log2(val : INTEGER) return natural is
@@ -73,14 +74,14 @@ architecture rtl of ${name} is
     signal layer_state : t_layer_state;
     type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling, s_output, s_done);
     signal mac_state : t_mac_state;
-    signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal x_int : signed(X_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_sub_z : signed(X_DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_en : std_logic;
-    signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal y_scaled : signed(Y_DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES*OUT_NUM_DIMENSIONS;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal acc_sum : signed(2 * (DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
+    signal acc_sum : signed(2 * (X_DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     x_int <= signed(x);
@@ -110,7 +111,7 @@ begin
         variable input_idx : integer  range 0 to IN_FEATURES*IN_NUM_DIMENSIONS := 0;
         variable mac_cnt : integer range 0 to IN_FEATURES := 0;
         variable output_idx : integer  range 0 to OUT_FEATURES*OUT_NUM_DIMENSIONS := 0;
-        variable var_y_store : signed(DATA_WIDTH downto 0);
+        variable var_y_store : signed(Y_DATA_WIDTH downto 0);
         variable input_offset : integer;
     begin
         if rising_edge(clock) then
@@ -180,7 +181,7 @@ begin
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
-        RAM_WIDTH => DATA_WIDTH,
+        RAM_WIDTH => Y_DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,

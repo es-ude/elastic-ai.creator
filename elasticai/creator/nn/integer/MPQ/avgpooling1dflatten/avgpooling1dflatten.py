@@ -61,7 +61,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AVGPooling1dFlattenDesign:
         return AVGPooling1dFlattenDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            x_data_width=self.quant_bits_per_element["inputs"],
+            y_data_width=self.quant_bits_per_element["outputs"],
             in_features=self.in_features,
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,

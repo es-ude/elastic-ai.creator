@@ -16,7 +16,8 @@ class AVGPooling1dFlatten(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
+        x_data_width: int,
+        y_data_width: int,
         in_features: int,
         out_features: int,
         in_num_dimensions: int,
@@ -30,7 +31,9 @@ class AVGPooling1dFlatten(Design):
     ) -> None:
         super().__init__(name=name)
 
-        self._data_width = data_width
+        self._x_data_width = x_data_width
+        self._y_data_width = y_data_width
+
         self._in_features = in_features
         self._out_features = out_features
         self._in_num_dimensions = in_num_dimensions
@@ -73,7 +76,8 @@ class AVGPooling1dFlatten(Design):
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
                 in_features=str(self._in_features),
                 out_features=str(self._out_features),
                 in_num_dimensions=str(self._in_num_dimensions),
@@ -99,7 +103,8 @@ class AVGPooling1dFlatten(Design):
                 name=self.name,
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
                 in_features=str(self._in_features),
                 out_features=str(self._out_features),
                 in_num_dimensions=str(self._in_num_dimensions),
