@@ -13,7 +13,6 @@ entity ${name} is
         Y_DATA_WIDTH : integer := ${y_data_width};
         X_ADDR_WIDTH : integer := ${x_addr_width};
         FC1_Y_ADDR_WIDTH : integer := ${fc1_y_addr_width};
-        RELU_Y_ADDR_WIDTH : integer := ${relu_y_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width}
     ) ;
     port (

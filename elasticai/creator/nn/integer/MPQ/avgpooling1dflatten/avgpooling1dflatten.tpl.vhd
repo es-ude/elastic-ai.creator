@@ -9,9 +9,9 @@ entity ${name} is
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         X_DATA_WIDTH : integer := ${x_data_width};
         Y_DATA_WIDTH : integer := ${y_data_width};
+        X_COUNT : integer := ${x_count};
+        Y_COUNT : integer := ${y_count};
         IN_FEATURES : integer := ${in_features};
-        OUT_FEATURES : integer := ${out_features};
-        IN_NUM_DIMENSIONS : integer := ${in_num_dimensions};
         OUT_NUM_DIMENSIONS : integer := ${out_num_dimensions};
         M_Q : integer := ${m_q};
         M_Q_SHIFT : integer := ${m_q_shift};
@@ -78,7 +78,7 @@ architecture rtl of ${name} is
     signal x_sub_z : signed(X_DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_scaled : signed(Y_DATA_WIDTH downto 0) := (others=>'0');
-    signal y_store_addr : integer range 0 to OUT_FEATURES*OUT_NUM_DIMENSIONS;
+    signal y_store_addr : integer range 0 to Y_COUNT;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal acc_sum : signed(2 * (X_DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
@@ -108,9 +108,9 @@ begin
     end process fsm;
     mac : process( clock, layer_state )
         variable neuron_idx : integer range 0 to OUT_NUM_DIMENSIONS := 0;
-        variable input_idx : integer  range 0 to IN_FEATURES*IN_NUM_DIMENSIONS := 0;
+        variable input_idx : integer  range 0 to X_COUNT := 0;
         variable mac_cnt : integer range 0 to IN_FEATURES := 0;
-        variable output_idx : integer  range 0 to OUT_FEATURES*OUT_NUM_DIMENSIONS := 0;
+        variable output_idx : integer  range 0 to Y_COUNT := 0;
         variable var_y_store : signed(Y_DATA_WIDTH downto 0);
         variable input_offset : integer;
     begin
@@ -171,7 +171,7 @@ begin
                 mac_state <= s_done;
                 y_store_en <= '0';
             end if;
-            if input_idx < IN_FEATURES*IN_NUM_DIMENSIONS then
+            if input_idx < X_COUNT then
                 x_address <= std_logic_vector(to_unsigned(input_idx, x_address'length));
             else
                 x_address <= (others=>'0');

@@ -67,8 +67,7 @@ class FFN(Design):
                 fc2_x_data_width=str(self._fc2_design._x_data_width),
                 y_data_width=str(self._y_data_width),
                 x_addr_width=str(self._x_addr_width),
-                fc1_y_addr_width=str(self._fc1_design._y_data_width),
-                relu_y_addr_width=str(self._relu_design._y_data_width),
+                fc1_y_addr_width=str(self._fc1_design._y_addr_width),
                 y_addr_width=str(self._y_addr_width),
             ),
         )

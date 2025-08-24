@@ -9,8 +9,8 @@ entity ${name} is
         MHA_Y_ADDR_WIDTH : integer := ${mha_y_addr_width};
         MHA_ADD_Y_ADDR_WIDTH : integer := ${mha_add_y_addr_width};
         MHA_NORM_Y_ADDR_WIDTH : integer := ${mha_norm_y_addr_width};
-        FFN_Y_ADDR_WIDTH integer := ${ffn_y_addr_width};
-        FFN_ADD_Y_ADDR_WIDTH integer := ${ffn_add_y_addr_width};
+        FFN_Y_ADDR_WIDTH : integer := ${ffn_y_addr_width};
+        FFN_ADD_Y_ADDR_WIDTH : integer := ${ffn_add_y_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
         X_DATA_WIDTH : integer := ${x_data_width};
         MHA_Y_DATA_WIDTH : integer := ${mha_y_data_width};
@@ -76,22 +76,22 @@ architecture rtl of ${name} is
     signal mha_norm_clock : std_logic;
     signal mha_norm_x_address : std_logic_vector(MHA_ADD_Y_ADDR_WIDTH-1 downto 0);
     signal mha_norm_y_address : std_logic_vector(MHA_NORM_Y_ADDR_WIDTH-1 downto 0);
-    signal mha_norm_x : std_logic_vector(MHA_ADD_X_DATA_WIDTH-1 downto 0);
-    signal mha_norm_y : std_logic_vector(MHA_ADD_Y_DATA_WIDTH-1 downto 0);
+    signal mha_norm_x : std_logic_vector(MHA_NORM_X_DATA_WIDTH-1 downto 0);
+    signal mha_norm_y : std_logic_vector(MHA_NORM_Y_DATA_WIDTH-1 downto 0);
     signal mha_norm_done : std_logic;
 
     signal ffn_enable : std_logic;
     signal ffn_clock : std_logic;
-    signal ffn_x_address : std_logic_vector(MHA_ADD_Y_ADDR_WIDTH-1 downto 0);
-    signal ffn_y_address : std_logic_vector(FFN_NORM_Y_ADDR_WIDTH-1 downto 0);
+    signal ffn_x_address : std_logic_vector(MHA_NORM_Y_ADDR_WIDTH-1 downto 0);
+    signal ffn_y_address : std_logic_vector(FFN_Y_ADDR_WIDTH-1 downto 0);
     signal ffn_x : std_logic_vector(FFN_X_DATA_WIDTH-1 downto 0);
     signal ffn_y : std_logic_vector(FFN_Y_DATA_WIDTH-1 downto 0);
     signal ffn_done : std_logic;
 
     signal ffn_add_enable : std_logic;
     signal ffn_add_clock : std_logic;
-    signal ffn_add_x_1_address : std_logic_vector(MHA_ADD_Y_ADDR_WIDTH-1 downto 0);
-    signal ffn_add_x_2_address : std_logic_vector(FFN_ADD_X_2_ADDR_WIDTH-1 downto 0);
+    signal ffn_add_x_1_address : std_logic_vector(MHA_NORM_Y_ADDR_WIDTH-1 downto 0);
+    signal ffn_add_x_2_address : std_logic_vector(FFN_Y_ADDR_WIDTH-1 downto 0);
     signal ffn_add_y_address : std_logic_vector(FFN_ADD_Y_ADDR_WIDTH-1 downto 0);
     signal ffn_add_x_1 : std_logic_vector(FFN_ADD_X_1_DATA_WIDTH-1 downto 0);
     signal ffn_add_x_2 : std_logic_vector(FFN_ADD_X_2_DATA_WIDTH-1 downto 0);

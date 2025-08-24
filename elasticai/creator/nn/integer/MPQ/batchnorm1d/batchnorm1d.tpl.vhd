@@ -11,8 +11,9 @@ entity ${name} is
         W_DATA_WIDTH : integer := ${w_data_width};
         B_DATA_WIDTH : integer := ${b_data_width};
         Y_DATA_WIDTH : integer := ${y_data_width};
+        X_COUNT : integer := ${x_count};
+        Y_COUNT : integer := ${y_count};
         NUM_DIMENSIONS : integer := ${num_dimensions};
-        IN_FEATURES : integer := ${in_features};
         OUT_FEATURES : integer := ${out_features};
         M_Q : integer := ${m_q};
         M_Q_SHIFT : integer := ${m_q_shift};
@@ -98,12 +99,12 @@ architecture rtl of ${name} is
     signal w_sub_z : signed(W_DATA_WIDTH downto 0) := (others=>'0');
 
     signal b_addr : std_logic_vector(log2(OUT_FEATURES)-1 downto 0) := (others=>'0');
-    signal b_in : std_logic_vector(2 * (B_DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
-    signal b_int : signed(2 * (B_DATA_WIDTH + 1)-1 downto 0) := (others=>'0');
+    signal b_in : std_logic_vector(B_DATA_WIDTH-1 downto 0) := (others=>'0');
+    signal b_int : signed(B_DATA_WIDTH-1 downto 0) := (others=>'0');
 
     signal y_store_en : std_logic;
     signal y_scaled : signed(Y_DATA_WIDTH downto 0) := (others=>'0');
-    signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;
+    signal y_store_addr : integer range 0 to Y_COUNT;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal mac_sum : signed(MACC_OUT_WIDTH-1 downto 0) := (others=>'0');
@@ -136,10 +137,10 @@ begin
     mac : process( clock, layer_state )
         variable dimension_idx : integer range 0 to NUM_DIMENSIONS - 1 := 0;
         variable out_feature_idx : integer range 0 to OUT_FEATURES - 1 := 0;
-        variable input_idx : integer  range 0 to IN_FEATURES * NUM_DIMENSIONS - 1 := 0;
+        variable input_idx : integer  range 0 to X_COUNT - 1 := 0;
         variable weight_idx : integer range 0 to OUT_FEATURES - 1 := 0;
         variable bias_idx : integer range 0 to OUT_FEATURES - 1 := 0;
-        variable output_idx : integer  range 0 to OUT_FEATURES * NUM_DIMENSIONS - 1 := 0;
+        variable output_idx : integer  range 0 to Y_COUNT - 1 := 0;
         variable var_b_add_z_b : integer;
         variable var_product : signed(Y_DATA_WIDTH - 1 downto 0);
         variable var_y_store : signed(Y_DATA_WIDTH downto 0);

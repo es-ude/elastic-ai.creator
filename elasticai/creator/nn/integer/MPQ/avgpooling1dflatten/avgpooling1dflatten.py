@@ -144,6 +144,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
 
         # assume that (batch_size, channels, seq_len) is the shape of inputs
         outputs = F.avg_pool1d(inputs, kernel_size=inputs.size(2))
+        outputs = outputs.squeeze(2)
 
         if enable_simquant:
             if self.training:
@@ -156,4 +157,4 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
                     self.quant_data_dir,
                     f"{self.name}_y",
                 )
-        return outputs.squeeze(2)
+        return outputs

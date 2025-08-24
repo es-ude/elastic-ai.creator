@@ -92,7 +92,7 @@ begin
             while input_rd_cnt < X_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
-                x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             wait for C_CLK_PERIOD;
