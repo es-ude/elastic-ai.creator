@@ -39,7 +39,7 @@ class Linear(Design):
 
         self._x_data_width = x_data_width
         self._w_data_width = w_data_width
-        self._b_data_width = (w_data_width + 1) + (x_data_width + 1)
+        self._b_data_width = (x_data_width + 1) + (w_data_width + 1)
         self._y_data_width = y_data_width
 
         self._in_features = in_features

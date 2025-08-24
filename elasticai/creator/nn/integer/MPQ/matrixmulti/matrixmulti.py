@@ -7,13 +7,13 @@ from elasticai.creator.nn.integer.MPQ.matrixmulti.design import (
     MatrixMulti as MatrixMultiDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     MPQSupport,
     SimQuant,
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -132,13 +132,13 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
-            self.inputs1_QParams.quant_bits + 1,
+            self.inputs1_QParams.quant_bits.item() + 1,
         )
 
         q_inputs2 = self.math_ops.intsub(
             q_inputs2,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits + 1,
+            self.inputs2_QParams.quant_bits.item() + 1,
         )
 
         # integer-only matrix multiplication on CPU
@@ -154,7 +154,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         ).to("cpu")
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

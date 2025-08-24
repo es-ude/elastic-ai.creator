@@ -5,11 +5,11 @@ from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModu
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.MPQ.relu.design import ReLU as ReLUDesign
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     MPQSupport,
     SimQuant,
 )
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )

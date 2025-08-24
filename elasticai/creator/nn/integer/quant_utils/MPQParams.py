@@ -15,7 +15,6 @@ class QParams(nn.Module):
         super().__init__()
 
         self.observer = observer
-        self.quant_bits = quant_bits
         self.is_symmetric = is_symmetric
         self.is_signed = is_signed
 
@@ -33,6 +32,10 @@ class QParams(nn.Module):
         )
 
         self.register_buffer(
+            "quant_bits", torch.zeros((1), dtype=torch.int32, requires_grad=False)
+        )
+
+        self.register_buffer(
             "scale_factor", torch.ones((1), dtype=torch.float32, requires_grad=False)
         )
         self.register_buffer(
@@ -46,22 +49,23 @@ class QParams(nn.Module):
                 requires_grad=False,
             ),
         )
+        self.quant_bits.copy_(quant_bits)
         self._calculate_quant_range()
         self.math_ops = MathOperations()
 
     def _calculate_quant_range(self):
         if self.is_signed:
-            min_value = -(2 ** (self.quant_bits - 1)) + (
+            min_value = -(2 ** (self.quant_bits.item() - 1)) + (
                 1 if self.is_symmetric else 0
             )  # -127 or -128 for 8 bits
             self.min_quant.copy_(torch.tensor(min_value))
 
             self.max_quant.copy_(
-                torch.tensor((2 ** (self.quant_bits - 1)) - 1)  # 127 for 8 bits
+                torch.tensor((2 ** (self.quant_bits.item() - 1)) - 1)  # 127 for 8 bits
             )
         else:
             self.min_quant.copy_(torch.tensor(0))  # 0 for 8 bits
-            max_value = (1**self.quant_bits) - (
+            max_value = (1 ** self.quant_bits.item()) - (
                 2 if self.is_symmetric else 1
             )  # 254 or 255 for 8 bits
             self.max_quant.copy_(torch.tensor(max_value))
@@ -102,7 +106,7 @@ class QParams(nn.Module):
         zero_point = self.zero_point.to(x.device)
 
         x_q = x / scale_factor + zero_point
-        x_q = x_q.round_().clamp(min=self.min_quant, max=self.max_quant)
+        x_q = x_q.round_().clamp(min=self.min_quant.item(), max=self.max_quant.item())
         x_q = x_q.to(torch.int32)
 
         return x_q.to(x.device)
@@ -110,7 +114,7 @@ class QParams(nn.Module):
     def dequantize(self, x_q: torch.IntTensor) -> torch.FloatTensor:
         zero_point = self.zero_point.to(x_q.device)
         scale_factor = self.scale_factor.to(x_q.device)
-        x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits + 1)
+        x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits.item() + 1)
         x_dq = x_q * scale_factor
         return x_dq.to(torch.float32).to(x_q.device)
 

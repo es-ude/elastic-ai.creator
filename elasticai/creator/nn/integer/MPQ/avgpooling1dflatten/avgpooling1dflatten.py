@@ -8,13 +8,13 @@ from elasticai.creator.nn.integer.MPQ.avgpooling1dflatten.design import (
     AVGPooling1dFlatten as AVGPooling1dFlattenDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     MPQSupport,
     SimQuant,
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -101,7 +101,9 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         q_inputs = self.math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
+            q_inputs,
+            self.inputs_QParams.zero_point,
+            self.inputs_QParams.quant_bits.item() + 1,
         )
 
         # assume that (batch_size, channels, seq_len) is the shape of q_inputs
@@ -114,7 +116,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
         q_outputs = q_outputs.squeeze(2)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

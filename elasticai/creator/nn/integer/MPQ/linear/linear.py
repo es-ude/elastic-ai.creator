@@ -6,13 +6,15 @@ from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModu
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.MPQ.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     MPQSupport,
     SimQuant,
-    SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+    AsymmetricSignedQParams,
+    SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -97,7 +99,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             q_weights = self.math_ops.intsub(
                 q_weights,
                 self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits + 1,
+                self.weight_QParams.quant_bits.item() + 1,
             )
         return q_weights
 
@@ -106,8 +108,8 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
-            self.weight_QParams.quant_bits + 1
+        new_bias_quant_bits = (self.inputs_QParams.quant_bits.item() + 1) + (
+            self.weight_QParams.quant_bits.item() + 1
         )
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
@@ -150,15 +152,17 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         q_inputs = self.math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
+            q_inputs,
+            self.inputs_QParams.zero_point,
+            self.inputs_QParams.quant_bits.item() + 1,
         )
 
         tmp = self.math_ops.int_mac(
             x=q_inputs,
             w=self.q_weights,
             b=self.q_bias,
-            x_quant_bits=self.inputs_QParams.quant_bits,
-            w_quant_bits=self.weight_QParams.quant_bits,
+            x_quant_bits=self.inputs_QParams.quant_bits.item(),
+            w_quant_bits=self.weight_QParams.quant_bits.item(),
         )
 
         tmp = simulate_bitshifting(
@@ -166,7 +170,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

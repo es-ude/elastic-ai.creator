@@ -9,13 +9,15 @@ from elasticai.creator.nn.integer.MPQ.batchnorm1d.design import (
     BatchNorm1d as BatchNorm1dDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     MPQSupport,
     SimQuant,
-    SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+    AsymmetricSignedQParams,
+    SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -113,7 +115,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             q_weights = self.math_ops.intsub(
                 q_weights,
                 weight_QParams.zero_point,
-                weight_QParams.quant_bits + 1,
+                weight_QParams.quant_bits.item() + 1,
             )
         return q_weights
 
@@ -137,8 +139,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        self.tmp_quant_bits = (self.weight_QParams.quant_bits + 1) + (
-            self.inputs_QParams.quant_bits + 1
+        self.tmp_quant_bits = (self.weight_QParams.quant_bits.item() + 1) + (
+            self.inputs_QParams.quant_bits.item() + 1
         )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
@@ -182,7 +184,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         q_inputs = self.math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
+            q_inputs,
+            self.inputs_QParams.zero_point,
+            self.inputs_QParams.quant_bits.item() + 1,
         )
         # integer-only
         tmp = self.math_ops.int_dotproduct(
@@ -197,7 +201,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

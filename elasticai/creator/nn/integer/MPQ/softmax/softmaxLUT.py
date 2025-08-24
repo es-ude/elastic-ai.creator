@@ -7,11 +7,11 @@ from elasticai.creator.nn.integer.MPQ.softmax.design import (
     SoftmaxLUT as SoftmaxLUTDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     MPQSupport,
     SimQuant,
 )
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -171,12 +171,12 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         # 1. Compute q_inputs
         max_q_inputs = q_inputs.max(dim=-1, keepdim=True)[0]
         q_inputs = self.math_ops.intsub(
-            q_inputs, max_q_inputs, self.inputs2_QParams.quant_bits + 1
+            q_inputs, max_q_inputs, self.inputs2_QParams.quant_bits.item() + 1
         )
         q_inputs = self.math_ops.intadd(
             q_inputs,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits + 1,
+            self.inputs2_QParams.quant_bits.item() + 1,
         )
 
         # q_numerator = q_inputs.clone()  # tmp / (S_soft * S_t)
