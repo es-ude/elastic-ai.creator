@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.MPQ.encoderlayer import EncoderLayer
-from elasticai.creator.nn.integer.sequential import Sequential
+from elasticai.creator.nn.integer.MPQ.sequential import Sequential
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
