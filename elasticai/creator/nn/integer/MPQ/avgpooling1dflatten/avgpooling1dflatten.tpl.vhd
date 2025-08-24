@@ -12,6 +12,7 @@ entity ${name} is
         X_COUNT : integer := ${x_count};
         Y_COUNT : integer := ${y_count};
         IN_FEATURES : integer := ${in_features};
+        IN_NUM_DIMENSIONS : integer := ${in_num_dimensions};
         OUT_NUM_DIMENSIONS : integer := ${out_num_dimensions};
         M_Q : integer := ${m_q};
         M_Q_SHIFT : integer := ${m_q_shift};
@@ -108,9 +109,9 @@ begin
     end process fsm;
     mac : process( clock, layer_state )
         variable neuron_idx : integer range 0 to OUT_NUM_DIMENSIONS := 0;
-        variable input_idx : integer  range 0 to X_COUNT := 0;
+        variable input_idx : integer  range 0 to X_COUNT + IN_NUM_DIMENSIONS := 0;
         variable mac_cnt : integer range 0 to IN_FEATURES := 0;
-        variable output_idx : integer  range 0 to Y_COUNT := 0;
+        variable output_idx : integer  range 0 to Y_COUNT + IN_NUM_DIMENSIONS := 0;
         variable var_y_store : signed(Y_DATA_WIDTH downto 0);
         variable input_offset : integer;
     begin
@@ -133,7 +134,7 @@ begin
                     when s_preload =>
                         x_sub_z <= to_signed(0, x_sub_z'length);
                         acc_sum <= (OTHERS=>'0');
-                        input_idx := input_idx + 1;
+                        input_idx := input_idx + IN_NUM_DIMENSIONS;
                         mac_state <= s_accumulate;
                     when s_accumulate =>
                         x_sub_z <= x_int - to_signed(Z_X, x_sub_z'length);
@@ -141,7 +142,7 @@ begin
                         if mac_cnt<IN_FEATURES then
                             mac_cnt := mac_cnt + 1;
                             if mac_cnt<IN_FEATURES then
-                                input_idx := input_idx + 1;
+                                input_idx := input_idx + IN_NUM_DIMENSIONS;
                             end if;
                             mac_state <= s_accumulate;
                         else
@@ -159,7 +160,7 @@ begin
                             neuron_idx := neuron_idx + 1;
                             mac_state <= s_init;
                             output_idx := output_idx + 1;
-                            input_offset:= input_offset + IN_FEATURES;
+                            input_offset:= input_offset + 1;
                         else
                             mac_state <= s_done;
                         end if;

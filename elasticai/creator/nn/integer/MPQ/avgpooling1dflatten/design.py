@@ -81,6 +81,7 @@ class AVGPooling1dFlatten(Design):
                 x_count=str(self._x_count),
                 y_count=str(self._y_count),
                 in_features=str(self._in_features),
+                in_num_dimensions=str(self._in_num_dimensions),
                 out_num_dimensions=str(self._out_num_dimensions),
                 m_q_data_width=str(self._m_q_data_width),
                 z_x=str(self._z_x),

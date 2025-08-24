@@ -96,6 +96,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         assert self.precomputed, "precompute should be called before int_forward"
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+        q_inputs = q_inputs.permute(0, 2, 1)
 
         q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
@@ -141,6 +142,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
                     "prev_inputs_QParams",
                 )
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
+
+        inputs = inputs.permute(0, 2, 1)
 
         # assume that (batch_size, channels, seq_len) is the shape of inputs
         outputs = F.avg_pool1d(inputs, kernel_size=inputs.size(2))
