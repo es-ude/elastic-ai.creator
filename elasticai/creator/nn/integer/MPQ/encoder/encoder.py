@@ -52,11 +52,11 @@ class Encoder(nn.Module):
 
     @property
     def inputs_QParams(self):
-        return self.encoder_layers[0].inputs_QParams
+        return self.sequential.submodules[0].inputs_QParams
 
     @property
     def outputs_QParams(self):
-        return self.encoder_layers[-1].outputs_QParams
+        return self.sequential.submodules[-1].outputs_QParams
 
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")

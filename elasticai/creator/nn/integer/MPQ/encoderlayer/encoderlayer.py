@@ -113,7 +113,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
 
     @property
     def outputs_QParams(self):
-        return self.ffn.outputs_QParams
+        return self.ffn_norm.outputs_QParams
 
     def create_design(self, name: str) -> EncoderLayerDesign:
         return EncoderLayerDesign(

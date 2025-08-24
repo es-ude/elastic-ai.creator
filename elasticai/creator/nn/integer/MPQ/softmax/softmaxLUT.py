@@ -45,7 +45,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
             key = f"{self.name}.{element}"
             quant_bits_per_element[element] = quant_configs.get(key)
         self.quant_bits_per_element = quant_bits_per_element
-        self._init_element_Qparams()
+        self._init_Qparams()
 
     def _init_element_Qparams(self):
         self.inputs1_QParams = AsymmetricSignedQParams(
