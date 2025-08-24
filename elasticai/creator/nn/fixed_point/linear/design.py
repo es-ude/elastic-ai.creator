@@ -10,10 +10,8 @@ from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
-from .testbench import LinearDesignProtocol
 
-
-class LinearDesign(Design, LinearDesignProtocol):
+class LinearDesign(Design):
     def __init__(
         self,
         *,
@@ -82,19 +80,18 @@ class LinearDesign(Design, LinearDesignProtocol):
             )
         )
 
-    @staticmethod
-    def _flatten_params(params: list[list[int]]) -> list[int]:
-        return list(chain(*params))
-
     def save_to(self, destination: Path):
-        rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
+        rom_name = f"{self.name}_rom"
+        rom_params = list(
+            chain.from_iterable([a + [b] for a, b in zip(self.weights, self.bias)])
+        )
+
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="linear.tpl.vhd",
             parameters=dict(
                 layer_name=self.name,
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
+                params_rom_name=rom_name,
                 work_library_name=self.work_library_name,
                 resource_option=f'"{self.resource_option}"',
                 log2_max_value="31",
@@ -104,12 +101,7 @@ class LinearDesign(Design, LinearDesignProtocol):
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
         Rom(
-            name=rom_name["weights"],
+            name=rom_name,
             data_width=self.data_width,
-            values_as_integers=self._flatten_params(self.weights),
-        ).save_to(destination)
-        Rom(
-            name=rom_name["bias"],
-            data_width=self.data_width,
-            values_as_integers=self.bias,
+            values_as_integers=rom_params,
         ).save_to(destination)
