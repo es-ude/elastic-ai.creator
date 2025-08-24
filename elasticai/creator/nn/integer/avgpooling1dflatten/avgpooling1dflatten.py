@@ -79,8 +79,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+        q_inputs = q_inputs.permute(0, 2, 1)
 
         q_inputs = self.math_ops.intsub(
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
@@ -123,6 +123,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
                     self.inputs_QParams = given_inputs_QParams
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
+        inputs = inputs.permute(0, 2, 1)
         # assume that (batch_size, channels, seq_len) is the shape of inputs
         outputs = F.avg_pool1d(inputs, kernel_size=inputs.size(2))
 
