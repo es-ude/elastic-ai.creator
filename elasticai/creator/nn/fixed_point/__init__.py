@@ -4,7 +4,7 @@ from .hard_sigmoid import HardSigmoid as HardSigmoid
 from .hard_tanh import HardTanh as HardTanh
 from .linear import BatchNormedLinear as BatchNormedLinear
 from .linear import Linear as Linear
-from .math_operations import FixedPointConfig as FixedPointConfig
+from .math_operations import MathOperations as MathOperations
 from .precomputed import AdaptableSiLU as AdaptableSiLU
 from .precomputed import PReLU as PReLU
 from .precomputed import Sigmoid as Sigmoid
