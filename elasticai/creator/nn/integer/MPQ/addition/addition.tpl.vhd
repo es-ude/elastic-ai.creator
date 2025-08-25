@@ -35,14 +35,45 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    function shift_with_rounding(
+    function shift_with_rounding_x1(
         product : in signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
         scaler_m_shift : in integer
     ) return signed is
         variable shifted : signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
         variable round_bit : std_logic;
         variable temp_result : signed(X_1_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
-        variable result : signed(X_1_DATA_WIDTH + 1 downto 0);
+        variable result : signed(Y_DATA_WIDTH + 1 downto 0);
+        -- For DATA_WIDTH + 2 bits signed: range is -(2**(DATA_WIDTH+1)) to (2**(DATA_WIDTH+1) - 1)
+        constant MAX_VAL : integer := 2**(Y_DATA_WIDTH+1) - 1;
+        constant MIN_VAL : integer := -(2**(Y_DATA_WIDTH+1));
+    begin
+        round_bit := product(scaler_m_shift - 1);
+        shifted := shift_right(product, scaler_m_shift);
+        if round_bit = '1' then
+            temp_result := shifted + 1;
+        else
+            temp_result := shifted;
+        end if;
+
+        -- Saturate/clamp the result
+        if temp_result > MAX_VAL then
+            result := to_signed(MAX_VAL, Y_DATA_WIDTH + 2);
+        elsif temp_result < MIN_VAL then
+            result := to_signed(MIN_VAL, Y_DATA_WIDTH + 2);
+        else
+            result := resize(temp_result, Y_DATA_WIDTH + 2);
+        end if;
+
+        return result;
+    end function;
+    function shift_with_rounding_x2(
+        product : in signed(X_2_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        scaler_m_shift : in integer
+    ) return signed is
+        variable shifted : signed(X_2_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable round_bit : std_logic;
+        variable temp_result : signed(X_2_DATA_WIDTH + 1 + M_Q_DATA_WIDTH - 1 downto 0);
+        variable result : signed(Y_DATA_WIDTH + 1 downto 0);
         -- For DATA_WIDTH + 2 bits signed: range is -(2**(DATA_WIDTH+1)) to (2**(DATA_WIDTH+1) - 1)
         constant MAX_VAL : integer := 2**(Y_DATA_WIDTH+1) - 1;
         constant MIN_VAL : integer := -(2**(Y_DATA_WIDTH+1));
@@ -140,8 +171,8 @@ begin
                         x_2_product_to_scaling <= x_2_sub_z * M_Q_2_SIGNED;
                         add_state <= s_scaling_2;
                     when s_scaling_2 =>
-                        x_1_scaled <= shift_with_rounding(x_1_product_to_scaling, M_Q_1_SHIFT);
-                        x_2_scaled <= shift_with_rounding(x_2_product_to_scaling, M_Q_2_SHIFT);
+                        x_1_scaled <= shift_with_rounding_x1(x_1_product_to_scaling, M_Q_1_SHIFT);
+                        x_2_scaled <= shift_with_rounding_x2(x_2_product_to_scaling, M_Q_2_SHIFT);
                         add_state <= s_sum;
                     when s_sum =>
                         sum <= resize(x_1_scaled,sum'length) + resize(x_2_scaled,sum'length);

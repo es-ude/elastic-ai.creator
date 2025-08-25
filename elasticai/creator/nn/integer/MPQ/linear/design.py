@@ -43,13 +43,6 @@ class Linear(Design):
         self._b_data_width = b_data_width
         self._y_data_width = y_data_width
 
-        print("----------------------------")
-        print("linear name", self.name)
-        print("x_data_width", self._x_data_width)
-        print("w_data_width", self._w_data_width)
-        print("b_data_width", self._b_data_width)
-        print("y_data_width", self._y_data_width)
-
         self._in_features = in_features
         self._out_features = out_features
         self._num_dimensions = num_dimensions
