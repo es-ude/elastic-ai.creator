@@ -84,7 +84,7 @@ class LinearTestbench(Testbench):
                     prepared_inputs[-1][f"x_{channel_id}_{time_step_id}"] = (
                         self._converter.rational_to_binary_string_vhdl(
                             time_step_val
-                        ).replace('"', '')
+                        ).replace('"', "")
                     )
         return prepared_inputs
 
