@@ -33,6 +33,18 @@ class FxpParams:
     frac_bits: int
     signed: bool = True
 
+    def __post_init__(self):
+        if self.total_bits <= 0:
+            raise Exception(
+                f"total bits need to be > 0 for {self.__class__.__name__}. "
+                f"You have set {self.total_bits=}."
+            )
+        if self.frac_bits > self.total_bits:
+            raise Exception(
+                f"total bits-1 needs to be > frac bits for {self.__class__.__name__}. "
+                f"You have set {self.total_bits=} and {self.frac_bits=}."
+            )
+
     @property
     def minimum_as_integer(self) -> int:
         return 2 ** (self.total_bits - 1) * (-1) if self.signed else 0
