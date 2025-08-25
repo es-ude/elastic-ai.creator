@@ -2,13 +2,13 @@ from typing import Any, cast
 
 import torch
 
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
+)
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 
 class BatchNormedConv1d(DesignCreatorModule):
@@ -29,7 +29,7 @@ class BatchNormedConv1d(DesignCreatorModule):
         device: Any = None,
     ) -> None:
         super().__init__()
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._config = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
         self._operations = MathOperations(config=self._config)
         self._signal_length = signal_length
         self._conv1d = Conv1dBase(

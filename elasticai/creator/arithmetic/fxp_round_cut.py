@@ -2,8 +2,8 @@ from typing import Any
 
 import torch
 
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
 )
 
 
@@ -16,7 +16,7 @@ class RoundToFixedPoint(torch.autograd.Function):
                 "(x: torch.Tensor, config: FixedPointConfig)"
             )
         x: torch.Tensor = args[0]
-        config: FixedPointConfig = args[1]
+        config: FxpArithmetic = args[1]
 
         fxp_ints = config.round_to_integer(x)
         out_of_bounds = fxp_ints[config.integer_out_of_bounds(fxp_ints)]
@@ -39,10 +39,10 @@ class CutToFixedPoint(torch.autograd.Function):
                 "(x: torch.Tensor, config: FixedPointConfig)"
             )
         x: torch.Tensor = args[0]
-        config: FixedPointConfig = args[1]
+        config: FxpArithmetic = args[1]
 
         fxp_ints = config.cut_as_integer(x)
-        out_of_bounds = fxp_ints[config.integer_out_of_bounds(fxp_ints)]
+        out_of_bounds = config.integer_out_of_bounds(fxp_ints)
         if torch.any(out_of_bounds):
             raise ValueError("Cannot quantize tensor. Values out of bounds.")
 

@@ -2,6 +2,8 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
+from elasticai.creator.arithmetic import FxpParams
+
 from .autograd import (
     QuantizeForwHTEAutograd,
     QuantizeForwHTEBackwHTEAutograd,
@@ -9,34 +11,31 @@ from .autograd import (
     QuantizeForwStochasticAutograd,
     QuantizeForwStochasticBackwStochasticAutograd,
 )
-from .two_complement_fixed_point_config import FixedPointConfigV2
 
 
 class _ForwModule(Module):
-    def __init__(self, forward_conf: FixedPointConfigV2): ...
+    def __init__(self, forward_conf: FxpParams): ...
 
 
 class _ForwBackwModule(Module):
-    def __init__(
-        self, forward_conf: FixedPointConfigV2, backward_conf: FixedPointConfigV2
-    ): ...
+    def __init__(self, forward_conf: FxpParams, backward_conf: FxpParams): ...
 
 
 def get_fxp_forw_quantization_module(
     autograd_func: torch.autograd.Function,
 ) -> type[_ForwModule]:
     class FxPForwQuantizationModule(Module):
-        def __init__(self, forward_conf: FixedPointConfigV2) -> None:
+        def __init__(self, forward_conf: FxpParams) -> None:
             super().__init__()
             self.autograd_func = autograd_func
             self.register_buffer(
                 "forw_resolution_per_int", forward_conf.resolution_per_int
             )
             self.register_buffer(
-                "forw_minimum_as_rational", forward_conf.minimum_as_rational
+                "forw_minimum_as_rational", forward_conf.minimum_as_rational_tensor
             )
             self.register_buffer(
-                "forw_maximum_as_rational", forward_conf.maximum_as_rational
+                "forw_maximum_as_rational", forward_conf.maximum_as_rational_tensor
             )
 
         def forward(self, x: Tensor) -> Tensor:
@@ -54,28 +53,26 @@ def get_fxp_forwbackw_quantization_module(
     autograd_func: torch.autograd.Function,
 ) -> type[_ForwBackwModule]:
     class FxPForwBackwQuantizationModule(Module):
-        def __init__(
-            self, forward_conf: FixedPointConfigV2, backward_conf: FixedPointConfigV2
-        ) -> None:
+        def __init__(self, forward_conf: FxpParams, backward_conf: FxpParams) -> None:
             super().__init__()
             self.autograd_func = autograd_func
             self.register_buffer(
                 "forw_resolution_per_int", forward_conf.resolution_per_int
             )
             self.register_buffer(
-                "forw_minimum_as_rational", forward_conf.minimum_as_rational
+                "forw_minimum_as_rational", forward_conf.minimum_as_rational_tensor
             )
             self.register_buffer(
-                "forw_maximum_as_rational", forward_conf.maximum_as_rational
+                "forw_maximum_as_rational", forward_conf.maximum_as_rational_tensor
             )
             self.register_buffer(
                 "backw_resolution_per_int", backward_conf.resolution_per_int
             )
             self.register_buffer(
-                "backw_minimum_as_rational", backward_conf.minimum_as_rational
+                "backw_minimum_as_rational", backward_conf.minimum_as_rational_tensor
             )
             self.register_buffer(
-                "backw_maximum_as_rational", backward_conf.maximum_as_rational
+                "backw_maximum_as_rational", backward_conf.maximum_as_rational_tensor
             )
             self._kwargs = {
                 "forw_resolution_per_int": self.forw_resolution_per_int,

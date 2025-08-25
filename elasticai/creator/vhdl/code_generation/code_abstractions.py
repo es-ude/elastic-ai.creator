@@ -65,24 +65,3 @@ def signal_definition(
         return vector_signal(name, width)
     else:
         return logic_signal(name)
-
-
-def hex_representation(hex_value: str) -> str:
-    return f'x"{hex_value}"'
-
-
-def bin_representation(bin_value: str) -> str:
-    return f'"{bin_value}"'
-
-
-def to_vhdl_binary_string(number: int, number_of_bits: int) -> str:
-    max_val = 2 ** (number_of_bits - 1)
-    if (number < -max_val) | (number > max_val - 1):
-        raise ValueError(
-            f"Value '{number}' cannot be represented with {number_of_bits} bits."
-        )
-    if number < 0:
-        twos = (1 << number_of_bits) + number
-    else:
-        twos = number
-    return f'"{twos:0{number_of_bits}b}"'

@@ -1,8 +1,8 @@
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
+)
 from elasticai.creator.base_modules.hard_sigmoid import HardSigmoid as HardSigmoidBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 from .design import HardSigmoid as HardSigmoidDesign
 
@@ -14,7 +14,7 @@ class HardSigmoid(DesignCreatorModule, HardSigmoidBase):
         :param frac_bits:           Fraction of bits
         """
         super().__init__()
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._config = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
 
     def create_design(self, name: str) -> HardSigmoidDesign:
         neg_thr = -3.0

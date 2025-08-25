@@ -3,9 +3,9 @@ import torch
 from torch.nn import Sequential
 from torch.optim import SGD
 
+from elasticai.creator.arithmetic import FxpParams
 from elasticai.creator_plugins.quantized_grads.base_modules import Linear
 from elasticai.creator_plugins.quantized_grads.fixed_point import (
-    FixedPointConfigV2,
     QuantizeForwHTEBackwHTE,
     QuantizeParamToFixedPointHTE,
 )
@@ -58,20 +58,20 @@ class Test1:
     def model(self, in_features: int, out_features: int) -> Sequential:
         params_conf_total_bits = 8
         params_conf_frac_bits = 3
-        params_conf = FixedPointConfigV2(
+        params_conf = FxpParams(
             total_bits=params_conf_total_bits, frac_bits=params_conf_frac_bits
         )
 
         forward_conf_total_bits = 8
         forward_conf_frac_bits = 2
-        forward_conf = FixedPointConfigV2(
+        forward_conf = FxpParams(
             total_bits=forward_conf_total_bits,
             frac_bits=forward_conf_frac_bits,
         )
 
         grad_conf_total_bits = 8
         grad_conf_frac_bits = 0
-        backward_conf = FixedPointConfigV2(
+        backward_conf = FxpParams(
             total_bits=grad_conf_total_bits,
             frac_bits=grad_conf_frac_bits,
         )
@@ -188,20 +188,20 @@ class Test2:
     def model(self, in_features: int, out_features: int) -> Sequential:
         params_conf_total_bits = 8
         params_conf_frac_bits = 2
-        params_conf = FixedPointConfigV2(
+        params_conf = FxpParams(
             total_bits=params_conf_total_bits, frac_bits=params_conf_frac_bits
         )
 
         forward_conf_total_bits = 8
         forward_conf_frac_bits = 4
-        forward_conf = FixedPointConfigV2(
+        forward_conf = FxpParams(
             total_bits=forward_conf_total_bits,
             frac_bits=forward_conf_frac_bits,
         )
 
         grad_conf_total_bits = 8
         grad_conf_frac_bits = 4
-        backward_conf = FixedPointConfigV2(
+        backward_conf = FxpParams(
             total_bits=grad_conf_total_bits,
             frac_bits=grad_conf_frac_bits,
         )

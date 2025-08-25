@@ -1,7 +1,7 @@
 from torch import Tensor, flatten
 
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
 )
 
 
@@ -9,7 +9,7 @@ def parse_fxp_tensor_to_bytearray(
     tensor: Tensor, total_bits: int, frac_bits: int
 ) -> list[bytearray]:
     tensor = flatten(tensor.permute([0, 2, 1]), start_dim=1)
-    fxp_config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp_config = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
     ints = fxp_config.cut_as_integer(tensor).tolist()
     data = list()
     for i, batch in enumerate(ints):
@@ -23,7 +23,7 @@ def parse_fxp_tensor_to_bytearray(
 def parse_bytearray_to_fxp_tensor(
     data: list[bytearray], total_bits: int, frac_bits: int, dimensions: tuple
 ) -> Tensor:
-    fxp_config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp_config = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
     rationals = list()
     for i, batch in enumerate(data):
         rationals.append(list())
