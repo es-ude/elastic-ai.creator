@@ -1,6 +1,6 @@
 import torch
 
-from elasticai.creator_plugins.quantized_grads.fixed_point import FixedPointConfigV2
+from elasticai.creator.arithmetic import FxpParams
 from elasticai.creator_plugins.quantized_grads.fixed_point.quantize_to_fixed_point import (
     _clamp,
     _round_to_fixed_point_hte,
@@ -9,7 +9,7 @@ from elasticai.creator_plugins.quantized_grads.fixed_point.quantize_to_fixed_poi
 
 
 def test_round_determinstic_to_fixed_point():
-    conf = FixedPointConfigV2(total_bits=8, frac_bits=2)
+    conf = FxpParams(total_bits=8, frac_bits=2)
     x = torch.arange(-2, 2.1, step=0.1, dtype=torch.float32)
 
     actual = _round_to_fixed_point_hte(x, conf.resolution_per_int)
@@ -62,7 +62,7 @@ def test_round_determinstic_to_fixed_point():
 
 
 def test_clamp_to_fixed_point():
-    conf = FixedPointConfigV2(total_bits=4, frac_bits=2)
+    conf = FxpParams(total_bits=4, frac_bits=2)
     x = torch.arange(-3, 4, dtype=torch.float32)
 
     actual = _clamp(
@@ -75,7 +75,7 @@ def test_clamp_to_fixed_point():
 
 
 def test_quantize_determinstic_to_fixed_point():
-    conf = FixedPointConfigV2(total_bits=4, frac_bits=2)
+    conf = FxpParams(total_bits=4, frac_bits=2)
     x = torch.arange(-3, 3.1, step=0.33, dtype=torch.float32)
     actual = quantize_to_fxp_hte(
         number=x,

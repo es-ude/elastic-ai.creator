@@ -3,18 +3,23 @@ from typing import Callable
 from torch import Tensor
 from torch.nn import Module
 
+from elasticai.creator.arithmetic import FxpParams
+
 from .quantize_to_fixed_point import quantize_to_fxp_hte, quantize_to_fxp_stochastic
-from .two_complement_fixed_point_config import FixedPointConfigV2
 
 
 def get_quantize_to_fixed_point(
     func: Callable[[Tensor, Tensor, Tensor, Tensor], Tensor],
 ) -> tuple[type[Module], type[Module]]:
     class QuantizeToFixedPoint(Module):
-        def __init__(self, config: FixedPointConfigV2):
+        def __init__(self, config: FxpParams):
             super().__init__()
-            self.register_buffer("minimum_as_rational", config.minimum_as_rational)
-            self.register_buffer("maximum_as_rational", config.maximum_as_rational)
+            self.register_buffer(
+                "minimum_as_rational", config.minimum_as_rational_tensor
+            )
+            self.register_buffer(
+                "maximum_as_rational", config.maximum_as_rational_tensor
+            )
             self.register_buffer("resolution_per_int", config.resolution_per_int)
 
         @staticmethod
@@ -30,10 +35,14 @@ def get_quantize_to_fixed_point(
             )
 
     class QuantizeToFixedPointSTE(Module):
-        def __init__(self, config: FixedPointConfigV2):
+        def __init__(self, config: FxpParams):
             super().__init__()
-            self.register_buffer("minimum_as_rational", config.minimum_as_rational)
-            self.register_buffer("maximum_as_rational", config.maximum_as_rational)
+            self.register_buffer(
+                "minimum_as_rational", config.minimum_as_rational_tensor
+            )
+            self.register_buffer(
+                "maximum_as_rational", config.maximum_as_rational_tensor
+            )
             self.register_buffer("resolution_per_int", config.resolution_per_int)
 
         def forward(self, x: Tensor) -> Tensor:

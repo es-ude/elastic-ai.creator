@@ -87,7 +87,9 @@ def create_uut() -> Callable[[FxpParams, int, int], LinearDesign]:
         )
     ),
 )
-def test_parse_reported_content_one_out_channel(fxp_params, reported, expected, create_uut):
+def test_parse_reported_content_one_out_channel(
+    fxp_params, reported, expected, create_uut
+):
     in_signal_length = None
     out_signal_length = 1
     bench = LinearTestbench(

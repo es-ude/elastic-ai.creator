@@ -1,6 +1,6 @@
+from elasticai.creator.arithmetic import FxpParams
 from elasticai.creator_plugins.quantized_grads.base_modules import Conv1d
 from elasticai.creator_plugins.quantized_grads.fixed_point import (
-    FixedPointConfigV2,
     QuantizeForwHTE,
     QuantizeParamToFixedPointHTE,
     QuantizeParamToFixedPointStochastic,
@@ -8,7 +8,7 @@ from elasticai.creator_plugins.quantized_grads.fixed_point import (
 
 
 def test_conv1d_fxp_init():
-    conf = FixedPointConfigV2(8, 3)
+    conf = FxpParams(total_bits=8, frac_bits=3)
 
     Conv1d(
         QuantizeForwHTE(conf),
