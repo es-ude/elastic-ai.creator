@@ -81,6 +81,7 @@ class _Sequential:
             type="clocked_combinatorial",
         )
         self._last_node: Node | None = None
+        self._last_filter_parameters: None | FilterParameters = None
         self._counting_node_constructor = append_counter_suffix_before_construction(
             vhdl_node
         )
@@ -126,9 +127,7 @@ class _Sequential:
                 }
             )
         if self._need_shift_register(params):
-            old_params = _FilterNode(
-                self._last_node.name, self._last_node.data
-            ).filter_parameters
+            old_params = self._last_filter_parameters
             self.strided_shift_register(
                 output_shape=(
                     params.in_channels,
@@ -184,6 +183,31 @@ class _Sequential:
         )
         self._impl.add_node(new_node)
         self._last_node = new_node
+        if (
+            "filter_parameters" in new_node.data
+            and self._last_filter_parameters is not None
+        ):
+            params = _FilterNode(new_node.name, new_node.data).filter_parameters
+
+            if params.kernel_size == 1:
+                self._last_filter_parameters = FilterParameters(
+                    kernel_size=params.kernel_size,
+                    in_channels=params.in_channels,
+                    out_channels=params.out_channels,
+                    groups=params.groups,
+                    stride=self._last_filter_parameters.stride * params.stride,
+                    input_size=params.input_size,
+                    output_size=params.output_size,
+                )
+            else:
+                self._last_filter_parameters = params
+        elif self._last_filter_parameters is None:
+            self._last_filter_parameters = FilterParameters(
+                kernel_size=1,
+                in_channels=new_node.input_shape.depth,
+                out_channels=new_node.output_shape.depth,
+            )
+
         if old_node is not None:
             self._impl.add_edge(
                 edge(
