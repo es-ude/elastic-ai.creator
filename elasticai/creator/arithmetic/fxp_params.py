@@ -36,6 +36,7 @@ class FxpParams:
     but calculates and sets minimum_as_rational_tensor and maximum_as_rational_tensor just once in __post__init__.
     After the __post_init__ the __setattr__ and __getattr__ methods block the change of variables.
     """
+
     total_bits: int
     frac_bits: int
     signed: bool = True
