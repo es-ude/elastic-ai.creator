@@ -1,8 +1,8 @@
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
+)
 from elasticai.creator.base_modules.hard_tanh import HardTanh as HardTanhBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 from .design import HardTanh as HardTanhDesign
 
@@ -22,7 +22,7 @@ class HardTanh(DesignCreatorModule, HardTanhBase):
         :param max_val:      Floating value of the minimal input/output value (upper limitation)
         """
         super().__init__(min_val, max_val)
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._config = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
 
         if self._config.rational_out_of_bounds(min_val):
             self.min_val = self._config.minimum_as_rational

@@ -2,12 +2,12 @@ from abc import abstractmethod
 from collections import defaultdict
 from typing import Protocol
 
+from elasticai.creator.arithmetic import FxpConverter, FxpParams
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.fixed_point.number_converter import FXPParams, NumberConverter
 from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator.vhdl.simulated_layer import Testbench
 
@@ -40,15 +40,17 @@ class LinearDesignProtocol(Protocol):
 
 class LinearTestbench(Testbench):
     def __init__(self, name: str, uut: LinearDesignProtocol):
-        self._converter_for_batch = NumberConverter(
-            FXPParams(8, 0)
+        self._fxp_params = FxpParams(uut.data_width, uut.frac_width)
+        self._converter = FxpConverter(
+            total_bits=uut.data_width, frac_bits=uut.frac_width, signed=True
+        )
+        self._converter_for_batch = FxpConverter(
+            total_bits=8, frac_bits=0, signed=True
         )  # max for 255 lines of inputs
         self._name = name
         self._uut_name = uut.name
         self._input_signal_length = uut.in_feature_num
         self._x_address_width = uut.port["x_address"].width
-        self._fxp_params = FXPParams(uut.data_width, uut.frac_width)
-        self._converter = NumberConverter(self._fxp_params)
         self._output_signal_length = uut.out_feature_num
         self._y_address_width = uut.port["y_address"].width
 
@@ -80,7 +82,9 @@ class LinearTestbench(Testbench):
             for channel_id, channel in enumerate(batch):
                 for time_step_id, time_step_val in enumerate(channel):
                     prepared_inputs[-1][f"x_{channel_id}_{time_step_id}"] = (
-                        self._converter.rational_to_bits(time_step_val)
+                        self._converter.rational_to_binary_string_vhdl(
+                            time_step_val
+                        ).replace('"', '')
                     )
         return prepared_inputs
 
@@ -111,9 +115,9 @@ class LinearTestbench(Testbench):
                 batch_text = line.split(":")[1].split(",")[0][1:]
                 output_text = line.split(":")[1].split(",")[1][0:]
                 print("output_text: ", output_text)
-                batch = int(self._converter_for_batch.bits_to_rational(batch_text))
+                batch = int(self._converter_for_batch.binary_to_rational(batch_text))
                 if "U" not in line.split(":")[1].split(",")[1][1:]:
-                    output = self._converter.bits_to_rational(output_text)
+                    output = self._converter.binary_to_rational(output_text)
                 else:
                     output = output_text
                 results_dict[batch].append(output)

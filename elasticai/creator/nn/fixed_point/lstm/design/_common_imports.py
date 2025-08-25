@@ -1,3 +1,6 @@
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
+)
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
@@ -6,9 +9,6 @@ from elasticai.creator.file_generation.template import (
 from elasticai.creator.nn.fixed_point.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.fixed_point.hard_tanh.design import HardTanh
 from elasticai.creator.nn.fixed_point.linear.design import LinearDesign as FPLinear1d
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design import std_signals
 from elasticai.creator.vhdl.design.design import Design
@@ -19,7 +19,7 @@ from elasticai.creator.vhdl.shared_designs.rom import Rom
 __all__ = [
     "Path",
     "Design",
-    "FixedPointConfig",
+    "FxpArithmetic",
     "InProjectTemplate",
     "Path",
     "Port",
