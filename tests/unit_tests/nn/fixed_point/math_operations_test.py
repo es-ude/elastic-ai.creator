@@ -1,16 +1,17 @@
 import torch
 
-from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
 )
+from elasticai.creator.nn.fixed_point.math_operations import MathOperations
 from tests.tensor_test_case import TensorTestCase
 
 
 class FixedPointMathOperationsTest(TensorTestCase):
     def setUp(self) -> None:
         self.operations = MathOperations(
-            config=FixedPointConfig(total_bits=4, frac_bits=2)
+            config=FxpArithmetic(FxpParams(total_bits=4, frac_bits=2, signed=True))
         )
 
     def test_add(self) -> None:

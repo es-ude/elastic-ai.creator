@@ -2,13 +2,14 @@ from typing import Any, cast
 
 import torch
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.base_modules.linear import Linear as LinearBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 
 class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
@@ -25,7 +26,10 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         device: Any = None,
     ) -> None:
         super().__init__()
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._params = FxpParams(
+            total_bits=total_bits, frac_bits=frac_bits, signed=True
+        )
+        self._config = FxpArithmetic(self._params)
         self._operations = MathOperations(config=self._config)
         self._linear = LinearBase(
             in_features=in_features,

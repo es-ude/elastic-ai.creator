@@ -7,12 +7,13 @@ import numpy as np
 import serial  # type: ignore
 import torch
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point.linear import Linear
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
 from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
@@ -112,7 +113,8 @@ if __name__ == "__main__":
         vhdl_dir, num_inputs, num_outputs, total_bits, frac_bits, skeleton_id
     )
 
-    fxp_conf = FixedPointConfig(total_bits, frac_bits)
+    fxp_params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    fxp_conf = FxpArithmetic(fxp_params)
     # inputs = fxp_conf.as_rational(fxp_conf.as_integer(torch.rand(batches, 1, num_inputs)))
     inputs = fxp_conf.as_rational(fxp_conf.cut_as_integer(input_tensor))
     batches = inputs.shape[0]

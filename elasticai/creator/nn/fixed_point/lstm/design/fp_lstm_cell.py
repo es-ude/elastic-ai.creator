@@ -6,7 +6,6 @@ import numpy as np
 
 from ._common_imports import (
     Design,
-    FixedPointConfig,
     InProjectTemplate,
     Path,
     Port,
@@ -41,7 +40,10 @@ class FPLSTMCell(Design):
         self.weights_hh = w_hh
         self.biases_ih = b_ih
         self.biases_hh = b_hh
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._params = FxpParams(
+            total_bits=total_bits, frac_bits=frac_bits, signed=True
+        )
+        self._config = FxpArithmetic(self._params)
         self._htanh = hardtanh
         self._hsigmoid = hardsigmoid
         self._rom_base_names = ("wi", "wf", "wg", "wo", "bi", "bf", "bg", "bo")

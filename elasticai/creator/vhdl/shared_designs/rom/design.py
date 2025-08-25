@@ -1,12 +1,10 @@
+from elasticai.creator.arithmetic import FxpConverter, FxpParams
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
-from elasticai.creator.vhdl.code_generation.code_abstractions import (
-    to_vhdl_binary_string,
-)
 
 
 class Rom:
@@ -16,8 +14,11 @@ class Rom:
         self._name = name
         self._data_width = data_width
         self._address_width = calculate_address_width(len(values_as_integers))
+        conv = FxpConverter(
+            FxpParams(total_bits=self._data_width, frac_bits=0, signed=True)
+        )
         self._values = [
-            to_vhdl_binary_string(x, self._data_width)
+            conv.integer_to_binary_string_vhdl(x)
             for x in self._append_zeros_to_fill_addressable_memory(values_as_integers)
         ]
 

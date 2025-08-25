@@ -1,12 +1,13 @@
 from typing import Any, cast
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.base_modules.linear import Linear as LinearBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point.linear.design import LinearDesign
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 
 class Linear(DesignCreatorModule, LinearBase):
@@ -19,7 +20,10 @@ class Linear(DesignCreatorModule, LinearBase):
         bias: bool = True,
         device: Any = None,
     ) -> None:
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._params = FxpParams(
+            total_bits=total_bits, frac_bits=frac_bits, signed=True
+        )
+        self._config = FxpArithmetic(self._params)
         super().__init__(
             in_features=in_features,
             out_features=out_features,

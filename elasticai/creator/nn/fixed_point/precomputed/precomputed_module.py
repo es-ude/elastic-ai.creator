@@ -2,11 +2,12 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.shared_designs.precomputed_scalar_function import (
     PrecomputedScalarFunction,
 )
@@ -28,7 +29,10 @@ class PrecomputedModule(DesignCreatorModule):
     ) -> None:
         super().__init__()
         self._base_module = base_module
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._params = FxpParams(
+            total_bits=total_bits, frac_bits=frac_bits, signed=True
+        )
+        self._config = FxpArithmetic(self._params)
         self._operations = MathOperations(self._config)
         self._build_lut(in_range=sampling_intervall, lut_size=num_steps)
 

@@ -2,7 +2,6 @@ import pytest
 
 import elasticai.creator.nn.fixed_point as nn_creator
 from elasticai.creator.nn import Sequential
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from tests.integration_tests.nn.fixed_point.sequential_routine import (
     routine_testing_sequential_module,
 )
@@ -27,7 +26,9 @@ def test_build_test_batchnorm_linear(
     file_name = (
         f"TestBatchNormLinear_{total_bits}_{frac_bits}_{features_in}x{features_out}"
     )
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
 
     dut = Sequential(
         nn_creator.BatchNormedLinear(

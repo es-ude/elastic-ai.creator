@@ -2,7 +2,7 @@ import pytest
 import torch
 
 import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
+from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
 
 
 class SimpleHardSigmoid(torch.nn.Module):
@@ -27,7 +27,7 @@ class SimpleHardSigmoid(torch.nn.Module):
 def test_trainable_layer_hardtanh(
     total_bits: int, frac_bits: int, num_steps: int
 ) -> None:
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
     vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]

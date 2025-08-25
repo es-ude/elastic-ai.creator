@@ -5,12 +5,13 @@ from pathlib import Path
 import serial
 import torch
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point import Conv1d
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
 from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
@@ -108,7 +109,9 @@ if __name__ == "__main__":
         skeleton_id=skeleton_id,
     )
 
-    fxp_conf = FixedPointConfig(total_bits, frac_bits)
+    fxp_conf = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
 
     # inputs = fxp_conf.as_rational(fxp_conf.as_integer(torch.rand(batches, num_in_channels, num_inputs)))
     inputs = fxp_conf.as_rational(

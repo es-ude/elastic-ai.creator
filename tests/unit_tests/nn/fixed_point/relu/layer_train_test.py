@@ -2,7 +2,7 @@ import pytest
 import torch
 
 import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
+from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
 
 
 class SimpleReLU(torch.nn.Module):
@@ -25,7 +25,7 @@ class SimpleReLU(torch.nn.Module):
 @pytest.mark.slow
 @pytest.mark.parametrize("total_bits, frac_bits", [(4, 3)])
 def test_trainable_layer_relu(total_bits: int, frac_bits: int) -> None:
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
     vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]

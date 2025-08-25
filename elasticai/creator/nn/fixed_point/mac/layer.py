@@ -1,19 +1,19 @@
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.number_converter import FXPParams
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
-from elasticai.creator.testing import SimulatedLayer
+from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
 
 from .design import MacDesign
 from .mactestbench import MacTestBench
 
 
 class MacLayer:
-    def __init__(self, vector_width: int, fxp_params: FXPParams):
+    def __init__(self, vector_width: int, fxp_params: FxpParams):
         self.ops = MathOperations(
-            FixedPointConfig(
+            FxpArithmetic(
                 total_bits=fxp_params.total_bits, frac_bits=fxp_params.frac_bits
             )
         )

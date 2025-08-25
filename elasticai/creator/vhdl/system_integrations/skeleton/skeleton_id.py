@@ -8,8 +8,7 @@ from pathlib import Path
 from warnings import warn
 
 from elasticai.creator.hw_function_id import _HwFunctionIdHash
-
-from .hw_function_id import _replace_id_in_vhdl
+from elasticai.creator.vhdl.hw_function_id import _replace_id_in_vhdl
 
 
 def compute_skeleton_id_hash(files: Iterable[Path]) -> bytes:

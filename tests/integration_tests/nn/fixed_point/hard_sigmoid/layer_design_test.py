@@ -1,7 +1,7 @@
 import pytest
 
 import elasticai.creator.nn.fixed_point as nn_creator
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
+from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from tests.integration_tests.nn.fixed_point.precomputed_routine import (
     routine_testing_precomputed_module,
 )
@@ -17,7 +17,9 @@ def test_build_test_hardsigmoid_design(
     total_bits: int, frac_bits: int, num_steps: int
 ) -> None:
     file_name = f"TestHardSigmoid_{total_bits}_{frac_bits}_{num_steps}"
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
 
     dut = nn_creator.HardSigmoid(total_bits=total_bits, frac_bits=frac_bits)
     routine_testing_precomputed_module(

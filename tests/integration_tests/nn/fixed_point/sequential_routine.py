@@ -9,7 +9,6 @@ import torch
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from elasticai.creator.testing import (
     build_report_folder_and_testdata,
     run_cocotb_sim,
@@ -19,7 +18,7 @@ from elasticai.creator.testing import (
 def routine_testing_sequential_module(
     dut: Sequential,
     feat_in: int,
-    fxp: FixedPointConfig,
+    fxp: FxpArithmetic,
     file_name: str,
     check_quant: bool = True,
 ) -> None:

@@ -1,13 +1,10 @@
 import warnings
-from functools import partial
 
+from elasticai.creator.arithmetic import FxpConverter, FxpParams
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
-)
-from elasticai.creator.vhdl.code_generation.code_abstractions import (
-    to_vhdl_binary_string,
 )
 from elasticai.creator.vhdl.design.ports import Port
 
@@ -83,6 +80,7 @@ class Skeleton:
             )
 
     def save_to(self, destination: Path):
+        conv = FxpConverter(FxpParams(total_bits=8, frac_bits=0, signed=False))
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name=self._template_file_name,
@@ -95,9 +93,7 @@ class Skeleton:
                 y_num_values=self._y_num_values,
                 data_width_out=str(self._port["y"].width),
                 y_addr_width=str(self._port["y_address"].width),
-                id=", ".join(
-                    map(partial(to_vhdl_binary_string, number_of_bits=8), self._id)
-                ),
+                id=", ".join(map(conv.integer_to_binary_string_vhdl, self._id)),
             ),
         )
         file = destination.as_file(".vhd")
@@ -133,6 +129,7 @@ class EchoSkeletonV2:
         self._id = [50, 52, 48, 56, 50, 51, 69, 67, 72, 79, 83, 69, 82, 86, 69, 82]
 
     def save_to(self, destination: Path):
+        conv = FxpConverter(FxpParams(total_bits=8, frac_bits=0, signed=False))
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name=self._template_file_name,
@@ -140,9 +137,7 @@ class EchoSkeletonV2:
                 name=self._name,
                 data_width=str(self._bitwidth),
                 num_values=str(self._num_values),
-                id=", ".join(
-                    map(partial(to_vhdl_binary_string, number_of_bits=8), self._id)
-                ),
+                id=", ".join(map(conv.integer_to_binary_string_vhdl, self._id)),
             ),
         )
         file = destination.as_file(".vhd")

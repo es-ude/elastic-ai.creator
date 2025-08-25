@@ -2,7 +2,7 @@ import pytest
 import torch
 
 import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
+from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
 
 
 class SimpleSigmoid(torch.nn.Module):
@@ -36,7 +36,7 @@ class SimpleSigmoid(torch.nn.Module):
 @pytest.mark.slow
 @pytest.mark.parametrize("total_bits, frac_bits, num_steps", [(4, 3, 4)])
 def test_trainable_layer_silu(total_bits: int, frac_bits: int, num_steps: int) -> None:
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
     vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]

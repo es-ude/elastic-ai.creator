@@ -6,7 +6,6 @@ import torch
 
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 from elasticai.creator.testing import (
     build_report_folder_and_testdata,
     run_cocotb_sim,
@@ -27,7 +26,7 @@ def test_build_test_rom(
     file_name = f"TestROM_{total_bits}_{frac_bits}_{features_in}"
 
     # Build pattern and write into file
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpArithmetic(FxpParams(total_bits=total_bits, frac_bits=frac_bits))
     val_input = (
         fxp.as_rational(
             torch.randint(

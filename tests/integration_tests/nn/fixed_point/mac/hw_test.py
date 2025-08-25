@@ -1,12 +1,12 @@
 import pytest
 import torch
 
+from elasticai.creator.arithmetic import FxpParams
 from elasticai.creator.nn.fixed_point.mac.layer import MacLayer
-from elasticai.creator.nn.fixed_point.number_converter import FXPParams
-from elasticai.creator.testing.ghdl_simulation import GHDLSimulator
+from elasticai.creator.vhdl.ghdl_simulation import GHDLSimulator
 
 integer_test_data = [
-    (FXPParams(4, 0), x1, x2)
+    (FxpParams(4, 0), x1, x2)
     for x1, x2 in [
         ((1.0, 0.0), (-1.0, 0.0)),
         ((1.0, 0.0), (0.0, 0.0)),
@@ -19,7 +19,7 @@ integer_test_data = [
 ]
 
 fractions_test_data = [
-    (FXPParams(5, 2), x1, x2)
+    (FxpParams(5, 2), x1, x2)
     for x1, x2 in [
         # 00010 * 00010 -> 00000 00100 -> 000(00 001)00 -> 00001
         ((0.5, 0.0), (0.5, 0.0)),
@@ -64,7 +64,7 @@ def test_mac_hw_for_integers(tmp_path, fxp_params, x1, x2):
     ],
 )
 def test_sw_mac_rounds_towards_zero(x1, x2, expected):
-    fxp_params = FXPParams(total_bits=5, frac_bits=2)
+    fxp_params = FxpParams(total_bits=5, frac_bits=2)
     mac = MacLayer(fxp_params=fxp_params, vector_width=len(x1))
     y = mac(torch.tensor(x1), torch.tensor(x2)).item()
     assert expected == y

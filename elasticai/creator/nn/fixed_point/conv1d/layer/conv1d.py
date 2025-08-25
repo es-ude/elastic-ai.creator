@@ -1,13 +1,14 @@
 from typing import Any, cast
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.base_modules.conv1d import Conv1d as Conv1dBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.fixed_point.conv1d.design import Conv1dDesign
 from elasticai.creator.nn.fixed_point.conv1d.testbench import Conv1dTestbench
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 
 
 class Conv1d(DesignCreatorModule, Conv1dBase):
@@ -22,7 +23,8 @@ class Conv1d(DesignCreatorModule, Conv1dBase):
         bias: bool = True,
         device: Any = None,
     ) -> None:
-        self._config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        self._params = FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+        self._config = FxpArithmetic(self._params)
         self._signal_length = signal_length
         super().__init__(
             operations=MathOperations(config=self._config),

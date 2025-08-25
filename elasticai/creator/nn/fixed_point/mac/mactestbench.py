@@ -1,13 +1,12 @@
+from elasticai.creator.arithmetic import FxpConverter, FxpParams
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import InProjectTemplate
-
-from ..number_converter import NumberConverter
 
 
 class MacTestBench:
     def __init__(self, uut, fxp_params, name, uut_name):
         self._fxp_params = fxp_params
-        self._converter = NumberConverter(fxp_params)
+        self._converter = FxpConverter(self._fxp_params)
         self._uut = uut
         self._uut_name = uut_name
         self._inputs = None
@@ -18,7 +17,7 @@ class MacTestBench:
         self._inputs = inputs
 
     def parse_reported_content(self, outputs: list[str]):
-        return self._converter.bits_to_rational(outputs[0])
+        return self._converter.binary_to_rational(outputs[0])
 
     @property
     def _vector_width(self) -> str:
@@ -50,8 +49,8 @@ class MacTestBench:
 
     def _prepare_inputs_for_test_bench(self, inputs):
         x1, x2 = inputs
-        x1 = map(self._converter.rational_to_bits, x1)
-        x2 = map(self._converter.rational_to_bits, x2)
+        x1 = map(self._converter.rational_to_binary_string_vhdl, x1)
+        x2 = map(self._converter.rational_to_binary_string_vhdl, x2)
         inputs = {
             "x1": ", ".join([f'b"{x}"' for x in x1]),
             "x2": ", ".join([f'b"{x}"' for x in x2]),

@@ -2,7 +2,6 @@ import pytest
 import torch
 
 from elasticai.creator.nn import fixed_point as nn_creator
-from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
 
 
 @pytest.mark.parametrize(
@@ -10,7 +9,7 @@ from elasticai.creator.nn.fixed_point.math_operations import FixedPointConfig
     [(4, 3, 4), (6, 4, 32), (8, 5, 64), (10, 6, 16), (12, 7, 128), (12, 11, 64)],
 )
 def test_relu_compared_torch(total_bits: int, frac_bits: int, num_steps: int) -> None:
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
     vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
     stimulus = torch.arange(
         start=vrange[0], end=vrange[1], step=fxp.minimum_step_as_rational

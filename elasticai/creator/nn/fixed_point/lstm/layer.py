@@ -3,6 +3,10 @@ from typing import cast
 
 import torch
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.base_modules.lstm import LSTM
 from elasticai.creator.base_modules.lstm_cell import LSTMCell
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
@@ -10,9 +14,6 @@ from elasticai.creator.nn.fixed_point.hard_sigmoid import HardSigmoid
 from elasticai.creator.nn.fixed_point.hard_tanh import HardTanh
 from elasticai.creator.nn.fixed_point.lstm.design.fp_lstm_cell import FPLSTMCell
 from elasticai.creator.nn.fixed_point.lstm.design.lstm import LSTMNetworkDesign
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
-)
 from elasticai.creator.vhdl.design.design import Design
 
 from ..math_operations import MathOperations
@@ -73,7 +74,8 @@ class FixedPointLSTMWithHardActivations(DesignCreatorModule, LSTM):
         hidden_size: int,
         bias: bool,
     ) -> None:
-        config = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+        params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+        config = FxpArithmetic(params)
 
         class LayerFactory:
             def lstm(self, input_size: int, hidden_size: int, bias: bool) -> LSTMCell:
@@ -103,7 +105,7 @@ class FixedPointLSTMWithHardActivations(DesignCreatorModule, LSTM):
         self._config = config
 
     @property
-    def fixed_point_config(self) -> FixedPointConfig:
+    def fixed_point_config(self) -> FxpArithmetic:
         return self._config
 
     def create_design(self, name: str = "lstm_cell") -> Design:

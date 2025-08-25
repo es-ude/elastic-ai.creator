@@ -4,7 +4,6 @@ import torch
 import elasticai.creator.nn.fixed_point as nn_creator
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point.math_operations import (
-    FixedPointConfig,
     MathOperations,
 )
 from tests.integration_tests.nn.fixed_point.sequential_routine import (
@@ -28,7 +27,9 @@ def test_build_test_linear_relu(
     features_out: int,
 ) -> None:
     file_name = f"TestLinearReLU_{total_bits}_{frac_bits}_{features_in}x{features_out}"
-    fxp = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
     math = MathOperations(fxp)
 
     dut = Sequential(

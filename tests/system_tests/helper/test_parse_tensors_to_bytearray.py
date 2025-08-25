@@ -1,7 +1,7 @@
 import torch
 
-from elasticai.creator.nn.fixed_point.two_complement_fixed_point_config import (
-    FixedPointConfig,
+from elasticai.creator.arithmetic.fxp_converter import (
+    FxpArithmetic,
 )
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
     parse_bytearray_to_fxp_tensor,
@@ -13,7 +13,9 @@ def test_tensors_to_bytearray():
     torch.manual_seed(0)
     total_bits = 8
     frac_bits = 2
-    fxp_conf = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp_conf = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
     tensor = fxp_conf.as_rational(fxp_conf.cut_as_integer(torch.randn(2, 3, 4)))
     result = parse_fxp_tensor_to_bytearray(tensor, total_bits, frac_bits)
     expected = [
@@ -31,7 +33,9 @@ def test_bytearray_to_tensor():
     total_bits = 8
     frac_bits = 2
     torch.manual_seed(0)
-    fxp_conf = FixedPointConfig(total_bits=total_bits, frac_bits=frac_bits)
+    fxp_conf = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
     dimensions = (2, 3, 4)
     expected = fxp_conf.as_rational(fxp_conf.cut_as_integer(torch.randn(dimensions)))
     result = parse_bytearray_to_fxp_tensor(input, total_bits, frac_bits, dimensions)
