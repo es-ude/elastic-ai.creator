@@ -83,7 +83,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     @property
-    def inputsq_QParams(self):
+    def inputs_q_QParams(self):
         return self.matrix_multi_score.inputs1_QParams
 
     @property

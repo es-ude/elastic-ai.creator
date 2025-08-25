@@ -45,12 +45,10 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> SoftmaxLUTDesign:
-        if self.quant_bits <= 4:
-            numerator_out_data_width = self.quant_bits * 3 - 1
-            denominator_out_data_width = self.quant_bits * 3
-        else:
-            numerator_out_data_width = self.quant_bits * 3 - 1
-            denominator_out_data_width = self.quant_bits * 2
+        numerator_out_data_width = self.quant_bits * 3 - 1
+        coefficient = 3 if self.quant_bits <= 4 else 2
+        denominator_out_data_width = self.quant_bits * coefficient
+
         return SoftmaxLUTDesign(
             name=name,
             data_width=self.quant_bits,
@@ -81,9 +79,9 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         tmp = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
 
         # 4. Identify quant_bits of tmp
-        tmp_quant_bits = (
-            3 * self.quant_bits if self.quant_bits <= 4 else 2 * self.quant_bits
-        )
+        coefficient = 3 if self.quant_bits <= 4 else 2
+        tmp_quant_bits = self.quant_bits * coefficient
+
         # get scale factor of tmp
         tmp_scale_factor = (1.0 - 0.0) / (
             ((2 ** (tmp_quant_bits - 1) - 1) - (-(2 ** (tmp_quant_bits - 1))))

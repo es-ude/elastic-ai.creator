@@ -20,6 +20,7 @@ class Linear(Design):
         name: str,
         x_data_width: int,
         w_data_width: int,
+        b_data_width: int,
         y_data_width: int,
         in_features: int,
         out_features: int,
@@ -39,8 +40,15 @@ class Linear(Design):
 
         self._x_data_width = x_data_width
         self._w_data_width = w_data_width
-        self._b_data_width = (x_data_width + 1) + (w_data_width + 1)
+        self._b_data_width = b_data_width
         self._y_data_width = y_data_width
+
+        print("----------------------------")
+        print("linear name", self.name)
+        print("x_data_width", self._x_data_width)
+        print("w_data_width", self._w_data_width)
+        print("b_data_width", self._b_data_width)
+        print("y_data_width", self._y_data_width)
 
         self._in_features = in_features
         self._out_features = out_features

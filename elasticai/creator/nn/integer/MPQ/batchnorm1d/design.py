@@ -19,6 +19,7 @@ class BatchNorm1d(Design):
         name: str,
         x_data_width: int,
         w_data_width: int,
+        b_data_width: int,
         y_data_width: int,
         num_dimensions: int,
         in_features: int,
@@ -38,7 +39,7 @@ class BatchNorm1d(Design):
 
         self._x_data_width = x_data_width
         self._w_data_width = w_data_width
-        self._b_data_width = (self._x_data_width + 1) + (self._w_data_width + 1)
+        self._b_data_width = b_data_width
         self._y_data_width = y_data_width
 
         self._num_dimensions = num_dimensions

@@ -52,8 +52,8 @@ class ReLU(DesignCreatorModule, MPQSupport):
     def create_design(self, name: str) -> ReLUDesign:
         return ReLUDesign(
             name=name,
-            x_data_width=self.quant_bits_per_element["inputs"],
-            y_data_width=self.quant_bits_per_element["outputs"],
+            x_data_width=self.inputs_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             threshold=int(self.inputs_QParams.zero_point.detach()),
             clock_option=False,
             work_library_name="work",

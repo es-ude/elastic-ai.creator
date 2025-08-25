@@ -59,6 +59,11 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         for element in self.quantizable_elements:
             key = f"{self.name}.{element}"
             quant_bits_per_element[element] = quant_configs.get(key)
+
+        if "bias" in quant_bits_per_element:
+            quant_bits_per_element["bias"] = (quant_bits_per_element["inputs"] + 1) + (
+                quant_bits_per_element["weights"] + 1
+            )
         self.quant_bits_per_element = quant_bits_per_element
         self._init_element_Qparams()
 
@@ -87,9 +92,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
     def create_design(self, name: str) -> BatchNorm1dDesign:
         return BatchNorm1dDesign(
             name=name,
-            x_data_width=self.quant_bits_per_element["inputs"],
-            w_data_width=self.quant_bits_per_element["weights"],
-            y_data_width=self.quant_bits_per_element["outputs"],
+            x_data_width=self.inputs_QParams.quant_bits.item(),
+            w_data_width=self.weight_QParams.quant_bits.item(),
+            b_data_width=self.bias_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             num_dimensions=self.num_dimensions,
             in_features=self.in_features,
             out_features=self.out_features,

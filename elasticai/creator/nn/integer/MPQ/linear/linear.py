@@ -30,7 +30,9 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         self.enable_bias = kwargs.get("bias", True)
 
         self.name = kwargs.get("name")
-        self.quantizable_elements = ["inputs", "weights", "bias", "outputs"]
+        self.quantizable_elements = ["inputs", "weights", "outputs"]
+        if kwargs.get("bias"):
+            self.quantizable_elements.append("bias")
         self.quant_bits_per_element = None
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
@@ -45,6 +47,11 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         for element in self.quantizable_elements:
             key = f"{self.name}.{element}"
             quant_bits_per_element[element] = quant_configs.get(key)
+
+        if "bias" in quant_bits_per_element:
+            quant_bits_per_element["bias"] = (quant_bits_per_element["inputs"] + 1) + (
+                quant_bits_per_element["weights"] + 1
+            )
         self.quant_bits_per_element = quant_bits_per_element
         self._init_element_Qparams()
 
@@ -73,9 +80,12 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
             name=name,
-            x_data_width=self.quant_bits_per_element["inputs"],
-            w_data_width=self.quant_bits_per_element["weights"],
-            y_data_width=self.quant_bits_per_element["outputs"],
+            x_data_width=self.inputs_QParams.quant_bits.item(),
+            w_data_width=self.weight_QParams.quant_bits.item(),
+            b_data_width=(
+                self.bias_QParams.quant_bits.item() if self.enable_bias else 0
+            ),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             in_features=self.in_features,
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,

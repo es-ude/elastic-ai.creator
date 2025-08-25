@@ -74,9 +74,9 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         return MatrixMultiDesign(
             name=name,
             is_score_mode="true" if self.operation_mode == "score" else "false",
-            x_1_data_width=self.quant_bits_per_element["inputs1"],
-            x_2_data_width=self.quant_bits_per_element["inputs2"],
-            y_data_width=self.quant_bits_per_element["outputs"],
+            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
+            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             x_1_dim_a=self.x_1_dim_a,
             x_1_dim_b=self.x_1_dim_b,
             x_1_dim_c=self.x_1_dim_c,
@@ -146,7 +146,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
             inputs1=q_inputs1,
             inputs2=q_inputs2,
             operation_mode=self.operation_mode,
-            outputs_quant_bits=(self.quant_bits_per_element["outputs"] + 1) * 2,
+            outputs_quant_bits=(self.outputs_QParams.quant_bits.item() + 1) * 2,
         )
 
         tmp = simulate_bitshifting(

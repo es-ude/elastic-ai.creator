@@ -61,9 +61,9 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AdditionDesign:
         return AdditionDesign(
             name=name,
-            x_1_data_width=self.quant_bits_per_element["inputs1"],
-            x_2_data_width=self.quant_bits_per_element["inputs2"],
-            y_data_width=self.quant_bits_per_element["outputs"],
+            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
+            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             num_features=self.num_features,
             num_dimensions=self.num_dimensions,
             m_q_1=self.scale_factor_m_q_1.item(),

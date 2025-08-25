@@ -62,16 +62,16 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         ).to(self.device)
 
     def create_design(self, name: str) -> SoftmaxLUTDesign:
-        if self.quant_bits_per_element["inputs"] <= 4:
-            numerator_out_data_width = self.quant_bits_per_element["inputs"] * 3 - 1
-            denominator_out_data_width = self.quant_bits_per_element["inputs"] * 3
-        else:
-            numerator_out_data_width = self.quant_bits_per_element["inputs"] * 3 - 1
-            denominator_out_data_width = self.quant_bits_per_element["inputs"] * 2
+        numerator_out_data_width = self.inputs1_QParams.quant_bits.item() * 3 - 1
+        coefficient = 3 if self.inputs1_QParams.quant_bits.item() <= 4 else 2
+        denominator_out_data_width = (
+            self.inputs1_QParams.quant_bits.item() * coefficient
+        )
+
         return SoftmaxLUTDesign(
             name=name,
-            x_data_width=self.quant_bits_per_element["inputs"],
-            y_data_width=self.quant_bits_per_element["outputs"],
+            x_data_width=self.inputs1_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             dim_a=self.dim_a,
             dim_b=self.dim_b,
             dim_c=self.dim_c,
@@ -99,11 +99,9 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         tmp = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
 
         # 4. Identify quant_bits of tmp
-        tmp_quant_bits = (
-            3 * self.quant_bits_per_element["inputs"]
-            if self.quant_bits_per_element["inputs"] <= 4
-            else 2 * self.quant_bits_per_element["inputs"]
-        )
+        coefficient = 3 if self.inputs2_QParams.quant_bits.item() <= 4 else 2
+        tmp_quant_bits = self.inputs2_QParams.quant_bits.item() * coefficient
+
         # get scale factor of tmp
         tmp_scale_factor = (1.0 - 0.0) / (
             ((2 ** (tmp_quant_bits - 1) - 1) - (-(2 ** (tmp_quant_bits - 1))))
@@ -131,8 +129,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         q_numerator = tmp / (tmp_scale_factor * self.outputs_QParams.scale_factor)
         q_numerator = q_numerator.to(torch.int32)
         q_numerator = q_numerator.round_().clamp(
-            -(2 ** (self.quant_bits_per_element["inputs"] * 3 - 1)),
-            2 ** (self.quant_bits_per_element["inputs"] * 3 - 1) - 1,
+            -(2 ** (self.inputs2_QParams.quant_bits.item() * 3 - 1)),
+            2 ** (self.inputs2_QParams.quant_bits.item() * 3 - 1) - 1,
         )
         self.Qinput2QNumerator_LUT_dict = {}
         for i in range(len(q_numerator)):
@@ -179,26 +177,6 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
             self.inputs2_QParams.quant_bits.item() + 1,
         )
 
-        # q_numerator = q_inputs.clone()  # tmp / (S_soft * S_t)
-        # for i in range(q_inputs.shape[0]):
-        #     for j in range(q_inputs.shape[1]):
-        #         for k in range(q_inputs.shape[2]):
-        #             for l in range(q_inputs.shape[3]):
-        #                 q_numerator[i][j][k][l] = self.Qinput2QNumerator_LUT_dict[
-        #                     q_inputs[i][j][k][l].item()
-        #                 ]
-        # q_denominator = q_inputs.clone()
-        # for i in range(q_inputs.shape[0]):
-        #     for j in range(q_inputs.shape[1]):
-        #         for k in range(q_inputs.shape[2]):
-        #             for l in range(q_inputs.shape[3]):
-        #                 q_denominator[i][j][k][l] = (
-        #                     self.Qinput2QDenominator_LUT_dict[
-        #                         q_inputs[i][j][k][l].item()
-        #                     ]
-        #                     - self.tmp_zero_point
-        #                 )
-
         indices = q_inputs - self.mapping_offset
         q_numerator = self.numerator_mapping[indices]
         q_denominator = self.denominator_mapping[indices] - self.tmp_zero_point
@@ -206,11 +184,11 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         q_denominator = q_denominator.sum(dim=-1, keepdim=True)  # sum(Q_t - Z_t)
 
         tmp = self.math_ops.int_division(
-            q_numerator, q_denominator, self.quant_bits_per_element["inputs"] + 1
+            q_numerator, q_denominator, self.outputs_QParams.quant_bits.item() + 1
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.quant_bits_per_element["inputs"]
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 

@@ -97,6 +97,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
     def inputs_v_QParams(self):
         return self.v_linear.inputs_QParams
 
+    @property
     def outputs_QParams(self):
         return self.output_linear.outputs_QParams
 
