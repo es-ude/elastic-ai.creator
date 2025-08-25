@@ -19,6 +19,9 @@ class FxpArithmetic(FxpParams):
     def cut_as_integer(self, number: float | int) -> int: ...
 
     @overload
+    def cut_as_integer(self, number: list) -> list: ...
+
+    @overload
     def cut_as_integer(self, number: T) -> T: ...
 
     def cut_as_integer(self, number: float | int | list | T) -> int | list | T:

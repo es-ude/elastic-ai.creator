@@ -28,7 +28,7 @@ class FxpConverter(FxpParams):
         else:
             return self._convert_integer_to_twos(number)
 
-    def _convert_integer_to_twos(self, number: int | float) -> int | float:
+    def _convert_integer_to_twos(self, number: int | float | T) -> int | float | T:
         if self.integer_out_of_bounds(number):
             raise ValueError(
                 f"Value '{number}' cannot be represented with {self.total_bits} bits."
