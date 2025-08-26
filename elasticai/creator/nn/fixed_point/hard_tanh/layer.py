@@ -28,9 +28,9 @@ class HardTanh(DesignCreatorModule, HardTanhBase):
         )
         self._config = FxpArithmetic(self._params)
 
-        if self._config.rational_out_of_bounds(min_val):
+        if self._params.rational_out_of_bounds(min_val):
             self.min_val = self._config.minimum_as_rational
-        if self._config.rational_out_of_bounds(max_val):
+        if self._params.rational_out_of_bounds(max_val):
             self.max_val = self._config.maximum_as_rational
 
     def create_design(self, name: str) -> HardTanhDesign:

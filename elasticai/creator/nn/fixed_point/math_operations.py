@@ -10,9 +10,6 @@ from elasticai.creator.nn.fixed_point.fxp_round_cut import (
     CutToFixedPoint,
     RoundToFixedPoint,
 )
-from elasticai.creator.base_modules.conv1d import MathOperations as Conv1dOps
-from elasticai.creator.base_modules.linear import MathOperations as LinearOps
-from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
 
 
 class MathOperations(LinearOps, Conv1dOps, LSTMOps):

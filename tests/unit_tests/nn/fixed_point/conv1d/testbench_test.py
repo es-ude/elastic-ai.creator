@@ -53,7 +53,9 @@ def parameters_for_reported_content_parsing(fxp_params, input_expected_pairs):
 
 @pytest.fixture
 def create_uut() -> Callable[[FxpParams, int, int], Conv1dDesign]:
-    def create(fxp_params, in_channels: int, out_channels: int) -> Conv1dDesign:
+    def create(
+        fxp_params: FxpParams, in_channels: int, out_channels: int
+    ) -> Conv1dDesign:
         return DummyConv1d(
             fxp_params, in_channels=in_channels, out_channels=out_channels
         )

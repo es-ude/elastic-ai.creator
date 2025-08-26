@@ -1,15 +1,16 @@
 import pytest
 import torch
 
-import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
+import elasticai.creator.nn.fixed_point as nn_fxp
+from elasticai.creator.arithmetic import FxpParams
+from elasticai.creator.nn import Sequential
 
 
 class SimpleLinear(torch.nn.Module):
     def __init__(self, total_width: int, frac_width: int):
         super().__init__()
-        self.model = nn.Sequential(
-            nn.fixed_point.Linear(
+        self.model = Sequential(
+            nn_fxp.Linear(
                 in_features=10,
                 out_features=10,
                 total_bits=total_width,
@@ -26,8 +27,8 @@ class SimpleLinear(torch.nn.Module):
 def test_trainable_layer_linear(
     total_bits: int, frac_bits: int, num_steps: int
 ) -> None:
-    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
-    vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
+    params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    vrange = (params.minimum_as_rational, params.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]
     model = SimpleLinear(total_bits, frac_bits)
@@ -45,8 +46,8 @@ def test_trainable_layer_linear(
 class SimpleBatchNormLinear(torch.nn.Module):
     def __init__(self, total_width: int, frac_width: int):
         super().__init__()
-        self.model = nn.Sequential(
-            nn.fixed_point.BatchNormedLinear(
+        self.model = Sequential(
+            nn_fxp.BatchNormedLinear(
                 in_features=10,
                 out_features=10,
                 total_bits=total_width,
@@ -63,8 +64,8 @@ class SimpleBatchNormLinear(torch.nn.Module):
 def test_trainable_layer_batchnorm_linear(
     total_bits: int, frac_bits: int, num_steps: int
 ) -> None:
-    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
-    vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
+    params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    vrange = (params.minimum_as_rational, params.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]
 

@@ -54,7 +54,7 @@ depends_on = [
 path = "elasticai.creator.vhdl"
 depends_on = [
     "elasticai.creator.file_generation",
-    "elasticai.creator.hw_function_id",
+    "elasticai.creator.hw_function_id", "elasticai.creator.arithmetic",
 ]
 
 [[modules]]
@@ -110,7 +110,7 @@ depends_on = [
     "elasticai.creator.vhdl",
     "elasticai.creator.nn.design_creator_module",
     "elasticai.creator.file_generation",
-    "elasticai.creator.base_modules", "elasticai.creator.testing",
+    "elasticai.creator.base_modules", "elasticai.creator.arithmetic",
 ]
 
 [[modules]]
@@ -195,8 +195,8 @@ depends_on = [
 ]
 
 [[modules]]
-path = "elasticai.creator.testing"
-depends_on = ["elasticai.creator.file_generation"]
+path = "elasticai.creator.arithmetic"
+
 
 [[modules]]
 path = "<root>"

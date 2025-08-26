@@ -52,7 +52,7 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         return self._linear.weight
 
     @property
-    def lin_bias(self) -> torch.Tensor | None:
+    def lin_bias(self) -> torch.Tensor:
         return self._linear.bias
 
     @property

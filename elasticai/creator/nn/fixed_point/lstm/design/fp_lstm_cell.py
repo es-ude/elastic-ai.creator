@@ -4,6 +4,11 @@ from typing import Any, cast
 
 import numpy as np
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
+
 from ._common_imports import (
     Design,
     InProjectTemplate,

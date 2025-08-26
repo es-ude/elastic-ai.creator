@@ -1,21 +1,22 @@
 import pytest
 import torch
 
-import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
+import elasticai.creator.nn.fixed_point as nn
+from elasticai.creator.arithmetic import FxpParams
+from elasticai.creator.nn import Sequential
 
 
 class SimpleHardTanh(torch.nn.Module):
     def __init__(self, total_width: int, frac_width: int, vrange: tuple[float, float]):
         super().__init__()
-        self.model = nn.Sequential(
-            nn.fixed_point.Linear(
+        self.model = Sequential(
+            nn.Linear(
                 in_features=10,
                 out_features=10,
                 total_bits=total_width,
                 frac_bits=frac_width,
             ),
-            nn.fixed_point.HardTanh(
+            nn.HardTanh(
                 total_bits=total_width,
                 frac_bits=frac_width,
                 min_val=vrange[0],
@@ -34,8 +35,8 @@ class SimpleHardTanh(torch.nn.Module):
 def test_trainable_layer_hardtanh(
     total_bits: int, frac_bits: int, num_steps: int, yrange: tuple[float, float]
 ) -> None:
-    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
-    vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
+    params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    vrange = (params.minimum_as_rational, params.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]
     model = SimpleHardTanh(total_bits, frac_bits, yrange)

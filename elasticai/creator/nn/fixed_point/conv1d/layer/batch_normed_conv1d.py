@@ -59,7 +59,7 @@ class BatchNormedConv1d(DesignCreatorModule):
         return self._conv1d.weight
 
     @property
-    def conv_bias(self) -> torch.Tensor | None:
+    def conv_bias(self) -> torch.Tensor:
         return self._conv1d.bias
 
     @property

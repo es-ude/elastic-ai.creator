@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from elasticai.creator.arithmetic import FxpParams
 from elasticai.creator.nn import fixed_point as nn_creator
 
 
@@ -11,10 +12,10 @@ from elasticai.creator.nn import fixed_point as nn_creator
 def test_hard_sigmoid_compared_torch(
     total_bits: int, frac_bits: int, num_steps: int
 ) -> None:
-    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
-    vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
+    params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    vrange = (params.minimum_as_rational, params.maximum_as_rational)
     stimulus = torch.arange(
-        start=vrange[0], end=vrange[1], step=fxp.minimum_step_as_rational
+        start=vrange[0], end=vrange[1], step=params.minimum_step_as_rational
     )
 
     act0 = torch.nn.Hardsigmoid()

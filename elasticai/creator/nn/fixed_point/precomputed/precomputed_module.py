@@ -61,12 +61,12 @@ class PrecomputedModule(DesignCreatorModule):
         )
         lut_diff = (
             torch.abs(torch.diff(self._lut_input))
-            / self._config.minimum_step_as_rational
+            / self._params.minimum_step_as_rational
             / 2
         )
         self._xoffset = (
             float((lut_diff.max() + lut_diff.min()) / 2)
-            * self._config.minimum_step_as_rational
+            * self._params.minimum_step_as_rational
         )
 
     def get_lut_integer(self) -> tuple[list[int], list[int]]:

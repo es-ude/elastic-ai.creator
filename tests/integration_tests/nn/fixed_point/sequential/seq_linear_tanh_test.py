@@ -2,6 +2,7 @@ import pytest
 import torch
 
 import elasticai.creator.nn.fixed_point as nn_creator
+from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point.math_operations import (
     MathOperations,
@@ -53,7 +54,7 @@ def test_build_test_linear_tanh(
             )
             + scale_min
             + torch.randint(low=-1, high=+1, size=(features_out, features_in))
-            * fxp.minimum_step_as_rational
+            * fxp.config.minimum_step_as_rational
         )
     )
     dut[0].bias.data = torch.nn.Parameter(
@@ -64,7 +65,7 @@ def test_build_test_linear_tanh(
             )
             + scale_min
             + torch.randint(low=-1, high=+1, size=(features_out,))
-            * fxp.minimum_step_as_rational
+            * fxp.config.minimum_step_as_rational
         )
     )
 

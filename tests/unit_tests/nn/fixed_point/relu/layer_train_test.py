@@ -1,21 +1,22 @@
 import pytest
 import torch
 
-import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
+import elasticai.creator.nn.fixed_point as nn_creator
+from elasticai.creator.arithmetic import FxpParams
+from elasticai.creator.nn import Sequential
 
 
 class SimpleReLU(torch.nn.Module):
     def __init__(self, total_width: int, frac_width: int):
         super().__init__()
-        self.model = nn.Sequential(
-            nn.fixed_point.Linear(
+        self.model = Sequential(
+            nn_creator.Linear(
                 in_features=10,
                 out_features=10,
                 total_bits=total_width,
                 frac_bits=frac_width,
             ),
-            nn.fixed_point.ReLU(total_bits=total_width),
+            nn_creator.ReLU(total_bits=total_width),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

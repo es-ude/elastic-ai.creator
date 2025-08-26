@@ -1,8 +1,9 @@
 import pytest
 import torch
 
-import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
+import elasticai.creator.nn.fixed_point as nn_creator
+from elasticai.creator.arithmetic import FxpParams
+from elasticai.creator.nn import Sequential
 
 
 class SimpleSigmoid(torch.nn.Module):
@@ -14,14 +15,14 @@ class SimpleSigmoid(torch.nn.Module):
         vrange: tuple[float, float],
     ):
         super().__init__()
-        self.model = nn.Sequential(
-            nn.fixed_point.Linear(
+        self.model = Sequential(
+            nn_creator.Linear(
                 in_features=10,
                 out_features=10,
                 total_bits=total_width,
                 frac_bits=frac_width,
             ),
-            nn.fixed_point.Sigmoid(
+            nn_creator.Sigmoid(
                 total_bits=total_width,
                 frac_bits=frac_width,
                 num_steps=num_steps,
@@ -36,11 +37,13 @@ class SimpleSigmoid(torch.nn.Module):
 @pytest.mark.slow
 @pytest.mark.parametrize("total_bits, frac_bits, num_steps", [(4, 3, 4)])
 def test_trainable_layer_silu(total_bits: int, frac_bits: int, num_steps: int) -> None:
-    fxp = FxpArithmetic(total_bits=total_bits, frac_bits=frac_bits)
-    vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
+    params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    vrange = (params.minimum_as_rational, params.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]
-    model = SimpleSigmoid(total_bits, frac_bits, num_steps, vrange)
+    model = SimpleSigmoid(
+        total_width=total_bits, frac_width=frac_bits, num_steps=num_steps, vrange=vrange
+    )
     criterion = torch.nn.MSELoss()
     optim = torch.optim.Adam(model.parameters())
 

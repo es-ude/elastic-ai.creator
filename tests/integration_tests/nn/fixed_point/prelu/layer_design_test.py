@@ -24,7 +24,10 @@ def test_build_test_prelu_design(
         total_bits=total_bits,
         frac_bits=frac_bits,
         num_steps=num_steps,
-        sampling_intervall=(fxp.minimum_as_rational, fxp.maximum_as_rational),
+        sampling_intervall=(
+            fxp.config.minimum_as_rational,
+            fxp.config.maximum_as_rational,
+        ),
     )
     routine_testing_precomputed_module(
         dut=dut,

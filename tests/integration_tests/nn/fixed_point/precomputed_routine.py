@@ -3,6 +3,9 @@ from pathlib import Path
 
 import torch
 
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+)
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.testing import (

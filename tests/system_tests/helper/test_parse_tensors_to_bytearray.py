@@ -1,8 +1,6 @@
 import torch
 
-from elasticai.creator.arithmetic.fxp_converter import (
-    FxpArithmetic,
-)
+from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
     parse_bytearray_to_fxp_tensor,
     parse_fxp_tensor_to_bytearray,

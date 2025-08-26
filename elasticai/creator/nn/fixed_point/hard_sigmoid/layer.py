@@ -22,20 +22,20 @@ class HardSigmoid(DesignCreatorModule, HardSigmoidBase):
 
     def create_design(self, name: str) -> HardSigmoidDesign:
         neg_thr = -3.0
-        if self._config.rational_out_of_bounds(neg_thr):
+        if self._params.rational_out_of_bounds(neg_thr):
             neg_thr = self._config.minimum_as_rational
         pos_thr = +3.0
-        if self._config.rational_out_of_bounds(pos_thr):
+        if self._params.rational_out_of_bounds(pos_thr):
             pos_thr = self._config.maximum_as_rational
         y_int = 0.5
-        if self._config.rational_out_of_bounds(y_int):
+        if self._params.rational_out_of_bounds(y_int):
             pos_thr = self._config.maximum_as_rational
         y_max = 1.0
-        if self._config.rational_out_of_bounds(y_max):
+        if self._params.rational_out_of_bounds(y_max):
             y_max = self._config.maximum_as_rational
         slope = 1 / 6
-        if self._config.rational_out_of_bounds(slope):
-            y_max = self._config.minimum_step_as_rational
+        if self._params.rational_out_of_bounds(slope):
+            y_max = self._params.minimum_step_as_rational
 
         return HardSigmoidDesign(
             name=name,

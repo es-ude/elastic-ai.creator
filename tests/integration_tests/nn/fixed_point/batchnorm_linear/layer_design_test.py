@@ -1,6 +1,10 @@
 import pytest
 
 import elasticai.creator.nn.fixed_point as nn_creator
+from elasticai.creator.arithmetic import (
+    FxpArithmetic,
+    FxpParams,
+)
 from elasticai.creator.nn import Sequential
 from tests.integration_tests.nn.fixed_point.sequential_routine import (
     routine_testing_sequential_module,

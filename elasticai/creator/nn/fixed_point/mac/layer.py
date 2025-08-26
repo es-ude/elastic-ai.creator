@@ -14,7 +14,9 @@ class MacLayer:
     def __init__(self, vector_width: int, fxp_params: FxpParams):
         self.ops = MathOperations(
             FxpArithmetic(
-                total_bits=fxp_params.total_bits, frac_bits=fxp_params.frac_bits
+                FxpParams(
+                    total_bits=fxp_params.total_bits, frac_bits=fxp_params.frac_bits
+                )
             )
         )
         self._vector_width = vector_width

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import torch
 
+from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.testing import (
@@ -30,8 +31,8 @@ def test_build_test_rom(
     val_input = (
         fxp.as_rational(
             torch.randint(
-                low=fxp.minimum_as_integer,
-                high=fxp.maximum_as_integer + 1,
+                low=fxp.config.minimum_as_integer,
+                high=fxp.config.maximum_as_integer + 1,
                 size=(features_in,),
             )
         )

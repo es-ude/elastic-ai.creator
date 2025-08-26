@@ -63,4 +63,4 @@ class Conv1d(DesignCreatorModule, Conv1dBase):
         )
 
     def create_testbench(self, name: str, uut: Conv1dDesign) -> Conv1dTestbench:
-        return Conv1dTestbench(name=name, uut=uut, fxp_params=self._config)
+        return Conv1dTestbench(name=name, uut=uut, fxp_params=self._params)

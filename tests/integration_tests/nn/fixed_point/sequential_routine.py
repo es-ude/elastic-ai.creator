@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from elasticai.creator.arithmetic import FxpArithmetic
 from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
@@ -34,11 +35,14 @@ def routine_testing_sequential_module(
     if check_quant:
         weights_f, bias_f = dut[0].get_params()
         error_w = (
-            np.array(weights_f) - np.array(weights_q) * fxp.minimum_step_as_rational
+            np.array(weights_f)
+            - np.array(weights_q) * fxp.config.minimum_step_as_rational
         )
-        assert np.all(np.abs(error_w) < fxp.minimum_step_as_rational)
-        error_b = np.array(bias_f) - np.array(bias_q) * fxp.minimum_step_as_rational
-        assert np.all(np.abs(error_b) < fxp.minimum_step_as_rational)
+        assert np.all(np.abs(error_w) < fxp.config.minimum_step_as_rational)
+        error_b = (
+            np.array(bias_f) - np.array(bias_q) * fxp.config.minimum_step_as_rational
+        )
+        assert np.all(np.abs(error_b) < fxp.config.minimum_step_as_rational)
 
     dut.eval()
     with torch.no_grad():

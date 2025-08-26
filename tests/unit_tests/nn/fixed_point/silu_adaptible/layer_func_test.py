@@ -2,6 +2,7 @@ import pytest
 import torch
 from torch import nn as nn_torch
 
+from elasticai.creator.arithmetic import FxpParams
 from elasticai.creator.nn import fixed_point as nn_creator
 
 

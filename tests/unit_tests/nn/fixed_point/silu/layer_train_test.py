@@ -1,8 +1,9 @@
 import pytest
 import torch
 
-import elasticai.creator.nn as nn
-from elasticai.creator.nn.fixed_point.math_operations import FxpArithmetic
+import elasticai.creator.nn.fixed_point as nn_creator
+from elasticai.creator.arithmetic import FxpParams
+from elasticai.creator.nn import Sequential
 
 
 class SimpleSiLU(torch.nn.Module):
@@ -14,14 +15,14 @@ class SimpleSiLU(torch.nn.Module):
         vrange: tuple[float, float],
     ):
         super().__init__()
-        self.model = nn.Sequential(
-            nn.fixed_point.Linear(
+        self.model = Sequential(
+            nn_creator.Linear(
                 in_features=10,
                 out_features=10,
                 total_bits=total_width,
                 frac_bits=frac_width,
             ),
-            nn.fixed_point.SiLU(
+            nn_creator.SiLU(
                 total_bits=total_width,
                 frac_bits=frac_width,
                 num_steps=num_steps,
