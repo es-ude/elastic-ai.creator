@@ -1,4 +1,5 @@
 from .cocotb_prepare import build_report_folder_and_testdata, read_testdata
+from .cocotb_pytest import cocotb_test_fixture, eai_testbench
 from .cocotb_runner import run_cocotb_sim
 from .ghdl_report_parsing import parse_report
 from .ghdl_simulation import GHDLSimulator
@@ -12,4 +13,7 @@ __all__ = [
     "parse_report",
     "Testbench",
     "SimulatedLayer",
+    "make_cocotb_pytest",
+    "cocotb_test_fixture",
+    "eai_testbench",
 ]
