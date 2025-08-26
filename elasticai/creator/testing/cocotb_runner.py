@@ -62,6 +62,7 @@ def run_cocotb_sim(
     timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
     waveform_save_dst: str = "",
+    build_sim_dir: str | Path | None = None,
 ) -> Path:
     """Function for running Verilog/VHDL Simulation using COCOTB environment
     :param src_files:           List with source files of each used Verilog/VHDL file
@@ -98,8 +99,12 @@ def run_cocotb_sim(
     environ["COCOTB_REDUCED_LOG_FMT"] = "0" if en_debug_mode else "1"
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
 
-    build_sim_dir = find_project_root() / "build_sim"
-    build_sim_dir.mkdir(exist_ok=True, parents=True)
+    if build_sim_dir is None:
+        build_sim_dir = find_project_root() / "build_sim"
+        build_sim_dir.mkdir(exist_ok=True, parents=True)
+    else:
+        build_sim_dir = Path(build_sim_dir)
+
     build_waveform_dir = (
         build_sim_dir.absolute()
         if waveform_save_dst == ""
