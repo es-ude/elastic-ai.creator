@@ -68,7 +68,7 @@ begin
         variable denominator_sum : signed(DENOMINATOR_LUT_OUT_DATA_WIDTH downto 0) := (others=>'0');
         type t_state is (s_find_max, s_lookup);
         variable state : t_state;
-        variable max_value : signed(Y_DATA_WIDTH - 1 downto 0);
+        variable max_value : signed(X_DATA_WIDTH - 1 downto 0);
         variable pre_fetch : integer range 0 to 6;
         variable input_offset : integer range 0 to NUM_ELEMENT-1;
         variable tmp: integer;
