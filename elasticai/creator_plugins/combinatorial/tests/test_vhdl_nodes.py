@@ -93,8 +93,8 @@ class TestShiftRegister:
     @pytest.fixture(scope="class")
     def raw_node(self):
         conv0_channels = 2
-        conv1_kernel_size = 3
-        conv0_out_shape = Shape(conv0_channels, 1)
+        conv1_kernel_size = 4
+        conv0_out_shape = Shape(conv0_channels, 2)
         conv1_in_shape = Shape(conv0_channels, conv1_kernel_size)
         n = new_node(
             name="a",
@@ -109,8 +109,8 @@ class TestShiftRegister:
         expected = (
             "a: entity work.impl(rtl)",
             "generic map (",
-            f"DATA_WIDTH => {raw_node.input_shape.depth},",
-            f"NUM_POINTS => {raw_node.output_shape.width}",
+            "DATA_WIDTH => 4,",
+            "NUM_POINTS => 2",
             ")",
             "port map (",
             "clk => clk,",
@@ -126,8 +126,8 @@ class TestShiftRegister:
 
     def test_can_define_signals(self, node):
         expected = (
-            "signal d_in_a : std_logic_vector(2 - 1 downto 0) := (others => '0');",
-            "signal d_out_a : std_logic_vector(6 - 1 downto 0) := (others => '0');",
+            "signal d_in_a : std_logic_vector(4 - 1 downto 0) := (others => '0');",
+            "signal d_out_a : std_logic_vector(8 - 1 downto 0) := (others => '0');",
             "signal valid_in_a : std_logic := '0';",
             "signal valid_out_a : std_logic := '0';",
         )
