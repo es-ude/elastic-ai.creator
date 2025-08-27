@@ -9,8 +9,8 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.testing import Testbench
 from elasticai.creator.vhdl.design.ports import Port
-from elasticai.creator.vhdl.simulated_layer import Testbench
 
 
 class Conv1dDesignProtocol(Protocol):

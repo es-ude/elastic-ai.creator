@@ -4,7 +4,7 @@ from elasticai.creator.arithmetic import (
 )
 from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.vhdl.simulated_layer import SimulatedLayer
+from elasticai.creator.testing import SimulatedLayer
 
 from .design import MacDesign
 from .mactestbench import MacTestBench
