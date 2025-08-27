@@ -12,6 +12,7 @@ dependencies = [
     "tomlkit>=0.13.2",
     "click>=8.1.7",
     "pyserial>=3.5",
+    "cocotb>=1.9.2",
 ]
 
 
@@ -54,7 +55,6 @@ testing = [
     "pytest-cov>=6.0.0",
     "coverage>=7.6.9",
     "vunit-hdl>=5.0.0.dev5",
-    "cocotb>=1.9.2",
 ]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
@@ -100,6 +100,7 @@ minversion = "6.0"
 markers = [
     "simulation: possibly slow running integration tests including hw simulation, depends on ghdl being present",
     "slow: a slow test that you would not run in tdd cycle",
+    "hardware: slow running system tests using the hardware deployment on real targets"
 ]
 testpaths = ["elasticai/creator/", "tests", "elasticai/creator_plugins"]
 python_files = ["*_test.py", "test_*.py"]

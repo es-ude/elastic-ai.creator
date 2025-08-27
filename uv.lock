@@ -564,6 +564,7 @@ name = "elasticai-creator"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
+    { name = "cocotb" },
     { name = "numpy" },
     { name = "pyserial" },
     { name = "tomlkit" },
@@ -633,6 +634,7 @@ versioning = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
+    { name = "cocotb", specifier = ">=1.9.2" },
     { name = "numpy", specifier = ">=1.23.0" },
     { name = "pyserial", specifier = ">=3.5" },
     { name = "tomlkit", specifier = ">=0.13.2" },
