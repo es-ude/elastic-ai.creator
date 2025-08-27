@@ -69,6 +69,9 @@ depends_on = []
 expose = ["[a-zA-Z_]*"]
 from = ["elasticai.creator_plugins.[a-z_]+"]
 
+[[modules]]
+path = "elasticai.creator.testing"
+depends_on = ["elasticai.creator.file_generation"]
 
 [[modules]]
 path = "elasticai.creator.template"
@@ -110,7 +113,8 @@ depends_on = [
     "elasticai.creator.vhdl",
     "elasticai.creator.nn.design_creator_module",
     "elasticai.creator.file_generation",
-    "elasticai.creator.base_modules", "elasticai.creator.arithmetic",
+    "elasticai.creator.base_modules",
+    "elasticai.creator.arithmetic", "elasticai.creator.testing",
 ]
 
 [[modules]]

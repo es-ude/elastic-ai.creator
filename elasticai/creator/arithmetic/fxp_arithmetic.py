@@ -33,7 +33,7 @@ class FxpArithmetic:
     def maximum_as_rational(self) -> float:
         return self._config.maximum_as_rational
 
-    def integer_out_of_bounds(self, number: int | float | list | T) -> bool | T:
+    def integer_out_of_bounds(self, number):
         return self._config.integer_out_of_bounds(number)
 
     @overload

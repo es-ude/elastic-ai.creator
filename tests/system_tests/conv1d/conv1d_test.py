@@ -3,7 +3,6 @@ import tomllib
 from pathlib import Path
 
 import pytest
-
 import serial
 import torch
 
@@ -155,10 +154,8 @@ def test_conv1d_runtime():
             )
         )
     )
-    batches = inputs.shape[0]
 
     expected_outputs = nn(inputs)
-
     vivado_build_binfile(vhdl_dir, binfile_dir)
 
     with serial.Serial(dev_address) as serial_con:

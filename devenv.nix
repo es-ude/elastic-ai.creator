@@ -134,7 +134,7 @@ in {
     };
 
     "check:slow-tests" = {
-      exec = "${uv_run} pytest -m 'simulation and slow and not hardware'";
+      exec = "${uv_run} pytest -m '(simulation or slow) and not hardware'";
       before = ["check:tests"];
     };
 

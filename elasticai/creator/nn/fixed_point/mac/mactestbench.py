@@ -1,10 +1,10 @@
-from elasticai.creator.arithmetic import FxpConverter, FxpParams
+from elasticai.creator.arithmetic import FxpConverter
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import InProjectTemplate
 
 
 class MacTestBench:
-    def __init__(self, uut, fxp_params: FxpParams, name, uut_name):
+    def __init__(self, uut, fxp_params, name, uut_name):
         self._fxp_params = fxp_params
         self._converter = FxpConverter(self._fxp_params)
         self._uut = uut

@@ -95,7 +95,7 @@ class FxpParams:
         else:
             return self._check_integer_out_of_bounds(number)
 
-    def _check_integer_out_of_bounds(self, number: int | T) -> bool:
+    def _check_integer_out_of_bounds(self, number) -> bool | T:
         return self.integer_out_underflow(number) | self.integer_out_overflow(number)
 
     @overload
@@ -122,5 +122,5 @@ class FxpParams:
     @overload
     def rational_out_of_bounds(self, number: float) -> bool: ...
 
-    def rational_out_of_bounds(self, number: float | T) -> bool:
+    def rational_out_of_bounds(self, number) -> bool | T:
         return self.rational_out_underflow(number) | self.rational_out_overflow(number)

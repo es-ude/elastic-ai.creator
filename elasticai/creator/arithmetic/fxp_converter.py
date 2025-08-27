@@ -23,21 +23,21 @@ class FxpConverter:
     def frac_bits(self) -> int:
         return self._config.frac_bits
 
-    def _round_to_integer(self, number: float | int | T) -> int | T:
+    def _round_to_integer(self, number: float | T) -> int | T:
         return FxpArithmetic(self._config).round_to_integer(number)
 
-    def _integer_to_twos(self, number: int | float | T) -> int:
+    def _integer_to_twos(self, number):
         if isinstance(number, ConvertableToFixedPointValues):
             return int(self._convert_integer_to_twos(cast(T, number)))
         else:
             return self._convert_integer_to_twos(number)
 
-    def _convert_integer_to_twos(self, number: int | float | T) -> int | float | T:
+    def _convert_integer_to_twos(self, number):
         if self._config.integer_out_of_bounds(number):
             raise ValueError(
                 f"Value '{number}' cannot be represented with {self._config.total_bits} bits."
             )
-        return (1 << self._config.total_bits) + number if number < 0 else number
+        return ((1 << self._config.total_bits) + number) if number < 0 else number
 
     def integer_to_binary_string_vhdl(self, number: int) -> str:
         twos = self._integer_to_twos(number)
