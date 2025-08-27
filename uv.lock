@@ -617,8 +617,8 @@ release = [
     { name = "git-cliff" },
 ]
 testing = [
-    { name = "cocotb" },
     { name = "coverage" },
+    { name = "elasticai-runtime-env5" },
     { name = "hypothesis" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -636,7 +636,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
     { name = "cocotb", specifier = ">=1.9.2" },
     { name = "numpy", specifier = ">=1.23.0" },
-    { name = "pyserial", specifier = ">=3.5" },
+    { name = "pyserial", specifier = ">=3.4" },
     { name = "tomlkit", specifier = ">=0.13.2" },
     { name = "torch", specifier = ">=1.11" },
 ]
@@ -685,8 +685,8 @@ lsp = [
 ]
 release = [{ name = "git-cliff", specifier = ">=2.7.0" }]
 testing = [
-    { name = "cocotb", specifier = ">=1.9.2" },
     { name = "coverage", specifier = ">=7.6.9" },
+    { name = "elasticai-runtime-env5", git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git?rev=a9bc18749b1c1666828453a47c9c37f6f0aa2d61" },
     { name = "hypothesis", specifier = ">=6.124.7" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
@@ -694,6 +694,14 @@ testing = [
 ]
 utils = [{ name = "rust-just", specifier = ">=1.38.0" }]
 versioning = [{ name = "towncrier", specifier = ">=24.8.0" }]
+
+[[package]]
+name = "elasticai-runtime-env5"
+version = "0.1.0"
+source = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git?rev=a9bc18749b1c1666828453a47c9c37f6f0aa2d61#a9bc18749b1c1666828453a47c9c37f6f0aa2d61" }
+dependencies = [
+    { name = "pyserial" },
+]
 
 [[package]]
 name = "esbonio"
@@ -1977,11 +1985,11 @@ wheels = [
 
 [[package]]
 name = "pyserial"
-version = "3.5"
+version = "3.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1e/7d/ae3f0a63f41e4d2f6cb66a5b57197850f919f59e558159a4dd3a818f5082/pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb", size = 159125, upload-time = "2020-11-23T03:59:15.045Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/74/11b04703ec416717b247d789103277269d567db575d2fd88f25d9767fe3d/pyserial-3.4.tar.gz", hash = "sha256:6e2d401fdee0eab996cf734e67773a0143b932772ca8b42451440cfed942c627", size = 151657, upload-time = "2017-07-23T21:10:04.368Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0", size = 90585, upload-time = "2020-11-23T03:59:13.41Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/e4/2a744dd9e3be04a0c0907414e2a01a7c88bb3915cbe3c8cc06e209f59c30/pyserial-3.4-py2.py3-none-any.whl", hash = "sha256:e0770fadba80c31013896c7e6ef703f72e7834965954a78e71a3049488d4d7d8", size = 193717, upload-time = "2017-07-23T21:10:01.982Z" },
 ]
 
 [[package]]
@@ -2650,7 +2658,7 @@ wheels = [
 
 [[package]]
 name = "sphinxcontrib-wavedrom"
-version = "0.1.dev148+g8b315a2"
+version = "0.1.dev148+g8b315a2ac"
 source = { git = "https://github.com/glencoe/sphinx-wavedrom.git?rev=hotfix_html_only_version#8b315a2ac01c92c3de24681cb7c0d37e444955e9" }
 dependencies = [
     { name = "cairosvg" },
