@@ -2,6 +2,8 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
+
 import serial
 import torch
 
@@ -76,7 +78,8 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str):
     print(f"{out.stdout=}")
 
 
-if __name__ == "__main__":
+@pytest.mark.hardware
+def test_conv1d_runtime():
     # dev_address = "COM8"
     dev_address = get_env5_port()
     vhdl_dir = "./tests/system_tests/conv1d/build_dir"

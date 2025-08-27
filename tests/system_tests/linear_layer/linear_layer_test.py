@@ -3,6 +3,8 @@ import time
 import tomllib
 from pathlib import Path
 
+import pytest
+
 import numpy as np
 import serial  # type: ignore
 import torch
@@ -75,7 +77,8 @@ def vivado_build_binfile(input_dir: str, binfile_dir: str) -> None:
     # print(f"{out.stdout=}")
 
 
-if __name__ == "__main__":
+@pytest.mark.hardware
+def test_linear_layer_env5():
     # --- Settings
     # dev_address = "COM8"
     dev_address = get_env5_port()
