@@ -15,7 +15,6 @@ from elasticai.creator.vhdl.shared_designs.rom.design import Rom
 
 
 @pytest.mark.simulation
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "total_bits, frac_bits, features_in", [(4, 2, 8), (8, 2, 12), (10, 4, 63)]
 )

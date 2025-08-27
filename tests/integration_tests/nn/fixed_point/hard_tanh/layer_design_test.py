@@ -8,7 +8,6 @@ from tests.integration_tests.nn.fixed_point.precomputed_routine import (
 
 
 @pytest.mark.simulation
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "total_bits, frac_bits, num_steps",
     [(6, 4, 32), (8, 4, 32), (10, 8, 64), (10, 9, 64)],
