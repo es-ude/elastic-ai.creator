@@ -1,0 +1,8 @@
+[[plugins]]
+name = "systolic_array"
+target_platform = "FPGA"
+target_runtime = "vhdl"
+version = "0.1"
+api_version = "0.1"
+generated = [""]
+static_files = [""]
