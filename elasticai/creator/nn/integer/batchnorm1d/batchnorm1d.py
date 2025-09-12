@@ -1,5 +1,3 @@
-import logging
-
 import torch
 from torch import nn
 
@@ -164,7 +162,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         )
 
         tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
-        # print("tmp + self.q_bias: ", self.q_bias)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
@@ -225,8 +222,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             weight = self.weight
             bias = self.bias
 
-        normed_input = (inputs - mean) / std
-        outputs = weight * normed_input + bias
+        normed_inputs = (inputs - mean) / std
+        outputs = weight * normed_inputs + bias
 
         if enable_simquant:
             if self.training:
