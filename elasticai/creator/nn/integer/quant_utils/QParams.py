@@ -31,7 +31,6 @@ class QParams(nn.Module):
         self.register_buffer(
             "max_quant", torch.zeros((1), dtype=torch.int32, requires_grad=False)
         )
-
         self.register_buffer(
             "scale_factor", torch.ones((1), dtype=torch.float32, requires_grad=False)
         )
@@ -46,6 +45,7 @@ class QParams(nn.Module):
                 requires_grad=False,
             ),
         )
+
         self._calculate_quant_range()
         self.math_ops = MathOperations()
 
@@ -94,7 +94,7 @@ class QParams(nn.Module):
         self.zero_point.copy_(given_zero_point)
 
     def set_quant_range(self, given_quant_bits: int) -> None:
-        self.quant_bits.copy_(torch.tensor(given_quant_bits))
+        self.quant_bits = given_quant_bits
         self._calculate_quant_range()
 
     def quantize(self, x: torch.FloatTensor) -> torch.IntTensor:
@@ -102,7 +102,7 @@ class QParams(nn.Module):
         zero_point = self.zero_point.to(x.device)
 
         x_q = x / scale_factor + zero_point
-        x_q = x_q.round_().clamp(min=self.min_quant, max=self.max_quant)
+        x_q = x_q.round_().clamp(min=self.min_quant.item(), max=self.max_quant.item())
         x_q = x_q.to(torch.int32)
 
         return x_q.to(x.device)
@@ -129,7 +129,6 @@ class QParams(nn.Module):
             "max_float",
             "min_quant",
             "max_quant",
-            "quant_bits",
             "scale_factor",
             "zero_point",
         ]
@@ -143,7 +142,6 @@ class QParams(nn.Module):
         info += "max_float: %.6f" % self.max_float
         info += "min_quant: %d " % self.min_quant
         info += "max_quant: %d" % self.max_quant
-        info += "quant_bits: %d " % self.quant_bits
         info += "scale_factor: %.10f " % self.scale_factor
         info += "zero_point: %d " % self.zero_point
         return info
