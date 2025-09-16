@@ -4,8 +4,6 @@ from os import environ
 from pathlib import Path
 from typing import Any
 
-from cocotb.runner import get_runner  # type: ignore
-
 from elasticai.creator.file_generation import find_project_root
 
 
@@ -92,6 +90,8 @@ def run_cocotb_sim(
         raise ValueError(f"File ending {suffix} not supported")
 
     language = language_mapping[suffix]
+    from cocotb.runner import get_runner
+
     runner = get_runner(runner_mapping[language])
 
     environ["COCOTB_RESOLVE_X"] = "ZEROS"
