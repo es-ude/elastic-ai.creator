@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from functools import partial
 from os import environ
 from os.path import exists
 from pathlib import Path
@@ -101,7 +100,7 @@ def run_cocotb_sim(
         raise ValueError(f"File ending {suffix} not supported")
 
     language = language_mapping[suffix]
-    from cocotb.runner import get_runner
+    from cocotb_tools.runner import get_runner
 
     runner = get_runner(runner_mapping[language])
 
@@ -128,14 +127,13 @@ def run_cocotb_sim(
             path=build_waveform_dir,
         )
         design_sources.append(dump_file_src)
-        build_call = partial(runner.build, verilog_sources=design_sources)
     else:
         top_module_name = top_module_name.lower()
         build_args = []
         plus_args = [f"--vcd={build_waveform_dir / 'waveforms'}.vcd"]
-        build_call = partial(runner.build, vhdl_sources=design_sources)
 
-    build_call(
+    runner.build(
+        sources=design_sources,
         hdl_toplevel=top_module_name,
         always=True,
         clean=False,
