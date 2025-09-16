@@ -1,5 +1,9 @@
 from .cocotb_prepare import build_report_folder_and_testdata, read_testdata
-from .cocotb_runner import run_cocotb_sim, run_cocotb_sim_for_src_dir, check_cocotb_test_result
+from .cocotb_runner import (
+    check_cocotb_test_result,
+    run_cocotb_sim,
+    run_cocotb_sim_for_src_dir,
+)
 from .ghdl_report_parsing import parse_report
 from .ghdl_simulation import GHDLSimulator
 from .simulated_layer import SimulatedLayer, Testbench

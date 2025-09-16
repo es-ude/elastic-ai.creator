@@ -102,6 +102,7 @@ def run_cocotb_sim(
 
     language = language_mapping[suffix]
     from cocotb.runner import get_runner
+
     runner = get_runner(runner_mapping[language])
 
     environ["COCOTB_RESOLVE_X"] = "ZEROS"
@@ -161,15 +162,17 @@ def run_cocotb_sim(
     return build_waveform_dir.absolute()
 
 
-def check_cocotb_test_result(result_folder_cocotb: str='build_sim') -> bool:
-    path2xml = find_project_root() / result_folder_cocotb / 'results.xml'
+def check_cocotb_test_result(result_folder_cocotb: str = "build_sim") -> bool:
+    path2xml = find_project_root() / result_folder_cocotb / "results.xml"
     if not exists(path2xml):
-        raise FileNotFoundError("Output file of cocotb simulation 'results.xml' not found")
+        raise FileNotFoundError(
+            "Output file of cocotb simulation 'results.xml' not found"
+        )
     else:
-        with open(path2xml, 'r') as f:
+        with open(path2xml, "r") as f:
             lines = f.readlines()
 
         for line in lines:
-            if 'failed' in line:
+            if "failed" in line:
                 return False
     return True
