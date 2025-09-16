@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from functools import partial
 from os import environ
+from os.path import exists
 from pathlib import Path
 from typing import Any
 
@@ -159,3 +160,19 @@ def run_cocotb_sim(
         test_dir=build_sim_dir,
     )
     return build_waveform_dir.absolute()
+
+
+def check_cocotb_test_result(result_folder_cocotb: str = "build_sim") -> bool:
+    path2xml = find_project_root() / result_folder_cocotb / "results.xml"
+    if not exists(path2xml):
+        raise FileNotFoundError(
+            "Output file of cocotb simulation 'results.xml' not found"
+        )
+    else:
+        with open(path2xml, "r") as f:
+            lines = f.readlines()
+
+        for line in lines:
+            if "failed" in line:
+                return False
+    return True
