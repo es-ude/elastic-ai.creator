@@ -1,11 +1,12 @@
 import importlib.resources as res
 
-from elasticai.creator.ir2vhdl import Code, Implementation, Ir2Vhdl
-from elasticai.creator.plugin import PluginSymbol as Loadable
 from elasticai.creator.vhdl_template import (
     EntityTemplateDirector,
     Template,
 )
+
+from elasticai.creator.ir2vhdl import Code, Implementation, Ir2Vhdl
+from elasticai.creator.plugin import PluginSymbol as Loadable
 
 
 def _load_vhd(component: str) -> str:

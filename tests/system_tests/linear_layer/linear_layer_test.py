@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 import serial  # type: ignore
 import torch
+from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 
 from elasticai.creator.arithmetic import (
     FxpArithmetic,
@@ -16,7 +17,6 @@ from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn.fixed_point.linear import Linear
 from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
 from tests.system_tests.helper.parse_tensors_to_bytearray import (
     parse_bytearray_to_fxp_tensor,
     parse_fxp_tensor_to_bytearray,
