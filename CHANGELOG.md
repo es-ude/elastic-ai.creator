@@ -1,8 +1,143 @@
+## 0.66.0 - 2025-09-24
+
+[162c0f6](162c0f6095718a85e8ccdd2c4dd057629326fbad)...[9609d41](9609d41078f294d05393b8f095966dd1a5a511ee)
+
+### Chore
+
+- Update devenv version for ci to point to nixos-25.05 ([7159c34]( https://github.com/es-ude/elastic-ai.creator/commit/7159c3406799f564ac1e7847642e3f260c2655fa)) - [object]
+- Call devenv with --mode before flag to execute deps ([1545341]( https://github.com/es-ude/elastic-ai.creator/commit/1545341cc72a5fc91821b114c9acf84f6a0206e4)) - [object]
+- Use py311 for ruff checks ([674f883]( https://github.com/es-ude/elastic-ai.creator/commit/674f883cc4edd06a5039ff283292177f5a292326)) - [object]
+- Allow blank github issues ([e133979]( https://github.com/es-ude/elastic-ai.creator/commit/e133979d6a09e2f797d45b852f4065a747f18329)) - [object]
+- Ignore folder with artifacts from cocotb ([9631fc3]( https://github.com/es-ude/elastic-ai.creator/commit/9631fc336b5a9f71d4552991164ac819e62b0caa)) - [object]
+- Add py.typed to plugins to mark them as supporting typing ([646f780]( https://github.com/es-ude/elastic-ai.creator/commit/646f780824b8c73bf31c8f3bd4d750f82596740e)) - [object]
+- Download native ghdl for MacM1 and add verilog support ([f12fcfa]( https://github.com/es-ude/elastic-ai.creator/commit/f12fcfa5c87e7a2056ceabe6b89057fa5dcce26c)) - [object]
+- Use our fork for vunit ([fd65309]( https://github.com/es-ude/elastic-ai.creator/commit/fd65309e58ded074c104ac9f19544738c568b9f8)) - [object]
+- Add iverilog ([d01a55b]( https://github.com/es-ude/elastic-ai.creator/commit/d01a55b7e5b1ec51334fa7d7a56a8786c7049601)) - [object]
+- Move cocotb to testing dependencies ([d70bef0]( https://github.com/es-ude/elastic-ai.creator/commit/d70bef0383e946181a6d0d4cb7987e3e9386868f)) - [object]
+- Move to py312 for cocotb support ([f051cfb]( https://github.com/es-ude/elastic-ai.creator/commit/f051cfb4f8b12449230dddc5069cb31629b0a419)) - [object]
+- Ignore all ghdl *.cf files ([44a1cc0]( https://github.com/es-ude/elastic-ai.creator/commit/44a1cc0b27d3ad30ba0f5f4dbbde2066a3ec8e58)) - [object]
+- Fix missing devenv mode flags ([592161a]( https://github.com/es-ude/elastic-ai.creator/commit/592161a2b8f475e8fcdc1a8aeec7c2f8308de898)) - [object]
+- Fix otherwise irritating comment in test ([7bce930]( https://github.com/es-ude/elastic-ai.creator/commit/7bce930fb8c699bcd0e175ab15128c3d2db64f90)) - [object]
+- Remove print statements and commented out code from tests ([d98edd7]( https://github.com/es-ude/elastic-ai.creator/commit/d98edd726c8803a63c100842d2f219721c7adc09)) - [object]
+- Remove quantization.py from fixed_point ([5de7113]( https://github.com/es-ude/elastic-ai.creator/commit/5de7113454315dff0e5c76bfa0dbad48cc877413)) - [object]
+- Adapt the cocotb routine for precomputed layers ([81286b9]( https://github.com/es-ude/elastic-ai.creator/commit/81286b97da57c6de23daa0d090a6cd65605ccf8d)) - [object]
+- Address review comments from PR #693 ([bde0ed0]( https://github.com/es-ude/elastic-ai.creator/commit/bde0ed06ea3620e6c87fa1b04f5a2140b75ce0cc)) - [object]
+- Add language server config for vhdl ([e386f70]( https://github.com/es-ude/elastic-ai.creator/commit/e386f70f0bef9c498aef063498a799f07ec52d17)) - [object]
+- Add pyserial as a dependency ([c306192]( https://github.com/es-ude/elastic-ai.creator/commit/c3061921be6d5468da134a551776016aae75d0a0)) - [object]
+- Removing tests of linear layer with GHDLsimulator (doubled with cocotb) ([9fbcb5d]( https://github.com/es-ude/elastic-ai.creator/commit/9fbcb5dc8c457e664fa6d8854f9ed44e6314e16b)) - [object]
+- Removing base template generator. ([831c189]( https://github.com/es-ude/elastic-ai.creator/commit/831c1898faee7653202fdabe48b6229381353177)) - [object]
+- Renaming file name to have all math_operations in sorted directly ([8f2fa31]( https://github.com/es-ude/elastic-ai.creator/commit/8f2fa31da7fd74b8fb853923e2c8e135f62b855c)) - [object]
+- Removing converter funcs due to new Fxp scheme ([3be6d34]( https://github.com/es-ude/elastic-ai.creator/commit/3be6d34a8a5e4d5ebc91fc6b1adee8adecf23ea7)) - [object]
+- Removing old FxpConfig and number_conversion due to unified Fxp scheme ([ec91a86]( https://github.com/es-ude/elastic-ai.creator/commit/ec91a8675b9b25658026c6696847afeace515905)) - [object]
+- Removing quantized_grads tests from tests folder (duplicated with same plugin_folder) ([17b73ca]( https://github.com/es-ude/elastic-ai.creator/commit/17b73caa652deb77c44a17de8692aa98b77b36dd)) - [object]
+- Address pr review commit # [feedbac](https://github.com/es-ude/elastic-ai.creator/commit/feedbac)k ([02e583d]( https://github.com/es-ude/elastic-ai.creator/commit/02e583d0742a7749b8a5b9f9f21c3b2c405e2081)) - [object]
+
+### Docs
+
+- Add example for configuring jj fix with ruff ([b4196e0]( https://github.com/es-ude/elastic-ai.creator/commit/b4196e0c9f7ec9f48604e54b05d27db8c08c5aa5)) - [object]
+
+### Feat
+
+- Moved quantized grads to plugins plugin ([b034bdb]( https://github.com/es-ude/elastic-ai.creator/commit/b034bdba4741c03669c4eacd5d8a2e8f0982c683)) - [object]
+- Add a counter with maximum value reached signal. ([a7d5ef5]( https://github.com/es-ude/elastic-ai.creator/commit/a7d5ef5288178dc9cf01e5e1b331fefebf667c1d)) - [object]
+- Add cocotb runner ([4063cc7]( https://github.com/es-ude/elastic-ai.creator/commit/4063cc7167c66c4074ceabfb1c917a0ac237b386)) - [object]
+- Add func tests for hardtanh and relu ([f588f8d]( https://github.com/es-ude/elastic-ai.creator/commit/f588f8dae5f06541c1c91e42c0832154b55dd058)) - [object]
+- Add func tests for hardsigmoid ([d2f9d71]( https://github.com/es-ude/elastic-ai.creator/commit/d2f9d71418e0e9d0190f4aa0ac238fbfea0fb510)) - [object]
+- Adapt cocotb runner tests and refactor act func tests ([843bf4c]( https://github.com/es-ude/elastic-ai.creator/commit/843bf4c84e8a3e45260ee631bfdf9c2b7f04af3c)) - [object]
+- Add report saving of waveform ([86d9010]( https://github.com/es-ude/elastic-ai.creator/commit/86d9010fcc5162e0f6338adf0bd73062df1f8065)) - [object]
+- Add string from integer generation ([a69260d]( https://github.com/es-ude/elastic-ai.creator/commit/a69260df6ed0261deba0d05d7d09a9b441609b17)) - [object]
+- Add cocotb tests for ROM module ([6319434]( https://github.com/es-ude/elastic-ai.creator/commit/631943473b0ad0a3a4251006cb3ba58ded59e871)) - [object]
+- Use sliding windows consistently in sequential networks ([35ea53e]( https://github.com/es-ude/elastic-ai.creator/commit/35ea53e48fd68aa096c7cc0e2d1a9053601f1237)) - [object]
+- Add elasticai tester ([e5656b8]( https://github.com/es-ude/elastic-ai.creator/commit/e5656b86edea110dddb746557ade6c96d601d185)) - [object]
+- Add new scheme for integer and fxp processing ([76caa8f]( https://github.com/es-ude/elastic-ai.creator/commit/76caa8f1e64ae608c5c5ccf2b03a82b1dc35168e)) - [object]
+- Adding tensor building for merging with FixedPointConfigV2 ([15e8661]( https://github.com/es-ude/elastic-ai.creator/commit/15e86610f123783eb008994a02459dc48eb6b1be)) - [object]
+- Let user set build folder in cocotb test runner ([cd65793]( https://github.com/es-ude/elastic-ai.creator/commit/cd65793c2a9fe8ef93ec310ba28a4b5fdfb9aa92)) - [object]
+- Introduce cocotb_test_fixture ([9609d41]( https://github.com/es-ude/elastic-ai.creator/commit/9609d41078f294d05393b8f095966dd1a5a511ee)) - [object]
+
+### Fix
+
+- Pin ghdl to version from nixpkgs-24.11 ([5e39432]( https://github.com/es-ude/elastic-ai.creator/commit/5e39432a00ae2e4a2480986f0e6704113d320c73)) - [object]
+- Incorrect use of `ir.Implementation.add_edge` ([8204dbc]( https://github.com/es-ude/elastic-ai.creator/commit/8204dbc4ec47fd8dc4264d9c4a278eb615177db5)) - [object]
+- Fix getting rewriteable matches ([43ab216]( https://github.com/es-ude/elastic-ai.creator/commit/43ab216c086330a778bec6546d933d4928fe62e0)) - [object]
+- Fix bug where rewriting would skip available names ([6cca9b8]( https://github.com/es-ude/elastic-ai.creator/commit/6cca9b857e79545fc404aab8e417f9d168ea0ef3)) - [object]
+- Remove problematic matches before rewriting ([facc479]( https://github.com/es-ude/elastic-ai.creator/commit/facc479b68a615fe311043dece87a40504bf3d4e)) - [object]
+- Ensure inference works on rebuilt torch model ([2fa79a5]( https://github.com/es-ude/elastic-ai.creator/commit/2fa79a557f297673aeba09dbc8ce67bc282d3ad6)) - [object]
+- Stop relying on reserved name for input nodes ([ce11c5d]( https://github.com/es-ude/elastic-ai.creator/commit/ce11c5d5cc167e65ca9e0b74cc114c704908150c)) - [object]
+- Do not call iter_bfs_down on implementation ([ae1e812]( https://github.com/es-ude/elastic-ai.creator/commit/ae1e8128a772341cf6701f8b0a8554226d82b3a4)) - [object]
+- Rename "params" to "filter_parameters" ([e9a3aec]( https://github.com/es-ude/elastic-ai.creator/commit/e9a3aec109aee1167c0e364b451bee837d6bf2aa)) - [object]
+- Do not use relative path to identify file with id ([0e3d66f]( https://github.com/es-ude/elastic-ai.creator/commit/0e3d66fa52101462b2cb1bf14fc1b242d71e5b8e)) - [object]
+- Fix plugin test for exception ([e4569a3]( https://github.com/es-ude/elastic-ai.creator/commit/e4569a3840afbc4e297b242eb9e40d55d9bedc2b)) - [object]
+- Fix activation functions and rounding behaviour ([1898b8a]( https://github.com/es-ude/elastic-ai.creator/commit/1898b8a93e6ad2e3e718875c805e9b2b4323ea2c)) - [object]
+- Use lower case module names for ghdl ([38b90bb]( https://github.com/es-ude/elastic-ai.creator/commit/38b90bbe577b7b3990b87023f74902721b5ed3a0)) - [object]
+- Fix wrong params generation and wrong execution in designs ([87efe5b]( https://github.com/es-ude/elastic-ai.creator/commit/87efe5b76a31347c3c554016a4a63f24be09351c)) - [object]
+- Test not loaded due to wrong link to testbench ([99b091c]( https://github.com/es-ude/elastic-ai.creator/commit/99b091c1e8a1b36e3d310e644292580fabcf3b00)) - [object]
+- Remove temp test files from main folder ([63cea50]( https://github.com/es-ude/elastic-ai.creator/commit/63cea50c9b26475023075860f36bdc1cde351dcd)) - [object]
+- Fix error formatting and folder building ([a9b96cb]( https://github.com/es-ude/elastic-ai.creator/commit/a9b96cb1254e4f43bb46937a8cd1da473d5bc37e)) - [object]
+- Adapt testbench routines of all act-funcs ([50d5c19]( https://github.com/es-ude/elastic-ai.creator/commit/50d5c199d43cd4da88ff33ec0d33a43d63bf2696)) - [object]
+- Fix errors in testname and init file ([1fb7c51]( https://github.com/es-ude/elastic-ai.creator/commit/1fb7c519eb474ad858d932d6ef909c69421f86c6)) - [object]
+- Fixed errors due to ruff formatting ([664eab0]( https://github.com/es-ude/elastic-ai.creator/commit/664eab0476b6b3131874419b3f9647b4e78c5a8c)) - [object]
+- Error in binary string generation ([e36a599]( https://github.com/es-ude/elastic-ai.creator/commit/e36a59933dada2e9e326bdbd96d4352f4e23256d)) - [object]
+- Remove synopsys package (not commercial) ([079dc92]( https://github.com/es-ude/elastic-ai.creator/commit/079dc92dec647863bb9f6053eb64c95935382def)) - [object]
+- Refactoring hw design of linear layer ([48db35a]( https://github.com/es-ude/elastic-ai.creator/commit/48db35a0a8551d1e3a7feaa9499cf509ac7aa93e)) - [object]
+- Building design of batchnorm linear layer is now possible ([74706cd]( https://github.com/es-ude/elastic-ai.creator/commit/74706cdd69e28325fe531b430b2cadb91a0c83eb)) - [object]
+- Model parameter are now constant during inference ([e57c551]( https://github.com/es-ude/elastic-ai.creator/commit/e57c551d75e9eddbec20fe56781c043cec2c44ed)) - [object]
+- Formatting and fixed error in building build_sim folder ([ca640ed]( https://github.com/es-ude/elastic-ai.creator/commit/ca640ed2bbf68e8bab2ab596b1ffb032903a7489)) - [object]
+- Define switch remove extra commenting on enable ([51903a0]( https://github.com/es-ude/elastic-ai.creator/commit/51903a0847d9a33737508b846a573d845664ed55)) - [object]
+- Right comment symbol and add instance name changing ([488857d]( https://github.com/es-ude/elastic-ai.creator/commit/488857d520e0fcf66f8ffaf860362cfb22b11ed5)) - [object]
+- Use correct width for Shape ([0dc4efe]( https://github.com/es-ude/elastic-ai.creator/commit/0dc4efeb5740f5810e9b7d53c9c469ae75675f3f)) - [object]
+- Compute and check input/output widths correctly ([62e8fd2]( https://github.com/es-ude/elastic-ai.creator/commit/62e8fd2444cc330e29c3fa707bde0cef2f6b3afe)) - [object]
+- Derive stride for hw design correctly ([7642230]( https://github.com/es-ude/elastic-ai.creator/commit/7642230303707a103637502731ad8046a4a36de6)) - [object]
+- Connect valid_in/out signals correctly ([802cd2a]( https://github.com/es-ude/elastic-ai.creator/commit/802cd2a91c36b90988a19838e26c3e49fc63084d)) - [object]
+- Fix padding remover ([9cc127f]( https://github.com/es-ude/elastic-ai.creator/commit/9cc127fbcbd70b5ab8e34448ab2c9b40456a7fa2)) - [object]
+- Fix padder ([a45bf23]( https://github.com/es-ude/elastic-ai.creator/commit/a45bf23a273dbb7678bc935f4e5a6b93abd83434)) - [object]
+- Handle tuples for 1d kernels in FilterParameters ([0891d74]( https://github.com/es-ude/elastic-ai.creator/commit/0891d74ed365230cc3495de3bff3f39955e0fd30)) - [object]
+- Raise error if `groups != len(kernels_per_group)` ([ca3e28c]( https://github.com/es-ude/elastic-ai.creator/commit/ca3e28ca5c5d1ed2facc15d956333fdf2ca5ca65)) - [object]
+- Use natural instead of positive for return type clog2 ([aa37429]( https://github.com/es-ude/elastic-ai.creator/commit/aa374299a5c642f77fb3400e089487c914bae68f)) - [object]
+- Remember last filter params correctly ([6976870]( https://github.com/es-ude/elastic-ai.creator/commit/6976870e2134e9e375f71bca93ec1c187640b7d6)) - [object]
+- Moving GHDLsimulator and parser into testing folder ([4869f36]( https://github.com/es-ude/elastic-ai.creator/commit/4869f360f333768413a04501a0cd5a0507958d0e)) - [object]
+- Merging bias and weights ROM into one single ROM ([7308c29]( https://github.com/es-ude/elastic-ai.creator/commit/7308c29f0e08fda857514ea858bd9456959b84fd)) - [object]
+- Adding cocotb to the dependencies and removed from dev-testing ([4a9610d]( https://github.com/es-ude/elastic-ai.creator/commit/4a9610d3b5da521cf2243baa4af71670b2d13dec)) - [object]
+- Add elastic-runtime to testing-dev ([94e626b]( https://github.com/es-ude/elastic-ai.creator/commit/94e626b7413e3eeeca72f92b9c5b71474d465160)) - [object]
+- Adding right module call ([7568f54]( https://github.com/es-ude/elastic-ai.creator/commit/7568f5415c8c3ab4abe028d218b3d45c586c9f4f)) - [object]
+- Remapping FxpConfig or second module to new Fxp scheme ([354ae40]( https://github.com/es-ude/elastic-ai.creator/commit/354ae400ca97ec1e4e9e6e01cfcacfd5fd968892)) - [object]
+- Fix linting problems ([c2f8e5c]( https://github.com/es-ude/elastic-ai.creator/commit/c2f8e5c194e492514ed11648470ee06100599207)) - [object]
+- Editing files due to merge conflicts from previous main updates ([987ca5a]( https://github.com/es-ude/elastic-ai.creator/commit/987ca5a3832e6efefdc8483246b3d5e2d95a0756)) - [object]
+- Removing slow marker due to already available simulation marker ([1d7e2ca]( https://github.com/es-ude/elastic-ai.creator/commit/1d7e2ca8536379587b799fc33b0a803fc83de246)) - [object]
+- Add pytest marker for hardware system tests ([878a6b2]( https://github.com/es-ude/elastic-ai.creator/commit/878a6b2fb2c2ca603fb4108fa457bcd9bb0526ee)) - [object]
+- Fixed linter errors ([1351bb4]( https://github.com/es-ude/elastic-ai.creator/commit/1351bb47ea91b06a6dafa4d4fbfa77487c283190)) - [object]
+- Remove dict default args from cocotb runner ([9265523]( https://github.com/es-ude/elastic-ai.creator/commit/92655231d2d303ad42cddaae33aa148da9958580)) - [object]
+
+### Refactor
+
+- Remove unused signal ([85b26e9]( https://github.com/es-ude/elastic-ai.creator/commit/85b26e94946d342be2444e8a019d4a6b884f6b1d)) - [object]
+
+### Style
+
+- Reorder imports ([3d9f079]( https://github.com/es-ude/elastic-ai.creator/commit/3d9f0799d72960ead94ed231321c3a90fb3e1273)) - [object]
+- Fix non-explicit exports from packages and type hints ([6005d08]( https://github.com/es-ude/elastic-ai.creator/commit/6005d08153780546f0feae6605fb6f6e47cdf501)) - [object]
+- Fix import order ([7efbbac]( https://github.com/es-ude/elastic-ai.creator/commit/7efbbac9792ce04f21f0d63db6f716d3970802d4)) - [object]
+
+### Test
+
+- Remove duplicate test file and mark tests with backprop as slow ([dd9dfb0]( https://github.com/es-ude/elastic-ai.creator/commit/dd9dfb0ae413474de97094005641a198c8fef7b5)) - [object]
+- Add complex graph rewriting test case ([0586649]( https://github.com/es-ude/elastic-ai.creator/commit/058664992ecfe18bb53a57f87fcdf4a70484b9be)) - [object]
+- Add exemplary optional addition of matplot lib to single test ([05e6ffa]( https://github.com/es-ude/elastic-ai.creator/commit/05e6ffa4f84bca6e510402bd6c8837a59fc6fd20)) - [object]
+- Add tests ([28a72c6]( https://github.com/es-ude/elastic-ai.creator/commit/28a72c610d2b5dbb76ecde74f025352eb6718b0f)) - [object]
+- Fix missing folder generation in testing designs ([ac6e1ab]( https://github.com/es-ude/elastic-ai.creator/commit/ac6e1abf750fbc314136447a45479505563e7433)) - [object]
+- Fix missing folder generation and wrong testpattern in testing designs ([958a291]( https://github.com/es-ude/elastic-ai.creator/commit/958a2917df3f9aa80420c3c42d4bf1fa7c80a1e9)) - [object]
+- Adapt precomputed template by adding to_signed to input ([a2ef294]( https://github.com/es-ude/elastic-ai.creator/commit/a2ef294b6931f0592090d04072d54a94b5ee4e10)) - [object]
+- Adapt testbench ([aac59a0]( https://github.com/es-ude/elastic-ai.creator/commit/aac59a00493dfc1f110155562384b4cfde36ad32)) - [object]
+- Add cocotb tests for linear layer with optional act-func ([5595193]( https://github.com/es-ude/elastic-ai.creator/commit/559519399998623078912738935630b5fc3fe9ff)) - [object]
+- Escape otherwise incorrect regex string for exception assertion ([c616dd4]( https://github.com/es-ude/elastic-ai.creator/commit/c616dd4c14af55948c7e00ce3a865972714b3819)) - [object]
+
 ## 0.65.0 - 2025-06-04
+
+[87f2fee](87f2fee7ee6f3f971cebca1c679ba35f46f44cc2)...[162c0f6](162c0f6095718a85e8ccdd2c4dd057629326fbad)
 
 ### Chore
 
 - Use git cliff instead of cog for changelogs ([83270cf]( https://github.com/es-ude/elastic-ai.creator/commit/83270cfacb9a5b27f059602f25fe05c7bb6d2a2f)) - [object]
+- Bump v0.65.0 ([162c0f6]( https://github.com/es-ude/elastic-ai.creator/commit/162c0f6095718a85e8ccdd2c4dd057629326fbad)) - [object]
 
 ### Docs
 
@@ -2342,4 +2477,6 @@ rename add_numeric to register_symbol
 - Beautify commit # [1d617cd](https://github.com/es-ude/elastic-ai.creator/commit/1d617cd289068f3c6552da1bd6e9468759cb5747) ([0bb5d39]( https://github.com/es-ude/elastic-ai.creator/commit/0bb5d39e73c6b4e746f1fb0308b863273d86b7f3)) - [object]
 - Sort imports ([de31b33]( https://github.com/es-ude/elastic-ai.creator/commit/de31b335ed9ee8cf04d3823d0b9058e54df07eb9)) - [object]
 - Run pre-commit tools on all files ([c22eecf]( https://github.com/es-ude/elastic-ai.creator/commit/c22eecf97792e104596e6575d692c6f4564e66c2)) - [object]
+
+## 0.3.0 - 2021-12-15
 
