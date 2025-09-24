@@ -4,6 +4,8 @@ from os.path import exists
 from pathlib import Path
 from typing import Any
 
+from cocotb_tools.runner import get_runner
+
 from elasticai.creator.file_generation import find_project_root
 
 
@@ -100,8 +102,6 @@ def run_cocotb_sim(
         raise ValueError(f"File ending {suffix} not supported")
 
     language = language_mapping[suffix]
-    from cocotb_tools.runner import get_runner
-
     runner = get_runner(runner_mapping[language])
 
     environ["COCOTB_RESOLVE_X"] = "ZEROS"
@@ -171,6 +171,6 @@ def check_cocotb_test_result(result_folder_cocotb: str = "build_sim") -> bool:
             lines = f.readlines()
 
         for line in lines:
-            if "failed" in line:
+            if "failure" in line:
                 return False
     return True
