@@ -1,4 +1,6 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from functools import partial
+
 from os import environ
 from os.path import exists
 from pathlib import Path
@@ -9,27 +11,13 @@ from cocotb_tools.runner import get_runner
 from elasticai.creator.file_generation import find_project_root
 
 
-def _create_iverilog_dump_file(
-    top_module_name: str, path: Path, dump_dst: Path
-) -> Path:
-    dumpfile_path = path / "waveforms.vcd"
-    with open(dump_dst / "dump.v", "w") as f:
-        f.write("module cocotb_iverilog_dump_v2();\n")
-        f.write("initial begin\n")
-        f.write(f'    $dumpfile("{dumpfile_path}");\n')
-        f.write(f"    $dumpvars(0, {top_module_name});\n")
-        f.write("end\n")
-        f.write("endmodule\n")
-    return dump_dst / "dump.v"
-
-
 def run_cocotb_sim_for_src_dir(
     src_files: Iterable[str] | Iterable[Path],
     top_module_name: str,
     cocotb_test_module: str,
     path2src: str = "",
-    defines: dict = {},
-    params: dict = {},
+    defines: dict | Callable[[], dict] = lambda: {},
+    params: dict | Callable[[], dict] = lambda: {},
     timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
     waveform_save_dst: str = "",
@@ -71,11 +59,12 @@ def run_cocotb_sim(
     src_files: Iterable[str] | Iterable[Path],
     top_module_name: str,
     cocotb_test_module: str,
-    defines: dict[str, Any] = {},
-    params: dict[str, Any] = {},
+    defines: dict[str, Any] | Callable[[], dict[str, Any]] = lambda: {},
+    params: dict[str, Any] | Callable[[], dict[str, Any]] = lambda: {},
     timescale: tuple[str, str] = ("1ps", "1fs"),
     en_debug_mode: bool = True,
     waveform_save_dst: str = "",
+    build_sim_dir: str | Path | None = None,
 ) -> Path:
     """Function for running Verilog/VHDL Simulation using COCOTB environment
     :param src_files:           List with source files of each used Verilog/VHDL file
@@ -88,7 +77,10 @@ def run_cocotb_sim(
     :param waveform_save_dst:   Path to the destination folder for saving waveform file
     :return:                    Path to folder which includes waveform file [Default: simulation output folder]
     """
+
     design_sources = [Path(m) for m in src_files]
+    params = _normalize_dict_arg(params)
+    defines = _normalize_dict_arg(defines)
     if len(design_sources) == 0:
         raise ValueError("no design sources specified")
 
@@ -109,8 +101,12 @@ def run_cocotb_sim(
     environ["COCOTB_REDUCED_LOG_FMT"] = "0" if en_debug_mode else "1"
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
 
-    build_sim_dir = find_project_root() / "build_sim"
-    build_sim_dir.mkdir(exist_ok=True, parents=True)
+    if build_sim_dir is None:
+        build_sim_dir = find_project_root() / "build_sim"
+        build_sim_dir.mkdir(exist_ok=True, parents=True)
+    else:
+        build_sim_dir = Path(build_sim_dir)
+
     build_waveform_dir = (
         build_sim_dir.absolute()
         if waveform_save_dst == ""
@@ -174,3 +170,25 @@ def check_cocotb_test_result(result_folder_cocotb: str = "build_sim") -> bool:
             if "failure" in line:
                 return False
     return True
+
+  
+def _create_iverilog_dump_file(
+    top_module_name: str, path: Path, dump_dst: Path
+) -> Path:
+    dumpfile_path = path / "waveforms.vcd"
+    with open(dump_dst / "dump.v", "w") as f:
+        f.write("module cocotb_iverilog_dump_v2();\n")
+        f.write("initial begin\n")
+        f.write(f'    $dumpfile("{dumpfile_path}");\n')
+        f.write(f"    $dumpvars(0, {top_module_name});\n")
+        f.write("end\n")
+        f.write("endmodule\n")
+    return dump_dst / "dump.v"
+
+
+def _normalize_dict_arg(
+    arg: dict[str, Any] | Callable[[], dict[str, Any]],
+) -> dict[str, Any]:
+    if callable(arg):
+        return arg()
+    return arg

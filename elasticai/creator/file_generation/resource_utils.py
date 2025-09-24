@@ -53,7 +53,7 @@ def save_text_to_path(text: str, path: PathType, encoding: str = "utf-8") -> Non
         out_file.write(text)
 
 
-def find_project_root(max_levels: int = 10):
+def find_project_root(max_levels: int = 10) -> Path:
     cwd = Path(".").absolute()
     current = cwd
 
