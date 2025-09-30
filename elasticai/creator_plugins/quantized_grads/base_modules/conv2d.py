@@ -53,8 +53,11 @@ class Conv2d(TorchConv2d):
             dtype=dtype,
         )
         P.register_parametrization(self, "weight", weight_quantization)
+        self.weight_config = weight_quantization
+        self.output_config = math_ops
         if bias:
             P.register_parametrization(self, "bias", bias_quantization)
+            self.bias_config = bias_quantization
         self.add_module("math_ops", math_ops)
 
     def forward(self, x: Tensor) -> Tensor:
