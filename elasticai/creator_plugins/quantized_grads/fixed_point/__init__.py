@@ -33,6 +33,4 @@ __all__ = [
     "QuantizeParamToFixedPointHTE",
     "QuantizeParamToFixedPointStochastic",
     "FixedPointConfigV2",
-    "QuantizeTensorToFixedPointHTE",
-    "QuantizeTensorToFixedPointStochastic",
 ]
