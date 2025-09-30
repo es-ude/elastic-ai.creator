@@ -1,12 +1,9 @@
-from .autograd import get_autograd_func
 from .module_quantization import (
     QuantizeForwHTE,
     QuantizeForwHTEBackwHTE,
     QuantizeForwHTEBackwStochastic,
     QuantizeForwStochastic,
     QuantizeForwStochasticBackwStochastic,
-    get_fxp_forw_quantization_module,
-    get_fxp_forwbackw_quantization_module,
 )
 from .param_quantization import (
     QuantizeParamSTEToFixedPointHTE,
@@ -20,9 +17,6 @@ from .two_complement_fixed_point_config import FixedPointConfigV2
 __all__ = [
     "quantize_to_fxp_hte",
     "quantize_to_fxp_stochastic",
-    "get_autograd_func",
-    "get_fxp_forwbackw_quantization_module",
-    "get_fxp_forw_quantization_module",
     "QuantizeForwHTE",
     "QuantizeForwHTEBackwHTE",
     "QuantizeForwHTEBackwStochastic",
@@ -33,6 +27,4 @@ __all__ = [
     "QuantizeParamToFixedPointHTE",
     "QuantizeParamToFixedPointStochastic",
     "FixedPointConfigV2",
-    "QuantizeTensorToFixedPointHTE",
-    "QuantizeTensorToFixedPointStochastic",
 ]
