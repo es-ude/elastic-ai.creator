@@ -1,7 +1,7 @@
 import importlib
 import inspect
 import json
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import ExitStack
 from functools import wraps
 from os import environ
@@ -20,7 +20,17 @@ def _get_args(fn: Callable, *args: Any, **kwargs: Any) -> dict[str, Any]:
 
 def create_name_for_build_test_subdir(fn: Callable, *args: Any, **kwargs: Any) -> str:
     mangling_args: list[str] = []
+
+    def get_hash(v):
+        return hash(v).to_bytes(length=8, signed=True).hex()
+
     for arg, value in _get_args(fn, *args, **kwargs).items():
+        if isinstance(value, str):
+            pass
+        elif isinstance(value, Sequence):
+            value = get_hash(tuple(value))
+        elif isinstance(value, Mapping):
+            value = get_hash(tuple((k, v) for k, v in value.items()))
         mangling_args.extend([str(arg), str(value)])
     if len(mangling_args) > 0:
         argstring = "_" + "_".join(mangling_args)
@@ -96,6 +106,7 @@ class CocotbTestFixture:
         self._build_test_subdir = "<none>"
         self._top_module_name = self._test_fn.__name__.removeprefix("test_")
         self._id = "<none>"
+        self._timescale = ("1ps", "1fs")
 
         def get_parent_module(module: str):
             return ".".join(module.split(".")[:-1])
@@ -156,6 +167,9 @@ class CocotbTestFixture:
     def add_srcs(self, *srcs: str | Path) -> None:
         self._srcs.extend((str(s) for s in srcs))
 
+    def set_timescale(self, scale: tuple[str, str]) -> None:
+        self._timescale = scale
+
     def run(self, params, defines):
         environ["EAI_SIM_TEST_DIR"] = str(self._build_test_subdir)
 
@@ -166,6 +180,7 @@ class CocotbTestFixture:
             params=params,
             defines=defines,
             build_sim_dir=self._build_test_subdir,
+            timescale=self._timescale,
         )
 
 
