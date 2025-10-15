@@ -217,6 +217,9 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
                     "inputs1_QParams",
                     "prev_inputs1_QParams",
                 )
+                inherited_bits = self.inputs1_QParams.quant_bits.item()
+                if self.inputs2_QParams.quant_bits.item() != inherited_bits:
+                    self.inputs2_QParams.set_quant_range(inherited_bits)
 
         max_input = inputs.max(dim=-1, keepdim=True)[0]
         inputs = inputs - max_input
