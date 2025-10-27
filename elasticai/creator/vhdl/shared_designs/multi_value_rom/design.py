@@ -25,10 +25,12 @@ class MultiValueRom:
         self._data_width = data_width
         self._rom_data_width = data_width * unroll_factor
         number_of_values = math.ceil(len(values_as_integers) / unroll_factor)
-        self._address_width = self._bits_required_to_address_n_values(number_of_values)
         self._unroll_factor = unroll_factor
         self._number_per_row = number_per_row
         self._restructured_values = self._restructure_values(values_as_integers)
+        self._address_width = self._bits_required_to_address_n_values(
+            self._restructured_values
+        )
         self._values = [
             multi_values_to_vhdl_binary_string(x, self._data_width)
             for x in self._append_zeros_to_fill_addressable_memory(
