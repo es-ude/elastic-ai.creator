@@ -17,7 +17,10 @@ class BatchNorm1d(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
+        x_data_width: int,
+        w_data_width: int,
+        b_data_width: int,
+        y_data_width: int,
         num_dimensions: int,
         in_features: int,
         out_features: int,
@@ -34,7 +37,11 @@ class BatchNorm1d(Design):
     ) -> None:
         super().__init__(name=name)
 
-        self._data_width = data_width
+        self._x_data_width = x_data_width
+        self._w_data_width = w_data_width
+        self._b_data_width = b_data_width
+        self._y_data_width = y_data_width
+
         self._num_dimensions = num_dimensions
         self._in_features = in_features
         self._out_features = out_features
@@ -65,8 +72,8 @@ class BatchNorm1d(Design):
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
+            x_width=self._x_data_width,
+            y_width=self._y_data_width,
             x_addr_width=self._x_addr_width,
             y_addr_width=self._y_addr_width,
         )
@@ -77,12 +84,16 @@ class BatchNorm1d(Design):
             file_name="batchnorm1d.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
-                num_dimensions=str(self._num_dimensions),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
+                x_data_width=str(self._x_data_width),
+                w_data_width=str(self._w_data_width),
+                b_data_width=str(self._b_data_width),
+                y_data_width=str(self._y_data_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
+                num_dimensions=str(self._num_dimensions),
+                out_features=str(self._out_features),
                 m_q=str(self._m_q),
                 m_q_shift=str(self._m_q_shift),
                 m_q_data_width=str(self._m_q_data_width),
@@ -99,14 +110,14 @@ class BatchNorm1d(Design):
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
         rom_weights = Rom(
             name=rom_name["weights"],
-            data_width=self._data_width,
+            data_width=self._w_data_width,
             values_as_integers=self._weights,
         )
         rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
         rom_bias = Rom(
             name=rom_name["bias"],
-            data_width=(self._data_width + 1) * 2,
+            data_width=self._b_data_width,
             values_as_integers=self._bias,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
@@ -119,12 +130,12 @@ class BatchNorm1d(Design):
             file_name="batchnorm1d_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
-                num_dimensions=str(self._num_dimensions),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )

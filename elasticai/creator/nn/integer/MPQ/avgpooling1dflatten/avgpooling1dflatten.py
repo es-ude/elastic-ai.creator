@@ -8,18 +8,19 @@ from elasticai.creator.nn.integer.MPQ.avgpooling1dflatten.design import (
     AVGPooling1dFlatten as AVGPooling1dFlattenDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    MPQSupport,
     SimQuant,
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
-class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
+class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -36,6 +37,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -59,7 +61,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> AVGPooling1dFlattenDesign:
         return AVGPooling1dFlattenDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            x_data_width=self.inputs_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             in_features=self.in_features,
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,
@@ -82,7 +85,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M.clone().detach()
         )
-
+        self._precompute_requantizer_params()
         self.precomputed = True
 
     def int_forward(
@@ -93,9 +96,14 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         assert self.precomputed, "precompute should be called before int_forward"
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+        q_inputs = q_inputs.permute(0, 2, 1)
+
+        q_inputs = self._apply_requantizer(q_inputs, "inputs")
 
         q_inputs = self.math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
+            q_inputs,
+            self.inputs_QParams.zero_point,
+            self.inputs_QParams.quant_bits.item() + 1,
         )
 
         # assume that (batch_size, channels, seq_len) is the shape of q_inputs
@@ -108,7 +116,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
         q_outputs = q_outputs.squeeze(2)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -129,14 +137,19 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
     ) -> torch.FloatTensor:
         if enable_simquant:
             if self.training:
-                if given_inputs_QParams is None:
-                    self.inputs_QParams.update_quant_params(inputs)
-                else:
-                    self.inputs_QParams = given_inputs_QParams
+                self._handle_input_QParams(
+                    inputs,
+                    given_inputs_QParams,
+                    "inputs_QParams",
+                    "prev_inputs_QParams",
+                )
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
+
+        inputs = inputs.permute(0, 2, 1)
 
         # assume that (batch_size, channels, seq_len) is the shape of inputs
         outputs = F.avg_pool1d(inputs, kernel_size=inputs.size(2))
+        outputs = outputs.squeeze(2)
 
         if enable_simquant:
             if self.training:
@@ -149,4 +162,4 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
                     self.quant_data_dir,
                     f"{self.name}_y",
                 )
-        return outputs.squeeze(2)
+        return outputs

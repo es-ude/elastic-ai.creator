@@ -14,7 +14,8 @@ class SoftmaxLUT(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
+        x_data_width: int,
+        y_data_width: int,
         numberator_lut_out_data_width: int,
         denominator_lut_out_data_width: int,
         dim_a: int,
@@ -30,7 +31,9 @@ class SoftmaxLUT(Design):
 
         self._divider_name = f"{name}_divider"
 
-        self._data_width = data_width
+        self._x_data_width = x_data_width
+        self._y_data_width = y_data_width
+
         self._numberator_lut_out_data_width = numberator_lut_out_data_width
         self._denominator_lut_out_data_width = denominator_lut_out_data_width
         self._dim_a = dim_a
@@ -53,8 +56,8 @@ class SoftmaxLUT(Design):
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
+            x_width=self._x_data_width,
+            y_width=self._y_data_width,
             x_count=self._x_count,
             y_count=self._y_count,
         )
@@ -65,7 +68,8 @@ class SoftmaxLUT(Design):
             file_name="softmaxLUT.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
                 divider_name=str(self._divider_name),
                 dim_a=str(self._dim_a),
                 dim_b=str(self._dim_b),
@@ -105,10 +109,10 @@ class SoftmaxLUT(Design):
             file_name="softmaxLUT_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
-                dim_a=str(self._dim_a),
-                dim_b=str(self._dim_b),
-                dim_c=str(self._dim_c),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
                 x_addr_width=str(self._x_addr_width),
                 y_addr_width=str(self._y_addr_width),
                 numberator_lut_out_data_width=str(self._numberator_lut_out_data_width),

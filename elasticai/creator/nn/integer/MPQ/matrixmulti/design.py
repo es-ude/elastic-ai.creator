@@ -17,7 +17,9 @@ class MatrixMulti(Design):
         self,
         name: str,
         is_score_mode: str,
-        data_width: int,
+        x_1_data_width: int,
+        x_2_data_width: int,
+        y_data_width: int,
         x_1_dim_a: int,
         x_1_dim_b: int,
         x_1_dim_c: int,
@@ -37,8 +39,12 @@ class MatrixMulti(Design):
     ) -> None:
         super().__init__(name=name)
 
-        self._data_width = data_width
+        self._x_1_data_width = x_1_data_width
+        self._x_2_data_width = x_2_data_width
+        self._y_data_width = y_data_width
+
         self._is_score_mode = is_score_mode
+
         self._x_1_dim_a = x_1_dim_a
         self._x_1_dim_b = x_1_dim_b
         self._x_1_dim_c = x_1_dim_c
@@ -73,9 +79,9 @@ class MatrixMulti(Design):
     @property
     def port(self) -> Port:
         return create_port(
-            x_1_width=self._data_width,
-            x_2_width=self._data_width,
-            y_width=self._data_width,
+            x_1_width=self._x_1_data_width,
+            x_2_width=self._x_2_data_width,
+            y_width=self._y_data_width,
             x_1_count=self._x_1_count,
             x_2_count=self._x_2_count,
             y_count=self._y_count,
@@ -91,7 +97,9 @@ class MatrixMulti(Design):
                 x_1_addr_width=str(self._x_1_addr_width),
                 x_2_addr_width=str(self._x_2_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
+                x_1_data_width=str(self._x_1_data_width),
+                x_2_data_width=str(self._x_2_data_width),
+                y_data_width=str(self._y_data_width),
                 x_1_dim_a=str(self._x_1_dim_a),
                 x_1_dim_b=str(self._x_1_dim_b),
                 x_1_dim_c=str(self._x_1_dim_c),
@@ -125,16 +133,12 @@ class MatrixMulti(Design):
                 x_1_addr_width=str(self._x_1_addr_width),
                 x_2_addr_width=str(self._x_2_addr_width),
                 y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                x_1_dim_a=str(self._x_1_dim_a),
-                x_1_dim_b=str(self._x_1_dim_b),
-                x_1_dim_c=str(self._x_1_dim_c),
-                x_2_dim_a=str(self._x_2_dim_a),
-                x_2_dim_b=str(self._x_2_dim_b),
-                x_2_dim_c=str(self._x_2_dim_c),
-                y_dim_a=str(self._y_dim_a),
-                y_dim_b=str(self._y_dim_b),
-                y_dim_c=str(self._y_dim_c),
+                x_1_data_width=str(self._x_1_data_width),
+                x_2_data_width=str(self._x_2_data_width),
+                y_data_width=str(self._y_data_width),
+                x_1_count=str(self._x_1_count),
+                x_2_count=str(self._x_2_count),
+                y_count=str(self._y_count),
                 work_library_name=self._work_library_name,
             ),
         )

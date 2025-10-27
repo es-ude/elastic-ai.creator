@@ -3,22 +3,23 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
-from elasticai.creator.nn.integer.matrixmulti.design import (
+from elasticai.creator.nn.integer.MPQ.matrixmulti.design import (
     MatrixMulti as MatrixMultiDesign,
 )
 from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    MPQSupport,
     SimQuant,
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
-class MatrixMulti(DesignCreatorModule, nn.Module):
+class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -44,6 +45,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -72,7 +74,9 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         return MatrixMultiDesign(
             name=name,
             is_score_mode="true" if self.operation_mode == "score" else "false",
-            data_width=self.quant_bits_per_element["inputs1"],  # TODO
+            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
+            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
             x_1_dim_a=self.x_1_dim_a,
             x_1_dim_b=self.x_1_dim_b,
             x_1_dim_c=self.x_1_dim_c,
@@ -108,6 +112,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
         )
+        self._precompute_requantizer_params()
         self.precomputed = True
 
     def int_forward(
@@ -121,16 +126,19 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         save_quant_data(q_inputs1, self.quant_data_dir, f"{self.name}_q_x_1")
         save_quant_data(q_inputs2, self.quant_data_dir, f"{self.name}_q_x_2")
 
+        q_inputs1 = self._apply_requantizer(q_inputs1, "inputs1")
+        q_inputs2 = self._apply_requantizer(q_inputs2, "inputs2")
+
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
-            self.inputs1_QParams.quant_bits + 1,
+            self.inputs1_QParams.quant_bits.item() + 1,
         )
 
         q_inputs2 = self.math_ops.intsub(
             q_inputs2,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits + 1,
+            self.inputs2_QParams.quant_bits.item() + 1,
         )
 
         # integer-only matrix multiplication on CPU
@@ -138,7 +146,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
             inputs1=q_inputs1,
             inputs2=q_inputs2,
             operation_mode=self.operation_mode,
-            outputs_quant_bits=(self.quant_bits_per_element["outputs"] + 1) * 2,
+            outputs_quant_bits=(self.outputs_QParams.quant_bits.item() + 1) * 2,
         )
 
         tmp = simulate_bitshifting(
@@ -146,7 +154,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         ).to("cpu")
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -171,15 +179,18 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         assert inputs2.ndim == 4, "Input must be a 4D tensor"
         if enable_simquant:
             if self.training:
-                if given_inputs1_QParams is None:
-                    self.inputs1_QParams.update_quant_params(inputs1)
-                else:
-                    self.inputs1_QParams = given_inputs1_QParams
-
-                if given_inputs2_QParams is None:
-                    self.inputs2_QParams.update_quant_params(inputs2)
-                else:
-                    self.inputs2_QParams = given_inputs2_QParams
+                self._handle_input_QParams(
+                    inputs1,
+                    given_inputs1_QParams,
+                    "inputs1_QParams",
+                    "prev_inputs1_QParams",
+                )
+                self._handle_input_QParams(
+                    inputs2,
+                    given_inputs2_QParams,
+                    "inputs2_QParams",
+                    "prev_inputs2_QParams",
+                )
 
             inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
             inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)

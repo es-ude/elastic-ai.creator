@@ -7,10 +7,6 @@ from elasticai.creator.nn.integer.MPQ.mha.design import MHA as MHADesign
 from elasticai.creator.nn.integer.MPQ.scaleddotproductattention import (
     ScaledDotProductAttention,
 )
-from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
-    GlobalMinMaxObserver,
-)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -25,12 +21,11 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         window_size = kwargs.get("window_size")
 
         self.name = kwargs.get("name")
-        self.quantizable_elements = ["inputs", "outputs"]
-        self.quant_bits_per_element = None
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
 
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
 
         self.q_linear = Linear(
             name=self.name + "_q_linear",
@@ -41,6 +36,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.k_linear = Linear(
@@ -52,6 +48,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
         self.v_linear = Linear(
             name=self.name + "_v_linear",
@@ -62,6 +59,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.inner_attn_module = ScaledDotProductAttention(
@@ -71,6 +69,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             d_model=d_model,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
         self.output_linear = Linear(
             name=self.name + "_output_linear",
@@ -81,38 +80,36 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             device=self.device,
             bias=True,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.precomputed = False
 
-    def set_quant_bits_from_config(self, quant_configs):
-        quant_bits_per_element = {}
-        for element in self.quantizable_elements:
-            key = f"{self.name}.{element}"
-            quant_bits_per_element[element] = quant_configs.get(key)
-        self.quant_bits_per_element = quant_bits_per_element
-        self._init_element_Qparams()
+    @property
+    def inputs_q_QParams(self):
+        return self.q_linear.inputs_QParams
 
-    def _init_element_Qparams(self):
-        self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["inputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["outputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
+    @property
+    def inputs_k_QParams(self):
+        return self.k_linear.inputs_QParams
+
+    @property
+    def inputs_v_QParams(self):
+        return self.v_linear.inputs_QParams
+
+    @property
+    def outputs_QParams(self):
+        return self.output_linear.outputs_QParams
 
     def create_design(self, name: str) -> MHADesign:
         return MHADesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            work_library_name="work",
             q_linear=self.q_linear,
             k_linear=self.k_linear,
             v_linear=self.v_linear,
             inner_attn_module=self.inner_attn_module,
             output_linear=self.output_linear,
-            work_library_name="work",
         )
 
     def precompute(self) -> None:
@@ -185,30 +182,23 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         given_inputs_QParams: object = None,
         enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if enable_simquant:
-            if self.training:
-                if given_inputs_QParams is not None:
-                    self.inputs_QParams = given_inputs_QParams
-                else:
-                    self.inputs_QParams.update_quant_params(q)
-
         B = q.shape[0]
         L = q.shape[1]
         H = self.nhead
 
         q = self.q_linear.forward(
             inputs=q,
-            given_inputs_QParams=self.inputs_QParams,
+            given_inputs_QParams=given_inputs_QParams,
             enable_simquant=enable_simquant,
         )
         k = self.k_linear.forward(
             inputs=k,
-            given_inputs_QParams=self.inputs_QParams,
+            given_inputs_QParams=given_inputs_QParams,
             enable_simquant=enable_simquant,
         )
         v = self.v_linear.forward(
             inputs=v,
-            given_inputs_QParams=self.inputs_QParams,
+            given_inputs_QParams=given_inputs_QParams,
             enable_simquant=enable_simquant,
         )
 
@@ -235,13 +225,11 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             enable_simquant=enable_simquant,
         )
 
-        if enable_simquant:
-            self.outputs_QParams = self.output_linear.outputs_QParams
-            if self.enable_error_analysis:
-                save_quant_data(
-                    outputs,
-                    self.quant_data_dir,
-                    f"{self.name}_y",
-                )
+        if self.enable_error_analysis:
+            save_quant_data(
+                outputs,
+                self.quant_data_dir,
+                f"{self.name}_y",
+            )
 
         return outputs, attn_weights

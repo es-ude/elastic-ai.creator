@@ -7,7 +7,8 @@ entity ${name} is
 generic (
     X_ADDR_WIDTH : integer := ${x_addr_width};
     Y_ADDR_WIDTH : integer := ${y_addr_width};
-    DATA_WIDTH : integer := ${data_width};
+    X_DATA_WIDTH : integer := ${x_data_width};
+    Y_DATA_WIDTH : integer := ${y_data_width};
     DIM_A: integer := ${dim_a};
     DIM_B: integer := ${dim_b};
     DIM_C: integer := ${dim_c};
@@ -22,22 +23,22 @@ port (
     enable : in std_logic;
     clock : in std_logic;
     x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    x : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+    x : in std_logic_vector(X_DATA_WIDTH - 1 downto 0);
     y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-	y : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+	y : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     done : out std_logic
 );
 end entity ${name};
 architecture rtl of ${name} is
     constant NUM_ELEMENT : integer := DIM_A*DIM_B*DIM_C;
     signal reset : std_logic := '0';
-    signal x_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal denominator_lut_x: std_logic_vector(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal denominator_lut_x_int: signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_int : signed(X_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal denominator_lut_x: std_logic_vector(X_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal denominator_lut_x_int: signed(X_DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal tmp_numerators_addr : integer range 0 to DIM_C-1 := 0;
     signal numerator_lut_y: std_logic_vector(NUMERATOR_LUT_OUT_DATA_WIDTH-1 downto 0) := (others=>'0');
     signal numerator_lut_y_int: signed(NUMERATOR_LUT_OUT_DATA_WIDTH-1 downto 0) := (others=>'0');
-    signal max_value_sub_z: signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal max_value_sub_z: signed(Y_DATA_WIDTH downto 0) := (others=>'0');
     signal denominator_lut_y: std_logic_vector(DENOMINATOR_LUT_OUT_DATA_WIDTH-1 downto 0) := (others=>'0');
     signal denominator_lut_y_int: signed(DENOMINATOR_LUT_OUT_DATA_WIDTH-1 downto 0) := (others=>'0');
     signal denominator_sum_s : signed(DENOMINATOR_LUT_OUT_DATA_WIDTH downto 0) := (others=>'0');
@@ -47,10 +48,10 @@ architecture rtl of ${name} is
     type t_numerators_array is array (0 to DIM_C) of signed(NUMERATOR_LUT_OUT_DATA_WIDTH-1 downto 0);
     signal numerators_ram : t_numerators_array;
     signal y_store_en : std_logic;
-    signal y_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal y_int : signed(Y_DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to NUM_ELEMENT-1 := 0;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal divider_request, divider_done : std_logic := '0';
     signal divider_quotient, divider_dividend, divider_divisor, divider_remainder: signed(NUMERATOR_LUT_OUT_DATA_WIDTH downto 0) := (others=>'0');
     signal divider_quotient_std, divider_remainder_std : std_logic_vector(NUMERATOR_LUT_OUT_DATA_WIDTH downto 0) := (others=>'0');
@@ -67,7 +68,7 @@ begin
         variable denominator_sum : signed(DENOMINATOR_LUT_OUT_DATA_WIDTH downto 0) := (others=>'0');
         type t_state is (s_find_max, s_lookup);
         variable state : t_state;
-        variable max_value : signed(DATA_WIDTH - 1 downto 0);
+        variable max_value : signed(X_DATA_WIDTH - 1 downto 0);
         variable pre_fetch : integer range 0 to 6;
         variable input_offset : integer range 0 to NUM_ELEMENT-1;
         variable tmp: integer;
@@ -223,7 +224,7 @@ begin
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
-        RAM_WIDTH => DATA_WIDTH,
+        RAM_WIDTH => Y_DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,

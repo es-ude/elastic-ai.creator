@@ -5,21 +5,23 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name} is
     generic (
+        X_DATA_WIDTH : integer := ${x_data_width};
+        FC1_Y_DATA_WIDTH : integer := ${fc1_y_data_width};
+        RELU_X_DATA_WIDTH : integer := ${relu_x_data_width};
+        RELU_Y_DATA_WIDTH : integer := ${relu_y_data_width};
+        FC2_X_DATA_WIDTH : integer := ${fc2_x_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         X_ADDR_WIDTH : integer := ${x_addr_width};
-        Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
-        NUM_DIMENSIONS : integer := ${num_dimensions};
-        FC1_IN_FEATURES : integer := ${fc1_in_features};
-        FC1_OUT_FEATURES : integer := ${fc1_out_features};
-        FC2_OUT_FEATURES : integer := ${fc2_out_features}
+        FC1_Y_ADDR_WIDTH : integer := ${fc1_y_addr_width};
+        Y_ADDR_WIDTH : integer := ${y_addr_width}
     ) ;
     port (
         enable : in std_logic;
         clock : in std_logic;
         x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x : in std_logic_vector(X_DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
         done : out std_logic
     ) ;
 end ${name};
@@ -35,23 +37,26 @@ architecture rtl of ${name} is
         end loop;
         return result;
     end function log2;
+
     signal fc1_enable : std_logic;
     signal fc1_clock : std_logic;
-    signal fc1_x_address : std_logic_vector(log2(FC1_IN_FEATURES * NUM_DIMENSIONS)-1 downto 0);
-    signal fc1_x: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal fc1_y_address : std_logic_vector(log2(FC1_OUT_FEATURES * NUM_DIMENSIONS)-1 downto 0);
-    signal fc1_y: std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal fc1_x_address : std_logic_vector(X_ADDR_WIDTH-1 downto 0);
+    signal fc1_x: std_logic_vector(X_DATA_WIDTH - 1 downto 0);
+    signal fc1_y_address : std_logic_vector(FC1_Y_ADDR_WIDTH-1 downto 0);
+    signal fc1_y: std_logic_vector(FC1_Y_DATA_WIDTH - 1 downto 0);
     signal fc1_done : std_logic;
+
     signal relu_enable : std_logic;
     signal relu_clock : std_logic;
-    signal relu_x: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal relu_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal relu_x: std_logic_vector(RELU_X_DATA_WIDTH - 1 downto 0);
+    signal relu_y : std_logic_vector(RELU_Y_DATA_WIDTH - 1 downto 0);
+
     signal fc2_enable : std_logic;
     signal fc2_clock : std_logic;
-    signal fc2_x_address : std_logic_vector(log2(FC1_OUT_FEATURES * NUM_DIMENSIONS)-1 downto 0);
-    signal fc2_x: std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal fc2_y_address : std_logic_vector(log2(FC2_OUT_FEATURES * NUM_DIMENSIONS)-1 downto 0);
-    signal fc2_y: std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal fc2_x_address : std_logic_vector(FC1_Y_ADDR_WIDTH-1 downto 0);
+    signal fc2_x: std_logic_vector(FC2_X_DATA_WIDTH - 1 downto 0);
+    signal fc2_y_address : std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
+    signal fc2_y: std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal fc2_done : std_logic;
     begin
     fc1_enable <= enable;

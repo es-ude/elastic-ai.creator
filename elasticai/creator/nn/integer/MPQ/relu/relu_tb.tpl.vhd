@@ -7,7 +7,8 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name}_tb is
     generic (
-        DATA_WIDTH : integer := ${data_width};
+        X_DATA_WIDTH : integer := ${x_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         THRESHOLD : integer := ${threshold};
         CLOCK_OPTION : boolean := ${clock_option}
     );
@@ -20,8 +21,8 @@ architecture rtl of ${name}_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal x : std_logic_vector(X_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0) := (others => '0');
 begin
     CLK_GEN : process
     begin
@@ -75,7 +76,7 @@ begin
         while not ENDFILE (fp_inputs) loop
             readline (fp_inputs, line_num);
             read (line_num, line_content);
-            x <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+            x <= std_logic_vector(to_signed(line_content, X_DATA_WIDTH));
             wait for 2*C_CLK_PERIOD;
             readline (fp_labels, line_num);
             read (line_num, line_content);

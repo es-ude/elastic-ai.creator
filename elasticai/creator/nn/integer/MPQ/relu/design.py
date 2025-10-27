@@ -12,20 +12,24 @@ class ReLU(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
+        x_data_width: int,
+        y_data_width: int,
         threshold: int,
         clock_option: bool,
         work_library_name: str,
     ) -> None:
         super().__init__(name=name)
-        self._data_width = data_width
+
+        self._x_data_width = x_data_width
+        self._y_data_width = y_data_width
+
         self._threshold = threshold
         self._clock_option = clock_option
         self._work_library_name = work_library_name
 
     @property
     def port(self) -> Port:
-        return create_port(x_width=self._data_width, y_width=self._data_width)
+        return create_port(x_width=self._x_data_width, y_width=self._y_data_width)
 
     def save_to(self, destination: Path) -> None:
         template = InProjectTemplate(
@@ -33,7 +37,8 @@ class ReLU(Design):
             file_name="relu.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
                 threshold=str(self._threshold),
                 clock_option="true" if self._clock_option else "false",
             ),
@@ -45,7 +50,8 @@ class ReLU(Design):
             file_name="relu_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
                 threshold=str(self._threshold),
                 clock_option="true" if self._clock_option else "false",
                 work_library_name=self._work_library_name,

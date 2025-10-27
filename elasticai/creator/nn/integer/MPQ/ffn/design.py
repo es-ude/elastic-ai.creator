@@ -12,7 +12,6 @@ class FFN(Design):
     def __init__(
         self,
         name: str,
-        data_width: int,
         fc1: object,
         relu: object,
         fc2: object,
@@ -20,47 +19,56 @@ class FFN(Design):
     ) -> None:
         super().__init__(name=name)
 
-        self._data_width = data_width
-        self._fc1 = fc1
-        self._relu = relu
-        self._fc2 = fc2
-
+        self._fc1_name = fc1.name
+        self._relu_name = relu.name
+        self._fc2_name = fc2.name
         self._work_library_name = work_library_name
 
-        self.fc1_design = self._fc1.create_design(name=self._fc1.name)
-        self.relu_design = self._relu.create_design(name=self._relu.name)
-        self.fc2_design = self._fc2.create_design(name=self._fc2.name)
+        self._fc1_design = fc1.create_design(name=self._fc1_name)
+        self._relu_design = relu.create_design(name=self._relu_name)
+        self._fc2_design = fc2.create_design(name=self._fc2_name)
+
+        self._x_data_width = self._fc1_design._x_data_width
+        self._y_data_width = self._fc2_design._y_data_width
+
+        self._x_addr_width = self._fc1_design._x_addr_width
+        self._y_addr_width = self._fc2_design._y_addr_width
+
+        self._x_count = self._fc1_design._x_count
+        self._y_count = self._fc2_design._y_count
 
     @property
     def port(self) -> Port:
         return create_port(
-            x_width=self._data_width,
-            y_width=self._data_width,
-            x_count=self.fc1_design._x_count,
-            y_count=self.fc2_design._y_count,
+            x_width=self._x_data_width,
+            y_width=self._y_data_width,
+            x_count=self._x_count,
+            y_count=self._y_count,
         )
 
     def save_to(self, destination: Path) -> None:
-        self.fc1_design.save_to(destination.create_subpath(self._fc1.name))
-        self.relu_design.save_to(destination.create_subpath(self._relu.name))
-        self.fc2_design.save_to(destination.create_subpath(self._fc2.name))
+        self._fc1_design.save_to(destination.create_subpath(self._fc1_name))
+        self._relu_design.save_to(destination.create_subpath(self._relu_name))
+        self._fc2_design.save_to(destination.create_subpath(self._fc2_name))
 
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="ffn.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                fc1_name=self._fc1.name,
-                relu_name=self._relu.name,
-                fc2_name=self._fc2.name,
-                data_width=str(self._data_width),
-                x_addr_width=str(self.fc1_design._x_addr_width),
-                y_addr_width=str(self.fc2_design._y_addr_width),
-                num_dimensions=str(self.fc1_design._num_dimensions),
-                fc1_in_features=str(self.fc1_design._in_features),
-                fc1_out_features=str(self.fc1_design._out_features),
-                fc2_out_features=str(self.fc2_design._out_features),
+                fc1_name=self._fc1_name,
+                relu_name=self._relu_name,
+                fc2_name=self._fc2_name,
                 work_library_name=self._work_library_name,
+                x_data_width=str(self._x_data_width),
+                fc1_y_data_width=str(self._fc1_design._y_data_width),
+                relu_x_data_width=str(self._relu_design._x_data_width),
+                relu_y_data_width=str(self._relu_design._y_data_width),
+                fc2_x_data_width=str(self._fc2_design._x_data_width),
+                y_data_width=str(self._y_data_width),
+                x_addr_width=str(self._x_addr_width),
+                fc1_y_addr_width=str(self._fc1_design._y_addr_width),
+                y_addr_width=str(self._y_addr_width),
             ),
         )
         destination.create_subpath(self.name).as_file(".vhd").write(template)
@@ -70,13 +78,13 @@ class FFN(Design):
             file_name="ffn_tb.tpl.vhd",
             parameters=dict(
                 name=self.name,
-                data_width=str(self._data_width),
-                x_addr_width=str(self.fc1_design._x_addr_width),
-                y_addr_width=str(self.fc2_design._y_addr_width),
-                num_dimensions=str(self.fc1_design._num_dimensions),
-                in_features=str(self.fc1_design._in_features),
-                out_features=str(self.fc2_design._out_features),
                 work_library_name=self._work_library_name,
+                x_data_width=str(self._x_data_width),
+                y_data_width=str(self._y_data_width),
+                x_addr_width=str(self._fc1_design._x_addr_width),
+                y_addr_width=str(self._fc2_design._y_addr_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
             ),
         )
         destination.create_subpath(self.name).as_file("_tb.vhd").write(template_test)

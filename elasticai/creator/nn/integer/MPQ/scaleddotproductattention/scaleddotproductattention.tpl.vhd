@@ -5,12 +5,20 @@ library ${work_library_name};
 use ${work_library_name}.all;
 entity ${name} is
     generic (
+        X_1_DATA_WIDTH : integer := ${x_1_data_width};
+        X_2_DATA_WIDTH : integer := ${x_2_data_width};
+        MatrixMulti_SCORE_Y_DATA_WIDTH : integer := ${matrix_multi_score_y_data_width};
+        SOFTMAX_X_DATA_WIDTH : integer := ${softmax_x_data_width};
+        SOFTMAX_Y_DATA_WIDTH : integer := ${softmax_y_data_width};
+        MatrixMulti_ATT_X_1_DATA_WIDTH : integer := ${matrix_multi_att_x_1_data_width};
+        X_3_DATA_WIDTH : integer := ${x_3_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         X_1_ADDR_WIDTH : integer := ${x_1_addr_width};
         X_2_ADDR_WIDTH : integer := ${x_2_addr_width};
-        Y_SCORE_ADDR_WIDTH : integer := ${y_score_addr_width};
+        MatrixMulti_SCORE_Y_ADDR_WIDTH : integer := ${matrix_multi_score_y_addr_width};
         X_3_ADDR_WIDTH : integer := ${x_3_addr_width};
-        Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width}
+        Y_ADDR_WIDTH : integer := ${y_addr_width}
+
     );
     port (
         enable : in std_logic;
@@ -19,10 +27,10 @@ entity ${name} is
         x_2_address : out std_logic_vector(X_2_ADDR_WIDTH-1 downto 0);
         x_3_address : out std_logic_vector(X_3_ADDR_WIDTH-1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH-1 downto 0);
-        x_1 : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        x_2 : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        x_3 : in std_logic_vector(DATA_WIDTH-1 downto 0);
-        y : out std_logic_vector(DATA_WIDTH-1 downto 0);
+        x_1 : in std_logic_vector(X_1_DATA_WIDTH-1 downto 0);
+        x_2 : in std_logic_vector(X_2_DATA_WIDTH-1 downto 0);
+        x_3 : in std_logic_vector(X_3_DATA_WIDTH-1 downto 0);
+        y : out std_logic_vector(Y_DATA_WIDTH-1 downto 0);
         done : out std_logic
     );
 end ${name};
@@ -41,27 +49,27 @@ architecture rtl of ${name} is
     signal matmul_score_enable : std_logic;
     signal matmul_score_clock : std_logic;
     signal matmul_score_x_1_address : std_logic_vector(X_1_ADDR_WIDTH - 1 downto 0);
-    signal matmul_score_x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal matmul_score_x_1 : std_logic_vector(X_1_DATA_WIDTH - 1 downto 0);
     signal matmul_score_x_2_address : std_logic_vector(X_2_ADDR_WIDTH - 1 downto 0);
-    signal matmul_score_x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal matmul_score_y_address : std_logic_vector(Y_SCORE_ADDR_WIDTH - 1 downto 0);
-    signal matmul_score_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal matmul_score_x_2 : std_logic_vector(X_2_DATA_WIDTH - 1 downto 0);
+    signal matmul_score_y_address : std_logic_vector(MatrixMulti_SCORE_Y_ADDR_WIDTH - 1 downto 0);
+    signal matmul_score_y : std_logic_vector(MatrixMulti_SCORE_Y_DATA_WIDTH - 1 downto 0);
     signal matmul_score_done : std_logic;
     signal softmax_enable : std_logic;
     signal softmax_clock : std_logic;
-    signal softmax_x_address : std_logic_vector(Y_SCORE_ADDR_WIDTH - 1 downto 0);
-    signal softmax_x : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal softmax_y_address : std_logic_vector(Y_SCORE_ADDR_WIDTH - 1 downto 0);
-    signal softmax_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal softmax_x_address : std_logic_vector(MatrixMulti_SCORE_Y_ADDR_WIDTH - 1 downto 0);
+    signal softmax_x : std_logic_vector(SOFTMAX_X_DATA_WIDTH - 1 downto 0);
+    signal softmax_y_address : std_logic_vector(MatrixMulti_SCORE_Y_ADDR_WIDTH - 1 downto 0);
+    signal softmax_y : std_logic_vector(SOFTMAX_Y_DATA_WIDTH - 1 downto 0);
     signal softmax_done : std_logic;
     signal matmul_att_enable : std_logic;
     signal matmul_att_clock : std_logic;
-    signal matmul_att_x_1_address : std_logic_vector(Y_SCORE_ADDR_WIDTH - 1 downto 0);
-    signal matmul_att_x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal matmul_att_x_1_address : std_logic_vector(MatrixMulti_SCORE_Y_ADDR_WIDTH - 1 downto 0);
+    signal matmul_att_x_1 : std_logic_vector(MatrixMulti_ATT_X_1_DATA_WIDTH - 1 downto 0);
     signal matmul_att_x_2_address : std_logic_vector(X_3_ADDR_WIDTH - 1 downto 0);
-    signal matmul_att_x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal matmul_att_x_2 : std_logic_vector(X_3_DATA_WIDTH - 1 downto 0);
     signal matmul_att_y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal matmul_att_y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal matmul_att_y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal matmul_att_done : std_logic;
 begin
     matmul_score_enable <= enable;
@@ -88,10 +96,10 @@ begin
         enable => matmul_score_enable,
         clock => matmul_score_clock,
         x_1_address => matmul_score_x_1_address,
-        x_1 => matmul_score_x_1,
         x_2_address => matmul_score_x_2_address,
-        x_2 => matmul_score_x_2,
         y_address => matmul_score_y_address,
+        x_1 => matmul_score_x_1,
+        x_2 => matmul_score_x_2,
         y => matmul_score_y,
         done => matmul_score_done
     );
@@ -100,8 +108,8 @@ begin
         enable => softmax_enable,
         clock => softmax_clock,
         x_address => softmax_x_address,
-        x => softmax_x,
         y_address => softmax_y_address,
+        x => softmax_x,
         y => softmax_y,
         done => softmax_done
     );
@@ -110,10 +118,10 @@ begin
         enable => matmul_att_enable,
         clock => matmul_att_clock,
         x_1_address => matmul_att_x_1_address,
-        x_1 => matmul_att_x_1,
         x_2_address => matmul_att_x_2_address,
-        x_2 => matmul_att_x_2,
         y_address => matmul_att_y_address,
+        x_1 => matmul_att_x_1,
+        x_2 => matmul_att_x_2,
         y => matmul_att_y,
         done => matmul_att_done
     );

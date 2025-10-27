@@ -1,3 +1,4 @@
+from .MPQSupport import MPQSupport
 from .Observers import (
     GlobalMinMaxObserver,
     LocalMinMaxObserver,

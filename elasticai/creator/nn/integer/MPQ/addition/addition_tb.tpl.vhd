@@ -9,9 +9,11 @@ entity ${name}_tb is
     generic (
         X_ADDR_WIDTH : integer := ${x_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
-        NUM_FEATURES : integer := ${num_features};
-        NUM_DIMENSIONS : integer := ${num_dimensions}
+        X_1_DATA_WIDTH : integer := ${x_1_data_width};
+        X_2_DATA_WIDTH : integer := ${x_2_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
+        X_COUNT : integer := ${x_count};
+        Y_COUNT : integer := ${y_count}
     );
 port(
     clk : out std_logic
@@ -24,13 +26,14 @@ architecture rtl of ${name}_tb is
     signal uut_enable : std_logic := '0';
     signal x_1_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x_2_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    type t_array_x is array (0 to NUM_FEATURES * NUM_DIMENSIONS-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal x_1_arr : t_array_x := (others=>(others=>'0'));
+    signal x_1 : std_logic_vector(X_1_DATA_WIDTH - 1 downto 0);
+    signal x_2 : std_logic_vector(X_2_DATA_WIDTH - 1 downto 0);
+    type t_array_x_1 is array (0 to X_COUNT-1) of std_logic_vector(X_1_DATA_WIDTH - 1 downto 0);
+    signal x_1_arr : t_array_x_1 := (others=>(others=>'0'));
+    type t_array_x is array (0 to X_COUNT-1) of std_logic_vector(X_2_DATA_WIDTH - 1 downto 0);
     signal x_2_arr : t_array_x := (others=>(others=>'0'));
     signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal n_clk_cycles : integer := 0;
     signal done : std_logic;
 begin
@@ -101,13 +104,13 @@ begin
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs_1) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < NUM_DIMENSIONS * NUM_FEATURES loop
+            while input_rd_cnt < X_COUNT loop
                 readline (fp_inputs_1, line_num);
                 read (line_num, line_content);
-                x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_1_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_1_DATA_WIDTH));
                 readline (fp_inputs_2, line_num);
                 read (line_num, line_content);
-                x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+                x_2_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, X_2_DATA_WIDTH));
                 input_rd_cnt := input_rd_cnt + 1;
             end loop;
             wait for C_CLK_PERIOD;
@@ -117,7 +120,7 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<NUM_DIMENSIONS*NUM_FEATURES loop
+            while output_rd_cnt < Y_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
                 y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));

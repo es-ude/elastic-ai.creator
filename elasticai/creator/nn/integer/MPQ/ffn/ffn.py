@@ -5,10 +5,6 @@ from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModu
 from elasticai.creator.nn.integer.MPQ.ffn.design import FFN as FFNDesign
 from elasticai.creator.nn.integer.MPQ.linear import Linear
 from elasticai.creator.nn.integer.MPQ.relu import ReLU
-from elasticai.creator.nn.integer.quant_utils import (
-    AsymmetricSignedQParams,
-    GlobalMinMaxObserver,
-)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -23,11 +19,11 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         num_dimensions = kwargs.get("num_dimensions")
 
         self.name = kwargs.get("name")
-        self.quantizable_elements = ["inputs", "outputs"]
-        self.quant_bits_per_element = None
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         self.device = kwargs.get("device")
+
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.MPQ_strategy = kwargs.get("MPQ_strategy")
 
         self.fc1 = Linear(
             name=self.name + "_fc1",
@@ -38,6 +34,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.relu = ReLU(
@@ -45,6 +42,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
 
         self.fc2 = Linear(
@@ -56,41 +54,32 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=self.device,
             enable_error_analysis=self.enable_error_analysis,
+            MPQ_strategy=self.MPQ_strategy,
         )
-
         self.precomputed = False
 
-    def set_quant_bits_from_config(self, quant_configs):
-        quant_bits_per_element = {}
-        for element in self.quantizable_elements:
-            key = f"{self.name}.{element}"
-            quant_bits_per_element[element] = quant_configs.get(key)
-        self.quant_bits_per_element = quant_bits_per_element
-        self._init_element_Qparams()
+    @property
+    def inputs_QParams(self):
+        return self.fc1.inputs_QParams
 
-    def _init_element_Qparams(self):
-        self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["inputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["outputs"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
+    @property
+    def outputs_QParams(self):
+        return self.fc2.outputs_QParams
 
     def create_design(self, name: str) -> FFNDesign:
         return FFNDesign(
             name=name,
-            data_width=self.quant_bits_per_element["inputs"],  # TODO
+            work_library_name="work",
             fc1=self.fc1,
             relu=self.relu,
             fc2=self.fc2,
-            work_library_name="work",
         )
 
     def precompute(self):
         assert not self.training, "int_forward should be called in eval mode"
+
         self.fc1.precompute()
+        self.relu.precompute()
         self.fc2.precompute()
         self.precomputed = True
 
@@ -100,6 +89,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
     ) -> torch.IntTensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
+
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_f1_outputs = self.fc1.int_forward(
@@ -110,9 +100,10 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             q_inputs=q_relu_outputs,
         )
         save_quant_data(q_f2_outputs, self.quant_data_dir, f"{self.name}_q_y")
+
         if self.enable_error_analysis:
             save_quant_data(
-                self.outputs_QParams.dequantize(q_f2_outputs),
+                self.fc2.outputs_QParams.dequantize(q_f2_outputs),
                 self.quant_data_dir,
                 f"{self.name}_dq_y",
             )
@@ -124,16 +115,9 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         given_inputs_QParams: nn.Module = None,
         enable_simquant: bool = True,
     ) -> torch.FloatTensor:
-        if enable_simquant:
-            if self.training:
-                if given_inputs_QParams is not None:
-                    self.inputs_QParams = given_inputs_QParams
-                else:
-                    self.inputs_QParams.update_quant_params(inputs)
-
         f1_outputs = self.fc1.forward(
             inputs=inputs,
-            given_inputs_QParams=self.inputs_QParams,
+            given_inputs_QParams=given_inputs_QParams,
             enable_simquant=enable_simquant,
         )
 
@@ -147,12 +131,11 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             given_inputs_QParams=self.fc1.outputs_QParams,
             enable_simquant=enable_simquant,
         )
-        if enable_simquant:
-            self.outputs_QParams = self.fc2.outputs_QParams
-            if self.enable_error_analysis:
-                save_quant_data(
-                    f2_outputs,
-                    self.quant_data_dir,
-                    f"{self.name}_y",
-                )
+
+        if self.enable_error_analysis:
+            save_quant_data(
+                f2_outputs,
+                self.quant_data_dir,
+                f"{self.name}_y",
+            )
         return f2_outputs

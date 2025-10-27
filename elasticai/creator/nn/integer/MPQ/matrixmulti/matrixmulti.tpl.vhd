@@ -9,7 +9,9 @@ entity ${name} is
         X_1_ADDR_WIDTH : integer := ${x_1_addr_width};
         X_2_ADDR_WIDTH : integer := ${x_2_addr_width};
         Y_ADDR_WIDTH : integer := ${y_addr_width};
-        DATA_WIDTH : integer := ${data_width};
+        X_1_DATA_WIDTH : integer := ${x_1_data_width};
+        X_2_DATA_WIDTH : integer := ${x_2_data_width};
+        Y_DATA_WIDTH : integer := ${y_data_width};
         X_1_DIM_A : integer := ${x_1_dim_a};
         X_1_DIM_B : integer := ${x_1_dim_b};
         X_1_DIM_C : integer := ${x_1_dim_c};
@@ -33,22 +35,22 @@ entity ${name} is
         x_1_address : out std_logic_vector(X_1_ADDR_WIDTH-1 downto 0);
         x_2_address : out std_logic_vector(X_2_ADDR_WIDTH-1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        x_1 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        x_2 : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x_1 : in std_logic_vector(X_1_DATA_WIDTH - 1 downto 0);
+        x_2 : in std_logic_vector(X_2_DATA_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end ${name};
 architecture rtl of ${name} is
-    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    constant MACC_OUT_WIDTH : integer := (X_1_DATA_WIDTH + 1) + (X_2_DATA_WIDTH + 1)  + 1;
     function multiply_accumulate(
-                    w : in signed(DATA_WIDTH downto 0);
-                    x_in : in signed(DATA_WIDTH downto 0);
+                    x_1_in : in signed(X_1_DATA_WIDTH downto 0);
+                    x_2_in : in signed(X_2_DATA_WIDTH downto 0);
                     y_out : in signed(MACC_OUT_WIDTH - 1 downto 0)
             ) return signed is
-        variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+        variable TMP : signed(((X_1_DATA_WIDTH + 1) + (X_2_DATA_WIDTH + 1)) - 1 downto 0) := (others=>'0');
     begin
-        TMP := w * x_in;
+        TMP := x_1_in * x_2_in;
         return TMP + y_out;
     end function;
     function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
@@ -71,9 +73,9 @@ architecture rtl of ${name} is
             TMP_3 := TMP_2 + 1;
         end if;
         if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
+            return -resize(TMP_3, Y_DATA_WIDTH + 1);
         else
-            return resize(TMP_3, DATA_WIDTH + 1);
+            return resize(TMP_3, Y_DATA_WIDTH + 1);
         end if;
     end function;
     function log2(val : INTEGER) return natural is
@@ -96,15 +98,18 @@ architecture rtl of ${name} is
     signal layer_state : t_layer_state;
     type t_mac_state is (s_stop, s_init, s_preload, s_accumulate, s_scaling, s_output, s_done);
     signal mac_state : t_mac_state;
-    signal x_1_int: signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_1_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal x_2_int: signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal x_2_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
+
+    signal x_1_int: signed(X_1_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_1_sub_z : signed(X_1_DATA_WIDTH downto 0) := (others=>'0');
+
+    signal x_2_int: signed(X_2_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal x_2_sub_z : signed(X_2_DATA_WIDTH downto 0) := (others=>'0');
+
     signal y_store_en : std_logic;
-    signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
+    signal y_scaled : signed(Y_DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to Y_DIM_A * Y_DIM_B * Y_DIM_C;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y_store_data : std_logic_vector(Y_DATA_WIDTH - 1 downto 0);
     signal macc_sum : signed(MACC_OUT_WIDTH-1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
@@ -139,8 +144,8 @@ begin
         variable input_2_idx : integer  range 0 to X_2_DIM_A * X_2_DIM_B * X_2_DIM_C-1 := 0;
         variable mac_cnt : integer range 0 to X_1_DIM_C+1 := 0;
         variable output_idx : integer  range 0 to Y_DIM_A * Y_DIM_B * Y_DIM_C-1 := 0;
-        variable var_product : signed(DATA_WIDTH - 1 downto 0);
-        variable var_y_store : signed(DATA_WIDTH downto 0);
+        variable var_product : signed(Y_DATA_WIDTH - 1 downto 0);
+        variable var_y_store : signed(Y_DATA_WIDTH downto 0);
         variable input_1_offset : integer;
         variable input_2_offset : integer;
     begin
@@ -244,7 +249,7 @@ begin
     y_store_addr_std <= std_logic_vector(to_unsigned(y_store_addr, y_store_addr_std'length));
     ram_y : entity ${work_library_name}.${name}_ram(rtl)
     generic map (
-        RAM_WIDTH => DATA_WIDTH,
+        RAM_WIDTH => Y_DATA_WIDTH,
         RAM_DEPTH_WIDTH => Y_ADDR_WIDTH,
         RAM_PERFORMANCE => "LOW_LATENCY",
         RESOURCE_OPTION => Y_RESOURCE_OPTION,
