@@ -29,7 +29,7 @@ class MultiValueRom:
         self._number_per_row = number_per_row
         self._restructured_values = self._restructure_values(values_as_integers)
         self._address_width = self._bits_required_to_address_n_values(
-            self._restructured_values
+            len(self._restructured_values)
         )
         self._values = [
             multi_values_to_vhdl_binary_string(x, self._data_width)
