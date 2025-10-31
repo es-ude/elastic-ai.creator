@@ -1,10 +1,11 @@
 from collections.abc import Callable, Iterable
 from functools import partial
 from os import environ
+from os.path import exists
 from pathlib import Path
 from typing import Any
 
-from cocotb.runner import get_runner  # type: ignore
+from cocotb_tools.runner import get_runner
 
 from elasticai.creator.file_generation import find_project_root
 
@@ -121,14 +122,13 @@ def run_cocotb_sim(
             path=build_waveform_dir,
         )
         design_sources.append(dump_file_src)
-        build_call = partial(runner.build, verilog_sources=design_sources)
     else:
         top_module_name = top_module_name.lower()
         build_args = []
         plus_args = [f"--vcd={build_waveform_dir / 'waveforms'}.vcd"]
-        build_call = partial(runner.build, vhdl_sources=design_sources)
 
-    build_call(
+    runner.build(
+        sources=design_sources,
         hdl_toplevel=top_module_name,
         always=True,
         clean=False,
@@ -175,3 +175,19 @@ def _normalize_dict_arg(
     if callable(arg):
         return arg()
     return arg
+
+
+def check_cocotb_test_result(result_folder_cocotb: str = "build_sim") -> bool:
+    path2xml = find_project_root() / result_folder_cocotb / "results.xml"
+    if not exists(path2xml):
+        raise FileNotFoundError(
+            "Output file of cocotb simulation 'results.xml' not found"
+        )
+    else:
+        with open(path2xml, "r") as f:
+            lines = f.readlines()
+
+        for line in lines:
+            if "failure" in line:
+                return False
+    return True

@@ -8,9 +8,8 @@ def model(a: int, scale: int, offset: int, do_offset: bool) -> int:
 
 @cocotb.test()
 async def model_test(dut):
-    print(dir(dut))
     A = 1
-    B = dut.OFFSET.value if "OFFSET" in dir(dut) else 0
+    B = dut.OFFSET.value.to_signed() if "OFFSET" in dir(dut) else 0
     dut.A.value = A
-    await Timer(2, units="step")
-    assert dut.Q.value == model(A, dut.SCALE.value, B, "OFFSET" in dir(dut))
+    await Timer(2, unit="step")
+    assert dut.Q.value == model(A, dut.SCALE.value.to_signed(), B, "OFFSET" in dir(dut))
