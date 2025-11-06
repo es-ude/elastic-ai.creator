@@ -1,15 +1,8 @@
 inputs:
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
-  nixpkgs-python:
-    url: github:cachix/nixpkgs-python
-    inputs:
-      nixpkgs:
-        follows: nixpkgs
   nixpkgs-unstable:
     url: github:nixos/nixpkgs/nixpkgs-unstable
-  nixpkgs-24-11:
-    url: github:nixos/nixpkgs/release-24.11
 imports:
   - ./devenv_modules/hdl/
   - ./devenv_modules/torch_backend/
