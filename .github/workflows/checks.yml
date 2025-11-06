@@ -19,7 +19,7 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run python linting
-        run: devenv shell devenv tasks run check:code-lint --mode before
+        run: devenv --option torch.backend:string "cpu" tasks run check:code-lint --mode before
 
   check-commit-lint:
     name: Lint Commits
@@ -35,7 +35,7 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run commit linting
-        run: devenv shell devenv tasks run check:commit-lint --mode before
+        run: devenv --option torch.backend:string "cpu" tasks run check:commit-lint --mode before
 
   check-package-build:
     name: Check that package builds
@@ -49,7 +49,8 @@ jobs:
         uses: ./.github/actions/prepare-devenv
 
       - name: run build check
-        run: devenv shell --option torch.backend:str "cpu" devenv tasks run package:build --mode before
+        shell: devenv --option torch.backend:string "cpu" shell bash -- -e {0}
+        run: devenv tasks run package:build --mode before
 
   check-docs-build:
     name: check that docs build
@@ -65,17 +66,18 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run docs build check
-        shell: devenv --option torch.backend:str "cpu" shell bash -- -e {0}
         run: |
-          devenv tasks run docs:single-page --mode before
+          devenv --option torch.backend:string "cpu" tasks run docs:single-page --mode before
           nix run nixpkgs#monolith -- build/docs/index.html > build/docs/single_page.html
+      - name: compress docs preview
+        run: gzip -9 -c build/docs/single_page.html > build/docs/single_page.html.gz
       - name: Upload docs preview
         uses: actions/upload-artifact@v4
         id: artifact-upload
         with:
           name: docs-preview
-          path: build/docs/single_page.html
-          retention-days: 7
+          path: build/docs/single_page.html.gz
+          retention-days: 1
       - name: Comment on PR
         uses: thollander/actions-comment-pull-request@v2
         with:
@@ -98,7 +100,7 @@ jobs:
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run tests
-        run: devenv --option torch.backend:str "cpu" shell devenv tasks run check:tests --mode before
+        run: devenv --option torch.backend:string "cpu" tasks run check:tests --mode before
       - name: Publish coverage report
         uses: orgoro/coverage@v3.1
         with:
