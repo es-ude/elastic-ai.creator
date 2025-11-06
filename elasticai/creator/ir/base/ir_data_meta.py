@@ -1,6 +1,6 @@
 from collections.abc import MutableMapping
 from types import GenericAlias, MappingProxyType, resolve_bases
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 from .required_field import SimpleRequiredField, is_required_field
 
@@ -140,7 +140,7 @@ class IrDataMeta(type):
         return fields
 
     @staticmethod
-    def __get_annotations_type(annotation) -> type:
+    def __get_annotations_type(annotation) -> type | TypeAlias:
         if isinstance(annotation, str):
             annotation = eval(annotation, globals(), locals())
         if isinstance(annotation, GenericAlias):
