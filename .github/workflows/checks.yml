@@ -54,6 +54,8 @@ jobs:
   check-docs-build:
     name: check that docs build
     runs-on: ubuntu-latest
+    env:
+      UV_TORCH_BACKEND: cpu
     permissions:
       pull-requests: write
       contents: read
