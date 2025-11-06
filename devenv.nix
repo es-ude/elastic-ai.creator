@@ -16,12 +16,9 @@ in {
   packages = [
     pkgs.git-cliff
     pkgs.pikchr
-    unstablePkgs.jujutsu
+    pkgs.jujutsu
     pkgs.graphviz
     pkgs.cocogitto
-    unstablePkgs.mypy # python type checker
-    unstablePkgs.vale # syntax aware linter for prose
-    unstablePkgs.act # run github workflows locally
     pkgs.alejandra # nix formatter
     pkgs.zlib # needed as dependency cocotb/ghdl under circumstances
     pkgs.iverilog
@@ -29,6 +26,7 @@ in {
 
   languages.c.enable = true;
   languages.nix.enable = true;
+  cachix.pull = ["nixpkgs-python"];
   languages.python = {
     enable = true;
     package = pkgs.python312;
@@ -166,7 +164,7 @@ in {
     };
 
     "check:nix-lint" = {
-      exec = "${pkgs.alejandra}/bin/alejandra --exclude ./.devenv.flake.nix -c .";
+      exec = "${pkgs.alejandra}/bin/alejandra --exclude ./.devenv --exclude ./.devenv.flake.nix -c .";
       before = ["check:code-lint"];
     };
 
