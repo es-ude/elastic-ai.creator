@@ -1,5 +1,5 @@
 from .base_graph import BaseGraph
-from .graph import Graph
+from .graph import FrozenGraph, Graph
 from .graph_iterators import (
     bfs_iter_down,
     bfs_iter_up,
@@ -19,6 +19,7 @@ from .subgraph_matching import NodeConstraintFn, find_all_subgraphs, find_subgra
 __all__ = [
     "BaseGraph",
     "Graph",
+    "FrozenGraph",
     "find_all_subgraphs",
     "find_subgraph",
     "GraphRewriter",
