@@ -9,5 +9,7 @@ runs:
         name: devenv
     - run: nix profile install nixpkgs/nixos-25.05#devenv
       shell: bash
+    - run: echo "UV_TORCH_BACKEND=cpu" >> "$GITHUB_ENV"
+      shell: bash
     - run: devenv shell
       shell: bash
