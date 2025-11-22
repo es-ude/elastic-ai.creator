@@ -37,7 +37,10 @@ in {
     uv.sync.enable = true;
     uv.sync.allExtras = true;
   };
-
+  env = {
+    UV_TORCH_BACKEND = lib.mkDefault "cpu";
+    UV_PREVIEW = lib.mkDefault "1";
+  };
   processes = {
     serve_docs.exec = "serve_docs";
   };
