@@ -37,7 +37,6 @@ in {
     uv.sync.enable = true;
     uv.sync.allExtras = true;
   };
-
   processes = {
     serve_docs.exec = "serve_docs";
   };

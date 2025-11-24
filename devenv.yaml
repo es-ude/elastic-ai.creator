@@ -12,3 +12,4 @@ inputs:
     url: github:nixos/nixpkgs/release-24.11
 imports:
   - ./devenv_modules/hdl/
+  - ./devenv_modules/torch_backend/

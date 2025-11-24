@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -666,7 +666,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.23.0" },
     { name = "pyserial", specifier = ">=3.4" },
     { name = "tomlkit", specifier = ">=0.13.2" },
-    { name = "torch", specifier = ">=1.11" },
+    { name = "torch", specifier = ">=1.11", index = "https://pypi.org/simple" },
 ]
 
 [package.metadata.requires-dev]
@@ -2715,7 +2715,7 @@ wheels = [
 
 [[package]]
 name = "sphinxcontrib-wavedrom"
-version = "0.1.dev148+g8b315a2ac"
+version = "0.1.dev148+g8b315a2"
 source = { git = "https://github.com/glencoe/sphinx-wavedrom.git?rev=hotfix_html_only_version#8b315a2ac01c92c3de24681cb7c0d37e444955e9" }
 dependencies = [
     { name = "cairosvg" },
