@@ -7,7 +7,6 @@ from .graph_iterators import (
 )
 from .graph_rewriting import (
     DanglingEdgeError,
-    GraphRewriter,
     RewriteResult,
     get_rewriteable_matches,
     produces_dangling_edge,
@@ -22,7 +21,6 @@ __all__ = [
     "ReadOnlyGraph",
     "find_all_subgraphs",
     "find_subgraph",
-    "GraphRewriter",
     "bfs_iter_down",
     "bfs_iter_up",
     "dfs_iter",
