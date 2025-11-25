@@ -4,10 +4,29 @@ from typing import Any
 import torch.nn as nn
 from torch import fx
 
-from elasticai.creator.ir import LoweringPass
-from elasticai.creator.torch2ir import Implementation
+from elasticai.creator.ir import Attribute, Edge, GraphProtocol, LoweringPass, Node
+from elasticai.creator.ir import Implementation as _Implementation
 
 from .default_handlers import handlers
+
+
+class Implementation(_Implementation[Node, Edge]):
+    name: str
+    type: str
+
+    def __init__(
+        self,
+        *,
+        graph: GraphProtocol,
+        name: str | None = None,
+        type: str | None = None,
+        data: dict[str, Attribute] | None = None,
+    ):
+        super().__init__(data=data, graph=graph, node_fn=Node, edge_fn=Edge)
+        if name is not None:
+            self.name = name
+        if type is not None:
+            self.type = type
 
 
 class Ir2Torch(LoweringPass[Implementation, nn.Module]):
