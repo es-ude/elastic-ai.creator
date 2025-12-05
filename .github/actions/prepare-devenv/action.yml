@@ -7,7 +7,5 @@ runs:
     - uses: cachix/cachix-action@v15
       with:
         name: devenv
-    - run: nix profile install nixpkgs/nixos-25.05#devenv
-      shell: bash
-    - run: devenv --option torch.backend:string "cpu" shell
+    - run: nix profile install nixpkgs/nixos-25.11#devenv
       shell: bash
