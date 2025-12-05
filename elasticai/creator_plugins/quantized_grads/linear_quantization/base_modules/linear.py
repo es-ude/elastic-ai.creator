@@ -6,9 +6,8 @@ from torch.nn import Linear as TorchLinear
 from torch.nn import Module
 from torch.nn.utils import parametrize as P
 
-from elasticai.creator_plugins.quantized_grads.linear_quantization import quantize_linear_hte, dequantize_linear
 from elasticai.creator_plugins.quantized_grads.linear_quantization.param_quantization import \
-    ParamLinearQuantizationModule
+    ParamQuantizationModule
 
 
 class Linear(TorchLinear):
@@ -23,12 +22,13 @@ class Linear(TorchLinear):
 
     def __init__(
             self,
-            math_ops: Module,
+            input_quantization: Module,
+            output_quantization: Module,
             in_features: int,
             out_features: int,
-            weight_quantization: ParamLinearQuantizationModule,
+            weight_quantization: ParamQuantizationModule,
             bias: bool,
-            bias_quantization: ParamLinearQuantizationModule = None,
+            bias_quantization: ParamQuantizationModule = None,
             device: Any = None,
             dtype: Any = None,
     ) -> None:
@@ -49,14 +49,15 @@ class Linear(TorchLinear):
         P.register_parametrization(self, "weight", weight_quantization)
         if bias:
             P.register_parametrization(self, "bias", bias_quantization)
-        self.add_module("math_ops", math_ops)
+        self.add_module("output_quantization", output_quantization)
+        self.add_module("input_quantization", input_quantization)
 
     def forward(self, x: Tensor) -> Tensor:
-        x_new, x_scale, x_zero_point = self.parametrizations["weight"][0].quantize(x, self.parametrizations["weight"][0].min_value, self.parametrizations["weight"][0].max_value)
-        w, w_scale, w_zero_point = self.parametrizations["weight"][0].quantize(self.weight, self.parametrizations["weight"][0].min_value, self.parametrizations["weight"][0].max_value)
-        y_int =  (w + w_zero_point) @ (x_new+x_zero_point)
+        x_new, x_scale, x_zero_point = self.input_quantization(x)
+        w, w_scale, w_zero_point = self.parametrizations["weight"][0].quantize(self.weight)
+        y_int =  (x_new+x_zero_point) @ (w + w_zero_point).T
         if self.bias is not None:
-            y_int += self.bias
-        y = self.math_ops(y_int) * w_scale* x_scale
+            y_int = y_int + self.bias
+        y = self.output_quantization(y_int) * w_scale* x_scale
         return y
 

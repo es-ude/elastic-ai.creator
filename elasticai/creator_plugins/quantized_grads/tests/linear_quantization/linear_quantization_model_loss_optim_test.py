@@ -12,7 +12,7 @@ from elasticai.creator_plugins.quantized_grads.linear_quantization import (
     IntQuantizationConfig,
     QuantizeForwHTEBackwHTE,
     QuantizeParamToLinearQuantizationHTE,
-    quantize_linear_hte_fake, quantize_linear_hte, QuantizeTensorToIntHTE, dequantize_linear
+    quantize_linear_asym_hte_fake, quantize_linear_asym_hte, QuantizeTensorToIntHTE, dequantize_linear
 )
 from elasticai.creator_plugins.quantized_grads.linear_quantization.param_quantization import QuantizeParamToIntHTE
 from elasticai.creator_plugins.quantized_grads.linear_quantization.quantize_to_int_with_linear_quantization_style import \
@@ -21,7 +21,7 @@ from elasticai.creator_plugins.quantized_grads.linear_quantization.quantize_to_i
 from elasticai.creator_plugins.quantized_grads.quantized_optim import get_quantized_optimizer
 
 def get_linear_quantized_tensor(t: Tensor, num_bits: int) -> Tensor:
-    return quantize_linear_hte_fake(t, Tensor([0]), Tensor([2**num_bits-1]))
+    return quantize_linear_asym_hte_fake(t, Tensor([0]), Tensor([2 ** num_bits - 1]))
 
 def get_int_quantized_tensor(t: Tensor, num_bits: int) -> Tensor:
     return quantize_to_int_hte_fake(t, Tensor([-2**(num_bits-1)]), Tensor([2**(num_bits-1)-1]))
@@ -45,7 +45,7 @@ class TestLinearQuantizationTraining:
     def test_grad_weight(self, loss: Tensor, model: Sequential) -> None:
         expected_grad_weight = Tensor([])
         actual_grad_weight = model[0].weight.grad
-        g, g_scale, g_zero_point = quantize_linear_hte(actual_grad_weight, Tensor([0]), Tensor([2**(8)-1]))
+        g, g_scale, g_zero_point = quantize_linear_asym_hte(actual_grad_weight, Tensor([0]), Tensor([2 ** (8) - 1]))
         print(f"{actual_grad_weight=}")
         print(f"{g=}, {g_scale=}, {g_zero_point=}")
         print(f"{dequantize_linear(g, g_scale, g_zero_point)=}")
@@ -99,7 +99,7 @@ class TestLinearQuantizationTraining:
 
         nn = Sequential(
             Linear(
-                math_ops=QuantizeForwHTEBackwHTE(
+                output_quantization=QuantizeForwHTEBackwHTE(
                     forward_conf=forward_conf, backward_conf=backward_conf
                 ),
                 in_features=in_features,
@@ -127,7 +127,7 @@ class TestLinearQuantizationTraining:
         #print(f"{nn[0].bias=}")
 
         print()
-        w_, w_scale, w_zero_point = quantize_linear_hte(nn[0].weight, Tensor([0.]), Tensor([2**params_num_bits-1]))
+        w_, w_scale, w_zero_point = quantize_linear_asym_hte(nn[0].weight, Tensor([0.]), Tensor([2 ** params_num_bits - 1]))
         print(f"{w_=}, {w_scale=}, {w_zero_point=}")
 
         b_, b_scale, b_zero_point = quantize_to_int_hte(nn[0].bias, Tensor([-2**(params_num_bits-1)]), Tensor([2**(params_num_bits-1)-1]))
@@ -139,7 +139,7 @@ class TestLinearQuantizationTraining:
     @pytest.fixture(scope="class")
     def input(self, in_features: int, params_num_bits: int) -> Tensor:
         x = get_linear_quantized_tensor(Tensor([-1., -2., 2.]), params_num_bits)
-        x_, x_scale, x_zero_point = quantize_linear_hte(x, Tensor([0.]), Tensor([2**params_num_bits-1]))
+        x_, x_scale, x_zero_point = quantize_linear_asym_hte(x, Tensor([0.]), Tensor([2 ** params_num_bits - 1]))
         print(f"{x_=}, {x_scale=}, {x_zero_point=}")
         return x
 
