@@ -13,6 +13,7 @@ dependencies = [
     "pyserial>=3.4",
     "cocotb>=1.9.2",
     "torch>=2.8.0",
+    "torchvision>=0.23.0",
 ]
 
 

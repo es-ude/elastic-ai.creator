@@ -1,9 +1,9 @@
-from typing import Any, override
+from typing import Union
 
-from torch import Tensor
-from torch.nn import Linear as TorchLinear
+from torch import nn, Tensor
+from torch.nn import Conv2d as TorchConv2d
 from torch.nn.utils import parametrize as P
-
+from torch.nn.common_types import _size_2_t
 from elasticai.creator_plugins.quantized_grads.linear_quantization.base_modules.linear_quantization_module import \
     LinearQuantizationLayer
 from elasticai.creator_plugins.quantized_grads.linear_quantization.module_quantization import QuantizationModule
@@ -11,27 +11,24 @@ from elasticai.creator_plugins.quantized_grads.linear_quantization.param_quantiz
     ParamQuantizationSimulatedModule, ParamQuantizationModule
 
 
-class Linear(LinearQuantizationLayer, TorchLinear):
-    """A linear layer.
-    The weights and bias are fake quantized during initialization.
-    Make sure that math_ops is a module where all needed tensors are part of it,
-    so they can be moved to the same device.
-    Make sure that weight_quantization and bias_quantization are modules that implement the forward function.
-    If you want to quantize during initialization or only apply quantized updates make sure to use a quantized optimizer
-    and implement the right_inverse method for your module.
-    """
-
+class Conv2d(LinearQuantizationLayer, TorchConv2d):
     def __init__(
             self,
-            in_features: int,
-            out_features: int,
-            bias: bool,
+            in_channels: int,
+            out_channels: int,
+            kernel_size: _size_2_t,
             input_quantization: QuantizationModule,
             output_quantization: QuantizationModule,
             weight_quantization: ParamQuantizationModule,
-            bias_quantization: ParamQuantizationSimulatedModule = None,
-            device: Any = None,
-            dtype: Any = None,
+            bias_quantization: ParamQuantizationSimulatedModule,
+            stride: _size_2_t = 1,
+            padding: Union[str, _size_2_t] = 0,
+            dilation: _size_2_t = 1,
+            groups: int = 1,
+            bias: bool = True,
+            padding_mode: str = "zeros",  # TODO: refine this type
+            device=None,
+            dtype=None,
     ) -> None:
         if not isinstance(output_quantization, QuantizationModule):
             raise TypeError(f"{output_quantization} should be a {QuantizationModule.__class__.__name__}")
@@ -46,12 +43,19 @@ class Linear(LinearQuantizationLayer, TorchLinear):
                 f"If not it is not allowed to be set."
                 f"You have choosen {bias=} and {bias_quantization=}."
             )
-        super().__init__(in_features=in_features,
-                         out_features=out_features,
-                         bias=bias,
-                         device=device,
-                         dtype=dtype,)
-
+        super().__init__(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+            padding_mode=padding_mode,
+            device=device,
+            dtype=dtype
+        )
         P.register_parametrization(self, "weight", weight_quantization)
         if bias:
             P.register_parametrization(self, "bias", bias_quantization)
@@ -61,8 +65,6 @@ class Linear(LinearQuantizationLayer, TorchLinear):
     def forward(self, x: Tensor) -> Tensor:
         x_new, x_scale, x_zero_point = self.input_quantization.quantize(x)
         w, w_scale, w_zero_point = self.parametrizations["weight"][0].quantize(self.weight)
-        y_int =  (x_new + x_zero_point) @ (w + w_zero_point).T
-        if self.bias is not None:
-            y_int = y_int + self.bias
+        y_int = self._conv_forward(x_new-x_zero_point, w-w_zero_point, self.bias)
         y = self.output_quantization.quantize_simulated(y_int) * w_scale * x_scale
         return y

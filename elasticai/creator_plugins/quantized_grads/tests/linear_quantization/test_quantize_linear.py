@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from elasticai.creator_plugins.quantized_grads.linear_quantization.quantize_linear import quantize_linear_asym_hte, \
-    dequantize_linear, quantize_linear_asym_stochastic, quantize_linear_asym_hte_fake
+    dequantize_linear, quantize_linear_asym_stochastic, quantize_simulated_linear_asym_hte
 
 
 def test_quantize_linear_hte():
@@ -40,7 +40,7 @@ def test_fake_quantize_hte():
     max_value = Tensor([255])
     x = Tensor([-3.2, -2., 10.6])
     print(f"{x=}")
-    x = quantize_linear_asym_hte_fake(x, min_value, max_value)
+    x = quantize_simulated_linear_asym_hte(x, min_value, max_value)
     print(f"{x=}")
     result_q, scale, zero_point = quantize_linear_asym_hte(x, min_value, max_value)
     result = dequantize_linear(result_q, scale, zero_point)

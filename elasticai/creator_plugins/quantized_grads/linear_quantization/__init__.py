@@ -1,5 +1,5 @@
 from .linear_quantization_config import (
-    LinearQuantizationConfig,
+    LinearAsymQuantizationConfig,
     IntQuantizationConfig
 )
 
@@ -7,35 +7,31 @@ from .linear_quantization_config import (
 from .quantize_linear import (
     quantize_linear_asym_hte,
     quantize_linear_asym_stochastic,
-    quantize_linear_asym_hte_fake,
-    quantize_linear_asym_stochastic_fake,
+    quantize_simulated_linear_asym_hte,
+    quantize_simulated_linear_asym_stochastic,
     dequantize_linear
 )
-
-from .module_output_quantization import (
-    OutputQuantizeLinearAsymForwHTE,
-    OutputQuantizeLinearAsymForwStochastic,
-)
+from .module_quantization import (ModuleQuantizeLinearAsymForwHTE, ModuleQuantizeLinearAsymForwStochastic)
 
 from .param_quantization import (
-    QuantizeParamSTEToLinearQuantizationHTE,
-    QuantizeParamSTEToLinearQuantizationStochastic,
+    QuantizeParamSTEToLinearAsymQuantizationHTE,
+    QuantizeParamSTEToLinearAsymQuantizationStochastic,
     QuantizeTensorToIntHTE,
     QuantizeTensorToIntStochastic,
 )
 
 __all__ = [
-    "LinearQuantizationConfig",
+    "LinearAsymQuantizationConfig",
     "IntQuantizationConfig",
     "quantize_linear_asym_hte",
     "quantize_linear_asym_stochastic",
-    "quantize_linear_asym_hte_fake",
-    "quantize_linear_asym_stochastic_fake",
+    "quantize_simulated_linear_asym_hte",
+    "quantize_simulated_linear_asym_stochastic",
     "dequantize_linear",
-    "OutputQuantizeLinearAsymForwHTE",
-    "OutputQuantizeLinearAsymForwStochastic",
-    "QuantizeParamSTEToLinearQuantizationHTE",
-    "QuantizeParamSTEToLinearQuantizationStochastic",
+    "ModuleQuantizeLinearAsymForwHTE",
+    "ModuleQuantizeLinearAsymForwStochastic",
+    "QuantizeParamSTEToLinearAsymQuantizationHTE",
+    "QuantizeParamSTEToLinearAsymQuantizationStochastic",
     "QuantizeTensorToIntHTE",
     "QuantizeTensorToIntStochastic",
 ]

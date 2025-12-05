@@ -8,23 +8,23 @@ from torch.optim import SGD
 from elasticai.creator_plugins.quantized_grads.linear_quantization.base_modules import Linear
 
 from elasticai.creator_plugins.quantized_grads.linear_quantization import (
-    LinearQuantizationConfig,
+    LinearAsymQuantizationConfig,
     IntQuantizationConfig,
     QuantizeForwHTEBackwHTE,
     QuantizeParamToLinearQuantizationHTE,
-    quantize_linear_asym_hte_fake, quantize_linear_asym_hte, QuantizeTensorToIntHTE, dequantize_linear
+    quantize_simulated_linear_asym_hte, quantize_linear_asym_hte, QuantizeTensorToIntHTE, dequantize_linear
 )
 from elasticai.creator_plugins.quantized_grads.linear_quantization.param_quantization import QuantizeParamToIntHTE
 from elasticai.creator_plugins.quantized_grads.linear_quantization.quantize_to_int_with_linear_quantization_style import \
-    quantize_to_int_hte, quantize_to_int_hte_fake
+    quantize_to_int_hte, quantize_simulated_to_int_hte
 
 from elasticai.creator_plugins.quantized_grads.quantized_optim import get_quantized_optimizer
 
 def get_linear_quantized_tensor(t: Tensor, num_bits: int) -> Tensor:
-    return quantize_linear_asym_hte_fake(t, Tensor([0]), Tensor([2 ** num_bits - 1]))
+    return quantize_simulated_linear_asym_hte(t, Tensor([0]), Tensor([2 ** num_bits - 1]))
 
 def get_int_quantized_tensor(t: Tensor, num_bits: int) -> Tensor:
-    return quantize_to_int_hte_fake(t, Tensor([-2**(num_bits-1)]), Tensor([2**(num_bits-1)-1]))
+    return quantize_simulated_to_int_hte(t, Tensor([-2 ** (num_bits - 1)]), Tensor([2 ** (num_bits - 1) - 1]))
 
 torch.set_printoptions(precision=16)
 @pytest.mark.slow
@@ -87,15 +87,15 @@ class TestLinearQuantizationTraining:
     def model(self, in_features: int, params_num_bits: int, output_num_bits: int, out_features: int) -> Sequential:
         print()
         params_conf_total_bits = params_num_bits
-        weight_conf = LinearQuantizationConfig(num_bits=params_conf_total_bits)
+        weight_conf = LinearAsymQuantizationConfig(num_bits=params_conf_total_bits)
 
         bias_conf = IntQuantizationConfig(num_bits=params_conf_total_bits)
 
         forward_conf_total_bits = output_num_bits
-        forward_conf = LinearQuantizationConfig(num_bits=forward_conf_total_bits)
+        forward_conf = LinearAsymQuantizationConfig(num_bits=forward_conf_total_bits)
 
         grad_conf_total_bits = 8
-        backward_conf = LinearQuantizationConfig(num_bits=grad_conf_total_bits)
+        backward_conf = LinearAsymQuantizationConfig(num_bits=grad_conf_total_bits)
 
         nn = Sequential(
             Linear(

@@ -7,19 +7,30 @@ from elasticai.creator_plugins.quantized_grads.round import Round, _noise, round
 def quantize_linear_asym_hte(number: Tensor, min_value: Tensor, max_value: Tensor) -> tuple[Tensor, Tensor, Tensor]:
     min_number = torch.min(number)
     max_number = torch.max(number)
-    scale = (max_number-min_number)/(max_value)
+    if max_number == min_number:
+        scale = max_value
+    else:
+        scale = (max_number-min_number)/(max_value)
     zero_point = round_tensor(min_number/scale)
     norm = number/scale - zero_point
+    return Round.apply(torch.clamp(norm, min_value, max_value)), scale, zero_point
+
+def quantize_linear_sym_hte(number: Tensor, min_value: Tensor, max_value: Tensor) -> tuple[Tensor, Tensor, Tensor]:
+    max_number = torch.max(torch.abs(number))
+    scale = max_number/(max_value)
+    zero_point = max_number-max_number
+    norm = number/scale
     return Round.apply(torch.clamp(norm, min_value, max_value)), scale, zero_point
 
 def quantize_linear_asym_stochastic(number: Tensor, min_value: Tensor, max_value: Tensor) -> tuple[Tensor, Tensor, Tensor]:
     return quantize_linear_asym_hte(number + _noise(number), min_value, max_value)
 
-def quantize_linear_asym_hte_fake(number: Tensor, min_value: Tensor, max_value: Tensor) -> Tensor:
+def quantize_simulated_linear_asym_hte(number: Tensor, min_value: Tensor, max_value: Tensor) -> Tensor:
     number, scale, zero_point = quantize_linear_asym_hte(number, min_value, max_value)
-    return dequantize_linear(number, scale, zero_point)
+    out = dequantize_linear(number, scale, zero_point)
+    return out
 
-def quantize_linear_asym_stochastic_fake(number: Tensor, min_value: Tensor, max_value: Tensor) -> Tensor:
+def quantize_simulated_linear_asym_stochastic(number: Tensor, min_value: Tensor, max_value: Tensor) -> Tensor:
     number, scale, zero_point = quantize_linear_asym_stochastic(number, min_value, max_value)
     return dequantize_linear(number, scale, zero_point)
 

@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from elasticai.creator_plugins.quantized_grads.linear_quantization.quantize_to_int_with_linear_quantization_style import \
-    quantize_to_int_hte_fake, quantize_to_int_hte, quantize_to_int_stochastic
+    quantize_simulated_to_int_hte, quantize_to_int_hte, quantize_to_int_stochastic
 
 
 def test_quantize_to_int_hte_fake():
@@ -10,7 +10,7 @@ def test_quantize_to_int_hte_fake():
     max_val = Tensor([127])
     min_val = Tensor([-128])
 
-    result = quantize_to_int_hte_fake(x, min_val, max_val)
+    result = quantize_simulated_to_int_hte(x, min_val, max_val)
 
     expected_result = Tensor([1, -5, 4, 6, 127, -128])
 
