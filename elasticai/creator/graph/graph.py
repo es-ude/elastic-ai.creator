@@ -1,23 +1,23 @@
 from abc import abstractmethod
-from collections.abc import Hashable, Iterator, Mapping, Set
+from collections.abc import Collection, Hashable, Iterator, Mapping
 from typing import Protocol, Self
 
 
 class ReadOnlyGraph[T: Hashable](Protocol):
     @property
     @abstractmethod
-    def nodes(self) -> Set[T]: ...
+    def nodes(self) -> Collection[T]: ...
 
     @abstractmethod
     def iter_edges(self) -> Iterator[tuple[T, T]]: ...
 
     @property
     @abstractmethod
-    def predecessors(self) -> Mapping[T, set[T]]: ...
+    def predecessors(self) -> Mapping[T, Collection[T]]: ...
 
     @property
     @abstractmethod
-    def successors(self) -> Mapping[T, set[T]]: ...
+    def successors(self) -> Mapping[T, Collection[T]]: ...
 
 
 class Graph[T: Hashable](ReadOnlyGraph[T], Protocol):
