@@ -84,6 +84,7 @@ async def can_write_to_ram(
         assert ram_content == expected
 
 
+@pytest.mark.simulation
 @pytest.mark.parametrize(
     [
         "write_data_width",
