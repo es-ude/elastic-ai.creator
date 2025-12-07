@@ -49,10 +49,13 @@ class TestRemapping:
             graph=replacement.graph,
             data=replaced.data["nodes"],  #  type: ignore
             node_fn=Node,
+            edge_fn=lambda src, dst, data: ir.Edge(src, dst, data),
         )
 
     def test_change_node_data_using_names_from_replacement(
-        self, remapped: RemappedSubImplementation[Node], replaced: ir.Implementation
+        self,
+        remapped: RemappedSubImplementation[Node, ir.Edge],
+        replaced: ir.Implementation,
     ):
         replacement_node_name = "x"
         corresponding_node_name_in_resulting_graph = "a"

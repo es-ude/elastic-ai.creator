@@ -17,24 +17,32 @@ class Node(IrData):
     """
 
     type: ReadOnlyField[str, str] = _read_only_str()
-    __slots__ = ("name",)
+    __slots__ = ("_name",)
 
     def __init__(self, name: str, data: dict[str, Attribute]) -> None:
         super().__init__(data)
-        self.name = name
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        return self._name
 
 
 class Edge(IrData):
-    """
-    NOTE: src, dst are read only when accessed through their descriptors.
-    """
-
-    __slots__ = ("src", "dst")
+    __slots__ = ("_src", "_dst")
 
     def __init__(self, src: str, dst: str, data: dict[str, Attribute]) -> None:
         super().__init__(data)
-        self.src = src
-        self.dst = dst
+        self._src = src
+        self._dst = dst
+
+    @property
+    def src(self) -> str:
+        return self._src
+
+    @property
+    def dst(self) -> str:
+        return self._dst
 
 
 def node(name: str, type: str, attributes: dict[str, Attribute] | None = None) -> Node:
