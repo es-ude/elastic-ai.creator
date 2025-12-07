@@ -24,6 +24,8 @@ class PluginSpec(pl.PluginSpec):
 
 
 class Implementation(ir.Implementation[Node, ir.Edge]):
+    type: str
+
     def __init__(self, *, graph: g.Graph[str], data: dict[str, ir.Attribute]):
         super().__init__(graph=graph, data=data)
 
