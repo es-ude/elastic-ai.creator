@@ -162,13 +162,9 @@ def read_only_field(
             self.data = data
             self.length_scaling = 2
 
-        @required_field
-        def name(self, value: str) -> str:
+        @read_only_field
+        def length(self, value: str) -> str:
             return value
-
-        @type.setter
-        def _(self, value: str) -> str:
-            return value.lower()
     ```
     :::
     For more information see [`required_field`](#elasticai.creator.ir.required_field).
@@ -179,7 +175,7 @@ def read_only_field(
 def static_required_field(
     fn: Callable[[StoredT], VisibleT],
 ) -> StaticMethodField[StoredT, VisibleT]:
-    """Decorate a static method as getter for a read only field.
+    """Decorate a static method as getter for a required field.
 
     Opposed to `read_only_field` this decorator will not pass the owning instance
     to the decorated method. This is to avoid hard to catch inconsistencies
