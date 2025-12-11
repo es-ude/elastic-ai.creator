@@ -143,7 +143,8 @@ depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.ir"]
 path = "elasticai.creator.torch2ir"
 depends_on = [
     "elasticai.creator.ir",
-    "elasticai.creator.graph", "elasticai.creator.function_dispatch",
+    "elasticai.creator.graph",
+    "elasticai.creator.function_dispatch",
 ]
 
 [[modules]]
@@ -197,6 +198,10 @@ path = "elasticai.creator.arithmetic"
 [[modules]]
 path = "elasticai.creator.function_dispatch"
 depends_on = []
+
+[[modules]]
+path = "elasticai.creator.translation_pass_plugin"
+depends_on = ["elasticai.creator.plugin", "elasticai.creator.function_dispatch"]
 
 [[modules]]
 path = "<root>"
