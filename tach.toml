@@ -199,11 +199,9 @@ path = "elasticai.creator.function_dispatch"
 depends_on = []
 
 [[modules]]
+path = "elasticai.creator.translation_pass_plugin"
+depends_on = ["elasticai.creator.plugin", "elasticai.creator.function_dispatch"]
+
+[[modules]]
 path = "<root>"
-depends_on = [
-    "elasticai.creator.vhdl",
-    "elasticai.creator.base_modules",
-    "elasticai.creator.file_generation",
-    "elasticai.creator.nn",
-    "elasticai.creator.nn.fixed_point",
-]
+depends_on = ["elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules", "elasticai.creator.nn", "elasticai.creator.vhdl", "elasticai.creator.file_generation"]
