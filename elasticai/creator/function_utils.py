@@ -1,3 +1,4 @@
+import warnings
 from typing import Callable, Generic, TypeVar, overload
 
 Tin = TypeVar("Tin")
@@ -97,7 +98,7 @@ class FunctionDecorator(Generic[FN, Tout]):
         return self._cb(fn.__name__, fn)
 
 
-class RegisterDescriptor(Generic[Tin, Tout]):
+class FunctionDecoratorDescriptor(Generic[Tin, Tout]):
     """Automatically connect the `FunctionDecorator` to a callback and make it look like a method.
 
     The owning instance needs to define a callback that has the name `f"_{name}_callback"`,
@@ -121,6 +122,16 @@ class RegisterDescriptor(Generic[Tin, Tout]):
         return FunctionDecorator(wrapped)
 
 
+class RegisterDescriptor(FunctionDecoratorDescriptor[Tin, Tout]):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warnings.warn(
+            "RegisterDescriptor is deprecated, use FunctionDecoratorDescriptor instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+
 class KeyedFunctionDispatcher(Generic[Tin, Tout]):
     """
     Functions can be registered with custom key or by
@@ -130,7 +141,7 @@ class KeyedFunctionDispatcher(Generic[Tin, Tout]):
     passed to `call` to process the argument and return the result.
     """
 
-    register: RegisterDescriptor[Tin, Tout] = RegisterDescriptor()
+    register: FunctionDecoratorDescriptor[Tin, Tout] = FunctionDecoratorDescriptor()
 
     def __init__(self, dispatch_key_fn: Callable[[Tin], str]) -> None:
         self._key_fn = dispatch_key_fn
