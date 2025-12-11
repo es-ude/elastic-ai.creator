@@ -4,8 +4,8 @@ from collections.abc import Callable, Iterable, Iterator
 from functools import wraps
 from typing import Generic, ParamSpec, Protocol, TypeVar
 
+from elasticai.creator.function_utils import FunctionDecoratorDescriptor
 from elasticai.creator.function_utils import KeyedFunctionDispatcher as _Registry
-from elasticai.creator.function_utils import RegisterDescriptor
 
 
 class Lowerable(Protocol):
@@ -19,11 +19,15 @@ Tout = TypeVar("Tout")
 
 
 class LoweringPass(Generic[Tin, Tout]):
-    register: RegisterDescriptor[Tin, Tout] = RegisterDescriptor()
-    register_override: RegisterDescriptor[Tin, Tout] = RegisterDescriptor()
-    register_iterable: RegisterDescriptor[Tin, Iterable[Tout]] = RegisterDescriptor()
-    register_iterable_override: RegisterDescriptor[Tin, Iterable[Tout]] = (
-        RegisterDescriptor()
+    register: FunctionDecoratorDescriptor[Tin, Tout] = FunctionDecoratorDescriptor()
+    register_override: FunctionDecoratorDescriptor[Tin, Tout] = (
+        FunctionDecoratorDescriptor()
+    )
+    register_iterable: FunctionDecoratorDescriptor[Tin, Iterable[Tout]] = (
+        FunctionDecoratorDescriptor()
+    )
+    register_iterable_override: FunctionDecoratorDescriptor[Tin, Iterable[Tout]] = (
+        FunctionDecoratorDescriptor()
     )
 
     def __init__(self) -> None:
