@@ -72,13 +72,14 @@ Most other classes defined in this module are supposed to increase usability and
 """
 
 import importlib.resources as _res
+import warnings
 from abc import abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from functools import partial, update_wrapper
 from importlib import import_module as _import_module
 from inspect import signature as _signature
-from typing import Generic, ParamSpec, Protocol, TypeAlias, TypeVar, Union
+from typing import Protocol, Self, Union
 
 import tomlkit as toml
 
@@ -104,20 +105,10 @@ class PluginSpec:
     package: str
 
 
-PluginDict: TypeAlias = dict[str, Union[str, tuple[str, ...], "PluginDict"]]
-
-_PlRecT = TypeVar("_PlRecT", contravariant=True)
-_T = TypeVar("_T")
+type PluginDict = dict[str, Union[str, tuple[str, ...], "PluginDict"]]
 
 
-PluginSpecT = TypeVar("PluginSpecT", bound=PluginSpec)
-
-P = ParamSpec("P")
-
-_ReturnT = TypeVar("_ReturnT", covariant=True)
-
-
-class PluginLoader(Generic[_PlRecT]):
+class PluginLoader[RecT]:
     """Get a set of plugins from a package, use `extract_fn` to resolve the symbols and load them into the `plugin_receiver`.
 
     .Args
@@ -128,7 +119,7 @@ class PluginLoader(Generic[_PlRecT]):
     E.g., it could register a lowering function in a `LoweringPass` if that lowering pass is given as the receiver.
     """
 
-    def __init__(self, fetch: "SymbolFetcher", plugin_receiver: _PlRecT) -> None:
+    def __init__(self, fetch: "SymbolFetcher[RecT]", plugin_receiver: RecT) -> None:
         self._extract_fn = fetch
         self._receiver = plugin_receiver
 
@@ -143,29 +134,24 @@ class PluginLoader(Generic[_PlRecT]):
             loadable.load_into(self._receiver)
 
 
-class PluginSymbol(Protocol[_PlRecT]):
+class PluginSymbol[RecT](Protocol):
     """A symbol that the `PluginLoader` can load into a receiver object.
 
     The receiver can be any object.
     """
 
     @abstractmethod
-    def load_into(self, /, receiver: _PlRecT) -> None: ...
+    def load_into(self, /, receiver: RecT) -> None: ...
 
 
-class SymbolFetcher(Protocol[_PlRecT]):
+class SymbolFetcher[RecT](Protocol):
     """Fetches ``PluginSymbol``s for the `PluginLoader`."""
 
     @abstractmethod
-    def __call__(
-        self, data: Iterable[PluginDict]
-    ) -> Iterator[PluginSymbol[_PlRecT]]: ...
+    def __call__(self, data: Iterable[PluginDict]) -> Iterator[PluginSymbol[RecT]]: ...
 
 
-_SymbolFetcherBuilderT = TypeVar("_SymbolFetcherBuilderT", bound="SymbolFetcherBuilder")
-
-
-class SymbolFetcherBuilder(Generic[PluginSpecT, _PlRecT]):
+class SymbolFetcherBuilder[SpecT: PluginSpec, RecT]:
     """Build a `SymbolFetcher` from simpler functions.
 
     The `SymbolFetcherBuilder` composes simpler functions into a
@@ -175,39 +161,52 @@ class SymbolFetcherBuilder(Generic[PluginSpecT, _PlRecT]):
     * `spec_type`: The type of the plugin spec that the `SymbolFetcher` will build from the plugin dictionaries.
     """
 
-    def __init__(self, spec_type: type[PluginSpecT]) -> None:
-        self._fns_over_iterables: list[
-            Callable[[Iterable[PluginSpecT]], Iterator[PluginSymbol[_PlRecT]]]
+    def __init__(self, spec_type: type[SpecT]) -> None:
+        self._fns_for_each: list[
+            Callable[[Iterable[SpecT]], Iterator[PluginSymbol[RecT]]]
         ] = []
-        self._fns: list[Callable[[PluginSpecT], Iterator[PluginSymbol[_PlRecT]]]] = []
-        self._spec_type: type[PluginSpecT] = spec_type
+        self._fns: list[Callable[[SpecT], Iterator[PluginSymbol[RecT]]]] = []
+        self._spec_type: type[SpecT] = spec_type
+
+    def add_fn_for_each(
+        self: Self,
+        fn: Callable[[Iterable[SpecT]], Iterator[PluginSymbol[RecT]]],
+    ) -> Self:
+        """Add a function that will be called for each plugin spec."""
+        self._fns_for_each.append(fn)
+        return self
 
     def add_fn_over_iter(
-        self: _SymbolFetcherBuilderT,
-        fn: Callable[[Iterable[PluginSpecT]], Iterator[PluginSymbol[_PlRecT]]],
-    ) -> _SymbolFetcherBuilderT:
+        self: Self,
+        fn: Callable[[Iterable[SpecT]], Iterator[PluginSymbol[RecT]]],
+    ) -> Self:
         """Add a function that will be called for each plugin spec."""
-        self._fns_over_iterables.append(fn)
+        warnings.warn(
+            "SymbolFetcherBuilder.add_fn_over_iter is deprecated, use add_fn_for_each instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self._fns_for_each.append(fn)
         return self
 
     def add_fn(
-        self: _SymbolFetcherBuilderT,
-        fn: Callable[[PluginSpecT], Iterator[PluginSymbol[_PlRecT]]],
-    ) -> _SymbolFetcherBuilderT:
+        self: Self,
+        fn: Callable[[SpecT], Iterator[PluginSymbol[RecT]]],
+    ) -> Self:
         """Add a function that will be called once for all plugin specs."""
         self._fns.append(fn)
         return self
 
-    def build(self) -> SymbolFetcher[_PlRecT]:
+    def build(self) -> SymbolFetcher[RecT]:
         # The next three locs will decouple `fetcher` from the builder's state.
         # Without them the function will keep looking up these values
         # from the builder's namespace instead of the function closure.
         # But the builders state might have changed in the meantime.
         spec_type = self._spec_type
         fns = self._fns
-        fns_over_iterables = self._fns_over_iterables
+        fns_over_iterables = self._fns_for_each
 
-        def fetcher(data: Iterable[PluginDict]) -> Iterator[PluginSymbol[_PlRecT]]:
+        def fetcher(data: Iterable[PluginDict]) -> Iterator[PluginSymbol[RecT]]:
             specs = map(partial(build_plugin_spec, spec_type=spec_type), data)
             for plugin in specs:
                 for fn in fns:
@@ -219,11 +218,11 @@ class SymbolFetcherBuilder(Generic[PluginSpecT, _PlRecT]):
         return fetcher
 
 
-class PluginSymbolFn(PluginSymbol[_PlRecT], Generic[_PlRecT, P, _ReturnT], Protocol):
+class PluginSymbolFn[RecT, **P, ReturnT](PluginSymbol[RecT], Protocol):
     """A `PluginSymbol` that is also a function/callable."""
 
     @abstractmethod
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> _ReturnT: ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> ReturnT: ...
 
 
 def import_symbols(module: str, names: Iterable[str]) -> Iterator[PluginSymbol]:
@@ -233,9 +232,9 @@ def import_symbols(module: str, names: Iterable[str]) -> Iterator[PluginSymbol]:
         yield getattr(m, name)
 
 
-def make_plugin_symbol(
-    load_into: Callable[[_PlRecT], None], fn: Callable[P, _T]
-) -> PluginSymbolFn[_PlRecT, P, _T]:
+def make_plugin_symbol[RecT, **P, ReturnT](
+    load_into: Callable[[RecT], None], fn: Callable[P, ReturnT]
+) -> PluginSymbolFn[RecT, P, ReturnT]:
     """Turn two functions into a loadable and callable plugin symbol.
 
     .Args
@@ -251,11 +250,11 @@ def make_plugin_symbol(
     ```
     """
 
-    class _PS(PluginSymbolFn[_PlRecT, P, _T]):
+    class _PS(PluginSymbolFn[RecT, P, ReturnT]):
         def load_into(self, receiver):
             load_into(receiver)
 
-        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> _T:
+        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> ReturnT:
             return fn(*args, **kwargs)
 
     wrapped = _PS()
@@ -264,7 +263,9 @@ def make_plugin_symbol(
     return wrapped
 
 
-def build_plugin_spec(d: PluginDict, spec_type: type[PluginSpecT]) -> PluginSpecT:
+def build_plugin_spec[SpecT: PluginSpec](
+    d: PluginDict, spec_type: type[SpecT]
+) -> SpecT:
     """inspect spec_type and build an instance of it from the dictionary `d`.
 
     Missing field raise an error while extra fields will be ignored.
@@ -295,7 +296,7 @@ def read_plugin_dicts_from_package(package: str) -> Iterable[PluginDict]:
     return parsed
 
 
-class MissingFieldError(Exception):
+class MissingFieldError[PluginSpecT: PluginSpec](Exception):
     def __init__(self, field_names: set[str], plugin_type: type[PluginSpecT]):
         super().__init__(
             f"missing required fields {field_names} for plugin spec '{plugin_type.__qualname__}'\n\tAre you sure you are loading the correct plugin?\n\tIs the meta.toml file correct?"
