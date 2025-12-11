@@ -104,6 +104,41 @@ class FunctionDecorator(Generic[FN, Tout]):
         return self._cb(fn.__name__, fn)
 
 
+def curry_fn[P, Q, R](fn: Callable[[P, Q], R]) -> Callable[[P], Callable[[Q], R]]:
+    """Curry a two-argument function into a one-argument function that returns another one-argument function.
+
+    Example:
+        ```python
+        def add(x: int, y: int) -> int:
+            return x + y
+
+        curried_add = curry(add)
+        add_five = curried_add(5)
+        result = add_five(10)  # result is 15
+        ```
+    """
+
+    def curried(p: P) -> Callable[[Q], R]:
+        def inner(q: Q) -> R:
+            return fn(p, q)
+
+        return inner
+
+    return curried
+
+
+def curry_method[P, Q, R, O](
+    fn: Callable[[O, P, Q], R],
+) -> Callable[[O, P], Callable[[Q], R]]:
+    def curried(self, p: P) -> Callable[[Q], R]:
+        def inner(q: Q) -> R:
+            return fn(self, p, q)
+
+        return inner
+
+    return curried
+
+
 class FunctionDecoratorDescriptor(Generic[Tin, Tout]):
     """Automatically connect the `FunctionDecorator` to a callback and make it look like a method.
 

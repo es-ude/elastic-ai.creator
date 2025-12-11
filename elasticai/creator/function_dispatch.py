@@ -281,6 +281,52 @@ def dispatch_method[**P1, **P2, R1, R2, Owner, K: Hashable](
     [Callable[Concatenate[Owner, Callable[P2, R1], P1], R2]],
     KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K],
 ]:
+    """A decorator to create a KeyedDispatcherDescriptor for methods.
+
+    This often has the advantage of not needing to specify the generic
+    parameters explicitly. However, the type of keys cannot be inferred
+    automatically, this is why it needs to be provided as an argument to
+    the decorator.
+
+    Note: The ParamSpec `**P` will narrow down to the most concrete type.
+    Thus if you decorate a method with a signature like
+    ```python
+    @dispatch_method(str)
+    def call(self, fn: Callable[[str], str], item: str) -> str:
+        ...
+    ```
+    The type checker will assume that `P` is `(item: str)`.
+    This means that annotating another method that should
+    be compatible with this dispatcher might (rightly) lead to type errors.
+    A registration method could e.g., look like this:
+    ```python
+    def register(self, name: str | None, fn: Callable[[str], str]) -> Callable[[str], str]:
+        if name is None:
+            name = fn.__name__
+        self.call.register(name, fn)
+        return fn
+    ```
+    However, this will not pass type checking, as the checker expects
+    the signature to be `Callable[[Arg('item', str)], str]`.
+    Sadly there is no way to express this inline in current python versions.
+    You have the following options
+        - make the arguments more generic (e.g., using `Any`) and loose type safety
+        - use positional only arguments in the `call` method like so:
+          ```python
+          @dispatch_method(str)
+          def call(self, fn: Callable[[str], str], item: str, /) -> str:
+                ...
+          ```
+        - explicitly annotate the descriptor attribute in the class like so:
+          ```python
+          class MyClass:
+              call: KeyedDispatcherDescriptor[[str], str, str, "MyClass", str] = KeyedDispatcherDescriptor()
+
+
+    Using a protocol to define the expected signature of the registered functions will not help here, as the type checker will not be able
+    to map the protocol to the ParamSpec `P` and return value `R1`.
+    """
+
     def decorator(
         wrapped: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2],
     ) -> KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K]:

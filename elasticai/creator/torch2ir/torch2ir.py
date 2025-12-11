@@ -35,7 +35,7 @@ class Torch2Ir:
         self._registry[""] = self._root
 
     @dispatch_method(str)
-    def _extractors(self, fn: Callable[[Module], dict], m: Module) -> dict:
+    def _extractors(self, fn: Callable[[Module], dict], m: Module, /) -> dict:
         return fn(m)
 
     def register(
