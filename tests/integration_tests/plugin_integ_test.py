@@ -5,6 +5,7 @@ import pytest
 
 import elasticai.creator.plugin as pl
 from elasticai.creator.ir import Lowerable, LoweringPass
+from elasticai.creator.plugin.read_specs_from_toml import read_plugin_dicts_from_package
 
 
 @dataclass
@@ -14,9 +15,9 @@ class PluginSpec(pl.PluginSpec):
 
 @pytest.fixture
 def plugin() -> PluginSpec:
-    p = list(
-        pl.read_plugin_dicts_from_package("tests.integration_tests.minimal_plugin")
-    )[0]
+    p = list(read_plugin_dicts_from_package("tests.integration_tests.minimal_plugin"))[
+        0
+    ]
     return pl.build_plugin_spec(p, PluginSpec)
 
 
@@ -92,6 +93,5 @@ def test_can_load_lowering_pass_plugin(
         "lowering_pass_conv", ["some", "important", "information"]
     )
     loader.load_from_package("tests.integration_tests.minimal_plugin")
-    print(lower.__dict__["_fns"].__dict__["_fns"])
 
     assert ("some_important_information",) == tuple(lower((lowerable,)))
