@@ -595,9 +595,7 @@ class _StaticFile(_PluginSymbol[Ir2Vhdl]):
         return file.read_text()
 
 
-_Tcontra = TypeVar("_Tcontra", contravariant=True)
-
-TypeHandlerFn: TypeAlias = Callable[[Implementation], Code]
+type TypeHandlerFn = Callable[[Implementation], Code]
 
 
 def _type_handler(name: str, fn: TypeHandlerFn) -> PluginSymbol:
