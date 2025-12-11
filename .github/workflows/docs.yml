@@ -35,8 +35,7 @@ jobs:
       - name: Install devenv.sh
         run: nix profile install nixpkgs#devenv
       - name: build docs
-        shell: devenv shell -- bash -e {0}
-        run: devenv tasks run "docs:build" --mode before
+        run: devenv --option torch.backend:string "cpu" tasks run "docs:build" --mode before
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
