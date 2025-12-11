@@ -183,9 +183,6 @@ depends_on = []
 [[modules]]
 path = "elasticai.creator.ir_transforms"
 depends_on = [
-    "elasticai.creator.torch2ir",
-    "elasticai.creator.ir",
-    "elasticai.creator.graph",
 ]
 
 [[modules]]
