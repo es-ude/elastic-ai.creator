@@ -22,6 +22,9 @@ in {
     pkgs.alejandra # nix formatter
     pkgs.zlib # needed as dependency cocotb/ghdl under circumstances
     pkgs.iverilog
+    pkgs.plantuml
+    pkgs.plantuml-server
+    pkgs.jetty_11
   ];
 
   languages.c.enable = true;
@@ -37,9 +40,24 @@ in {
   };
   processes = {
     serve_docs.exec = "serve_docs";
+    plantuml_server.exec = "plantuml_server";
+  };
+
+  env = {
+    JETTY_HOME = "${pkgs.jetty_11}";
+    PLANTUML_SERVER_HOME = "${pkgs.plantuml-server}";
   };
 
   scripts = {
+    plantuml_server.exec = ''
+      java \
+        -jar ${pkgs.jetty_11}/start.jar \
+          --module=deploy,http,jsp \
+          jetty.home=${pkgs.jetty_11} \
+          jetty.base=${pkgs.plantuml-server} \
+          jetty.http.host="127.0.0.1" \
+          jetty.http.port="8081"
+    '';
     serve_docs = {
       exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
     };
