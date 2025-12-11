@@ -251,6 +251,7 @@ Temporary Items
 *.pyc
 /vhdl93-bnf.html
 .devenv*
+!.devenv.flake.nix
 .direnv/
 devenv.local.nix
 build/
