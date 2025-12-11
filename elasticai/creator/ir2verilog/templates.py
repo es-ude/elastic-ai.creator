@@ -108,9 +108,41 @@ class _ModuleName(tpl.AnalysingTemplateParameter):
 
 
 class TemplateDirector:
-    """Director for verilog templates.
+    """Director for building verilog templates.
 
-    Most methods correspond to verilog language constructs."""
+    Most methods correspond to verilog language constructs.
+    Building the final template can be expensive! Typically you only want to do this once.
+    E.g.:
+
+    ```python
+    from string import Template
+    from elasticai.creator.ir2verilog import type_handler, Code, TemplateDirector, Implementation
+
+    class _ExplodingTemplate:
+        def substitute(self, params):
+            raise RuntimeError("Template not initialized!")
+
+    _template = None
+
+    @type_handler
+    def fir_filter(impl: Implementation) -> Code:
+        global _template
+        if _template is None:
+            _template = (
+                TemplateDirector()
+                .define_scoped_switch("USE_EXT_WEIGHTS", False)
+                .define_scoped_switch("USE_EXT_MAC", False)
+                .parameter("BITWIDTH")
+                .parameter("LENGTH")
+                .localparam("FILT_COEFFS")
+                .localparam("NUM_MULT_UNIT")
+                .add_module_name()
+                .set_prototype(res.read_text(package_path, "verilog/filter_fir_full.v"))
+                .build()
+            )
+        return _template.substitute(impl.attributes)
+    ```
+    """
 
     def __init__(self) -> None:
         self._builder = tpl.TemplateBuilder()
