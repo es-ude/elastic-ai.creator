@@ -23,7 +23,7 @@
         then ""
         else " default=https://pypi.org/simple pytorch=https://download.pytorch.org/whl/${config.torch.backend}";
     in {
-      UV_INDEX = "$UV_INDEX${index}";
+      UV_INDEX = "${index}";
     };
   };
 }
