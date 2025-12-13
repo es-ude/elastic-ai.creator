@@ -1,0 +1,289 @@
+import types
+from collections.abc import Callable, Hashable, Mapping
+from functools import update_wrapper, wraps
+from typing import Concatenate, Protocol, Self, cast, overload
+
+
+class Registrar[K: Hashable, V, R](Protocol):
+    """A decorator to register values. Keys are derived from values or provided explicitly."""
+
+    @overload
+    def __call__(self, key: K, value: V, /) -> R: ...
+    @overload
+    def __call__(self, key: K | None = None, /) -> Callable[[V], R]: ...
+
+
+def registrar_method[Owner, K: Hashable, V, R](
+    wrapped: Callable[[Owner, K | None, V], R],
+) -> Registrar[K, V, R]:
+    """Turn a method into a registrar."""
+
+    @wraps(wrapped)
+    def wrapper(
+        self: Owner,
+        key: K | None = None,
+        value: V | None = None,
+    ) -> R | Callable[[V], R]:
+        match (key, value):
+            case None, None:
+
+                def decorator(value: V) -> R:
+                    return wrapped(self, None, value)
+
+                return decorator
+            case _, None:
+
+                def decorator(value: V) -> R:
+                    return wrapped(self, key, value)
+
+                return decorator
+            case _, _:
+                return wrapped(self, key, value)  # type: ignore
+            case _:
+                raise ValueError("Invalid arguments to TypeHandlerDecorator.")
+
+    return cast(Registrar[K, V, R], wrapper)
+
+
+def registrar[K: Hashable, V, R](
+    wrapped: Callable[[K | None, V], R],
+) -> Registrar[K, V, R]:
+    """Turn a function into a registrar."""
+
+    @wraps(wrapped)
+    def wrapper(
+        key: K | None = None,
+        value: V | None = None,
+    ) -> R | Callable[[V], R]:
+        match key, value:
+            case None, None:
+
+                def decorator(value: V) -> R:
+                    return wrapped(None, value)
+
+                return decorator
+            case _, None:
+
+                def decorator(value: V) -> R:
+                    return wrapped(key, value)
+
+                return decorator
+
+            case _:
+                return wrapped(key, value)  # type: ignore
+
+    return cast(Registrar[K, V, R], wrapper)
+
+
+class KeyedDispatcher[**P1, **P2, R1, R2, K: Hashable](Protocol):
+    """Automatically dispatch registered functions based on a key derived from the arguments."""
+
+    def register(self, key: K, fn: Callable[P2, R1], /) -> Callable[P2, R1]: ...
+
+    def override(self, key: K, fn: Callable[P2, R1], /) -> Callable[P2, R1]: ...
+
+    @property
+    def registry(self) -> Mapping[K, Callable[P2, R1]]: ...
+
+    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> R2: ...
+
+
+class KeyedDispatcherWithRegistrars[**P1, **P2, R1, R2, K: Hashable](Protocol):
+    """Automatically dispatch registered functions based on a key derived from the arguments."""
+
+    @property
+    def register(self) -> Registrar[K, Callable[P2, R1], Callable[P2, R1]]: ...
+    @property
+    def override(self) -> Registrar[K, Callable[P2, R1], Callable[P2, R1]]: ...
+
+    @property
+    def registry(self) -> Mapping[K, Callable[P2, R1]]: ...
+
+    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> R2: ...
+
+
+def create_keyed_dispatch[**P1, **P2, R1, R2, K: Hashable](
+    key_from_obj: Callable[P1, K], key_from_fn: Callable[[Callable[P2, R1]], K]
+) -> Callable[
+    [Callable[Concatenate[Callable[P2, R1], P1], R2]],
+    KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K],
+]:
+    """The created decorator allows to register functions that will be passed to the decorated function based on a key.
+
+    This is useful to create functions that dispatch based on some property of the arguments. Additionally, it allows to override
+    previously registered functions. The decorated function will receive the dispatched function as its first argument, thus
+    allowing clients to decide how to call the dispatched function.
+    """
+
+    def keyed_dispatch(
+        fn: Callable[Concatenate[Callable[P2, R1], P1], R2],
+    ) -> KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K]:
+        registry: dict[K, Callable[P2, R1]] = {}
+
+        def wrapper(*args: P1.args, **kwargs: P1.kwargs) -> R2:
+            key = key_from_obj(*args, **kwargs)
+            if key not in registry:
+                raise KeyError(f"No function registered for key: {key}")
+            handler_fn = registry[key]
+            return fn(handler_fn, *args, **kwargs)
+
+        @registrar
+        def register(key: K | None, fn: Callable[P2, R1]) -> Callable[P2, R1]:
+            if key is None:
+                key = key_from_fn(fn)
+            if key in registry:
+                raise ValueError(f"Function already registered for key: {key}")
+            registry[key] = fn
+            return fn
+
+        @registrar
+        def override(key: K | None, fn: Callable[P2, R1]) -> Callable[P2, R1]:
+            if key is None:
+                key = key_from_fn(fn)
+            if key not in registry:
+                raise ValueError(f"No function registered for key: {key} to override")
+            registry[key] = fn
+            return fn
+
+        setattr(wrapper, "register", register)
+        setattr(wrapper, "override", override)
+        setattr(wrapper, "registry", types.MappingProxyType(registry))
+
+        update_wrapper(wrapper, fn)
+
+        return cast(KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K], wrapper)
+
+    return keyed_dispatch
+
+
+class KeyedDispatcherForDescriptor[**P1, **P2, R1, R2, Owner, K: Hashable](
+    KeyedDispatcher[P1, P2, R1, R2, K]
+):
+    __slots__ = ("_owner", "_dispatcher")
+
+    def __init__(
+        self,
+        owner: Owner,
+        dispatcher: "KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K]",
+    ):
+        self._owner = owner
+        self._dispatcher = dispatcher
+
+    def _registry_dict(self) -> dict[K, Callable[P2, R1]]:
+        if not hasattr(self._owner, self._dispatcher._registry):
+            setattr(self._owner, self._dispatcher._registry, {})
+        reg = getattr(self._owner, self._dispatcher._registry)
+        return reg
+
+    @property
+    def registry(self) -> Mapping[K, Callable[P2, R1]]:
+        return types.MappingProxyType(self._registry_dict())
+
+    def register(self, key: K, fn: Callable[P2, R1]) -> Callable[P2, R1]:
+        if key in self.registry:
+            raise ValueError(f"Function already registered for key: {key}")
+        self._registry_dict()[key] = fn
+        return fn
+
+    def override(self, key: K, fn: Callable[P2, R1]) -> Callable[P2, R1]:
+        if key not in self.registry:
+            raise ValueError(f"No function registered for key: {key} to override")
+        self._registry_dict()[key] = fn
+        return fn
+
+    def _get_key_from_args(self, *args: P1.args, **kwargs: P1.kwargs) -> K:
+        key_fn = getattr(self._owner, self._dispatcher._key_from_obj)
+        return key_fn(*args, **kwargs)
+
+    def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> R2:
+        key = self._get_key_from_args(*args, **kwargs)
+        registry = self._registry_dict()
+        if key not in registry:
+            raise KeyError(f"No function registered for key: {key}")
+        handler_fn = registry[key]
+
+        def bound_call(
+            handler_fn: Callable[P2, R1],
+            *args: P1.args,
+            **kwargs: P1.kwargs,
+        ) -> R2:
+            assert self._dispatcher._fn is not None
+            return self._dispatcher._fn(self._owner, handler_fn, *args, **kwargs)
+
+        return bound_call(handler_fn, *args, **kwargs)
+
+
+class KeyedDispatcherDescriptor[**P1, **P2, R1, R2, Owner, K: Hashable]:
+    """Automatically dispatch registered functions based on a key derived from the arguments.
+
+    Opposed to its function counterpart, this descriptor is intended to be used as a class attribute.
+
+    Use the decorators as follows
+
+     - `key_from_args` on a method of the owning class to define how to derive the key from the arguments
+     - `dispatch_for` on a method of the owning class to define the dispatching behavior. The method will receive the dispatched function as its first argument followed by the original arguments.
+    """
+
+    __slots__ = ("_key_from_obj", "_registry", "_name", "_fn")
+
+    def __init__(
+        self, fn: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2] | None = None
+    ) -> None:
+        self._fn: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2] | None = fn
+        self._key_from_obj: str = ""
+        self._registry: str = ""
+
+    def __get__(
+        self, instance: Owner | None, owner: type[Owner]
+    ) -> KeyedDispatcher[P1, P2, R1, R2, K]:
+        if instance is None:
+            raise TypeError(
+                "KeyedDispatcherDescriptor must be accessed via an instance."
+            )
+        if self._key_from_obj == "":
+            raise TypeError("Key function not set. Use the key_from_args decorator.")
+        return KeyedDispatcherForDescriptor(instance, self)
+
+    def key_from_args(
+        self, key_from_obj: Callable[Concatenate[Owner, P1], K]
+    ) -> Callable[Concatenate[Owner, P1], K]:
+        self._key_from_obj = key_from_obj.__name__
+        return key_from_obj
+
+    def __set_name__(self, instance: Owner, name: str) -> None:
+        self._registry = f"_{name}_registry"
+
+    def _unbound_call(
+        self,
+        owner: Owner,
+        *args: P1.args,
+        **kwargs: P1.kwargs,
+    ) -> R2:
+        if self._fn is None:
+            raise TypeError(
+                "Dispatch function not set. Use the dispatch_for decorator."
+            )
+        dispatcher = KeyedDispatcherForDescriptor(owner, self)
+        print(owner)
+        return dispatcher(*args, **kwargs)
+
+    def dispatch_for(
+        self,
+        fn: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2],
+    ) -> Self:
+        self._fn = fn
+        return self
+
+
+def dispatch_method[**P1, **P2, R1, R2, Owner, K: Hashable](
+    _: type[K],
+) -> Callable[
+    [Callable[Concatenate[Owner, Callable[P2, R1], P1], R2]],
+    KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K],
+]:
+    def decorator(
+        wrapped: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2],
+    ) -> KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K]:
+        return KeyedDispatcherDescriptor(wrapped)
+
+    return decorator
