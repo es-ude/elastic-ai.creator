@@ -5,6 +5,12 @@ Tin = TypeVar("Tin")
 Tout = TypeVar("Tout")
 FN = TypeVar("FN", bound=Callable)
 
+warnings.warn(
+    "function_utils module is deprecated, use function_dispatch module instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 class FunctionDecorator(Generic[FN, Tout]):
     """Apply a callback to functions and either their own or custom names.
