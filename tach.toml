@@ -13,7 +13,7 @@ source_roots = ["."]
 
 [[modules]]
 path = "elasticai.creator.ir"
-depends_on = ["elasticai.creator.function_utils", "elasticai.creator.graph"]
+depends_on = ["elasticai.creator.graph", "elasticai.creator.function_dispatch"]
 
 [[interfaces]]
 expose = ["[a-zA-Z0-9_]+"]

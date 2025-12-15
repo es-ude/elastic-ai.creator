@@ -21,8 +21,8 @@ from .high_level_network import network
 @pytest.fixture
 def lower():
     _lower = LoweringPass()
-    _lower.register(sequential)
-    _lower.register_iterable(_network_handler)
+    _lower.register()(sequential)
+    _lower.register_iterable()(_network_handler)
     return _lower
 
 
