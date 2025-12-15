@@ -4,8 +4,7 @@ from collections.abc import Callable, Iterable, Iterator
 from functools import wraps
 from typing import Generic, ParamSpec, Protocol, TypeVar
 
-from elasticai.creator.function_utils import FunctionDecoratorDescriptor
-from elasticai.creator.function_utils import KeyedFunctionDispatcher as _Registry
+import elasticai.creator.function_dispatch as F
 
 
 class Lowerable(Protocol):
@@ -19,61 +18,64 @@ Tout = TypeVar("Tout")
 
 
 class LoweringPass(Generic[Tin, Tout]):
-    register: FunctionDecoratorDescriptor[Tin, Tout] = FunctionDecoratorDescriptor()
-    register_override: FunctionDecoratorDescriptor[Tin, Tout] = (
-        FunctionDecoratorDescriptor()
-    )
-    register_iterable: FunctionDecoratorDescriptor[Tin, Iterable[Tout]] = (
-        FunctionDecoratorDescriptor()
-    )
-    register_iterable_override: FunctionDecoratorDescriptor[Tin, Iterable[Tout]] = (
-        FunctionDecoratorDescriptor()
-    )
+    _dispatcher: F.KeyedDispatcherDescriptor[
+        [Tin],
+        [Tin],
+        Iterable[Tout],
+        Iterable[Tout],
+        "LoweringPass",
+        str,
+    ] = F.KeyedDispatcherDescriptor()
 
-    def __init__(self) -> None:
-        def key_lookup_fn(x: Tin) -> str:
-            return x.type
+    @_dispatcher.key_from_args
+    def _key_from_args(self, x: Tin) -> str:
+        return x.type
 
-        self._fns: _Registry[Tin, Iterable[Tout]] = _Registry(key_lookup_fn)
-
-    def _register_callback(self, name: str, fn: Callable[[Tin], Tout]):
-        self._check_for_redefinition(name)
+    @F.registrar_method
+    def register(
+        self, name: str | None, fn: Callable[[Tin], Tout]
+    ) -> Callable[[Tin], Tout]:
+        if name is None:
+            name = fn.__name__
         wrapper = return_as_iterable(fn)
-        self._fns.register(name)(wrapper)
+        self._dispatcher.register(name, wrapper)
+        return fn
 
-    def _register_override_callback(self, name: str, fn: Callable[[Tin], Tout]):
-        self._check_for_override(name)
+    @F.registrar_method
+    def register_override(
+        self, name: str | None, fn: Callable[[Tin], Tout]
+    ) -> Callable[[Tin], Tout]:
+        if name is None:
+            name = fn.__name__
         wrapper = return_as_iterable(fn)
-        self._fns.register(name)(wrapper)
+        self._dispatcher.override(name, wrapper)
+        return fn
 
-    def _register_iterable_callback(
-        self, name: str, fn: Callable[[Tin], Iterable[Tout]]
-    ):
-        self._check_for_redefinition(name)
-        self._fns.register(name)(fn)
+    @F.registrar_method
+    def register_iterable(
+        self, name: str | None, fn: Callable[[Tin], Iterable[Tout]]
+    ) -> Callable[[Tin], Iterable[Tout]]:
+        if name is None:
+            name = fn.__name__
+        self._dispatcher.register(name, fn)
+        return fn
 
-    def _register_iterable_override_callback(
-        self, name: str, fn: Callable[[Tin], Iterable[Tout]]
-    ):
-        self._check_for_override(name)
-        self._fns.register(name)(fn)
+    @F.registrar_method
+    def register_iterable_override(
+        self, name: str | None, fn: Callable[[Tin], Iterable[Tout]]
+    ) -> Callable[[Tin], Iterable[Tout]]:
+        if name is None:
+            name = fn.__name__
+        self._dispatcher.override(name, fn)
+        return fn
+
+    @_dispatcher.dispatch_for
+    def _run(self, fn, x: Tin) -> Iterator[Tout]:
+        yield from fn(x)
 
     def __call__(self, args: Iterable[Tin]) -> Iterator[Tout]:
         for arg in args:
-            yield from self._fns(arg)
-
-    def _check_for_redefinition(self, arg):
-        if arg in self._fns:
-            raise ValueError(f"function for {arg} already defined in lowering pass")
-
-    def _check_for_override(self, arg):
-        if arg not in self._fns:
-            warnings.warn(
-                "expected to override registered function for {}, but no function for that type was defined".format(
-                    arg
-                ),
-                stacklevel=3,
-            )
+            yield from self._run(arg)
 
 
 P = ParamSpec("P")

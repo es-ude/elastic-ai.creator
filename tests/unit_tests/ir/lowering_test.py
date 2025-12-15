@@ -39,7 +39,7 @@ def test_register_lowering_fn_with_fn_name() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
     p: LoweringPass[SimpleNamespace, str] = LoweringPass()
 
-    @p.register
+    @p.register()
     def convolution(x: SimpleNamespace) -> str:
         return f"conv{x.name}"
 
@@ -49,8 +49,10 @@ def test_register_lowering_fn_with_fn_name() -> None:
 def test_can_directly_call_fn_as_defined() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
     p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+    print("Before registration:")
+    print(p._dispatcher.registry)
 
-    @p.register
+    @p.register()
     def convolution(x: SimpleNamespace) -> str:
         return f"conv{x.name}"
 
@@ -73,7 +75,7 @@ def test_lowering_iterates_over_input() -> None:
     d = SimpleNamespace(name="c1", type="convolution")
     p: LoweringPass[SimpleNamespace, str] = LoweringPass()
 
-    @p.register
+    @p.register()
     def convolution(x: SimpleNamespace) -> str:
         return f"conv{x.name}"
 
@@ -84,7 +86,7 @@ def test_can_register_and_call_iter_fn() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
     p: LoweringPass[SimpleNamespace, str] = LoweringPass()
 
-    @p.register_iterable
+    @p.register_iterable()
     def convolution(x: SimpleNamespace) -> tuple[str, ...]:
         return f"conv{x.name}", "more content"
 
@@ -94,13 +96,11 @@ def test_can_register_and_call_iter_fn() -> None:
 def test_registering_a_name_as_iterable_and_non_iterable_yields_error() -> None:
     p: LoweringPass = LoweringPass()
 
-    @p.register
+    @p.register()
     def a(x):
         return x
 
-    with pytest.raises(
-        ValueError, match="function for a already defined in lowering pass"
-    ):
+    with pytest.raises(ValueError, match="Function already registered for key: a"):
 
         @p.register_iterable("a")
         def b(x):
