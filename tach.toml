@@ -16,7 +16,6 @@ path = "elasticai.creator.ir"
 depends_on = [
     "elasticai.creator.function_utils",
     "elasticai.creator.graph",
-    "elasticai.creator.rewriting",
 ]
 
 [[interfaces]]
@@ -36,9 +35,8 @@ path = "elasticai.creator.ir2vhdl"
 depends_on = [
     "elasticai.creator.ir",
     "elasticai.creator.plugin",
-    "elasticai.creator.function_utils",
     "elasticai.creator.template",
-    "elasticai.creator.graph",
+    "elasticai.creator.graph", "elasticai.creator.function_dispatch",
 ]
 
 [[modules]]
@@ -167,19 +165,17 @@ depends_on = ["elasticai.creator.ir2vhdl", "elasticai.creator.graph"]
 path = "elasticai.creator_plugins.grouped_filter"
 depends_on = [
     "elasticai.creator.ir2vhdl",
-    "elasticai.creator.function_utils",
-    "elasticai.creator.plugin",
+    "elasticai.creator.plugin", "elasticai.creator.function_dispatch",
 ]
 
 [[modules]]
 path = "elasticai.creator_plugins.time_multiplexed_sequential"
 depends_on = [
-    "elasticai.creator.function_utils",
     "elasticai.creator.ir2vhdl",
     "elasticai.creator.plugin",
     "elasticai.creator_plugins.grouped_filter",
     "elasticai.creator.ir",
-    "elasticai.creator.graph",
+    "elasticai.creator.graph", "elasticai.creator.function_dispatch",
 ]
 
 [[modules]]
@@ -191,9 +187,8 @@ path = "elasticai.creator.ir2verilog"
 depends_on = [
     'elasticai.creator.ir',
     'elasticai.creator.plugin',
-    'elasticai.creator.function_utils',
     'elasticai.creator.graph',
-    'elasticai.creator.template',
+    'elasticai.creator.template', "elasticai.creator.function_dispatch",
 ]
 
 [[modules]]
@@ -202,3 +197,7 @@ path = "elasticai.creator.arithmetic"
 [[modules]]
 path = "elasticai.creator.function_dispatch"
 depends_on = []
+
+[[modules]]
+path = "<root>"
+depends_on = ["elasticai.creator.nn", "elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules", "elasticai.creator.vhdl", "elasticai.creator.file_generation"]

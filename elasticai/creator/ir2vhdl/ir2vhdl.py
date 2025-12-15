@@ -8,9 +8,8 @@ from dataclasses import dataclass
 from functools import reduce
 from typing import Any, Iterator, TypeAlias, TypeGuard, TypeVar, overload
 
-import elasticai.creator.function_utils as F
+import elasticai.creator.function_dispatch as F
 import elasticai.creator.plugin as _pl
-from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from elasticai.creator.graph import BaseGraph
 from elasticai.creator.ir import (
     Attribute,
@@ -531,14 +530,30 @@ class Instance:
         yield "  );"
 
 
-class InstanceFactory(KeyedFunctionDispatcher[VhdlNode, Instance]):
+class InstanceFactory:
     """Automatically creates Instances from VhdlNodes based on their `type` field."""
 
-    def __init__(self):
-        def dispatch_key_fn(node: VhdlNode) -> str:
-            return node.type
+    _dispatcher: F.KeyedDispatcherDescriptor[
+        [VhdlNode], [VhdlNode], Instance, Instance, "InstanceFactory", str
+    ] = F.KeyedDispatcherDescriptor()
 
-        super().__init__(dispatch_key_fn=dispatch_key_fn)
+    @_dispatcher.key_from_args
+    def _get_type_from_node(self, node: VhdlNode) -> str:
+        return node.type
+
+    @F.registrar_method
+    def register(
+        self,
+        type: str | None,
+        fn: Callable[[VhdlNode], Instance],
+    ) -> Callable[[VhdlNode], Instance]:
+        if type is None:
+            type = fn.__name__
+        return self._dispatcher.register(type, fn)
+
+    @_dispatcher.dispatch_for
+    def __call__(self, fn: Callable[[VhdlNode], Instance], node: VhdlNode) -> Instance:
+        return fn(node)
 
 
 PluginSymbol: TypeAlias = _PluginSymbol[Ir2Vhdl]
@@ -598,21 +613,27 @@ class _StaticFile(_PluginSymbol[Ir2Vhdl]):
 type TypeHandlerFn = Callable[[Implementation], Code]
 
 
-def _type_handler(name: str, fn: TypeHandlerFn) -> PluginSymbol:
+@F.registrar
+def type_handler(
+    name: str | None, fn: Callable[[Implementation], Code]
+) -> PluginSymbol:
+    if name is None:
+        name = fn.__name__
+
     def load_into(lower: Ir2Vhdl) -> None:
         lower.register(name)(fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
 
 
-def _type_handler_for_iterable(
-    name: str, fn: Callable[[Implementation], Iterable[Code]]
+@F.registrar
+def type_handler_iterable(
+    name: str | None, fn: Callable[[Implementation], Iterable[Code]]
 ) -> PluginSymbol:
+    if name is None:
+        name = fn.__name__
+
     def load_into(lower: Ir2Vhdl) -> None:
         lower.register_iterable(name)(fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
-
-
-type_handler = F.FunctionDecorator(_type_handler)
-type_handler_iterable = F.FunctionDecorator(_type_handler_for_iterable)

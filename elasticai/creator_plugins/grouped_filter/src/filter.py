@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from typing import ParamSpec
 
+import elasticai.creator.function_dispatch as F
 import elasticai.creator.plugin as _pl
-from elasticai.creator.function_utils import FunctionDecorator
 from elasticai.creator.ir2vhdl import (
     Edge,
     Implementation,
@@ -21,16 +21,14 @@ from .index_generators import GroupedFilterIndexGenerator
 P = ParamSpec("P")
 
 
-def _type_handler_fn(
+@F.registrar
+def _type_handler(
     name: str, fn: Callable[[Implementation], Implementation]
 ) -> _pl.PluginSymbol:
     def load_into(lower: LoweringPass[Implementation, Implementation]):
         lower.register(name, fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
-
-
-_type_handler = FunctionDecorator(_type_handler_fn)
 
 
 def append_counter_suffix_before_construction(

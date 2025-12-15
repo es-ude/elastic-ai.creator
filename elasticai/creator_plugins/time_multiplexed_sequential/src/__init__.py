@@ -1,8 +1,8 @@
 from collections.abc import Callable, Iterable
 from typing import ParamSpec
 
+import elasticai.creator.function_dispatch as F
 import elasticai.creator.plugin as _pl
-from elasticai.creator.function_utils import FunctionDecorator
 from elasticai.creator.graph import dfs_iter
 from elasticai.creator.ir import RequiredField
 from elasticai.creator.ir2vhdl import (
@@ -21,26 +21,30 @@ from elasticai.creator_plugins.grouped_filter import FilterParameters
 P = ParamSpec("P")
 
 
-def _type_handler_fn(
-    name: str, fn: Callable[[Implementation], Implementation]
+@F.registrar
+def _type_handler(
+    name: str | None, fn: Callable[[Implementation], Implementation]
 ) -> _pl.PluginSymbolFn[LoweringPass, [Implementation], Implementation]:
+    if name is None:
+        name = fn.__name__
+
     def load_into(lower: LoweringPass[Implementation, Implementation]):
         lower.register(name, fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
 
 
-def _iterable_type_handler_fn(
-    name: str, fn: Callable[[Implementation], Iterable[Implementation]]
+@F.registrar
+def _iterable_type_handler(
+    name: str | None, fn: Callable[[Implementation], Iterable[Implementation]]
 ) -> _pl.PluginSymbolFn[LoweringPass, [Implementation], Iterable[Implementation]]:
+    if name is None:
+        name = fn.__name__
+
     def load_into(lower: LoweringPass[Implementation, Implementation]):
         lower.register_iterable(name, fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
-
-
-_type_handler = FunctionDecorator(_type_handler_fn)
-_iterable_type_handler = FunctionDecorator(_iterable_type_handler_fn)
 
 
 class _FilterNode(Node):
@@ -296,7 +300,7 @@ class _Sequential:
         )
 
 
-@_type_handler
+@_type_handler()
 def sequential(impl: Implementation) -> Implementation:
     seq = _Sequential(impl.name)
 
@@ -328,7 +332,7 @@ def sequential(impl: Implementation) -> Implementation:
     return seq.get_impl()
 
 
-@_iterable_type_handler
+@_iterable_type_handler()
 def network(impl: Implementation) -> Iterable[Implementation]:
     network = sequential(impl)
     network.attributes["top_kernel_size"]
