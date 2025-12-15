@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from importlib import resources as res
 from typing import Protocol, TypeAlias
 
-import elasticai.creator.function_utils as F
+import elasticai.creator.function_dispatch as F
 from elasticai.creator import graph as g
 from elasticai.creator import ir
 from elasticai.creator import plugin as pl
@@ -109,23 +109,25 @@ class _StaticFile(PluginSymbol):
 TypeHandlerFn: TypeAlias = Callable[[Implementation], Code]
 
 
-def _type_handler(
-    name: str, fn: TypeHandlerFn
+@F.registrar
+def type_handler(
+    name: str | None, fn: Callable[[Implementation], Code]
 ) -> pl.PluginSymbolFn[Ir2Verilog, [Implementation], Code]:
+    name = _check_and_get_fn_name(name, fn)
+
     def load_into(lower: Ir2Verilog) -> None:
         lower.register(name)(fn)
 
     return pl.make_plugin_symbol(load_into, fn)
 
 
-def _type_handler_for_iterable(
-    name: str, fn: Callable[[Implementation], Iterable[Code]]
+@F.registrar
+def type_handler_iterable(
+    name: str | None, fn: Callable[[Implementation], Iterable[Code]]
 ) -> pl.PluginSymbolFn[Ir2Verilog, [Implementation], Iterable[Code]]:
+    name = _check_and_get_fn_name(name, fn)
+
     def load_into(lower: Ir2Verilog) -> None:
         lower.register_iterable(name)(fn)
 
     return pl.make_plugin_symbol(load_into, fn)
-
-
-type_handler = F.FunctionDecorator(_type_handler)
-type_handler_iterable = F.FunctionDecorator(_type_handler_for_iterable)

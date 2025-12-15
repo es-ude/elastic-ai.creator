@@ -8,7 +8,7 @@ from .language import Port, VHDLEntity
 IOPair: TypeAlias = tuple[tuple[int, ...], tuple[int, ...]]
 
 
-@type_handler
+@type_handler()
 def lutron(lowered: Implementation) -> Code:
     def _iter():
         name: str = lowered.name

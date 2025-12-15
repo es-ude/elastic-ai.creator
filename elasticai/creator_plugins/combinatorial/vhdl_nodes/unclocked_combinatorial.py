@@ -10,7 +10,7 @@ from .node_factory import (
 @InstanceFactoryForCombinatorial.register("output")
 @InstanceFactoryForCombinatorial.register("input")
 @InstanceFactoryForCombinatorial.register("lutron")
-@InstanceFactoryForCombinatorial.register
+@InstanceFactoryForCombinatorial.register()
 def unclocked_combinatorial(node):
     return UnclockedInstance(node)
 

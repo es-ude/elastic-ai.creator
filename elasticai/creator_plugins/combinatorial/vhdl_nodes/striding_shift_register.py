@@ -6,7 +6,7 @@ from .node_factory import (
 from .shift_register import ShiftRegister
 
 
-@InstanceFactoryForCombinatorial.register
+@InstanceFactoryForCombinatorial.register()
 def striding_shift_register(node: VhdlNode):
     return StridingShiftRegister(node)
 

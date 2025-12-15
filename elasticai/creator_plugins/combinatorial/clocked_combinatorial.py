@@ -13,7 +13,7 @@ from .combinatorial import (
 from .language import Port, VHDLEntity
 
 
-@type_handler
+@type_handler()
 def clocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
     def _iter():
         input_size = impl.nodes["input"].input_shape.size()

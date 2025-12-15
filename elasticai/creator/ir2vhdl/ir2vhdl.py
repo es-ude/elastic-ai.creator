@@ -6,11 +6,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from functools import reduce
-from typing import Any, Iterator, TypeAlias, TypeGuard, TypeVar, overload
+from typing import Any, Iterator, Protocol, TypeAlias, TypeGuard, overload
 
-import elasticai.creator.function_utils as F
+import elasticai.creator.function_dispatch as FD
 import elasticai.creator.plugin as _pl
-from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from elasticai.creator.graph import BaseGraph
 from elasticai.creator.ir import (
     Attribute,
@@ -531,14 +530,29 @@ class Instance:
         yield "  );"
 
 
-class InstanceFactory(KeyedFunctionDispatcher[VhdlNode, Instance]):
+class InstanceFactory:
     """Automatically creates Instances from VhdlNodes based on their `type` field."""
 
-    def __init__(self):
-        def dispatch_key_fn(node: VhdlNode) -> str:
-            return node.type
+    _dispatcher: FD.KeyedDispatcherDescriptor[
+        [Node], [Node], Instance, Instance, "InstanceFactory", str
+    ] = FD.KeyedDispatcherDescriptor()
 
-        super().__init__(dispatch_key_fn=dispatch_key_fn)
+    @_dispatcher.key_from_args
+    def _get_type_from_node(self, node: Node) -> str:
+        return node.type
+
+    @FD.registrar_method
+    def register(
+        self,
+        type: str | None,
+        fn: Callable[[Node], Instance],
+    ) -> Callable[[Node], Instance]:
+        type = _check_and_get_name_fn(type, fn)
+        return self._dispatcher.register(type, fn)
+
+    @_dispatcher.dispatch_for
+    def __call__(self, fn: Callable[[Node], Instance], node: Node) -> Instance:
+        return fn(node)
 
 
 PluginSymbol: TypeAlias = _PluginSymbol[Ir2Vhdl]
@@ -598,21 +612,61 @@ class _StaticFile(_PluginSymbol[Ir2Vhdl]):
 type TypeHandlerFn = Callable[[Implementation], Code]
 
 
-def _type_handler(name: str, fn: TypeHandlerFn) -> PluginSymbol:
+class _LegacyRegistrar(Protocol):
+    @overload
+    def __call__(self) -> "_LegacyRegistrar": ...
+    @overload
+    def __call__(self, fn: Callable[[Implementation], Code], /) -> PluginSymbol: ...
+    @overload
+    def __call__(
+        self, name: str | None, fn: Callable[[Implementation], Code], /
+    ) -> PluginSymbol: ...
+
+    def __call__(self, *args) -> Any: ...
+
+
+def _legacy_registrar(
+    handler_creator: Callable[
+        [str | None, Callable[[Implementation], Code]], PluginSymbol
+    ],
+) -> _LegacyRegistrar:
+    registrar = F.registrar(handler_creator)
+
+    @wraps(handler_creator)
+    def wrapper(*args):
+        if len(args) == 1 and callable(args[0]):
+            warnings.warn(
+                "You're using a type handler as `@type_handler` this is deprecated and will be removed in the future. Use `@type_handler()` instead.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+            return handler_creator(args[0].__name__, args[0])
+        return registrar(*args)
+
+    return wrapper
+
+
+@_legacy_registrar
+def type_handler(
+    name: str | None, fn: Callable[[Implementation], Code]
+) -> PluginSymbol:
+    if name is None:
+        name = fn.__name__
+
     def load_into(lower: Ir2Vhdl) -> None:
         lower.register(name)(fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
 
 
-def _type_handler_for_iterable(
-    name: str, fn: Callable[[Implementation], Iterable[Code]]
+@_legacy_registrar
+def type_handler_iterable(
+    name: str | None, fn: Callable[[Implementation], Iterable[Code]]
 ) -> PluginSymbol:
+    if name is None:
+        name = fn.__name__
+
     def load_into(lower: Ir2Vhdl) -> None:
         lower.register_iterable(name)(fn)
 
     return _pl.make_plugin_symbol(load_into, fn)
-
-
-type_handler = F.FunctionDecorator(_type_handler)
-type_handler_iterable = F.FunctionDecorator(_type_handler_for_iterable)
