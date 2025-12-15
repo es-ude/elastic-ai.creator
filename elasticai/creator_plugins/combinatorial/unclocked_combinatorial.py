@@ -9,7 +9,7 @@ from .vhdl_nodes.node_factory import InstanceFactoryForCombinatorial
 from .wiring import connect_data_signals
 
 
-@type_handler
+@type_handler()
 def unclocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
     def _generate_entity(name, input_size, output_size):
         entity = VHDLEntity(
@@ -26,7 +26,7 @@ def unclocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
         )
         return entity
 
-    return impl.name, combinatorial(impl, _generate_entity)
+    return impl.name, tuple(combinatorial(impl, _generate_entity))
 
 
 def combinatorial(
@@ -36,7 +36,7 @@ def combinatorial(
     nodes = []
     for n in impl.nodes.values():
         nodes.append(InstanceFactoryForCombinatorial(n))
-    nodes = tuple(nodes)
+    nodes = list(nodes)
     instances = tuple(n for n in nodes if n.name not in ("input", "output"))
     input = impl.nodes["input"]
     output = impl.nodes["output"]

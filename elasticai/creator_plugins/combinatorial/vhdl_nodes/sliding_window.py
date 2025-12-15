@@ -8,7 +8,7 @@ from .node_factory import (
 )
 
 
-@InstanceFactoryForCombinatorial.register
+@InstanceFactoryForCombinatorial.register()
 def sliding_window(node):
     return SlidingWindowNode(node)
 

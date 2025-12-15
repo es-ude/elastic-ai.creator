@@ -7,6 +7,7 @@ from elasticai.creator.ir2vhdl import (
     Edge,
     Implementation,
     Instance,
+    IrFactory,
     LogicSignal,
     LogicVectorSignal,
     NullDefinedLogicSignal,
@@ -14,6 +15,7 @@ from elasticai.creator.ir2vhdl import (
     Shape,
     Signal,
     VhdlNode,
+    type_handler,
     vhdl_node,
 )
 

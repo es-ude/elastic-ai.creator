@@ -8,7 +8,7 @@ from .node_factory import (
 )
 
 
-@InstanceFactoryForCombinatorial.register
+@InstanceFactoryForCombinatorial.register()
 def shift_register(node: VhdlNode) -> Instance:
     return ShiftRegister(node)
 
