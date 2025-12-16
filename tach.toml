@@ -143,8 +143,7 @@ depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.ir"]
 path = "elasticai.creator.torch2ir"
 depends_on = [
     "elasticai.creator.ir",
-    "elasticai.creator.function_utils",
-    "elasticai.creator.graph",
+    "elasticai.creator.graph", "elasticai.creator.function_dispatch",
 ]
 
 [[modules]]
