@@ -5,7 +5,7 @@ from torch.fx import Node as FxNode
 from torch.fx import Tracer
 from torch.nn import Module
 
-from elasticai.creator.function_utils import KeyedFunctionDispatcher
+from elasticai.creator.function_dispatch import dispatch_method
 from elasticai.creator.graph import BaseGraph
 
 from .core import Edge, Implementation, new_node
@@ -33,9 +33,10 @@ class Torch2Ir:
         self._root.type = "module"
         self._root.name = ""
         self._registry[""] = self._root
-        self._extractors: KeyedFunctionDispatcher[Module, dict] = (
-            KeyedFunctionDispatcher(self._get_module_key)
-        )
+
+    @dispatch_method(str)
+    def _extractors(self, fn: Callable[[Module], dict], m: Module, /) -> dict:
+        return fn(m)
 
     def register(
         self, module_type: str, handler: Callable[[Module], dict]
@@ -51,8 +52,8 @@ class Torch2Ir:
             self.register(handler.__name__, handler)
         return self
 
-    @staticmethod
-    def _get_module_key(module: Module) -> str:
+    @_extractors.key_from_args
+    def _get_module_key(self, module: Module) -> str:
         return module.__class__.__name__.lower()
 
     def convert(self, model: Module) -> Iterator[Implementation]:
