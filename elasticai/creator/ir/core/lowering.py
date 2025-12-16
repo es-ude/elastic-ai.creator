@@ -81,9 +81,9 @@ class LoweringPass(Generic[Tin, Tout]):
 P = ParamSpec("P")
 
 
-def return_as_iterable(fn: Callable[P, Tout]) -> Callable[P, Iterable[Tout]]:
+def return_as_iterable(fn: Callable[P, Tout]) -> Callable[P, Iterator[Tout]]:
     @wraps(fn)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Tout]:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Tout]:
         yield fn(*args, **kwargs)
 
     return wrapper

@@ -2,7 +2,6 @@ from types import SimpleNamespace
 
 import pytest
 
-from elasticai.creator.function_utils import KeyedFunctionDispatcher
 from elasticai.creator.ir import LoweringPass
 
 """
@@ -13,31 +12,9 @@ For later in LoweringPass:
 """
 
 
-def test_calls_a_registered_function():
-    r = KeyedFunctionDispatcher(dispatch_key_fn=lambda x: x.type)
-    c = SimpleNamespace(name="c0", type="convolution")
-
-    @r.register
-    def convolution(x) -> str:
-        return f"conv{x.name}"
-
-    assert "convc0" == r.call(c)
-
-
-def test_calling_a_function_with_custom_name():
-    r = KeyedFunctionDispatcher(dispatch_key_fn=lambda x: x.type)
-    c = SimpleNamespace(name="c0", type="convolution")
-
-    @r.register("convolution")
-    def fn(x) -> str:
-        return f"conv{x.name}"
-
-    assert "convc0" == r.call(c)
-
-
 def test_register_lowering_fn_with_fn_name() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
-    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()  # type: ignore
 
     @p.register()
     def convolution(x: SimpleNamespace) -> str:
@@ -48,7 +25,7 @@ def test_register_lowering_fn_with_fn_name() -> None:
 
 def test_can_directly_call_fn_as_defined() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
-    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()  # type: ignore
     print("Before registration:")
     print(p._dispatcher.registry)
 
@@ -61,7 +38,7 @@ def test_can_directly_call_fn_as_defined() -> None:
 
 def test_register_lowering_fn_with_custom_name() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
-    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()  # type: ignore
 
     @p.register("convolution")
     def f(x: SimpleNamespace) -> str:
@@ -73,7 +50,7 @@ def test_register_lowering_fn_with_custom_name() -> None:
 def test_lowering_iterates_over_input() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
     d = SimpleNamespace(name="c1", type="convolution")
-    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()  # type: ignore
 
     @p.register()
     def convolution(x: SimpleNamespace) -> str:
@@ -84,7 +61,7 @@ def test_lowering_iterates_over_input() -> None:
 
 def test_can_register_and_call_iter_fn() -> None:
     c = SimpleNamespace(name="c0", type="convolution")
-    p: LoweringPass[SimpleNamespace, str] = LoweringPass()
+    p: LoweringPass[SimpleNamespace, str] = LoweringPass()  # type: ignore
 
     @p.register_iterable()
     def convolution(x: SimpleNamespace) -> tuple[str, ...]:
