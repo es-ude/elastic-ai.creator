@@ -2,8 +2,7 @@ from typing import TypeVar
 
 from elasticai.creator.graph._types import NodeConstraintFn
 
-from .graph import Graph
-from .vf2 import find_all_matches, match
+from .vf2 import Graph, find_all_matches, match
 
 TP = TypeVar("TP")
 T = TypeVar("T")
