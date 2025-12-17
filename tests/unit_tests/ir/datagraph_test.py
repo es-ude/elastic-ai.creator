@@ -1,13 +1,15 @@
 from collections.abc import Callable
+from typing import Any, Protocol, cast
 
 import pytest
 
 import elasticai.creator.ir.datagraph as dgraph
 from elasticai.creator.graph.subgraph_matching import find_all_subgraphs
-from elasticai.creator.ir.attribute import AttributeMapping
+from elasticai.creator.ir.attribute import Attribute, AttributeMapping
 from elasticai.creator.ir.datagraph import DataGraph
 from elasticai.creator.ir.datagraph_impl import (
     DataGraphImpl,
+    DefaultDataGraphFactory,
     DefaultIrFactory,
     DefaultNodeEdgeFactory,
     EdgeImpl,
@@ -19,15 +21,18 @@ from elasticai.creator.ir.datagraph_impl import (
 from elasticai.creator.ir.datagraph_impl import (
     NodeImpl as Node,
 )
+from elasticai.creator.ir.deserializer import IrDeserializer
 from elasticai.creator.ir.factories import (
     IrFactory,
+    NodeEdgeFactory,
     StdNodeEdgeFactory,
 )
 from elasticai.creator.ir.graph import GraphImpl
+from elasticai.creator.ir.serializer import IrSerializer
 
 
 @pytest.fixture
-def factory() -> IrFactory[dgraph.Node, dgraph.Edge, DataGraph[Node, Edge]]:
+def factory() -> IrFactory[dgraph.Node, dgraph.Edge, dgraph.DataGraph[Node, Edge]]:
     return DefaultIrFactory()
 
 
@@ -201,3 +206,250 @@ def test_create_new_dgraph_from_existing(new_dgraph) -> None:
     assert g2.type == "<undefined>"
     assert g2.node_attributes["a"] == AttributeMapping(type="ta")
     assert g2.nodes["a"].shape == (0, 0)
+
+
+@pytest.fixture
+def serialize() -> Callable[[Attribute | Node], Any]:
+    s: IrSerializer = IrSerializer()
+
+    def _serialize(attribute: Attribute | Node) -> Any:
+        return s.serialize(attribute)
+
+    return _serialize
+
+
+class TestSerialization:
+    def test_can_serialize_primitive_attributes(
+        self, serialize: Callable[[Attribute], Any]
+    ) -> None:
+        a = (1, 2.0, "three", True)
+        serialized = serialize(a)
+        assert a == serialized
+
+    def test_serializing_list_raises_error(
+        self, serialize: Callable[[Attribute], Any]
+    ) -> None:
+        pytest.raises(TypeError, serialize, [1, 2, 3])
+
+    def test_can_serialize_flat_attribute_mapping(
+        self, serialize: Callable[[Attribute], Any]
+    ) -> None:
+        a = AttributeMapping(x=1, y="two", z=3.0)
+        serialized = serialize(a)
+        assert serialized == {"x": 1, "y": "two", "z": 3.0}
+        assert isinstance(serialized, dict)
+
+    def test_can_serialize_nested_attribute_mapping(
+        self, serialize: Callable[[Attribute], Any]
+    ) -> None:
+        a = AttributeMapping(
+            x=1,
+            y=AttributeMapping(a="A", b="B"),
+        )
+        serialized = serialize(a)
+        assert serialized == {"x": 1, "y": {"a": "A", "b": "B"}}
+        assert isinstance(serialized, dict)
+        assert isinstance(serialized["y"], dict)
+
+    def test_hiding_unsupported_type_inside_tuple_raises_error(
+        self, serialize: Callable[[Attribute], Any]
+    ) -> None:
+        a = AttributeMapping(x=1, y=(2, [3, 4]))  # type: ignore
+        pytest.raises(TypeError, serialize, a)
+
+    def test_serializing_a_node_means_to_serialize_its_attributes(
+        self, serialize: Callable[[Attribute | Node], Any]
+    ) -> None:
+        n = Node("a", AttributeMapping(type="N", value=10))
+        serialized = serialize(n)
+        assert serialized == {"type": "N", "value": 10}
+
+    def test_can_serialize_node_subclass(self, serialize) -> None:
+        class MyNode(Node):
+            def __init__(self, name: str, data: AttributeMapping) -> None:
+                super().__init__(name, AttributeMapping(extra="extra") | data)
+
+            @property
+            def extra(self) -> str:
+                return self.attributes["extra"]
+
+        n = MyNode("a", AttributeMapping(type="N"))
+        serialized = serialize(n)
+        assert serialized == {"extra": "extra", "type": "N"}
+
+    def test_can_serialize_datagraph(self, serialize, factory) -> None:
+        g: dgraph.DataGraph[Node, Edge] = factory.graph(
+            attributes=AttributeMapping(version=1)
+        )
+        g = g.add_edges(
+            ("a", "b"),
+        )
+        g = g.add_nodes(
+            factory.node("a", AttributeMapping(type="A")),
+            factory.node("b", AttributeMapping(type="B")),
+        )
+
+        serialized = serialize(g)
+        assert serialized == {
+            "nodes": {
+                "a": {"type": "A"},
+                "b": {"type": "B"},
+            },
+            "edges": {"a": {"b": {}}, "b": {}},
+            "attributes": {"version": 1},
+        }
+
+    def test_deserialization(self, serialize, factory) -> None:
+        g: dgraph.DataGraph[Node, Edge] = factory.graph(
+            attributes=AttributeMapping(version=1)
+        )
+        g = g.add_edges(
+            ("a", "b"),
+        )
+        g = g.add_nodes(
+            ("a", AttributeMapping(type="A")),
+            ("b", AttributeMapping(type="B")),
+        )
+
+        serialized = serialize(g)
+        deserializer = IrDeserializer(DefaultIrFactory())
+        deserialized = deserializer.deserialize_graph(serialized)
+        print(deserialized.attributes)
+        print(g.attributes)
+        print(g.successors)
+        print(deserialized.successors)
+        print(serialized)
+
+        assert g == deserialized
+
+
+def test_dynamically_extend_nodes_and_graphs_in_custom_factory() -> None:
+    class MyNode(dgraph.Node, Protocol):
+        @property
+        def implementation(self) -> str: ...
+
+    class MyGraph(dgraph.DataGraph[MyNode, dgraph.Edge], Protocol):
+        @property
+        def name(self) -> str: ...
+
+    class MyIrFactory(IrFactory):
+        def __init__(self):
+            self._node_edge = DefaultNodeEdgeFactory()
+            self._graph = DefaultDataGraphFactory(self)
+
+        def node(
+            self, name: str, attributes: AttributeMapping = AttributeMapping()
+        ) -> MyNode:
+            n = self._node_edge.node(name, attributes)
+
+            class _Node(n.__class__):  # type: ignore
+                @property
+                def implementation(self) -> str:
+                    return self.attributes.get("implementation", "<none>")
+
+            n.__class__ = _Node
+            return n
+
+        def edge(
+            self,
+            src: str,
+            dst: str,
+            attributes: AttributeMapping = AttributeMapping(),
+        ) -> Edge:
+            return self._node_edge.edge(src, dst, attributes)
+
+        def graph(self, attributes: AttributeMapping = AttributeMapping()) -> MyGraph:
+            g = self._graph.graph(attributes)
+
+            class _Graph(g.__class__):  # type: ignore
+                @property
+                def name(self) -> str:
+                    return self.attributes.get("name", "<undefined>")
+
+            g.__class__ = _Graph
+            return g
+
+    factory = MyIrFactory()
+    n = factory.node("x")
+    g = factory.graph()
+    assert n.implementation == "<none>"
+    assert g.name == "<undefined>"
+
+
+def test_extend_node_and_graph_statically() -> None:
+    class MyNode(Node):
+        @property
+        def implementation(self) -> str:
+            return cast(str, self.attributes.get("implementation", "<none>"))
+
+    class MyGraph[N: Node, E: Edge](DataGraphImpl[N, E]):
+        @property
+        def name(self) -> str:
+            return cast(str, self.attributes.get("name", "<undefined>"))
+
+    class MyFactory(IrFactory):
+        def node(
+            self, name: str, attributes: AttributeMapping = AttributeMapping()
+        ) -> MyNode:
+            return MyNode(name, attributes)
+
+        def edge(
+            self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()
+        ) -> Edge:
+            return Edge(src, dst, attributes)
+
+        def graph(
+            self, attributes: AttributeMapping = AttributeMapping()
+        ) -> MyGraph[MyNode, Edge]:
+            return MyGraph(
+                factory=self,
+                attributes=attributes,
+                graph=GraphImpl(
+                    lambda: AttributeMapping(),
+                ),
+                node_attributes=AttributeMapping(),
+            )
+
+    f = MyFactory()
+    n = f.node("x")
+    g = f.graph()
+    assert n.implementation == "<none>"
+    assert g.name == "<undefined>"
+
+
+def test_wrap_existing_data_into_new_graph_with_new_node_type(factory) -> None:
+    class MyNode(Node):
+        @property
+        def implementation(self) -> str:
+            return cast(str, self.attributes.get("implementation", "<none>"))
+
+    class MyGraph[N: Node, E: Edge](DataGraphImpl[N, E]):
+        @property
+        def name(self) -> str:
+            return cast(str, self.attributes.get("name", "<undefined>"))
+
+    class MyNodeEdgeFactory(NodeEdgeFactory[MyNode, Edge]):
+        def node(
+            self, name: str, attributes: AttributeMapping = AttributeMapping()
+        ) -> MyNode:
+            return MyNode(name, attributes)
+
+        def edge(
+            self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()
+        ) -> Edge:
+            return Edge(src, dst, attributes)
+
+    def to_my_graph_type(g: dgraph.DataGraph) -> MyGraph[MyNode, Edge]:
+        return MyGraph(
+            factory=MyNodeEdgeFactory(),
+            attributes=g.attributes,
+            graph=g.graph,
+            node_attributes=g.node_attributes,
+        )
+
+    g1: DataGraphImpl[Node, Edge] = factory.graph()
+    g1 = g1.add_edges(("a", "b"), ("c", "d"))
+    g2: MyGraph[MyNode, Edge] = to_my_graph_type(g1).add_node("e")
+    assert g2.name == "<undefined>"
+    assert g2.nodes["a"].implementation == "<none>"
+    assert g2.nodes["e"].implementation == "<none>"
