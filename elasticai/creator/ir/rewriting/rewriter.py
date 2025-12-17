@@ -15,10 +15,6 @@ class Node(Protocol):
     @abstractmethod
     def data(self) -> dict[str, Any]: ...
 
-    @data.setter
-    @abstractmethod
-    def data(self, data: dict[str, Any]) -> None: ...
-
     @property
     @abstractmethod
     def name(self) -> str: ...
@@ -29,9 +25,6 @@ class Edge(Protocol):
     @abstractmethod
     def data(self) -> dict[str, Any]: ...
 
-    @data.setter
-    @abstractmethod
-    def data(self, data: dict[str, Any]) -> None: ...
     @property
     @abstractmethod
     def src(self) -> str: ...
