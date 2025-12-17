@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from typing import Generic, TypeVar
 
-from elasticai.creator.graph.graph import Graph
+from .graph import Graph
 
 T = TypeVar("T")
 TP = TypeVar("TP")
@@ -9,11 +9,11 @@ TP = TypeVar("TP")
 
 class State(Generic[T, TP]):
     def __init__(self, graph: Graph[T]) -> None:
-        self.order: dict[T, int] = {n: i for i, n in enumerate(graph.nodes)}
+        self.order: dict[T, int] = {n: i for i, n in enumerate(graph.successors.keys())}
         self.order_back: dict[int, T] = {v: k for k, v in self.order.items()}
-        self.core: list[TP | None] = [None for _ in graph.nodes]
-        self.in_nodes: list[int] = [0 for _ in graph.nodes]
-        self.out_nodes: list[int] = [0 for _ in graph.nodes]
+        self.core: list[TP | None] = [None for _ in graph.successors]
+        self.in_nodes: list[int] = [0 for _ in graph.successors]
+        self.out_nodes: list[int] = [0 for _ in graph.successors]
         self.graph: Graph[T] = graph
         self.current_depth = 0
 
@@ -94,7 +94,7 @@ class State(Generic[T, TP]):
         return all(n is not None for n in self.core)
 
     def iter_matched_pairs(self) -> Iterator[tuple[T, TP]]:
-        for node in self.graph.nodes:
+        for node in self.graph.successors:
             matched_node = self.core[self.order[node]]
             if matched_node is not None:
                 yield node, matched_node
