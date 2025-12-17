@@ -1,9 +1,9 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from functools import wraps
 from typing import TypeVar
 
-from elasticai.creator.graph.graph import Graph
-
 from .._types import NodeConstraintFn
+from .graph import Graph
 from .state import State
 
 T = TypeVar("T")
@@ -15,10 +15,22 @@ class MatchError(Exception):
         super().__init__("No match found")
 
 
+def _make_node_constraint_fn[PN, N](
+    fn: Callable[[PN, N], bool],
+) -> NodeConstraintFn[PN, N]:
+    @wraps(fn)
+    def wrapper(pattern_node: PN, graph_node: N) -> bool:
+        return fn(pattern_node, graph_node)
+
+    return wrapper
+
+
 def match(
     pattern: Graph[TP],
     graph: Graph[T],
-    node_constraint: NodeConstraintFn[TP, T] = lambda _, __: True,
+    node_constraint: NodeConstraintFn[TP, T] = _make_node_constraint_fn(
+        lambda _, __: True
+    ),
 ) -> dict[TP, T]:
     try:
         return next(_match(pattern, graph, node_constraint))
@@ -29,7 +41,9 @@ def match(
 def find_all_matches(
     pattern: Graph[TP],
     graph: Graph[T],
-    node_constraint: NodeConstraintFn[TP, T] = lambda _, __: True,
+    node_constraint: NodeConstraintFn[TP, T] = _make_node_constraint_fn(
+        lambda _, __: True
+    ),
 ) -> list[dict[TP, T]]:
     return list(_match(pattern, graph, node_constraint))
 
@@ -37,7 +51,9 @@ def find_all_matches(
 def _match(
     pattern: Graph[TP],
     graph: Graph[T],
-    node_constraint: NodeConstraintFn[TP, T] = lambda _, __: True,
+    node_constraint: NodeConstraintFn[TP, T] = _make_node_constraint_fn(
+        lambda _, __: True
+    ),
 ) -> Iterator[dict[TP, T]]:
     """
     Implementation of the VF2 algorithm by Cordella et al. 2004
@@ -70,8 +86,8 @@ def _match(
                     candidate_pairs.add((pn, gn))
 
         if len(candidate_pairs) == 0 and depth == 0:
-            for pn in pattern.nodes:
-                for gn in graph.nodes:
+            for pn in pattern.successors:
+                for gn in graph.successors:
                     yield pn, gn
         else:
             yield from candidate_pairs
@@ -217,7 +233,7 @@ def _match(
 
         order = {pn: i for i, (pn, _) in enumerate(candidate_pairs)}
         for pn, gn in candidate_pairs:
-            if any(n in pattern.nodes and order[n] < order[pn] for n in order):
+            if any(n in pattern.successors and order[n] < order[pn] for n in order):
                 continue
             if is_feasible(pn, gn):
                 pattern_state.add_pair(pn, gn)
