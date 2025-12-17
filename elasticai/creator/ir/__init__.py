@@ -15,9 +15,7 @@ __all__ = [
     "StaticMethodField",
     "ReadOnlyField",
     "GraphProtocol",
-    "Rewriter",
     "PatternRuleSpec",
-    "RemappedSubImplementation",
     "ReadOnlyDataGraph",
     "Rule",
     "CompositeRule",
@@ -50,6 +48,7 @@ from .core import (
 from .rewriting import (
     CompositeRule,
     Pattern,
+    PatternRule,
     PatternRuleSpec,
     ReadOnlyDataGraph,
     Rule,

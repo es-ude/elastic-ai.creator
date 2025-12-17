@@ -15,7 +15,7 @@
   container_name = null;
   active_profiles = [
   ];
-  hostname = "Lukass-MacBook-Pro.local";
+  hostname = "MacBookPro.fritz.box";
   username = "lukas";
   git_root = "/Users/lukas/Projects/ies-ude/elasticai-new-creator";
   secretspec = null;
@@ -52,7 +52,7 @@
   container_name = null;
   active_profiles = [
   ];
-  hostname = "Lukass-MacBook-Pro.local";
+  hostname = "MacBookPro.fritz.box";
   username = "lukas";
   git_root = "/Users/lukas/Projects/ies-ude/elasticai-new-creator";
   secretspec = null;
