@@ -4,6 +4,7 @@ from elasticai.creator.graph import BaseGraph
 from elasticai.creator.ir import (
     Implementation,
     Node,
+    PatternRule,
     PatternRuleSpec,
     edge,
     node,
@@ -11,7 +12,6 @@ from elasticai.creator.ir import (
 from elasticai.creator.ir.rewriting import (
     DataGraph,
     Pattern,
-    PatternRule,
     ReadOnlyDataGraph,
     StdPattern,
 )
