@@ -19,7 +19,7 @@ class HardSigmoid(Design):
         quantized_zero: int,
         tmp: int,  # Note: at the moment hardware side only supports 16 bits signed of TEMP.
         work_library_name: str,
-        template_variant: str = "lut_1to1_mapping",  # default, lut_1to1_mapping
+        template_variant: str = "lut_step_function",  # default, lut_1to1_mapping
     ) -> None:
         super().__init__(name=name)
 
@@ -58,6 +58,10 @@ class HardSigmoid(Design):
             )
         elif self._template_variant == "lut_1to1_mapping":
             template = self._gen_1to1_mapping_lut_implementation()
+        elif self._template_variant == "lut_step_function":
+            template = self._gen_step_lut_implementation()
+        else:
+            raise ValueError(f"Unsupported template variant: {self._template_variant}")
 
         destination.create_subpath(self.name).as_file(".vhd").write(template)
 
@@ -91,11 +95,9 @@ class HardSigmoid(Design):
         process_content = []
 
         process_content.append(
-            f"if signed_x < {self._quantized_minus_three} then "
+            f"if signed_x <= {self._quantized_minus_three} then "
             f"signed_y <= to_signed({self._quantized_zero}, {self._data_width});"
         )
-        # print("minus three:", self._quantized_minus_three)
-        # print("three:", self._quantized_three)
         for input_value in range(
             self._quantized_minus_three + 1, self._quantized_three - 1
         ):
@@ -105,6 +107,53 @@ class HardSigmoid(Design):
                 f"elsif signed_x = {input_value} then "
                 f"signed_y <= to_signed({output_value}, {self._data_width});"
             )
+
+        process_content.append(
+            f"else signed_y <= to_signed({self._quantized_one}, {self._data_width});"
+        )
+        process_content.append("end if;")
+
+        self._process_content = process_content
+
+        template.parameters.update(process_content=process_content)
+
+        return template
+
+    def _gen_step_lut_implementation(self) -> None:
+        """Generate step function based LUT implementation for HardSigmoid."""
+
+        template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="LUT.tpl.vhd",
+            parameters=dict(
+                name=self.name,
+                x_data_width=str(self._data_width),
+                y_data_width=str(self._data_width),
+            ),
+        )
+
+        process_content = []
+
+        process_content.append(
+            f"if signed_x <= {self._quantized_minus_three} then "
+            f"signed_y <= to_signed({self._quantized_zero}, {self._data_width});"
+        )
+        for input_value in range(
+            self._quantized_minus_three + 1, self._quantized_three - 1
+        ):
+            # Calculate the corresponding output value based on the HardSigmoid formula
+            output_value = int((input_value) / 8.0) + self._tmp
+            next_output_value = int((input_value + 1) / 8.0) + self._tmp
+            if output_value != next_output_value:
+                process_content.append(
+                    f"elsif signed_x <= {input_value} then "
+                    f"signed_y <= to_signed({output_value}, {self._data_width});"
+                )
+            elif input_value == self._quantized_three - 2:
+                process_content.append(
+                    f"elsif signed_x <= {input_value} then "
+                    f"signed_y <= to_signed({output_value}, {self._data_width});"
+                )
 
         process_content.append(
             f"else signed_y <= to_signed({self._quantized_one}, {self._data_width});"
