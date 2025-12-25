@@ -31,22 +31,26 @@ architecture rtl of ${name} is
     function sum_div_8_op(a : in signed(DATA_WIDTH-1 downto 0);
                     b : in signed(2*DATA_WIDTH-1 downto 0)
             ) return signed is
-
-        variable TEMP : signed(DATA_WIDTH*2-1 downto 0) := (others=>'0');
-        variable TEMP1 : signed(DATA_WIDTH*2-1 downto 0) := (others=>'0');
+        variable TEMP : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
+        variable TEMPB : signed(DATA_WIDTH*2-1 downto 0) := (others=>'0');
+        variable TEMP1 : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
         variable TEMP2 : signed(DATA_WIDTH*2-1 downto 0) := (others=>'0');
         variable is_negative : boolean;
     begin
-        TEMP := a + b;
-        is_negative := (TEMP(TEMP'left) = '1');
+
+        is_negative := (a(a'left) = '1');
 
         if is_negative then
-            TEMP1 := -TEMP;
+            TEMP := -a;
+            TEMPB := -b;
         else
-            TEMP1 := TEMP;
+            TEMP := a;
+            TEMPB := b;
         end if;
 
-        TEMP2 := shift_right(TEMP1, 3); -- divide by 8
+        TEMP1 := shift_right(TEMP, 3); -- divide by 8
+
+        TEMP2 := TEMP1 + TEMPB;
         if is_negative then
             return -resize(TEMP2, DATA_WIDTH);
         else

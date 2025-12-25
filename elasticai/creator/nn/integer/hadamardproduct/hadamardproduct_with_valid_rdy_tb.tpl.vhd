@@ -29,8 +29,8 @@ architecture rtl of ${name}_tb is
     signal uut_enable : std_logic := '0';
     signal x_1_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
     signal x_2_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_1 : std_logic_vector(DATA_WIDTH - 1 downto 0):=(others => '0');
+    signal x_2 : std_logic_vector(DATA_WIDTH - 1 downto 0):=(others => '0');
     type t_array_x is array (0 to NUM_FEATURES * NUM_DIMENSIONS-1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_1_arr : t_array_x := (others=>(others=>'0'));
     signal x_2_arr : t_array_x := (others=>(others=>'0'));

@@ -56,6 +56,10 @@ class HardTanh(DesignCreatorModule, nn.Module):
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
+        # q_inputs = self.math_ops.intsub(
+        #             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
+        #         )
+
         q_outputs = torch.where(
             q_inputs > self.quantized_one, self.quantized_one, q_inputs
         )
@@ -63,6 +67,10 @@ class HardTanh(DesignCreatorModule, nn.Module):
         q_outputs = torch.where(
             q_outputs < self.quantized_minus_one, self.quantized_minus_one, q_outputs
         )
+
+        # q_outputs = self.math_ops.intadd(
+        #     q_outputs, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+        # )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs

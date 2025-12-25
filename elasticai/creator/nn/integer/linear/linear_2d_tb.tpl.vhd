@@ -24,7 +24,7 @@ architecture rtl of ${name}_tb is
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
     signal x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0):=(others => '0');
     signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;

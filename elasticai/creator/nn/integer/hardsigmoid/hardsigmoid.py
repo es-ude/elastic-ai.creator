@@ -5,6 +5,7 @@ from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModu
 from elasticai.creator.nn.integer.hardsigmoid.design import (
     HardSigmoid as HardSigmoidDesign,
 )
+from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -33,7 +34,7 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
-
+        self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name: str) -> HardSigmoidDesign:
@@ -66,15 +67,10 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         # self.out_quantized_one = self.outputs_QParams.quantize(torch.tensor(1.0))
         # self.out_quantized_zero = self.outputs_QParams.quantize(torch.tensor(0.0))
 
-        self.tmp = (
-            int(
-                0.5 / (self.inputs_QParams.scale_factor)
-                + self.inputs_QParams.zero_point
-            )
-            * 8
+        self.tmp = int(
+            self.inputs_QParams.quantize(torch.tensor(0.5))
+            - self.inputs_QParams.zero_point // 8
         )
-        # self.tmp = self.inputs_QParams.quantize(torch.tensor(0.5)) * 8
-
         self.precomputed = True
 
     def _div_trunc(self, x: torch.Tensor, y: int) -> torch.Tensor:
@@ -83,7 +79,6 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
-
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_outputs = torch.where(
@@ -100,8 +95,7 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
 
         q_outputs = torch.where(
             (q_inputs > self.quantized_minus_three) & (q_inputs < self.quantized_three),
-            # (q_outputs + self.tmp) // 8,
-            self._div_trunc(q_outputs + self.tmp, 8),
+            self._div_trunc(q_inputs, 8) + self.tmp,
             q_outputs,
         )
 
