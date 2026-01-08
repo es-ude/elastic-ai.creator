@@ -1,8 +1,9 @@
+import re
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Hashable, TypeVar
 
-from .graph import Graph
-from .name_generation import NameRegistry
+from .name_generation import NameRegistry  # type: ignore
+from .vf2.graph import Graph
 
 
 class DanglingEdgeError(Exception):
@@ -32,7 +33,9 @@ TP = TypeVar("TP", bound=Hashable)
 
 
 def get_rewriteable_matches(
-    original: Graph[T], matches: Iterable[dict[TP, T]], interface_nodes: Iterable[TP]
+    original: Graph[T],
+    matches: Iterable[dict[TP, T]],
+    interface_nodes: Iterable[TP],
 ) -> Iterator[dict[TP, T]]:
     """Yield all matches that do produce dangling edges and do not overlap with previous matches.
 
@@ -193,4 +196,32 @@ class SingleNewNameGenerator:
         new_name = self._registry.get_unique_name(name)
         self.memory[name] = new_name
         self._reversed[new_name] = name
+        return new_name
+
+
+class NameRegistry:
+    def __init__(self):
+        self._registry = {}
+
+    def _get_name_count(self, name):
+        return self._registry.get(name, 0)
+
+    def prepopulate(self, names):
+        for name in names:
+            match = re.match(r"(.+)_(\d+)$", name)
+            suffix = 0
+            if match:
+                name = match.group(1)
+                suffix = int(match.group(2))
+            suffix = max(suffix, self._get_name_count(name))
+            self._registry[name] = suffix
+        return self
+
+    def get_unique_name(self, name):
+        if name not in self._registry:
+            self._registry[name] = 0
+            return name
+
+        new_name = f"{name}_{self._registry[name] + 1}"
+        self._registry[name] += 1
         return new_name
