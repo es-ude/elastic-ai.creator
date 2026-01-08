@@ -359,9 +359,9 @@ class PatternRule[N: Node, E: Edge, G: DataGraph]:
         rewritten = graph.graph
         full_replacement_map = {}
         for match, replacement in zip(matches, replacements):
-            rewritten, replacement_map = rewrite(
-                replacement=replacement.graph,
-                original=rewritten,
+            rewritten, replacement_map = rewrite(  # type: ignore
+                replacement=replacement.graph,  # type: ignore
+                original=rewritten,  # type: ignore
                 match=match,
                 lhs={x: x for x in self._spec.interface},
                 rhs={x: x for x in self._spec.interface},

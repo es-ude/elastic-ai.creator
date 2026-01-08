@@ -1,8 +1,8 @@
-from collections.abc import Iterable, Iterator, Mapping
-from typing import Hashable, TypeVar
+from collections.abc import Collection, Iterable, Iterator, Mapping
+from typing import Hashable, Protocol, Self, TypeVar
 
-from .graph import Graph
 from .name_generation import NameRegistry
+from .vf2.graph import Graph
 
 
 class DanglingEdgeError(Exception):
@@ -32,7 +32,9 @@ TP = TypeVar("TP", bound=Hashable)
 
 
 def get_rewriteable_matches(
-    original: Graph[T], matches: Iterable[dict[TP, T]], interface_nodes: Iterable[TP]
+    original: Graph[T],
+    matches: Iterable[dict[TP, T]],
+    interface_nodes: Iterable[TP],
 ) -> Iterator[dict[TP, T]]:
     """Yield all matches that do produce dangling edges and do not overlap with previous matches.
 
@@ -86,10 +88,19 @@ def produces_dangling_edge(
     return False
 
 
+class _Graph(Graph[str], Protocol):
+    def new(self) -> Self: ...
+    @property
+    def nodes(self) -> Collection[str]: ...
+    def add_node(self, node: str) -> None: ...
+    def iter_edges(self) -> Iterable[tuple[str, str]]: ...
+    def add_edge(self, src: str, dst: str) -> None: ...
+
+
 def rewrite(
     *,
-    replacement: Graph[str],
-    original: Graph[str],
+    replacement: _Graph,
+    original: _Graph,
     match: Mapping[str, str],
     lhs: Mapping[str, str],
     rhs: Mapping[str, str],
@@ -135,7 +146,7 @@ def rewrite(
     interface_nodes_in_pattern = set(lhs.values())
     interface_nodes_in_graph = set(match[node] for node in interface_nodes_in_pattern)
 
-    new_graph: Graph = original.new()
+    new_graph: _Graph = original.new()
     nodes_to_be_removed = set(match.values()) - set(interface_nodes_in_graph)
     nodes_to_keep = set(original.nodes) - nodes_to_be_removed
     name_registry = SingleNewNameGenerator(NameRegistry().prepopulate(nodes_to_keep))
