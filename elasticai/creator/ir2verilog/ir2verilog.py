@@ -165,7 +165,7 @@ def type_handler(
     name = _check_and_get_fn_name(name, fn)
 
     def load_into(lower: Ir2Verilog) -> None:
-        lower.register(name)(fn)
+        lower.register(name)(fn)  # ty: ignore
 
     return pl.make_plugin_symbol(load_into, fn)
 
@@ -177,6 +177,6 @@ def type_handler_iterable(
     name = _check_and_get_fn_name(name, fn)
 
     def load_into(lower: Ir2Verilog) -> None:
-        lower.register_iterable(name)(fn)
+        lower.register_iterable(name)(fn)  # ty: ignore
 
     return pl.make_plugin_symbol(load_into, fn)
