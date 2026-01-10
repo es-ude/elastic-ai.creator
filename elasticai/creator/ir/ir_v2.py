@@ -1,4 +1,4 @@
-from .attribute import Attribute, AttributeMapping
+from .attribute import Attribute, AttributeMapping, attribute
 from .datagraph import DataGraph, Edge, Node
 from .datagraph_impl import (
     DataGraphImpl,
@@ -33,6 +33,7 @@ __all__ = [
     "IrSerializer",
     "Registry",
     "is_registry",
+    "attribute",
     "mark_as_registry",
     "Graph",
     "GraphImpl",
