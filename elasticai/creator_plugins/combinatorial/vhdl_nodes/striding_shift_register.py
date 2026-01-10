@@ -1,4 +1,4 @@
-from elasticai.creator.ir2vhdl import VhdlNode
+from elasticai.creator.ir2vhdl import Node as VhdlNode
 
 from .node_factory import (
     InstanceFactoryForCombinatorial,

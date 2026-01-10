@@ -1,40 +1,22 @@
 from collections.abc import Callable
+from itertools import chain
 from typing import ParamSpec
 
-import elasticai.creator.function_dispatch as F
-import elasticai.creator.plugin as _pl
-from elasticai.creator.ir2vhdl import (
-    Edge,
-    Implementation,
-    LoweringPass,
-    Shape,
-    edge,
-    vhdl_node,
-)
-from elasticai.creator.ir2vhdl import (
-    VhdlNode as Node,
-)
+import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator.ir2vhdl import Node, Shape, factory
+from elasticai.creator.translation_pass_plugin import type_handler
 
 from .filter_params import FilterParameters
 from .index_generators import GroupedFilterIndexGenerator
 
 P = ParamSpec("P")
 
-
-@F.registrar
-def _type_handler(
-    name: str | None, fn: Callable[[Implementation], Implementation]
-) -> _pl.PluginSymbol:
-    if name is None:
-        name = fn.__name__
-
-    def load_into(lower: LoweringPass[Implementation, Implementation]):
-        lower.register(name, fn)
-
-    return _pl.make_plugin_symbol(load_into, fn)
+type InDGraph = ir.DataGraph[ir.Node, ir.Edge]
+type InRegistry = ir.Registry[InDGraph]
+type Registry = ir.Registry[ir.DataGraph]
 
 
-def append_counter_suffix_before_construction(
+def append_counter_suffix_before_construction[**P](
     fn: Callable[P, Node],
 ) -> Callable[P, Node]:
     counters: dict[str, int] = {}
@@ -43,6 +25,7 @@ def append_counter_suffix_before_construction(
         nonlocal counters
         if "name" in kwargs:
             name = kwargs["name"]
+            kwargs.pop("name")
             if not isinstance(name, str):
                 raise TypeError("expected `name` to be of type str")
         elif isinstance(args[0], str):
@@ -52,23 +35,25 @@ def append_counter_suffix_before_construction(
 
         count = counters.get(name, 0)
         counters[name] = count + 1
-        kwargs["name"] = f"{name}_i{count}"
+
+        new_name = f"{name}_i{count}"
+        args = tuple(chain((new_name,), args[1:]))  # type: ignore
         node = fn(*args, **kwargs)
         return node
 
     return construct
 
 
-@_type_handler()
-def grouped_filter(impl: Implementation) -> Implementation:
-    nc: Callable = append_counter_suffix_before_construction(vhdl_node)
-    result: Implementation[Node, Edge] = Implementation(
-        name=impl.name, type="unclocked_combinatorial", data={}
-    )
+@type_handler()
+def grouped_filter(
+    impl: InDGraph, registry: InRegistry
+) -> tuple[ir.DataGraph, InRegistry]:
+    nc = append_counter_suffix_before_construction(factory.node)
+    result = factory.graph(type="unclocked_combinatorial")
     params = FilterParameters.from_dict(impl.attributes["filter_parameters"])
-    result.add_node(
-        vhdl_node(
-            name="input",
+    result = result.add_node(
+        factory.node(
+            "input",
             type="input",
             implementation="",
             input_shape=Shape(params.in_channels, params.kernel_size),
@@ -96,7 +81,7 @@ def grouped_filter(impl: Implementation) -> Implementation:
     for kernel, wires_per_step in zip(kernels, g.as_tuple_by_groups()):
         wires = wires_per_step[0]
         node = nc(
-            name=kernel,
+            kernel,
             type="unclocked_combinatorial",
             implementation=kernel,
             input_shape=Shape(
@@ -106,18 +91,16 @@ def grouped_filter(impl: Implementation) -> Implementation:
                 params.out_channels_per_group,
             ),
         )
-        result.add_node(node)
-        result.add_edge(
-            edge(
-                src="input",
-                dst=node.name,
+        result = result.add_node(node)
+        result = result.add_edges(
+            factory.edge(
+                "input",
+                node.name,
                 src_dst_indices=tuple(zip(wires, range(len(wires)))),
-            )
-        )
-        result.add_edge(
-            edge(
-                src=node.name,
-                dst="output",
+            ),
+            factory.edge(
+                node.name,
+                "output",
                 src_dst_indices=(
                     f"range(0, {params.out_channels_per_group})",
                     f"range({output_offset}, {output_offset + params.out_channels_per_group})",
@@ -126,13 +109,13 @@ def grouped_filter(impl: Implementation) -> Implementation:
         )
         output_offset += params.out_channels_per_group
 
-    result.add_node(
-        vhdl_node(
-            name="output",
+    result = result.add_node(
+        factory.node(
+            "output",
             type="output",
             implementation="",
             input_shape=Shape(params.out_channels, 1),
             output_shape=Shape(params.out_channels, 1),
         )
     )
-    return result
+    return result, registry

@@ -2,7 +2,9 @@ import re
 
 import pytest
 
-from elasticai.creator.ir2vhdl import Shape, VhdlNode
+import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator.ir2vhdl import Node as VhdlNode
+from elasticai.creator.ir2vhdl import Shape, factory
 
 from ..vhdl_nodes.node_factory import (
     InstanceFactoryForCombinatorial,
@@ -24,11 +26,16 @@ def new_node(
 ) -> VhdlNode:
     if attributes is None:
         attributes = {}
-    n = VhdlNode(
-        name=name, data=dict(type=type, implementation=implementation, **attributes)
+    n = factory.node(
+        name,
+        ir.attribute(
+            dict(**attributes),
+        ),
+        type=type,
+        implementation=implementation,
+        input_shape=input_shape,
+        output_shape=output_shape,
     )
-    n.input_shape = input_shape
-    n.output_shape = output_shape
 
     return n
 
@@ -46,8 +53,8 @@ class TestStridingShiftRegister:
             implementation="striding_shift_register",
             input_shape=conv0_out_shape,
             output_shape=conv1_in_shape,
+            attributes=dict(stride=2),
         )
-        n.data["stride"] = 2
         return n
 
     def test_can_instantiate(self, node, raw_node):

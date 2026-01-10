@@ -1,6 +1,7 @@
 import warnings
 
-from elasticai.creator.ir2vhdl import Instance, VhdlNode
+from elasticai.creator.ir2vhdl import Instance
+from elasticai.creator.ir2vhdl import Node as VhdlNode
 
 from .clocked_combinatorial import ClockedInstance
 from .node_factory import (

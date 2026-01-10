@@ -1,7 +1,8 @@
 from collections.abc import Callable, Iterator, Sequence
 from itertools import chain
 
-from elasticai.creator.ir2vhdl import Implementation, type_handler
+import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator.ir2vhdl import DataGraph, type_handler
 
 from .combinatorial import wrap_in_architecture
 from .language import Port, VHDLEntity
@@ -10,7 +11,9 @@ from .wiring import connect_data_signals
 
 
 @type_handler()
-def unclocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
+def unclocked_combinatorial(
+    impl: DataGraph, registry: ir.Registry
+) -> tuple[str, Sequence[str]]:
     def _generate_entity(name, input_size, output_size):
         entity = VHDLEntity(
             name=name,
@@ -30,7 +33,7 @@ def unclocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
 
 
 def combinatorial(
-    impl: Implementation, entity_fn: Callable[[str, int, int], VHDLEntity]
+    impl: DataGraph, entity_fn: Callable[[str, int, int], VHDLEntity]
 ) -> Iterator[str]:
     name = impl.name
     nodes = []

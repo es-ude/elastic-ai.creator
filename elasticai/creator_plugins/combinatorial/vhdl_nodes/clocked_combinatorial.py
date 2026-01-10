@@ -6,7 +6,9 @@ from elasticai.creator.ir2vhdl import (
     LogicVectorSignal,
     NullDefinedLogicSignal,
     Signal,
-    VhdlNode,
+)
+from elasticai.creator.ir2vhdl import (
+    Node as VhdlNode,
 )
 
 from .node_factory import (
@@ -14,7 +16,7 @@ from .node_factory import (
 )
 
 
-@InstanceFactoryForCombinatorial.register
+@InstanceFactoryForCombinatorial.register()
 def clocked_combinatorial(node):
     return ClockedInstance(
         node, input_width=node.input_shape.size(), output_width=node.output_shape.size()

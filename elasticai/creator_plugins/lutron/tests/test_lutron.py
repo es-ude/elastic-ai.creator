@@ -1,24 +1,27 @@
-from elasticai.creator.ir2vhdl import Implementation
+import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator.ir2vhdl import factory
 from elasticai.creator_plugins.lutron.lutron import lutron
 
 
 def test_can_generate_vhdl_for_lutron():
-    impl = Implementation(
+    impl = factory.graph(
+        ir.attribute(
+            {
+                "input_size": 2,
+                "output_size": 2,
+                "truth_table": (
+                    ("00", "11"),
+                    ("01", "10"),
+                    ("10", "01"),
+                    ("11", "11"),
+                ),
+            }
+        ),
         name="lut_0",
         type="lutron",
-        data={
-            "input_size": 2,
-            "output_size": 2,
-            "truth_table": (
-                ("00", "11"),
-                ("01", "10"),
-                ("10", "01"),
-                ("11", "11"),
-            ),
-        },
     )
-    _, lines = lutron(impl)
-    vhdl = tuple(map(str.strip, lines))
+    _, lines = lutron(impl, ir.Registry())
+    vhdl = tuple((line.strip() for line in lines))
     expected = (
         "library ieee;",
         "use ieee.std_logic_1164.all;",

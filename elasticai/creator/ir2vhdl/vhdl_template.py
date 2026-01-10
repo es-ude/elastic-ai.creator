@@ -26,11 +26,11 @@ class EntityTemplateParameter(AnalysingTemplateParameter):
         )
         self.regex = "<none>"
 
-    def analyse(self, m: dict[str, str]) -> None:
-        original_name = m["param"]
+    def analyse(self, match: dict[str, str]) -> None:
+        original_name = match["param"]
         self.regex = r"\b{original_name}\b".format(original_name=original_name)
 
-    def replace(self, m: dict[str, str]) -> str:
+    def replace(self, match: dict[str, str]) -> str:
         return "$entity"
 
 

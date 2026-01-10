@@ -1,10 +1,11 @@
 import importlib.resources as res
 from string import Template
 
+import elasticai.creator.ir.ir_v2 as ir
 from elasticai.creator.ir2vhdl import (
     Code,
+    DataGraph,
     EntityTemplateDirector,
-    Implementation,
     Ir2Vhdl,
     PluginSymbol,
 )
@@ -16,13 +17,10 @@ class _BufferedNetworkWrapper(PluginSymbol):
     def __init__(self, template: Template):
         self._template = template
 
-    def __call__(self, args: Implementation) -> Code:
-        def _iter():
-            yield self._template.substitute(
-                dict(entity=args.name) | args.attributes["generic_map"]
-            )
-
-        return args.name, _iter()
+    def __call__(self, args: DataGraph, registry: ir.Registry) -> Code:
+        return args.name, self._template.substitute(
+            dict(entity=args.name) | args.attributes["generic_map"]
+        )
 
     @classmethod
     def load_into(cls, receiver: Ir2Vhdl) -> None:

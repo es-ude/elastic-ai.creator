@@ -1,7 +1,8 @@
 from itertools import chain
 from typing import TypeAlias
 
-from elasticai.creator.ir2vhdl import Code, Implementation, type_handler
+import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator.ir2vhdl import Code, DataGraph, type_handler
 
 from .language import Port, VHDLEntity
 
@@ -9,9 +10,11 @@ IOPair: TypeAlias = tuple[tuple[int, ...], tuple[int, ...]]
 
 
 @type_handler()
-def lutron(lowered: Implementation) -> Code:
+def lutron(lowered: DataGraph, registry: ir.Registry) -> Code:
     def _iter():
-        name: str = lowered.name
+        if "name" not in lowered.attributes:
+            raise Exception("no name for lutron")
+        name: str = lowered.attributes["name"]
         d_in_width: int = lowered.attributes["input_size"]
         d_out_width: int = lowered.attributes["output_size"]
         io_pairs: tuple[IOPair, ...] = lowered.attributes["truth_table"]

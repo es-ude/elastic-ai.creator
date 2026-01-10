@@ -2,10 +2,9 @@ from typing import Any
 
 from pytest import fixture
 
-from elasticai.creator.graph.base_graph import BaseGraph
+import elasticai.creator.ir.ir_v2 as ir
 from elasticai.creator.ir2vhdl import (
-    Edge,
-    Implementation,
+    DataGraph,
     Instance,
     LogicSignal,
     LogicVectorSignal,
@@ -13,61 +12,48 @@ from elasticai.creator.ir2vhdl import (
     PortMap,
     Shape,
     Signal,
-    VhdlNode,
-    vhdl_node,
+    factory,
 )
+
+ir_factory = factory
 
 
 @fixture
-def impl() -> Implementation:
-    impl: Implementation[VhdlNode, Edge] = Implementation(
-        name="conv1",
-        type="conv",
-        data={"a": 1},
+def impl() -> DataGraph:
+    return ir_factory.graph(ir.attribute(type="conv", a=1)).add_node(
+        ir_factory.node("x", type="y")
     )
-    impl.add_node(
-        VhdlNode(name="x", data=dict(type="y")),
-    )
-    return impl
 
 
 @fixture
 def data() -> dict[str, Any]:
     return {
-        "name": "conv1",
-        "type": "conv",
+        "attributes": {"type": "conv", "a": 1},
         "nodes": {
             "x": {"type": "y"},
         },
-        "edges": {},
-        "a": 1,
+        "edges": {"x": {}},
     }
 
 
-def test_store_as_dict(data, impl):
-    assert data == impl.as_dict()
-
-
-def test_load_from_dict(data):
-    assert data == Implementation(graph=BaseGraph()).load_from_dict(data).as_dict()
-
-
 def test_can_access_attributes_of_vhdl_node():
-    n = VhdlNode(name="a", data={"type": "b", "implementation": "c", "stride": 2})
-    n.input_shape = Shape(1)
-    n.output_shape = Shape(2)
+    n = ir_factory.node("a", ir.attribute(stride=2), type="b", implementation="c")
+    n = ir_factory.node(
+        n.name, n.attributes, input_shape=Shape(1), output_shape=Shape(2)
+    )
     assert n.attributes["stride"] == 2
+    assert n.input_shape == Shape(1)
+    assert n.output_shape == Shape(2)
 
 
 class TestInstance:
     def test_instantiate(self):
-        n = vhdl_node(
-            name="my_component",
+        n = ir_factory.node(
+            "my_component",
             type="my_type",
             implementation="my_implementation",
             input_shape=Shape(2, 8),
             output_shape=Shape(2),
-            attributes={},
         )
         my_instance = Instance(
             n,
@@ -93,13 +79,12 @@ class TestInstance:
         assert expected == tuple(my_instance.instantiate())
 
     def test_can_instantiate_with_two_generics(self):
-        n = vhdl_node(
-            name="my_component",
+        n = ir_factory.node(
+            "my_component",
             type="my_type",
             implementation="my_implementation",
             input_shape=Shape(2, 8),
             output_shape=Shape(2),
-            attributes={},
         )
         my_instance = Instance(
             n,
@@ -147,11 +132,13 @@ class TestLogicVectorSignal:
         code = 'signal d_in: std_logic_vector(3 downto 0) := "0000";'
         signal = Signal.from_code(code)
         assert signal.name == "d_in"
+        assert isinstance(signal, LogicVectorSignal)
         assert signal.width == 4
 
     def test_can_create_from_signal_with_arith_expr(self):
         code = 'signal d_in: std_logic_vector(3 - 1 downto 0) := "000";'
         signal = Signal.from_code(code)
+        assert isinstance(signal, LogicVectorSignal)
         assert signal.width == 3
 
     def test_can_define(self):

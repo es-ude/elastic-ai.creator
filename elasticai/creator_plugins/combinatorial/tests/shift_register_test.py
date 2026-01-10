@@ -1,13 +1,12 @@
 from collections.abc import Iterable
 
-from elasticai.creator.ir2vhdl import Shape
-from elasticai.creator.ir2vhdl import VhdlNode as Node
+from elasticai.creator.ir2vhdl import Shape, factory
 from elasticai.creator_plugins.combinatorial.vhdl_nodes import shift_register
 
 
 def extract_code_section(lines: Iterable[str], start: str, end: str):
     section_is_relevant = False
-    lines = map(str.strip, lines)
+    lines = (line.strip() for line in lines)
     lines = tuple(lines)
     for line in lines:
         if not section_is_relevant and line.startswith(start):
@@ -23,14 +22,12 @@ def test_shift_register_converts_depth_and_width_to_correct_generics():
     conv1_kernel_size = 3
     conv0_out_shape = Shape(conv0_channels, 1)
     conv1_in_shape = Shape(conv0_channels, conv1_kernel_size)
-    n = Node(
-        name="sr0",
-        data=dict(
-            type="shift_register",
-            implementation="",
-            input_shape=conv0_out_shape.to_tuple(),
-            output_shape=conv1_in_shape.to_tuple(),
-        ),
+    n = factory.node(
+        "sr0",
+        type="shift_register",
+        implementation="",
+        input_shape=conv0_out_shape,
+        output_shape=conv1_in_shape,
     )
     sr = shift_register(n)
     entity = tuple(extract_code_section(sr.instantiate(), start="generic", end=")"))
