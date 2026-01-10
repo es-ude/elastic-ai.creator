@@ -1,10 +1,11 @@
 import importlib.resources as res
 from string import Template
 
+import elasticai.creator.ir.ir_v2 as ir
 from elasticai.creator.ir2vhdl import (
     Code,
+    DataGraph,
     EntityTemplateDirector,
-    Implementation,
     Ir2Vhdl,
     PluginSymbol,
 )
@@ -21,13 +22,10 @@ class _Skeleton(PluginSymbol):
     def __init__(self, template: Template):
         self._template = template
 
-    def __call__(self, arg: Implementation) -> Code:
-        def _iter():
-            yield self._template.substitute(
-                arg.attributes["generic_map"] | dict(entity=arg.name)
-            )
-
-        return arg.name, _iter()
+    def __call__(self, arg: DataGraph, registry: ir.Registry) -> Code:
+        return arg.name, self._template.substitute(
+            arg.attributes["generic_map"] | dict(entity=arg.name)
+        )
 
     @classmethod
     def load_into(cls, loader: Ir2Vhdl) -> None:

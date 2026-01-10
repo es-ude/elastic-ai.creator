@@ -1,4 +1,5 @@
-from elasticai.creator.ir2vhdl import Shape, VhdlNode
+import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator.ir2vhdl import Shape, factory
 from elasticai.creator_plugins.combinatorial.vhdl_nodes.striding_shift_register import (
     striding_shift_register,
 )
@@ -12,14 +13,16 @@ def test_shift_register_converts_depth_and_width_to_correct_generics():
     conv0_out_shape = Shape(conv0_channels, 1)
     conv1_in_shape = Shape(conv0_channels, conv1_kernel_size)
     stride = 2
-    n = VhdlNode(
-        name="sr0",
-        data=dict(
-            type="shift_register",
-            implementation="",
-            input_shape=conv0_out_shape.to_tuple(),
-            output_shape=conv1_in_shape.to_tuple(),
-            stride=stride,
+    n = factory.node(
+        "sr0",
+        ir.attribute(
+            dict(
+                type="shift_register",
+                implementation="",
+                input_shape=conv0_out_shape.to_tuple(),
+                output_shape=conv1_in_shape.to_tuple(),
+                stride=stride,
+            )
         ),
     )
     sr = striding_shift_register(n)

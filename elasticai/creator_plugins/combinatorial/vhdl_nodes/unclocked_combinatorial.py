@@ -1,6 +1,7 @@
 from typing import Any, Callable
 
-from elasticai.creator.ir2vhdl import Instance, LogicVectorSignal, VhdlNode
+from elasticai.creator.ir2vhdl import Instance, LogicVectorSignal
+from elasticai.creator.ir2vhdl import Node as VhdlNode
 
 from .node_factory import (
     InstanceFactoryForCombinatorial,
@@ -11,7 +12,7 @@ from .node_factory import (
 @InstanceFactoryForCombinatorial.register("input")
 @InstanceFactoryForCombinatorial.register("lutron")
 @InstanceFactoryForCombinatorial.register()
-def unclocked_combinatorial(node):
+def unclocked_combinatorial(node: VhdlNode):
     return UnclockedInstance(node)
 
 

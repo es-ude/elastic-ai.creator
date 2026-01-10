@@ -1,8 +1,9 @@
 from collections.abc import Sequence
 from itertools import chain
 
+import elasticai.creator.ir.ir_v2 as ir
 from elasticai.creator import graph as gr
-from elasticai.creator.ir2vhdl import Implementation, type_handler
+from elasticai.creator.ir2vhdl import DataGraph, type_handler
 
 from .combinatorial import (
     build_data_signal_connections_for_combinatorial,
@@ -13,8 +14,18 @@ from .combinatorial import (
 from .language import Port, VHDLEntity
 
 
+def _is_clocked_node(node):
+    return node.type in [
+        "striding_shift_register",
+        "sliding_window",
+        "shift_register",
+    ]
+
+
 @type_handler()
-def clocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
+def clocked_combinatorial(
+    impl: DataGraph, registry: ir.Registry
+) -> tuple[str, Sequence[str]]:
     def _iter():
         input_size = impl.nodes["input"].input_shape.size()
         output_size = impl.nodes["output"].output_shape.size()
@@ -66,20 +77,15 @@ def clocked_combinatorial(impl: Implementation) -> tuple[str, Sequence[str]]:
     return impl.name, tuple(_iter())
 
 
-def _get_valid_in_out_pairs(impl: Implementation) -> dict[str, str]:
-    def is_clocked(node):
-        return node.type in [
-            "striding_shift_register",
-            "sliding_window",
-            "shift_register",
-        ]
+def _get_valid_in_out_pairs(impl: DataGraph) -> dict[str, str]:
+    is_clocked = _is_clocked_node
 
     def iterate(node: str):
         def pred(node: str):
-            return impl.predecessors(node)
+            return impl.predecessors[node]
 
         def succ(node: str):
-            return impl.successors(node)
+            return impl.successors[node]
 
         for node in gr.bfs_iter_up(successors=succ, predecessors=pred, start=node):
             yield impl.nodes[node]
