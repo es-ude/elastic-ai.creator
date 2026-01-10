@@ -14,10 +14,14 @@ def _register(fn):
 
 @_register
 def linear(impl: Implementation) -> nn.Module:
+    if not hasattr(impl, "data"):
+        attrs = impl.attributes
+    else:
+        attrs = impl.data
     return nn.Linear(
-        in_features=cast(int, impl.data["in_features"]),
-        out_features=cast(int, impl.data["out_features"]),
-        bias=cast(bool, impl.data["bias"]),
+        in_features=cast(int, attrs["in_features"]),
+        out_features=cast(int, attrs["out_features"]),
+        bias=cast(bool, attrs["bias"]),
     )
 
 
@@ -36,7 +40,13 @@ def conv1d(impl: Implementation) -> nn.Conv1d:
         "kernel_size",
         "stride",
     )
-    kwargs = dict(((k, impl.data[k]) for k in keywords))
+
+    def get_attribute(impl, k):
+        if hasattr(impl, "data"):
+            return impl.data[k]
+        return impl.attributes[k]
+
+    kwargs = {k: get_attribute(impl, k) for k in keywords}
     return nn.Conv1d(**kwargs)  # type: ignore
 
 

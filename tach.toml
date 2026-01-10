@@ -137,7 +137,7 @@ depends_on = []
 
 [[modules]]
 path = "elasticai.creator.ir2torch"
-depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.ir"]
+depends_on = ["elasticai.creator.torch2ir", "elasticai.creator.ir", "elasticai.creator.function_dispatch", "elasticai.creator.translation_pass_plugin"]
 
 [[modules]]
 path = "elasticai.creator.torch2ir"
