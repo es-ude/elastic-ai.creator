@@ -1,7 +1,9 @@
+import warnings
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
+from functools import wraps
 from importlib import resources as res
-from typing import Protocol, TypeAlias
+from typing import Any, Protocol, TypeAlias, cast, overload
 
 import elasticai.creator.function_dispatch as F
 from elasticai.creator import graph as g
@@ -109,7 +111,54 @@ class _StaticFile(PluginSymbol):
 TypeHandlerFn: TypeAlias = Callable[[Implementation], Code]
 
 
-@F.registrar
+class _LegacyRegistrar[C: Code | Iterable[Code]](Protocol):
+    @overload
+    def __call__(self) -> "_LegacyRegistrar[C]": ...
+    @overload
+    def __call__(self, fn: Callable[[Implementation], C], /) -> PluginSymbol: ...
+    @overload
+    def __call__(
+        self, name: str | None, fn: Callable[[Implementation], C], /
+    ) -> PluginSymbol: ...
+
+    def __call__(self, *args) -> Any: ...
+
+
+def _legacy_registrar[C: Iterable[Code] | Code](
+    handler_creator: Callable[
+        [str | None, Callable[[Implementation], C]], PluginSymbol
+    ],
+) -> _LegacyRegistrar[C]:
+    registrar = F.registrar(handler_creator)
+
+    @wraps(handler_creator)
+    def wrapper(*args):
+        if len(args) == 1 and callable(args[0]):
+            warnings.warn(
+                "You're using a type handler as `@type_handler` this is deprecated and will be removed in the future. Use `@type_handler()` instead.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+            return handler_creator(
+                args[0].__name__, cast(Callable[[Implementation], C], args[0])
+            )
+        return registrar(*args)
+
+    return cast(_LegacyRegistrar, wrapper)
+
+
+def _check_and_get_fn_name(name: str | None, fn: Callable) -> str:
+    if name is None:
+        if hasattr(fn, "__name__") and isinstance(fn.__name__, str):
+            name = fn.__name__
+        else:
+            raise Exception(
+                "provided type handler has to be a function or named explicitly"
+            )
+    return name
+
+
+@_legacy_registrar
 def type_handler(
     name: str | None, fn: Callable[[Implementation], Code]
 ) -> pl.PluginSymbolFn[Ir2Verilog, [Implementation], Code]:
@@ -121,7 +170,7 @@ def type_handler(
     return pl.make_plugin_symbol(load_into, fn)
 
 
-@F.registrar
+@_legacy_registrar
 def type_handler_iterable(
     name: str | None, fn: Callable[[Implementation], Iterable[Code]]
 ) -> pl.PluginSymbolFn[Ir2Verilog, [Implementation], Iterable[Code]]:
