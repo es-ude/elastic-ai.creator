@@ -206,6 +206,8 @@ skip-magic-trailing-comma = false
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
+[tool.pyrefly]
+search-path = ["elasticai/creator/", "elasticai/creator_plugins"]
 
 [tool.mypy]
 ignore_errors = false
