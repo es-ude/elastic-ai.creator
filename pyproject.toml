@@ -14,7 +14,8 @@ dependencies = [
     "tomlkit>=0.13.2",
     "click>=8.1.7",
     "cocotb>=2.0.0",
-    "pytest>=8.3.4"         # Fix due to wrong linking of pytest in cocotb src files (only used in their test files)
+    "pytest>=8.3.4",    # Fix due to wrong linking of pytest in cocotb src files (only used in their test files)
+    "pyserial>=3.4",    # Add due to RemoteControl, will be removed later
 ]
 
 

@@ -597,6 +597,7 @@ dependencies = [
     { name = "cocotb" },
     { name = "numpy" },
     { name = "pyserial" },
+    { name = "pytest" },
     { name = "tomlkit" },
     { name = "torch" },
 ]
@@ -667,6 +668,7 @@ requires-dist = [
     { name = "cocotb", specifier = ">=2.0.0" },
     { name = "numpy", specifier = ">=1.23.0" },
     { name = "pyserial", specifier = ">=3.4" },
+    { name = "pytest", specifier = ">=8.3.4" },
     { name = "tomlkit", specifier = ">=0.13.2" },
     { name = "torch", specifier = ">=1.11", index = "https://pypi.org/simple" },
 ]
