@@ -13,7 +13,6 @@ dependencies = [
     "numpy>=1.23.0",
     "tomlkit>=0.13.2",
     "click>=8.1.7",
-    "pyserial>=3.4",
     "cocotb>=1.9.2",
 ]
 
