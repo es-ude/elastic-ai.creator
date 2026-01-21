@@ -1,6 +1,63 @@
+## 0.67.0 - 2026-01-21
+
+[0a05b48](0a05b4872da4845078f8482e7339f9d5e00344c7)...[f0e6561](f0e6561d269fd65cd6e674cf89fd0ca9f9a9d1dd)
+
+### Chore
+
+- Force torch cpu backend in ci ([630cc40]( https://github.com/es-ude/elastic-ai.creator/commit/630cc4068ba75bd67cf1784cdca3f5b8d2c491f0)) - [object]
+- Inject torch backend from command line ([080583e]( https://github.com/es-ude/elastic-ai.creator/commit/080583ed45ec961f2c4737e99b68ec581546bc21)) - [object]
+- Use devenv option to select torch.backend during testing ([adbe91b]( https://github.com/es-ude/elastic-ai.creator/commit/adbe91bdb16dc166c799716dab2e45237a09ce92)) - [object]
+- Fix passing torch backend to devenv tasks ([9458a7c]( https://github.com/es-ude/elastic-ai.creator/commit/9458a7c50c653cc36ce68de814174733d2c1167e)) - [object]
+- Update devenv version ([b8dc026]( https://github.com/es-ude/elastic-ai.creator/commit/b8dc0265f74f72d6977e539f4442b228ca8b4ca7)) - [object]
+- Build docs in cpu torch backend environment ([ebc23de]( https://github.com/es-ude/elastic-ai.creator/commit/ebc23de4cef019462c5e92d23af7dca663419e21)) - [object]
+- Make graph.Graph abstract and segregate ReadOnlyGraph ([2c7a673]( https://github.com/es-ude/elastic-ai.creator/commit/2c7a673f98495fb3735cd7afa470f0910865acb3)) - [object]
+- Remove deprecated `graph.GraphRewriter` ([39ec8b2]( https://github.com/es-ude/elastic-ai.creator/commit/39ec8b20d2646f8d225138fa6f47da0fa6462f3d)) - [object]
+- Replace potentially existing UV_INDEX ([ae0a469]( https://github.com/es-ude/elastic-ai.creator/commit/ae0a469bc217072ce7349feb273b558787ab455e)) - [object]
+- Remove deprecated ir_transforms module ([bc4125f]( https://github.com/es-ude/elastic-ai.creator/commit/bc4125f47fffda6d0d73a64a95a9c7e20580fa83)) - [object]
+- Track .devenv.flake.nix ([2461179]( https://github.com/es-ude/elastic-ai.creator/commit/24611799a4cdb9c08e16dce384c7adc0e08d9aa1)) - [object]
+- Stop tracking .devenv.flake.nix ([748bced]( https://github.com/es-ude/elastic-ai.creator/commit/748bced28d1433bf69fb47f2bc85649441e3e80d)) - [object]
+- Remove elasticai.tester package ([be947ef]( https://github.com/es-ude/elastic-ai.creator/commit/be947ef1aac362b0bd17fd828ff51a75467023f9)) - [object]
+- Bump cocotb version to 2.0 ([f0e6561]( https://github.com/es-ude/elastic-ai.creator/commit/f0e6561d269fd65cd6e674cf89fd0ca9f9a9d1dd)) - [object]
+
+### Docs
+
+- Correct mistake in required field docstring ([1a01c5c]( https://github.com/es-ude/elastic-ai.creator/commit/1a01c5c3141a6ed9fe0f8ac15d2a24dd787d70c4)) - [object]
+- Encourage building templates once ([c0b6a80]( https://github.com/es-ude/elastic-ai.creator/commit/c0b6a80762f15998866b65704369bfe25a6d58eb)) - [object]
+
+### Feat
+
+- Let user set build folder in cocotb test runner ([ffab96d]( https://github.com/es-ude/elastic-ai.creator/commit/ffab96d57eceb725a8180ef22588d170f4031d61)) - [object]
+- Introduce cocotb_test_fixture ([ec32b36]( https://github.com/es-ude/elastic-ai.creator/commit/ec32b3633deed127e21c44c162267de0bfcc2c66)) - [object]
+- Use hash for generating test data paths based on lists etc ([3b15ea6]( https://github.com/es-ude/elastic-ai.creator/commit/3b15ea6f4eb270272a5b0def48bd8196401aa929)) - [object]
+- Add asymmetric dual port bram ([587e4b5]( https://github.com/es-ude/elastic-ai.creator/commit/587e4b5dabda327959bfa65d854d267349eed85a)) - [object]
+- Implement check func for getting the result state after simulation ([449d445]( https://github.com/es-ude/elastic-ai.creator/commit/449d4456514417edd92762a042a04d21cf0cc0cc)) - [object]
+- Add func to init file ([d40eb8e]( https://github.com/es-ude/elastic-ai.creator/commit/d40eb8eb6461182aaa3fae071b4f98000b987846)) - [object]
+- Overhaul rewrite API ([4f42602]( https://github.com/es-ude/elastic-ai.creator/commit/4f42602eec1709268f13862e482414a6e5dcd42d)) - [object], BREAKING CHANGE:breaks any client that was rewriting implementation
+graphs
+
+### Fix
+
+- Moving runner from cocotb into the func ([db2a74b]( https://github.com/es-ude/elastic-ai.creator/commit/db2a74bb9585dbe6776560c0a57ed0332a572c01)) - [object]
+- Fix linting errors ([42548a7]( https://github.com/es-ude/elastic-ai.creator/commit/42548a71ea009923860bd38257ff6b80acabca15)) - [object]
+- Upgrade funcs to cocotb v2.0.0 (deprecated funcs) ([9c2a4c5]( https://github.com/es-ude/elastic-ai.creator/commit/9c2a4c54e83bf474ae84369999c3bf8950ed80ee)) - [object]
+- Fixing errors in cocotb runner testbench ([8cb950b]( https://github.com/es-ude/elastic-ai.creator/commit/8cb950ba85b39750eedb0f6fe2d6754385b11d6e)) - [object]
+- Add missing `TypeAlias` to `IrDataMeta` implementation ([d99d269]( https://github.com/es-ude/elastic-ai.creator/commit/d99d269bc7decea0b0b6841d2267d4400363f992)) - [object]
+- Stop depending on torch2ir ([9bc40db]( https://github.com/es-ude/elastic-ai.creator/commit/9bc40dbd26ab356ed82a07849451dbda62a1e244)) - [object]
+- Add missing type field to verilog Implementation class ([74d36d4]( https://github.com/es-ude/elastic-ai.creator/commit/74d36d45576a850f7dda7ffb04a100a1c93657e4)) - [object]
+- Add pytest as normal dep for our cocotb fixture ([48698ec]( https://github.com/es-ude/elastic-ai.creator/commit/48698ec03c7169024090a96bde899069af7735b9)) - [object]
+
+### Refactor
+
+- Rename RegisterDescriptor ([74a8d63]( https://github.com/es-ude/elastic-ai.creator/commit/74a8d638a775dea77747974db258c2b3a0707a2b)) - [object]
+- Use Collections instead of Sets for return values of Graph ([c8364d0]( https://github.com/es-ude/elastic-ai.creator/commit/c8364d05326acc00f63ba9fc3af0db73d6ab6265)) - [object]
+
+### Test
+
+- Mark simulation test in plugin correctly as such ([ff68b85]( https://github.com/es-ude/elastic-ai.creator/commit/ff68b85fcd3847462efeaef4dd555f62a49cf6a9)) - [object]
+
 ## 0.66.0 - 2025-09-24
 
-[162c0f6](162c0f6095718a85e8ccdd2c4dd057629326fbad)...[9609d41](9609d41078f294d05393b8f095966dd1a5a511ee)
+[162c0f6](162c0f6095718a85e8ccdd2c4dd057629326fbad)...[0a05b48](0a05b4872da4845078f8482e7339f9d5e00344c7)
 
 ### Chore
 
@@ -31,6 +88,7 @@
 - Removing old FxpConfig and number_conversion due to unified Fxp scheme ([ec91a86]( https://github.com/es-ude/elastic-ai.creator/commit/ec91a8675b9b25658026c6696847afeace515905)) - [object]
 - Removing quantized_grads tests from tests folder (duplicated with same plugin_folder) ([17b73ca]( https://github.com/es-ude/elastic-ai.creator/commit/17b73caa652deb77c44a17de8692aa98b77b36dd)) - [object]
 - Address pr review commit # [feedbac](https://github.com/es-ude/elastic-ai.creator/commit/feedbac)k ([02e583d]( https://github.com/es-ude/elastic-ai.creator/commit/02e583d0742a7749b8a5b9f9f21c3b2c405e2081)) - [object]
+- Bump to v0.66 ([0a05b48]( https://github.com/es-ude/elastic-ai.creator/commit/0a05b4872da4845078f8482e7339f9d5e00344c7)) - [object]
 
 ### Docs
 
@@ -51,8 +109,6 @@
 - Add elasticai tester ([e5656b8]( https://github.com/es-ude/elastic-ai.creator/commit/e5656b86edea110dddb746557ade6c96d601d185)) - [object]
 - Add new scheme for integer and fxp processing ([76caa8f]( https://github.com/es-ude/elastic-ai.creator/commit/76caa8f1e64ae608c5c5ccf2b03a82b1dc35168e)) - [object]
 - Adding tensor building for merging with FixedPointConfigV2 ([15e8661]( https://github.com/es-ude/elastic-ai.creator/commit/15e86610f123783eb008994a02459dc48eb6b1be)) - [object]
-- Let user set build folder in cocotb test runner ([cd65793]( https://github.com/es-ude/elastic-ai.creator/commit/cd65793c2a9fe8ef93ec310ba28a4b5fdfb9aa92)) - [object]
-- Introduce cocotb_test_fixture ([9609d41]( https://github.com/es-ude/elastic-ai.creator/commit/9609d41078f294d05393b8f095966dd1a5a511ee)) - [object]
 
 ### Fix
 
@@ -105,7 +161,8 @@
 - Removing slow marker due to already available simulation marker ([1d7e2ca]( https://github.com/es-ude/elastic-ai.creator/commit/1d7e2ca8536379587b799fc33b0a803fc83de246)) - [object]
 - Add pytest marker for hardware system tests ([878a6b2]( https://github.com/es-ude/elastic-ai.creator/commit/878a6b2fb2c2ca603fb4108fa457bcd9bb0526ee)) - [object]
 - Fixed linter errors ([1351bb4]( https://github.com/es-ude/elastic-ai.creator/commit/1351bb47ea91b06a6dafa4d4fbfa77487c283190)) - [object]
-- Remove dict default args from cocotb runner ([9265523]( https://github.com/es-ude/elastic-ai.creator/commit/92655231d2d303ad42cddaae33aa148da9958580)) - [object]
+- Use correct number of points for shift registers ([fb98f3a]( https://github.com/es-ude/elastic-ai.creator/commit/fb98f3a0ba992a12086497c8d6bf57fc4374f12d)) - [object]
+- Remove dict default args from cocotb runner ([bfc605e]( https://github.com/es-ude/elastic-ai.creator/commit/bfc605e868015387bdcf93176d2b9f4d5a70d3da)) - [object]
 
 ### Refactor
 
