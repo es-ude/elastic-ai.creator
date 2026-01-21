@@ -13,8 +13,8 @@ dependencies = [
     "numpy>=1.23.0",
     "tomlkit>=0.13.2",
     "click>=8.1.7",
-    "pyserial>=3.4",
-    "cocotb>=1.9.2",
+    "cocotb>=2.0.0",
+    "pytest>=8.3.4"         # Fix due to wrong linking of pytest in cocotb src files (only used in their test files)
 ]
 
 
@@ -69,9 +69,11 @@ lsp = [
     "python-lsp-server>=1.12.0",
 ]
 
+
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
 
 [tool.hatch.build.targets.wheel]
 packages = ["elasticai"]
@@ -105,6 +107,7 @@ sphinxcontrib-wavedrom = { git = "https://github.com/glencoe/sphinx-wavedrom.git
 vunit-hdl = { url = "https://github.com/glencoe/vunit/releases/download/5.0.0.dev7-no-tests/vunit_hdl-5.0.0.dev7.tar.gz" }
 torch = [{ index = "pytorch" }]
 
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 markers = [
@@ -115,6 +118,7 @@ markers = [
 testpaths = ["elasticai/creator/", "tests", "elasticai/creator_plugins"]
 python_files = ["*_test.py", "test_*.py"]
 addopts = "--import-mode=importlib"
+
 
 [tool.coverage.run]
 omit = [

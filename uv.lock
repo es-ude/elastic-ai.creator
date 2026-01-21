@@ -664,7 +664,7 @@ versioning = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
-    { name = "cocotb", specifier = ">=1.9.2" },
+    { name = "cocotb", specifier = ">=2.0.0" },
     { name = "numpy", specifier = ">=1.23.0" },
     { name = "pyserial", specifier = ">=3.4" },
     { name = "tomlkit", specifier = ">=0.13.2" },
@@ -2725,7 +2725,7 @@ wheels = [
 
 [[package]]
 name = "sphinxcontrib-wavedrom"
-version = "0.1.dev148+g8b315a2"
+version = "0.1.dev148+g8b315a2ac"
 source = { git = "https://github.com/glencoe/sphinx-wavedrom.git?rev=hotfix_html_only_version#8b315a2ac01c92c3de24681cb7c0d37e444955e9" }
 dependencies = [
     { name = "cairosvg" },
