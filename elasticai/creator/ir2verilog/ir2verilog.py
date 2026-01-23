@@ -1,20 +1,22 @@
-import warnings
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from functools import wraps
 from importlib import resources as res
-from typing import Any, Protocol, TypeAlias, cast, overload
+from itertools import starmap
+from typing import TypeAlias
 
-import elasticai.creator.function_dispatch as F
-from elasticai.creator import graph as g
-from elasticai.creator import ir
+import elasticai.creator.function_dispatch as FD
 from elasticai.creator import plugin as pl
-from elasticai.creator.ir import Edge as Edge
+from elasticai.creator._hdl_ir import (
+    DataGraph,
+    IrFactory,
+    NonIterableTypeHandler,
+    Registry,
+    TypeHandler,
+    _check_and_get_name_fn,
+)
+from elasticai.creator.ir import ir_v2 as ir
 
-
-class Node(ir.Node):
-    implementation: str
-
+factory = IrFactory()
 
 Code: TypeAlias = tuple[str, Sequence[str]]
 
@@ -25,34 +27,69 @@ class PluginSpec(pl.PluginSpec):
     static_files: tuple[str, ...]
 
 
-class Implementation(ir.Implementation[Node, ir.Edge]):
-    type: str
-
-    def __init__(self, *, graph: g.Graph[str], data: dict[str, ir.Attribute]):
-        super().__init__(graph=graph, data=data)
-
-
-class Ir2Verilog(ir.LoweringPass[Implementation, Code]):
+class Ir2Verilog:
     def __init__(self) -> None:
-        super().__init__()
         self.__static_files: dict[str, Callable[[], str]] = {}
-        self._loader = PluginLoader(self)
 
-    def register_static(self, name: str, fn: Callable[[], str]) -> None:
-        self.__static_files[name] = fn
-
-    def __call__(self, args: Iterable[Implementation]) -> Iterator[Code]:
-        for name, content in super().__call__(args):
-            yield f"{name}.v", content
+    def __call__(
+        self, root: DataGraph, registry: Registry, default_root_name="root"
+    ) -> Iterable[Code]:
+        registry = self._give_names_to_registry_graphs(registry)
+        if "name" not in root.attributes:
+            root = root.with_attributes(root.attributes | dict(name=default_root_name))
+        yield from self._handle_type(root, registry)
+        for g in registry.values():
+            for name, code in self._handle_type(g, registry):
+                yield f"{name}.v", code
         for name, fn in self.__static_files.items():
             yield name, fn()
 
-    def load_from_package(self, package: str) -> None:
-        self._loader.load_from_package(package)
+    def _give_names_to_registry_graphs(self, registry: Registry) -> Registry:
+        def give_name(name: str, g: DataGraph) -> tuple[str, DataGraph]:
+            if "name" not in g.attributes:
+                return name, g.with_attributes(g.attributes | dict(name=name))
+            return name, g
+
+        return ir.Registry(starmap(give_name, registry.items()))
+
+    @FD.dispatch_method(str)
+    def _handle_type(
+        self, fn: TypeHandler, graph: DataGraph, registry: Registry
+    ) -> Iterable[Code]:
+        return fn(graph, registry)
+
+    @_handle_type.key_from_args
+    def _get_key(self, graph: DataGraph, registry: Registry) -> str:
+        return graph.type
+
+    @staticmethod
+    def _check_and_get_name(name: str | None, fn: Callable) -> str:
+        return _check_and_get_name_fn(name, fn)
+
+    @FD.registrar_method
+    def register_static(
+        self, name: str | None, fn: Callable[[], str]
+    ) -> Callable[[], str]:
+        self.__static_files[self._check_and_get_name(name, fn)] = fn
+        return fn
+
+    @FD.registrar_method
+    def register(self, name: str | None, fn: TypeHandler) -> TypeHandler:
+        name = self._check_and_get_name(name, fn)
+        self._handle_type.register(name, fn)
+        return fn
+
+    @FD.registrar_method
+    def override(self, name: str | None, fn: TypeHandler) -> TypeHandler:
+        name = self._check_and_get_name(name, fn)
+        self._handle_type.override(name, fn)
+        return fn
 
 
-class PluginSymbol(pl.PluginSymbol[Ir2Verilog], Protocol):
-    pass
+type PluginSymbol = pl.PluginSymbolFn[Ir2Verilog, [DataGraph, Registry], Code]
+type PluginSymbolIter = pl.PluginSymbolFn[
+    Ir2Verilog, [DataGraph, Registry], Iterable[Code]
+]
 
 
 class PluginLoader(pl.PluginLoader[Ir2Verilog]):
@@ -78,12 +115,12 @@ class PluginLoader(pl.PluginLoader[Ir2Verilog]):
         super().load_from_package(package)
 
     @staticmethod
-    def __get_generated(plugin: PluginSpec) -> Iterator[PluginSymbol]:
+    def __get_generated(plugin: PluginSpec) -> Iterator[pl.PluginSymbol]:
         if plugin.target_runtime == "verilog":
             yield from pl.import_symbols(plugin.package, plugin.generated)
 
 
-class _StaticFile(PluginSymbol):
+class _StaticFile(pl.PluginSymbol[Ir2Verilog]):
     _subfolder = "verilog"
 
     def __init__(self, name: str, package: str):
@@ -108,75 +145,26 @@ class _StaticFile(PluginSymbol):
         return file.read_text()
 
 
-TypeHandlerFn: TypeAlias = Callable[[Implementation], Code]
-
-
-class _LegacyRegistrar[C: Code | Iterable[Code]](Protocol):
-    @overload
-    def __call__(self) -> "_LegacyRegistrar[C]": ...
-    @overload
-    def __call__(self, fn: Callable[[Implementation], C], /) -> PluginSymbol: ...
-    @overload
-    def __call__(
-        self, name: str | None, fn: Callable[[Implementation], C], /
-    ) -> PluginSymbol: ...
-
-    def __call__(self, *args) -> Any: ...
-
-
-def _legacy_registrar[C: Iterable[Code] | Code](
-    handler_creator: Callable[
-        [str | None, Callable[[Implementation], C]], PluginSymbol
-    ],
-) -> _LegacyRegistrar[C]:
-    registrar = F.registrar(handler_creator)
-
-    @wraps(handler_creator)
-    def wrapper(*args):
-        if len(args) == 1 and callable(args[0]):
-            warnings.warn(
-                "You're using a type handler as `@type_handler` this is deprecated and will be removed in the future. Use `@type_handler()` instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            return handler_creator(
-                args[0].__name__, cast(Callable[[Implementation], C], args[0])
-            )
-        return registrar(*args)
-
-    return cast(_LegacyRegistrar, wrapper)
-
-
-def _check_and_get_fn_name(name: str | None, fn: Callable) -> str:
-    if name is None:
-        if hasattr(fn, "__name__") and isinstance(fn.__name__, str):
-            name = fn.__name__
-        else:
-            raise Exception(
-                "provided type handler has to be a function or named explicitly"
-            )
-    return name
-
-
-@_legacy_registrar
-def type_handler(
-    name: str | None, fn: Callable[[Implementation], Code]
-) -> pl.PluginSymbolFn[Ir2Verilog, [Implementation], Code]:
-    name = _check_and_get_fn_name(name, fn)
+@FD.registrar
+def type_handler(name: str | None, fn: NonIterableTypeHandler) -> PluginSymbol:
+    name = _check_and_get_name_fn(name, fn)
 
     def load_into(lower: Ir2Verilog) -> None:
-        lower.register(name)(fn)  # ty: ignore
+        def wrapper(*args, **kwargs):
+            yield fn(*args, **kwargs)
+
+        lower.register(name, wrapper)
 
     return pl.make_plugin_symbol(load_into, fn)
 
 
-@_legacy_registrar
-def type_handler_iterable(
-    name: str | None, fn: Callable[[Implementation], Iterable[Code]]
-) -> pl.PluginSymbolFn[Ir2Verilog, [Implementation], Iterable[Code]]:
-    name = _check_and_get_fn_name(name, fn)
+@FD.registrar
+def type_handler_iterable(name: str | None, fn: TypeHandler) -> PluginSymbolIter:
+    name = _check_and_get_name_fn(name, fn)
+    if name is None:
+        name = fn.__name__
 
     def load_into(lower: Ir2Verilog) -> None:
-        lower.register_iterable(name)(fn)  # ty: ignore
+        lower.register(name, fn)
 
     return pl.make_plugin_symbol(load_into, fn)

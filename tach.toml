@@ -181,9 +181,8 @@ path = "elasticai.creator.ir2verilog"
 depends_on = [
     'elasticai.creator.ir',
     'elasticai.creator.plugin',
-    'elasticai.creator.graph',
     'elasticai.creator.template',
-    "elasticai.creator.function_dispatch",
+    "elasticai.creator.function_dispatch", "elasticai.creator._hdl_ir",
 ]
 
 [[modules]]

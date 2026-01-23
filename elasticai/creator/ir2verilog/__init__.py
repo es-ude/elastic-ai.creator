@@ -1,9 +1,12 @@
+from elasticai.creator._hdl_ir import Edge, Node, Shape, ShapeTuple
+
 from .ir2verilog import (
     Code,
-    Edge,
-    Implementation,
+    DataGraph,
     Ir2Verilog,
-    Node,
+    PluginLoader,
+    Registry,
+    factory,
     type_handler,
     type_handler_iterable,
 )
@@ -13,9 +16,12 @@ __all__ = [
     "Ir2Verilog",
     "type_handler",
     "type_handler_iterable",
+    "Shape",
+    "ShapeTuple",
+    "Registry",
+    "DataGraph",
     "Node",
     "Edge",
-    "Implementation",
     "Code",
     "TemplateDirector",
     "VerilogTemplate",
