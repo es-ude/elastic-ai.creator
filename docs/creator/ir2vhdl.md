@@ -66,29 +66,8 @@ relevant parameters and the structure of the network.
 
     classDiagram
       direction LR
-      class Node {
-        +str name
-        +str type
-        +dict attributes
-      }
+      
 
-      class Edge {
-        +str src
-        +str dst
-        +dict attributes
-      }
-
-      class Graph {
-        +dict[str, Node] nodes
-        +dict[tuple[str, str], Edge] edges
-        +add_node(Node n)
-        +add_edge(Edge e)
-        +get_successors(str name)
-        +get_predecessors(str name)
-      }
-
-      Graph *-- Node
-      Graph *-- Edge
 
     class neural_network["neural_network :Graph"]
 
@@ -137,10 +116,7 @@ relevant parameters and the structure of the network.
     conv_0 --> linear_0 : Edge
     linear_0 --> output : Edge
 ```
-:::{caution}
-As most nodes have input and output shapes, we are considering making
-those members required fields for the `Node` data class.
-:::
+
 
 This representation will be consumed by a lowering pass. The lowering
 pass will transform the high-level IR into a lower-level IR. Depending
@@ -157,9 +133,8 @@ complex. The result could look like this
 
 ``` json
 
-[
-  {
-    "name": "neural_network",
+{
+ "neural_network": {
     "type": "clocked_combinatorial",
     "attributes": {
       "runtime_input_shape": [2, 4],
@@ -167,38 +142,32 @@ complex. The result could look like this
       "top_stride": 1,
       "runtime_output_shape": [1, 1]
     },
-    "nodes": [
-      {
-        "name": "input",
+    "nodes": {
+      "input": {
         "type": "input",
-        "implementation": ""
       },
-      {
-        "name": "conv_0_i0",
+      "conv_0_i0": {
         "type": "mac",
         "implementation": "conv_0",
         "input_shape": [2, 2],
         "output_shape": [1, 1]
       },
-      {
-        "name": "conv_0_i1",
+      "conv_0_i1": {
         "type": "mac",
         "implementation": "conv_0",
         "input_shape": [2, 2],
         "output_shape": [1, 1]
       },
-      {
-        "name": "linear_0_i0",
+      "linear_0_i0": {
         "type": "mac",
         "implementation": "linear_0",
         "input_shape": [2, 1],
         "output_shape": [1, 1]
       }
-    ],
-    "edges": [
-      {
-        "src": "input",
-        "dst": "conv_0_i0",
+    },
+    "edges": {
+      "input": {
+       "conv_0_i0" : {
         "src_dst_indices": [
           [0, 0],
           [1, 1],
@@ -206,50 +175,42 @@ complex. The result could look like this
           [3, 3]
         ]
       },
-      {
-        "src": "input",
-        "dst": "conv_0_i1",
+       "conv_0_i1": {
         "src_dst_indices": [
           [2, 0],
           [3, 1],
           [4, 2],
           [5, 3]
         ]
-      },
-      {
-        "src": "conv_0_i0",
-        "dst": "linear_0_i0",
+      }}
+        "conv_0_i0": {
+        "linear_0_i0": {
         "src_dst_indices": [[0, 0]]
-      },
-      {
-        "src": "conv_0_i1",
-        "dst": "linear_0_i0",
+      }},
+     "conv_0_i1": {
+        "linear_0_i0": {
         "src_dst_indices": [[0, 1]]
-      },
-      {
-        "src": "linear_0",
-        "dst": "output",
+      }},
+       "linear_0": {
+        "output": {
         "src_dst_indices": [[0, 0]]
-      }
-    ]
+      }}
   },
-  {
-    "name": "conv_0",
+  "conv_0":{
     "type": "mac",
     "weight": [[1.0, 0.0, 1.0, 0.1]],
     "bias": [],
-    "nodes": [],
-    "edges": []
+    "nodes": {},
+    "edges": {}
   },
-  {
-    "name": "linear_0",
+  "linear_0": {
     "type": "mac",
     "weight": [[1.0], [0.0]],
     "bias": [],
-    "nodes": [],
-    "edges": []
+    "nodes": {},
+    "edges": {}
   }
-]
+ }
 ```
 
 Several noteworthy things happened in this lowering pass:

@@ -24,7 +24,7 @@ We define the following terms
 
 * Graph: The graph $G$ is a tuple of nodes $N_G$ and edges $E_G$. Many
     lowering passes will require the graph to hold additional
-    attributes. Finally, each graph features an input and output node
+    attributes. Finally, most graphs feature an input and output node
     with the same name and type respectively. Any node that is not
     transitively connected as a source (i.e., by an outgoing edge) to
     the output node is considered a **dead node**. A node not connected
@@ -91,7 +91,7 @@ The design goals for the python implementation of nodes and edges are
 
 -   support for static type checking and custom data types
 
--   extension or creation of new node and edge types with minimal
+-   extension or creation of new node and edge types with little
     boilerplate code
 
 -   easy inspection of the underlying data
@@ -102,175 +102,61 @@ The design goals for the python implementation of nodes and edges are
 :::{note}
 Third party solutions like protobuf or pydantic have been considered,
 but finally they are either too complicated (protobuf) or do not fulfill
-all our requirements: pydantic does not offer read/write access to
+all our requirements: pydantic does not offer read access to
 underlying fields through descriptors that model more complex custom
 data types.
 :::
 
-## `IrData`
 
-These goals are realized by the `IrData` class. Its metaclass,
-`IrDataMeta`, customizes the object creation process, by inspecting type
-annotations. The underlying data structure of each `IrData` subclass is
-a dictionary of json serializable data types. This data structure is
-accessible by the attribute `IrData.data`. Inspecting this field will
-always give you the exact representation of the serializable data
-structure, making serialization trivial. By inspecting the type
-annotations of the given class attributes, the metaclass will turn these
-class attributes into corresponding fields that provide type safe access
-to the underlying `.data`.
+```mermaid
+classDiagram
 
-``` python
-from elasticai.creator.ir import IrData
+class Graph {
+    + successors: Mapping[str, AttributeMapping]
+    + predecessors: Mapping[str, AttributeMapping]
+    + add_node(name: str): Self
+    + add_edge(src: str, dst: str, attributes: AttributeMapping): Self
+}
 
-class MyNode(IrData):
-  name: str
-  type: str
+class DataGraph~N: Node, E: Edge~ {
+    + nodes: Mapping[str, N]
+    + node_attributes: Mapping[str, AttributeMapping]
+    + edges: Mapping[tuple[str, str], E]
+    + add_node(name: str, attribute: AttributeMapping): Self
+    + add_node(node: Node): Self
+    + attributes: AttributeMapping
+    + with_attributes(attrs: AttributeMapping): Graph
+    + factory: NodeEdgeFactory~N, E~
+}
 
+class Node {
+    + type: str
+    + name: str
+    + attributes: AttributeMapping
+}
 
-n = MyNode(dict(   # <1>
-    name="my_node",
-    type="my_type"
-))
-n.name = "new_name"  # <2>
-print(n.data)   # <3>
+class Edge {
+    + src: str
+    + dst: str
+    + attributes: AttributeMapping
+}
+
+class NodeEdgeFactory~N: Node, E: Edge~ {
+    + node(name: str, attributes: AttributeMapping): N
+    + edge(src: str, dst: str, attributes: AttributeMapping): E
+}
+
+class IrFactory~N: Node, E: Edge, G: DataGraph~ {
+    + graph(attributes: AttributeMapping) -> G
+}
+
+DataGraph --|> Graph
+DataGraph --> Node
+DataGraph --> Edge
+DataGraph --> NodeEdgeFactory
+
 ```
 
-1.  The default constructor takes a dictionary
-
-2.  This will be correctly picked up by *mypy*
-
-3.  Prints `{name="new_name", type="my_type"}`
-
-:::{important}
-Opposed to python dataclasses we do not generate a constructor based on
-the provided class attributes. If you want a constructor with type hint
-support you have to provide your own. Type checkers handle dataclasses
-in a special way which is incompatible with some other features of
-`IrDataMeta`.
-:::
-
-During lowering and transformation passes you often have to deal with
-complex data, like filter parameters, shape tuples and more. To
-accommodate handling this data it is necessary to access fields as
-custom objects with type hints and docstrings. The
-`elasticai.creator.ir` package provides a few descriptors to realize
-that. Descriptors are a python concept, that allows to customize read
-and write access to an objects attributes. The provided descriptors will
-serialize and deserialize the underlying data on the fly.
-
-While this introduces more overhead than a serialization on demand,
-e.g., in a `asdict` method, the approach has two significant advantages
-
--   serialization and deserialization will fail immediately
-
--   we can construct a new object using another one as a prototype,
-    e.g., we could use the `.data` of a `Node` to construct a `VhdlNode`
-    and add missing fields afterward.
-
-    :::{note}
-    You can use `IrData.get_missing_required_fields()` to get a list of
-    all fields that have been defined in the class definition but are
-    missing from the underlying `.data`.
-    :::
-
-As an example the definition of the `VhdlNode` in
-`elasticai.creator.ir2vhdl` looks similar to this
-
-**simplified implementation of the `VhdlNode`**
-
-``` python
-from elasticai.creator.ir import IrData, RequiredField
-from typing import TypeAlias
-
-ShapeTuple: TypeAlias = tuple[int, int]
-
-class Shape:
-    def __init__(self, length, channels):
-        self.length = length
-        self.channels = channels
-
-    def to_tuple(self) -> ShapeTuple:
-        return self.length, self.channels
-
-    @classmethod
-    def from_tuple(cls, t: tuple[int, int]) -> "Shape":
-        return Shape(t[0], t[1])
-
-class ShapeField(RequiredField[ShapeTuple, Shape]):
-    def __init__(self):
-        super().__init__(
-            set_convert=lambda x: x.to_tuple(),
-            get_convert=Shape.from_tuple
-        )
-
-
-class VhdlNode(IrData):
-    name: str
-    type: str
-    implementation: str
-    input_shape: RequiredField[ShapeTuple, Shape] = ShapeField()
-    output_shape: RequiredField[ShapeTuple, Shape] = ShapeField()
-```
-
-::: caution
-The implementation of `Shape` in the example above, will create a copy
-of the data that was stored in the node. That means
-
-``` python
-n = VhdlNode(dict(
-    name="x", type="t",
-    implementation="impl",
-    input_shape=(1, 2),
-    output_shape=(3, 4)
-))
-n.input_shape.length = 5  # WRONG!
-n.input_shape = Shape(length=5,
-    channels=n.input_shape.channels)  # CORRECT!
-```
-
-1.  The value is not written into the underlying `.data` because
-    accessing `input_shape` will return an independent `Shape` object.
-
-2.  This will create a new `Shape` object and write it into the
-    `input_shape` field and therefore into the `.data` dictionary.
-
-This is not a limitation of the `IrData` class but of the
-`RequiredField`. To change the node's `.data` field, the shape would
-have to keep a reference to it. `RequiredField` is not passing that
-reference though.
-
-Introducing a new type of field, that passes the reference to the
-conversion functions would (if implemented properly) allow for nested
-`IrData` objects. If you need this feature, please open an issue.
-:::
-
-## High Level IR Types
-
-While the exact types and parameters of IR data types is often highly
-dependent on the target (e.g., vhdl vs c), the purpose of the
-high level IR is solely to describe the neural network and not to
-specify its implementation. As such, we can define IR data types for
-a concrete set of components.
-
-Note that each of the types below represents a layer instead of an operator,
-i.e. we consider them to be mappings from the example space $X$ instead of
-example and parameter space $X \times \Omega$
-
-### Convolution
-
-Input tensors should be structured as `[L, C]`, with
-
-* `L`: length of each example
-* `C`: number of channels of each example
-
-#### Parameters
-
-  * `weight`: Nested array of floats. The dimensions depend on `in_channels`, `out_channels`, `kernel_size`
-  * `bias`: Nested array of floats. The dimensions depend on `out_channels`. Is an empty array if no bias should be used.
-  * `in_channels`: `int`
-  * `out_channels`: `int`
-  * `kernel_size`: `int`
-  * `padding`: `str`
-  * `padding_value`: `float`
-  * `groups`: `int`
+Typically the IR you will be dealing with needs to be
+problem specific though. Have a look at the `ir2vhdl`
+module for an example of problem specific IR data types.
