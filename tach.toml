@@ -33,8 +33,7 @@ depends_on = [
     "elasticai.creator.ir",
     "elasticai.creator.plugin",
     "elasticai.creator.template",
-    "elasticai.creator.function_dispatch",
-    "elasticai.creator._hdl_ir",
+    "elasticai.creator.function_dispatch", "elasticai.creator.hdl_ir",
 ]
 
 [[modules]]
@@ -200,7 +199,7 @@ depends_on = [
     'elasticai.creator.ir',
     'elasticai.creator.plugin',
     'elasticai.creator.template',
-    "elasticai.creator.function_dispatch", "elasticai.creator._hdl_ir",
+    "elasticai.creator.function_dispatch", "elasticai.creator.hdl_ir",
 ]
 
 [[modules]]
@@ -215,15 +214,9 @@ path = "elasticai.creator.translation_pass_plugin"
 depends_on = ["elasticai.creator.plugin", "elasticai.creator.function_dispatch"]
 
 [[modules]]
-path = "elasticai.creator._hdl_ir"
+path = "elasticai.creator.hdl_ir"
 depends_on = ["elasticai.creator.ir"]
 
 [[modules]]
 path = "<root>"
-depends_on = [
-    "elasticai.creator.nn",
-    "elasticai.creator.nn.fixed_point",
-    "elasticai.creator.base_modules",
-    "elasticai.creator.vhdl",
-    "elasticai.creator.file_generation",
-]
+depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules", "elasticai.creator.vhdl", "elasticai.creator.nn"]

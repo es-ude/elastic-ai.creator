@@ -6,7 +6,7 @@ from typing import TypeAlias
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import plugin as pl
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     DataGraph,
     IrFactory,
     NonIterableTypeHandler,

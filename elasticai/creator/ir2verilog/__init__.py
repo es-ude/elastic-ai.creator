@@ -1,4 +1,4 @@
-from elasticai.creator._hdl_ir import Edge, Node, Shape, ShapeTuple
+from elasticai.creator.hdl_ir import Edge, Node, Shape, ShapeTuple
 
 from .ir2verilog import (
     Code,
@@ -22,6 +22,8 @@ __all__ = [
     "PluginLoader",
     "Registry",
     "DataGraph",
+    "PluginLoader",
+    "factory",
     "Node",
     "Edge",
     "Code",

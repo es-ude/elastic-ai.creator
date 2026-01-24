@@ -8,7 +8,7 @@ from typing import Iterator, TypeAlias
 
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.plugin as _pl
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     Code,
     DataGraph,
     Node,
@@ -18,19 +18,19 @@ from elasticai.creator._hdl_ir import (
     TypeHandler,
     _check_and_get_name_fn,
 )
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     Edge as Edge,
 )
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     EdgeImpl as EdgeImpl,
 )
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     IrFactory as IrFactory,
 )
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     NodeImpl as NodeImpl,
 )
-from elasticai.creator._hdl_ir import (
+from elasticai.creator.hdl_ir import (
     ShapeTuple as ShapeTuple,
 )
 from elasticai.creator.ir import ir_v2 as ir
