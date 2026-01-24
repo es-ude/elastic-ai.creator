@@ -174,7 +174,6 @@ path = "elasticai.creator_plugins.grouped_filter"
 depends_on = [
     "elasticai.creator.ir2vhdl",
     "elasticai.creator.ir",
-    "elasticai.creator.translation_pass_plugin",
 ]
 
 [[modules]]
@@ -184,7 +183,6 @@ depends_on = [
     "elasticai.creator_plugins.grouped_filter",
     "elasticai.creator.ir",
     "elasticai.creator.graph",
-    "elasticai.creator.translation_pass_plugin",
 ]
 
 [[modules]]
@@ -206,10 +204,6 @@ path = "elasticai.creator.arithmetic"
 [[modules]]
 path = "elasticai.creator.function_dispatch"
 depends_on = []
-
-[[modules]]
-path = "elasticai.creator.translation_pass_plugin"
-depends_on = ["elasticai.creator.plugin", "elasticai.creator.function_dispatch"]
 
 [[modules]]
 path = "elasticai.creator.hdl_ir"

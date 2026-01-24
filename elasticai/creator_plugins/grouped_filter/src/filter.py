@@ -3,8 +3,7 @@ from itertools import chain
 from typing import ParamSpec
 
 import elasticai.creator.ir.ir_v2 as ir
-from elasticai.creator.ir2vhdl import Node, Shape, factory
-from elasticai.creator.translation_pass_plugin import type_handler
+from elasticai.creator.ir2vhdl import Node, Shape, factory, type_handler
 
 from .filter_params import FilterParameters
 from .index_generators import GroupedFilterIndexGenerator

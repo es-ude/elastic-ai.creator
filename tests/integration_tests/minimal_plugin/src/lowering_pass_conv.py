@@ -1,28 +1,30 @@
 from collections.abc import Callable
-from typing import TypeAlias
-
-import elasticai.creator.function_dispatch as F
-import elasticai.creator.plugin as pl
-from elasticai.creator.ir import LoweringPass as _LoweringPass
+from typing import Protocol
 
 from .convolution import DummyLowerable
 
-LoweringPass: TypeAlias = _LoweringPass[DummyLowerable, str]
-LoweringFn: TypeAlias = Callable[[DummyLowerable], str]
-SymbolFn: TypeAlias = pl.PluginSymbolFn[LoweringPass, [DummyLowerable], str]
+
+class Translator(Protocol):
+    def register(self, name: str) -> Callable: ...
 
 
-@F.registrar
-def type_handler(name: str | None, fn: LoweringFn) -> SymbolFn:
-    if name is None:
-        name = fn.__name__
+class LoweringPassPluginSymbol:
+    def __init__(self, fn: Callable[[DummyLowerable], str]):
+        self._fn = fn
 
-    def load_into(lower: LoweringPass) -> None:
-        lower.register(name)(fn)
+    def load_lowering_pass_test(self, receiver: Translator) -> None:
+        receiver.register(self._fn.__name__)(self._fn)
 
-    return pl.make_plugin_symbol(load_into, fn)
+    def __call__(self, x: DummyLowerable) -> str:
+        return self._fn(x)
 
 
-@type_handler()
+def make_plugin_symbol(
+    fn: Callable[[DummyLowerable], str],
+) -> LoweringPassPluginSymbol:
+    return LoweringPassPluginSymbol(fn)
+
+
+@make_plugin_symbol
 def lowering_pass_conv(x: DummyLowerable) -> str:
     return "_".join(x.more_data)

@@ -54,8 +54,6 @@ def test_using_two_clocked_components_connects_their_valid_signals():
     result = clocked_combinatorial(impl, ir.Registry())
     _, lines = result
     lines = set(l.lstrip() for l in lines)
-    for line in lines:
-        if line.startswith("valid"):
-            print(line)
+
     valid_ins = [line for line in lines if line.startswith("valid_in")]
     assert "valid_in_shift_register <= valid_out_sliding_window;" in valid_ins
