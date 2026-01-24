@@ -1,4 +1,3 @@
-from collections.abc import Mapping
 from dataclasses import dataclass
 from inspect import signature as _signature
 
@@ -24,7 +23,7 @@ class PluginSpec:
     package: str
 
 
-type PluginMap = Mapping[str, str | tuple[str, ...] | PluginMap]
+type PluginMap = dict[str, str | list[str] | PluginMap]
 
 
 def build_plugin_spec[SpecT: PluginSpec](d: PluginMap, spec_type: type[SpecT]) -> SpecT:

@@ -1,11 +1,12 @@
+import warnings
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from importlib import resources as res
 from itertools import starmap
-from typing import TypeAlias
+from typing import Any, Protocol, TypeAlias, override
 
 import elasticai.creator.function_dispatch as FD
-from elasticai.creator import plugin as pl
+from elasticai.creator import plugin as _pl
 from elasticai.creator.hdl_ir import (
     DataGraph,
     IrFactory,
@@ -15,6 +16,7 @@ from elasticai.creator.hdl_ir import (
     _check_and_get_name_fn,
 )
 from elasticai.creator.ir import ir_v2 as ir
+from elasticai.creator.plugin import PluginLoaderBase, StaticFileBase
 
 factory = IrFactory()
 
@@ -22,7 +24,7 @@ Code: TypeAlias = tuple[str, Sequence[str]]
 
 
 @dataclass
-class PluginSpec(pl.PluginSpec):
+class PluginSpec(_pl.PluginSpec):
     generated: tuple[str, ...]
     static_files: tuple[str, ...]
 
@@ -86,41 +88,60 @@ class Ir2Verilog:
         return fn
 
 
-type PluginSymbol = pl.PluginSymbolFn[Ir2Verilog, [DataGraph, Registry], Code]
-type PluginSymbolIter = pl.PluginSymbolFn[
-    Ir2Verilog, [DataGraph, Registry], Iterable[Code]
-]
+class PluginSymbol(Protocol):
+    def load_verilog(self, receiver: Ir2Verilog) -> None: ...
 
 
-class PluginLoader(pl.PluginLoader[Ir2Verilog]):
+class _StaticFileSymbol:
+    def __init__(self, file: StaticFileBase):
+        self._file = file
+
+    def load_verilog(self, receiver: Ir2Verilog) -> None:
+        receiver.register_static(self._file.name, self._file.get_content)
+
+
+class PluginLoader(PluginLoaderBase):
     """PluginLoader for Ir2Verilog passes."""
 
     def __init__(self, lowering: Ir2Verilog):
-        builder: pl.SymbolFetcherBuilder[PluginSpec, Ir2Verilog] = (
-            pl.SymbolFetcherBuilder(PluginSpec)
-        )
-        fetcher: pl.SymbolFetcher[Ir2Verilog] = (
-            builder.add_fn(self.__get_generated)
-            .add_fn(_StaticFile.make_symbols)
-            .build()
-        )
-        super().__init__(
-            fetch=fetcher,
-            plugin_receiver=lowering,
-        )
+        self._receiver = lowering
+        super().__init__(PluginSpec)
 
-    def load_from_package(self, package: str) -> None:
-        if "." not in package:
-            package = f"elasticai.creator_plugins.{package}"
-        super().load_from_package(package)
+    @override
+    def filter_plugin_dicts(
+        self, plugins: Iterable[dict[str, Any]]
+    ) -> Iterable[dict[str, Any]]:
+        for p in plugins:
+            if p["target_runtime"] == "verilog":
+                yield p
 
-    @staticmethod
-    def __get_generated(plugin: PluginSpec) -> Iterator[pl.PluginSymbol]:
-        if plugin.target_runtime == "verilog":
-            yield from pl.import_symbols(plugin.package, plugin.generated)
+    @override
+    def load_symbol(self, symbol: PluginSymbol) -> None:
+        if hasattr(symbol, "load_verilog"):
+            symbol.load_verilog(self._receiver)
+        elif hasattr(symbol, "load_into"):
+            warnings.warn(
+                "Loading legacy plugin symbol, this behaviour will be removed in the future ensure your plugin symbol provides a load_verilog method",
+                stacklevel=2,
+                category=DeprecationWarning,
+            )
+            symbol.load_into(self._receiver)
+        else:
+            raise TypeError("Failed to load plugin symbol")
+
+    @override
+    def get_symbols(self, specs: Iterable[PluginSpec]) -> Iterable[PluginSymbol]:
+        for spec in specs:
+            yield from _pl.import_symbols(spec.package, spec.generated)
+            for static_name in spec.static_files:
+                yield _StaticFileSymbol(
+                    _pl.StaticFileBase(
+                        name=static_name, package=spec.package, subfolder="verilog"
+                    )
+                )
 
 
-class _StaticFile(pl.PluginSymbol[Ir2Verilog]):
+class _StaticFile:
     _subfolder = "verilog"
 
     def __init__(self, name: str, package: str):
@@ -131,11 +152,11 @@ class _StaticFile(pl.PluginSymbol[Ir2Verilog]):
     def name(self) -> str:
         return self._name
 
-    def load_into(self, receiver: Ir2Verilog):
+    def load_verilog(self, receiver: Ir2Verilog):
         receiver.register_static(self.name, self)
 
     @classmethod
-    def make_symbols(cls, p: PluginSpec) -> Iterator[pl.PluginSymbol[Ir2Verilog]]:
+    def make_symbols(cls, p: PluginSpec) -> Iterator[PluginSymbol]:
         if p.target_runtime == cls._subfolder:
             for name in p.static_files:
                 yield cls(name=name, package=p.package)
@@ -146,7 +167,9 @@ class _StaticFile(pl.PluginSymbol[Ir2Verilog]):
 
 
 @FD.registrar
-def type_handler(name: str | None, fn: NonIterableTypeHandler) -> PluginSymbol:
+def type_handler(
+    name: str | None, fn: NonIterableTypeHandler
+) -> NonIterableTypeHandler:
     name = _check_and_get_name_fn(name, fn)
 
     def load_into(lower: Ir2Verilog) -> None:
@@ -155,11 +178,12 @@ def type_handler(name: str | None, fn: NonIterableTypeHandler) -> PluginSymbol:
 
         lower.register(name, wrapper)
 
-    return pl.make_plugin_symbol(load_into, fn)
+    setattr(fn, "load_verilog", load_into)
+    return fn
 
 
 @FD.registrar
-def type_handler_iterable(name: str | None, fn: TypeHandler) -> PluginSymbolIter:
+def type_handler_iterable(name: str | None, fn: TypeHandler) -> TypeHandler:
     name = _check_and_get_name_fn(name, fn)
     if name is None:
         name = fn.__name__
@@ -167,4 +191,5 @@ def type_handler_iterable(name: str | None, fn: TypeHandler) -> PluginSymbolIter
     def load_into(lower: Ir2Verilog) -> None:
         lower.register(name, fn)
 
-    return pl.make_plugin_symbol(load_into, fn)
+    setattr(fn, "load_verilog", load_into)
+    return fn

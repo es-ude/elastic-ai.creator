@@ -6,7 +6,7 @@ from hypothesis import given
 from torch.nn import Linear, ReLU, Sequential
 
 import elasticai.creator.torch2ir.default_handlers as t2ir_handlers
-from elasticai.creator.ir2torch import Ir2TorchTranslationPass as Ir2Torch
+from elasticai.creator.ir2torch import Ir2Torch
 from elasticai.creator.ir2torch.default_handlers import linear, relu
 from elasticai.creator.torch2ir import Torch2IrTranslator as Torch2Ir
 

@@ -1,26 +1,33 @@
 from collections.abc import Callable
 from typing import Protocol
 
-from elasticai.creator.ir import Lowerable, LoweringPass
-from elasticai.creator.plugin import PluginSymbol
 
-
-class DummyLowerable(Lowerable, Protocol):
+class DummyLowerable(Protocol):
     more_data: list[str]
 
 
-class CallablePluginSymbol(PluginSymbol):
+class Translator(Protocol):
+    def register(self, name: str, fn: Callable) -> Callable: ...
+
+
+class CallablePluginSymbol:
     def __init__(self, fn: Callable[[DummyLowerable], str]):
         self._fn = fn
 
-    def load_into(self, receiver: LoweringPass) -> None:
-        receiver.register(self._fn.__name__)(self._fn)
+    def load_vhdl(self, receiver: Translator) -> None:
+        receiver.register(self._fn.__name__, self._fn)
+
+    def load_minimal(self, receiver: Translator) -> None:
+        receiver.register(self._fn.__name__, self._fn)
+
+    def load_other(self, receiver: Translator) -> None:
+        receiver.register("other_" + self._fn.__name__, self._fn)
 
     def __call__(self, x: DummyLowerable) -> str:
         return self._fn(x)
 
 
-def make_plugin_symbol(fn: Callable[[DummyLowerable], str]) -> PluginSymbol:
+def make_plugin_symbol(fn: Callable[[DummyLowerable], str]) -> CallablePluginSymbol:
     return CallablePluginSymbol(fn)
 
 

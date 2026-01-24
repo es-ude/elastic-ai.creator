@@ -1,10 +1,10 @@
-import importlib.resources as res
+import warnings
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from itertools import starmap
-from typing import Iterator, TypeAlias
+from typing import Any, Iterator, Protocol, override
 
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.plugin as _pl
@@ -34,6 +34,7 @@ from elasticai.creator.hdl_ir import (
     ShapeTuple as ShapeTuple,
 )
 from elasticai.creator.ir import ir_v2 as ir
+from elasticai.creator.plugin import PluginLoaderBase, StaticFileBase
 
 
 @dataclass
@@ -363,65 +364,61 @@ class InstanceFactory:
         return self._handle_type(node)
 
 
-PluginSymbol: TypeAlias = _pl.PluginSymbolFn[Ir2Vhdl, [DataGraph, Registry], Code]
-PluginSymbolIter: TypeAlias = _pl.PluginSymbolFn[
-    Ir2Vhdl, [DataGraph, Registry], Iterable[Code]
-]
+class PluginSymbol(Protocol):
+    def load_vhdl(self, receiver: Ir2Vhdl) -> None: ...
 
 
-class PluginLoader(_pl.PluginLoader[Ir2Vhdl]):
-    """Plugin loader for ir2vhdl translation."""
+class _StaticFileSymbol:
+    def __init__(self, file: StaticFileBase):
+        self._file = file
+
+    def load_vhdl(self, receiver: Ir2Vhdl) -> None:
+        receiver.register_static(self._file.name, self._file.get_content)
+
+
+class PluginLoader(PluginLoaderBase):
+    """PluginLoader for Ir2Vhdl passes."""
 
     def __init__(self, lowering: Ir2Vhdl):
-        builder: _pl.SymbolFetcherBuilder[PluginSpec, Ir2Vhdl] = (
-            _pl.SymbolFetcherBuilder(PluginSpec)
-        )
-        fetcher: _pl.SymbolFetcher[Ir2Vhdl] = (
-            builder.add_fn(self.__get_generated)
-            .add_fn(_StaticFile.make_symbols)
-            .build()
-        )
-        super().__init__(
-            fetch=fetcher,
-            plugin_receiver=lowering,
-        )
+        self._receiver = lowering
+        super().__init__(PluginSpec)
 
-    def load_from_package(self, package: str) -> None:
-        if "." not in package:
-            package = f"elasticai.creator_plugins.{package}"
-        super().load_from_package(package)
+    @override
+    def filter_plugin_dicts(
+        self, plugins: Iterable[dict[str, Any]]
+    ) -> Iterable[dict[str, Any]]:
+        for p in plugins:
+            if p["target_runtime"] == "vhdl":
+                yield p
 
-    @staticmethod
-    def __get_generated(plugin: PluginSpec) -> Iterator[_pl.PluginSymbol]:
-        if plugin.target_runtime == "vhdl":
-            yield from _pl.import_symbols(plugin.package, plugin.generated)
+    @override
+    def get_symbols(self, specs: Iterable[PluginSpec]) -> Iterable[PluginSymbol]:
+        for spec in specs:
+            yield from _pl.import_symbols(spec.package, spec.generated)
+            for static_name in spec.static_files:
+                yield _StaticFileSymbol(
+                    StaticFileBase(static_name, spec.package, "vhdl")
+                )
 
-
-class _StaticFile(_pl.PluginSymbol[Ir2Vhdl]):
-    def __init__(self, name: str, package: str):
-        self._name = name
-        self._package = package
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    def load_into(self, receiver: Ir2Vhdl):
-        receiver.register_static(self.name, self)
-
-    @classmethod
-    def make_symbols(cls, p: PluginSpec) -> Iterator[_pl.PluginSymbol[Ir2Vhdl]]:
-        if p.target_runtime == "vhdl":
-            for name in p.static_files:
-                yield cls(name=name, package=p.package)
-
-    def __call__(self) -> str:
-        file = res.files(self._package).joinpath(f"vhdl/{self.name}")
-        return file.read_text()
+    @override
+    def load_symbol(self, symbol: PluginSymbol) -> None:
+        if hasattr(symbol, "load_vhdl"):
+            symbol.load_vhdl(self._receiver)
+        elif hasattr(symbol, "load_into"):
+            warnings.warn(
+                "Loading legacy plugin symbol, this behaviour will be removed in the future ensure your plugin symbol provides a load_vhdl method",
+                stacklevel=2,
+                category=DeprecationWarning,
+            )
+            symbol.load_into(self._receiver)
+        else:
+            raise TypeError("Failed to load plugin symbol")
 
 
 @FD.registrar
-def type_handler(name: str | None, fn: NonIterableTypeHandler) -> PluginSymbol:
+def type_handler(
+    name: str | None, fn: NonIterableTypeHandler
+) -> NonIterableTypeHandler:
     name = _check_and_get_name_fn(name, fn)
 
     def load_into(lower: Ir2Vhdl) -> None:
@@ -430,11 +427,12 @@ def type_handler(name: str | None, fn: NonIterableTypeHandler) -> PluginSymbol:
 
         lower.register(name, wrapper)
 
-    return _pl.make_plugin_symbol(load_into, fn)
+    setattr(fn, "load_vhdl", load_into)
+    return fn
 
 
 @FD.registrar
-def type_handler_iterable(name: str | None, fn: TypeHandler) -> PluginSymbolIter:
+def type_handler_iterable(name: str | None, fn: TypeHandler) -> TypeHandler:
     name = _check_and_get_name_fn(name, fn)
     if name is None:
         name = fn.__name__
@@ -442,4 +440,5 @@ def type_handler_iterable(name: str | None, fn: TypeHandler) -> PluginSymbolIter
     def load_into(lower: Ir2Vhdl) -> None:
         lower.register(name, fn)
 
-    return _pl.make_plugin_symbol(load_into, fn)
+    setattr(fn, "load_vhdl", load_into)
+    return fn

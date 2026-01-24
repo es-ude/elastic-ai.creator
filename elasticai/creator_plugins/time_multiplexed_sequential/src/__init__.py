@@ -4,8 +4,14 @@ from typing import Protocol, cast
 
 import elasticai.creator.ir.ir_v2 as ir
 from elasticai.creator.graph import dfs_iter
-from elasticai.creator.ir2vhdl import DataGraph, IrFactory, Node, Registry, Shape
-from elasticai.creator.translation_pass_plugin import type_handler
+from elasticai.creator.ir2vhdl import (
+    DataGraph,
+    IrFactory,
+    Node,
+    Registry,
+    Shape,
+    type_handler,
+)
 from elasticai.creator_plugins.grouped_filter import FilterParameters
 
 
