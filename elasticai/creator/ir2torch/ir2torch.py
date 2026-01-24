@@ -1,5 +1,6 @@
 import warnings
 from collections.abc import Callable, Iterable
+from itertools import starmap
 from typing import Any, Protocol
 
 import torch.nn as nn
@@ -61,8 +62,19 @@ class IrFactory(ir.IrFactory[ir.Node, ir.Edge, ir.DataGraph]):
         return self._node_edge.edge(src, dst, attributes)
 
     def graph(
-        self, attributes: ir.AttributeMapping = ir.AttributeMapping()
+        self,
+        attributes: ir.AttributeMapping = ir.AttributeMapping(),
+        /,
+        *,
+        graph: ir.DataGraph | None = None,
     ) -> DataGraph:
+        if graph is not None:
+            return _DataGraph(
+                factory=graph.factory,
+                attributes=graph.attributes,
+                graph=graph.graph,
+                node_attributes=graph.node_attributes,
+            )
         return self._graph(attributes)
 
 
@@ -134,10 +146,15 @@ class Ir2TorchTranslationPass(TranslationPass[[DataGraph], nn.Module]):
             from the original model via `nn.Module.state_dict`. As the `Torch2Ir` stage got rid of all
             duplicate submodules, we will strip all unknown keys from the `state_dict` and then load it.
         """
+        factory = IrFactory()
+
         root_module = nn.Module()
-        for name, impl in registry.items():
-            modules = list(self._build_submodule(m) for m in registry.values())
-            assert len(modules) == 1
+
+        def to_new_graph(name, graph):
+            return name, factory.graph(graph=graph)
+
+        for name, impl in starmap(to_new_graph, registry.items()):
+            layer = self._build_submodule(impl)
             last_parent = root_module
             while "." in name:
                 parent_name, name = name.rsplit(".", 1)
@@ -148,7 +165,7 @@ class Ir2TorchTranslationPass(TranslationPass[[DataGraph], nn.Module]):
                 else:
                     current_parent = last_children[parent_name]
                 last_parent = current_parent
-            last_parent.add_module(name, modules[0])
+            last_parent.add_module(name, layer)
 
         graph = fx.Graph()
         nodes: dict[str, fx.Node] = {}
