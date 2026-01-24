@@ -6,9 +6,9 @@ from hypothesis import given
 from torch.nn import Linear, ReLU, Sequential
 
 import elasticai.creator.torch2ir.default_handlers as t2ir_handlers
-from elasticai.creator.ir2torch import Ir2TorchTranslationPass as Ir2Torch
+from elasticai.creator.ir2torch import Ir2Torch
 from elasticai.creator.ir2torch.default_handlers import linear, relu
-from elasticai.creator.torch2ir import Torch2IrTranslator as Torch2Ir
+from elasticai.creator.torch2ir import Torch2Ir
 
 
 def model():
@@ -41,7 +41,7 @@ def ir2torch(ir, state=None):
     translate = Ir2Torch()
     translate.register()(linear)
     translate.register()(relu)
-    return translate(ir[0], ir[1], state)
+    return translate(ir[0], ir[1], state)  # type: ignore
 
 
 @given(st.tuples(st.integers(1, 10), st.integers(1, 10)), st.booleans())
@@ -88,5 +88,4 @@ def test_perform_inference():
     original = model()
     ir = torch2ir(original)
     rebuilt = ir2torch(ir)
-    print(rebuilt.graph)
     rebuilt(torch.randn((1, 1)))

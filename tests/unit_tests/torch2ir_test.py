@@ -5,7 +5,9 @@ import torch
 from torch.nn import Linear, ReLU, Sequential
 
 import elasticai.creator.ir.ir_v2 as ir
-from elasticai.creator.torch2ir import Torch2IrTranslator, get_default_converter
+from elasticai.creator.torch2ir import (
+    Torch2Ir as Torch2IrTranslator,
+)
 from elasticai.creator.torch2ir.default_handlers import batchnorm1d, linear, relu
 
 
@@ -14,16 +16,6 @@ def model():
         Linear(1, 2),
         ReLU(),
     )
-
-
-def convert_legacy(model):
-    ir = get_default_converter().convert(model)
-    ir_dict = {impl.name: impl.as_dict() for impl in ir}
-    for v in ir_dict.values():
-        v.pop("name")
-        if "output" in v["nodes"]:  # type: ignore
-            v["edges"]["output"] = {}  # type: ignore
-    return ir_dict
 
 
 def convert_new(model):
@@ -39,7 +31,7 @@ def convert_new(model):
     return result
 
 
-@pytest.mark.parametrize("convert", [convert_legacy, convert_new])
+@pytest.mark.parametrize("convert", [convert_new])
 def test_convert_linear_without_bias(convert):
     m = Sequential(Linear(1, 2, bias=False))
     with torch.no_grad():
@@ -79,7 +71,7 @@ def test_convert_linear_without_bias(convert):
     }
 
 
-@pytest.mark.parametrize("convert", [convert_legacy, convert_new])
+@pytest.mark.parametrize("convert", [convert_new])
 def test_convert_linear_to_ir(convert):
     m = model()
     with torch.no_grad():
@@ -131,7 +123,7 @@ def test_convert_linear_to_ir(convert):
     }
 
 
-@pytest.mark.parametrize("convert", [convert_legacy, convert_new])
+@pytest.mark.parametrize("convert", [convert_new])
 def test_converting_model_with_batchnorm(convert):
     class Model(torch.nn.Module):
         def __init__(self):
@@ -186,7 +178,7 @@ def test_converting_model_with_batchnorm(convert):
     }
 
 
-@pytest.mark.parametrize("convert", [convert_legacy, convert_new])
+@pytest.mark.parametrize("convert", [convert_new])
 def test_can_handle_same_object_under_different_hierarchy_paths(convert):
     lin = Linear(1, 1)
     model = Sequential(OrderedDict(a=lin, b=lin))  # type: ignore
@@ -230,7 +222,7 @@ def test_can_handle_same_object_under_different_hierarchy_paths(convert):
     }
 
 
-@pytest.mark.parametrize("convert", [convert_legacy, convert_new])
+@pytest.mark.parametrize("convert", [convert_new])
 def test_can_handle_nested_hierarchies(convert):
     model = Sequential(OrderedDict(top=Sequential(OrderedDict(nested=Linear(1, 1)))))  # type: ignore
     assert convert(model) == {

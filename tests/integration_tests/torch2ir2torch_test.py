@@ -10,7 +10,7 @@ from hypothesis.stateful import (
 )
 from torch.nn import Conv1d, Flatten, Linear, ReLU, Sequential, Sigmoid
 
-from elasticai.creator.ir2torch import get_default_converter as ir2torch
+from elasticai.creator.ir2torch import get_default_converter as _ir2torch
 from elasticai.creator.torch2ir import get_default_converter as torch2ir
 
 
@@ -21,8 +21,13 @@ def model():
     )
 
 
+def ir2torch(ir, state=None):
+    ir = list(ir)
+    return _ir2torch()(ir[0], ir[1], state)  # type: ignore
+
+
 def convert(model):
-    return torch2ir().convert(model)
+    return torch2ir()(model)
 
 
 @st.composite
@@ -98,7 +103,7 @@ class BuildModelFromIr(RuleBasedStateMachine):
         original = self.model
         ir = convert(original)
         state = original.state_dict()
-        rebuilt = ir2torch().convert(ir, state)
+        rebuilt = ir2torch(ir, state)
 
         def to_native_python(data) -> dict:
             result = {}
@@ -107,7 +112,7 @@ class BuildModelFromIr(RuleBasedStateMachine):
             return result
 
         original_params = to_native_python(original.named_parameters())
-        rebuilt_params = to_native_python(rebuilt.named_parameters())
+        rebuilt_params = to_native_python(rebuilt.named_parameters())  # type: ignore
         assert original_params == rebuilt_params
         del rebuilt
 
