@@ -52,9 +52,9 @@ class _ModuleOfInstance(tpl.TemplateParameter):
             )
         )
 
-    def replace(self, m: dict[str, str]) -> str:
+    def replace(self, match: dict[str, str]) -> str:
         d = self.delimiter
-        return f"{m['prefix']}{d}{self.name}"
+        return f"{match['prefix']}{d}{self.name}"
 
 
 class _InstanceName(tpl.TemplateParameter):
@@ -67,10 +67,10 @@ class _InstanceName(tpl.TemplateParameter):
             )
         )
 
-    def replace(self, m: dict[str, str]) -> str:
+    def replace(self, match: dict[str, str]) -> str:
         d = self.delimiter
-        pos = m[""].find(self.name)
-        chck = m[""][:pos] + d + m[""][pos:]
+        pos = match[""].find(self.name)
+        chck = match[""][:pos] + d + match[""][pos:]
         return chck
 
 
@@ -80,7 +80,7 @@ class _DefineSwitch(tpl.TemplateParameter):
         self.regex = r"(//+)?\s*`define\s+{name}(?=\s)?".format(name=name)
         self.delimiter = delimiter
 
-    def replace(self, m: dict[str, str]) -> str:
+    def replace(self, match: dict[str, str]) -> str:
         d = self.delimiter
         return f"{d}def{self.name}"
 
@@ -242,7 +242,7 @@ class VerilogTemplate:
             new_params[defname] = f"`define {module_prefix}{name}"
             new_params[name] = f"{module_prefix}{name}"
             if not enabled:
-                new_params[defname] = "//" + cast(str, new_params[defname])
+                new_params[defname] = "//" + new_params[defname]
 
         for module, name in modules.items():
             new_params[module] = name
