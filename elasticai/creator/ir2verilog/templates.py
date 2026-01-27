@@ -1,7 +1,11 @@
 from string import Template as _pyTemplate
-from typing import Mapping, Self, cast
+from typing import Any, Mapping, Protocol, Self, cast
 
 from elasticai.creator import template as tpl
+
+
+class Template(Protocol):
+    def substitute(self, mapping: dict[str, Any] = {}, /, **kwargs) -> str: ...
 
 
 class _Definition(tpl.TemplateParameter):
@@ -194,7 +198,7 @@ class TemplateDirector:
         self._builder.add_parameter(_ModuleName(self._delimiter))
         return self
 
-    def build(self) -> "VerilogTemplate":
+    def build(self) -> Template:
         MyStrTemplate = type(
             "MyStrTemplate", (_pyTemplate,), {"delimiter": self._delimiter}
         )
@@ -216,7 +220,7 @@ class VerilogTemplate:
         self._defines = defines.copy()
         self._modules = module_name.copy()
 
-    def substitute(self, params: Mapping[str, str | bool]) -> str:
+    def _prepare_params(self, params: Mapping[str, str | bool]) -> Mapping[str, Any]:
         new_params: dict[str, str] = {}
         if "module_name" in params:
             module_prefix = f"{params['module_name']}_"
@@ -246,5 +250,7 @@ class VerilogTemplate:
 
         for module, name in modules.items():
             new_params[module] = name
+        return new_params
 
-        return self._template.substitute(new_params)
+    def substitute(self, params: dict[str, str | bool] = {}, /, **kwargs: Any) -> str:
+        return self._template.substitute(self._prepare_params(params | kwargs))
