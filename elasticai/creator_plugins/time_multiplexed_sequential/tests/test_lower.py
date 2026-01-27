@@ -3,7 +3,7 @@ from collections.abc import Callable
 import pytest
 
 import elasticai.creator.function_dispatch as FD
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import DataGraph, Shape, factory
 from elasticai.creator_plugins.grouped_filter import FilterParameters
 from elasticai.creator_plugins.time_multiplexed_sequential.src import (

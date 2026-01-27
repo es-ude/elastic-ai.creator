@@ -2,7 +2,7 @@ from collections.abc import Callable
 from itertools import chain, starmap
 from typing import Protocol, cast
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.graph import dfs_iter
 from elasticai.creator.ir2vhdl import (
     DataGraph,

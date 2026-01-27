@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch import fx
 
 import elasticai.creator.function_dispatch as FD
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 
 from .default_handlers import handlers
 

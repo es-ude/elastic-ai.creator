@@ -1,9 +1,9 @@
 import re
 from collections.abc import Iterable
 
-import elasticai.creator.ir.ir_v2 as ir
 import pytest
 
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import Node as VhdlNode
 from elasticai.creator.ir2vhdl import Shape, factory
 from elasticai.creator.ir2vhdl.language import Instance

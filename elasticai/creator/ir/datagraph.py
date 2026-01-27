@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections.abc import Mapping
 from typing import Protocol, Self, TypeVar, overload, runtime_checkable
 
-from .attribute import AttributeMapping
+from ._attribute import AttributeMapping
 from .graph import Graph, ReadOnlyGraph
 
 

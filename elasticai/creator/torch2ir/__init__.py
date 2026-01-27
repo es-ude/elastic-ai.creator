@@ -17,9 +17,6 @@ However, you are free to extend or alter the behaviour of the
 translation process by registering your own module handlers.
 """
 
-from elasticai.creator.ir import edge as new_edge
-
-from .core import Edge, Implementation, Node, input_node, new_node, output_node
 from .default_handlers import handlers as default_module_handlers
 from .torch2ir import Torch2Ir, get_default_converter
 

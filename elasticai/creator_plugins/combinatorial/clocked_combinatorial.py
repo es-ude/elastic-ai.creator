@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 from itertools import chain
 
-import elasticai.creator.ir.ir_v2 as ir
-
 from elasticai.creator import graph as gr
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import DataGraph, type_handler
 
 from .combinatorial import (

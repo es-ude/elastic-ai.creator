@@ -5,7 +5,7 @@ import pytest
 
 import elasticai.creator.ir.datagraph as dgraph
 from elasticai.creator.graph.subgraph_matching import find_all_subgraphs
-from elasticai.creator.ir.attribute import Attribute, AttributeMapping
+from elasticai.creator.ir import Attribute, AttributeMapping
 from elasticai.creator.ir.datagraph import DataGraph
 from elasticai.creator.ir.datagraph_impl import (
     DataGraphImpl,

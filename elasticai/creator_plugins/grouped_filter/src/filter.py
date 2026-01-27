@@ -2,17 +2,20 @@ from collections.abc import Callable
 from itertools import chain
 from typing import ParamSpec
 
-import elasticai.creator.ir.ir_v2 as ir
-from elasticai.creator.ir2vhdl import Node, Shape, factory, type_handler
+import elasticai.creator.hdl_ir as ir
+from elasticai.creator.hdl_ir import IrFactory, Node, Shape
+from elasticai.creator.ir import Registry as _Registry
 
 from .filter_params import FilterParameters
 from .index_generators import GroupedFilterIndexGenerator
 
+factory = IrFactory()
+
 P = ParamSpec("P")
 
 type InDGraph = ir.DataGraph[ir.Node, ir.Edge]
-type InRegistry = ir.Registry[InDGraph]
-type Registry = ir.Registry[ir.DataGraph]
+type InRegistry = ir.Registry
+type Registry = ir.Registry
 
 
 def append_counter_suffix_before_construction[**P](
@@ -43,7 +46,6 @@ def append_counter_suffix_before_construction[**P](
     return construct
 
 
-@type_handler()
 def grouped_filter(
     impl: InDGraph, registry: InRegistry
 ) -> tuple[ir.DataGraph, InRegistry]:
@@ -77,6 +79,7 @@ def grouped_filter(
         )
     )
     output_offset = 0
+
     for kernel, wires_per_step in zip(kernels, g.as_tuple_by_groups()):
         wires = wires_per_step[0]
         node = nc(
@@ -117,4 +120,4 @@ def grouped_filter(
             output_shape=Shape(params.out_channels, 1),
         )
     )
-    return result, registry
+    return result, _Registry()

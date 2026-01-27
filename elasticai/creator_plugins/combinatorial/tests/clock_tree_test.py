@@ -1,8 +1,8 @@
 from collections.abc import Iterable, Sequence
 
-import elasticai.creator.ir.ir_v2 as ir
 import pytest
 
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import Shape, factory
 from elasticai.creator_plugins.combinatorial.clocked_combinatorial import (
     clocked_combinatorial,

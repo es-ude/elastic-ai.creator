@@ -2,7 +2,7 @@ from typing import Any
 
 from pytest import fixture
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import (
     DataGraph,
     Instance,
