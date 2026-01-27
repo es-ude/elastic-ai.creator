@@ -8,7 +8,7 @@ import pytest
 
 from elasticai.creator.hdl_generator import HDLLanguage, create_generator
 from elasticai.creator.hdl_ir import Node, Shape
-from elasticai.creator.ir.ir_v2 import attribute
+from elasticai.creator.ir import attribute
 from elasticai.creator.ir2vhdl import factory as vhdl_factory
 
 

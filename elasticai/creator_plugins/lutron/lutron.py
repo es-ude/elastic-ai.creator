@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import TypeAlias
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import Code, DataGraph, type_handler
 
 from .language import Port, VHDLEntity

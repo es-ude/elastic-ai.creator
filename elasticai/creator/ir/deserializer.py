@@ -1,6 +1,6 @@
 from typing import Any
 
-from .attribute import AttributeMapping, attribute
+from ._attribute import AttributeMapping, attribute
 from .datagraph import DataGraph, Edge, Node
 from .factories import IrFactory
 

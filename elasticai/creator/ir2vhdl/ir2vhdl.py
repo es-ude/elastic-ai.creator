@@ -5,6 +5,7 @@ from itertools import starmap
 from typing import Any, Protocol, override
 
 import elasticai.creator.function_dispatch as FD
+import elasticai.creator.ir as ir
 import elasticai.creator.plugin as _pl
 from elasticai.creator.hdl_ir import (
     Code,
@@ -29,7 +30,6 @@ from elasticai.creator.hdl_ir import (
 from elasticai.creator.hdl_ir import (
     ShapeTuple as ShapeTuple,
 )
-from elasticai.creator.ir import ir_v2 as ir
 from elasticai.creator.plugin import PluginLoaderBase, StaticFileBase
 
 

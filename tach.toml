@@ -13,7 +13,7 @@ source_roots = ["."]
 
 [[modules]]
 path = "elasticai.creator.ir"
-depends_on = ["elasticai.creator.graph", "elasticai.creator.function_dispatch"]
+depends_on = ["elasticai.creator.graph"]
 
 [[interfaces]]
 expose = ["[a-zA-Z0-9_]+"]
@@ -33,7 +33,8 @@ depends_on = [
     "elasticai.creator.ir",
     "elasticai.creator.plugin",
     "elasticai.creator.template",
-    "elasticai.creator.function_dispatch", "elasticai.creator.hdl_ir",
+    "elasticai.creator.function_dispatch",
+    "elasticai.creator.hdl_ir",
 ]
 
 [[modules]]
@@ -132,25 +133,15 @@ depends_on = [
 
 [[modules]]
 path = "elasticai.creator.ir2torch"
-depends_on = [
-    "elasticai.creator.torch2ir",
-    "elasticai.creator.ir",
-    "elasticai.creator.function_dispatch",
-]
+depends_on = ["elasticai.creator.ir", "elasticai.creator.function_dispatch"]
 
 [[modules]]
 path = "elasticai.creator.torch2ir"
-depends_on = [
-    "elasticai.creator.ir",
-    "elasticai.creator.function_dispatch",
-]
+depends_on = ["elasticai.creator.ir", "elasticai.creator.function_dispatch"]
 
 [[modules]]
 path = "elasticai.creator_plugins.skeleton"
-depends_on = [
-    "elasticai.creator.ir2vhdl",
-    "elasticai.creator.ir", "elasticai.creator.hw_function_id",
-]
+depends_on = ["elasticai.creator.ir2vhdl", "elasticai.creator.ir", "elasticai.creator.hw_function_id"]
 
 [[modules]]
 path = "elasticai.creator_plugins.lutron"
@@ -166,10 +157,7 @@ depends_on = [
 
 [[modules]]
 path = "elasticai.creator_plugins.grouped_filter"
-depends_on = [
-    "elasticai.creator.ir2vhdl",
-    "elasticai.creator.ir",
-]
+depends_on = ["elasticai.creator.ir", "elasticai.creator.hdl_ir"]
 
 [[modules]]
 path = "elasticai.creator_plugins.time_multiplexed_sequential"
@@ -190,7 +178,8 @@ depends_on = [
     'elasticai.creator.ir',
     'elasticai.creator.plugin',
     'elasticai.creator.template',
-    "elasticai.creator.function_dispatch", "elasticai.creator.hdl_ir",
+    "elasticai.creator.function_dispatch",
+    "elasticai.creator.hdl_ir",
 ]
 
 [[modules]]
@@ -206,4 +195,13 @@ depends_on = ["elasticai.creator.ir"]
 
 [[modules]]
 path = "<root>"
-depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules", "elasticai.creator.vhdl", "elasticai.creator.nn", "elasticai.creator.ir2verilog", "elasticai.creator.ir2vhdl", "elasticai.creator.hdl_ir"]
+depends_on = [
+    "elasticai.creator.file_generation",
+    "elasticai.creator.nn.fixed_point",
+    "elasticai.creator.base_modules",
+    "elasticai.creator.vhdl",
+    "elasticai.creator.nn",
+    "elasticai.creator.ir2verilog",
+    "elasticai.creator.ir2vhdl",
+    "elasticai.creator.hdl_ir",
+]

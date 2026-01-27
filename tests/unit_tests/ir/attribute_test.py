@@ -1,6 +1,6 @@
 import pytest
 
-from elasticai.creator.ir.attribute import (
+from elasticai.creator.ir import (
     AttributeMapping,
     attribute,
 )

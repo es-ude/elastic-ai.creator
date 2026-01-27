@@ -5,7 +5,7 @@ from collections.abc import (
 )
 from typing import Self
 
-from .attribute import AttributeMapping
+from ._attribute import AttributeMapping
 from .datagraph import DataGraph, Edge, Node, ReadOnlyDataGraph
 from .factories import (
     NodeEdgeFactory,

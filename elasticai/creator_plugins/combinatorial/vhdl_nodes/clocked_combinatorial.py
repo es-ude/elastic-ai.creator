@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-import elasticai.creator.ir.ir_v2 as ir
+import elasticai.creator.ir as ir
 from elasticai.creator.ir2vhdl import (
     Instance,
     LogicSignal,

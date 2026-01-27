@@ -3,7 +3,7 @@ from collections.abc import Iterable
 
 import pytest
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import Node as VhdlNode
 from elasticai.creator.ir2vhdl import Shape, factory
 from elasticai.creator.ir2vhdl.language import Instance

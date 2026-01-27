@@ -6,6 +6,7 @@ from itertools import starmap
 from typing import Any, Protocol, TypeAlias, override
 
 import elasticai.creator.function_dispatch as FD
+from elasticai.creator import ir
 from elasticai.creator import plugin as _pl
 from elasticai.creator.hdl_ir import (
     DataGraph,
@@ -15,7 +16,6 @@ from elasticai.creator.hdl_ir import (
     TypeHandler,
     _check_and_get_name_fn,
 )
-from elasticai.creator.ir import ir_v2 as ir
 from elasticai.creator.plugin import PluginLoaderBase, StaticFileBase
 
 factory = IrFactory()

@@ -1,7 +1,7 @@
 import importlib.resources as res
 from string import Template
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import (
     Code,
     DataGraph,

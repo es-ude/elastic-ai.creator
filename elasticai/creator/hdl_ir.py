@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
 from typing import Any, Protocol, TypeGuard, cast, overload
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 
 type ShapeTuple = tuple[int] | tuple[int, int] | tuple[int, int, int]
 

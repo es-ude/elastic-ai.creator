@@ -4,7 +4,7 @@ import pytest
 import torch
 from torch.nn import Linear, ReLU, Sequential
 
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.torch2ir import (
     Torch2Ir as Torch2IrTranslator,
 )

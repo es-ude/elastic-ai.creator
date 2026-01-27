@@ -194,7 +194,10 @@ def cocotb_test_fixture(request) -> Iterator[CocotbTestFixture]:
 
     For more information see the documentation of `CocotbTestFixture`
     """
-    fixture = CocotbTestFixture(request.function, **request.node.callspec.params)
+    if hasattr(request.node, "callspec"):
+        fixture = CocotbTestFixture(request.function, **request.node.callspec.params)
+    else:
+        fixture = CocotbTestFixture(request.function)
     fixture.setup()
     yield fixture
     fixture.teardown()

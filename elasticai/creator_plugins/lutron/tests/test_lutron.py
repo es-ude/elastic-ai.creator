@@ -1,4 +1,4 @@
-import elasticai.creator.ir.ir_v2 as ir
+from elasticai.creator import ir
 from elasticai.creator.ir2vhdl import factory
 from elasticai.creator_plugins.lutron.lutron import lutron
 

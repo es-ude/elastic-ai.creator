@@ -2,7 +2,7 @@ from typing import cast
 
 from torch import nn
 
-from elasticai.creator.torch2ir import Implementation
+import elasticai.creator.ir as ir
 
 handlers = []
 
@@ -13,11 +13,9 @@ def _register(fn):
 
 
 @_register
-def linear(impl: Implementation) -> nn.Module:
+def linear(impl: ir.DataGraph) -> nn.Module:
     if not hasattr(impl, "data"):
         attrs = impl.attributes
-    else:
-        attrs = impl.data
     return nn.Linear(
         in_features=cast(int, attrs["in_features"]),
         out_features=cast(int, attrs["out_features"]),
@@ -26,12 +24,12 @@ def linear(impl: Implementation) -> nn.Module:
 
 
 @_register
-def relu(impl: Implementation) -> nn.Module:
+def relu(impl: ir.DataGraph) -> nn.Module:
     return nn.ReLU()
 
 
 @_register
-def conv1d(impl: Implementation) -> nn.Conv1d:
+def conv1d(impl: ir.DataGraph) -> nn.Conv1d:
     keywords = (
         "in_channels",
         "out_channels",
@@ -51,10 +49,10 @@ def conv1d(impl: Implementation) -> nn.Conv1d:
 
 
 @_register
-def sigmoid(impl: Implementation) -> nn.Sigmoid:
+def sigmoid(impl: ir.DataGraph) -> nn.Sigmoid:
     return nn.Sigmoid()
 
 
 @_register
-def flatten(imp: Implementation) -> nn.Flatten:
+def flatten(imp: ir.DataGraph) -> nn.Flatten:
     return nn.Flatten()
