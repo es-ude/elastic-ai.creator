@@ -211,4 +211,4 @@ depends_on = ["elasticai.creator.ir"]
 
 [[modules]]
 path = "<root>"
-depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules", "elasticai.creator.vhdl", "elasticai.creator.nn"]
+depends_on = ["elasticai.creator.file_generation", "elasticai.creator.nn.fixed_point", "elasticai.creator.base_modules", "elasticai.creator.vhdl", "elasticai.creator.nn", "elasticai.creator.ir2verilog", "elasticai.creator.ir2vhdl", "elasticai.creator.hdl_ir"]

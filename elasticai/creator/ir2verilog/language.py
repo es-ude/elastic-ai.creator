@@ -1,7 +1,5 @@
-from typing import Self
-from typing import Iterator
-from abc import abstractmethod
-from abc import ABC
+from abc import ABC, abstractmethod
+from typing import Iterator, Self
 
 from elasticai.creator.hdl_ir import Node
 
