@@ -228,7 +228,7 @@ class _ParameterTypeWrapper(Protocol):
     @property
     def name(self) -> str: ...
 
-    def replace(self, m: Match) -> str: ...
+    def replace(self, match: Match) -> str: ...
 
 
 class _ParameterTypeWrapperImpl:
@@ -240,9 +240,9 @@ class _ParameterTypeWrapperImpl:
     def regex(self) -> str:
         return _mangle_capture_group_names(self.name, self._type.regex)
 
-    def replace(self, m: Match) -> str:
+    def replace(self, match: Match) -> str:
         return self._type.replace(
-            _demangle_capture_group_names(self.name, m.groupdict())
+            _demangle_capture_group_names(self.name, match.groupdict())
         )
 
 

@@ -12,9 +12,9 @@ class _Definition(tpl.TemplateParameter):
             type=type, name=name
         )
 
-    def replace(self, m: dict[str, str]) -> str:
+    def replace(self, match: dict[str, str]) -> str:
         d = self.delimiter
-        return f"{m['param']} {d}{self.name}"
+        return f"{match['param']} {d}{self.name}"
 
 
 class _LocalParameter(_Definition):
@@ -37,9 +37,9 @@ class _IdParameter(tpl.TemplateParameter):
             name=name
         )
 
-    def replace(self, m: dict[str, str]) -> str:
+    def replace(self, match: dict[str, str]) -> str:
         d = self.delimiter
-        return f"{m['prefix']}{d}{self.name}{m['suffix']}"
+        return f"{match['prefix']}{d}{self.name}{match['suffix']}"
 
 
 class _ModuleOfInstance(tpl.TemplateParameter):
