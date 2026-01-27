@@ -6,7 +6,7 @@ from torch.fx import Tracer
 from torch.nn import Module
 
 import elasticai.creator.function_dispatch as FD
-import elasticai.creator.ir.ir_v2 as ir
+import elasticai.creator.ir as ir
 
 from .default_handlers import handlers as default_handlers
 

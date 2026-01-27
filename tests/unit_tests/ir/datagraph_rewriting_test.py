@@ -2,7 +2,7 @@ from typing import overload
 
 import pytest
 
-from elasticai.creator.ir.attribute import AttributeMapping, attribute
+from elasticai.creator.ir import AttributeMapping, attribute
 from elasticai.creator.ir.datagraph import DataGraph, Node
 from elasticai.creator.ir.datagraph_impl import DefaultIrFactory
 from elasticai.creator.ir.datagraph_rewriting import (

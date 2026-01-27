@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from typing import Protocol
 
-from .attribute import AttributeMapping
+from ._attribute import AttributeMapping
 from .datagraph import DataGraph, NodeEdgeFactory
 from .datagraph import Edge as _Edge
 from .datagraph import Node as _Node

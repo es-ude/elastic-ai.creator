@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
-from .attribute import Attribute, AttributeMapping
+from ._attribute import Attribute, AttributeMapping
 
 
 @runtime_checkable

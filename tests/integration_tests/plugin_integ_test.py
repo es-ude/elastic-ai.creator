@@ -1,11 +1,12 @@
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from types import FunctionType
 from typing import Any, Protocol, override
 
 import pytest
 
+import elasticai.creator.function_dispatch as FD
 import elasticai.creator.plugin as pl
-from elasticai.creator.ir import Lowerable, LoweringPass
 from elasticai.creator.plugin import PluginLoaderBase
 
 
@@ -17,13 +18,40 @@ class PluginSpec(pl.PluginSpec):
 class PluginSymbol(Protocol):
     """Protocol for plugin symbols that can be loaded."""
 
-    pass
+    def load_minimal(self, lowering: FD.KeyedDispatcherWithRegistrars) -> None: ...
+
+
+class DummyLowerable:
+    def __init__(self, type: str, more_data: list[str]):
+        self._type = type
+        self.more_data: list[str] = more_data
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+
+def _get_key_from_arg(x: DummyLowerable) -> str:
+    return x.type
+
+
+def _get_key_from_fn(fn: Callable) -> str:
+    if isinstance(fn, FunctionType):
+        return fn.__name__
+    raise TypeError("fn has to be a function")
+
+
+@FD.create_keyed_dispatch(_get_key_from_arg, _get_key_from_fn)
+def lower(fn, x):
+    return fn(x)
 
 
 class PluginLoader(PluginLoaderBase):
     """PluginLoader for test lowering passes."""
 
-    def __init__(self, lowering: LoweringPass, target_runtime: str = "vhdl"):
+    def __init__(
+        self, lowering: FD.KeyedDispatcherWithRegistrars, target_runtime: str = "vhdl"
+    ):
         self._receiver = lowering
         self._target_runtime = target_runtime
         super().__init__(PluginSpec)
@@ -55,19 +83,9 @@ class PluginLoader(PluginLoaderBase):
             )
 
 
-class DummyLowerable(Lowerable):
-    def __init__(self, type: str, more_data: list[str]):
-        self._type = type
-        self.more_data: list[str] = more_data
-
-    @property
-    def type(self) -> str:
-        return self._type
-
-
 @pytest.fixture
 def plugin() -> PluginSpec:
-    loader = PluginLoader(LoweringPass(), target_runtime="vhdl")
+    loader = PluginLoader(lower, target_runtime="vhdl")
     specs = list(loader.get_specs("tests.integration_tests.minimal_plugin"))
     return specs[0]
 
@@ -83,7 +101,7 @@ def test_can_read_plugin(plugin: PluginSpec) -> None:
 
 
 @pytest.fixture
-def make_lowerable(plugin) -> Callable[[list[str]], DummyLowerable]:
+def make_lowerable(plugin: PluginSpec) -> Callable[[list[str]], DummyLowerable]:
     def dummy(more_data: list[str]) -> DummyLowerable:
         return DummyLowerable(plugin.generated[0], more_data)
 
@@ -93,22 +111,20 @@ def make_lowerable(plugin) -> Callable[[list[str]], DummyLowerable]:
 def test_can_load_entire_plugin(
     make_lowerable: Callable[[list[str]], DummyLowerable],
 ) -> None:
-    lower: LoweringPass[DummyLowerable, str] = LoweringPass()
     loader = PluginLoader(lower, target_runtime="vhdl")
     lowerable = make_lowerable(["some", "important", "information"])
     loader.load_from_package("tests.integration_tests.minimal_plugin")
 
-    assert ("some_important_information",) == tuple(lower((lowerable,)))
+    assert "some_important_information" == lower(lowerable)
 
 
 def test_can_load_lowering_pass_plugin(
     make_lowerable: Callable[[list[str]], DummyLowerable],
 ) -> None:
-    lower: LoweringPass[DummyLowerable, str] = LoweringPass()
     loader = PluginLoader(lower, target_runtime="lowering_pass_test")
     lowerable = DummyLowerable(
         "lowering_pass_conv", ["some", "important", "information"]
     )
     loader.load_from_package("tests.integration_tests.minimal_plugin")
 
-    assert ("some_important_information",) == tuple(lower((lowerable,)))
+    assert "some_important_information" == lower(lowerable)

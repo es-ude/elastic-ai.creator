@@ -1,4 +1,4 @@
-from .attribute import Attribute, AttributeMapping, attribute
+from ._attribute import Attribute, AttributeMapping, attribute
 from .datagraph import DataGraph, Edge, Node
 from .datagraph_impl import (
     DataGraphImpl,

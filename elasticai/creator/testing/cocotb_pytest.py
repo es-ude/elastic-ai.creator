@@ -195,7 +195,10 @@ def cocotb_test_fixture(request) -> Iterator[CocotbTestFixture]:
     to either a conftest.py in the test directory tree or in the
     test module.
     """
-    fixture = CocotbTestFixture(request.function, **request.node.callspec.params)
+    if hasattr(request.node, "callspec"):
+        fixture = CocotbTestFixture(request.function, **request.node.callspec.params)
+    else:
+        fixture = CocotbTestFixture(request.function)
     fixture.setup()
     yield fixture
     fixture.teardown()

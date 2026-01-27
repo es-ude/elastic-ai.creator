@@ -13,7 +13,7 @@ source_roots = ["."]
 
 [[modules]]
 path = "elasticai.creator.ir"
-depends_on = ["elasticai.creator.graph", "elasticai.creator.function_dispatch"]
+depends_on = ["elasticai.creator.graph"]
 
 [[interfaces]]
 expose = ["[a-zA-Z0-9_]+"]
@@ -131,13 +131,8 @@ depends_on = [
 ]
 
 [[modules]]
-path = "elasticai.creator.ir2vhdl.testing"
-depends_on = []
-
-[[modules]]
 path = "elasticai.creator.ir2torch"
 depends_on = [
-    "elasticai.creator.torch2ir",
     "elasticai.creator.ir",
     "elasticai.creator.function_dispatch",
 ]
@@ -152,9 +147,8 @@ depends_on = [
 [[modules]]
 path = "elasticai.creator_plugins.skeleton"
 depends_on = [
-    "elasticai.creator.plugin",
     "elasticai.creator.ir2vhdl",
-    "elasticai.creator.ir",
+    "elasticai.creator.ir", "elasticai.creator.plugin",
 ]
 
 [[modules]]
@@ -172,8 +166,7 @@ depends_on = [
 [[modules]]
 path = "elasticai.creator_plugins.grouped_filter"
 depends_on = [
-    "elasticai.creator.ir2vhdl",
-    "elasticai.creator.ir",
+    "elasticai.creator.ir", "elasticai.creator.hdl_ir",
 ]
 
 [[modules]]

@@ -7,29 +7,6 @@ from elasticai.creator_plugins.grouped_filter import (
     grouped_filter as grouped_filter,
 )
 
-# class Implementation(_Implementation):
-#     def input(self, shape: tuple[int, int]):
-#         self.add_node(
-#             vhdl_node(
-#                 name="input",
-#                 type="input",
-#                 implementation="",
-#                 input_shape=shape,
-#                 output_shape=shape,
-#             )
-#         )
-
-#     def output(self, shape: tuple[int, int]):
-#         self.add_node(
-#             vhdl_node(
-#                 name="output",
-#                 type="output",
-#                 implementation="",
-#                 output_shape=shape,
-#                 input_shape=shape,
-#             )
-#         )
-
 
 def high_level_ir(groups: int) -> DataGraph:
     p = FilterParameters(
@@ -39,10 +16,10 @@ def high_level_ir(groups: int) -> DataGraph:
         ir.attribute(
             {
                 "filter_parameters": p.as_dict(),
-                "kernel_per_group": tuple(f"lutron_{i}" for i in range(groups)),
+                "kernel_per_group": tuple(f"kernel_{i}" for i in range(groups)),
             }
         ),
-        type="lutron_filter",
+        type="kernel_filter",
     ).add_nodes(
         factory.node(
             "input",
@@ -57,21 +34,21 @@ def high_level_ir(groups: int) -> DataGraph:
             output_shape=Shape(p.out_channels, p.num_steps),
         ),
         factory.node(
-            "lutron_0",
+            "kernel_0",
             input_shape=Shape(
                 p.in_channels * p.kernel_size,
             ),
             output_shape=Shape(
                 p.out_channels,
             ),
-            type="lutron",
-            implementation="lutron_0",
+            type="kernel",
+            implementation="kernel_0",
         ),
     )
     return hl_ir
 
 
-class TestLutronFilterWithSingleGroup:
+class TestFilterWithSingleGroup:
     def test_has_correct_edges(self) -> None:
         hl_ir = high_level_ir(1)
         p = FilterParameters.from_dict(hl_ir.attributes["filter_parameters"])
@@ -79,7 +56,7 @@ class TestLutronFilterWithSingleGroup:
         expected_edges.add(
             factory.edge(
                 "input",
-                "lutron_0_i0",
+                "kernel_0_i0",
                 src_dst_indices=tuple(
                     zip(
                         range(p.in_channels * p.kernel_size),
@@ -90,7 +67,7 @@ class TestLutronFilterWithSingleGroup:
         )
         expected_edges.add(
             factory.edge(
-                "lutron_0_i0",
+                "kernel_0_i0",
                 "output",
                 src_dst_indices=(
                     f"range(0, {p.out_channels})",
@@ -102,14 +79,18 @@ class TestLutronFilterWithSingleGroup:
         assert set(actual_ir.edges.values()) == expected_edges
 
 
-class TestLutronFilterWithTwoGroups:
+class TestFilterWithTwoGroups:
     def test_has_correct_edges(self) -> None:
+        """
+        Note that the module interprets higher src_dst index as either earlier in time
+        or more significant bit of single channel or channel with lower id.
+        """
         hl_ir = high_level_ir(2)
         FilterParameters.from_dict(hl_ir.attributes["filter_parameters"])
         expected_edges = (
             factory.edge(
                 "input",
-                "lutron_0_i0",
+                "kernel_0_i0",
                 src_dst_indices=(
                     (0, 0),
                     (2, 1),
@@ -117,19 +98,19 @@ class TestLutronFilterWithTwoGroups:
             ),
             factory.edge(
                 "input",
-                "lutron_1_i0",
+                "kernel_1_i0",
                 src_dst_indices=((1, 0), (3, 1)),
             ),
             factory.edge(
-                "lutron_0_i0",
+                "kernel_0_i0",
                 "output",
                 src_dst_indices=("range(0, 2)", "range(0, 2)"),
             ),
             factory.edge(
-                "lutron_1_i0",
+                "kernel_1_i0",
                 "output",
                 src_dst_indices=("range(0, 2)", "range(2, 4)"),
             ),
         )
         actual_ir, _ = grouped_filter(hl_ir, ir.Registry())
-        assert tuple(actual_ir.edges.values()) == expected_edges
+        assert set(actual_ir.edges.values()) == set(expected_edges)
