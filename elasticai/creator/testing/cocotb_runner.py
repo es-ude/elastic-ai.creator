@@ -69,7 +69,7 @@ def run_cocotb_sim(
     :param top_module_name:     Name of the top module (from file)
     :param cocotb_test_module:  Fully qualified name of python module containing cotName of the cocotb testbench in Python
     :param defines:             Dictionary of parameters to pass to the module [key: value, ...] - usable only in Verilog
-    :param params:              Dictionary of parameters to pass to the module [key: value, ...] - value will be ignored
+    :param params:              Dictionary of parameters to pass to the module [key: value, ...] - verilog parameters or vhdl generics
     :param timescale:           Tuple with Timescale value for simulation (step, accuracy)
     :param en_debug_mode:       Enable debug mode
     :param waveform_save_dst:   Path to the destination folder for saving waveform file
@@ -83,7 +83,11 @@ def run_cocotb_sim(
         raise ValueError("no design sources specified")
 
     if any(map(lambda x: not x.exists(), design_sources)):
-        raise FileNotFoundError(f"Design file does not exist {design_sources}")
+        non_existent = []
+        for s in design_sources:
+            if not s.exists():
+                non_existent.append(s)
+        raise FileNotFoundError(f"Design file does not exist {non_existent}")
 
     runner_mapping = {"verilog": "icarus", "vhdl": "ghdl"}
     suffix = design_sources[0].suffix

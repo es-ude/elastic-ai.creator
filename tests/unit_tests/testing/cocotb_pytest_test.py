@@ -27,18 +27,16 @@ def test_create_name_for_function_with_list_args():
     actual = create_name_for_build_test_subdir(
         function_with_args, [1, 2, 3], 2, c="abcd"
     )
-    h = hash((1, 2, 3)).to_bytes(length=8, signed=True).hex()
-    expected = f"function_with_args_a_{h}_b_2_c_abcd"
-    assert actual == expected
+
+    assert actual == "function_with_args_a_dfd5726d86ed2c8b_b_2_c_abcd"
 
 
 def test_create_name_for_fn_with_dict_args():
     actual = create_name_for_build_test_subdir(
         function_with_args, {"a": 1}, 2, c="abcd"
     )
-    h = hash((("a", 1),)).to_bytes(length=8, signed=True).hex()
-    expected = f"function_with_args_a_{h}_b_2_c_abcd"
-    assert actual == expected
+
+    assert actual == "function_with_args_a_4f798fe9c78df93a_b_2_c_abcd"
 
 
 @pytest.fixture
