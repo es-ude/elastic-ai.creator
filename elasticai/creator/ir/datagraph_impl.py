@@ -80,6 +80,9 @@ class EdgeImpl(Edge):
             and self._attributes == other.attributes
         )
 
+    def __repr__(self) -> str:
+        return f"Edge({self.src}, {self.dst}, {self.attributes})"
+
 
 class DefaultNodeEdgeFactory(NodeEdgeFactory[Node, Edge]):
     def node(
