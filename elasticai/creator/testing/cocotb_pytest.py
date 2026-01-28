@@ -64,7 +64,7 @@ def eai_testbench(fn):
     contains the pytest test function.
     It will create a unique subdirectory under `build_test` that matches
     the path to the module containing the testbench definition and pytest
-    test function (those need to be the same).
+    test function (both need to live in the same module).
     This prevents test A overriding the artifacts of test B.
     The name of the subdirectory will be derived from the parameters
     passed via the `parametrize` pytest marker and the top module name.
@@ -90,6 +90,10 @@ class CocotbTestFixture:
     * Use the test function name to determine the dut top module name and the name of its containing source file. These can be overriden inside the test function using `CocotbTestFixture.set_top_module_name()` and `CocotbTestFixture.set_srcs()`. The name will be derived by stripping the `test_` prefix from the test function name.
       The implementation will try to find a vhdl or verilog file under `../{vhdl, verilog}/<name>.{vhd, v}`. Vhdl will take precedence. If no file is found, the initial srcs list will be left empty without raising an exception.
     * It will create a folder to contain test artifacts including waveforms, xml result, testdata json and compiled simulation object files. To avoid collisions, the name of the folder will be derived from the fully qualified test function name (replacing `.` by `/`) and the parameter list provided via pytest parametrization.
+
+        The fixture assumes the test resolves package resources itself (e.g. via `get_file_from_package`). It will keep open the files whose
+        paths are passed to `set_srcs()`/`add_srcs()` while `run` executes, but you must keep a surrounding `with` in the test so the
+        package helper holds the resource alive during the simulation.
 
     This is not intended to be used directly. Request `cocotb_test_fixture` as a pytest fixture instead.
     """
