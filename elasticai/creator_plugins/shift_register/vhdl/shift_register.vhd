@@ -1,60 +1,81 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.counter_pkg.all;
 
 entity shift_register is
     generic (
-        DATA_WIDTH: positive; -- size of single data point
-        NUM_POINTS: positive  -- number of data points to write in a single step
+        DATA_WIDTH: positive;
+        NUM_POINTS: positive
     );
     port (
-        clk : in std_logic;
-        d_in : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        d_out : out std_logic_vector(DATA_WIDTH*NUM_POINTS - 1 downto 0);
-        valid_in : in std_logic;  -- set to '1' while to write data to the register
-        rst : in std_logic;  -- setting to '1' will reset the internal counter and set valid_out to `0`
-        valid_out : out std_logic := '0' -- will be '1' when the register is full
+        CLK : in std_logic;
+        D_IN : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        D_OUT : out std_logic_vector(DATA_WIDTH * NUM_POINTS - 1 downto 0);
+        SRC_VALID : in std_logic;
+        RST : in std_logic;
+        VALID : out std_logic := '0';
+        READY : out std_logic := '1';
+        DST_READY : in std_logic := '1';
+        EN : in std_logic := '1'
     );
 end entity;
 
 architecture rtl of shift_register is
-  signal q_i : std_logic_vector(d_out'range);
-  signal counter_enable : std_logic := '0';
-  signal counter : std_logic_vector(clog2(NUM_POINTS + 1) - 1 downto 0);
-begin
+    type buffer_t is array (0 to NUM_POINTS - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal storage : buffer_t := (others => (others => '0'));
+    signal write_ptr : integer range 0 to NUM_POINTS - 1 := 0;
+    signal filled : integer range 0 to NUM_POINTS := 0;
+    signal last_filled : integer range 0 to NUM_POINTS := 0;
 
-    counter_i : entity work.counter
-      generic map (
-        MAX_VALUE => NUM_POINTS
-      )
-      port map (
-        rst => rst,
-        enable => counter_enable,
-        d_out => counter,
-        clk => clk
-    );
-
-
-
-  counter_enable <= '1' when valid_in = '1' and unsigned(counter) < NUM_POINTS
-                    else '0';
-
-  valid_out <= '1' when unsigned(counter) = NUM_POINTS
-               else '0';
-
-  d_out <= q_i;
-
-
-  process(clk, rst)
-  begin
-    if rst = '1' then
-        q_i <= (others => '0');
-    elsif rising_edge(clk) then
-        if valid_in = '1' then
-            q_i <= q_i(DATA_WIDTH*(NUM_POINTS-1) - 1 downto 0) & d_in;
+    function build_window(buff : buffer_t; write_pos : integer; fill_count : integer) return std_logic_vector is
+        variable assembled : std_logic_vector(DATA_WIDTH * NUM_POINTS - 1 downto 0) := (others => '0');
+        variable current_index : integer := 0;
+    begin
+        if fill_count > 0 then
+            current_index := write_pos - 1;
+            for chunk_idx in 0 to fill_count - 1 loop
+                if current_index < 0 then
+                    current_index := current_index + NUM_POINTS;
+                end if;
+                assembled((chunk_idx + 1) * DATA_WIDTH - 1 downto chunk_idx * DATA_WIDTH) := buff(current_index);
+                current_index := current_index - 1;
+            end loop;
         end if;
-    end if;
-  end process;
+        return assembled;
+    end function;
+begin
+    
+    -- Valid pulses when buffer becomes full or new data arrives while already full
+    VALID <= '1' when (filled = NUM_POINTS and last_filled < NUM_POINTS) or 
+                      (filled = NUM_POINTS and last_filled = NUM_POINTS and SRC_VALID = '1') 
+             else '0';
+    D_OUT <= build_window(storage, write_ptr, filled);
+
+    update_register : process(CLK, RST)
+    begin
+        if RST = '1' then
+            storage <= (others => (others => '0'));
+            write_ptr <= 0;
+            filled <= 0;
+            last_filled <= 0;
+        elsif rising_edge(CLK) then
+            -- Write on every cycle when SRC_VALID is high (level-triggered)
+            if SRC_VALID = '1' then
+                storage(write_ptr) <= D_IN;
+                if write_ptr = NUM_POINTS - 1 then
+                    write_ptr <= 0;
+                else
+                    write_ptr <= write_ptr + 1;
+                end if;
+                if filled < NUM_POINTS then
+                    filled <= filled + 1;
+                else
+                    filled <= NUM_POINTS;
+                end if;
+            end if;
+            -- Track previous filled count for valid pulse generation
+            last_filled <= filled;
+        end if;
+    end process;
 
 end architecture;
