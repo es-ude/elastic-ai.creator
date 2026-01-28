@@ -14,6 +14,7 @@ from elasticai.creator.ir2vhdl import (
     Signal,
     factory,
 )
+from elasticai.creator.ir2vhdl.ir2vhdl import Ir2Vhdl
 
 ir_factory = factory
 
@@ -173,3 +174,34 @@ class TestPortMap:
                 "clk": "signal clk : std_logic := '0';",
             }
         )
+
+
+class TestTranslation:
+    def test_correctly_handle_static_files(self):
+        def static_file():
+            return "my static file content"
+
+        def network(*args, **kwargs):
+            yield "network", []
+
+        translate = Ir2Vhdl()
+        translate.register_static("static_file.vhd")(static_file)
+        translate.register()(network)
+        dummy_network = factory.graph(type="network")
+        result = dict(translate(dummy_network, ir.Registry()))
+        actual_static_content = []
+        expected_static_content = [static_file()]
+        for line in result["static_file.vhd"]:
+            actual_static_content.append(line)
+
+        assert actual_static_content == expected_static_content
+
+    def test_can_derive_names_for_generated_content(self):
+        def network(*args, **kwargs):
+            yield "network", []
+
+        translate = Ir2Vhdl()
+        translate.register()(network)
+        dummy_network = factory.graph(type="network")
+        result = dict(translate(dummy_network, ir.Registry()))
+        assert "network.vhd" in result

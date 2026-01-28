@@ -1,7 +1,6 @@
 import warnings
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from importlib import resources as res
 from itertools import starmap
 from typing import Any, Protocol, TypeAlias, override
 
@@ -39,12 +38,13 @@ class Ir2Verilog:
         registry = self._give_names_to_registry_graphs(registry)
         if "name" not in root.attributes:
             root = root.with_attributes(root.attributes | dict(name=default_root_name))
-        yield from self._handle_type(root, registry)
+        for name, code in self._handle_type(root, registry):
+            yield f"{name}.v", code
         for g in registry.values():
             for name, code in self._handle_type(g, registry):
                 yield f"{name}.v", code
         for name, fn in self.__static_files.items():
-            yield name, fn()
+            yield name, (fn(),)
 
     def _give_names_to_registry_graphs(self, registry: Registry) -> Registry:
         def give_name(name: str, g: DataGraph) -> tuple[str, DataGraph]:
@@ -139,31 +139,6 @@ class PluginLoader(PluginLoaderBase):
                         name=static_name, package=spec.package, subfolder="verilog"
                     )
                 )
-
-
-class _StaticFile:
-    _subfolder = "verilog"
-
-    def __init__(self, name: str, package: str):
-        self._name = name
-        self._package = package
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    def load_verilog(self, receiver: Ir2Verilog):
-        receiver.register_static(self.name, self)
-
-    @classmethod
-    def make_symbols(cls, p: PluginSpec) -> Iterator[PluginSymbol]:
-        if p.target_runtime == cls._subfolder:
-            for name in p.static_files:
-                yield cls(name=name, package=p.package)
-
-    def __call__(self) -> str:
-        file = res.files(self._package).joinpath(f"{self._subfolder}/{self.name}")
-        return file.read_text()
 
 
 @FD.registrar

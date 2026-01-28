@@ -1,4 +1,7 @@
-from elasticai.creator.ir2verilog import TemplateDirector
+from collections.abc import Iterable
+
+from elasticai.creator.ir import Registry
+from elasticai.creator.ir2verilog import Code, Ir2Verilog, TemplateDirector, factory
 
 
 class TestVerilogTemplate:
@@ -295,3 +298,34 @@ class TestVerilogTemplate:
 	  .DATA_VALID(filter_rdy)
 );"""
         )
+
+
+class TestTranslation:
+    def test_correctly_handle_static_files(self):
+        def static_file():
+            return "my static file content"
+
+        def network(*args, **kwargs) -> Iterable[Code]:
+            yield "network", []
+
+        translate = Ir2Verilog()
+        translate.register_static("static_file.v")(static_file)
+        translate.register()(network)
+        dummy_network = factory.graph(type="network")
+        result = dict(translate(dummy_network, Registry()))
+        actual_static_content = []
+        expected_static_content = [static_file()]
+        for line in result["static_file.v"]:
+            actual_static_content.append(line)
+
+        assert actual_static_content == expected_static_content
+
+    def test_can_derive_names_for_generated_content(self):
+        def network(*args, **kwargs):
+            yield "network", []
+
+        translate = Ir2Verilog()
+        translate.register()(network)
+        dummy_network = factory.graph(type="network")
+        result = dict(translate(dummy_network, Registry()))
+        assert "network.v" in result

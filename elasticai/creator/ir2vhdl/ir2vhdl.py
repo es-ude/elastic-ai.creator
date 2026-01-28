@@ -49,12 +49,13 @@ class Ir2Vhdl:
         registry = self._give_names_to_registry_graphs(registry)
         if "name" not in root.attributes:
             root = root.with_attributes(root.attributes | dict(name=default_root_name))
-        yield from self._handle_type(root, registry)
+        for name, code in self._handle_type(root, registry):
+            yield f"{name}.vhd", code
         for g in registry.values():
             for name, code in self._handle_type(g, registry):
                 yield f"{name}.vhd", code
         for name, fn in self.__static_files.items():
-            yield name, fn()
+            yield name, (fn(),)
 
     def _give_names_to_registry_graphs(self, registry: Registry) -> Registry:
         def give_name(name: str, g: DataGraph) -> tuple[str, DataGraph]:
