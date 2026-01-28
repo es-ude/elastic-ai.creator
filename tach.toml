@@ -152,7 +152,6 @@ depends_on = [
 [[modules]]
 path = "elasticai.creator_plugins.skeleton"
 depends_on = [
-    "elasticai.creator.plugin",
     "elasticai.creator.ir2vhdl",
     "elasticai.creator.ir",
 ]

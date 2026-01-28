@@ -18,7 +18,7 @@ def _load_vhd(component: str) -> str:
     return vhd_file.read_text()
 
 
-class _Skeleton(PluginSymbol):
+class _Skeleton:
     def __init__(self, template: Template):
         self._template = template
 
@@ -28,7 +28,7 @@ class _Skeleton(PluginSymbol):
         )
 
     @classmethod
-    def load_into(cls, loader: Ir2Vhdl) -> None:
+    def load_vhdl(cls, loader: Ir2Vhdl) -> None:
         template = (
             EntityTemplateDirector()
             .set_prototype(_load_vhd("skeleton"))
@@ -42,4 +42,4 @@ class _Skeleton(PluginSymbol):
         loader.register("skeleton", skeleton)
 
 
-skeleton = _Skeleton
+skeleton: PluginSymbol = _Skeleton
