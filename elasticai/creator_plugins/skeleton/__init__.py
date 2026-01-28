@@ -7,7 +7,6 @@ from elasticai.creator.ir2vhdl import (
     DataGraph,
     EntityTemplateDirector,
     Ir2Vhdl,
-    PluginSymbol,
 )
 
 from ._skeleton import skeleton as skeleton

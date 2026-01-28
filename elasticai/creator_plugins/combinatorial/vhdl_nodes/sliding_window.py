@@ -32,7 +32,7 @@ def _check_input_output_shape_compatibility(node):
 
 
 class SlidingWindowNode(ClockedInstance):
-    _logic_signals_with_default_suffix = ("valid_in", "valid_out")
+    _logic_signals_with_default_suffix = ("src_valid", "valid", "dst_ready", "ready")
 
     def __init__(
         self,

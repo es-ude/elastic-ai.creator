@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+import elasticai.creator.ir as ir
 from elasticai.creator.ir2vhdl import (
     Instance,
     LogicSignal,
@@ -36,9 +37,11 @@ class ClockedInstance(Instance):
     ):
         if callable(generic_map):
             generic_map = generic_map()
+
         port_map: dict[str, Signal] = dict(
             clk=NullDefinedLogicSignal("clk"),
             rst=NullDefinedLogicSignal("rst"),
+            en=NullDefinedLogicSignal(name="en"),
             d_in=LogicVectorSignal(name="d_in", width=input_width),
             d_out=LogicVectorSignal(name="d_out", width=output_width),
         )
@@ -48,10 +51,21 @@ class ClockedInstance(Instance):
             port_map[name] = LogicSignal(name)
         super().__init__(
             node,
-            generic_map=node.attributes.get("generic_map", {}) | generic_map,  #  pyright: ignore
+            generic_map=dict(
+                self._check_generic_map(
+                    node.attributes.get("generic_map", ir.attribute())
+                )
+            )
+            | generic_map,  #  pyright: ignore
             port_map=port_map,
         )
 
+    @staticmethod
+    def _check_generic_map(map: Any) -> ir.AttributeMapping:
+        if not isinstance(map, ir.AttributeMapping):
+            raise TypeError("generic map has to be an AttributeMapping")
+        return map
+
 
 class _ClockedCombinatorial(ClockedInstance):
-    _logic_signals_with_default_suffix = ("valid_in", "valid_out")
+    _logic_signals_with_default_suffix = ("src_valid", "valid", "dst_ready", "ready")
