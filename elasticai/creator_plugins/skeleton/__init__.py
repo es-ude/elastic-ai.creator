@@ -13,7 +13,7 @@ from elasticai.creator.ir2vhdl import (
 from ._skeleton import skeleton as skeleton
 
 
-class _BufferedNetworkWrapper(PluginSymbol):
+class _BufferedNetworkWrapper:
     def __init__(self, template: Template):
         self._template = template
 
@@ -23,7 +23,7 @@ class _BufferedNetworkWrapper(PluginSymbol):
         )
 
     @classmethod
-    def load_into(cls, receiver: Ir2Vhdl) -> None:
+    def load_vhdl(cls, receiver: Ir2Vhdl) -> None:
         def load_file():
             return (
                 res.files("elasticai.creator_plugins.skeleton")
@@ -40,4 +40,4 @@ class _BufferedNetworkWrapper(PluginSymbol):
         receiver.register("buffered_network_wrapper", cls(template))
 
 
-buffered_network_wrapper = _BufferedNetworkWrapper
+buffered_network_wrapper: PluginSymbol = _BufferedNetworkWrapper

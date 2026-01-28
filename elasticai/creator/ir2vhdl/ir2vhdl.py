@@ -98,8 +98,21 @@ class Ir2Vhdl:
         return fn
 
 
-class PluginSymbol(Protocol):
+class PluginSymbolObject(Protocol):
     def load_vhdl(self, receiver: Ir2Vhdl) -> None: ...
+
+
+class PluginSymbolClass(Protocol):
+    @classmethod
+    def load_vhdl(cls, receiver: Ir2Vhdl) -> None: ...
+
+
+class PluginSymbolStatic(Protocol):
+    @staticmethod
+    def load_vhdl(receiver: Ir2Vhdl) -> None: ...
+
+
+type PluginSymbol = PluginSymbolClass | PluginSymbolObject | PluginSymbolStatic
 
 
 class _StaticFileSymbol:
