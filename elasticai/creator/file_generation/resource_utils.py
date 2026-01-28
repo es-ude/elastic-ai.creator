@@ -12,12 +12,22 @@ def get_file_from_package(package: Package, file_name: str) -> ContextManager[Pa
     This is a context manager, because the returned file might be extracted from a zip file and the context manager
     will take care of removing the resulting temporary files on __exit__
     """
-    for resource in resources.files(package).iterdir():
-        if resource.name == file_name:
-            return resources.as_file(resource)
-    raise FileNotFoundError(
-        f"The file '{file_name}' in package '{package}' does not exist."
-    )
+    file_path = list(Path(file_name).parts)
+    current_resource = resources.files(package)
+    dir_contents = current_resource.iterdir()
+    try:
+        while True:
+            resource = next(dir_contents)
+            if resource.name == file_path[0]:
+                if len(file_path) == 1:
+                    return resources.as_file(resource)
+                else:
+                    file_path = file_path[1:]
+                    dir_contents = resource.iterdir()
+    except StopIteration:
+        raise FileNotFoundError(
+            f"The file '{file_name}' in package '{package}' does not exist."
+        )
 
 
 def read_text(package: Package, file_name: str) -> Iterator[str]:
