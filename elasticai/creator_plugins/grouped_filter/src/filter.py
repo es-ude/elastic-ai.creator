@@ -80,6 +80,9 @@ def grouped_filter(
     )
     output_offset = 0
 
+    # need to reverse kernels, as this implementation assumes that higher
+    # id on wire means earlier in time or higher in channel
+    kernels = reversed(kernels)
     for kernel, wires_per_step in zip(kernels, g.as_tuple_by_groups()):
         wires = wires_per_step[0]
         node = nc(

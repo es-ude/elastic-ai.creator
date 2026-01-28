@@ -92,24 +92,24 @@ class TestFilterWithTwoGroups:
                 "input",
                 "kernel_0_i0",
                 src_dst_indices=(
-                    (0, 0),
-                    (2, 1),
+                    (1, 0),
+                    (3, 1),
                 ),
             ),
             factory.edge(
                 "input",
                 "kernel_1_i0",
-                src_dst_indices=((1, 0), (3, 1)),
+                src_dst_indices=((0, 0), (2, 1)),
             ),
             factory.edge(
                 "kernel_0_i0",
                 "output",
-                src_dst_indices=("range(0, 2)", "range(0, 2)"),
+                src_dst_indices=("range(0, 2)", "range(2, 4)"),
             ),
             factory.edge(
                 "kernel_1_i0",
                 "output",
-                src_dst_indices=("range(0, 2)", "range(2, 4)"),
+                src_dst_indices=("range(0, 2)", "range(0, 2)"),
             ),
         )
         actual_ir, _ = grouped_filter(hl_ir, ir.Registry())
