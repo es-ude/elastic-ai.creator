@@ -131,10 +131,6 @@ depends_on = [
 ]
 
 [[modules]]
-path = "elasticai.creator.ir2vhdl.testing"
-depends_on = []
-
-[[modules]]
 path = "elasticai.creator.ir2torch"
 depends_on = [
     "elasticai.creator.torch2ir",
@@ -153,7 +149,7 @@ depends_on = [
 path = "elasticai.creator_plugins.skeleton"
 depends_on = [
     "elasticai.creator.ir2vhdl",
-    "elasticai.creator.ir",
+    "elasticai.creator.ir", "elasticai.creator.hw_function_id",
 ]
 
 [[modules]]

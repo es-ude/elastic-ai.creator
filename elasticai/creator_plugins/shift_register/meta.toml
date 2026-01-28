@@ -6,7 +6,4 @@ api_version = '0.1'
 target_runtime = 'vhdl'
 target_platform = ''
 generated = []
-static_files = [
-  "shift_register.vhd",
-]
-
+static_files = ["shift_register.vhd", "base_shift_register.vhd"]

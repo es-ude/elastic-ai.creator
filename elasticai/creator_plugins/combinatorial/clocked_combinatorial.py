@@ -16,7 +16,6 @@ from .language import Port, VHDLEntity
 
 def _is_clocked_node(node):
     return node.type in [
-        "striding_shift_register",
         "sliding_window",
         "shift_register",
     ]
@@ -34,13 +33,16 @@ def clocked_combinatorial(
             port=Port(
                 inputs=dict(
                     clk="std_logic",
+                    en="std_logic",
                     rst="std_logic",
                     d_in=f"std_logic_vector({input_size} - 1 downto 0)",
-                    valid_in="std_logic",
+                    src_valid="std_logic",
+                    dst_ready="std_logic",
                 ),
                 outputs=dict(
                     d_out=f"std_logic_vector({output_size} - 1 downto 0)",
-                    valid_out="std_logic",
+                    valid="std_logic",
+                    ready="std_logic",
                 ),
             ),
             generics=dict(),
@@ -48,20 +50,31 @@ def clocked_combinatorial(
         yield from entity.generate_entity()
         yield ""
         declarations = build_declarations_for_combinatorial(impl)
+
+        def build_ctrl_declaration(name) -> str:
+            return f"signal {name} : std_logic := '0';"
+
         declarations = chain(
             declarations,
-            (
-                "signal valid_out_input : std_logic := '0';",
-                "signal valid_in_output : std_logic := '0';",
+            map(
+                build_ctrl_declaration,
+                ("dst_ready_input", "src_valid_output", "valid_input", "ready_output"),
             ),
         )
         definitions = build_data_signal_connections_for_combinatorial(impl)
         connected_valid_signals = []
         valid_in_out_pairs = tuple(_get_valid_in_out_pairs(impl).items())
-        connected_valid_signals.extend(("valid_out_input <= valid_in;",))
+        connected_valid_signals.extend(
+            ("valid_input <= src_valid;", "ready <= dst_ready_input;")
+        )
         for dst, src in valid_in_out_pairs:
-            connected_valid_signals.append(f"valid_in_{dst} <= valid_out_{src};")
-        connected_valid_signals.append("valid_out <= valid_in_output;")
+            connected_valid_signals.extend(
+                (f"src_valid_{dst} <= valid_{src};", f"dst_ready_{src} <= ready_{dst};")
+            )
+        connected_valid_signals.extend(
+            ("valid <= src_valid_output;", "ready_output <= dst_ready;")
+        )
+
         definitions = chain(
             definitions,
             connected_valid_signals,

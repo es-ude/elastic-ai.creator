@@ -7,10 +7,7 @@ creator.files = [
   "./elasticai/creator_plugins/*/vhdl/*.vhd",
   "./elasticai/creator_plugins/*/tests/*.vhd"
 ]
-vunit_lib.files = [
-  ".devenv/state/venv/lib/python3.11/site-packages/vunit/vhdl/*.vhd",
-  ".devenv/state/venv/lib/python3.11/site-packages/vunit/vhdl/**/*.vhd"
-]
+
 
 # # Libraries can be marked as third-party to disable some analysis warnings, such as unused declarations
 # UNISIM.files = [

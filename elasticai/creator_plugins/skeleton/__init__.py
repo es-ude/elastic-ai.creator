@@ -1,4 +1,5 @@
 import importlib.resources as res
+from collections.abc import Iterable
 from string import Template
 
 import elasticai.creator.ir.ir_v2 as ir
@@ -17,9 +18,12 @@ class _BufferedNetworkWrapper:
     def __init__(self, template: Template):
         self._template = template
 
-    def __call__(self, args: DataGraph, registry: ir.Registry) -> Code:
-        return args.name, self._template.substitute(
-            dict(entity=args.name) | args.attributes["generic_map"]
+    def __call__(self, args: DataGraph, registry: ir.Registry) -> Iterable[Code]:
+        yield (
+            args.name,
+            self._template.substitute(
+                dict(entity=args.name) | args.attributes["generic_map"]
+            ),
         )
 
     @classmethod

@@ -24,7 +24,7 @@ def _check_input_output_shape_compatibility(node):
         )
     if output_shape.depth != input_shape.depth:
         warnings.warn(
-            'Detected mismatching input output shapes for shift_register for node "{}". Width of output and input shape should usually be equal, but found output={} and input={}.'.format(
+            'Detected mismatching input output shapes for shift_register for node "{}". Depth of output and input shape should usually be equal, but found output={} and input={}.'.format(
                 node.name, output_shape, input_shape
             ),
             stacklevel=3,
@@ -32,12 +32,16 @@ def _check_input_output_shape_compatibility(node):
 
 
 class ShiftRegister(ClockedInstance):
-    _logic_signals_with_default_suffix = ("valid_in", "valid_out")
+    _logic_signals_with_default_suffix = ("src_valid", "valid", "ready", "dst_ready")
 
     def __init__(self, node: VhdlNode):
         _check_input_output_shape_compatibility(node)
         data_width = node.input_shape.size()
         output_width = node.output_shape.size()
+        if "skip" in node.attributes:
+            stride = node.attributes["skip"]
+        else:
+            stride = 1
         if output_width % data_width != 0:
             raise ValueError(
                 "incompatible shapes input: {}  output: {}".format(
@@ -49,5 +53,9 @@ class ShiftRegister(ClockedInstance):
             node,
             input_width=data_width,
             output_width=output_width,
-            generic_map={"data_width": data_width, "num_points": num_points},
+            generic_map={
+                "data_width": data_width,
+                "num_points": num_points,
+                "SKIP": stride,
+            },
         )
