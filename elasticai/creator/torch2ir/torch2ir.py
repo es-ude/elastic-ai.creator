@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 from torch.fx import Node as FxNode
 from torch.fx import Tracer
@@ -99,12 +99,11 @@ class Torch2Ir:
         return list(node.users)
 
     def _get_type(self, node: FxNode) -> str:
-        error = LoweringError("""
-                              Cannot handle function calls or getting 
-                              attributes during translation. Please use 
-                              supported Modules to design your model
-                              and change every function call to a
-                            module call.""")
+        error = LoweringError(f"""
+                              Handling {node.name} failed. 
+                              For function calls only add is supported.
+                              If you use pytorch functionals, please swap them for pytorch modules.
+                              Getting attributes is not supported.""")
         match node.op:
             case "call_module":
                 return type(
@@ -112,6 +111,10 @@ class Torch2Ir:
                 ).__name__.lower()
 
             case "call_function":
+                if "add" in node.name:
+                    return "add"
+                elif "flatten" in node.name:
+                    return "flatten"
                 raise error
             case "placeholder":
                 return "input"
@@ -128,17 +131,59 @@ class Torch2Ir:
                 return "input"
             case "output":
                 return "output"
+            case "add":
+                return "add"
+            case "flatten":
+                return "flatten"
             case _:
                 return cast(str, node.target)
 
     def _extract_attributes(self, node: FxNode) -> dict:
-        if self._get_type(node) in ("input", "output"):
+        if self._get_type(node) in ("input", "output", "add", "flatten"):
             return {}
         module = self.model.get_submodule(cast(str, node.target))
         return self._extractors(module)
 
     def __call__(self, model: Module) -> tuple[DataGraph, Registry]:
         return self.convert(model)
+
+
+def nested_list_to_tuple(obj: Any) -> Any:
+    if isinstance(obj, list):
+        return tuple(nested_list_to_tuple(x) for x in obj)
+    return obj
+
+
+class Torch2IrWithParams(Torch2Ir):
+    def _add_params(self, module) -> dict:
+        params = {}
+        for name, param in module.named_parameters():
+            params[name] = nested_list_to_tuple(param.data.detach().numpy().tolist())
+        return params
+
+    def _extract_attributes(self, node: FxNode) -> dict:
+        if self._get_type(node) in ("input", "output", "add", "flatten"):
+            return {}
+        module = self.model.get_submodule(cast(str, node.target))
+        return self._extractors(module) | self._add_params(module)
+
+
+class Torch2IrWithParamsAndBuffers(Torch2IrWithParams):
+    def _add_buffers(self, module: Module) -> dict:
+        buffers = {}
+        for name, buffer in module.named_parameters():
+            buffers[name] = nested_list_to_tuple(buffer.data.detach().numpy().tolist())
+        return buffers
+
+    def _extract_attributes(self, node: FxNode) -> dict:
+        if self._get_type(node) in ("input", "output", "add", "flatten"):
+            return {}
+        module = self.model.get_submodule(cast(str, node.target))
+        return (
+            self._extractors(module)
+            | self._add_params(module)
+            | self._add_buffers(module)
+        )
 
 
 def get_default_converter() -> Torch2Ir:
