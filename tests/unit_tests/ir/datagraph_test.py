@@ -314,12 +314,6 @@ class TestSerialization:
         serialized = serialize(g)
         deserializer = IrDeserializer(DefaultIrFactory())
         deserialized = deserializer.deserialize_graph(serialized)
-        print(deserialized.attributes)
-        print(g.attributes)
-        print(g.successors)
-        print(deserialized.successors)
-        print(serialized)
-
         assert g == deserialized
 
 

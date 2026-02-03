@@ -57,6 +57,7 @@ testing = [
     "pytest-cov>=6.0.0",
     "coverage>=7.6.9",
     "elasticai-runtime-env5",
+    "torchvision>=0.24.1",
 ]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
