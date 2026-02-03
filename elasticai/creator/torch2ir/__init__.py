@@ -21,10 +21,17 @@ from elasticai.creator.ir import edge as new_edge
 
 from .core import Edge, Implementation, Node, input_node, new_node, output_node
 from .default_handlers import handlers as default_module_handlers
-from .torch2ir import Torch2Ir, get_default_converter
+from .torch2ir import (
+    Torch2Ir,
+    Torch2IrWithParams,
+    Torch2IrWithParamsAndBuffers,
+    get_default_converter,
+)
 
 __all__ = [
     "Torch2Ir",
+    "Torch2IrWithParams",
+    "Torch2IrWithParamsAndBuffers",
     "get_default_converter",
     "Implementation",
     "Node",

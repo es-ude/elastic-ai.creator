@@ -1,6 +1,8 @@
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, Self, cast, overload
 
+import torch
+
 type AttributeBaseData = float | int | str | bool
 
 type AttributeTuple = tuple["Attribute", ...]
@@ -181,8 +183,14 @@ def attribute(
         if not isinstance(arg, AttributeMapping):
             if isinstance(arg, Mapping):
                 return AttributeMapping(**{k: attribute(arg[k]) for k in arg})
-            if isinstance(arg, Iterable) and not isinstance(arg, str):
+            elif (
+                isinstance(arg, Iterable)
+                and not isinstance(arg, str)
+                and not isinstance(arg, torch.Tensor)
+            ):
                 return tuple(convert(item) for item in arg)  # type: ignore
+            elif isinstance(arg, torch.Tensor):
+                return arg.detach().numpy().tolist()
         return arg
 
     if isinstance(arg, Mapping):

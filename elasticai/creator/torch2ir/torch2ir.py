@@ -112,6 +112,10 @@ class Torch2Ir:
                 ).__name__.lower()
 
             case "call_function":
+                if "add" in node.name:
+                    return "add"
+                elif "flatten" in node.name:
+                    return "flatten"
                 raise error
             case "placeholder":
                 return "input"
@@ -128,17 +132,53 @@ class Torch2Ir:
                 return "input"
             case "output":
                 return "output"
+            case "add":
+                return "add"
+            case "flatten":
+                return "flatten"
             case _:
                 return cast(str, node.target)
 
     def _extract_attributes(self, node: FxNode) -> dict:
-        if self._get_type(node) in ("input", "output"):
+        if self._get_type(node) in ("input", "output", "add", "flatten"):
             return {}
         module = self.model.get_submodule(cast(str, node.target))
-        return self._extractors(module)
+        return self._extractors(module)  # | self._add_params(module)
 
     def __call__(self, model: Module) -> tuple[DataGraph, Registry]:
         return self.convert(model)
+
+
+class Torch2IrWithParams(Torch2Ir):
+    def _add_params(self, module) -> dict:
+        params = {}
+        for name, param in module.named_parameters():
+            params[name] = param.data
+        return params
+
+    def _extract_attributes(self, node: FxNode) -> dict:
+        if self._get_type(node) in ("input", "output", "add", "flatten"):
+            return {}
+        module = self.model.get_submodule(cast(str, node.target))
+        return self._extractors(module) | self._add_params(module)
+
+
+class Torch2IrWithParamsAndBuffers(Torch2IrWithParams):
+    def _add_buffers(self, module: Module) -> dict:
+        buffers = {}
+        for name, buffer in module.named_parameters():
+            buffers[name] = buffer.data
+        return buffers
+
+    def _extract_attributes(self, node: FxNode) -> dict:
+        if self._get_type(node) in ("input", "output", "add", "flatten"):
+            return {}
+        module = self.model.get_submodule(cast(str, node.target))
+        return (
+            self._extractors(module)
+            | self._add_params(module)
+            | self._add_buffers(module)
+        )
 
 
 def get_default_converter() -> Torch2Ir:

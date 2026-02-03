@@ -58,6 +58,7 @@ testing = [
     "coverage>=7.6.9",
     "vunit-hdl>=5.0.0.dev5",
     "elasticai-runtime-env5",
+    "torchvision>=0.24.1",
 ]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
