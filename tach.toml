@@ -203,5 +203,5 @@ depends_on = [
     "elasticai.creator.nn",
     "elasticai.creator.ir2verilog",
     "elasticai.creator.ir2vhdl",
-    "elasticai.creator.hdl_ir",
+    "elasticai.creator.hdl_ir", "elasticai.creator.ir", "elasticai.creator.function_dispatch",
 ]
