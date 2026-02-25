@@ -32,6 +32,8 @@ class IrSerializer:
                 return item
             case tuple() as item:
                 return tuple(self.serialize(v) for v in item)
+            case list() as item:
+                return list(self.serialize(v) for v in item)
             case AttributeMapping() as item:
                 return {k: self.serialize(v) for k, v in item.items()}
 

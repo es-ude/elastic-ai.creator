@@ -9,6 +9,7 @@ def _register(fn):
 
 
 @_register
+# @_add_params
 def conv1d(module: nn.Conv1d) -> dict:
     return {
         "in_channels": module.in_channels,
@@ -64,4 +65,49 @@ def relu(module: nn.ReLU) -> dict:
 
 @_register
 def sigmoid(module: nn.Sigmoid) -> dict:
+    return {}
+
+
+@_register
+def conv2d(module: nn.Conv2d) -> dict:
+    return {
+        "in_channels": module.in_channels,
+        "out_channels": module.out_channels,
+        "kernel_size": module.kernel_size,
+        "stride": module.stride,
+        "padding": module.padding,
+        "dilation": module.dilation,
+        "groups": module.groups,
+        "bias": module.bias is not None,
+        "padding_mode": module.padding_mode,
+    }
+
+
+@_register
+def batchnorm2d(module: nn.BatchNorm2d) -> dict:
+    return {
+        "num_features": module.num_features,
+        "affine": module.affine,
+    }
+
+
+@_register
+def maxpool2d(module: nn.MaxPool2d) -> dict:
+    return {
+        "kernel_size": module.kernel_size,
+        "stride": module.stride,
+        "padding": module.padding,
+        "dilation": module.dilation,
+    }
+
+
+@_register
+def adaptiveavgpool2d(module: nn.AdaptiveAvgPool2d) -> dict:
+    return {
+        "output_size": module.output_size,
+    }
+
+
+@_register
+def add(module) -> dict:
     return {}

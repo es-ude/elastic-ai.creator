@@ -222,14 +222,9 @@ class TestSerialization:
     def test_can_serialize_primitive_attributes(
         self, serialize: Callable[[Attribute], Any]
     ) -> None:
-        a = (1, 2.0, "three", True)
+        a = (1, 2.0, "three", True, [6.0, 5.0, 4.0])
         serialized = serialize(a)
         assert a == serialized
-
-    def test_serializing_list_raises_error(
-        self, serialize: Callable[[Attribute], Any]
-    ) -> None:
-        pytest.raises(TypeError, serialize, [1, 2, 3])
 
     def test_can_serialize_flat_attribute_mapping(
         self, serialize: Callable[[Attribute], Any]
@@ -254,7 +249,9 @@ class TestSerialization:
     def test_hiding_unsupported_type_inside_tuple_raises_error(
         self, serialize: Callable[[Attribute], Any]
     ) -> None:
-        a = AttributeMapping(x=1, y=(2, [3, 4]))  # type: ignore
+        class UnsupportedType: ...
+
+        a = AttributeMapping(x=1, y=(2, UnsupportedType()))  # type: ignore
         pytest.raises(TypeError, serialize, a)
 
     def test_serializing_a_node_means_to_serialize_its_attributes(
