@@ -61,93 +61,11 @@ in {
     serve_docs = {
       exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
     };
-
-    new_docs_for_creator_plugin = {
-      exec = ''
-        mkdir -p elasticai/creator_plugins/$1/docs/modules/ROOT/pages
-        echo "= $1
-        " > elasticai/creator_plugins/$1/docs/modules/ROOT/pages/index.adoc
-        touch elasticai/creator_plugins/$1/docs/modules/ROOT/nav.adoc
-        echo "name: <name>
-        version: true
-        title: <title>
-        nav:
-         - modules/ROOT/nav.adoc" > elasticai/creator_plugins/$1/docs/antora.yml
-      '';
-      package = pkgs.bash;
-      description = "create new plugin including docs folder";
-    };
-
-    new_meta_for_creator_plugin = {
-      exec = ''
-        echo "
-        [[plugins]]
-        name = '$1'
-        version = '0.1'
-        api_version = 'xx.xx'
-        target_runtime = 'runtime'
-        target_platform = 'platform'
-
-        " > elasticai/creator_plugins/$1/meta.toml
-      '';
-      package = pkgs.bash;
-      description = "create a new minimal meta.toml file for a plugin";
-    };
-
-    new_creator_plugin = {
-      exec = ''
-        if [ -d elasticai/creator_plugins/$1 ]; then
-           mkdir -p elasticai/creator_plugins/$1
-           touch elasticai/creator_plugins/$1/__init__.py
-           new_meta_for_creator_plugin $1
-           new_docs_for_creator_plugin $1
-        else
-          echo "plugin already exists"
-        fi
-      '';
-      package = pkgs.bash;
-      description = "create a new creator plugin incl. meta.toml and docs";
-    };
-
-    run_vhdl_tbs = {
-      exec = ''
-        LAST_EXIT=0
-        START_DIR=$1
-        FILE_PATTERN=$2
-        for tb in $(find $START_DIR -type f -iname $FILE_PATTERN); do
-          ${unstablePkgs.uv}/bin/uv run $tb
-          tmp_state=$?
-          NUM_TESTS=$(($NUM_TESTS + 1))
-          if [[ $tmp_state -ne 0 ]] ; then
-            NUM_FAILS=$(($NUM_FAILS + 1))
-            FAILED_TESTS+=("$tb")
-          fi
-        done
-        if [[ NUM_FAILS -gt 0 ]]; then
-          echo ""
-          echo "--------------Summary: $(basename $0)----------------------"
-          echo "$NUM_FAILS out of $NUM_TESTS failed:"
-          for tb in $FAILED_TESTS; do
-            echo "  $tb"
-          done
-          exit 1
-        fi
-      '';
-      package = pkgs.bash;
-      description = "search for all testbenches in given directory and  run them using given command";
-    };
   };
 
   tasks = let
     uv_run = "${unstablePkgs.uv}/bin/uv run";
   in {
-    "check:vhdl-plugins" = {
-      exec = ''
-        run_vhdl_tbs . "run_tbs.py"
-      '';
-      before = ["check:tests"];
-    };
-
     "check:slow-tests" = {
       exec = "${uv_run} pytest -m '(simulation or slow) and not hardware'";
       before = ["check:tests"];
@@ -228,21 +146,3 @@ in {
     };
   };
 }
-## Commented out while we're configuring pre-commit manually
-# pre-commit.hooks = {
-#   shellcheck.enable = true;
-#   ripsecrets.enable = true; # don't commit secrets
-#   ruff.enable = true; # lint and automatically fix simple problems/reformat
-#   taplo.enable = true; # reformat toml
-#   nixfmt-rfc-style.enable = true; # reformat nix
-#   ruff-format.enable = true;
-#   mypy = {
-#     enable = false;
-#   }; # check type annotations
-#   end-of-file-fixer.enable = true;
-#   commitizen.enable = true; # help adhering to commit style guidelines
-#   check-toml.enable = true; # check toml syntax
-#   check-case-conflicts.enable = true;
-#   check-added-large-files.enable = true;
-# };
-
