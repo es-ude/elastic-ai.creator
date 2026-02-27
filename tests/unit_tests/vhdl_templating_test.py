@@ -25,7 +25,10 @@ def dummy_vhdl_prototype() -> Iterable[str]:
         "end entity;",
         "",
         "begin architecture rtl of skeleton is",
-        "  constant ADDRESS_WIDTH: integer := 16;begin  d_in <= address_in;",
+        "  constant ADDRESS_WIDTH: integer := 16;",
+        "  constant WEIGHT : std_logic_vector(5 downto 0) := (others => '0');",
+        "begin",
+        "  d_in <= address_in;",
         "end architecture;",
     ]
 
@@ -118,3 +121,44 @@ generic (
         code = type_handler.substitute(dict(data_width=5, data_depth=3)).splitlines()
         assert "    DATA_WIDTH : natural := 5;" == code[2]
         assert "    DATA_DEPTH : natural := 3" == code[3]
+
+    def test_can_replace_constant(self):
+        type_handler = (
+            EntityTemplateDirector()
+            .set_prototype("""
+        constant MY_VALUE : integer := 0;
+        """)
+            .add_value("MY_VALUE")
+            .build()
+        )
+        print(type_handler.template)
+
+        code = type_handler.substitute(dict(MY_VALUE=3))
+        assert "constant MY_VALUE : integer := 3" in code
+
+    def setup(self, prototype, param_name):
+        return (
+            EntityTemplateDirector()
+            .set_prototype(prototype)
+            .add_value(param_name)
+            .build()
+        )
+
+    def test_can_replace_logic_vector(self):
+        type_handler = self.setup(
+            """constant MY_VALUE : std_logic_vector(5 downto 0) := (others => '0');""",
+            "MY_VALUE",
+        )
+
+        code = type_handler.substitute(dict(MY_VALUE='"010101"'))
+        assert 'constant MY_VALUE : std_logic_vector(5 downto 0) := "010101";' == code
+
+    def test_can_replace_logic_vector_defined_with_generics(self):
+        type_handler = self.setup(
+            "constant VALUE : std_logic_vector(D_WIDTH - 1 downto 0) := (others => '0');",
+            "VALUE",
+        )
+        code = type_handler.substitute(dict(VALUE='"0000"'))
+        assert (
+            'constant VALUE : std_logic_vector(D_WIDTH - 1 downto 0) := "0000";' == code
+        )
