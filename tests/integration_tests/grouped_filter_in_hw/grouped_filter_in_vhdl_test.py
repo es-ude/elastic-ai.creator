@@ -2,6 +2,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import cocotb as ctb
+import pytest
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.types import LogicArray
@@ -271,6 +272,7 @@ async def check_grouped_filter_behaviour(dut):
     }
 
 
+@pytest.mark.simulation
 def test_network(cocotb_test_fixture: CocotbTestFixture):
     graph, registry = build_ir()
     artifact_dir = cocotb_test_fixture.get_artifact_dir()
