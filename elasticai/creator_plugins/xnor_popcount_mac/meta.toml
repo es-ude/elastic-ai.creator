@@ -1,0 +1,9 @@
+
+[[plugins]]
+name = 'xnor_popcount_mac'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'vhdl'
+target_platform = ''
+generated = ["binary_filter"]
+static_files = ["mac.vhd"]
