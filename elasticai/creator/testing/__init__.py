@@ -5,6 +5,13 @@ from .cocotb_runner import (
     run_cocotb_sim,
     run_cocotb_sim_for_src_dir,
 )
+from .cocotb_stream import (
+    ClockReset,
+    StreamInterface,
+    bitstring_to_logic_array,
+    logic_value_to_bitstring,
+    set_from_bit_string,
+)
 from .ghdl_report_parsing import parse_report
 from .ghdl_simulation import GHDLSimulator
 from .simulated_layer import SimulatedLayer, Testbench
@@ -22,4 +29,9 @@ __all__ = [
     "SimulatedLayer",
     "cocotb_test_fixture",
     "eai_testbench",
+    "bitstring_to_logic_array",
+    "logic_value_to_bitstring",
+    "set_from_bit_string",
+    "ClockReset",
+    "StreamInterface",
 ]
