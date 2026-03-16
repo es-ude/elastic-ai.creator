@@ -289,4 +289,5 @@ external/
 # ignore cocotb build sim folder no matter where
 **/build_sim
 **/build_dir
+**/build_dir_output
 **/build_test
