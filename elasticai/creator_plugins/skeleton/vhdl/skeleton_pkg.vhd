@@ -5,6 +5,7 @@ use ieee.MATH_REAL.all;
 
 package skeleton_pkg is
   type skeleton_id_t is array (0 to 15) of std_logic_vector(7 downto 0);
+  type byte_array_t is array (natural range <>) of std_logic_vector(7 downto 0);
   constant SKELETON_ID : skeleton_id_t := (others => x"00");
 
   function fmax(L: integer; R: integer) return integer;
