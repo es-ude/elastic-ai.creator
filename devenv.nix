@@ -62,6 +62,11 @@ in {
     serve_docs = {
       exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
     };
+    run_hw_tests = {
+      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest --import-mode=prepend -m hardware "@$"'';
+      description = ''        Run hw tests depending on the experiment framework. This uses a different import mode to resolve
+              import issues. IMPORTANT: this is only temporary and will be solved more naturally in the future'';
+    };
   };
 
   tasks = let

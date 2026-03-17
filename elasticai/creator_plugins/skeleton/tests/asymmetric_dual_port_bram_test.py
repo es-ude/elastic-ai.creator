@@ -1,3 +1,5 @@
+from contextlib import ExitStack
+
 import cocotb as ctb
 import pytest
 from cocotb.clock import Clock
@@ -97,6 +99,7 @@ async def can_write_to_ram(
         "expected",
     ],
     [
+        (8, 2, 4, 8, 2, 4, [3, 7, 15, 1], [3, 7, 15, 1]),
         (2, 2, 4, 4, 1, 2, [1, 2, 3, 0], [9, 3]),
         (4, 1, 2, 2, 2, 4, [9, 3], [1, 2, 3, 0]),
         (
@@ -122,10 +125,19 @@ def test_asymmetric_dual_port_bram(
     input_data,
     expected,
 ):
-    with get_file_from_package(
-        "elasticai.creator_plugins.skeleton.vhdl", "skeleton_pkg.vhd"
-    ) as f:
-        cocotb_test_fixture.add_srcs(f)
+    with ExitStack() as stack:
+        dut = stack.enter_context(
+            get_file_from_package(
+                "elasticai.creator_plugins.skeleton.vhdl",
+                "asymmetric_dual_port_bram.vhd",
+            )
+        )
+        pkg = stack.enter_context(
+            get_file_from_package(
+                "elasticai.creator_plugins.skeleton.vhdl", "skeleton_pkg.vhd"
+            )
+        )
+        cocotb_test_fixture.add_srcs(dut, pkg)
         cocotb_test_fixture.run(
             params=dict(
                 read_address_width=read_address_width,

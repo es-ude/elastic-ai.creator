@@ -1,4 +1,5 @@
 import importlib.resources as res
+from collections.abc import Iterable
 from string import Template
 
 from elasticai.creator import ir
@@ -22,9 +23,13 @@ class _Skeleton:
     def __init__(self, template: Template):
         self._template = template
 
-    def __call__(self, arg: DataGraph, registry: ir.Registry) -> Code:
-        return arg.name, self._template.substitute(
-            arg.attributes["generic_map"] | dict(entity=arg.name)
+    def __call__(self, arg: DataGraph, registry: ir.Registry) -> Iterable[Code]:
+        rendered = self._template.substitute(
+            dict(arg.attributes["generic_map"]) | dict(entity=arg.name)
+        )
+        yield (
+            arg.name,
+            tuple(rendered.splitlines()),
         )
 
     @classmethod
