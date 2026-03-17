@@ -42,7 +42,7 @@ class NodeImpl(Node):
     def __repr__(self) -> str:
         return f"Node({self._name}, {repr(self._attributes)})"
 
-    def __eq__(self, o: object) -> bool:
+    def __eq__(self, o: object, /) -> bool:
         if not isinstance(o, Node):
             return False
         return self._name == o.name and self._attributes == o.attributes
