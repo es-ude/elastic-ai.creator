@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import serial  # type: ignore
 import torch
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port  # type: ignore
+from elasticai.usbprotocol import UserRemoteControl, get_env5_port  # type: ignore
 
 from elasticai.creator.arithmetic import (
     FxpArithmetic,

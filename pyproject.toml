@@ -56,8 +56,9 @@ testing = [
     "hypothesis>=6.124.7",
     "pytest-cov>=6.0.0",
     "coverage>=7.6.9",
-    "elasticai-runtime-env5",
     "torchvision>=0.24.1",
+    "pyserial>=3.5",
+    "elasticai-usbprotocol",
 ]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
@@ -101,11 +102,12 @@ url = "https://pypi.org/simple"
 explicit = true
 
 [tool.uv.sources]
-elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61" }
-sphinxcontrib-wavedrom = { git = "https://github.com/glencoe/sphinx-wavedrom.git", rev = "hotfix_html_only_version" }
 torch = [{ index = "pytorch" }]
 torchvision = [{ index = "pytorch" }]
+elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61" }
+sphinxcontrib-wavedrom = { git = "https://github.com/glencoe/sphinx-wavedrom.git", rev = "hotfix_html_only_version" }
 
+elasticai-usbprotocol = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5" }
 [tool.pytest.ini_options]
 minversion = "6.0"
 markers = [

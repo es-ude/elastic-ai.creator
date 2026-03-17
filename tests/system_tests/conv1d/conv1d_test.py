@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import serial
 import torch
-from elasticai.runtime.env5.usb import UserRemoteControl, get_env5_port
+from elasticai.usbprotocol import UserRemoteControl, get_env5_port
 
 from elasticai.creator.arithmetic import (
     FxpArithmetic,
