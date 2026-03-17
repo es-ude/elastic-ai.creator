@@ -270,14 +270,20 @@ Our implementation is tested with unit and integration.
 You can run one explicit test with the following statement:
 
 ```bash
-python3 -m pytest ./tests/path/to/specific/test.py
+uv run python -m pytest ./tests/path/to/specific/test.py
 ```
 
 If you want to run all tests, give the path to the tests:
 
 ```bash
-python3 -m pytest ./tests ./elasticai
+uv run python -m pytest ./tests ./elasticai
 ```
+
+If you want to run just all the test without simulation, hardware tests and slow tests, use the following command 
+```bash
+uv run python -m pytest ./tests -m "not simulation and not hardware and not slow"
+```
+
 
 There still are unit tests for specific modules in their respective folders.
 Those are subject to be moved.
