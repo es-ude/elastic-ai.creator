@@ -44,9 +44,18 @@ class ValueTemplateParameter(TemplateParameter):
     """
 
     def __init__(self, name: str):
-        types = ["natural", "integer", "positive"]
-        self.regex = r"(?P<def>(?i:{name}\s*:\s*({types})))\s*(:=\s*.*)?\b".format(
-            name=name, types="|".join(types)
+        types = [
+            "natural",
+            "integer",
+            "positive",
+            r"std_logic_vector\(\s*[^=:]+\s+downto\s+[^=:]+\s*\)",
+            r"std_logic_vector\(.*\s+to\s+\d+\)",
+            r"std_logic\b",
+        ]
+        self.regex = (
+            r"(?P<def>(?i:{name}\s*:\s*({types})))(?:[ \t]*:=[ \t]*[^;,\n]*)?".format(
+                name=name, types="|".join(types)
+            )
         )
         self.name = name
 
@@ -55,11 +64,20 @@ class ValueTemplateParameter(TemplateParameter):
 
 
 class EntityTemplateDirector:
+    """Turn a vhdl prototype into a template.
+
+    Resulting template will have a parameter called `entity`
+    that you can set to define the name of the represented
+    entity.
+    Replace constants/variables/generics with `add_value()`.
+
+    """
+
     def __init__(self):
         self._builder = TemplateBuilder()
         self._builder.add_parameter(EntityTemplateParameter())
 
-    def set_prototype(self, prototype: str) -> "EntityTemplateDirector":
+    def set_prototype(self, prototype: str | list[str]) -> "EntityTemplateDirector":
         self._builder.set_prototype(prototype)
         return self
 
@@ -68,6 +86,10 @@ class EntityTemplateDirector:
             raise ValueError("name 'entity' is reserved for entity parameter")
         self._builder.add_parameter(ValueTemplateParameter(name))
         return self
+
+    def add_value(self, name: str) -> "EntityTemplateDirector":
+        """add a parameter for a generic/constant/variable/signal."""
+        return self.add_generic(name)
 
     def build(self) -> _pyTemplate:
         return _pyTemplate(self._builder.build())
