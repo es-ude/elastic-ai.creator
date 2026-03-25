@@ -61,6 +61,38 @@ in {
     serve_docs = {
       exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
     };
+    pr-check = {
+      exec = ''
+        set -e
+        echo "==> Formatting..."
+        ${unstablePkgs.uv}/bin/uv run ruff format
+        echo "==> Linting (with auto-fix)..."
+        ${unstablePkgs.uv}/bin/uv run ruff check --fix
+        echo "==> Syncing tach..."
+        ${unstablePkgs.uv}/bin/uv run tach sync
+        echo "==> Type checking..."
+        ${unstablePkgs.uv}/bin/uv run mypy -p elasticai.creator
+        echo "==> Running tests..."
+        ${unstablePkgs.uv}/bin/uv run pytest --tach -m "not simulation and not hardware and not slow"
+        echo "==> Done. Ready to push."
+      '';
+    };
+    pr-check-full = {
+      exec = ''
+        set -e
+        echo "==> Formatting..."
+        ${unstablePkgs.uv}/bin/uv run ruff format
+        echo "==> Linting (with auto-fix)..."
+        ${unstablePkgs.uv}/bin/uv run ruff check --fix
+        echo "==> Syncing tach..."
+        ${unstablePkgs.uv}/bin/uv run tach sync
+        echo "==> Type checking..."
+        ${unstablePkgs.uv}/bin/uv run mypy -p elasticai.creator
+        echo "==> Running tests..."
+        ${unstablePkgs.uv}/bin/uv run pytest --tach -m "not hardware"
+        echo "==> Done. Ready to push."
+      '';
+    };
   };
 
   tasks = let
