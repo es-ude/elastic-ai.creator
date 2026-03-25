@@ -18,6 +18,8 @@ coverage.xml
 htmlcov
 do_not_commit/*
 .hypothesis/
+CLAUDE.md
+.dual-graph
 
 # python build output
 dist/
@@ -292,3 +294,6 @@ external/
 **/build_dir_output
 #
 **/build_test
+
+# claude code config (local only)
+.claude/
