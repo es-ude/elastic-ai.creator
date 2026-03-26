@@ -5,6 +5,7 @@ from .cocotb_runner import (
     run_cocotb_sim,
     run_cocotb_sim_for_src_dir,
 )
+from .cocotb_stream import ResetControl, StreamInterface
 from .ghdl_report_parsing import parse_report
 from .ghdl_simulation import GHDLSimulator
 from .simulated_layer import SimulatedLayer, Testbench
@@ -20,6 +21,8 @@ __all__ = [
     "parse_report",
     "Testbench",
     "SimulatedLayer",
+    "StreamInterface",
+    "ResetControl",
     "cocotb_test_fixture",
     "eai_testbench",
 ]
