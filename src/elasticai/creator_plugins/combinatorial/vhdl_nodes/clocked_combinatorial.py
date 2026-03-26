@@ -19,7 +19,7 @@ from .node_factory import (
 
 @InstanceFactoryForCombinatorial.register()
 def clocked_combinatorial(node):
-    return ClockedInstance(
+    return _ClockedCombinatorial(
         node, input_width=node.input_shape.size(), output_width=node.output_shape.size()
     )
 

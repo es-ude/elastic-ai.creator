@@ -10,19 +10,23 @@ from elasticai.creator_plugins.combinatorial.clocked_combinatorial import (
 
 
 def test_valid_path_assignments_are_present(code):
+    code = [line for line in code if "<=" in line]
     assert "valid_input <= src_valid;" in code
     assert "src_valid_sliding_window <= valid_input;" in code
 
     assert "src_valid_shift_register <= valid_sliding_window;" in code
-    assert "src_valid_output <= valid_shift_register;" in code
+    assert "src_valid_multistep_filter <= valid_shift_register;" in code
+    assert "src_valid_output <= valid_multistep_filter;" in code
     assert "valid <= src_valid_output;" in code
 
 
 def test_ready_path_assignments_are_present(code):
+    code = [line for line in code if "<=" in line]
     assert "ready <= dst_ready_input;" in code
     assert "dst_ready_input <= ready_sliding_window;" in code
     assert "dst_ready_sliding_window <= ready_shift_register;" in code
-    assert "dst_ready_shift_register <= ready_output;" in code
+    assert "dst_ready_shift_register <= ready_multistep_filter;" in code
+    assert "dst_ready_multistep_filter <= ready_output;" in code
     assert "ready_output <= dst_ready;" in code
 
 
@@ -69,7 +73,7 @@ def code() -> Sequence[str]:
             "conv",
             type="unclocked_combinatorial",
             implementation="conv",
-            input_shape=Shape(2, 4),
+            input_shape=Shape(2, 2),
             output_shape=Shape(1, 1),
         ),
         vhdl_node(
@@ -77,6 +81,13 @@ def code() -> Sequence[str]:
             type="shift_register",
             implementation="shift_register",
             input_shape=Shape(1, 1),
+            output_shape=Shape(1, 3),
+        ),
+        vhdl_node(
+            "multistep_filter",
+            type="clocked_combinatorial",
+            implementation="multistep_filter",
+            input_shape=Shape(1, 3),
             output_shape=Shape(1, 3),
         ),
         vhdl_node(
@@ -90,7 +101,8 @@ def code() -> Sequence[str]:
         edge("input", "sliding_window"),
         edge("sliding_window", "conv"),
         edge("conv", "shift_register"),
-        edge("shift_register", "output"),
+        edge("shift_register", "multistep_filter"),
+        edge("multistep_filter", "output"),
     )
     result = clocked_combinatorial(impl, ir.Registry())
     _, lines = result

@@ -18,6 +18,7 @@ def _is_clocked_node(node):
     return node.type in [
         "sliding_window",
         "shift_register",
+        "clocked_combinatorial",
     ]
 
 
