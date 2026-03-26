@@ -165,8 +165,6 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
                 additional_predecessors[src] = {}
         new_successors = self.successors.join(additional_successors)
         new_predecessors = self.predecessors.join(additional_predecessors)
-        print(f"{new_predecessors}")
-        print(f"{new_successors}")
         return type(self)(
             self._default_edge_attributes_factory,
             predecessors=new_predecessors,

@@ -54,12 +54,10 @@ def bfs_iter_down[T](
         visit_next = sorted(list(successors(start)))
     while len(visit_next) > 0:
         current = visit_next.pop(0)
-        print(f"{current=}")
         if current not in visited:
             visited.add(current)
             yield current
             for child in successors(current):
-                print(f"\t{child=}")
                 if set(predecessors(child)).issubset(visited):
                     visit_next.append(child)
 

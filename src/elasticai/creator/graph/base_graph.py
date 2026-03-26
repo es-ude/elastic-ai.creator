@@ -48,7 +48,6 @@ class BaseGraph(Graph[T]):
         for node, successors in d.items():
             g.add_node(node)
             for s in successors:
-                print(f"{s=}")
                 g.add_edge(node, s)
         return g
 
