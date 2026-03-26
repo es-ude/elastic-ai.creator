@@ -95,7 +95,7 @@ async def shift_register_accumulates_data(
 
     # we need two cycles to read each data point and one cycle for the valid signal and data to propagate
     num_expected_read_cycles = 2 * len(input_data) * skip + 1
-
+    dut.en.value = 1
     read = ctb.start_soon(
         _record_output_for_n_cycles(
             dut,

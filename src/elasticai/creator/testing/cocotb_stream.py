@@ -52,11 +52,31 @@ class StreamInterface[TInput, TOutput]:
     and start the coroutine `.collect_chunks()` with `cocotb.start_soon()`
     to read data asynchronously from the dut.
 
+
     In most cases creating a new `StreamInterface` object
     should be done by calling the `.from_dut()` function.
     By default the data is provided and collect as strings,
     but you can use a custom data type, by injecting
     functions for conversion to/from cocotb `LogicArray`s.
+
+    Example:
+
+    ```python
+    cocotb.start_soon(Clock(dut.clk, 10, "ns").start())
+    stream = StreamInterface.from_dut(dut)
+    reset = ResetControl.from_dut(dut)
+    dut.src_valid.value = 0
+    dut.dst_ready.value = 0
+    await RisingEdge(dut.clk)
+    await reset.reset_active_high()
+    dut.en.value = 1
+    collect_task = cocotb.start_soon(
+        stream.collect_chunks(expected_count=1, max_cycles=10)
+    )
+    await stream.drive_chunks([input])
+    observed = await collect_task
+    assert observed == [expected]
+    ```
     """
 
     def __init__(
