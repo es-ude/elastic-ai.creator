@@ -57,21 +57,25 @@ Details on each steps come after this subsection
       };
     };
     ```
-  </details>
-  <details>
+   </details>
+   <details>
     <summary> All Platforms </summary>
       Note that this is the non-declarative approach (just like apt and other pkg managers).
       For a declarative install we refer to the official [nix documentation](https://nix.dev/manual/nix/stable/)
+
       ```bash
         nix-env --install --attr devenv -f https://github.com/NixOS/nixpkgs/tarball/nixpkgs-unstable
       ```
+
       or if you have installed nix with flake support
+
       ```bash
         nix profile install nixpkgs#devenv
       ```
-  </details>
+
+   </details>
 3. install direnv to automatically load the devenv environment, as soon as you enter the directory
-  <details> <summary>nix-darwin (and NixOS) </summary>
+   <details> <summary>nix-darwin (and NixOS) </summary>
   Configure the programs section in your system configuration like this
 
   ```nix
@@ -86,17 +90,22 @@ Details on each steps come after this subsection
     };
   };
   ```
+
    </details>
-  <details>
+   <details>
     <summary> others </summary>
     with nix including flake support you can just
+
     ```bash
     nix profile add nixpkgs#direnv
     ```
-  </details>
+
+   </details>
+
 4. clone the repository
 5. `cd` into the repo and call `direnv allow` to allow direnv to automatically load the devenv environment
 6. start your editor or IDE
+
   - point your IDE to the python environment `./devenv/state/venv/bin/python`
   - run commands using `uv run <command>`
   

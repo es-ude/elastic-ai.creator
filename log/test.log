@@ -1,0 +1,3 @@
+DEBUG    pydot:__init__.py:15 pydot initializing
+DEBUG    pydot:__init__.py:16 pydot 4.0.1
+DEBUG    pydot.core:core.py:25 pydot core module initializing

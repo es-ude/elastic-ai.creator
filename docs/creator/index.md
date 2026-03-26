@@ -17,6 +17,6 @@ skeleton.md
 system_integrations.md
 quantized_grads.md
 plugins/index
-../apidocs/index.rst
+testing.md
 ```
 
