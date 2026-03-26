@@ -2,7 +2,7 @@ import warnings
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from itertools import starmap
-from typing import Any, Protocol, override
+from typing import Any, Protocol, cast, overload, override
 
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.ir as ir
@@ -43,14 +43,21 @@ class Ir2Vhdl:
     def __init__(self) -> None:
         self.__static_files: dict[str, Callable[[], str]] = {}
 
+    @overload
+    def __call__(self, registry: Registry, /) -> Iterable[Code]: ...
+
+    @overload
     def __call__(
         self, root: DataGraph, registry: Registry, default_root_name="root"
+    ) -> Iterable[Code]: ...
+
+    def __call__(
+        self, root=None, registry=None, default_root_name="root"
     ) -> Iterable[Code]:
+        registry = self._normalize_args(
+            root=root, registry=registry, default_root_name=default_root_name
+        )
         registry = self._give_names_to_registry_graphs(registry)
-        if "name" not in root.attributes:
-            root = root.with_attributes(root.attributes | dict(name=default_root_name))
-        for name, code in self._handle_type(root, registry):
-            yield f"{name}.vhd", code
         for g in registry.values():
             for name, code in self._handle_type(g, registry):
                 yield f"{name}.vhd", code
@@ -97,6 +104,20 @@ class Ir2Vhdl:
         name = self._check_and_get_name(name, fn)
         self._handle_type.override(name, fn)
         return fn
+
+    def _normalize_args(
+        self, root: DataGraph | None, registry: Registry | None, default_root_name: str
+    ) -> ir.Registry:
+        incompatible_args_error = TypeError(
+            "Ir2Vhdl called with incompatible arguments"
+        )
+        if isinstance(root, ir.Registry) and registry is None:
+            return root
+        if isinstance(registry, ir.Registry) and root is not None:
+            return registry | ir.Registry(
+                **{cast(str, root.attributes.get("name", default_root_name)): root}
+            )
+        raise incompatible_args_error
 
 
 class PluginSymbolObject(Protocol):
