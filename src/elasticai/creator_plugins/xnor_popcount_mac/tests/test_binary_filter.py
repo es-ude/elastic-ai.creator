@@ -18,8 +18,6 @@ from elasticai.creator.testing.cocotb_stream import (
 
 factory = ir.IrFactory()
 
-pytest_plugins = "elasticai.creator.testing.cocotb_pytest"
-
 
 @pytest.fixture
 def translate():
