@@ -64,7 +64,7 @@ in {
       exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
     };
     run_simulation_tests = {
-      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m simulation '';
+      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m simulation | grep -v "ld:"'';
     };
     run_hw_tests = {
       exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m hardware "@$"'';
