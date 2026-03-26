@@ -61,7 +61,7 @@ class HwFunctionIdUpdater:
         hash = _HwFunctionIdHash()
 
         for vhd_file in self._collect_files_to_hash():
-            logger.debug(f"hashing {vhd_file.as_uri}")
+            logger.debug(f"hashing {vhd_file.as_uri()}")
             hash.update(vhd_file)
         digest = hash.digest()
         logger.debug(f"raw_digest is {digest.hex()}")
