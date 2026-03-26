@@ -14,9 +14,12 @@ from .cocotb_stream import (
 )
 from .ghdl_report_parsing import parse_report
 from .ghdl_simulation import GHDLSimulator
+from .hw_tester import AIAccelerator, HWTester
 from .simulated_layer import SimulatedLayer, Testbench
 
 __all__ = [
+    "AIAccelerator",
+    "HWTester",
     "run_cocotb_sim",
     "CocotbTestFixture",
     "run_cocotb_sim_for_src_dir",
@@ -35,4 +38,10 @@ __all__ = [
     "logic_value_to_bitstring",
     "set_from_bit_string",
     "StreamInterface",
+    "HardwareFunction",
+    "DefaultHWFunction",
+    "SyncSynthesisStrategy",
+    "CachedSynthesisStrategy",
+    "SyncHardwareTester",
+    "HWFunction",
 ]
