@@ -19,7 +19,8 @@ htmlcov
 do_not_commit/*
 .hypothesis/
 CLAUDE.md
-.dual-graph
+claude*
+.dual-graph/
 
 # python build output
 dist/
