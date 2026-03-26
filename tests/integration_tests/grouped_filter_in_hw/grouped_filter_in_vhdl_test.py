@@ -10,6 +10,7 @@ from cocotb.types import LogicArray
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.ir as ir
 from elasticai.creator import ir2vhdl
+from elasticai.creator.testing import ResetControl, StreamInterface
 from elasticai.creator.testing.cocotb_pytest import CocotbTestFixture
 from elasticai.creator_plugins.grouped_filter import FilterParameters, grouped_filter
 
@@ -249,24 +250,24 @@ async def check_grouped_filter_behaviour(dut):
     xor_input = "000110"
     expected_xnor_filter_results = "11001"
     expected_xor_filter_results = "00101"
-    inputs = [LogicArray("".join((c1, c2))) for c1, c2 in zip(xnor_input, xor_input)]
+    inputs = list("".join(bits) for bits in zip(xnor_input, xor_input))
+    num_steps = len(inputs)
     ctb.start_soon(Clock(dut.clk, period=10).start())
-    dut.dst_ready.value = 1
-    write = ctb.start_soon(_write(dut, inputs, 20))
-    result = []
-    for _ in range(25):
-        if dut.valid.value == 1:
-            result.append(str(dut.d_out.value))
-        await RisingEdge(dut.clk)
-    await write.join()
-
-    xnor_filter_results = "".join(
-        [a for a, _ in result][0 : len(expected_xnor_filter_results)]
+    reset = ResetControl.from_dut(dut)
+    stream = StreamInterface.from_dut(dut)
+    dut.src_valid.value = 0
+    dut.dst_ready.value = 0
+    dut.en.value = 1
+    await RisingEdge(dut.clk)
+    await reset.reset_active_high()
+    collect_task = ctb.start_soon(
+        stream.collect_chunks(expected_count=num_steps, max_cycles=10)
     )
-    xor_filter_results = "".join(
-        [b for _, b in result][0 : len(expected_xor_filter_results)]
-    )
-    assert {"xor": xor_filter_results, "xnor": xnor_filter_results} == {
+    await stream.drive_chunks(inputs)
+    observed = await collect_task
+    xnor_results = "".join([a for a, _ in observed])
+    xor_results = "".join([b for _, b in observed])
+    assert {"xor": xor_results, "xnor": xnor_results} == {
         "xor": expected_xor_filter_results,
         "xnor": expected_xnor_filter_results,
     }
