@@ -5,7 +5,9 @@ from time import sleep
 
 import elasticai.experiment_framework.remote_control as eaixp_rc
 import pytest
-from elasticai.experiment_framework.synthesis import run_synthesis as _run_synthesis
+from elasticai.experiment_framework.synthesis.vivado_synthesis import (
+    _run_synthesis,
+)
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
