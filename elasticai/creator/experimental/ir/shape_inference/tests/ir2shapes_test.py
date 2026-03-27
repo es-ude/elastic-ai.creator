@@ -1,6 +1,30 @@
 from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, Module, ReLU, Sequential
 
 from elasticai.creator import ir
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    add as add_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    batchnorm1d as batchnorm1d_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    batchnorm2d as batchnorm2d_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    conv2d as conv2d_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    flatten as flatten_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    linear as linear_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
+    relu as relu_shape,
+)
+from elasticai.creator.experimental.ir.shape_inference.shape_inference import (
+    IrShapeInference,
+)
 from elasticai.creator.torch2ir import (
     Torch2Ir as Torch2IrTranslator,
 )
@@ -16,30 +40,6 @@ from elasticai.creator.torch2ir.default_handlers import (
     relu,
 )
 from elasticai.creator.torch2ir.torch2ir import DataGraph, Registry
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    add as add_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    batchnorm1d as batchnorm1d_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    batchnorm2d as batchnorm2d_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    conv2d as conv2d_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    flatten as flatten_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    linear as linear_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.default_handlers import (
-    relu as relu_shape,
-)
-from elasticai.creator_plugins.ir_shape_inference.shape_inference import (
-    IrShapeInference,
-)
 
 
 def model():
