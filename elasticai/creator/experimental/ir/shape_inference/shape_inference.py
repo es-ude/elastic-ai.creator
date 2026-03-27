@@ -1,11 +1,14 @@
 from collections.abc import Callable
+from typing import cast
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
 
 type DataGraph = ir.DataGraph[ir.Node, ir.Edge]
 type Registry = ir.Registry[DataGraph]
-type TypeHandler = Callable[[DataGraph, tuple[int, ...]], tuple[int, ...]]
+type TypeHandler = Callable[
+    [DataGraph, tuple[tuple[int, ...], ...]], tuple[int, ...]
+]
 
 
 class IrShapeInference:
@@ -16,13 +19,18 @@ class IrShapeInference:
 
     @FD.dispatch_method(str)
     def _extractors(
-        self, fn: TypeHandler, dg_node: DataGraph, shape: tuple[int, ...]
+        self,
+        fn: TypeHandler,
+        dg_node: DataGraph,
+        input_shapes: tuple[tuple[int, ...], ...],
     ) -> tuple[int, ...]:
-        return fn(dg_node, shape)
+        return fn(dg_node, input_shapes)
 
     @_extractors.key_from_args
-    def _get_type_from_dg_node(self, dg_node: DataGraph, shape: tuple[int, ...]) -> str:
-        return dg_node.attributes["type"]
+    def _get_type_from_dg_node(
+        self, dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
+    ) -> str:
+        return cast(str, dg_node.attributes["type"])
 
     @staticmethod
     def _check_and_get_name(name: str | None, fn: TypeHandler) -> str:
@@ -80,30 +88,32 @@ class IrShapeInference:
                     srcs.append(edge.src)
             return srcs
 
-        def existing_shape_at_edge(src: str, dst: str) -> None | tuple[int, ...]:
+        def existing_shape_at_edge(src: str, dst: str) -> tuple[int, ...] | None:
             for name, edge in root.edges.items():
                 if (edge.src == src) and (edge.dst == dst):
                     if "shape" in edge.attributes.keys():
-                        attr = edge.attributes
-                        return attr.get("shape")  # ty:ignore[invalid-return-type]
+                        return cast(tuple[int, ...], edge.attributes.get("shape"))
+            return None
 
-        incomming_shapes = []
+        incomming_shapes: list[tuple[int, ...]] = []
         for src in get_all_srcs():
             shape = existing_shape_at_edge(src, output_node.name)
             if shape is None:
                 new_output_node = root.nodes.get(src)
                 if new_output_node is None:
                     raise Exception(f"{src} not found in root.nodes")
-                root, shape = self._get_shape_for_output_node(
+                root, resolved_shape = self._get_shape_for_output_node(
                     root, reg, new_output_node
                 )
-                incomming_shapes.append(shape)
+                incomming_shapes.append(resolved_shape)
             else:
                 incomming_shapes.append(shape)
 
         impl = str(output_node.attributes.get("implementation"))
         if impl == "output":
-            return root, shape
+            if not incomming_shapes:
+                raise Exception(f"output node {output_node.name} has no incoming edges")
+            return root, incomming_shapes[-1]
 
         dg_node = reg.get(impl)
         if dg_node is None:

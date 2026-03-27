@@ -1,5 +1,9 @@
+from typing import cast
+
 from elasticai.creator import ir
-from elasticai.creator_plugins.ir_shape_inference.shapes_calculation_functions import (
+from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functions import (
+    Padding,
+    Padding2D,
     adaptiveavgpool2d_output_shape,
     add_output_shape,
     batchnorm1d_output_shape,
@@ -52,16 +56,17 @@ def conv1d(
     if len(input_shapes[0]) != 3:
         raise Exception(f"expected 3-D input (NCW) for conv1d. Got {input_shapes[0]=}")
     attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int], input_shapes[0])
     padding = attr.get("padding")
     if isinstance(padding, (tuple, list)):
         padding = padding[0]
     return conv1d_output_shape(
-        x_shape=input_shapes[0],
-        out_channels=attr.get("out_channels"),
-        kernel_size=_unwrap1(attr.get("kernel_size")),
-        stride=_unwrap1(attr.get("stride")),
-        padding=padding,
-        dilation=_unwrap1(attr.get("dilation")),
+        x_shape=x_shape,
+        out_channels=cast(int, attr.get("out_channels")),
+        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
+        stride=cast(int, _unwrap1(attr.get("stride"))),
+        padding=cast(Padding, padding),
+        dilation=cast(int, _unwrap1(attr.get("dilation"))),
     )
 
 
@@ -75,13 +80,14 @@ def conv2d(
     if len(input_shapes[0]) != 4:
         raise Exception(f"expected 4-D input (NCHW) for conv2d. Got {input_shapes[0]=}")
     attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int, int], input_shapes[0])
     return conv2d_output_shape(
-        x_shape=input_shapes[0],
-        out_channels=attr.get("out_channels"),
-        kernel_size=attr.get("kernel_size"),
-        stride=attr.get("stride"),
-        padding=attr.get("padding"),
-        dilation=attr.get("dilation"),
+        x_shape=x_shape,
+        out_channels=cast(int, attr.get("out_channels")),
+        kernel_size=cast(int | tuple[int, int], attr.get("kernel_size")),
+        stride=cast(int | tuple[int, int], attr.get("stride")),
+        padding=cast(Padding2D, attr.get("padding")),
+        dilation=cast(int | tuple[int, int], attr.get("dilation")),
     )
 
 
@@ -93,13 +99,14 @@ def maxpool1d(
             f"multiple input_shapes are not supported for maxpool1d. {input_shapes=}"
         )
     attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int], input_shapes[0])
     return maxpool1d_output_shape(
-        x_shape=input_shapes[0],
-        kernel_size=_unwrap1(attr.get("kernel_size")),
-        stride=_unwrap1(attr.get("stride")),
-        padding=_unwrap1(attr.get("padding")),
-        dilation=_unwrap1(attr.get("dilation")),
-        ceil_mode=attr.get("ceil_mode", False),
+        x_shape=x_shape,
+        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
+        stride=cast(int, _unwrap1(attr.get("stride"))),
+        padding=cast(int, _unwrap1(attr.get("padding"))),
+        dilation=cast(int, _unwrap1(attr.get("dilation"))),
+        ceil_mode=cast(bool, attr.get("ceil_mode", False)),
     )
 
 
@@ -111,13 +118,14 @@ def maxpool2d(
             f"multiple input_shapes are not supported for maxpool2d. {input_shapes=}"
         )
     attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int, int], input_shapes[0])
     return maxpool2d_output_shape(
-        x_shape=input_shapes[0],
-        kernel_size=attr.get("kernel_size"),
-        stride=attr.get("stride"),
-        padding=attr.get("padding"),
-        dilation=attr.get("dilation"),
-        ceil_mode=attr.get("ceil_mode", False),
+        x_shape=x_shape,
+        kernel_size=cast(int | tuple[int, int], attr.get("kernel_size")),
+        stride=cast(int | tuple[int, int] | None, attr.get("stride")),
+        padding=cast(int | tuple[int, int], attr.get("padding")),
+        dilation=cast(int | tuple[int, int], attr.get("dilation")),
+        ceil_mode=cast(bool, attr.get("ceil_mode", False)),
     )
 
 
@@ -129,9 +137,10 @@ def adaptiveavgpool2d(
             f"multiple input_shapes are not supported for adaptiveavgpool2d. {input_shapes=}"
         )
     attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int, int], input_shapes[0])
     return adaptiveavgpool2d_output_shape(
-        x_shape=input_shapes[0],
-        output_size=attr.get("output_size"),
+        x_shape=x_shape,
+        output_size=cast(int | tuple[int, int], attr.get("output_size")),
     )
 
 
@@ -145,7 +154,7 @@ def batchnorm1d(
     attr = dg_node.attributes
     return batchnorm1d_output_shape(
         x_shape=input_shapes[0],
-        num_features=attr.get("num_features"),
+        num_features=cast(int, attr.get("num_features")),
     )
 
 
@@ -157,9 +166,10 @@ def batchnorm2d(
             f"multiple input_shapes are not supported for batchnorm2d. {input_shapes=}"
         )
     attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int, int], input_shapes[0])
     return batchnorm2d_output_shape(
-        x_shape=input_shapes[0],
-        num_features=attr.get("num_features"),
+        x_shape=x_shape,
+        num_features=cast(int, attr.get("num_features")),
     )
 
 
@@ -191,8 +201,8 @@ def flatten(
     attr = dg_node.attributes
     return flatten_output_shape(
         x_shape=input_shapes[0],
-        start_dim=attr.get("start_dim", 1),
-        end_dim=attr.get("end_dim", -1),
+        start_dim=cast(int, attr.get("start_dim", 1)),
+        end_dim=cast(int, attr.get("end_dim", -1)),
     )
 
 

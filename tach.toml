@@ -190,6 +190,10 @@ path = "elasticai.creator.function_dispatch"
 depends_on = []
 
 [[modules]]
+path = "elasticai.creator.experimental.ir"
+depends_on = ["elasticai.creator.ir", "elasticai.creator.function_dispatch"]
+
+[[modules]]
 path = "elasticai.creator.hdl_ir"
 depends_on = ["elasticai.creator.ir"]
 
@@ -203,5 +207,5 @@ depends_on = [
     "elasticai.creator.nn",
     "elasticai.creator.ir2verilog",
     "elasticai.creator.ir2vhdl",
-    "elasticai.creator.hdl_ir", "elasticai.creator.ir", "elasticai.creator.function_dispatch",
+    "elasticai.creator.hdl_ir",
 ]

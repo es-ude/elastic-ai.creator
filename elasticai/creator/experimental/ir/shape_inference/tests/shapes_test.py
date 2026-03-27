@@ -2,7 +2,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from elasticai.creator_plugins.ir_shape_inference.shapes_calculation_functions import (
+from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functions import (
     adaptiveavgpool2d_output_shape,
     add_output_shape,
     batchnorm1d_output_shape,
