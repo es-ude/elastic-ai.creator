@@ -27,6 +27,29 @@ class TrainingImplementationProvider(Protocol):
     def loss(self) -> DataGraph: ...
 
 
+class InferenceImplementationProvider(Protocol):
+    """Provider for inference-only implementation attributes.
+
+    Backends implement this protocol to declare model layer attributes
+    for inference without training (no optimizer, loss, or training loop).
+    """
+
+    @abstractmethod
+    def model_attributes(self, sub_graph: DataGraph) -> ir.AttributeMapping: ...
+
+
+def apply_inference_provider(
+    model_root: DataGraph,
+    model_registry: Registry,
+    provider: InferenceImplementationProvider,
+) -> tuple[DataGraph, Registry]:
+    augmented: dict[str, DataGraph] = {}
+    for key, sub_graph in model_registry.items():
+        new_attrs = provider.model_attributes(sub_graph)
+        augmented[key] = sub_graph.with_attributes(sub_graph.attributes | new_attrs)
+    return model_root, ir.Registry(augmented)
+
+
 _TRAINING_PROGRAM_COMPONENTS = ("model", "training_function", "optimizer", "loss")
 
 
