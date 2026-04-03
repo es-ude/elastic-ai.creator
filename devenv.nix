@@ -19,6 +19,7 @@ in {
     pkgs.jujutsu
     pkgs.graphviz
     pkgs.cocogitto
+    pkgs.secretspec
     pkgs.alejandra # nix formatter
     pkgs.zlib # needed as dependency cocotb/ghdl under circumstances
     pkgs.iverilog
