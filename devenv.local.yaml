@@ -1,4 +1,0 @@
-secretspec:
-  enable: true
-  provider: pass # keyring, dotenv, env, 1password, lastpass
-  profile: default   # profile from secretspec.toml

@@ -18,6 +18,8 @@ coverage.xml
 htmlcov
 do_not_commit/*
 .hypothesis/
+.sfdx/
+.env
 CLAUDE.md
 claude*
 .dual-graph/
@@ -256,6 +258,7 @@ Temporary Items
 .devenv*
 .direnv/
 devenv.local.nix
+devenv.local.*
 build/
 justfile
 .zed/
