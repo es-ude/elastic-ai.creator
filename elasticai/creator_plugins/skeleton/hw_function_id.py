@@ -34,7 +34,7 @@ class HwFunctionIdUpdater:
 
 def _replace_id_in_vhdl(code: Iterable[str], id: bytes) -> Iterator[str]:
     def split_hex(hex: str):
-        for i in range(int(len(hex) / 2)):
+        for i in range(0, len(hex), 2):
             yield hex[i : i + 2]
 
     def _is_id(line: str):
