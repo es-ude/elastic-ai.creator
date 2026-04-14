@@ -7,5 +7,5 @@ runs:
     - uses: cachix/cachix-action@v17
       with:
         name: devenv
-    - run: nix profile install nixpkgs/nixos-25.11#devenv
+    - run: nix profile install nixpkgs/nixos-unstable#devenv
       shell: bash
