@@ -26,6 +26,7 @@ in {
     pkgs.plantuml
     pkgs.plantuml-server
     pkgs.jetty_11
+    unstablePkgs.ty
   ];
 
   languages.c.enable = true;
@@ -67,6 +68,15 @@ in {
       description = ''        Run hw tests depending on the experiment framework. This uses a different import mode to resolve
               import issues. IMPORTANT: this is only temporary and will be solved more naturally in the future'';
     };
+    run_all_fast_checks = {
+      exec = ''devenv tasks run check:local --mode before'';
+    };
+    fix_all = {
+      exec = ''
+        uv run ruff check --fix
+        ${pkgs.alejandra}/bin/alejandra --exclude ./.devenv --exclude ./.devenv.flake.nix .
+      '';
+    };
   };
 
   tasks = let
@@ -97,10 +107,10 @@ in {
 
     "check:commit-lint" = {
       exec = ''
-        if $CI; then
+        if [ -n "$CI" ]; then
           ${pkgs.cocogitto}/bin/cog check ..$GITHUB_SOURCE_REF
         else
-          ${pkgs.cocogitto}/bin/cog check --from-latest-tag --ignore-merge-commits
+          ${pkgs.cocogitto}/bin/cog check main..
         fi
       '';
     };
@@ -146,9 +156,27 @@ in {
     };
 
     "check:code-lint" = {
+      after = [
+        "check:nix-lint"
+        "check:architecture"
+        "check:python-lint"
+        "check:types"
+      ];
     };
 
     "check:tests" = {
+      after = [
+        "check:slow-tests"
+        "check:fast-tests"
+      ];
+    };
+
+    "check:local" = {
+      after = [
+        "check:commit-lint"
+        "check:fast-tests"
+        "check:code-lint"
+      ];
     };
   };
 }
