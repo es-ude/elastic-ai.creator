@@ -3,8 +3,8 @@ description: "Prepare the development environment using devenv shell"
 runs:
   using: "composite"
   steps:
-    - uses: cachix/install-nix-action@v25
-    - uses: cachix/cachix-action@v15
+    - uses: cachix/install-nix-action@v31
+    - uses: cachix/cachix-action@v17
       with:
         name: devenv
     - run: nix profile install nixpkgs/nixos-25.11#devenv
