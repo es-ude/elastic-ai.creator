@@ -199,7 +199,7 @@ depends_on = []
 
 [[modules]]
 path = "elasticai.creator.experimental.ir"
-depends_on = ["elasticai.creator.ir", "elasticai.creator.function_dispatch"]
+depends_on = ["elasticai.creator.ir", "elasticai.creator.function_dispatch", "elasticai.creator.graph"]
 
 [[modules]]
 path = "elasticai.creator.hdl_ir"

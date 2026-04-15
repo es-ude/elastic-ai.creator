@@ -1,43 +1,9 @@
+import pytest
 from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, Module, ReLU, Sequential
 
-from elasticai.creator import ir
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    add as add_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    batchnorm1d as batchnorm1d_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    batchnorm2d as batchnorm2d_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    conv2d as conv2d_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    flatten as flatten_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    linear as linear_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.default_handlers import (
-    relu as relu_shape,
-)
-from elasticai.creator.experimental.ir.shape_inference.shape_inference import (
-    IrShapeInference,
-)
-from elasticai.creator.torch2ir import (
-    Torch2Ir as Torch2IrTranslator,
-)
-from elasticai.creator.torch2ir.default_handlers import (
-    adaptiveavgpool2d,
-    add,
-    batchnorm1d,
-    batchnorm2d,
-    conv2d,
-    flatten,
-    linear,
-    maxpool2d,
-    relu,
+from elasticai.creator import ir, torch2ir
+from elasticai.creator.experimental.ir.shape_inference import (
+    get_default_shape_inference,
 )
 from elasticai.creator.torch2ir.torch2ir import DataGraph, Registry
 
@@ -73,20 +39,9 @@ def model_skip_connection():
     return SkipConnection()
 
 
-def convert2ir(model):
-    translate = Torch2IrTranslator()
-    translate.register()(flatten)
-    translate.register("linear", linear)
-    translate.register()(relu)
-    translate.register()(batchnorm1d)
-    translate.register()(conv2d)
-    translate.register()(maxpool2d)
-    translate.register()(batchnorm2d)
-    translate.register()(adaptiveavgpool2d)
-    translate.register()(add)
-
-    root, reg = translate(model)
-    return root, reg
+@pytest.fixture
+def convert2ir() -> torch2ir.Torch2Ir:
+    return torch2ir.get_default_converter()
 
 
 def serialize(root: DataGraph, reg: Registry):
@@ -97,35 +52,10 @@ def serialize(root: DataGraph, reg: Registry):
 
 
 def shape_translator():
-    translator = IrShapeInference()
-    translator.register(
-        "linear",
-    )(linear_shape)
-    translator.register(
-        "relu",
-    )(relu_shape)
-    translator.register(
-        "batchnorm1d",
-    )(batchnorm1d_shape)
-    translator.register(
-        "batchnorm2d",
-    )(batchnorm2d_shape)
-    translator.register(
-        "conv1d",
-    )(conv2d_shape)
-    translator.register(
-        "conv2d",
-    )(conv2d_shape)
-    translator.register(
-        "flatten",
-    )(flatten_shape)
-    translator.register(
-        "add",
-    )(add_shape)
-    return translator
+    return get_default_shape_inference()
 
 
-def test_ir2shapes():
+def test_ir2shapes(convert2ir):
     m = model()
     root, reg = convert2ir(m)
     translator = shape_translator()
@@ -158,7 +88,7 @@ def test_ir2shapes():
     }
 
 
-def test_ir2shapes_skip_connection():
+def test_ir2shapes_skip_connection(convert2ir):
     shape = (5, 2, 6, 6)
     m = model_skip_connection()
     root, reg = convert2ir(m)

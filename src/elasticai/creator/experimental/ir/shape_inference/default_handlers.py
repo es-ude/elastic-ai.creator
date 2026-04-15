@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from typing import cast
 
-from elasticai.creator import ir
 from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functions import (
     Padding,
     Padding2D,
@@ -18,7 +18,31 @@ from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functi
     sigmoid_output_shape,
 )
 
-type DataGraph = ir.DataGraph[ir.Node, ir.Edge]
+from .shape_inference import DataGraph, IrShapeInference, Shape, TypeHandler
+
+_module_handlers: list[TypeHandler] = []
+_type_handlers: list[Callable[[tuple[Shape, ...]], Shape]] = []
+
+
+def _register_module(fn: TypeHandler) -> TypeHandler:
+    _module_handlers.append(fn)
+    return fn
+
+
+def _register_type(
+    fn: Callable[[tuple[Shape, ...]], Shape],
+) -> Callable[[tuple[Shape, ...]], Shape]:
+    _type_handlers.append(fn)
+    return fn
+
+
+def get_default_shape_inference() -> IrShapeInference:
+    infer = IrShapeInference()
+    for m in _module_handlers:
+        infer.register()(m)
+    for t in _type_handlers:
+        infer.register_type()(t)
+    return infer
 
 
 def _unwrap1(v):
@@ -28,12 +52,15 @@ def _unwrap1(v):
     return v
 
 
-def linear(dg_node: DataGraph, input_shapes: tuple[tuple[int, ...]]) -> tuple[int, ...]:
+@_register_module
+def linear(
+    graph: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
+) -> tuple[int, ...]:
     if len(input_shapes) != 1:
         raise Exception(
             f"multiple input_shapes are not supported for linear. {input_shapes=}"
         )
-    attr = dg_node.attributes
+    attr = graph.attributes
     if input_shapes[0][-1] != attr.get("in_features"):
         raise Exception(
             f"expected {attr.get('in_features')} inputs for linear. Got {input_shapes[0][-1]=}"
@@ -46,22 +73,31 @@ def linear(dg_node: DataGraph, input_shapes: tuple[tuple[int, ...]]) -> tuple[in
     return linear_output_shape(input_shapes[0][0], out_features)  # ty:ignore[invalid-return-type]
 
 
+@_register_module
 def conv1d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
-    if len(input_shapes) != 1:
-        raise Exception(
-            f"multiple input_shapes are not supported for conv1d. {input_shapes=}"
-        )
-    if len(input_shapes[0]) != 3:
-        raise Exception(f"expected 3-D input (NCW) for conv1d. Got {input_shapes[0]=}")
+    def validate_shape(
+        input_shapes: tuple[tuple[int, ...], ...],
+    ) -> tuple[int, int, int]:
+        match input_shapes:
+            case ((num_samples, channels, width),):
+                return num_samples, channels, width
+            case (_, _):
+                raise Exception(
+                    f"multiple input_shapes are not supported for conv1d. {input_shapes=}"
+                )
+            case _:
+                raise Exception(
+                    f"input shape for conv1d has to have the dimensions (N, C, W), but got {input_shapes[0]=}"
+                )
+
     attr = dg_node.attributes
-    x_shape = cast(tuple[int, int, int], input_shapes[0])
     padding = attr.get("padding")
     if isinstance(padding, (tuple, list)):
         padding = padding[0]
     return conv1d_output_shape(
-        x_shape=x_shape,
+        x_shape=validate_shape(input_shapes),
         out_channels=cast(int, attr.get("out_channels")),
         kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
         stride=cast(int, _unwrap1(attr.get("stride"))),
@@ -70,19 +106,28 @@ def conv1d(
     )
 
 
+@_register_module
 def conv2d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
-    if len(input_shapes) != 1:
-        raise Exception(
-            f"multiple input_shapes are not supported for conv2d. {input_shapes=}"
-        )
-    if len(input_shapes[0]) != 4:
-        raise Exception(f"expected 4-D input (NCHW) for conv2d. Got {input_shapes[0]=}")
+    def validate_shape(
+        input_shapes: tuple[tuple[int, ...], ...],
+    ) -> tuple[int, int, int, int]:
+        match input_shapes:
+            case ((num_samples, channels, height, width),):
+                return num_samples, channels, height, width
+            case (_, _):
+                raise Exception(
+                    f"multiple input_shapes are not supported for conv2d. {input_shapes=}"
+                )
+            case _:
+                raise Exception(
+                    f"expected 4-D input (NCHW) for conv2d. Got {input_shapes[0]=}"
+                )
+
     attr = dg_node.attributes
-    x_shape = cast(tuple[int, int, int, int], input_shapes[0])
     return conv2d_output_shape(
-        x_shape=x_shape,
+        x_shape=validate_shape(input_shapes),
         out_channels=cast(int, attr.get("out_channels")),
         kernel_size=cast(int | tuple[int, int], attr.get("kernel_size")),
         stride=cast(int | tuple[int, int], attr.get("stride")),
@@ -91,6 +136,7 @@ def conv2d(
     )
 
 
+@_register_module
 def maxpool1d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
@@ -110,6 +156,7 @@ def maxpool1d(
     )
 
 
+@_register_module
 def maxpool2d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
@@ -129,6 +176,7 @@ def maxpool2d(
     )
 
 
+@_register_module
 def adaptiveavgpool2d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
@@ -144,6 +192,7 @@ def adaptiveavgpool2d(
     )
 
 
+@_register_module
 def batchnorm1d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
@@ -158,6 +207,7 @@ def batchnorm1d(
     )
 
 
+@_register_module
 def batchnorm2d(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
@@ -173,7 +223,10 @@ def batchnorm2d(
     )
 
 
-def relu(dg_node: DataGraph, input_shapes: tuple[tuple[int, ...]]) -> tuple[int, ...]:
+@_register_module
+def relu(
+    dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
+) -> tuple[int, ...]:
     if len(input_shapes) != 1:
         raise Exception(
             f"multiple input_shapes are not supported for relu. {input_shapes=}"
@@ -181,8 +234,9 @@ def relu(dg_node: DataGraph, input_shapes: tuple[tuple[int, ...]]) -> tuple[int,
     return relu_output_shape(input_shapes[0])
 
 
+@_register_module
 def sigmoid(
-    dg_node: DataGraph, input_shapes: tuple[tuple[int, ...]]
+    dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
     if len(input_shapes) != 1:
         raise Exception(
@@ -191,6 +245,7 @@ def sigmoid(
     return sigmoid_output_shape(input_shapes[0])
 
 
+@_register_module
 def flatten(
     dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
 ) -> tuple[int, ...]:
@@ -206,9 +261,8 @@ def flatten(
     )
 
 
-def add(
-    dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
-) -> tuple[int, ...]:
+@_register_type
+def add(input_shapes: tuple[tuple[int, ...], ...]) -> tuple[int, ...]:
     if len(input_shapes) == 0:
         raise Exception("add requires at least one input shape")
     return add_output_shape(input_shapes[0])
