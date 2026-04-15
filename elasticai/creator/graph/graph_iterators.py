@@ -1,11 +1,11 @@
 from collections.abc import Hashable, Iterable, Iterator
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, overload
 
 HashableT = TypeVar("HashableT", bound=Hashable)
 
 
 class NodeNeighbourFn(Protocol[HashableT]):
-    def __call__(self, node: HashableT) -> Iterable[HashableT]: ...
+    def __call__(self, node: HashableT, /) -> Iterable[HashableT]: ...
 
 
 def dfs_iter(successors: NodeNeighbourFn, start: HashableT) -> Iterator[HashableT]:
@@ -21,24 +21,69 @@ def dfs_iter(successors: NodeNeighbourFn, start: HashableT) -> Iterator[Hashable
     yield from visit((start,))
 
 
-def bfs_iter_down(
-    successors: NodeNeighbourFn, predecessors: NodeNeighbourFn, start: HashableT
-) -> Iterator[HashableT]:
-    visited: set[HashableT] = set()
-    visit_next = sorted(list(successors(start)))
+@overload
+def bfs_iter_down[T: Hashable](
+    successors: NodeNeighbourFn, predecessors: NodeNeighbourFn, start: set[T]
+) -> Iterator[T]: ...
+
+
+@overload
+def bfs_iter_down[T: Hashable](
+    successors: NodeNeighbourFn, predecessors: NodeNeighbourFn, start: T
+) -> Iterator[T]: ...
+
+
+def bfs_iter_down[T](
+    successors: NodeNeighbourFn,
+    predecessors: NodeNeighbourFn,
+    start: T | set[T],
+) -> Iterator[T]:
+    """Iterate graph nodes in breadth first.
+
+    This ensures that no node will be visited before
+    each of its predecessors was visited.
+    """
+    visited: set[T] = set()
+    if isinstance(start, set):
+        visit_next = []
+        for n in start:
+            for succ in successors(n):
+                visit_next.append(succ)
+        visit_next = list(sorted(set(visit_next)))
+    else:
+        visit_next = sorted(list(successors(start)))
     while len(visit_next) > 0:
         current = visit_next.pop(0)
+        print(f"{current=}")
         if current not in visited:
             visited.add(current)
             yield current
             for child in successors(current):
+                print(f"\t{child=}")
                 if set(predecessors(child)).issubset(visited):
                     visit_next.append(child)
 
 
-def bfs_iter_up(
-    predecessors: NodeNeighbourFn[HashableT],
-    successors: NodeNeighbourFn[HashableT],
-    start: HashableT,
-) -> Iterator[HashableT]:
-    return bfs_iter_down(predecessors, successors, start)
+@overload
+def bfs_iter_up[T: Hashable](
+    successors: NodeNeighbourFn, predecessors: NodeNeighbourFn, start: T, /
+) -> Iterator[T]: ...
+
+
+@overload
+def bfs_iter_up[T: Hashable](
+    successors: NodeNeighbourFn, predecessors: NodeNeighbourFn, start: set[T], /
+) -> Iterator[T]: ...
+
+
+def bfs_iter_up[T](
+    predecessors: NodeNeighbourFn[T],
+    successors: NodeNeighbourFn[T],
+    start: T | set[T],
+) -> Iterator[T]:
+    """Iterate graph nodes in breadth first.
+
+    This ensures that no node will be visited before
+    each of its successors was visited.
+    """
+    return bfs_iter_down(successors=predecessors, predecessors=successors, start=start)  # type: ignore , because type checker fails to get that set is not hashable
