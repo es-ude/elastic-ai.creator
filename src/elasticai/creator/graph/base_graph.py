@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import copy
 import warnings
-from collections.abc import Iterable, Iterator, Mapping, Set
-from typing import Hashable, Self, TypeVar, cast
+from collections.abc import Collection, Iterable, Iterator, Mapping, Set
+from typing import Any, Hashable, Self, TypeVar, cast
 
 from .graph import Graph
 
@@ -33,15 +31,15 @@ class BaseGraph(Graph[T]):
         """We keep successor and predecessor nodes just to allow for easier implementation.
         Currently, this implementation is not optimized for performance.
         """
-        self._successors: dict[T, set[T]] = dict()
-        self._predecessors: dict[T, set[T]] = dict()
+        self._successors: dict[T, dict[T, Any]] = dict()
+        self._predecessors: dict[T, dict[T, Any]] = dict()
 
     @property
-    def successors(self) -> Mapping[T, set[T]]:
+    def successors(self) -> Mapping[T, Collection[T]]:
         return self._successors.keys().mapping
 
     @property
-    def predecessors(self) -> Mapping[T, set[T]]:
+    def predecessors(self) -> Mapping[T, Collection[T]]:
         return self._predecessors.keys().mapping
 
     @staticmethod
@@ -50,24 +48,30 @@ class BaseGraph(Graph[T]):
         for node, successors in d.items():
             g.add_node(node)
             for s in successors:
+                print(f"{s=}")
                 g.add_edge(node, s)
         return g
 
-    def as_dict(self) -> dict[T, set[T]]:
+    def as_dict(self) -> dict[T, dict[T, Any]]:
         return self._successors.copy()
 
-    def add_edge(self, _from: T, _to: T) -> Self:
-        self.add_node(_from)
-        self.add_node(_to)
-        self.predecessors[_to].add(_from)
-        self.successors[_from].add(_to)
+    def add_edge(self, src: T, dst: T, /) -> Self:
+        def add_to_adj_map(adj, a, b):
+            adj[a][b] = None
+
+        self.add_node(src)
+        self.add_node(dst)
+        add_to_adj_map(self._predecessors, dst, src)
+        add_to_adj_map(self._successors, src, dst)
         return self
 
     def add_node(self, node: T) -> Self:
-        if node not in self.predecessors:
-            self._predecessors[node] = set()
-        if node not in self.successors:
-            self._successors[node] = set()
+        def add_to_adj(adj, n):
+            if n not in adj:
+                adj[n] = {}
+
+        add_to_adj(self._predecessors, node)
+        add_to_adj(self._successors, node)
         return self
 
     @property

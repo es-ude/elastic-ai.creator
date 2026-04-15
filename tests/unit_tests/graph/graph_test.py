@@ -1,7 +1,7 @@
 import pytest
 
 from elasticai.creator.graph import BaseGraph as GraphDelegate
-from elasticai.creator.graph import bfs_iter_up, dfs_iter
+from elasticai.creator.graph import bfs_iter_down, bfs_iter_up, dfs_iter
 
 
 def test_yield_node_in_case_it_has_no_successors():
@@ -10,25 +10,24 @@ def test_yield_node_in_case_it_has_no_successors():
             "0": [],
         }
     )
-    actual = tuple(g.iter_nodes())
+    actual = tuple(g.nodes)
     assert actual == ("0",)
 
 
 def test_iterating_breadth_first_upwards():
-    g = GraphDelegate()
     """
-             0
-             |
-          /-----\
-          |     |
-          1     2
-          | /---+
-          |/    |
-          3     4
-          |     |
-          |     6
-          |/----+
-          5
+       0
+       |
+    /-----+
+    |     |
+    1     2
+    | /---+
+    |/    |
+    3     4
+    |     |
+    |     6
+    |/----+
+    5
     """
     g = GraphDelegate.from_dict(
         {
@@ -41,8 +40,47 @@ def test_iterating_breadth_first_upwards():
         }
     )
 
-    actual = tuple(bfs_iter_up(g.get_predecessors, g.get_successors, "5"))
+    actual = tuple(
+        bfs_iter_up(g.predecessors.__getitem__, g.successors.__getitem__, "5")
+    )
     assert actual == ("3", "6", "1", "4", "2", "0")
+
+
+def test_iterating_breadth_first_downwards_from_double_start_node():
+    """
+       0   0.1
+       |    |
+    /-----+ |
+    |     | |
+    1     2-+
+    | /---+
+    |/    |
+    3     4
+    |     |
+    |     6
+    |/----+
+    5
+    """
+    g = GraphDelegate.from_dict(
+        {
+            "0": ["1", "2"],
+            "0.1": ["2"],
+            "1": ["3"],
+            "2": ["3", "4"],
+            "3": ["5"],
+            "4": ["6"],
+            "6": ["5"],
+        }
+    )
+
+    actual = tuple(
+        bfs_iter_down(
+            predecessors=g.predecessors.__getitem__,
+            successors=g.successors.__getitem__,
+            start={"0", "0.1"},
+        )
+    )
+    assert actual == ("1", "2", "3", "4", "6", "5")
 
 
 @pytest.mark.parametrize(
@@ -106,5 +144,5 @@ def test_iterating_breadth_first_upwards():
 def test_iterate_dfs(adjacencies, expected):
     g = GraphDelegate.from_dict(adjacencies)
 
-    actual = tuple(dfs_iter(g.get_successors, "0"))
+    actual = tuple(dfs_iter(g.successors.__getitem__, "0"))
     assert actual in expected
