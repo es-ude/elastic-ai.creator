@@ -142,14 +142,22 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
 
         _edges = tuple(map(dispatch_arg, edges))
 
-        additional_successors: dict[T, dict[T, Any]] = {
-            src: {dst: attributes or self._default_edge_attributes_factory()}
-            for src, dst, attributes in _edges
-        }
-        additional_predecessors: dict[T, dict[T, Any]] = {
-            dst: {src: attributes or self._default_edge_attributes_factory()}
-            for src, dst, attributes in _edges
-        }
+        def reverse_src_dst(edges) -> Iterator[tuple[T, T, E]]:
+            for a, b, attributes in edges:
+                yield b, a, attributes
+
+        def build_edge_dict(edges) -> dict[T, dict[T, Any]]:
+            d: dict[T, dict[T, Any]] = {}
+            for a, b, attributes in edges:
+                if a not in d:
+                    d[a] = {}
+                d[a][b] = attributes or self._default_edge_attributes_factory()
+            return d
+
+        additional_successors: dict[T, dict[T, Any]] = build_edge_dict(_edges)
+        additional_predecessors: dict[T, dict[T, Any]] = build_edge_dict(
+            reverse_src_dst(_edges)
+        )
         for src, dst, _ in _edges:
             if dst not in self.successors and dst not in additional_successors:
                 additional_successors[dst] = {}
@@ -157,6 +165,8 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
                 additional_predecessors[src] = {}
         new_successors = self.successors.join(additional_successors)
         new_predecessors = self.predecessors.join(additional_predecessors)
+        print(f"{new_predecessors}")
+        print(f"{new_successors}")
         return type(self)(
             self._default_edge_attributes_factory,
             predecessors=new_predecessors,
