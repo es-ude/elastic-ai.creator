@@ -5,7 +5,7 @@ import pytest
 
 import elasticai.creator.ir.datagraph as dgraph
 from elasticai.creator.graph.subgraph_matching import find_all_subgraphs
-from elasticai.creator.ir import Attribute, AttributeMapping
+from elasticai.creator.ir import Attribute, AttributeMapping, Edge, Node
 from elasticai.creator.ir.datagraph import DataGraph
 from elasticai.creator.ir.datagraph_impl import (
     DataGraphImpl,
@@ -14,12 +14,6 @@ from elasticai.creator.ir.datagraph_impl import (
     DefaultNodeEdgeFactory,
     EdgeImpl,
     NodeImpl,
-)
-from elasticai.creator.ir.datagraph_impl import (
-    EdgeImpl as Edge,
-)
-from elasticai.creator.ir.datagraph_impl import (
-    NodeImpl as Node,
 )
 from elasticai.creator.ir.deserializer import IrDeserializer
 from elasticai.creator.ir.factories import (
@@ -32,7 +26,7 @@ from elasticai.creator.ir.serializer import IrSerializer
 
 
 @pytest.fixture
-def factory() -> IrFactory[dgraph.Node, dgraph.Edge, dgraph.DataGraph[Node, Edge]]:
+def factory() -> IrFactory[Node, Edge, DataGraph[Node, Edge]]:
     return DefaultIrFactory()
 
 
@@ -60,9 +54,9 @@ def test_can_add_multiple_nodes(new_dgraph) -> None:
 
 
 def test_nodes_compare_equal(new_dgraph) -> None:
-    n1 = Node("a", AttributeMapping(type="N", value=10))
-    n2 = Node("a", AttributeMapping(type="N", value=10))
-    n3 = Node("a", AttributeMapping(type="N", value=20))
+    n1 = NodeImpl("a", AttributeMapping(type="N", value=10))
+    n2 = NodeImpl("a", AttributeMapping(type="N", value=10))
+    n3 = NodeImpl("a", AttributeMapping(type="N", value=20))
 
     assert n1 == n2
     assert n1 != n3
@@ -70,13 +64,13 @@ def test_nodes_compare_equal(new_dgraph) -> None:
 
 def test_can_add_and_retrieve_node(new_dgraph) -> None:
     g = new_dgraph().add_node("a", AttributeMapping(type="N"))
-    assert Node("a", AttributeMapping(type="N")) == g.nodes["a"]
+    assert NodeImpl("a", AttributeMapping(type="N")) == g.nodes["a"]
     assert "N" == g.nodes["a"].attributes["type"]
 
 
 def test_adding_node_by_string_defaults_to_empty_attribute_map(new_dgraph) -> None:
     g = new_dgraph().add_node("a")
-    assert Node("a", AttributeMapping()) == g.nodes["a"]
+    assert NodeImpl("a", AttributeMapping()) == g.nodes["a"]
 
 
 def test_can_add_edges_to_datagraph(new_dgraph) -> None:
@@ -111,7 +105,8 @@ def test_can_add_node_attributes_after_adding_edges(new_dgraph) -> None:
         new_dgraph()
         .add_edges(("a", "b"))
         .add_nodes(
-            Node("a", AttributeMapping(type="N")), Node("b", AttributeMapping(type="N"))
+            NodeImpl("a", AttributeMapping(type="N")),
+            NodeImpl("b", AttributeMapping(type="N")),
         )
     )
     assert g.nodes["a"].attributes["type"] == "N"
@@ -150,9 +145,9 @@ def test_can_match_datagraph(new_dgraph) -> None:
             ("b", "c"),
         )
         .add_nodes(
-            Node("a", AttributeMapping(type="A")),
-            Node("b", AttributeMapping(type="B")),
-            Node("c", AttributeMapping(type="C")),
+            NodeImpl("a", AttributeMapping(type="A")),
+            NodeImpl("b", AttributeMapping(type="B")),
+            NodeImpl("c", AttributeMapping(type="C")),
         )
     )
 
@@ -162,7 +157,8 @@ def test_can_match_datagraph(new_dgraph) -> None:
             ("x", "y"),
         )
         .add_nodes(
-            Node("x", AttributeMapping(type="A")), Node("y", AttributeMapping(type="B"))
+            NodeImpl("x", AttributeMapping(type="A")),
+            NodeImpl("y", AttributeMapping(type="B")),
         )
     )
 
@@ -260,12 +256,12 @@ class TestSerialization:
     def test_serializing_a_node_means_to_serialize_its_attributes(
         self, serialize: Callable[[Attribute | Node], Any]
     ) -> None:
-        n = Node("a", AttributeMapping(type="N", value=10))
+        n = NodeImpl("a", AttributeMapping(type="N", value=10))
         serialized = serialize(n)
         assert serialized == {"type": "N", "value": 10}
 
     def test_can_serialize_node_subclass(self, serialize) -> None:
-        class MyNode(Node):
+        class MyNode(NodeImpl):
             def __init__(self, name: str, data: AttributeMapping) -> None:
                 super().__init__(name, AttributeMapping(extra="extra") | data)
 
@@ -318,7 +314,7 @@ class TestSerialization:
 
 
 def test_dynamically_extend_nodes_and_graphs_in_custom_factory() -> None:
-    class MyNode(dgraph.Node, Protocol):
+    class MyNode(Node, Protocol):
         @property
         def implementation(self) -> str: ...
 
@@ -342,7 +338,7 @@ def test_dynamically_extend_nodes_and_graphs_in_custom_factory() -> None:
                     return self.attributes.get("implementation", "<none>")
 
             n.__class__ = _Node
-            return n
+            return cast(MyNode, n)
 
         def edge(
             self,
@@ -361,7 +357,7 @@ def test_dynamically_extend_nodes_and_graphs_in_custom_factory() -> None:
                     return self.attributes.get("name", "<undefined>")
 
             g.__class__ = _Graph
-            return g
+            return cast(MyGraph, g)
 
     factory = MyIrFactory()
     n = factory.node("x")
@@ -371,7 +367,7 @@ def test_dynamically_extend_nodes_and_graphs_in_custom_factory() -> None:
 
 
 def test_extend_node_and_graph_statically() -> None:
-    class MyNode(Node):
+    class MyNode(NodeImpl):
         @property
         def implementation(self) -> str:
             return cast(str, self.attributes.get("implementation", "<none>"))
@@ -390,7 +386,7 @@ def test_extend_node_and_graph_statically() -> None:
         def edge(
             self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()
         ) -> Edge:
-            return Edge(src, dst, attributes)
+            return EdgeImpl(src, dst, attributes)
 
         def graph(
             self, attributes: AttributeMapping = AttributeMapping()
@@ -412,7 +408,7 @@ def test_extend_node_and_graph_statically() -> None:
 
 
 def test_wrap_existing_data_into_new_graph_with_new_node_type(factory) -> None:
-    class MyNode(Node):
+    class MyNode(NodeImpl):
         @property
         def implementation(self) -> str:
             return cast(str, self.attributes.get("implementation", "<none>"))
@@ -431,7 +427,7 @@ def test_wrap_existing_data_into_new_graph_with_new_node_type(factory) -> None:
         def edge(
             self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()
         ) -> Edge:
-            return Edge(src, dst, attributes)
+            return EdgeImpl(src, dst, attributes)
 
     def to_my_graph_type(g: dgraph.DataGraph) -> MyGraph[MyNode, Edge]:
         return MyGraph(

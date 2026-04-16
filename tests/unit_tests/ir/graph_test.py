@@ -132,3 +132,10 @@ def test_can_remove_edge(new_graph) -> None:
         for pred in g2.predecessors[node]:
             edges.add((pred, node))
     assert edges == {("b", "c")}
+
+
+def test_can_add_edges_with_same_src_to_dgraph(new_graph):
+    g = new_graph().add_edges(("a", "b"), ("a", "c"))
+    expected_edges = {("a", "b"), ("a", "c")}
+    actual_edges = set((a, b) for a in g.successors for b in g.successors[a])
+    assert expected_edges == actual_edges
