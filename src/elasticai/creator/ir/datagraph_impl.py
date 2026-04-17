@@ -262,7 +262,6 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
             case (
                 (Edge() as edge) | (Edge() as edge, None) | (Edge() as edge, None, None)
             ):
-                # see https://github.com/python/mypy/issues/19995 on the type ignore above
                 return edge.src, edge.dst, edge.attributes
             case (str() as src, str() as dst) | (str() as src, str() as dst, None):
                 return src, dst, AttributeMapping()
