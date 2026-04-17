@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import Iterable
 
 from elasticai.creator import graph as g
@@ -55,43 +54,3 @@ class Matcher:
         return g.find_subgraph(
             pattern=pattern, graph=graph, node_constraint=self._node_constraint
         )
-
-
-def get_rewriter(
-    pattern: Graph,
-    replacement: Graph,
-    lhs: dict[str, str],
-    rhs: dict[str, str],
-) -> Callable[[Graph], Graph]:
-    kwargs = locals()
-    _rewrite = get_rewriter_returning_full_result(**kwargs)
-
-    def rewrite(graph: Graph):
-        return Graph(_rewrite(graph).new_graph, {})
-
-    return rewrite
-
-
-def get_rewriter_returning_full_result(
-    pattern: Graph,
-    replacement: Graph,
-    lhs: dict[str, str],
-    rhs: dict[str, str],
-) -> Callable[[Graph], g.RewriteResult]:
-    do_match = Matcher(pattern)
-
-    def rewrite(graph: Graph) -> g.RewriteResult:
-        do_match.set_graph(graph)
-        match = do_match(graph.wrapped, pattern.wrapped)
-        new_graph, new_names = g.rewrite(
-            original=graph.wrapped,
-            replacement=replacement.wrapped,
-            match=match,
-            lhs=lhs,
-            rhs=rhs,
-        )
-        return g.RewriteResult(
-            new_graph=new_graph, pattern_to_original=match, replacement_to_new=new_names
-        )
-
-    return rewrite
