@@ -1,1 +1,1 @@
-from .sequential import Sequential
+from .sequential import Sequential as Sequential

@@ -1,1 +1,1 @@
-from .avgpooling1dflatten import AVGPooling1dFlatten
+from .avgpooling1dflatten import AVGPooling1dFlatten as AVGPooling1dFlatten

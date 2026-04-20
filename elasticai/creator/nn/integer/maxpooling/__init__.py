@@ -1,1 +1,1 @@
-from .maxpooling import MaxPooling1d
+from .maxpooling import MaxPooling1d as MaxPooling1d

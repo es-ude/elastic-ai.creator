@@ -1,1 +1,1 @@
-from .rnnlayer import RNNLayer
+from .rnnlayer import RNNLayer as RNNLayer

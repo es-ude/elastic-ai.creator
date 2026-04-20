@@ -1,1 +1,1 @@
-from .sepresidualblock import SepResidualBlock
+from .sepresidualblock import SepResidualBlock as SepResidualBlock

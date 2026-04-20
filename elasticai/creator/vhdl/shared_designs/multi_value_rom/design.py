@@ -1,5 +1,4 @@
 import math
-from functools import partial
 
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
@@ -24,7 +23,7 @@ class MultiValueRom:
         self._name = name
         self._data_width = data_width
         self._rom_data_width = data_width * unroll_factor
-        number_of_values = math.ceil(len(values_as_integers) / unroll_factor)
+        math.ceil(len(values_as_integers) / unroll_factor)
         self._unroll_factor = unroll_factor
         self._number_per_row = number_per_row
         self._restructured_values = self._restructure_values(values_as_integers)

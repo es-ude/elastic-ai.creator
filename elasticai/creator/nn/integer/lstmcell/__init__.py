@@ -1,1 +1,1 @@
-from .lstmcell import LSTMCell
+from .lstmcell import LSTMCell as LSTMCell

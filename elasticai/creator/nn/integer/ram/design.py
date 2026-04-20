@@ -9,7 +9,7 @@ from elasticai.creator.vhdl.design.ports import Port
 
 class Ram(Design):
     def __init__(self, name: str):
-        self.name = name
+        super().__init__(name)
 
     @property
     def port(self) -> Port:

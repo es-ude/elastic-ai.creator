@@ -1,1 +1,1 @@
-from .grucell import GRUCell
+from .grucell import GRUCell as GRUCell

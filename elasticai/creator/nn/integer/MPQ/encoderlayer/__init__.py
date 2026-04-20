@@ -1,1 +1,1 @@
-from .encoderlayer import EncoderLayer
+from .encoderlayer import EncoderLayer as EncoderLayer

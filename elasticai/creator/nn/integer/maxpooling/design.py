@@ -1,7 +1,5 @@
 from itertools import chain
 
-import numpy as np
-
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,

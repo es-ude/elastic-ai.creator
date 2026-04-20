@@ -596,7 +596,7 @@ def test_int_forward_q_outputs_is_correctly(
     linear_layer.eval()
     linear_layer.precompute()
 
-    assert linear_layer.precomputed == True
+    assert linear_layer.precomputed
     expected_q_output = q_outputs
     actual_q_output = linear_layer.int_forward(q_inputs)
     assert torch.allclose(actual_q_output, expected_q_output, atol=1)

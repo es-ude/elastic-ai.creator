@@ -152,7 +152,7 @@ def test_precompute(sequential_instance, inputs):
     sequential_instance.precompute()
     for submodule in sequential_instance.submodules:
         if hasattr(submodule, "precompute"):
-            assert submodule.precomputed == True
+            assert submodule.precomputed
 
 
 def test_quantize_inputs(sequential_instance, inputs, q_inputs):

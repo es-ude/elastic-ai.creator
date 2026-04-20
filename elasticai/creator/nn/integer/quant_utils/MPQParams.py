@@ -143,7 +143,7 @@ class QParams(nn.Module):
             state_dict.pop(prefix + key)
 
     def __str__(self):
-        info += "min_float: %.6f " % self.min_float
+        info = "min_float: %.6f " % self.min_float
         info += "max_float: %.6f" % self.max_float
         info += "min_quant: %d " % self.min_quant
         info += "max_quant: %d" % self.max_quant

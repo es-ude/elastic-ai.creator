@@ -1,1 +1,1 @@
-from .softmaxLUT import SoftmaxLUT
+from .softmaxLUT import SoftmaxLUT as SoftmaxLUT

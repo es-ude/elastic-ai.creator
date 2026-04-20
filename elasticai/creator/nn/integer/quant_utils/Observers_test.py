@@ -2,8 +2,6 @@ import torch
 
 from elasticai.creator.nn.integer.quant_utils.Observers import (
     GlobalMinMaxObserver,
-    LocalMinMaxObserver,
-    MovingAverageMinMaxObserver,
 )
 
 

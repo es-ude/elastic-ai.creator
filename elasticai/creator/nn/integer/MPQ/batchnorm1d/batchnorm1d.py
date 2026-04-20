@@ -1,5 +1,3 @@
-import logging
-
 import torch
 from torch import nn
 
@@ -117,7 +115,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
-        if weight_QParams.is_symmetric == False:
+        if not weight_QParams.is_symmetric:
             q_weights = self.math_ops.intsub(
                 q_weights,
                 weight_QParams.zero_point,

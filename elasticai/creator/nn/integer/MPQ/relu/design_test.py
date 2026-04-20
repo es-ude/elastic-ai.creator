@@ -1,9 +1,6 @@
-from typing import cast
-
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.integer.relu.relu_test import inputs, relu_layer
 
 
 @pytest.fixture
@@ -14,8 +11,18 @@ def saved_files(relu_layer, inputs):
 
     destination = InMemoryPath("relu_0", parent=None)
     design.save_to(destination)
-    files = cast(list[InMemoryFile], list(destination.children.values()))
 
+    # Get all InMemoryFile objects from the destination
+    def collect_files(path: InMemoryPath) -> list[InMemoryFile]:
+        files = []
+        for child in path.children.values():
+            if isinstance(child, InMemoryFile):
+                files.append(child)
+            elif isinstance(child, InMemoryPath):
+                files.extend(collect_files(child))
+        return files
+
+    files = collect_files(destination)
     return {file.name: "\n".join(file.text) for file in files}
 
 
@@ -36,20 +43,21 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity relu_0 is
 generic (
-    DATA_WIDTH : integer := 8;
-    THRESHOLD : integer := -43;
+    X_DATA_WIDTH : integer := 8;
+    Y_DATA_WIDTH : integer := 8;
+    THRESHOLD : integer := -128;
     CLOCK_OPTION : boolean := false
 );
 port (
     enable : in std_logic;
 	clock  : in std_logic;
-	x  : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-	y : out std_logic_vector(DATA_WIDTH - 1 downto 0)
+	x  : in std_logic_vector(X_DATA_WIDTH - 1 downto 0);
+	y : out std_logic_vector(Y_DATA_WIDTH - 1 downto 0)
 );
 end entity relu_0;
 architecture rtl of relu_0 is
-    signal signed_x : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
-    signal signed_y : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal signed_x : signed(X_DATA_WIDTH - 1 downto 0) := (others=>'0');
+    signal signed_y : signed(Y_DATA_WIDTH - 1 downto 0) := (others=>'0');
 begin
     signed_x <= signed(x);
     y <= std_logic_vector(signed_y);
@@ -57,10 +65,10 @@ begin
         main_process : process (enable, clock)
         begin
             if (enable = '0') then
-                signed_y <= to_signed(THRESHOLD, DATA_WIDTH);
+                signed_y <= to_signed(THRESHOLD, Y_DATA_WIDTH);
             elsif (rising_edge(clock)) then
                 if signed_x < THRESHOLD then
-                    signed_y <= to_signed(THRESHOLD, DATA_WIDTH);
+                    signed_y <= to_signed(THRESHOLD, Y_DATA_WIDTH);
                 else
                     signed_y <= signed_x;
                 end if;
@@ -71,10 +79,10 @@ begin
         process (enable, signed_x)
         begin
             if enable = '0' then
-                signed_y <= to_signed(THRESHOLD, DATA_WIDTH);
+                signed_y <= to_signed(THRESHOLD, Y_DATA_WIDTH);
             else
                 if signed_x < THRESHOLD then
-                    signed_y <= to_signed(THRESHOLD, DATA_WIDTH);
+                    signed_y <= to_signed(THRESHOLD, Y_DATA_WIDTH);
                 else
                     signed_y <= signed_x;
                 end if;
@@ -96,8 +104,9 @@ library work;
 use work.all;
 entity relu_0_tb is
     generic (
-        DATA_WIDTH : integer := 8;
-        THRESHOLD : integer := -43;
+        X_DATA_WIDTH : integer := 8;
+        Y_DATA_WIDTH : integer := 8;
+        THRESHOLD : integer := -128;
         CLOCK_OPTION : boolean := false
     );
 port(
@@ -109,8 +118,8 @@ architecture rtl of relu_0_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(X_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal y : std_logic_vector(Y_DATA_WIDTH - 1 downto 0) := (others => '0');
 begin
     CLK_GEN : process
     begin
@@ -129,7 +138,7 @@ begin
     test_main : process
         constant file_inputs:      string := "./data/relu_0_q_x.txt";
         constant file_labels:      string := "./data/relu_0_q_y.txt";
-        constant file_pred:      string := "./data/relu_0_out.txt";
+        constant file_pred:      string := "./data/relu_0_q_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -164,12 +173,12 @@ begin
         while not ENDFILE (fp_inputs) loop
             readline (fp_inputs, line_num);
             read (line_num, line_content);
-            x_in <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+            x <= std_logic_vector(to_signed(line_content, X_DATA_WIDTH));
             wait for 2*C_CLK_PERIOD;
             readline (fp_labels, line_num);
             read (line_num, line_content);
-            report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-            write (line_num, to_integer(signed(y_out)));
+            report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+            write (line_num, to_integer(signed(y)));
             writeline(fp_pred, line_num);
         end loop;
         wait until falling_edge(clock);
@@ -177,14 +186,15 @@ begin
         file_close (fp_labels);
         file_close (fp_pred);
         report "All files closed.";
-        wait;
+        report "Simulation done.";
+        assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
     uut: entity work.relu_0(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,
-        x  => x_in,
-        y  => y_out
+        x  => x,
+        y  => y
     );
 end architecture;"""
     assert expected_code == actual_code

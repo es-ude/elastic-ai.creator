@@ -24,7 +24,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
         inputs_size = kwargs.get("inputs_size")
         hidden_size = kwargs.get("hidden_size")
-        window_size = kwargs.get("window_size")
+        kwargs.get("window_size")
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")

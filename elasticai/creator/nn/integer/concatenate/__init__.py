@@ -1,1 +1,1 @@
-from .concatenate import Concatenate
+from .concatenate import Concatenate as Concatenate

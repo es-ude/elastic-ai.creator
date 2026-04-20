@@ -17,7 +17,7 @@ def test_makefile_creation():
         with open(makefile_path, "r") as file:
             content = file.read()
             assert f"STOP_TIME = {stop_time}" in content
-            assert "FILES = ./source/*/*.vhd" in content
+            assert 'FILES = $(shell find -type f -name "*.vhd")' in content
             assert "GHDL_FLAGS  = --ieee=synopsys --warn-no-vital-generic" in content
             assert "WAVEFORM_VIEWER = gtkwave" in content
 
@@ -31,5 +31,6 @@ def test_default_stop_time():
 
         with open(makefile_path, "r") as file:
             content = file.read()
+            # Default stop time is 4000ns based on the implementation
             assert "STOP_TIME = 4000ns" in content
-            assert "FILES = ./source/*/*.vhd" in content
+            assert 'FILES = $(shell find -type f -name "*.vhd")' in content

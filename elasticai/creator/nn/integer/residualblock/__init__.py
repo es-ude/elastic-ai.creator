@@ -1,1 +1,1 @@
-from .residualblock import ResidualBlock
+from .residualblock import ResidualBlock as ResidualBlock

@@ -1,5 +1,3 @@
-import warnings
-
 import torch
 
 from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
@@ -38,6 +36,6 @@ def test_simulate_bitshifting_negative_values():
     x_q = torch.tensor([-10], dtype=torch.int32)
     m_q_shift = torch.tensor([2], dtype=torch.int32)
     m_q = torch.tensor([4], dtype=torch.int32)
-    result = simulate_bitshifting(x_q, m_q_shift, m_q)
-    expected_result = torch.tensor([-10], dtype=torch.int32)
+    simulate_bitshifting(x_q, m_q_shift, m_q)
+    torch.tensor([-10], dtype=torch.int32)
     assert torch.eq

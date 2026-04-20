@@ -158,9 +158,9 @@ class Linear(Design):
                 if not self._use_parallelised_template:
                     file_name = "linear_2d_feature1.tpl.vhd"
                 else:
-                    assert (
-                        self._num_dimensions == 1
-                    ), "Parallelised template for input with 1 feature is not supported"
+                    assert self._num_dimensions == 1, (
+                        "Parallelised template for input with 1 feature is not supported"
+                    )
             test_file_name = "linear_2d_tb.tpl.vhd"
             if self.lstm_use_pipeline_template:
                 test_file_name = (  # override the test file name for pipeline template

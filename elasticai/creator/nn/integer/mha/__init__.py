@@ -1,1 +1,1 @@
-from .mha import MultiHeadAttention
+from .mha import MultiHeadAttention as MultiHeadAttention

@@ -1,1 +1,1 @@
-from .relu import ReLU
+from .relu import ReLU as ReLU

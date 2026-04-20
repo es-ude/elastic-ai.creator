@@ -1,1 +1,1 @@
-from .linearrelu import LinearReLU
+from .linearrelu import LinearReLU as LinearReLU

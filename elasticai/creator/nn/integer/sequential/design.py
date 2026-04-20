@@ -1,11 +1,8 @@
-from typing import cast
-
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
-from elasticai.creator.nn.integer.linear.design import Linear
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.nn.sequential.design import Sequential as _SequentialDesign
 from elasticai.creator.vhdl.design.design import Design

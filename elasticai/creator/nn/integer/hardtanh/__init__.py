@@ -1,1 +1,1 @@
-from .hardtanh import HardTanh
+from .hardtanh import HardTanh as HardTanh

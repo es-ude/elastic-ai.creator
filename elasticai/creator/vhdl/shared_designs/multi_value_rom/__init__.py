@@ -1,1 +1,1 @@
-from .design import MultiValueRom
+from .design import MultiValueRom as MultiValueRom

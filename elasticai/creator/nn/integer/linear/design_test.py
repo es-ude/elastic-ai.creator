@@ -1,10 +1,6 @@
-from typing import cast
-
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.linear.linear_test import inputs, linear_layer
 
 
 @pytest.fixture
@@ -16,7 +12,18 @@ def saved_files(linear_layer, inputs):
 
     destination = InMemoryPath("linear_0", parent=None)
     design.save_to(destination)
-    files = cast(list[InMemoryFile], list(destination.children.values()))
+
+    # Get all InMemoryFile objects from the destination
+    def collect_files(path: InMemoryPath) -> list[InMemoryFile]:
+        files = []
+        for child in path.children.values():
+            if isinstance(child, InMemoryFile):
+                files.append(child)
+            elif isinstance(child, InMemoryPath):
+                files.extend(collect_files(child))
+        return files
+
+    files = collect_files(destination)
     return {file.name: "\n".join(file.text) for file in files}
 
 
@@ -43,47 +50,48 @@ use work.all;
 entity linear_0 is
     generic (
         X_ADDR_WIDTH : integer := 2;
-        Y_ADDR_WIDTH : integer := 4;
+        Y_ADDR_WIDTH : integer := 1;
         DATA_WIDTH : integer := 8;
         IN_FEATURES : integer := 3;
-        OUT_FEATURES : integer := 10;
-        M_Q : integer := 236223;
-        M_Q_SHIFT : integer := 25;
-        Z_X : integer := 42;
+        OUT_FEATURES : integer := 2;
+        M_Q : integer := 2;
+        M_Q_SHIFT : integer := 1;
+        Z_X : integer := 0;
         Z_W : integer := 0;
         Z_B : integer := 0;
-        Z_Y : integer := 69;
-        M_Q_DATA_WIDTH : integer := 19;
-        Y_RESOURCE_OPTION : string := "auto"
+        Z_Y : integer := 0;
+        M_Q_DATA_WIDTH : integer := 2;
+        Y_RESOURCE_OPTION : string := "distributed"
     );
     port (
         enable : in std_logic;
         clock  : in std_logic;
         x_address : out std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-        x_in   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        x   : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         y_address : in std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-        y_out  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        y  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done   : out std_logic
     );
 end linear_0;
 architecture rtl of linear_0 is
+    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);
-                    y_0 : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0)
+                    y_out : in signed(MACC_OUT_WIDTH - 1 downto 0)
             ) return signed is
         variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
         TMP := w * x_in;
-        return TMP + y_0;
+        return TMP + y_out;
     end function;
-    function scaling(x_to_scale : in signed(2 * (DATA_WIDTH + 1) - 1 downto 0);
+    function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
     scaler_m_shift : in integer
     ) return signed is
-    variable TMP_1 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_2 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
-    variable TMP_3 : signed(2 * (DATA_WIDTH + 1) + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_1 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_2 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
+    variable TMP_3 : signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH -1 downto 0) := (others=>'0');
     variable is_negative : boolean := x_to_scale(x_to_scale'left) = '1';
     begin
         if is_negative then
@@ -128,18 +136,18 @@ architecture rtl of linear_0 is
     signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(OUT_FEATURES) - 1 downto 0) := (others=>'0');
-    signal b_int : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal b_int : signed(MACC_OUT_WIDTH - 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES;
     signal y_store_addr_std : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
     signal y_store_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal macc_sum : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal macc_sum : signed(MACC_OUT_WIDTH - 1 downto 0) := (others=>'0');
 begin
     n_clock <= not clock;
     w_int <= signed(w_in);
-    x_int <= signed(x_in);
-    b_int <= signed(b_in);
+    x_int <= signed(x);
+    b_int <= resize(signed(b_in), b_int'length);
     reset <= not enable;
     fsm : process (clock, reset)
     begin
@@ -262,7 +270,7 @@ begin
         enb    => '1',
         rstb   => '0',
         regceb => '0',
-        doutb  => y_out
+        doutb  => y
     );
     rom_w : entity work.linear_0_w_rom(rtl)
     port map  (
@@ -294,10 +302,10 @@ use work.all;
 entity linear_0_tb is
     generic (
         X_ADDR_WIDTH : integer := 2;
-        Y_ADDR_WIDTH : integer := 4;
+        Y_ADDR_WIDTH : integer := 1;
         DATA_WIDTH : integer := 8;
         IN_FEATURES : integer := 3;
-        OUT_FEATURES : integer := 10
+        OUT_FEATURES : integer := 2
     );
 port(
     clk : out std_logic
@@ -308,10 +316,10 @@ architecture rtl of linear_0_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0):=(others => '0');
+    signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
     type t_array_x is array (0 to IN_FEATURES - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
@@ -333,13 +341,13 @@ begin
     data_read : process( clock )
     begin
         if rising_edge(clock) then
-            x_in <= x_arr(to_integer(unsigned(x_addr)));
+            x <= x_arr(to_integer(unsigned(x_address)));
         end if;
     end process ;
     test_main : process
         constant file_inputs:      string := "./data/linear_0_q_x.txt";
         constant file_labels:      string := "./data/linear_0_q_y.txt";
-        constant file_pred:      string := "./data/linear_0_out.txt";
+        constant file_pred:      string := "./data/linear_0_q_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -368,7 +376,7 @@ begin
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        y_addr <= (others=>'0');
+        y_address <= (others=>'0');
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
@@ -390,10 +398,10 @@ begin
             while output_rd_cnt<OUT_FEATURES loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
-                y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
+                y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-                write (line_num, to_integer(signed(y_out)));
+                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+                write (line_num, to_integer(signed(y)));
                 writeline(fp_pred, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
@@ -412,10 +420,10 @@ begin
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_address => x_addr,
-        y_address => y_addr,
-        x   => x_in,
-        y   => y_out,
+        x_address => x_address,
+        y_address => y_address,
+        x   => x,
+        y   => y,
         done   => done
     );
 end architecture;"""
@@ -425,28 +433,31 @@ end architecture;"""
 def test_weight_rom_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_w_rom.vhd"]
     expected_code = """library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+
 entity linear_0_w_rom is
+    generic (
+        ROM_ADDR_WIDTH : integer := 3;
+        ROM_DATA_WIDTH : integer := 8
+    );
     port (
         clk : in std_logic;
         en : in std_logic;
-        addr : in std_logic_vector(5-1 downto 0);
-        data : out std_logic_vector(8-1 downto 0)
+        addr : in std_logic_vector(ROM_ADDR_WIDTH-1 downto 0);
+        data : out std_logic_vector(ROM_DATA_WIDTH-1 downto 0)
     );
 end entity linear_0_w_rom;
 architecture rtl of linear_0_w_rom is
-    type linear_0_w_rom_array_t is array (0 to 2**5-1) of std_logic_vector(8-1 downto 0);
-    signal ROM : linear_0_w_rom_array_t:=("00110101","11001011","00100000","00010101","11101011","00001011","00101010","11010110","00010101","01000000","11000000","00100000","01001010","10110110","00101010","01010101","10101011","00110101","01100000","10100000","01000000","01101010","10010110","01001010","01110101","10001011","01010101","01111111","10000000","01100000","00000000","00000000");
+    type linear_0_w_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);
+    signal ROM : linear_0_w_rom_array_t:=("00000000", "00000000", "00000000", "00000000", "00000000", "00000000", "00000000", "00000000");
     attribute rom_style : string;
     attribute rom_style of ROM : signal is "auto";
 begin
-    ROM_process: process(clk)
+    ROM_process: process(addr)
     begin
-        if rising_edge(clk) then
-            if (en = '1') then
-                data <= ROM(conv_integer(addr));
-            end if;
+        if (en = '1') then
+            data <= ROM(to_integer(unsigned(addr)));
         end if;
     end process ROM_process;
 end architecture rtl;"""
@@ -456,28 +467,31 @@ end architecture rtl;"""
 def test_bias_rom_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_b_rom.vhd"]
     expected_code = """library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+
 entity linear_0_b_rom is
+    generic (
+        ROM_ADDR_WIDTH : integer := 1;
+        ROM_DATA_WIDTH : integer := 18
+    );
     port (
         clk : in std_logic;
         en : in std_logic;
-        addr : in std_logic_vector(4-1 downto 0);
-        data : out std_logic_vector(18-1 downto 0)
+        addr : in std_logic_vector(ROM_ADDR_WIDTH-1 downto 0);
+        data : out std_logic_vector(ROM_DATA_WIDTH-1 downto 0)
     );
 end entity linear_0_b_rom;
 architecture rtl of linear_0_b_rom is
-    type linear_0_b_rom_array_t is array (0 to 2**4-1) of std_logic_vector(18-1 downto 0);
-    signal ROM : linear_0_b_rom_array_t:=("000010001101000111","111101110010111001","000001010100101011","000000111000011100","111111000111100100","000000011100001110","000001110000111001","111110001111000111","000000111000011100","000010101001010110","000000000000000000","000000000000000000","000000000000000000","000000000000000000","000000000000000000","000000000000000000");
+    type linear_0_b_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);
+    signal ROM : linear_0_b_rom_array_t:=("000000000000000000", "000000000000000000");
     attribute rom_style : string;
     attribute rom_style of ROM : signal is "auto";
 begin
-    ROM_process: process(clk)
+    ROM_process: process(addr)
     begin
-        if rising_edge(clk) then
-            if (en = '1') then
-                data <= ROM(conv_integer(addr));
-            end if;
+        if (en = '1') then
+            data <= ROM(to_integer(unsigned(addr)));
         end if;
     end process ROM_process;
 end architecture rtl;"""

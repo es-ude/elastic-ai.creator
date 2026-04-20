@@ -13,10 +13,10 @@ def test_AsymmetricSignedQParams():
     ASSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 
     x = torch.tensor([[-2.0, 0.5, 1.0, 2.0, 3.0]], dtype=torch.float32)
-    min_quant = torch.tensor([-128], dtype=torch.int32)
-    max_quant = torch.tensor([127], dtype=torch.int32)
-    scale_factor = torch.tensor([0.0196078431372549], dtype=torch.float32)
-    zero_point = torch.tensor([-26], dtype=torch.int32)
+    torch.tensor([-128], dtype=torch.int32)
+    torch.tensor([127], dtype=torch.int32)
+    torch.tensor([0.0196078431372549], dtype=torch.float32)
+    torch.tensor([-26], dtype=torch.int32)
 
     ASSSParams.update_quant_params(x)
     actual_q_x = ASSSParams.quantize(x)
@@ -36,10 +36,10 @@ def test_AsymmetricUnsignedQParams():
     )
 
     x = torch.tensor([-2.0, 0.5, 1.0, 2.0, 3.0], dtype=torch.float32)
-    min_quant = torch.tensor([0], dtype=torch.int32)
-    max_quant = torch.tensor([255], dtype=torch.int32)
-    scale_factor = torch.tensor([0.0196078431372549], dtype=torch.float32)
-    zero_point = torch.tensor([102], dtype=torch.int32)
+    torch.tensor([0], dtype=torch.int32)
+    torch.tensor([255], dtype=torch.int32)
+    torch.tensor([0.0196078431372549], dtype=torch.float32)
+    torch.tensor([102], dtype=torch.int32)
 
     ASUSParams.update_quant_params(x)
     actual_q_x = ASUSParams.quantize(x)
@@ -56,10 +56,10 @@ def test_AsymmetricUnsignedQParams():
 def test_SymmetricSignedQParams():
     SSSSParams = SymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
     x = torch.tensor([-2.0, 0.5, 0.5, 1.0, 2.0], dtype=torch.float32)
-    min_quant = torch.tensor([-127], dtype=torch.int32)
-    max_quant = torch.tensor([127], dtype=torch.int32)
-    scale_factor = torch.tensor([0.0157480314], dtype=torch.float32)
-    zero_point = torch.tensor([0], dtype=torch.int32)
+    torch.tensor([-127], dtype=torch.int32)
+    torch.tensor([127], dtype=torch.int32)
+    torch.tensor([0.0157480314], dtype=torch.float32)
+    torch.tensor([0], dtype=torch.int32)
 
     SSSSParams.update_quant_params(x)
     actual_q_x = SSSSParams.quantize(x)
@@ -78,10 +78,10 @@ def test_SymmetricUnsignedQParams():
     SSUSParams = SymmetricUnsignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 
     x = torch.tensor([-2.0, 0.5, 0.5, 1.0, 2.0], dtype=torch.float32)
-    min_quant = torch.tensor([0], dtype=torch.int32)
-    max_quant = torch.tensor([254], dtype=torch.int32)
-    scale_factor = torch.tensor([0.0157480314], dtype=torch.float32)
-    zero_point = torch.tensor([0], dtype=torch.int32)
+    torch.tensor([0], dtype=torch.int32)
+    torch.tensor([254], dtype=torch.int32)
+    torch.tensor([0.0157480314], dtype=torch.float32)
+    torch.tensor([0], dtype=torch.int32)
 
     SSUSParams.update_quant_params(x)
     actual_q_x = SSUSParams.quantize(x)

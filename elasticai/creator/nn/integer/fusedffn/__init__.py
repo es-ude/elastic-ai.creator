@@ -1,1 +1,1 @@
-from .ffn import FusedFeedForwardNetwork
+from .ffn import FusedFeedForwardNetwork as FusedFeedForwardNetwork

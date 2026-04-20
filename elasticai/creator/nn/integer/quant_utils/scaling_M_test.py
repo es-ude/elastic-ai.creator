@@ -29,7 +29,7 @@ def test_scaling_M_small_value():
 
 def test_scaling_M_shift_limit():
     M = torch.tensor([0.5], dtype=torch.float32)
-    m_q_shift, m_q = scaling_M(M, m_q_shift_limit=5)
+    m_q_shift, m_q = scaling_M(M, m_q_shift_threshold=5)
     approx_M = m_q * (2 ** (-m_q_shift.item()))
     error = torch.abs((M - approx_M) / M)
     assert torch.all(error < 0.0001)

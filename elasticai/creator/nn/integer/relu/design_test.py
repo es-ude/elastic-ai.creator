@@ -1,9 +1,6 @@
-from typing import cast
-
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.integer.relu.relu_test import inputs, relu_layer
 
 
 @pytest.fixture
@@ -14,8 +11,18 @@ def saved_files(relu_layer, inputs):
 
     destination = InMemoryPath("relu_0", parent=None)
     design.save_to(destination)
-    files = cast(list[InMemoryFile], list(destination.children.values()))
 
+    # Get all InMemoryFile objects from the destination
+    def collect_files(path: InMemoryPath) -> list[InMemoryFile]:
+        files = []
+        for child in path.children.values():
+            if isinstance(child, InMemoryFile):
+                files.append(child)
+            elif isinstance(child, InMemoryPath):
+                files.extend(collect_files(child))
+        return files
+
+    files = collect_files(destination)
     return {file.name: "\n".join(file.text) for file in files}
 
 
@@ -109,8 +116,8 @@ architecture rtl of relu_0_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
 begin
     CLK_GEN : process
     begin
@@ -129,7 +136,7 @@ begin
     test_main : process
         constant file_inputs:      string := "./data/relu_0_q_x.txt";
         constant file_labels:      string := "./data/relu_0_q_y.txt";
-        constant file_pred:      string := "./data/relu_0_out.txt";
+        constant file_pred:      string := "./data/relu_0_q_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -164,12 +171,12 @@ begin
         while not ENDFILE (fp_inputs) loop
             readline (fp_inputs, line_num);
             read (line_num, line_content);
-            x_in <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
+            x <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
             wait for 2*C_CLK_PERIOD;
             readline (fp_labels, line_num);
             read (line_num, line_content);
-            report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-            write (line_num, to_integer(signed(y_out)));
+            report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+            write (line_num, to_integer(signed(y)));
             writeline(fp_pred, line_num);
         end loop;
         wait until falling_edge(clock);
@@ -177,14 +184,15 @@ begin
         file_close (fp_labels);
         file_close (fp_pred);
         report "All files closed.";
-        wait;
+        report "Simulation done.";
+        assert false report "Simulation done. The `assertion failure` is intended to stop this simulation." severity FAILURE;
     end process ;
     uut: entity work.relu_0(rtl)
     port map (
         enable => uut_enable,
         clock  => clock,
-        x  => x_in,
-        y  => y_out
+        x  => x,
+        y  => y
     );
 end architecture;"""
     assert expected_code == actual_code

@@ -1,1 +1,1 @@
-from .matrixmulti import MatrixMulti
+from .matrixmulti import MatrixMulti as MatrixMulti

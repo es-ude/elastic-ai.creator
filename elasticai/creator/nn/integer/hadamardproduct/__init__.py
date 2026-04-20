@@ -1,1 +1,1 @@
-from .hadamardproduct import HadamardProduct
+from .hadamardproduct import HadamardProduct as HadamardProduct

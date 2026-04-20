@@ -1,1 +1,1 @@
-from .addition import Addition
+from .addition import Addition as Addition

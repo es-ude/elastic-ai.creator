@@ -1,1 +1,1 @@
-from .stackedrnn import StackedRNN
+from .stackedrnn import StackedRNN as StackedRNN

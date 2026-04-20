@@ -180,6 +180,7 @@ class Linear(DesignCreatorModule, nn.Linear):
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
+            bias = None
             if self.bias is not None:
                 bias = SimQuant.apply(self.bias, self.bias_QParams)
         else:

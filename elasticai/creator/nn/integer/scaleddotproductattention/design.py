@@ -5,7 +5,6 @@ from elasticai.creator.file_generation.template import (
 )
 from elasticai.creator.nn.integer.LUT.design import LUT as LUTDesign
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
-from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
 

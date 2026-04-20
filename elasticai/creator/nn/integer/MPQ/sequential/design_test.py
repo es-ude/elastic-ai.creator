@@ -1,18 +1,8 @@
-from typing import cast
-
 import pytest
 from torch import nn
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
 from elasticai.creator.nn.integer.sequential.sequential import Sequential
-from elasticai.creator.nn.integer.sequential.sequential_test import (
-    eps,
-    inputs,
-    linear_layer_0,
-    linear_layer_1,
-    q_inputs,
-    relu_layer_0,
-)
 
 
 @pytest.fixture
@@ -51,7 +41,17 @@ def saved_files(sequential_instance, inputs):
     if network_folder is None:
         raise ValueError("Network folder not found")
 
-    files = cast(list[InMemoryFile], list(network_folder.children.values()))
+    # Get all InMemoryFile objects from the network folder
+    def collect_files(path: InMemoryPath) -> list[InMemoryFile]:
+        files = []
+        for child in path.children.values():
+            if isinstance(child, InMemoryFile):
+                files.append(child)
+            elif isinstance(child, InMemoryPath):
+                files.extend(collect_files(child))
+        return files
+
+    files = collect_files(network_folder)
     return {file.name: "\n".join(file.text) for file in files}
 
 
@@ -59,6 +59,7 @@ def test_saved_design_contains_needed_files(saved_files) -> None:
     expected_files = {
         "network.vhd",
         "network_tb.vhd",
+        "network_ram.vhd",
     }
     actual_files = set(saved_files.keys())
     assert expected_files == actual_files
@@ -89,12 +90,12 @@ architecture rtl of network is
     signal i_linear_0_x : std_logic_vector(7 downto 0) := (others => '0');
     signal i_linear_0_x_address : std_logic_vector(1 downto 0) := (others => '0');
     signal i_linear_0_y : std_logic_vector(7 downto 0) := (others => '0');
-    signal i_linear_0_y_address : std_logic_vector(3 downto 0) := (others => '0');
+    signal i_linear_0_y_address : std_logic_vector(1 downto 0) := (others => '0');
     signal i_linear_1_clock : std_logic := '0';
     signal i_linear_1_done : std_logic := '0';
     signal i_linear_1_enable : std_logic := '0';
     signal i_linear_1_x : std_logic_vector(7 downto 0) := (others => '0');
-    signal i_linear_1_x_address : std_logic_vector(3 downto 0) := (others => '0');
+    signal i_linear_1_x_address : std_logic_vector(1 downto 0) := (others => '0');
     signal i_linear_1_y : std_logic_vector(7 downto 0) := (others => '0');
     signal i_linear_1_y_address : std_logic_vector(0 downto 0) := (others => '0');
     signal i_relu_0_clock : std_logic := '0';
@@ -162,8 +163,8 @@ entity network_tb is
         X_ADDR_WIDTH : integer := 2;
         Y_ADDR_WIDTH : integer := 1;
         DATA_WIDTH : integer := 8;
-        IN_FEATURES : integer := 3;
-        OUT_FEATURES : integer := 1
+        X_COUNT : integer := 3;
+        Y_COUNT : integer := 2
     );
 port(
     clk : out std_logic
@@ -174,12 +175,12 @@ architecture rtl of network_tb is
     signal clock : std_logic := '0';
     signal reset : std_logic := '0';
     signal uut_enable : std_logic := '0';
-    signal x_addr : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
-    signal x_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
-    signal y_addr : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
-    signal y_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal x_address : std_logic_vector(X_ADDR_WIDTH - 1 downto 0);
+    signal x : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal y_address : std_logic_vector(Y_ADDR_WIDTH - 1 downto 0);
+    signal y : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal done : std_logic;
-    type t_array_x is array (0 to IN_FEATURES - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+    type t_array_x is array (0 to X_COUNT - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal x_arr : t_array_x := (others=>(others=>'0'));
 begin
     CLK_GEN : process
@@ -199,13 +200,13 @@ begin
     data_read : process( clock )
     begin
         if rising_edge(clock) then
-            x_in <= x_arr(to_integer(unsigned(x_addr)));
+            x <= x_arr(to_integer(unsigned(x_address)));
         end if;
     end process ;
     test_main : process
         constant file_inputs:      string := "./data/network_q_x.txt";
         constant file_labels:      string := "./data/network_q_y.txt";
-        constant file_pred:      string := "./data/network_out.txt";
+        constant file_pred:      string := "./data/network_q_out.txt";
         file fp_inputs:      text;
         file fp_labels:      text;
         file fp_pred:      text;
@@ -234,13 +235,13 @@ begin
         assert filestatus = OPEN_OK
             report "file_open_status /= file_ok"
             severity FAILURE;
-        y_addr <= (others=>'0');
+        y_address <= (others=>'0');
         uut_enable <= '0';
         wait until reset='0';
         wait for C_CLK_PERIOD;
         while not ENDFILE (fp_inputs) loop
             input_rd_cnt := 0;
-            while input_rd_cnt < IN_FEATURES loop
+            while input_rd_cnt < X_COUNT loop
                 readline (fp_inputs, line_num);
                 read (line_num, line_content);
                 x_arr(input_rd_cnt) <= std_logic_vector(to_signed(line_content, DATA_WIDTH));
@@ -253,13 +254,13 @@ begin
             wait until done='1';
             v_TIME := now - v_TIME;
             output_rd_cnt := 0;
-            while output_rd_cnt<OUT_FEATURES loop
+            while output_rd_cnt<Y_COUNT loop
                 readline (fp_labels, line_num);
                 read (line_num, line_content);
-                y_addr <= std_logic_vector(to_unsigned(output_rd_cnt, y_addr'length));
+                y_address <= std_logic_vector(to_unsigned(output_rd_cnt, y_address'length));
                 wait for 2*C_CLK_PERIOD;
-                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y_out))) & ", Differece = " & integer'image(line_content - to_integer(signed(y_out)));
-                write (line_num, to_integer(signed(y_out)));
+                report "Correct/Simulated = " & integer'image(line_content) & "/" & integer'image(to_integer(signed(y))) & ", Differece = " & integer'image(line_content - to_integer(signed(y)));
+                write (line_num, to_integer(signed(y)));
                 writeline(fp_pred, line_num);
                 output_rd_cnt := output_rd_cnt + 1;
             end loop;
@@ -278,10 +279,10 @@ begin
     port map (
         enable => uut_enable,
         clock  => clock,
-        x_address => x_addr,
-        y_address => y_addr,
-        x   => x_in,
-        y   => y_out,
+        x_address => x_address,
+        y_address => y_address,
+        x   => x,
+        y   => y,
         done   => done
     );
 end architecture;"""

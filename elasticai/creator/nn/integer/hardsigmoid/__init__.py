@@ -1,1 +1,1 @@
-from .hardsigmoid import HardSigmoid
+from .hardsigmoid import HardSigmoid as HardSigmoid

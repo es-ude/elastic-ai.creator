@@ -1,1 +1,3 @@
-from .scaleddotproductattention import ScaledDotProductAttention
+from .scaleddotproductattention import (
+    ScaledDotProductAttention as ScaledDotProductAttention,
+)

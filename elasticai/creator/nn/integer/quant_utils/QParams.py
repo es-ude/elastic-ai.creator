@@ -61,7 +61,7 @@ class QParams(nn.Module):
             )
         else:
             self.min_quant.copy_(torch.tensor(0))  # 0 for 8 bits
-            max_value = (1**self.quant_bits) - (
+            max_value = (2**self.quant_bits) - (
                 2 if self.is_symmetric else 1
             )  # 254 or 255 for 8 bits
             self.max_quant.copy_(torch.tensor(max_value))
@@ -138,7 +138,7 @@ class QParams(nn.Module):
             state_dict.pop(prefix + key)
 
     def __str__(self):
-        info += "min_float: %.6f " % self.min_float
+        info = "min_float: %.6f " % self.min_float
         info += "max_float: %.6f" % self.max_float
         info += "min_quant: %d " % self.min_quant
         info += "max_quant: %d" % self.max_quant

@@ -1,1 +1,1 @@
-from .ffn import FeedForwardNetwork
+from .ffn import FeedForwardNetwork as FeedForwardNetwork
