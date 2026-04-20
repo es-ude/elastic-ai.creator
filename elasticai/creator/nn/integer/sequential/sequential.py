@@ -1,28 +1,40 @@
 from pathlib import Path
+from typing import Any, cast
 
 import torch
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.sequential.layer import Sequential as _SequentialBase
+from elasticai.creator.nn.sequential.design_builder import SequentialDesignBuilder
 from elasticai.creator.vhdl.design.design import Design
 
 from .design import Sequential as _SequentialDesign
 
 
-class Sequential(_SequentialBase):
+class _IntegerSequentialDesignFactory:
+    def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:
+        return _SequentialDesign(sub_designs=sub_designs, name=name)
+
+
+class Sequential(DesignCreatorModule, torch.nn.Sequential):
     def __init__(
         self, *submodules: DesignCreatorModule, name: str, quant_data_dir: Path
     ) -> None:
         super().__init__(*submodules)
-        self.submodules = submodules
+        self.submodules: tuple[Any, ...] = submodules
         self.name = name
         self.quant_data_dir = quant_data_dir
         self.precomputed = False
+        self._design_builder = SequentialDesignBuilder(
+            _IntegerSequentialDesignFactory()
+        )
+        # Set quant_data_dir on each submodule
+        for submodule in submodules:
+            cast(Any, submodule).quant_data_dir = quant_data_dir
 
     def forward(
         self,
         inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        given_inputs_QParams: torch.nn.Module | None = None,
         enable_simquant: bool = True,
     ) -> torch.FloatTensor:
         outputs = inputs
@@ -51,10 +63,16 @@ class Sequential(_SequentialBase):
     def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
         assert not self.training, "int_forward() should only be called in eval mode"
         assert self.precomputed, "precompute() should be called before int_forward()"
+        from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+            save_quant_data,
+        )
+
+        save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
+        q_outputs = q_inputs
         for submodule in self.submodules:
-            q_outputs = submodule.int_forward(q_inputs)
-            q_inputs = q_outputs
+            q_outputs = submodule.int_forward(q_outputs)
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
         return q_outputs
 
-    def create_sequential_design(self, sub_designs: list[Design], name: str) -> Design:
-        return _SequentialDesign(sub_designs=sub_designs, name=name)
+    def create_design(self, name: str) -> Design:
+        return self._design_builder.build(self.submodules, name)
