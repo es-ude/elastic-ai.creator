@@ -1,6 +1,6 @@
 --
 --! @file Main entity for interfacing with the ICAP,
---! used for specifying the next configuration to boot 
+--! used for specifying the next configuration to boot
 --! and to trigger a reconfiguration
 --! @brief Main entity for interfacing with the ICAP of the FPGA
 --
@@ -93,7 +93,7 @@ begin
 	end process;
 
     with current_state select icap_in <=
-		x"FFFFFFFF" when IDLE,              -- 
+		x"FFFFFFFF" when IDLE,              --
 		x"FFFFFFFF" when DUMMY,             -- Dummy Word
 		x"AA995566" when SYNC,              -- Sync Word
 		x"20000000" when CMD_0,             -- Type 1 NO OP

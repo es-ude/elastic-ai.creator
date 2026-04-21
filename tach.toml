@@ -96,6 +96,14 @@ path = "elasticai.creator.hw_function_id"
 depends_on = []
 
 [[modules]]
+path = "elasticai.creator.nn.integer"
+depends_on = [
+    "elasticai.creator.vhdl",
+    "elasticai.creator.file_generation",
+    "elasticai.creator.nn.sequential",
+]
+
+[[modules]]
 path = "elasticai.creator.nn.design_creator_module"
 depends_on = ["elasticai.creator.vhdl"]
 

@@ -1,0 +1,186 @@
+import torch
+import torch.nn as nn
+
+from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
+from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.MPQ.addition.design import Addition as AdditionDesign
+from elasticai.creator.nn.integer.quant_utils import (
+    GlobalMinMaxObserver,
+    MPQSupport,
+    SimQuant,
+    scaling_M,
+    simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
+    save_quant_data,
+)
+
+
+class Addition(DesignCreatorModule, nn.Module, MPQSupport):
+    def __init__(self, **kwargs) -> None:
+        super().__init__()
+
+        self.num_features = kwargs.get("num_features")
+        self.num_dimensions = kwargs.get("num_dimensions")
+
+        self.name = kwargs.get("name")
+        self.quantizable_elements = ["inputs1", "inputs2", "outputs"]
+        self.quant_bits_per_element = None
+        self.quant_data_dir = kwargs.get("quant_data_dir", None)
+        self.device = kwargs.get("device")
+
+        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+
+        self.math_ops = MathOperations()
+        self._init_mpq_attributes(**kwargs)  # MPQ
+        self.precomputed = False
+
+    def set_quant_bits_from_config(self, quant_configs):
+        quant_bits_per_element = {}
+        for element in self.quantizable_elements:
+            key = f"{self.name}.{element}"
+            quant_bits_per_element[element] = quant_configs.get(key)
+        self.quant_bits_per_element = quant_bits_per_element
+        self._init_element_Qparams()
+
+    def _init_element_Qparams(self):
+        self.inputs1_QParams = AsymmetricSignedQParams(
+            quant_bits=self.quant_bits_per_element["inputs1"],
+            observer=GlobalMinMaxObserver(),
+        ).to(self.device)
+        self.inputs2_QParams = AsymmetricSignedQParams(
+            quant_bits=self.quant_bits_per_element["inputs2"],
+            observer=GlobalMinMaxObserver(),
+        ).to(self.device)
+        self.outputs_QParams = AsymmetricSignedQParams(
+            quant_bits=self.quant_bits_per_element["outputs"],
+            observer=GlobalMinMaxObserver(),
+        ).to(self.device)
+
+    def create_design(self, name: str) -> AdditionDesign:
+        return AdditionDesign(
+            name=name,
+            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
+            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
+            y_data_width=self.outputs_QParams.quant_bits.item(),
+            num_features=self.num_features,
+            num_dimensions=self.num_dimensions,
+            m_q_1=self.scale_factor_m_q_1.item(),
+            m_q_2=self.scale_factor_m_q_2.item(),
+            m_q_1_shift=self.scale_factor_m_q_1_shift.item(),
+            m_q_2_shift=self.scale_factor_m_q_2_shift.item(),
+            z_x1=self.inputs1_QParams.zero_point.item(),
+            z_x2=self.inputs2_QParams.zero_point.item(),
+            z_y=self.outputs_QParams.zero_point.item(),
+            work_library_name="work",
+            resource_option="auto",
+        )
+
+    def precompute(self) -> None:
+        self.scale_factor_M_1 = (
+            self.inputs1_QParams.scale_factor / self.outputs_QParams.scale_factor
+        )
+        self.scale_factor_M_2 = (
+            self.inputs2_QParams.scale_factor / self.outputs_QParams.scale_factor
+        )
+
+        self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1 = scaling_M(
+            self.scale_factor_M_1
+        )
+        self.scale_factor_m_q_2_shift, self.scale_factor_m_q_2 = scaling_M(
+            self.scale_factor_M_2
+        )
+        self._precompute_requantizer_params()
+        self.precomputed = True
+
+    def int_forward(
+        self, q_inputs1: torch.IntTensor, q_inputs2: torch.IntTensor
+    ) -> torch.IntTensor:
+        assert not self.training, "int_forward should be called in eval mode"
+        assert self.precomputed, "precompute should be called before int_forward"
+
+        save_quant_data(q_inputs1, self.quant_data_dir, f"{self.name}_q_x_1")
+        save_quant_data(q_inputs2, self.quant_data_dir, f"{self.name}_q_x_2")
+
+        q_inputs1 = self._apply_requantizer(q_inputs1, "inputs1")
+        q_inputs2 = self._apply_requantizer(q_inputs2, "inputs2")
+
+        q_inputs1 = self.math_ops.intsub(
+            q_inputs1,
+            self.inputs1_QParams.zero_point,
+            self.inputs1_QParams.quant_bits.item() + 1,
+        )
+        q_inputs2 = self.math_ops.intsub(
+            q_inputs2,
+            self.inputs2_QParams.zero_point,
+            self.inputs2_QParams.quant_bits.item() + 1,
+        )
+
+        q_inputs1 = simulate_bitshifting(
+            q_inputs1, self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1
+        )
+        q_inputs2 = simulate_bitshifting(
+            q_inputs2, self.scale_factor_m_q_2_shift, self.scale_factor_m_q_2
+        )
+        tmp = self.math_ops.intadd(
+            q_inputs1,
+            q_inputs2,
+            self.inputs2_QParams.quant_bits.item() + 2,
+        )
+
+        q_outputs = self.math_ops.intadd(
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+        )
+
+        save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
+        if self.enable_error_analysis:
+            save_quant_data(
+                self.outputs_QParams.dequantize(q_outputs),
+                self.quant_data_dir,
+                f"{self.name}_dq_y",
+            )
+
+        return q_outputs
+
+    def forward(
+        self,
+        inputs1: torch.FloatTensor,
+        inputs2: torch.FloatTensor,
+        given_inputs1_QParams: torch.nn.Module = None,
+        given_inputs2_QParams: torch.nn.Module = None,
+        enable_simquant: bool = True,
+    ) -> torch.FloatTensor:
+        if enable_simquant:
+            if self.training:
+                self._handle_input_QParams(
+                    inputs1,
+                    given_inputs1_QParams,
+                    "inputs1_QParams",
+                    "prev_inputs1_QParams",
+                )
+                self._handle_input_QParams(
+                    inputs2,
+                    given_inputs2_QParams,
+                    "inputs2_QParams",
+                    "prev_inputs2_QParams",
+                )
+
+            inputs1 = SimQuant.apply(inputs1, self.inputs1_QParams)
+            inputs2 = SimQuant.apply(inputs2, self.inputs2_QParams)
+
+        outputs = inputs1 + inputs2
+
+        if enable_simquant:
+            if self.training:
+                self.outputs_QParams.update_quant_params(outputs)
+
+            outputs = SimQuant.apply(outputs, self.outputs_QParams)
+
+            if self.enable_error_analysis:
+                save_quant_data(
+                    outputs,
+                    self.quant_data_dir,
+                    f"{self.name}_y",
+                )
+        return outputs

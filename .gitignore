@@ -301,3 +301,6 @@ external/
 
 # claude code config (local only)
 .claude/
+tmp/
+examples/MLP
+

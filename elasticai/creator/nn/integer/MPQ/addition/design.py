@@ -1,0 +1,126 @@
+import numpy as np
+
+from elasticai.creator.file_generation.savable import Path
+from elasticai.creator.file_generation.template import (
+    InProjectTemplate,
+    module_to_package,
+)
+from elasticai.creator.nn.integer.ram.design import Ram
+from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
+from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
+from elasticai.creator.vhdl.design.design import Design
+from elasticai.creator.vhdl.design.ports import Port
+
+
+class Addition(Design):
+    def __init__(
+        self,
+        name: str,
+        x_1_data_width: int,
+        x_2_data_width: int,
+        y_data_width: int,
+        num_features: int,
+        num_dimensions: int,
+        m_q_1: int,
+        m_q_2: int,
+        m_q_1_shift: int,
+        m_q_2_shift: int,
+        z_x1: int,
+        z_x2: int,
+        z_y: int,
+        work_library_name: str,
+        resource_option: str,
+    ) -> None:
+        super().__init__(name=name)
+
+        self._x_1_data_width = x_1_data_width
+        self._x_2_data_width = x_2_data_width
+        self._y_data_width = y_data_width
+
+        self._num_features = num_features
+        self._num_dimensions = num_dimensions
+
+        self._m_q_1 = m_q_1
+        self._m_q_2 = m_q_2
+        self._m_q_1_shift = m_q_1_shift
+        self._m_q_2_shift = m_q_2_shift
+        self._m_q_1_data_width = (
+            int(np.ceil(np.log2(self._m_q_1))) + 1 if self._m_q_1 != 0 else 1
+        )
+        self._m_q_2_data_width = (
+            int(np.ceil(np.log2(self._m_q_2))) + 1 if self._m_q_2 != 0 else 1
+        )
+
+        self._z_x1 = z_x1
+        self._z_x2 = z_x2
+        self._z_y = z_y
+
+        self._work_library_name = work_library_name
+        self._resource_option = resource_option
+
+        self._m_q_data_width = max(self._m_q_1_data_width, self._m_q_2_data_width)
+
+        self._x_count = self._num_features * self._num_dimensions
+        self._y_count = self._x_count
+
+        self._x_addr_width = calculate_address_width(self._x_count)
+        self._y_addr_width = calculate_address_width(self._y_count)
+
+    @property
+    def port(self) -> Port:
+        return create_port(
+            x_1_width=self._x_1_data_width,
+            x_2_width=self._x_2_data_width,
+            y_width=self._y_data_width,
+            x_count=self._x_count,
+            y_count=self._y_count,
+        )
+
+    def save_to(self, destination: Path) -> None:
+        template = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="addition.tpl.vhd",
+            parameters=dict(
+                name=self.name,
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x_1_data_width=str(self._x_1_data_width),
+                x_2_data_width=str(self._x_2_data_width),
+                y_data_width=str(self._y_data_width),
+                num_features=str(self._num_features),
+                num_dimensions=str(self._num_dimensions),
+                m_q_1=str(self._m_q_1),
+                m_q_1_shift=str(self._m_q_1_shift),
+                m_q_2=str(self._m_q_2),
+                m_q_2_shift=str(self._m_q_2_shift),
+                m_q_data_width=str(self._m_q_data_width),
+                z_x_1=str(self._z_x1),
+                z_x_2=str(self._z_x2),
+                z_y=str(self._z_y),
+                work_library_name=self._work_library_name,
+                resource_option=self._resource_option,
+            ),
+        )
+        destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        ram = Ram(name=f"{self.name}_ram")
+        ram.save_to(destination)
+
+        template_test = InProjectTemplate(
+            package=module_to_package(self.__module__),
+            file_name="addition_tb.tpl.vhd",
+            parameters=dict(
+                name=self.name,
+                x_addr_width=str(self._x_addr_width),
+                y_addr_width=str(self._y_addr_width),
+                x_1_data_width=str(self._x_1_data_width),
+                x_2_data_width=str(self._x_2_data_width),
+                y_data_width=str(self._y_data_width),
+                x_count=str(self._x_count),
+                y_count=str(self._y_count),
+                work_library_name=self._work_library_name,
+            ),
+        )
+        destination.create_subpath(f"{self.name}_tb").as_file(".vhd").write(
+            template_test
+        )

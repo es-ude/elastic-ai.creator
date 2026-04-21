@@ -85,7 +85,7 @@ begin
                 int_addr := to_integer(unsigned(address_in));
                 if int_addr < X_NUM_VALUES then
                     data_buf_in(int_addr) <= data_in(DATA_WIDTH_IN-1 downto 0);
-                elsif int_addr = 100 then
+                elsif int_addr = 500 then
                     network_enable <= data_in(0);
                 end if;
             end if;

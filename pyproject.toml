@@ -228,6 +228,7 @@ module = [
     "elasticai.creator.base_modules.conv1d",
     "elasticai.creator.base_modules.conv2d",
     "elasticai.creator.base_modules.linear",
+    "elasticai.creator.nn.integer.*",
 ]
 ignore_errors = true
 
