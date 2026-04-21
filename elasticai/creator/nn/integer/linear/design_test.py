@@ -435,17 +435,17 @@ end architecture;"""
 def test_weight_rom_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_w_rom.vhd"]
 
-    assert "use ieee.std_logic_unsigned.all;" in actual_code
+    assert "use ieee.numeric_std.all;" in actual_code
     assert "entity linear_0_w_rom is" in actual_code
-    assert "addr : in std_logic_vector(3-1 downto 0);" in actual_code
-    assert "data : out std_logic_vector(8-1 downto 0)" in actual_code
+    assert "addr : in std_logic_vector(ROM_ADDR_WIDTH-1 downto 0);" in actual_code
+    assert "data : out std_logic_vector(ROM_DATA_WIDTH-1 downto 0)" in actual_code
     assert (
-        "type linear_0_w_rom_array_t is array (0 to 2**3-1) of std_logic_vector(8-1 downto 0);"
+        "type linear_0_w_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);"
         in actual_code
     )
-    assert "ROM_process: process(clk)" in actual_code
-    assert "if rising_edge(clk) then" in actual_code
-    assert "data <= ROM(conv_integer(addr));" in actual_code
+    assert "ROM_process: process(addr)" in actual_code
+    assert "if (en = '1') then" in actual_code
+    assert "data <= ROM(to_integer(unsigned(addr)));" in actual_code
 
     match = re.search(r"signal ROM : linear_0_w_rom_array_t:=\(([^)]*)\);", actual_code)
     assert match is not None
@@ -457,17 +457,17 @@ def test_weight_rom_code_generated_correctly(saved_files) -> None:
 def test_bias_rom_code_generated_correctly(saved_files) -> None:
     actual_code = saved_files["linear_0_b_rom.vhd"]
 
-    assert "use ieee.std_logic_unsigned.all;" in actual_code
+    assert "use ieee.numeric_std.all;" in actual_code
     assert "entity linear_0_b_rom is" in actual_code
-    assert "addr : in std_logic_vector(1-1 downto 0);" in actual_code
-    assert "data : out std_logic_vector(18-1 downto 0)" in actual_code
+    assert "addr : in std_logic_vector(ROM_ADDR_WIDTH-1 downto 0);" in actual_code
+    assert "data : out std_logic_vector(ROM_DATA_WIDTH-1 downto 0)" in actual_code
     assert (
-        "type linear_0_b_rom_array_t is array (0 to 2**1-1) of std_logic_vector(18-1 downto 0);"
+        "type linear_0_b_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);"
         in actual_code
     )
-    assert "ROM_process: process(clk)" in actual_code
-    assert "if rising_edge(clk) then" in actual_code
-    assert "data <= ROM(conv_integer(addr));" in actual_code
+    assert "ROM_process: process(addr)" in actual_code
+    assert "if (en = '1') then" in actual_code
+    assert "data <= ROM(to_integer(unsigned(addr)));" in actual_code
 
     match = re.search(r"signal ROM : linear_0_b_rom_array_t:=\(([^)]*)\);", actual_code)
     assert match is not None
