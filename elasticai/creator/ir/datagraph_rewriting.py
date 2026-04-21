@@ -1,14 +1,12 @@
 import re
 from abc import abstractmethod
 from collections.abc import Callable, Collection
-from typing import Protocol
+from typing import Protocol, cast
 
 from elasticai.creator.graph import find_all_subgraphs, get_rewriteable_matches
 from elasticai.creator.ir._attribute import AttributeMapping
 from elasticai.creator.ir.datagraph import DataGraph as _DGraph
 from elasticai.creator.ir.datagraph import Edge, Node
-from elasticai.creator.ir.datagraph_impl import DataGraphImpl, DefaultNodeEdgeFactory
-from elasticai.creator.ir.graph import GraphImpl
 from elasticai.creator.ir.registry import Registry as _Registry
 
 type DataGraph = _DGraph[
@@ -17,13 +15,13 @@ type DataGraph = _DGraph[
 type Registry = _Registry[
     DataGraph
 ]  # bind to upper bound until we get default type args
-type Rule = Callable[
-    [DataGraph, Registry],
+type Rule[G: DataGraph] = Callable[
+    [G, _Registry[G]],
     tuple[DataGraph, Registry],
 ]
 
 
-class Pattern(Protocol):
+class Pattern[G: DataGraph](Protocol):
     @property
     @abstractmethod
     def graph(self) -> DataGraph: ...
@@ -32,10 +30,10 @@ class Pattern(Protocol):
     def interface(self) -> Collection[str]: ...
 
     @abstractmethod
-    def match(self, g: DataGraph, registry: Registry, /) -> list[dict[str, str]]: ...
+    def match(self, g: G, registry: _Registry[G], /) -> list[dict[str, str]]: ...
 
 
-class StdPattern(Pattern):
+class StdPattern[G: DataGraph, N: Node](Pattern[G]):
     """Use a simple constraint over `Node`s to find all matching subgraphs.
 
     This pattern ignores the registry, so you cannot
@@ -52,7 +50,7 @@ class StdPattern(Pattern):
     def __init__(
         self,
         graph: DataGraph,
-        node_constraint: Callable[[Node, Node], bool],
+        node_constraint: Callable[[Node, N], bool],
         interface: Collection[str],
     ) -> None:
         self._graph = graph
@@ -67,16 +65,25 @@ class StdPattern(Pattern):
     def interface(self) -> Collection[str]:
         return self._interface
 
-    def match(self, g: DataGraph, registry: Registry, /) -> list[dict[str, str]]:
+    def match(self, g: G, _: _Registry[G], /) -> list[dict[str, str]]:
         def constraint(pattern_node: str, graph_node: str) -> bool:
-            return self._constraint(self.graph.nodes[pattern_node], g.nodes[graph_node])
+            return self._constraint(
+                # In fact the cast below is incorrect, but we have no way in python
+                # to express that N should be compatible with the node type from
+                # G. We'd need smth like StdPattern[N: Node, G: DataGraph[N, ir.Edge]].
+                # But that's not supported and we're trying to be pragmatic here.
+                # Considered runtime checking, but decided against it due to runtime cost.
+                # Constraint will be called a lot.
+                self.graph.nodes[pattern_node],
+                cast(N, g.nodes[graph_node]),
+            )
 
         return find_all_subgraphs(
             pattern=self.graph, graph=g, node_constraint=constraint
         )
 
 
-class PatternRuleSpec:
+class PatternRuleSpec[G: DataGraph]:
     """Specifies how `PatternRule` should create a new `DataGraph` from an existing one.
 
     It consists of
@@ -104,7 +111,7 @@ class PatternRuleSpec:
     def __init__(
         self,
         pattern: Pattern,
-        replacement_fn: Rule,
+        replacement_fn: Callable[[G, _Registry[G]], tuple[G, _Registry[G]]],
     ) -> None:
         self.pattern = pattern
         self.replacement_fn = replacement_fn
@@ -117,13 +124,13 @@ class PatternRuleSpec:
         return self.pattern.match(g, registry)
 
     def create_replacement(
-        self, g: DataGraph, registry: Registry
-    ) -> tuple[DataGraph, Registry]:
+        self, g: G, registry: _Registry[G]
+    ) -> tuple[G, _Registry[G]]:
         return self.replacement_fn(g, registry)
 
 
-class PatternRule:
-    def __init__(self, spec: PatternRuleSpec):
+class PatternRule[G: DataGraph]:
+    def __init__(self, spec: PatternRuleSpec[G]):
         self._spec = spec
 
     def _validate_interface_compatibility(
@@ -146,9 +153,7 @@ class PatternRule:
             self._spec.pattern.graph.nodes, "Pattern Graph"
         )
 
-    def __call__(
-        self, graph: DataGraph, registry: Registry
-    ) -> tuple[DataGraph, Registry]:
+    def __call__(self, graph: G, registry: _Registry[G]) -> tuple[_DGraph, _Registry]:
         self._validate_pattern_interface_compatibility()
         matches = self._spec.pattern.match(graph, registry)
         matches = list(
@@ -158,7 +163,7 @@ class PatternRule:
         )
         for match in matches:
             graph_mapped_to_matched_pattern = _create_remapped_graph(graph, match)
-            repl_graph, registry = self._spec.create_replacement(
+            repl_graph, _registry = self._spec.create_replacement(
                 graph_mapped_to_matched_pattern, registry
             )
             self._validate_replacement_interface_compatibility(repl_graph.nodes)
@@ -167,11 +172,11 @@ class PatternRule:
 
     def _replace_match(
         self,
-        original: DataGraph,
-        replacement: DataGraph,
+        original: G,
+        replacement: G,
         match: dict[str, str],
         interface: Collection[str],
-    ) -> DataGraph:
+    ) -> G:
         nodes_to_keep: set[str] = set()
         pattern_to_orig = match
         orig_to_pattern = {k: v for v, k in pattern_to_orig.items()}
@@ -210,16 +215,15 @@ class PatternRule:
         return new_graph
 
 
-def _create_remapped_graph(original: DataGraph, mapping: dict[str, str]) -> DataGraph:
+def _create_remapped_graph[G: DataGraph](original: G, mapping: dict[str, str]) -> G:
+
     orig_to_new = {v: k for k, v in mapping.items()}
 
-    remapped_node_attribute = AttributeMapping(
-        **{
-            orig_to_new[k]: v
-            for k, v in original.node_attributes.items()
-            if k in orig_to_new
-        }
-    )
+    remapped_node_attribute: list[tuple[str, AttributeMapping]] = [
+        (orig_to_new[k], cast(AttributeMapping, v))
+        for k, v in original.node_attributes.items()
+        if k in orig_to_new
+    ]
     edges_in_match: set[tuple[str, str]] = set()
     for src in orig_to_new:
         for dst in orig_to_new:
@@ -230,13 +234,12 @@ def _create_remapped_graph(original: DataGraph, mapping: dict[str, str]) -> Data
         remapped_edges.append(
             (orig_to_new[src], orig_to_new[dst], original.successors[src][dst])
         )
-    remapped_dgraph = DataGraphImpl(
-        factory=DefaultNodeEdgeFactory(),
-        attributes=original.attributes,
-        graph=GraphImpl(lambda: AttributeMapping()),
-        node_attributes=remapped_node_attribute,
+    remapped_dgraph = (
+        original.clear()
+        .with_attributes(original.attributes)
+        .add_nodes(*remapped_node_attribute)
+        .add_edges(*remapped_edges)
     )
-    remapped_dgraph = remapped_dgraph.add_edges(*remapped_edges)
     return remapped_dgraph
 
 
