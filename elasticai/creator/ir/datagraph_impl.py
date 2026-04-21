@@ -179,13 +179,6 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
     def graph(self) -> Graph[str, AttributeMapping]:
         return self._graph
 
-    def new_from_read_only_data_graph(self, g: ReadOnlyDataGraph) -> Self:
-        return self.new(
-            attributes=g.attributes,
-            node_attributes=g.node_attributes,
-            graph=g.graph,
-        )
-
     @property
     def attributes(self) -> AttributeMapping:
         return self._attributes
@@ -286,7 +279,6 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
         *nodes: Node | tuple[str, AttributeMapping] | str,
     ) -> Self:
         """Updates nodes in case they exist already."""
-        new_graph = self._graph
         new_nodes_attributes: dict[str, AttributeMapping] = {}
 
         for node in nodes:
@@ -296,7 +288,7 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
             *(name for name, _ in new_nodes_attributes.items())
         )
         new_nodes = self._nodes | new_nodes_attributes
-        return self.new(
+        return self._new(
             attributes=self._attributes,
             graph=new_graph,
             node_attributes=new_nodes,
@@ -335,7 +327,7 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
         """Will remove node and all connected edges."""
         new_graph = self._graph.remove_node(node)
         new_nodes = self._nodes.drop(node)
-        return self.new(
+        return self._new(
             attributes=self._attributes,
             graph=new_graph,
             node_attributes=new_nodes,
@@ -344,24 +336,28 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
     def remove_edge(self, src: str, dst: str) -> Self:
         """Will not remove nodes, even if they become isolated."""
         new_graph = self._graph.remove_edge(src, dst)
-        return self.new(
+        return self._new(
             attributes=self._attributes,
             graph=new_graph,
             node_attributes=self._nodes,
         )
 
     def with_attributes(self, attributes: AttributeMapping) -> Self:
-        return self.new(
+        return self._new(
             attributes=attributes,
             graph=self._graph,
             node_attributes=self._nodes,
         )
 
-    @property
-    def factory(self) -> NodeEdgeFactory[N, E]:
-        return self._factory
+    def clear(self) -> Self:
+        """Get a new empty graph with attributes, nodes, edges removed."""
+        return self._new(
+            attributes=AttributeMapping(),
+            graph=GraphImpl(lambda: AttributeMapping()),
+            node_attributes=AttributeMapping(),
+        )
 
-    def new(
+    def _new(
         self,
         /,
         attributes: AttributeMapping,
@@ -369,7 +365,7 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
         node_attributes: AttributeMapping,
     ) -> Self:
         return type(self)(
-            factory=self.factory,
+            factory=self._factory,
             attributes=attributes,
             graph=graph,
             node_attributes=node_attributes,

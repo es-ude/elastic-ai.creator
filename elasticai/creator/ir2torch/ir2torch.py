@@ -67,7 +67,7 @@ class IrFactory(ir.IrFactory[ir.Node, ir.Edge, ir.DataGraph]):
     ) -> DataGraph:
         if graph is not None:
             return _DataGraph(
-                factory=graph.factory,
+                factory=self,
                 attributes=graph.attributes,
                 graph=graph.graph,
                 node_attributes=graph.node_attributes,
