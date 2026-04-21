@@ -80,10 +80,6 @@ class ReadOnlyDataGraph(ReadOnlyGraph[str, AttributeMapping], Protocol[N, E]):
     @abstractmethod
     def edges(self) -> Mapping[tuple[str, str], E]: ...
 
-    @property
-    @abstractmethod
-    def factory(self) -> NodeEdgeFactory[N, E]: ...
-
 
 class DataGraph(ReadOnlyDataGraph[N, E], Graph[str, AttributeMapping], Protocol[N, E]):
     """
@@ -106,7 +102,9 @@ class DataGraph(ReadOnlyDataGraph[N, E], Graph[str, AttributeMapping], Protocol[
     ) -> Self: ...
 
     @abstractmethod
-    def add_nodes(self, *args: Node | tuple[str, AttributeMapping] | str) -> Self: ...
+    def add_nodes(self, *args: Node | tuple[str, AttributeMapping] | str) -> Self:
+        """Updates node in case it exists already."""
+        ...
 
     @overload
     def add_edge(self, edge: Edge, /) -> Self: ...
@@ -119,13 +117,24 @@ class DataGraph(ReadOnlyDataGraph[N, E], Graph[str, AttributeMapping], Protocol[
     @abstractmethod
     def add_edges(
         self, *args: Edge | tuple[str, str, AttributeMapping] | tuple[str, str]
-    ) -> Self: ...
+    ) -> Self:
+        """Updates edge in case it exists already. Possibly already existing nodes remain unchanged."""
+        ...
 
     @abstractmethod
-    def remove_node(self, node: str, /) -> Self: ...
+    def remove_node(self, node: str, /) -> Self:
+        """Will remove node and all connected edges."""
+        ...
 
     @abstractmethod
-    def remove_edge(self, src: str, dst: str) -> Self: ...
+    def remove_edge(self, src: str, dst: str) -> Self:
+        """Will not remove nodes, even if they become isolated."""
+        ...
 
     @abstractmethod
     def with_attributes(self, attributes: AttributeMapping) -> Self: ...
+
+    @abstractmethod
+    def clear(self) -> Self:
+        """Get a new empty graph with attributes, nodes, edges removed."""
+        ...
