@@ -182,7 +182,7 @@ def attribute(
             if isinstance(arg, Mapping):
                 return AttributeMapping(**{k: attribute(arg[k]) for k in arg})
             if isinstance(arg, Iterable) and not isinstance(arg, str):
-                return tuple(convert(item) for item in arg)  # type: ignore
+                return tuple(convert(item) for item in arg)
         return arg
 
     if isinstance(arg, Mapping):

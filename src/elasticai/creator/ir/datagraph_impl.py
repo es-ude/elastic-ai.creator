@@ -258,18 +258,14 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
         | tuple[Edge, None, None]
         | tuple[str, str, None],
     ) -> tuple[str, str, AttributeMapping] | tuple[str, str]:
-        if isinstance(
-            arg, Edge
-        ):  # check only to silence pyrefly until version > v0.47.0
-            return arg.src, arg.dst, arg.attributes
         match arg:
             case (
-                (Edge() as edge) | (Edge() as edge, None) | (Edge() as edge, None, None)  # type: ignore
+                (Edge() as edge) | (Edge() as edge, None) | (Edge() as edge, None, None)
             ):
                 # see https://github.com/python/mypy/issues/19995 on the type ignore above
                 return edge.src, edge.dst, edge.attributes
             case (str() as src, str() as dst) | (str() as src, str() as dst, None):
-                return src, dst
+                return src, dst, AttributeMapping()
             case (str() as src, str() as dst, AttributeMapping() as attr):
                 return src, dst, attr
             case _:

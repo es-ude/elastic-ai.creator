@@ -131,17 +131,14 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
 
     def add_edges(self, *edges: tuple[T, T, E | None] | tuple[T, T]) -> Self:
         def dispatch_arg(edge: tuple[T, T, E | None] | tuple[T, T]) -> tuple[T, T, E]:
-            if len(edge) == 3:
-                src, dst, attributes = edge
-            elif len(edge) == 2:
-                src, dst = edge
-                attributes = None
-            else:
-                raise TypeError(f"Invalid edge argument {edge}.")
-            if attributes is None:
-                return src, dst, self._default_edge_attributes_factory()
-            else:
-                return src, dst, attributes
+            match edge:
+                case (src, dst):
+                    return src, dst, self._default_edge_attributes_factory()
+                case (src, dst, None):
+                    return src, dst, self._default_edge_attributes_factory()
+                case (src, dst, attributes):
+                    return src, dst, attributes
+            raise TypeError(f"Invalid edge argument {edge}.")
 
         _edges = tuple(map(dispatch_arg, edges))
 

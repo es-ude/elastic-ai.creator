@@ -2,11 +2,10 @@
 root = ["src"]
 
 [src]
-# we exclude everything by default
 # As we gradually move on to more ty support we add
 # modules in here
 include = [
-  # "src/elasticai/creator/ir",
+  "src/elasticai/creator/ir",
   "src/elasticai/creator/vhdl2ir",
   "src/elasticai/creator/torch2ir",
   "src/elasticai/creator/hw_function_id.py",
