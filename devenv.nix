@@ -76,7 +76,9 @@ in {
     };
     fix_all = {
       exec = ''
+        uv run ruff format
         uv run ruff check --fix
+
         ${pkgs.alejandra}/bin/alejandra --exclude ./.devenv --exclude ./.devenv.flake.nix .
       '';
     };
@@ -99,7 +101,10 @@ in {
     };
 
     "check:types" = {
-      exec = "${uv_run} mypy -p elasticai.creator";
+      exec = ''
+        ${uv_run} mypy -p elasticai.creator
+        ${uv_run} ty check --config-file ty_config_for_ci.toml
+      '';
       before = ["check:code-lint"];
     };
 

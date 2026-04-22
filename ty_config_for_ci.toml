@@ -1,0 +1,26 @@
+[environment]
+root = ["src"]
+
+[src]
+# we exclude everything by default
+# As we gradually move on to more ty support we add
+# modules in here
+include = [
+  # "src/elasticai/creator/ir",
+  "src/elasticai/creator/vhdl2ir",
+  "src/elasticai/creator/torch2ir",
+  "src/elasticai/creator/hw_function_id.py",
+  # "src/elasticai/creator/graph",
+   "src/elasticai/creator/plugin",
+   "src/elasticai/creator/testing",
+  "src/elasticai/creator_plugins",
+]
+exclude = [
+  "src/elasticai/creator/testing/ghdl_simulation.py",
+  "src/elasticai/creator/testing/cocotb_pytest.py",
+  "src/elasticai/creator/testing/cocotb_runner.py",
+  "src/elasticai/creator_plugins/time_multiplexed_sequential",
+  "src/elasticai/creator_plugins/skeleton",
+  "src/elasticai/creator_plugins/quantized_grads",
+  "src/elasticai/creator_plugins/combinatorial",
+]
