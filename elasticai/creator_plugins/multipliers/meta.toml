@@ -1,0 +1,8 @@
+[[plugins]]
+name = 'lut_multipliers'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'verilog'
+target_platform = 'ASIC'
+generated = ['mult_lut_signed', 'mult_lut_unsigned']
+static_files = ["adder_half.v", "adder_full.v", "adder_range_violation_dtct.v"]

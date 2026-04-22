@@ -1,3 +1,4 @@
+import logging
 import warnings
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -105,6 +106,7 @@ class PluginLoader(PluginLoaderBase):
 
     def __init__(self, lowering: Ir2Verilog):
         self._receiver = lowering
+        self._logger = logging.getLogger(__name__)
         super().__init__(PluginSpec)
 
     @override
@@ -127,11 +129,12 @@ class PluginLoader(PluginLoaderBase):
             )
             symbol.load_into(self._receiver)
         else:
-            raise TypeError("Failed to load plugin symbol")
+            raise TypeError(f"Failed to load plugin symbol for {symbol}")
 
     @override
     def get_symbols(self, specs: Iterable[PluginSpec]) -> Iterable[PluginSymbol]:
         for spec in specs:
+            self._logger.debug(f"loading {spec}")
             yield from _pl.import_symbols(spec.package, spec.generated)
             for static_name in spec.static_files:
                 yield _StaticFileSymbol(
