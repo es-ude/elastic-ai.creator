@@ -63,10 +63,13 @@ in {
     serve_docs = {
       exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
     };
+    run_simulation_tests = {
+      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m simulation '';
+    };
     run_hw_tests = {
-      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest --import-mode=prepend -m hardware "@$"'';
+      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m hardware "@$"'';
       description = ''        Run hw tests depending on the experiment framework. This uses a different import mode to resolve
-              import issues. IMPORTANT: this is only temporary and will be solved more naturally in the future'';
+                      import issues. IMPORTANT: this is only temporary and will be solved more naturally in the future'';
     };
     run_all_fast_checks = {
       exec = ''devenv tasks run check:local --mode before'';
@@ -83,7 +86,7 @@ in {
     uv_run = "${unstablePkgs.uv}/bin/uv run";
   in {
     "check:slow-tests" = {
-      exec = "${uv_run} pytest -m '(simulation or slow) and not hardware'";
+      exec = "${uv_run} python -m pytest  -m '(simulation or slow) and not hardware'";
       before = ["check:tests"];
     };
 

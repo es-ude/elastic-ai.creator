@@ -9,7 +9,7 @@ exclude = [
 exact = true
 forbid_circular_dependencies = true
 root_module = "dependenciesonly"
-source_roots = ["."]
+source_roots = ["./src/"]
 
 [[modules]]
 path = "elasticai.creator.ir"
@@ -209,10 +209,7 @@ depends_on = ["elasticai.creator.ir"]
 path = "<root>"
 depends_on = [
     "elasticai.creator.file_generation",
-    "elasticai.creator.nn.fixed_point",
     "elasticai.creator.base_modules",
-    "elasticai.creator.vhdl",
-    "elasticai.creator.nn",
     "elasticai.creator.ir2verilog",
     "elasticai.creator.ir2vhdl",
     "elasticai.creator.hdl_ir",
