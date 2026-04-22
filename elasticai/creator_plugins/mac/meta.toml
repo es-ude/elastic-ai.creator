@@ -1,0 +1,8 @@
+[[plugins]]
+name = 'mac'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'verilog'
+target_platform = 'FPGA'
+generated = ["mac_fxp_fpga", "mac_fxp_asic", "uint_to_int"]
+static_files = []
