@@ -13,6 +13,94 @@
 
 ## Development Environment
 
+### TLDR; Setup
+
+Details on each steps come after this subsection
+
+1. Install nix package manager if you havent already.
+  - Instructions at https://lix.systems
+  - For Macos also consider [nix-darwin](https://github.com/nix-darwin/nix-darwin) for better integraton. We recommend using the flake based approach.
+2. Install devenv
+   <details>
+    <summary> nix-darwin with flake (and NixOS) </summary>
+    Your config in `/etc/nix-darwin/flake.nix`  should look something like this (on NixOS you can configure the `/etc/nixos/configuration.nix` in a similar fashion)
+
+    ```nix
+    inputs = {
+        nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+        # your other inputs are here as well
+    };
+    outputs = inputs@{self, nix-darwin, nixpkgs, nixpkgs-unstable}:
+    let
+      configuration = {pkgs, pkgs-unstable, ...}: {
+        environment.SystemPackages = [
+          # your other packages
+          pkgs-unstable.devenv
+        ];
+      # rest of your config
+      };
+    in
+    {
+      darwinConfigurations."<MyMacIdentifier>" = nix-darwin.lib.darwinSystem {
+        specialArgs = let
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-darwin"; # for apple silicon
+            # config.allowUnfree = true; # uncomment if you want to install unfree packages
+          };
+          in
+          {
+            inherit inputs pkgs-unstable;
+          };
+          modules = [
+            configuration
+          ];
+      };
+    };
+    ```
+  </details>
+  <details>
+    <summary> All Platforms </summary>
+      Note that this is the non-declarative approach (just like apt and other pkg managers).
+      For a declarative install we refer to the official [nix documentation](https://nix.dev/manual/nix/stable/)
+      ```bash
+        nix-env --install --attr devenv -f https://github.com/NixOS/nixpkgs/tarball/nixpkgs-unstable
+      ```
+      or if you have installed nix with flake support
+      ```bash
+        nix profile install nixpkgs#devenv
+      ```
+  </details>
+3. install direnv to automatically load the devenv environment, as soon as you enter the directory
+  <details> <summary>nix-darwin (and NixOS) </summary>
+  Configure the programs section in your system configuration like this
+
+  ```nix
+  configuration = {pkgs, pkgs-unstable, ...}: {
+    programs = {
+      direnv = {
+        enable = true;
+        enable = true;
+        loadInNixShell = true;
+        nix-direnv.enable = true;
+      };
+    };
+  };
+  ```
+   </details>
+  <details>
+    <summary> others </summary>
+    with nix including flake support you can just
+    ```bash
+    nix profile add nixpkgs#direnv
+    ```
+  </details>
+4. clone the repository
+5. `cd` into the repo and call `direnv allow` to allow direnv to automatically load the devenv environment
+6. start your editor or IDE
+  - point your IDE to the python environment `./devenv/state/venv/bin/python`
+  - run commands using `uv run <command>`
+  
+
 ### uv
 
 We rely on [uv](https://docs.astral.sh/uv/) to manage the venv and dependencies.
