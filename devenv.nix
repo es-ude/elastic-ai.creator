@@ -151,7 +151,6 @@ in {
 
     "docs:build" = {
       exec = ''
-        export LC_ALL=C  # necessary to run in github action
         ${uv_run} sphinx-build -j auto -b html docs build/docs
         touch build/docs/.nojekyll  # prevent github from trying to build the docs
       '';

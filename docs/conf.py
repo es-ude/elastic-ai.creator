@@ -8,7 +8,6 @@
 import os
 from importlib.metadata import version as _version
 from pathlib import Path
-
 from tomllib import load as _load_toml
 
 project = "elastic-ai.creator"
@@ -97,7 +96,7 @@ running_in_autobuild = os.getenv("SPHINX_AUTOBUILD", "NO") == "YES"
 
 
 def find_builtin_plugins():
-    plugin_path = Path(__file__).parent / "../elasticai/creator_plugins/"
+    plugin_path = Path(__file__).parent / "../src/elasticai/creator_plugins/"
     source_dir = Path(__file__).parent
     plugins = []
     for plugin in plugin_path.glob("*"):
@@ -117,7 +116,7 @@ find_builtin_plugins()
 
 autodoc2_packages = [
     {
-        "path": "../elasticai/creator",
+        "path": "../src/elasticai/creator",
         "module": "elasticai.creator",
     },
 ] + find_builtin_plugins()
