@@ -37,8 +37,6 @@ in {
     package = pkgs.python312;
     uv.enable = true;
     uv.package = unstablePkgs.uv;
-    uv.sync.enable = true;
-    uv.sync.allExtras = true;
   };
   processes = {
     serve_docs.exec = "serve_docs";
