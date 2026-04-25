@@ -1,4 +1,4 @@
-from .default_handlers import handlers as default_handlers
+from .default_handlers import dgraph_handlers as default_handlers
 from .ir2torch import (
     Ir2Torch,
     IrFactory,

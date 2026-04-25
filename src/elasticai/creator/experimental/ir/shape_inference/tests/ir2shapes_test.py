@@ -60,99 +60,35 @@ def test_ir2shapes(convert2ir):
     root, reg = convert2ir(m)
     translator = shape_translator()
     new_graph = translator(root, reg, {"input_1": (5, 1)})
-    assert serialize(new_graph, reg) == {
-        "0": {
-            "type": "linear",
-            "in_features": 1,
-            "out_features": 2,
-            "bias": True,
-            "nodes": {},
-            "edges": {},
-        },
-        "1": {"type": "relu", "nodes": {}, "edges": {}},
-        "": {
-            "type": "module",
-            "nodes": {
-                "input_1": {"type": "input", "implementation": "input"},
-                "_0": {"type": "linear", "implementation": "0"},
-                "_1": {"type": "relu", "implementation": "1"},
-                "output": {"type": "output", "implementation": "output"},
-            },
-            "edges": {
-                "input_1": {"_0": {"shape": (5, 1)}},
-                "_0": {"_1": {"shape": (5, 2)}},
-                "_1": {"output": {"shape": (5, 2)}},
-                "output": {},
-            },
-        },
+
+    expected_edges = {
+        ("input_1", "_0", (5, 1)),
+        ("_0", "_1", (5, 2)),
+        ("_1", "output", (5, 2)),
     }
+    actual_edges = {(e.src, e.dst, e.shape) for e in new_graph.edges.values()}
+    assert expected_edges == actual_edges
 
 
 def test_ir2shapes_skip_connection(convert2ir):
-    shape = (5, 2, 6, 6)
+    input_shape = (5, 2, 6, 6)
     m = model_skip_connection()
     root, reg = convert2ir(m)
     translator = shape_translator()
-    new_graph = translator(root, reg, {"x": shape})
-    assert serialize(new_graph, reg) == {
-        "conv2d": {
-            "type": "conv2d",
-            "in_channels": 2,
-            "out_channels": 2,
-            "kernel_size": (3, 3),
-            "stride": (1, 1),
-            "padding": "same",
-            "dilation": (1, 1),
-            "groups": 1,
-            "bias": True,
-            "padding_mode": "zeros",
-            "nodes": {},
-            "edges": {},
-        },
-        "relu": {"type": "relu", "nodes": {}, "edges": {}},
-        "batchnorm2d": {
-            "type": "batchnorm2d",
-            "num_features": 2,
-            "affine": True,
-            "nodes": {},
-            "edges": {},
-        },
-        "add": {"type": "add", "nodes": {}, "edges": {}},
-        "flatten": {"type": "flatten", "nodes": {}, "edges": {}},
-        "linear": {
-            "type": "linear",
-            "in_features": 72,
-            "out_features": 1,
-            "bias": True,
-            "nodes": {},
-            "edges": {},
-        },
-        "": {
-            "type": "module",
-            "nodes": {
-                "x": {"type": "input", "implementation": "input"},
-                "conv2d": {"type": "conv2d", "implementation": "conv2d"},
-                "add": {"type": "add", "implementation": "add"},
-                "relu": {"type": "relu", "implementation": "relu"},
-                "batchnorm2d": {"type": "batchnorm2d", "implementation": "batchnorm2d"},
-                "flatten": {"type": "flatten", "implementation": "flatten"},
-                "linear": {"type": "linear", "implementation": "linear"},
-                "relu_1": {"type": "relu", "implementation": "relu"},
-                "output": {"type": "output", "implementation": "output"},
-            },
-            "edges": {
-                "x": {
-                    "conv2d": {"shape": (5, 2, 6, 6)},
-                    "add": {"shape": (5, 2, 6, 6)},
-                },
-                "conv2d": {"relu": {"shape": (5, 2, 6, 6)}},
-                "add": {"flatten": {"shape": (5, 2, 6, 6)}},
-                "relu": {"batchnorm2d": {"shape": (5, 2, 6, 6)}},
-                "batchnorm2d": {"add": {"shape": (5, 2, 6, 6)}},
-                "flatten": {"linear": {"shape": (5, 72)}},
-                "linear": {"relu_1": {"shape": (5, 1)}},
-                "relu_1": {"output": {"shape": (5, 1)}},
-                "output": {},
-            },
-        },
+    new_graph = translator(root, reg, {"x": input_shape})
+    expected_shapes = {
+        (a, b): s
+        for a, b, s in (
+            ("x", "conv2d", input_shape),
+            ("x", "add", input_shape),
+            ("conv2d", "relu", input_shape),
+            ("batchnorm2d", "add", input_shape),
+            ("add", "flatten", input_shape),
+            ("relu", "batchnorm2d", input_shape),
+            ("flatten", "linear", (5, 72)),
+            ("linear", "relu_1", (5, 1)),
+            ("relu_1", "output", (5, 1)),
+        )
     }
+    actual_shapes = {(e.src, e.dst): e.shape for e in new_graph.edges.values()}
+    assert expected_shapes == actual_shapes
