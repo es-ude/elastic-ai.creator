@@ -15,7 +15,7 @@ def infer_shape():
     infer = get_default_shape_inference()
 
     @infer.register_node()
-    def scalar_function(input_shape: tuple[Shape, ...]) -> Shape:
+    def scalar_function(_, input_shape: tuple[Shape, ...]) -> Shape:
         if len(input_shape) > 1:
             raise ValueError("Scalar function cannot take more than single argument")
         return input_shape[0]
