@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 from typing import Any, Self, cast, overload
 
 from .datagraph import DataGraph
@@ -60,6 +60,10 @@ class Registry[G: DataGraph](Mapping[str, G]):
     def apply[G2: DataGraph](self, fn: Callable[[G], G2]) -> "Registry[G2]":
         new_dict = ((k, fn(g)) for k, g in self._data.items())
         return Registry(new_dict)
+
+    def without(self, keys: Collection[str]) -> Self:
+        new_dict = ((k, g) for k, g in self._data.items() if k not in keys)
+        return type(self)(new_dict)
 
     def __repr__(self) -> str:
         return f"Registry(**{repr(self._data)})"
