@@ -17,8 +17,6 @@ from elasticai.creator.testing.cocotb_stream import (
     set_from_bit_string,
 )
 
-pytest_plugins = "elasticai.creator.testing.cocotb_pytest"
-
 
 @cocotb.test()
 @eai_testbench

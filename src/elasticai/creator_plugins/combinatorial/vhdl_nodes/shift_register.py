@@ -27,7 +27,7 @@ def _check_input_output_shape_compatibility(node):
             'Detected mismatching input output shapes for shift_register for node "{}". Depth of output and input shape should usually be equal, but found output={} and input={}.'.format(
                 node.name, output_shape, input_shape
             ),
-            stacklevel=3,
+            stacklevel=4,
         )
 
 

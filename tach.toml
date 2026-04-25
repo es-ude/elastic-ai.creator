@@ -92,6 +92,10 @@ path = "elasticai.creator_plugins.middleware"
 depends_on = []
 
 [[modules]]
+path = "elasticai.creator_plugins.xnor_popcount_mac"
+depends_on = ["elasticai.creator.nn", "elasticai.creator.file_generation", "elasticai.creator.ir2vhdl"]
+
+[[modules]]
 path = "elasticai.creator.hw_function_id"
 depends_on = []
 
@@ -208,7 +212,6 @@ depends_on = ["elasticai.creator.ir"]
 [[modules]]
 path = "<root>"
 depends_on = [
-    "elasticai.creator.file_generation",
     "elasticai.creator.base_modules",
     "elasticai.creator.ir2verilog",
     "elasticai.creator.ir2vhdl",
