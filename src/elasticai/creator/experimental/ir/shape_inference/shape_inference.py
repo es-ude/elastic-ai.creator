@@ -25,9 +25,6 @@ class Node(ir.Node, Protocol):
     @property
     def implementation(self) -> str: ...
 
-    @property
-    def output_shape(self) -> Shape: ...
-
 
 type ShapedDatagraph = ir.DataGraph[Node, ShapedEdge]
 
@@ -71,7 +68,7 @@ class IrShapeInference:
         )
 
     def _get_out_shape_for_node(
-        self, node: ir.Node, input_shapes: tuple[Shape, ...]
+        self, node: Node, input_shapes: tuple[Shape, ...]
     ) -> Shape:
         if self._should_look_up_in_shapes_from_nodes_handlers(node):
             return self._get_out_shape_from_node(node, input_shapes)
@@ -89,7 +86,7 @@ class IrShapeInference:
         for pred in self._root.predecessors[node]:
             yield self._root.edges[(pred, node)]
 
-    def _get_non_input_nodes_in_data_dependency_order(self) -> Iterator[ir.Node]:
+    def _get_non_input_nodes_in_data_dependency_order(self) -> Iterator[Node]:
         input_nodes: set[str] = set()
         for node in self._original.nodes.values():
             if node.type == "input":
@@ -105,7 +102,7 @@ class IrShapeInference:
         for name in names:
             node = self._original.nodes[name]
             if node.type != "output":
-                yield node
+                yield self._ir_factory.node(node.name, node.attributes)
 
     def _check_input_shape_nodes_are_valid(self, input_nodes: Iterable[str]) -> None:
         for input_node in input_nodes:
@@ -147,11 +144,11 @@ class IrShapeInference:
     @FD.dispatch_method(str)
     def _get_out_shape_from_node(
         self,
-        fn: Callable[[tuple[Shape, ...]], Shape],
-        node: ir.Node,
+        fn: Callable[[Node, tuple[Shape, ...]], Shape],
+        node: Node,
         input_shapes: tuple[Shape, ...],
     ) -> Shape:
-        return fn(input_shapes)
+        return fn(node, input_shapes)
 
     @_get_out_shape_from_node.key_from_args
     def _get_node_type(self, node: ir.Node, input_shapes: tuple[Shape, ...]) -> str:
@@ -167,8 +164,8 @@ class IrShapeInference:
 
     @FD.registrar_method
     def register_node(
-        self, key: str | None, fn: Callable[[tuple[Shape, ...]], Shape]
-    ) -> Callable[[tuple[Shape, ...]], Shape]:
+        self, key: str | None, fn: Callable[[Node, tuple[Shape, ...]], Shape]
+    ) -> Callable[[Node, tuple[Shape, ...]], Shape]:
         key = self._check_and_get_name(key, fn)
         self._get_out_shape_from_node.register(key, fn)
         return fn
@@ -198,12 +195,6 @@ class _NodeImpl(ir.NodeImpl):
         if "implementation" not in self.attributes:
             return "<undefined>"
         return _type_check(self.attributes["implementation"], str)
-
-    @property
-    def output_shape(self) -> Shape:
-        if "output_shape" not in self.attributes:
-            raise ValueError(f"node {self.name} has not output_shape")
-        return _guard_shape(self.attributes["output_shape"])
 
 
 class _ShapedEdgeImpl(ir.EdgeImpl):

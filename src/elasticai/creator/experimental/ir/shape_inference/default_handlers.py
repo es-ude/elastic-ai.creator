@@ -18,10 +18,10 @@ from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functi
     sigmoid_output_shape,
 )
 
-from .shape_inference import DataGraph, IrShapeInference, Shape, TypeHandler
+from .shape_inference import DataGraph, IrShapeInference, Node, Shape, TypeHandler
 
 _module_handlers: list[TypeHandler] = []
-_type_handlers: list[Callable[[tuple[Shape, ...]], Shape]] = []
+_type_handlers: list[Callable[[Node, tuple[Shape, ...]], Shape]] = []
 
 
 def _register_module(fn: TypeHandler) -> TypeHandler:
@@ -30,8 +30,8 @@ def _register_module(fn: TypeHandler) -> TypeHandler:
 
 
 def _register_type(
-    fn: Callable[[tuple[Shape, ...]], Shape],
-) -> Callable[[tuple[Shape, ...]], Shape]:
+    fn: Callable[[Node, tuple[Shape, ...]], Shape],
+) -> Callable[[Node, tuple[Shape, ...]], Shape]:
     _type_handlers.append(fn)
     return fn
 
@@ -70,7 +70,7 @@ def linear(
         raise Exception(
             f"expected {out_features} inputs for linear. Got {type(out_features)=}"
         )
-    return linear_output_shape(input_shapes[0][0], out_features)  # ty:ignore[invalid-return-type]
+    return linear_output_shape(input_shapes[0][0], out_features)
 
 
 @_register_module
@@ -262,7 +262,7 @@ def flatten(
 
 
 @_register_type
-def add(input_shapes: tuple[tuple[int, ...], ...]) -> tuple[int, ...]:
+def add(node: Node, input_shapes: tuple[tuple[int, ...], ...]) -> tuple[int, ...]:
     if len(input_shapes) == 0:
         raise Exception("add requires at least one input shape")
     return add_output_shape(input_shapes[0])

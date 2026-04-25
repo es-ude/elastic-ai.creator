@@ -13,6 +13,7 @@ include = [
   "src/elasticai/creator/plugin",
   "src/elasticai/creator/testing",
   "src/elasticai/creator_plugins",
+  "src/elasticai/creator/experimental",
   "plugins/",
   "src/elasticai/creator/function_dispatch.py",
   "src/elasticai/creator/arithmetic/",
