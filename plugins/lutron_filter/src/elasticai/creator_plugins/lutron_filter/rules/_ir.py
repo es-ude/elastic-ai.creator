@@ -153,6 +153,10 @@ class FilterDecorator[T: Decoratable]:
         return self.filter_parameters.out_channels
 
     @property
+    def stride(self) -> int:
+        return self.filter_parameters.stride
+
+    @property
     def filter_parameters(self) -> FilterParameters:
         if not hasattr(self, "__cached_filter_params"):
             match self.type:
@@ -293,18 +297,24 @@ def pattern_rule(
         [ir.Registry[DataGraph]], NodeConstraint
     ] = make_default_constraint,
     interface=("start", "end"),
-) -> Rule:
+) -> Rule[ir.DataGraph, DataGraph]:
     def wrap_replace(
         match: ir.DataGraph, registry: ir.Registry
-    ) -> tuple[ir.DataGraph, ir.Registry]:
+    ) -> tuple[DataGraph, ir.Registry[DataGraph]]:
         return replacement_fn(wrap_graph(match), wrap_registry(registry))
 
-    return PatternRule(
+    _rule = PatternRule(
         spec=PatternRuleSpec(
-            pattern=Pattern(graph, make_default_constraint),
+            pattern=Pattern(graph, make_node_constraint),
             replacement_fn=wrap_replace,
         )
     )
+
+    def wrapped_rule(original: ir.DataGraph, registry: ir.Registry):
+        g, reg = _rule(original, registry)
+        return wrap_graph(g), wrap_registry(reg)
+
+    return wrapped_rule
 
 
 def build_sequential_ir(
