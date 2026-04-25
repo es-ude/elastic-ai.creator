@@ -1,5 +1,6 @@
 import hypothesis.strategies as st
 import pytest
+import torch
 from hypothesis import settings as hypothesis_settings
 from hypothesis.stateful import (
     RuleBasedStateMachine,
@@ -118,3 +119,13 @@ class BuildModelFromIr(RuleBasedStateMachine):
 
 
 BuildModelFromIrTest = pytest.mark.slow()(BuildModelFromIr.TestCase)
+
+
+def test_can_handle_model_with_flattening_layer():
+    model = Sequential(Flatten(start_dim=2))
+    x = torch.rand((3, 4, 5))
+    expected = model(x)
+    ir_representation = convert(model)
+    reconstructed_model = ir2torch(ir_representation)
+    actual = reconstructed_model(x)
+    assert expected.shape == actual.shape

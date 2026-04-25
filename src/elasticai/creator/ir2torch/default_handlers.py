@@ -71,7 +71,9 @@ def sigmoid(impl: ir.DataGraph) -> nn.Sigmoid:
 
 @_register_dgraph
 def flatten(imp: ir.DataGraph) -> nn.Flatten:
-    return nn.Flatten()
+    return nn.Flatten(
+        start_dim=imp.attributes["start_dim"], end_dim=imp.attributes["end_dim"]
+    )
 
 
 @_register_dgraph
