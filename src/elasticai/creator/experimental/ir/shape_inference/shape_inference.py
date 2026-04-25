@@ -62,15 +62,19 @@ class IrShapeInference:
             output_shape = self._get_out_shape_for_node(node, input_shapes)
             self._add_outgoing_edges(node.name, output_shape)
 
+    def _should_look_up_in_shapes_from_nodes_handlers(self, node: ir.Node):
+        return (
+            "implementation" not in node.attributes
+            or node.type == "function"
+            or self._get_node_impl(node).attributes["type"]
+            not in self._get_out_shape_from_dgraph.registry
+        )
+
     def _get_out_shape_for_node(
         self, node: ir.Node, input_shapes: tuple[Shape, ...]
     ) -> Shape:
-        if (
-            "implementation" not in node.attributes
-            or self._get_node_impl(node).attributes["type"]
-            not in self._get_out_shape_from_dgraph.registry
-        ):
-            return self._get_out_shape_for_type(node, input_shapes)
+        if self._should_look_up_in_shapes_from_nodes_handlers(node):
+            return self._get_out_shape_from_node(node, input_shapes)
 
         impl = self._get_node_impl(node.name)
         return self._get_out_shape_from_dgraph(impl, input_shapes)
@@ -135,13 +139,13 @@ class IrShapeInference:
         return fn(graph, input_shapes)
 
     @_get_out_shape_from_dgraph.key_from_args
-    def _get_type_from_dg_node(
+    def _get_type_from_dg(
         self, graph: DataGraph, input_shapes: tuple[Shape, ...]
     ) -> str:
         return cast(str, graph.attributes["type"])
 
     @FD.dispatch_method(str)
-    def _get_out_shape_for_type(
+    def _get_out_shape_from_node(
         self,
         fn: Callable[[tuple[Shape, ...]], Shape],
         node: ir.Node,
@@ -149,22 +153,24 @@ class IrShapeInference:
     ) -> Shape:
         return fn(input_shapes)
 
-    @_get_out_shape_for_type.key_from_args
+    @_get_out_shape_from_node.key_from_args
     def _get_node_type(self, node: ir.Node, input_shapes: tuple[Shape, ...]) -> str:
+        if node.type == "function":
+            return node.attributes["implementation"]
         return node.type
 
     @FD.registrar_method
-    def register(self, key: str | None, fn: TypeHandler) -> TypeHandler:
+    def register_dgraph(self, key: str | None, fn: TypeHandler) -> TypeHandler:
         key = self._check_and_get_name(key, fn)
         self._get_out_shape_from_dgraph.register(key, fn)
         return fn
 
     @FD.registrar_method
-    def register_type(
+    def register_node(
         self, key: str | None, fn: Callable[[tuple[Shape, ...]], Shape]
     ) -> Callable[[tuple[Shape, ...]], Shape]:
         key = self._check_and_get_name(key, fn)
-        self._get_out_shape_for_type.register(key, fn)
+        self._get_out_shape_from_node.register(key, fn)
         return fn
 
     @staticmethod
