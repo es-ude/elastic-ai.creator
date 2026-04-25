@@ -9,7 +9,6 @@ authors = [
 ]
 maintainers = [{ name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de" }]
 dependencies = [
-  "click>=8.1.7",
   "cocotb>=2.0.0",
   "numpy>=1.23.0",
   "pytest>=7.0",
@@ -163,8 +162,14 @@ markers = [
 ]
 minversion = "9.0"
 python_files = ["*_test.py", "test_*.py"]
-pythonpath = [".", "src"]
-testpaths = ["src/elasticai/creator/", "src/elasticai/creator_plugins", "tests"]
+pythonpath = ["."]
+testpaths = [
+  "plugins/**/tests",
+  "src/elasticai/creator/experimental/**/tests",
+  "src/elasticai/creator/nn/integer/",
+  "src/elasticai/creator_plugins/**/tests",
+  "tests"
+]
 
 [tool.ruff]
 include = [
@@ -259,3 +264,9 @@ explicit = true
 torch = [{ index = "pytorch" }]
 torchvision = [{ index = "pytorch" }]
 elasticai-usbprotocol = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5" }
+
+[tool.uv.workspace]
+members = [
+  "plugins/*",
+  ".",
+]

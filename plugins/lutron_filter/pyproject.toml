@@ -1,0 +1,19 @@
+[project]
+name = "eai-creator-lutron-filter"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "elasticai-creator",
+  "matplotlib>=3.10.9",
+  "networkx>=3.6.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.8,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "elasticai.creator_plugins.lutron_filter"
+
+[tool.uv.sources]
+elasticai-creator = { workspace = true }
