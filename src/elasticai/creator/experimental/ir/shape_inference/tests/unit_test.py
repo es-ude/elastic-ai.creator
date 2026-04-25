@@ -14,7 +14,7 @@ factory = ir.DefaultIrFactory()
 def infer_shape():
     infer = get_default_shape_inference()
 
-    @infer.register_type()
+    @infer.register_node()
     def scalar_function(input_shape: tuple[Shape, ...]) -> Shape:
         if len(input_shape) > 1:
             raise ValueError("Scalar function cannot take more than single argument")
@@ -33,7 +33,7 @@ def _base_graph():
 
 @pytest.fixture
 def _graph_with_datapath_join(_base_graph: ir.DataGraph[ir.Node, ir.Edge]):
-    add_attr = ir.attribute(type="add")
+    add_attr = ir.attribute(type="function", implementation="add")
     scalar_attr = ir.attribute(type="scalar_function")
     return (
         _base_graph.with_attributes(ir.attribute(name="child_module"))

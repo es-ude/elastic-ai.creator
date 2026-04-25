@@ -39,9 +39,9 @@ def _register_type(
 def get_default_shape_inference() -> IrShapeInference:
     infer = IrShapeInference()
     for m in _module_handlers:
-        infer.register()(m)
+        infer.register_dgraph()(m)
     for t in _type_handlers:
-        infer.register_type()(t)
+        infer.register_node()(t)
     return infer
 
 

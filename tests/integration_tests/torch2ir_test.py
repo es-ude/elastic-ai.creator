@@ -121,7 +121,6 @@ def test_convert_resnet_to_ir():
             "nodes": {},
             "edges": {},
         },
-        "add": {"type": "add", "nodes": {}, "edges": {}},
         "layer1.1.conv1": {
             "type": "conv2d",
             "in_channels": 64,
@@ -492,7 +491,6 @@ def test_convert_resnet_to_ir():
             "nodes": {},
             "edges": {},
         },
-        "flatten": {"type": "flatten", "nodes": {}, "edges": {}},
         "fc": {
             "type": "linear",
             "in_features": 512,
@@ -504,7 +502,9 @@ def test_convert_resnet_to_ir():
         "": {
             "type": "module",
             "nodes": {
-                "x": {"type": "input", "implementation": "input"},
+                "x": {
+                    "type": "input",
+                },
                 "conv1": {"type": "conv2d", "implementation": "conv1"},
                 "bn1": {"type": "batchnorm2d", "implementation": "bn1"},
                 "relu": {"type": "relu", "implementation": "relu"},
@@ -513,7 +513,7 @@ def test_convert_resnet_to_ir():
                     "type": "conv2d",
                     "implementation": "layer1.0.conv1",
                 },
-                "add": {"type": "add", "implementation": "add"},
+                "add": {"type": "function", "implementation": "add"},
                 "layer1_0_bn1": {
                     "type": "batchnorm2d",
                     "implementation": "layer1.0.bn1",
@@ -532,7 +532,7 @@ def test_convert_resnet_to_ir():
                     "type": "conv2d",
                     "implementation": "layer1.1.conv1",
                 },
-                "add_1": {"type": "add", "implementation": "add"},
+                "add_1": {"type": "function", "implementation": "add"},
                 "layer1_1_bn1": {
                     "type": "batchnorm2d",
                     "implementation": "layer1.1.bn1",
@@ -568,7 +568,7 @@ def test_convert_resnet_to_ir():
                     "type": "batchnorm2d",
                     "implementation": "layer2.0.bn2",
                 },
-                "add_2": {"type": "add", "implementation": "add"},
+                "add_2": {"type": "function", "implementation": "add"},
                 "layer2_0_downsample_1": {
                     "type": "batchnorm2d",
                     "implementation": "layer2.0.downsample.1",
@@ -578,7 +578,7 @@ def test_convert_resnet_to_ir():
                     "type": "conv2d",
                     "implementation": "layer2.1.conv1",
                 },
-                "add_3": {"type": "add", "implementation": "add"},
+                "add_3": {"type": "function", "implementation": "add"},
                 "layer2_1_bn1": {
                     "type": "batchnorm2d",
                     "implementation": "layer2.1.bn1",
@@ -614,7 +614,7 @@ def test_convert_resnet_to_ir():
                     "type": "batchnorm2d",
                     "implementation": "layer3.0.bn2",
                 },
-                "add_4": {"type": "add", "implementation": "add"},
+                "add_4": {"type": "function", "implementation": "add"},
                 "layer3_0_downsample_1": {
                     "type": "batchnorm2d",
                     "implementation": "layer3.0.downsample.1",
@@ -624,7 +624,7 @@ def test_convert_resnet_to_ir():
                     "type": "conv2d",
                     "implementation": "layer3.1.conv1",
                 },
-                "add_5": {"type": "add", "implementation": "add"},
+                "add_5": {"type": "function", "implementation": "add"},
                 "layer3_1_bn1": {
                     "type": "batchnorm2d",
                     "implementation": "layer3.1.bn1",
@@ -660,7 +660,7 @@ def test_convert_resnet_to_ir():
                     "type": "batchnorm2d",
                     "implementation": "layer4.0.bn2",
                 },
-                "add_6": {"type": "add", "implementation": "add"},
+                "add_6": {"type": "function", "implementation": "add"},
                 "layer4_0_downsample_1": {
                     "type": "batchnorm2d",
                     "implementation": "layer4.0.downsample.1",
@@ -670,7 +670,7 @@ def test_convert_resnet_to_ir():
                     "type": "conv2d",
                     "implementation": "layer4.1.conv1",
                 },
-                "add_7": {"type": "add", "implementation": "add"},
+                "add_7": {"type": "function", "implementation": "add"},
                 "layer4_1_bn1": {
                     "type": "batchnorm2d",
                     "implementation": "layer4.1.bn1",
@@ -686,9 +686,9 @@ def test_convert_resnet_to_ir():
                 },
                 "layer4_1_relu_1": {"type": "relu", "implementation": "layer4.1.relu"},
                 "avgpool": {"type": "adaptiveavgpool2d", "implementation": "avgpool"},
-                "flatten": {"type": "flatten", "implementation": "flatten"},
+                "flatten": {"type": "function", "implementation": "flatten"},
                 "fc": {"type": "linear", "implementation": "fc"},
-                "output": {"type": "output", "implementation": "output"},
+                "output": {"type": "output"},
             },
             "edges": {
                 "x": {"conv1": {}},

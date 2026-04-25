@@ -103,7 +103,6 @@ def test_convert_big_with_params():
             "type": "module",
             "nodes": {
                 "input_1": {
-                    "implementation": "input",
                     "type": "input",
                 },
                 "_0": {
@@ -115,7 +114,6 @@ def test_convert_big_with_params():
                     "type": "relu",
                 },
                 "output": {
-                    "implementation": "output",
                     "type": "output",
                 },
             },
@@ -169,10 +167,14 @@ def test_convert_linear_model_to_ir():
         "": {
             "type": "module",
             "nodes": {
-                "input_1": {"type": "input", "implementation": "input"},
+                "input_1": {
+                    "type": "input",
+                },
                 "_0": {"type": "linear", "implementation": "0"},
                 "_1": {"type": "relu", "implementation": "1"},
-                "output": {"type": "output", "implementation": "output"},
+                "output": {
+                    "type": "output",
+                },
             },
             "edges": {
                 "input_1": {"_0": {}},
@@ -188,7 +190,6 @@ def test_convert_skip_connection_model_to_ir():
     m = model_skip_connection()
     ir = convert(m)
     assert ir == {
-        "add": {"edges": {}, "nodes": {}, "type": "add"},
         "batchnorm2d": {
             "affine": True,
             "edges": {},
@@ -210,7 +211,11 @@ def test_convert_skip_connection_model_to_ir():
             "stride": (1, 1),
             "type": "conv2d",
         },
-        "flatten": {"edges": {}, "nodes": {}, "type": "flatten"},
+        "flatten": {
+            "edges": {},
+            "nodes": {},
+            "type": "flatten",
+        },
         "linear": {
             "bias": True,
             "edges": {},
@@ -223,15 +228,15 @@ def test_convert_skip_connection_model_to_ir():
         "": {
             "type": "module",
             "nodes": {
-                "add": {"implementation": "add", "type": "add"},
+                "add": {"type": "function", "implementation": "add"},
                 "batchnorm2d": {"implementation": "batchnorm2d", "type": "batchnorm2d"},
                 "conv2d": {"implementation": "conv2d", "type": "conv2d"},
                 "flatten": {"implementation": "flatten", "type": "flatten"},
                 "linear": {"implementation": "linear", "type": "linear"},
-                "output": {"implementation": "output", "type": "output"},
+                "output": {"type": "output"},
                 "relu": {"implementation": "relu", "type": "relu"},
                 "relu_1": {"implementation": "relu", "type": "relu"},
-                "x": {"implementation": "input", "type": "input"},
+                "x": {"type": "input"},
             },
             "edges": {
                 "add": {"flatten": {}},
@@ -259,7 +264,6 @@ def test_convert_linear_without_bias():
             "nodes": {
                 "input_1": {
                     "type": "input",
-                    "implementation": "input",
                 },
                 "_0": {
                     "type": "linear",
@@ -267,7 +271,6 @@ def test_convert_linear_without_bias():
                 },
                 "output": {
                     "type": "output",
-                    "implementation": "output",
                 },
             },
             "edges": {
@@ -299,7 +302,6 @@ def test_convert_linear_to_ir():
             "type": "module",
             "nodes": {
                 "input_1": {
-                    "implementation": "input",
                     "type": "input",
                 },
                 "_0": {
@@ -311,7 +313,6 @@ def test_convert_linear_to_ir():
                     "type": "relu",
                 },
                 "output": {
-                    "implementation": "output",
                     "type": "output",
                 },
             },
@@ -359,7 +360,6 @@ def test_converting_model_with_batchnorm():
             },
             "nodes": {
                 "x": {
-                    "implementation": "input",
                     "type": "input",
                 },
                 "bn": {
@@ -371,7 +371,6 @@ def test_converting_model_with_batchnorm():
                     "type": "relu",
                 },
                 "output": {
-                    "implementation": "output",
                     "type": "output",
                 },
             },
@@ -402,7 +401,6 @@ def test_can_handle_same_object_under_different_hierarchy_paths():
             "nodes": {
                 "input_1": {
                     "type": "input",
-                    "implementation": "input",
                 },
                 "a": {
                     "type": "linear",
@@ -414,7 +412,6 @@ def test_can_handle_same_object_under_different_hierarchy_paths():
                 },
                 "output": {
                     "type": "output",
-                    "implementation": "output",
                 },
             },
             "edges": {
@@ -443,7 +440,6 @@ def test_can_handle_nested_hierarchies():
             "nodes": {
                 "input_1": {
                     "type": "input",
-                    "implementation": "input",
                 },
                 "top_nested": {
                     "type": "linear",
@@ -451,7 +447,6 @@ def test_can_handle_nested_hierarchies():
                 },
                 "output": {
                     "type": "output",
-                    "implementation": "output",
                 },
             },
             "edges": {

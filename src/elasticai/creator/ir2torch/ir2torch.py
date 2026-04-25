@@ -2,13 +2,14 @@ from collections.abc import Callable
 from itertools import starmap
 from typing import Any, Protocol
 
+import torch
 import torch.nn as nn
 from torch import fx
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
 
-from .default_handlers import handlers
+from .default_handlers import dgraph_handlers, node_handlers
 
 
 class DataGraph(ir.DataGraph[ir.Node, ir.Edge], Protocol):
@@ -92,6 +93,16 @@ class Ir2Torch:
     def _get_key_from_data_graph(self, dgraph: DataGraph) -> str:
         return dgraph.type
 
+    @FD.dispatch_method(str)
+    def _make_fn_call(
+        self, fn: Callable[[ir.Node], Callable[[Any], torch.Tensor]], node: ir.Node, /
+    ) -> Callable[[Any], torch.Tensor]:
+        return fn(node)
+
+    @_make_fn_call.key_from_args
+    def _key_for_fn_call(self, node: ir.Node) -> str:
+        return node.attributes["implementation"]
+
     @staticmethod
     def _check_and_get_name_from_fn(name, fn) -> str:
         if name is None:
@@ -110,6 +121,14 @@ class Ir2Torch:
         fn: TypeHandler,
     ) -> TypeHandler:
         return self._build_submodule.register(
+            self._check_and_get_name_from_fn(name, fn), fn
+        )
+
+    @FD.registrar_method
+    def register_node(
+        self, name: str | None, fn: Callable[[ir.Node], Callable[[Any], torch.Tensor]]
+    ):
+        return self._make_fn_call.register(
             self._check_and_get_name_from_fn(name, fn), fn
         )
 
@@ -168,32 +187,40 @@ class Ir2Torch:
         nodes: dict[str, fx.Node] = {}
 
         def _add_node(ir_node: str) -> None:
-            node_type = ir_root.nodes[ir_node].type
-            node_impl: str = ir_root.nodes[ir_node].attributes["implementation"]
-            if ir_root.nodes[ir_node].type not in ("input", "output"):
-                predecessors = tuple(
-                    nodes[node] for node in ir_root.predecessors[ir_node]
-                )
-                node = graph.create_node(
-                    op="call_module",
-                    target=node_impl,
-                    args=predecessors,
-                    name=ir_node,
-                )
-                nodes[ir_node] = node
-            elif node_type == "input":
-                n = graph.create_node(op="placeholder", name=ir_node, target=ir_node)
-                nodes[ir_node] = n
-            elif node_type == "output":
-                predecessors = tuple(
-                    nodes[node] for node in ir_root.predecessors[ir_node]
-                )
-                n = graph.create_node(
-                    op="output",
-                    target=ir_node,
-                    args=predecessors,
-                )
-                nodes[ir_node] = n
+            node = ir_root.nodes[ir_node]
+            match node.type:
+                case "input":
+                    n = graph.create_node(
+                        op="placeholder", name=node.name, target=node.name
+                    )
+                    nodes[node.name] = n
+                case "output":
+                    predecessors = tuple(
+                        nodes[node] for node in ir_root.predecessors[node.name]
+                    )
+                    n = graph.create_node(
+                        op="output",
+                        target=ir_node,
+                        args=predecessors,
+                    )
+                    nodes[ir_node] = n
+                case _:
+                    predecessors = tuple(
+                        nodes[n] for n in ir_root.predecessors[ir_node]
+                    )
+                    if node.type == "function":
+                        op = "call_function"
+                        target = self._make_fn_call(node)
+                    else:
+                        op = "call_module"
+                        target = node.attributes["implementation"]
+                    fxnode = graph.create_node(
+                        op=op,
+                        target=target,
+                        args=predecessors,
+                        name=ir_node,
+                    )
+                    nodes[ir_node] = fxnode
 
         def visit_node(ir_node: str):
             if ir_node not in nodes:
@@ -218,6 +245,8 @@ class Ir2Torch:
 
 def get_default_converter() -> Ir2Torch:
     converter = Ir2Torch()
-    for handler in handlers:
+    for handler in dgraph_handlers:
         converter.register()(handler)
+    for name, handler in node_handlers.items():
+        converter.register_node(name, handler)
     return converter

@@ -65,21 +65,21 @@ class Torch2Ir:
         return fn
 
     def _handle_fx_node(self, node: FxNode) -> None:
-        self._root = self._root.add_node(
-            node.name,
-            ir.attribute(
-                type=self._get_type(node), implementation=self._get_implementation(node)
-            ),
-        )
+        attribute = ir.attribute(type=self._get_type(node))
+        if self._has_implementation(node):
+            attribute |= dict(implementation=self._get_implementation(node))
+
+        self._root = self._root.add_node(node.name, attribute)
         ir_node = self._root.nodes[node.name]
-        impl = ir_node.attributes["implementation"]
-        if impl not in self._registry and impl not in ("input", "output"):
-            attributes = self._extract_attributes(node)
-            self._registry = self._registry | {
-                impl: self._ir_factory.graph(
-                    ir.attribute(type=ir_node.type, **attributes),
-                )
-            }
+        if self._has_implementation(node):
+            impl = ir_node.attributes["implementation"]
+            if impl not in self._registry and ir_node.type != "function":
+                attributes = self._extract_attributes(node)
+                self._registry = self._registry | {
+                    impl: self._ir_factory.graph(
+                        ir.attribute(type=ir_node.type, **attributes),
+                    )
+                }
         for successor in self._get_successors(node):
             self._root = self._root.add_edge(node.name, successor.name)
 
@@ -111,11 +111,7 @@ class Torch2Ir:
                 ).__name__.lower()
 
             case "call_function":
-                if "add" in node.name:
-                    return "add"
-                elif "flatten" in node.name:
-                    return "flatten"
-                raise error
+                return "function"
             case "placeholder":
                 return "input"
             case "output":
@@ -125,21 +121,22 @@ class Torch2Ir:
             case _:
                 raise Exception(f"Unknown node type: {node.op}")
 
+    def _has_implementation(self, node: FxNode) -> bool:
+        return self._get_type(node) not in ("input", "output")
+
     def _get_implementation(self, node: FxNode) -> str:
-        match self._get_type(node):
-            case "input":
-                return "input"
-            case "output":
-                return "output"
-            case "add":
-                return "add"
-            case "flatten":
-                return "flatten"
-            case _:
+        match node.op:
+            case "call_module":
                 return cast(str, node.target)
+            case "call_function":
+                return node.target.__name__  # type: ignore
+            case _:
+                raise ValueError(
+                    f"unsupported operation {node.op} for node {node.name}"
+                )
 
     def _extract_attributes(self, node: FxNode) -> dict:
-        if self._get_type(node) in ("input", "output", "add", "flatten"):
+        if self._get_type(node) in ("input", "output", "function"):
             return {}
         module = self.model.get_submodule(cast(str, node.target))
         return self._extractors(module)
@@ -162,7 +159,7 @@ class Torch2IrWithParams(Torch2Ir):
         return params
 
     def _extract_attributes(self, node: FxNode) -> dict:
-        if self._get_type(node) in ("input", "output", "add", "flatten"):
+        if self._get_type(node) in ("input", "output", "function"):
             return {}
         module = self.model.get_submodule(cast(str, node.target))
         return self._extractors(module) | self._add_params(module)
@@ -176,7 +173,7 @@ class Torch2IrWithParamsAndBuffers(Torch2IrWithParams):
         return buffers
 
     def _extract_attributes(self, node: FxNode) -> dict:
-        if self._get_type(node) in ("input", "output", "add", "flatten"):
+        if self._get_type(node) in ("input", "output", "function"):
             return {}
         module = self.model.get_submodule(cast(str, node.target))
         return (
