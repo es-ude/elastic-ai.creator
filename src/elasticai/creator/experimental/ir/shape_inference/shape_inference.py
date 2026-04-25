@@ -4,7 +4,7 @@ from typing import Any, Iterable, Protocol, cast
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
 from elasticai.creator.graph import bfs_iter_down
-from elasticai.creator.ir import AttributeMapping, Graph, GraphImpl
+from elasticai.creator.ir2torch.ir2torch import _DataGraph
 
 type DataGraph = ir.DataGraph[ir.Node, ir.Edge]
 type Registry = ir.Registry[DataGraph]
@@ -205,38 +205,8 @@ class _ShapedEdgeImpl(ir.EdgeImpl):
         return _guard_shape(self.attributes["shape"])
 
 
-class _NodeEdgeFactory(ir.StdNodeEdgeFactory):
+class IrFactory(ir.StdIrFactory):
     def __init__(self):
-        super().__init__(node_fn=_NodeImpl, edge_fn=_ShapedEdgeImpl)
-
-
-class IrFactory(ir.IrFactory):
-    def __init__(self):
-        self._node_edge_fact = _NodeEdgeFactory()
-
-    def node(self, name: str, attributes: AttributeMapping = ir.attribute(), /) -> Node:
-        return self._node_edge_fact.node(name, attributes)
-
-    def edge(
-        self, src: str, dst: str, attributes: AttributeMapping = ir.attribute(), /
-    ) -> ShapedEdge:
-        return self._node_edge_fact.edge(src, dst, attributes)
-
-    def graph(
-        self,
-        attributes: AttributeMapping = ir.attribute(),
-        /,
-        other: ir.DataGraph[ir.Node, ir.Edge] | None = None,
-    ) -> ShapedDatagraph:
-        node_attributes = ir.attribute()
-        graph: Graph[str, AttributeMapping] = GraphImpl(lambda: AttributeMapping())
-        if other is not None:
-            node_attributes = other.node_attributes
-            graph = other.graph
-            attributes = other.attributes | attributes
-        return ir.DataGraphImpl(
-            node_attributes=node_attributes,
-            attributes=attributes,
-            graph=graph,
-            factory=ir.StdNodeEdgeFactory(_NodeImpl, _ShapedEdgeImpl),
+        super().__init__(
+            node_fn=_NodeImpl, edge_fn=_ShapedEdgeImpl, graph_fn=_DataGraph
         )

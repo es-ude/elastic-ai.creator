@@ -8,6 +8,7 @@ from torch import fx
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
+from elasticai.creator.ir import StdIrFactory
 
 from .default_handlers import dgraph_handlers, node_handlers
 
@@ -26,54 +27,9 @@ class _DataGraph(ir.DataGraphImpl[ir.Node, ir.Edge]):
         return result
 
 
-def _new_graph(
-    factory: ir.NodeEdgeFactory[ir.Node, ir.Edge], attributes: ir.AttributeMapping
-) -> DataGraph:
-    return _DataGraph(
-        factory,
-        attributes,
-        ir.GraphImpl(lambda: ir.AttributeMapping()),
-        ir.AttributeMapping(),
-    )
-
-
-class IrFactory(ir.IrFactory[ir.Node, ir.Edge, ir.DataGraph]):
-    def __init__(self):
-        self._node_edge = ir.DefaultNodeEdgeFactory()
-
-        def graph(attributes):
-            return _new_graph(self, attributes)
-
-        self._graph = graph
-
-    def node(
-        self, name: str, attributes: ir.AttributeMapping = ir.AttributeMapping()
-    ) -> ir.Node:
-        return self._node_edge.node(name, attributes)
-
-    def edge(
-        self,
-        src: str,
-        dst: str,
-        attributes: ir.AttributeMapping = ir.AttributeMapping(),
-    ) -> ir.Edge:
-        return self._node_edge.edge(src, dst, attributes)
-
-    def graph(
-        self,
-        attributes: ir.AttributeMapping = ir.AttributeMapping(),
-        /,
-        *,
-        graph: ir.DataGraph | None = None,
-    ) -> DataGraph:
-        if graph is not None:
-            return _DataGraph(
-                factory=self,
-                attributes=graph.attributes,
-                graph=graph.graph,
-                node_attributes=graph.node_attributes,
-            )
-        return self._graph(attributes)
+class IrFactory(StdIrFactory[ir.Node, ir.Edge, DataGraph]):
+    def __init__(self) -> None:
+        super().__init__(ir.NodeImpl, ir.EdgeImpl, _DataGraph)
 
 
 type TypeHandler = Callable[[DataGraph], nn.Module]
@@ -167,7 +123,7 @@ class Ir2Torch:
         root_module = nn.Module()
 
         def to_new_graph(name, graph):
-            return name, factory.graph(graph=graph)
+            return name, factory.graph_from_other(graph)
 
         for name, impl in starmap(to_new_graph, registry.items()):
             layer = self._build_submodule(impl)

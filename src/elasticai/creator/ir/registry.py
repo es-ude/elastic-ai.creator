@@ -1,5 +1,5 @@
-from collections.abc import Iterable, Iterator, Mapping
-from typing import Any, Self, overload
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from typing import Any, Self, cast, overload
 
 from .datagraph import DataGraph
 
@@ -38,7 +38,7 @@ class Registry[G: DataGraph](Mapping[str, G]):
             self._data = dict(items)
 
     def __getitem__(self, name: str) -> G:
-        return self._data[name]
+        return cast(G, self._data[name])
 
     def __len__(self) -> int:
         return len(self._data)
@@ -56,6 +56,10 @@ class Registry[G: DataGraph](Mapping[str, G]):
 
     def add(self, name: str, graph: G) -> Self:
         return type(self)(**(self._data) | {name: graph})
+
+    def apply[G2: DataGraph](self, fn: Callable[[G], G2]) -> "Registry[G2]":
+        new_dict = ((k, fn(g)) for k, g in self._data.items())
+        return Registry(new_dict)
 
     def __repr__(self) -> str:
         return f"Registry(**{repr(self._data)})"
