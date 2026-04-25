@@ -5,19 +5,12 @@ from typing import Protocol, cast
 
 from elasticai.creator.graph import find_all_subgraphs, get_rewriteable_matches
 from elasticai.creator.ir._attribute import AttributeMapping
-from elasticai.creator.ir.datagraph import DataGraph as _DGraph
-from elasticai.creator.ir.datagraph import Edge, Node
-from elasticai.creator.ir.registry import Registry as _Registry
+from elasticai.creator.ir.datagraph import DataGraph, Node
+from elasticai.creator.ir.registry import Registry
 
-type DataGraph = _DGraph[
-    Node, Edge
-]  # bind to upper bound until we get default type args
-type Registry = _Registry[
-    DataGraph
-]  # bind to upper bound until we get default type args
-type Rule[G: DataGraph] = Callable[
-    [G, _Registry[G]],
-    tuple[DataGraph, Registry],
+type Rule[GI: DataGraph, GO: DataGraph] = Callable[
+    [GI, Registry[GI]],
+    tuple[GO, Registry[GO]],
 ]
 
 
@@ -30,7 +23,7 @@ class Pattern[G: DataGraph](Protocol):
     def interface(self) -> Collection[str]: ...
 
     @abstractmethod
-    def match(self, g: G, registry: _Registry[G], /) -> list[dict[str, str]]: ...
+    def match(self, g: G, registry: Registry[G], /) -> list[dict[str, str]]: ...
 
 
 class StdPattern[G: DataGraph, N: Node](Pattern[G]):
@@ -65,7 +58,7 @@ class StdPattern[G: DataGraph, N: Node](Pattern[G]):
     def interface(self) -> Collection[str]:
         return self._interface
 
-    def match(self, g: G, _: _Registry[G], /) -> list[dict[str, str]]:
+    def match(self, g: G, _: Registry[G], /) -> list[dict[str, str]]:
         def constraint(pattern_node: str, graph_node: str) -> bool:
             return self._constraint(
                 # In fact the cast below is incorrect, but we have no way in python
@@ -111,7 +104,7 @@ class PatternRuleSpec[G: DataGraph]:
     def __init__(
         self,
         pattern: Pattern,
-        replacement_fn: Callable[[G, _Registry[G]], tuple[G, _Registry[G]]],
+        replacement_fn: Callable[[G, Registry[G]], tuple[G, Registry[G]]],
     ) -> None:
         self.pattern = pattern
         self.replacement_fn = replacement_fn
@@ -123,9 +116,7 @@ class PatternRuleSpec[G: DataGraph]:
     def match(self, g: DataGraph, registry: Registry) -> list[dict[str, str]]:
         return self.pattern.match(g, registry)
 
-    def create_replacement(
-        self, g: G, registry: _Registry[G]
-    ) -> tuple[G, _Registry[G]]:
+    def create_replacement(self, g: G, registry: Registry[G]) -> tuple[G, Registry[G]]:
         return self.replacement_fn(g, registry)
 
 
@@ -153,7 +144,7 @@ class PatternRule[G: DataGraph]:
             self._spec.pattern.graph.nodes, "Pattern Graph"
         )
 
-    def __call__(self, graph: G, registry: _Registry[G]) -> tuple[_DGraph, _Registry]:
+    def __call__(self, graph: G, registry: Registry[G]) -> tuple[G, Registry[G]]:
         self._validate_pattern_interface_compatibility()
         matches = self._spec.pattern.match(graph, registry)
         matches = list(
