@@ -1,6 +1,6 @@
 [project]
 name = "elasticai.creator"
-dynamic = ["version"]
+version = "0.68.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 authors = [
@@ -57,7 +57,7 @@ testing = [
     "pytest-cov>=6.0.0",
     "coverage>=7.6.9",
     "torchvision>=0.24.1",
-    "elasticai-experiment-framework",
+    "elasticai-experiment-framework>=0.2.0",
     "pyserial>=3.5",
     "elasticai-usbprotocol",
 ]
@@ -76,7 +76,7 @@ non-nixos = [ # you might want to disable these if you're on nixos as these pack
 ]
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -89,9 +89,6 @@ exclude = [
     "src/elasticai/creator_plugins/*/docs",
 ]
 
-
-[tool.hatch.version]
-source = "vcs"
 
 
 [tool.uv]
@@ -109,10 +106,8 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch" }]
 torchvision = [{ index = "pytorch" }]
-elasticai-runtime-env5 = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5.git", rev = "a9bc18749b1c1666828453a47c9c37f6f0aa2d61" }
 sphinxcontrib-wavedrom = { git = "https://github.com/glencoe/sphinx-wavedrom.git", rev = "hotfix_html_only_version" }
 
-elasticai-experiment-framework = { git = "https://github.com/es-ude/elastic-ai.experiment-framework.git" }
 elasticai-usbprotocol = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5" }
 [tool.pytest]
 minversion = "9.0"
