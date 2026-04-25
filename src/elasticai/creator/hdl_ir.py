@@ -266,3 +266,19 @@ type Code = tuple[str, Sequence[str]]
 type Registry = ir.Registry[DataGraph]
 type TypeHandler = Callable[[DataGraph, Registry], Iterable[Code]]
 type NonIterableTypeHandler = Callable[[DataGraph, Registry], Code]
+
+
+def collect_transitive_implementation_closure[G: DataGraph](
+    main: str, reg: ir.Registry[G]
+) -> ir.Registry[G]:
+    closure = {main}
+    check_now = [main]
+    while check_now:
+        design_name = check_now.pop(0)
+        design = reg[design_name]
+        for node in design.nodes.values():
+            if node.implementation in reg and node.implementation not in closure:
+                closure.add(node.implementation)
+                check_now.append(node.implementation)
+    dead_impls = set(reg.keys()) - closure
+    return reg.without(dead_impls)
