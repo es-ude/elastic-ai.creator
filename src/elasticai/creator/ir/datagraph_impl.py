@@ -6,10 +6,9 @@ from collections.abc import (
 from typing import Self
 
 from ._attribute import AttributeMapping
-from .datagraph import DataGraph, Edge, Node
+from .datagraph import DataGraph, Edge, Node, ReadOnlyDataGraph
 from .factories import (
     NodeEdgeFactory,
-    StdDataGraphFactory,
     StdIrFactory,
 )
 from .graph import Graph, GraphImpl
@@ -161,6 +160,7 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
     def __init__(
         self,
         /,
+        *,
         factory: NodeEdgeFactory[N, E],
         attributes: AttributeMapping,
         graph: Graph[str, AttributeMapping],
@@ -366,6 +366,13 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
             node_attributes=node_attributes,
         )
 
+    def with_data_from(self, other: ReadOnlyDataGraph) -> Self:
+        return self._new(
+            attributes=other.attributes,
+            graph=other.graph,
+            node_attributes=other.node_attributes,
+        )
+
     def __repr__(self) -> str:
         return f"DataGraphImpl(node_attributes={repr(self.node_attributes)}, attributes={repr(self.attributes)}, edges={repr(self._graph.successors)})"
 
@@ -383,18 +390,13 @@ def _new_graph[N: Node, E: Edge](
     factory: NodeEdgeFactory[N, E], attributes
 ) -> DataGraph[N, E]:
     return DataGraphImpl(
-        factory,
-        attributes,
-        GraphImpl(lambda: AttributeMapping()),
-        AttributeMapping(),
+        factory=factory,
+        attributes=attributes,
+        graph=GraphImpl(lambda: AttributeMapping()),
+        node_attributes=AttributeMapping(),
     )
-
-
-class DefaultDataGraphFactory[N: Node, E: Edge](StdDataGraphFactory[N, E, DataGraph]):
-    def __init__(self, node_edge_factory: NodeEdgeFactory[N, E]) -> None:
-        super().__init__(node_edge_factory, _new_graph)
 
 
 class DefaultIrFactory(StdIrFactory[Node, Edge, DataGraph[Node, Edge]]):
     def __init__(self) -> None:
-        super().__init__(NodeImpl, EdgeImpl, _new_graph)
+        super().__init__(NodeImpl, EdgeImpl, DataGraphImpl)

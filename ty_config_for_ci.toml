@@ -11,6 +11,7 @@ include = [
   "src/elasticai/creator/hw_function_id.py",
   # "src/elasticai/creator/graph",
   "src/elasticai/creator/plugin",
+  "src/elasticai/creator/ir",
   "src/elasticai/creator/testing",
   "src/elasticai/creator_plugins",
   "src/elasticai/creator/experimental",
