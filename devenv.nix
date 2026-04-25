@@ -63,7 +63,7 @@ in {
       exec = "${unstablePkgs.uv}/bin/uv run zensical serve --config-file zensical.toml";
     };
     run_simulation_tests = {
-      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m simulation | grep -v "ld:"'';
+      exec = ''${unstablePkgs.uv}/bin/uv run --all-packages python -m pytest -m simulation | grep -v "ld:"'';
     };
     run_hw_tests = {
       exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m hardware "@$"'';
@@ -88,13 +88,13 @@ in {
     uv_run = "${unstablePkgs.uv}/bin/uv run";
   in {
     "check:slow-tests" = {
-      exec = "${uv_run} python -m pytest  -m '(simulation or slow) and not hardware'";
+      exec = "${uv_run} --all-packages python -m pytest  -m '(simulation or slow) and not hardware'";
       before = ["check:tests"];
     };
 
     "check:fast-tests" = {
       exec = ''
-        ${uv_run} coverage run
+        ${uv_run} --all-packages coverage run
         ${uv_run} coverage xml
       '';
       before = ["check:tests"];
@@ -138,7 +138,7 @@ in {
     };
 
     "check:architecture" = {
-      exec = "${uv_run} tach check";
+      exec = "${uv_run} --all-packages tach check-external";
       before = ["check:code-lint"];
     };
 

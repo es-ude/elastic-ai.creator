@@ -1,5 +1,5 @@
 [environment]
-root = ["src"]
+root = ["src", "plugins/lutron_filter"]
 
 [src]
 # As we gradually move on to more ty support we add
@@ -14,6 +14,7 @@ include = [
   "src/elasticai/creator/testing",
   "src/elasticai/creator_plugins",
   "src/elasticai/creator/arithmetic/",
+  "plugins/",
   "tests/integration_tests/fxp_arithmetics_test.py"
 ]
 exclude = [
