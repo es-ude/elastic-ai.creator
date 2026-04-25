@@ -153,6 +153,10 @@ class FilterDecorator[T: Decoratable]:
         return self.filter_parameters.out_channels
 
     @property
+    def stride(self) -> int:
+        return self.filter_parameters.stride
+
+    @property
     def filter_parameters(self) -> FilterParameters:
         if not hasattr(self, "__cached_filter_params"):
             match self.type:
@@ -301,7 +305,7 @@ def pattern_rule(
 
     return PatternRule(
         spec=PatternRuleSpec(
-            pattern=Pattern(graph, make_default_constraint),
+            pattern=Pattern(graph, make_node_constraint),
             replacement_fn=wrap_replace,
         )
     )
