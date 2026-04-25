@@ -245,7 +245,12 @@ class IrFactory:
         if name is not None:
             attributes = attributes.new_with(name=name)
 
-        return DataGraphImpl(self, attributes, _graph, node_attributes)
+        return DataGraphImpl(
+            factory=self,
+            attributes=attributes,
+            graph=_graph,
+            node_attributes=node_attributes,
+        )
 
 
 def _check_and_get_name_fn(name: str | None, fn: Callable) -> str:

@@ -81,6 +81,7 @@ class ReadOnlyDataGraph(ReadOnlyGraph[str, AttributeMapping], Protocol[N, E]):
     def edges(self) -> Mapping[tuple[str, str], E]: ...
 
 
+@runtime_checkable
 class DataGraph(ReadOnlyDataGraph[N, E], Graph[str, AttributeMapping], Protocol[N, E]):
     """
     Note that the fact, that `add_node` and similar methods take
@@ -133,6 +134,15 @@ class DataGraph(ReadOnlyDataGraph[N, E], Graph[str, AttributeMapping], Protocol[
 
     @abstractmethod
     def with_attributes(self, attributes: AttributeMapping) -> Self: ...
+
+    @abstractmethod
+    def with_data_from(self, other: ReadOnlyDataGraph) -> Self:
+        """Construct a new graph with underlying data from other.
+        Note: Involves only shallow copies and
+          is cheaper than adding nodes/edges
+          one by one.
+        """
+        ...
 
     @abstractmethod
     def clear(self) -> Self:

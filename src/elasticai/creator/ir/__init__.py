@@ -2,7 +2,6 @@ from ._attribute import Attribute, AttributeConvertable, AttributeMapping, attri
 from .datagraph import DataGraph, Edge, Node, NodeEdgeFactory, ReadOnlyDataGraph
 from .datagraph_impl import (
     DataGraphImpl,
-    DefaultDataGraphFactory,
     DefaultIrFactory,
     DefaultNodeEdgeFactory,
     EdgeImpl,
@@ -10,7 +9,7 @@ from .datagraph_impl import (
 )
 from .datagraph_rewriting import Pattern, PatternRule, PatternRuleSpec, Rule, StdPattern
 from .deserializer import IrDeserializer, IrDeserializerLegacy
-from .factories import IrFactory, StdDataGraphFactory, StdIrFactory, StdNodeEdgeFactory
+from .factories import IrFactory, StdIrFactory
 from .graph import Graph, GraphImpl
 from .registry import Registry
 from .serializer import IrSerializer, IrSerializerLegacy
@@ -20,7 +19,6 @@ __all__ = [
     "AttributeConvertable",
     "AttributeMapping",
     "attribute",
-    "DefaultDataGraphFactory",
     "DefaultIrFactory",
     "DefaultNodeEdgeFactory",
     "DataGraphImpl",
@@ -28,10 +26,8 @@ __all__ = [
     "GraphImpl",
     "EdgeImpl",
     "IrFactory",
-    "StdNodeEdgeFactory",
-    "NodeImpl",
-    "StdDataGraphFactory",
     "StdIrFactory",
+    "NodeImpl",
     "DataGraph",
     "Edge",
     "Node",

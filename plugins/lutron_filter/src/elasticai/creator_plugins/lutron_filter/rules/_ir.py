@@ -14,6 +14,7 @@ from elasticai.creator.ir import (
     PatternRule,
     PatternRuleSpec,
     Rule,
+    StdIrFactory,
     attribute,
 )
 from elasticai.creator.ir import DataGraph as _BaseDataGraph
@@ -23,9 +24,7 @@ from elasticai.creator.ir import (
 from elasticai.creator.ir import (
     EdgeImpl as _EdgeImpl,
 )
-from elasticai.creator.ir import GraphImpl as _GraphImpl
 from elasticai.creator.ir import Node as _Node
-from elasticai.creator.ir import NodeEdgeFactory as _NodeEdgeFactory
 from elasticai.creator.ir import (
     NodeImpl as _NodeImpl,
 )
@@ -168,25 +167,16 @@ class FilterDecorator[T: Decoratable]:
         return self.__cached_filter_params
 
 
-class NodeEdgeFactory(_NodeEdgeFactory[Node, Edge]):
-    def edge(
-        self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping(), /
-    ) -> Edge:
-        return _EdgeImpl(src, dst, attributes)
+class _IrFactory(StdIrFactory[Node, Edge, DataGraph]):
+    def __init__(self):
+        super().__init__(Node, _EdgeImpl, _DataGraphImpl)
 
-    def node(
-        self, name: str, attributes: AttributeMapping = AttributeMapping(), /
-    ) -> Node:
-        return Node(name, attributes)
+
+ir_factory: IrFactory[Node, Edge, DataGraph] = _IrFactory()
 
 
 def wrap_graph(g: _BaseDataGraph[_Node, Edge]) -> _DataGraph[Node, Edge]:
-    return _DataGraphImpl(
-        factory=NodeEdgeFactory(),
-        attributes=g.attributes,
-        graph=g.graph,
-        node_attributes=g.node_attributes,
-    )
+    return ir_factory.graph_from_other(g)
 
 
 def wrap_node(n: _Node) -> Node:
@@ -195,19 +185,6 @@ def wrap_node(n: _Node) -> Node:
 
 def wrap_registry(reg: Registry) -> Registry[DataGraph]:
     return ir.Registry((name, wrap_graph(g)) for name, g in reg.items())
-
-
-class _IrFactory(NodeEdgeFactory):
-    def graph(self, attributes: AttributeMapping = AttributeMapping(), /) -> DataGraph:
-        return _DataGraphImpl(
-            factory=self,
-            attributes=attributes,
-            node_attributes=AttributeMapping(),
-            graph=_GraphImpl(lambda: AttributeMapping()),
-        )
-
-
-ir_factory: IrFactory[Node, Edge, DataGraph] = _IrFactory()
 
 
 def serialize(g: DataGraph) -> dict:

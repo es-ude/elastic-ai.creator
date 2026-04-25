@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Protocol, cast
+from typing import Any, cast
 
 import pytest
 
@@ -9,7 +9,6 @@ from elasticai.creator.ir import Attribute, AttributeMapping, Edge, Node
 from elasticai.creator.ir.datagraph import DataGraph
 from elasticai.creator.ir.datagraph_impl import (
     DataGraphImpl,
-    DefaultDataGraphFactory,
     DefaultIrFactory,
     DefaultNodeEdgeFactory,
     EdgeImpl,
@@ -19,6 +18,7 @@ from elasticai.creator.ir.deserializer import IrDeserializer
 from elasticai.creator.ir.factories import (
     IrFactory,
     NodeEdgeFactory,
+    StdIrFactory,
     StdNodeEdgeFactory,
 )
 from elasticai.creator.ir.graph import GraphImpl
@@ -313,59 +313,6 @@ class TestSerialization:
         assert g == deserialized
 
 
-def test_dynamically_extend_nodes_and_graphs_in_custom_factory() -> None:
-    class MyNode(Node, Protocol):
-        @property
-        def implementation(self) -> str: ...
-
-    class MyGraph(dgraph.DataGraph[MyNode, dgraph.Edge], Protocol):
-        @property
-        def name(self) -> str: ...
-
-    class MyIrFactory(IrFactory):
-        def __init__(self):
-            self._node_edge = DefaultNodeEdgeFactory()
-            self._graph = DefaultDataGraphFactory(self)
-
-        def node(
-            self, name: str, attributes: AttributeMapping = AttributeMapping()
-        ) -> MyNode:
-            n = self._node_edge.node(name, attributes)
-
-            class _Node(n.__class__):  # type: ignore
-                @property
-                def implementation(self) -> str:
-                    return self.attributes.get("implementation", "<none>")
-
-            n.__class__ = _Node
-            return cast(MyNode, n)
-
-        def edge(
-            self,
-            src: str,
-            dst: str,
-            attributes: AttributeMapping = AttributeMapping(),
-        ) -> Edge:
-            return self._node_edge.edge(src, dst, attributes)
-
-        def graph(self, attributes: AttributeMapping = AttributeMapping()) -> MyGraph:
-            g = self._graph.graph(attributes)
-
-            class _Graph(g.__class__):  # type: ignore
-                @property
-                def name(self) -> str:
-                    return self.attributes.get("name", "<undefined>")
-
-            g.__class__ = _Graph
-            return cast(MyGraph, g)
-
-    factory = MyIrFactory()
-    n = factory.node("x")
-    g = factory.graph()
-    assert n.implementation == "<none>"
-    assert g.name == "<undefined>"
-
-
 def test_extend_node_and_graph_statically() -> None:
     class MyNode(NodeImpl):
         @property
@@ -377,28 +324,9 @@ def test_extend_node_and_graph_statically() -> None:
         def name(self) -> str:
             return cast(str, self.attributes.get("name", "<undefined>"))
 
-    class MyFactory(IrFactory):
-        def node(
-            self, name: str, attributes: AttributeMapping = AttributeMapping()
-        ) -> MyNode:
-            return MyNode(name, attributes)
-
-        def edge(
-            self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()
-        ) -> Edge:
-            return EdgeImpl(src, dst, attributes)
-
-        def graph(
-            self, attributes: AttributeMapping = AttributeMapping()
-        ) -> MyGraph[MyNode, Edge]:
-            return MyGraph(
-                factory=self,
-                attributes=attributes,
-                graph=GraphImpl(
-                    lambda: AttributeMapping(),
-                ),
-                node_attributes=AttributeMapping(),
-            )
+    class MyFactory(StdIrFactory[MyNode, Edge, MyGraph]):
+        def __init__(self):
+            super().__init__(MyNode, EdgeImpl, MyGraph)
 
     f = MyFactory()
     n = f.node("x")
