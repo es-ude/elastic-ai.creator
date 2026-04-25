@@ -54,7 +54,7 @@ def batchnorm1d(module: nn.BatchNorm1d) -> dict:
 
 @_register
 def flatten(module: nn.Flatten) -> dict:
-    return {}
+    return {"start_dim": module.start_dim, "end_dim": module.end_dim}
 
 
 @_register

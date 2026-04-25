@@ -215,6 +215,8 @@ def test_convert_skip_connection_model_to_ir():
             "edges": {},
             "nodes": {},
             "type": "flatten",
+            "start_dim": 1,
+            "end_dim": -1,
         },
         "linear": {
             "bias": True,
