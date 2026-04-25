@@ -304,3 +304,4 @@ external/
 tmp/
 examples/MLP
 
+logs/

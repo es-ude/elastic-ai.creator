@@ -8,6 +8,7 @@ from .datagraph_impl import (
     EdgeImpl,
     NodeImpl,
 )
+from .datagraph_rewriting import Pattern, PatternRule, PatternRuleSpec, Rule, StdPattern
 from .deserializer import IrDeserializer, IrDeserializerLegacy
 from .factories import IrFactory, StdDataGraphFactory, StdIrFactory, StdNodeEdgeFactory
 from .graph import Graph, GraphImpl
@@ -41,4 +42,9 @@ __all__ = [
     "IrDeserializerLegacy",
     "IrSerializer",
     "IrSerializerLegacy",
+    "Pattern",
+    "PatternRule",
+    "PatternRuleSpec",
+    "StdPattern",
+    "Rule",
 ]
