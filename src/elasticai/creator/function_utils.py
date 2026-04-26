@@ -20,10 +20,9 @@ class FunctionDecorator(Generic[FN, Tout]):
 
     :param: `callback`: will be called as `callback(name, fn)`
 
-    :::{important}
-    if you want to use this as a decorator, do not forget to
-    return the wrapped function from your callback.
-    :::
+    Important:
+        if you want to use this as a decorator, do not forget to
+        return the wrapped function from your callback.
 
     *Examples*:
     ```python

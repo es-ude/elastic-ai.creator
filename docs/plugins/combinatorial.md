@@ -1,0 +1,1 @@
+--8<-- "src/elasticai/creator_plugins/combinatorial/README.md"

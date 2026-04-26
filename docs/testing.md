@@ -8,8 +8,8 @@ The HW-in-the-Loop testing framework in elasticai.creator enables testing of har
 
 ### Key Components
 
-- The [`HWTester`](apidocs/elasticai.creator/elasticai.creator.testing.hw_tester.md#elasticai.creator.testing.hw_tester.HWTester) class manages hardware testing, including device connections, bitstream uploads, and hardware function execution.
-- The method [`HWTester.prepare_hw_function(src_dir, id=None)`](apidocs/elasticai.creator/elasticai.creator.testing.hw_tester.md#elasticai.creator.testing.hw_tester.HWTester.prepare_hw_function) prepares and uploads a hardware function for testing.
+- The `HWTester` class manages hardware testing, including device connections, bitstream uploads, and hardware function execution.
+- The `HWTester.prepare_hw_function(src_dir, id=None)` method prepares and uploads a hardware function for testing.
 
 ### Workflow
 
@@ -61,9 +61,8 @@ Uses remote control interface via context manager, without direct dependency on 
 
 ### API Reference
 
-- [Testing Module](apidocs/elasticai.creator/elasticai.creator.testing.md)
-- [HWTester](apidocs/elasticai.creator/elasticai.creator.testing.hw_tester.md)
-- [AIAccelerator](apidocs/elasticai.creator/elasticai.creator.testing.hw_tester.md#elasticai.creator.testing.hw_tester.AIAccelerator)
+- [Testing Module](../api/testing.md)
+- [Core API Reference](../api/core.md)
 
 ### Related Projects
 
@@ -84,6 +83,4 @@ Use `@pytest.mark.hardware` marker for hardware tests.
 
 ## Simulation
 
-- [Testing Module API](apidocs/elasticai.creator/elasticai.creator.testing.md)
-- [Cocotb Testing](apidocs/elasticai.creator/elasticai.creator.testing.cocotb_pytest.md)
-- [GHDL Simulation](apidocs/elasticai.creator/elasticai.creator.testing.ghdl_simulation.md)
+- [Testing Module API](../api/testing.md)

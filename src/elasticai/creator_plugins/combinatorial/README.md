@@ -18,69 +18,42 @@ They differ only in their generic parameters.
 
 The symbols take an `elasticai.creator.ir2vhdl.Implementation` a corresponding implementation.
 
-```{note}
+!!! notenote
 **Supported node types:**
 * `'shift_register'`
 * `'clocked_combinatorial'`
 * `'sliding_window'`
 * `'unclocked_combinatorial'`
 * `'striding_shift_register'`
-```
 
-```{warning}
+!!! warningwarning
 The interfaces here are experimental. They are highly likely to change in future versions. E.g., we are currently planning to extend them to include `ready_in`, `ready_out` signals.
 Those could be used by a downstream component to control data flow.
-```
 
 ## Combinatorial
 
-```{note}
+!!! notenote
 **Terminology:**
 The terms _upstream_ and _downstream_ denote the direction of data flow for the rest of this document.
 The _upstream_ component is the one that sends data to the _downstream_ component.
-```
 
-```{list-table}
-:header-rows: 1
 
-* - Name
-  - Direction
-  - Type
-  - Description
-* - `clk`
-  - **in**
-  - `std_logic`
-  - Clock signal. Will typically connects to the clock signal of the enclosing component.
-* - `valid_in`
-  - **in**
-  - `std_logic`
-  - `'1'` on **rising** edge signals valid input data. Processes data only if `valid_in` is `'1'`. Connect this to the `valid_out` of the upstream component.
-* - `valid_out`
-  - **out**
-  - `std_logic`
-  - Drive `HIGH`/`'1'` on **rising** edge to signal that your component's output data is valid. Connect this to the `valid_in` of the downstream component.
-* - `rst`
-  - **in**
-  - `std_logic`
-  - Asynchronous reset: set to `'1'` to reset the network, set to `'0'` to release the reset and allow processing. Typically connects to the reset signal of the enclosing component.
-* - `d_in`
-  - **in**
-  - `std_logic_vector`
-  - Input data window. Connect this to `d_out` of upstream components.
-* - `d_out`
-  - **out**
-  - `std_logic_vector`
-  - All output data. Connect this to `d_in` of downstream components.
-```
+| Name | Direction | Type | Description |
+|------|-----------|------|-------------|
+| `clk` | **in** | `std_logic` | Clock signal. Will typically connects to the clock signal of the enclosing component. |
+| `valid_in` | **in** | `std_logic` | `'1'` on **rising** edge signals valid input data. Processes data only if `valid_in` is `'1'`. Connect this to the `valid_out` of the upstream component. |
+| `valid_out` | **out** | `std_logic` | Drive `HIGH`/`'1'` on **rising** edge to signal that your component's output data is valid. Connect this to the `valid_in` of the downstream component. |
+| `rst` | **in** | `std_logic` | Asynchronous reset: set to `'1'` to reset the network, set to `'0'` to release the reset and allow processing. Typically connects to the reset signal of the enclosing component. |
+| `d_in` | **in** | `std_logic_vector` | Input data window. Connect this to `d_out` of upstream components. |
+| `d_out` | **out** | `std_logic_vector` | All output data. Connect this to `d_in` of downstream components. |
 
-```{warning}
+!!! warningwarning
 Please note that we will most likely extend the interface above with two more signals, `ready_in` and `ready_out`, in the future.
 
 | Name | Direction | Type | Description |
 |------|-----------|------|-------------|
 | `ready_out` | **out** | `std_logic` | Drive `HIGH`/`'1'` when your component is ready to accept new input data via `d_in`. Connects to `ready_in` of upstream components. |
 | `ready_in` | **in** | `std_logic` | Connects to `ready_out` downstream components. |
-```
 
 ## Unclocked Combinatorial
 

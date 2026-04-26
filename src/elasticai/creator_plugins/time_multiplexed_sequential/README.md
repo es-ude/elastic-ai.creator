@@ -21,9 +21,8 @@ It supports the following concepts:
 - arbitrary number of input and output channels  
 - arbitrary 1d kernel sizes with where each data point has a size of 1bit (data width = 1bit)
 
-```{note}
+!!! notenote
 Data widths other than a single bit are not officially supported at the moment, but you might still be able to use them by setting data widths and data depths accordingly.
-```
 
 Linear layers are not supported currently, but you can often model them as a convolution of kernel size 1.
 

@@ -28,27 +28,10 @@ dev = [
     "tach>=0.23.0",
 ]
 docs = [
-    "sphinx>=8.1.3",
-    "furo>=2024.8.6",
-    "sphinx-autoapi>=3.4.0",
-    "sphinx-autobuild>=2024.10.3",
-    "sphinx-copybutton>=0.5.2",
-    "sphinx-prompt>=1.9.0",
-    "sphinxcontrib-plantuml>=0.30",
-    "sphinxcontrib-wavedrom>=3.0.4",
-    "myst-parser>=4.0.0",
-    "sphinxcontrib-mermaid>=1.0.0",
-    "linkify>=1.4",
-    "linkify-it-py>=2.0.3",
-    "sphinx-autodoc2>=0.5.0",
-    "sphinxext-opengraph>=0.9.1",
-    "sphinxcontrib-kroki>=1.3.0",
-    "zundler>=0.2.2",
-    "sphinx-book-theme>=1.1.3",
-    "sphinx-togglebutton>=0.3.2",
-    "htmlark[http,parsers]>=1.0.0",
-    "pydata-sphinx-theme>=0.16.1",
-    "sphinx-design>=0.6.1",
+    "zensical>=0.0.36",
+    "mkdocstrings[python]>=0.28.0",
+    "pymdown-extensions>=10.0",
+    "markdown-wavedrom>=1.0.0",
 ]
 release = ["git-cliff>=2.7.0"]
 testing = [
@@ -106,9 +89,8 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch" }]
 torchvision = [{ index = "pytorch" }]
-sphinxcontrib-wavedrom = { git = "https://github.com/glencoe/sphinx-wavedrom.git", rev = "hotfix_html_only_version" }
-
 elasticai-usbprotocol = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5" }
+
 [tool.pytest]
 minversion = "9.0"
 markers = [

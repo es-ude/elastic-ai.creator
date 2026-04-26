@@ -31,25 +31,44 @@ Input and output transport data are byte-aligned. Logical samples remain `DATA_I
 The network is expected to follow the same port contract used by the `shift_register` plugin:
 
 ```vhdl
-entity network is
-  port (
-    CLK : in std_logic;
-    D_IN : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-    D_OUT : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-    SRC_VALID : in std_logic;
-    RST : in std_logic;
-    VALID : out std_logic;
-    READY : out std_logic;
-    DST_READY : in std_logic;
-    EN : in std_logic
-  );
-end entity;
+--8<-- "src/elasticai/creator_plugins/skeleton/vhdl/skeleton.vhd:11:38"
 ```
 
-## Current Scope
+### Current Scope
 
 The implementation currently supports frame ingress only. Streaming ingress is planned separately.
 
-## Example
+### Example
 
 For a 1d-cnn processing a time series with three input channels, twelve bits per input channel and time step, and a total of 120 time steps, set `DATA_IN_WIDTH=12` and `DATA_IN_DEPTH=3*120`. The middleware stores transport bytes, while the inference path consumes logical samples at width `DATA_IN_WIDTH` and produces byte-padded output for readback.
+
+
+
+## Hardware Function ID 
+
+The `HW_FUNCTION_ID` uniquely identifies a hw design. It is set in the
+skeleton hardware module (hence the name). The skeleton id is 16 byte
+long. To ensure uniqueness the id is obtained by running blake2b on all
+files except for the skeleton_pkg itself. This way equal hw designs will
+always have an equal id, while being able to tell different designs
+apart.
+
+The algorithm is basically as follows
+
+    file_digests := []
+    FOR file in files
+        file_digests.append(hash(file))
+    END FOR
+    file_digests := sort(file_hashes)
+    skeleton_id := hash(file_digests)
+
+### Hw Function ID in VHDL
+
+In VHDL we include the hardware function id as a constant from a package
+called `skeleton_pkg`.
+
+## HW accelerator meta description 
+
+```toml
+--8<-- "src/elasticai/creator_plugins/skeleton/meta.toml"
+```

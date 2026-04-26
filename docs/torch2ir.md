@@ -68,8 +68,8 @@ To extend `Ir2Torch` with support for new modules, you need to register custom h
 
 By following these steps, you can extend `Ir2Torch` to support custom modules and ensure that your IR can be accurately converted back into a PyTorch model.
 
-:::{important}
-The reconstructed model will not contain the state of an original
+!!! important
+    The reconstructed model will not contain the state of an original
 pytorch model. Often the generated module hierarchy will be compatible
 with the state dict, that you can obtain by calling `torch.nn.Module.state_dict()`
 and you can load that dict after rebuilding the model with `torch.nn.Module.load_state(state)`.
@@ -91,7 +91,6 @@ During the generation of our Ir the duplicate instance will be ignored and the g
 will just contain two calls to the `lin` module.
 Thus, you will have to remove the parameters starting with `"1."` from the state dict
 before loading.
-:::
 
 ### Extending Torch2Ir
 

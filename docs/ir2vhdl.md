@@ -17,10 +17,6 @@ lot more information.
 Let's assume we have a neural network defined in an MK framework that
 looks like the following.
 
-:::
-##### Network from ML framework
-:::
-
 ```mermaid
     classDiagram
       direction LR
@@ -237,11 +233,10 @@ Usually one IR graph will be translated into one VHDL entity. Exceptions
 to this are possible though, e.g., to split complex designs into
 multiple smaller entities.
 
-::: {caution}
-We might limit this behaviour in the future, to ensure a one-to-one
-relationship between IR graphs and resulting VHDL code, in case problems
-like name clashes arise.
-:::
+!!! warning
+    We might limit this behaviour in the future, to ensure a one-to-one
+    relationship between IR graphs and resulting VHDL code, in case problems
+    like name clashes arise.
 
 Each node in a graph will be translated into the instance of a vhdl
 entity. We interpret the edges as data flow between instances.
@@ -324,10 +319,9 @@ interfaces. The supported node types are:
 
 -   `output`
 
-::: note
-including (un)clocked combinatorial allows us to nest combinatorial
-designs
-:::
+!!! note
+    including (un)clocked combinatorial allows us to nest combinatorial
+    designs
 
 The `combinatorial` plugin defines a `Instance` type for each of these
 nodes types and uses the `InstanceFactory` to create instances from

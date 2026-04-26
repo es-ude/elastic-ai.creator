@@ -32,21 +32,19 @@ We define the following terms
     independent node. That means it's value does not depend on incoming
     data.
 
-    :::{note}
-    An independent node does not necessarily mean that it has a constant
-    value. E.g., an independent node could be a counter, or another
-    component whose output value does not depend on input, but on
-    control signals like a clock.
-    :::
+    !!! note
+        An independent node does not necessarily mean that it has a constant
+        value. E.g., an independent node could be a counter, or another
+        component whose output value does not depend on input, but on
+        control signals like a clock.
 
-    :::{warning}
-    The required fields for graphs are very likely to change. We are
-    considering requiring graphs to have a **type** and **name** as
-    well, making them effectively extended nodes. This would enable
-    **nested** graphs.
+    !!! warning
+        The required fields for graphs are very likely to change. We are
+        considering requiring graphs to have a **type** and **name** as
+        well, making them effectively extended nodes. This would enable
+        **nested** graphs.
 
-    Please open an issue if you need this feature.
-    :::
+        Please open an issue if you need this feature.
 
 Edge
 
@@ -99,14 +97,12 @@ The design goals for the python implementation of nodes and edges are
 -   consistent serialization to nested dictionaries of primitive data
     types
 
-:::{note}
-Third party solutions like protobuf or pydantic have been considered,
-but finally they are either too complicated (protobuf) or do not fulfill
-all our requirements: pydantic does not offer read access to
-underlying fields through descriptors that model more complex custom
-data types.
-:::
-
+!!! note
+    Third party solutions like protobuf or pydantic have been considered,
+    but finally they are either too complicated (protobuf) or do not fulfill
+    all our requirements: pydantic does not offer read access to
+    underlying fields through descriptors that model more complex custom
+    data types.
 
 ```mermaid
 classDiagram

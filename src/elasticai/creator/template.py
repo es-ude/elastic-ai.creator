@@ -97,10 +97,9 @@ class TemplateBuilder:
         occurences of a pattern and replace them by the result of calling `.replace`
         on the found match. Usually the new value is a template parameter, e.g.,
         `"$my_template_param"`.
-        :::{note}
-        in case of multiple overlapping parameter types the first one added
-        to the builder will take precedence.
-        :::
+        Note:
+            in case of multiple overlapping parameter types the first one added
+            to the builder will take precedence.
 
 
     `AnalysingTemplateParameterType`

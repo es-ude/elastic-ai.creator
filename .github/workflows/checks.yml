@@ -67,7 +67,7 @@ jobs:
         uses: ./.github/actions/prepare-devenv
       - name: run docs build check
         run: |
-          devenv --option torch.backend:string "cpu" tasks run docs:single-page --mode before
+          devenv --option torch.backend:string "cpu" tasks run docs:build --mode before
           nix run nixpkgs#monolith -- build/docs/index.html > build/docs/single_page.html
       - name: compress docs preview
         run: gzip -9 -c build/docs/single_page.html > build/docs/single_page.html.gz

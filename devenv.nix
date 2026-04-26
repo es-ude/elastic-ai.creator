@@ -59,7 +59,7 @@ in {
           jetty.http.port="8081"
     '';
     serve_docs = {
-      exec = "${unstablePkgs.uv}/bin/uv run sphinx-autobuild -j auto docs build/docs/";
+      exec = "${unstablePkgs.uv}/bin/uv run zensical serve --config-file zensical.toml";
     };
     run_simulation_tests = {
       exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m simulation | grep -v "ld:"'';
@@ -140,16 +140,9 @@ in {
       exec = "${unstablePkgs.uv}/bin/uv build";
     };
 
-    "docs:single-page" = {
-      exec = ''
-        export LC_ALL=C  # necessary to run in github action
-        ${uv_run} sphinx-build -b singlehtml docs build/docs
-      '';
-    };
-
     "docs:build" = {
       exec = ''
-        ${uv_run} sphinx-build -j auto -b html docs build/docs
+        ${uv_run} zensical build --config-file zensical.toml
         touch build/docs/.nojekyll  # prevent github from trying to build the docs
       '';
     };

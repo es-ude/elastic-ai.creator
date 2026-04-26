@@ -29,36 +29,16 @@ plugin loaders to decide how to treat the plugin this could mean to
 
 The following table lists these required fields:
 
-:::{list-table}
-* - Field name
-  - Type
-  - Description
-* - **name**
-  - `str`
-  - The name of the plugin, used to identify the plugin
-* - **target platform**
-  - `str`
-  - A string describing the target platform for the plugin, ie.
-    the lowering pass it should be loaded into.
-    Currently there is no strict definition of the semantics of this string.
-* - **target runtime**
-  - `str`
-  - A string the runtime context for the plugin.
-    Currently there is no strict definition of the semantics of this string.
-* - **version**
-  - `str`
-  - A version string in the form `major.minor.[patch]`.
-    Specifies the version of the plugin, ie. if you introduce a new feature or fix a bug, you should usually increase the minor version.
-* - **api_version**
-  - `str`
-  - The version of the plugin API (plugin system) that this plugin was developed against.
-    This is used to check if the plugin is compatible with the current system.
-:::
+Field name | Type | Description
+-----------|------|-------------
+**name** | `str` | The name of the plugin, used to identify the plugin
+**target platform** | `str` | A string describing the target platform for the plugin, ie. the lowering pass it should be loaded into. Currently there is no strict definition of the semantics of this string.
+**target runtime** | `str` | A string the runtime context for the plugin. Currently there is no strict definition of the semantics of this string.
+**version** | `str` | A version string in the form `major.minor.[patch]`. Specifies the version of the plugin, ie. if you introduce a new feature or fix a bug, you should usually increase the minor version.
+**api_version** | `str` | The version of the plugin API (plugin system) that this plugin was developed against. This is used to check if the plugin is compatible with the current system.
 
-
-:::{warning}
-The set of required fields and their semantics is experimental and likely to change in the future.
-:::
+Warning:
+    The set of required fields and their semantics is experimental and likely to change in the future.
 
 The `PluginLoader` will read that description from the `meta.toml` file
 in a given package and use a user provided function to decide which

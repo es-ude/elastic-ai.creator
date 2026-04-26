@@ -13,3 +13,5 @@ If you are implementing a filter with internal logic you might want to handle st
 To implement a filter with stride $s > 1$ you set the `STRIDE` parameter of the succeeding shift register to $s$.
 Thus, the register will store the first filter output, skip $s-1$ outputs and repeat.
 While this might seem unintuitive, it is equivalent to the preceeding filter moving by $s$ steps instead of $1$.
+
+
