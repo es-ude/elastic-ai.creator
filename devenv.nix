@@ -18,6 +18,7 @@ in {
     pkgs.pikchr
     pkgs.jujutsu
     pkgs.graphviz
+    pkgs.tombi
     pkgs.cocogitto
     pkgs.secretspec
     pkgs.alejandra # nix formatter
@@ -78,6 +79,7 @@ in {
         uv run ruff check --fix
 
         ${pkgs.alejandra}/bin/alejandra --exclude ./.devenv --exclude ./.devenv.flake.nix .
+        ${pkgs.tombi}/bin/tombi format
       '';
     };
   };
@@ -126,6 +128,10 @@ in {
       before = ["check:code-lint"];
     };
 
+    "check:toml-formatting" = {
+      exec = "${pkgs.tombi}/bin/tombi format --check";
+    };
+
     "check:formatting" = {
       exec = "${uv_run} ruff format --check";
       before = ["check:code-lint"];
@@ -159,6 +165,7 @@ in {
         "check:architecture"
         "check:python-lint"
         "check:types"
+        "check:toml-formatting"
       ];
     };
 

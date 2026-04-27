@@ -1,13 +1,12 @@
 # What standard to use. This is optional and defaults to VHDL2008.
 standard = "2008"
+
 # File names are either absolute or relative to the parent folder of the vhdl_ls.toml file
 [libraries]
-
 creator.files = [
   "./elasticai/creator_plugins/*/vhdl/*.vhd",
   "./elasticai/creator_plugins/*/tests/*.vhd"
 ]
-
 
 # # Libraries can be marked as third-party to disable some analysis warnings, such as unused declarations
 # UNISIM.files = [
@@ -16,5 +15,5 @@ creator.files = [
 # UNISIM.is_third_party = true
 
 [lint]
-unused = 'error' # Upgrade the 'unused' diagnostic to the 'error' severity
-unnecessary_work_library = false # Disable linting for the 'library work;' statement
+unused = "error"  # Upgrade the 'unused' diagnostic to the 'error' severity
+unnecessary_work_library = false  # Disable linting for the 'library work;' statement

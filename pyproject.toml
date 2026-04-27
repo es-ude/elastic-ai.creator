@@ -3,220 +3,79 @@ name = "elasticai.creator"
 version = "0.68.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
+requires-python = ">=3.12"
 authors = [
-    { name = "Intelligent Embedded Systems Lab - University of Duisburg Essen" },
+  { name = "Intelligent Embedded Systems Lab - University of Duisburg Essen" },
 ]
 maintainers = [{ name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de" }]
-requires-python = ">=3.12"
 dependencies = [
-    "torch>=1.11",
-    "numpy>=1.23.0",
-    "tomlkit>=0.13.2",
-    "click>=8.1.7",
-    "cocotb>=2.0.0",
-    "pytest>=7.0",
+  "click>=8.1.7",
+  "cocotb>=2.0.0",
+  "numpy>=1.23.0",
+  "pytest>=7.0",
+  "tomlkit>=0.13.2",
+  "torch>=1.11",
 ]
-
 
 [dependency-groups]
 dev = [
-    "build>=1.2.2.post1",
-    "hatch>=1.14.0",
-    "hatch-vcs>=0.4.0",
-    "ipykernel>=6.29.5",
-    "pre-commit>=4.0.1",
-    "tach>=0.23.0",
+  "build>=1.2.2.post1",
+  "hatch>=1.14.0",
+  "hatch-vcs>=0.4.0",
+  "ipykernel>=6.29.5",
+  "pre-commit>=4.0.1",
+  "tach>=0.23.0",
 ]
 docs = [
-    "zensical>=0.0.36",
-    "mkdocstrings[python]>=0.28.0",
-    "pymdown-extensions>=10.0",
-    "markdown-wavedrom>=1.0.0",
+  "markdown-wavedrom>=1.0.0",
+  "mkdocstrings[python]>=0.28.0",
+  "pymdown-extensions>=10.0",
+  "zensical>=0.0.36",
+]
+lint = [
+  "mypy>=1.13.0",
+]
+lsp = [
+  "esbonio>=0.16.5",
+  "pylsp-mypy>=0.6.9",
+  "pylsp-rope>=0.1.17",
+  "python-lsp-server>=1.12.0",
+]
+non-nixos = [  # you might want to disable these if you're on nixos as these packages ship binaries, but its included per default
+  "ruff>=0.11.0",
+  "ty>=0.0.32"
 ]
 release = ["git-cliff>=2.7.0"]
 testing = [
-    "pytest>=8.3.4",
-    "hypothesis>=6.124.7",
-    "pytest-cov>=6.0.0",
-    "coverage>=7.6.9",
-    "torchvision>=0.24.1",
-    "elasticai-experiment-framework>=0.2.0",
-    "pyserial>=3.5",
-    "elasticai-usbprotocol",
+  "coverage>=7.6.9",
+  "elasticai-experiment-framework>=0.2.0",
+  "elasticai-usbprotocol",
+  "hypothesis>=6.124.7",
+  "pyserial>=3.5",
+  "pytest>=8.3.4",
+  "pytest-cov>=6.0.0",
+  "torchvision>=0.24.1",
 ]
 utils = ["rust-just>=1.38.0"]
 versioning = ["towncrier>=24.8.0"]
-lint = ["mypy>=1.13.0",]
-lsp = [
-    "esbonio>=0.16.5",
-    "pylsp-mypy>=0.6.9",
-    "pylsp-rope>=0.1.17",
-    "python-lsp-server>=1.12.0",
-]
-non-nixos = [ # you might want to disable these if you're on nixos as these packages ship binaries, but its included per default
- "ruff>=0.11.0",
- "ty>=0.0.32"
-]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/elasticai"]
-exclude = [
-    "*_test.py",
-    "test_*.py",
-    "src/elasticai/creator_plugins/*/tests",
-    "src/elasticai/creator_plugins/*/examples",
-    "src/elasticai/creator_plugins/*/docs",
-]
-
-
-
-[tool.uv]
-default-groups = ["utils", "testing", "lint", "dev", "docs", "non-nixos"]
-
-
-# this allows us to inject a custom index for torch via command line
-# in this case you will also have to provide the default index again, e.g.,
-# uv sync --index pytorch=https://download.pytorch.org/whl/cpu --index default=https://pypi.org/simple
-[[tool.uv.index]]
-name = "pytorch"
-url = "https://pypi.org/simple"
-explicit = true
-
-[tool.uv.sources]
-torch = [{ index = "pytorch" }]
-torchvision = [{ index = "pytorch" }]
-elasticai-usbprotocol = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5" }
-
-[tool.pytest]
-minversion = "9.0"
-markers = [
-    "simulation: possibly slow running integration tests including hw simulation, depends on ghdl being present",
-    "slow: a slow test that you would not run in tdd cycle",
-    "hardware: slow running system tests using the hardware deployment on real targets",
-]
-testpaths = ["src/elasticai/creator/", "tests", "src/elasticai/creator_plugins"]
-python_files = ["*_test.py", "test_*.py"]
-pythonpath = [".", "src"]
-addopts = ["--import-mode=importlib"]
-
 [tool.coverage.run]
 omit = [
-    "src/elasticai/creator/examples/*py",
-    "src/elasticai/creator/tests/*py",
-    "src/elasticai/creator/*Tests/*py",
-    "src/elasticai/creator/**/*_test.py",
-    "src/elasticai/**/__init__.py",
-    "tests/*py",
-    "src/elasticai/creator/utils/_console_out.py", # not testable
-    "src/elasticai/creator/utils/_run.py",         # not testable
+  "src/elasticai/creator/examples/*py",
+  "src/elasticai/creator/tests/*py",
+  "src/elasticai/creator/*Tests/*py",
+  "src/elasticai/creator/**/*_test.py",
+  "src/elasticai/**/__init__.py",
+  "tests/*py",
+  "src/elasticai/creator/utils/_console_out.py",  # not testable
+  "src/elasticai/creator/utils/_run.py",  # not testable
 ]
 source = ["src/elasticai/creator", "src/elasticai/creator_plugins"]
 command_line = "-m pytest -m 'not simulation and not slow and not hardware'"
-
-
-[tool.ruff]
-include = [
-    "pyproject.toml",
-    "src/elasticai/**/*.py",
-    "src/elasticai/**/*.pyi",
-    "src/elasticai/**/*.py",
-    "tests/**/*.py",
-]
-
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
-    ".pytest_cache",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    ".vscode",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "site-packages",
-    "venv",
-    ".devenv",
-]
-
-# Same as Black.
-line-length = 88
-indent-width = 4
-
-target-version = "py312"
-
-[tool.ruff.lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-select = ["E4", "E7", "E9", "F", "I"]
-ignore = [
-    "D101",
-    "D102",
-    "E741", # ambiguous variable names
-]
-
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
-[tool.ruff.format]
-# Like Black, use double quotes for strings.
-quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
-indent-style = "space"
-
-# Like Black, respect magic trailing commas.
-skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
-line-ending = "auto"
-
-[tool.ty.environment]
-root = ["./src"]
-
-[tool.pyrefly]
-search-path = ["src/elasticai/creator/", "src/elasticai/creator_plugins"]
-
-[tool.mypy]
-ignore_errors = false
-
-[[tool.mypy.overrides]]
-## Ignore errors in the following modules until we fixed type hints
-module = [
-    "elasticai.creator.nn.fixed_point.lstm.*",
-    "elasticai.creator.nn.fixed_point.conv1d.*",
-    "elasticai.creator.nn.fixed_point.linear.*",
-    "elasticai.creator.nn.fixed_point.number_converter.*",
-    "elasticai.creator.nn.quantized_grads.*",
-    "elasticai.creator.base_modules.conv1d",
-    "elasticai.creator.base_modules.conv2d",
-    "elasticai.creator.base_modules.linear",
-    "elasticai.creator.nn.integer.*",
-]
-ignore_errors = true
-
 
 [tool.git-cliff.changelog]
 body = """
@@ -245,22 +104,158 @@ body = """
 """
 
 postprocessors = [
-    # Replace the placeholder `<REPO>` with a URL.
-    { pattern = '\$REPO', replace = "https://github.com/es-ude/elastic-ai.creator" }, # replace repository URL
+  # Replace the placeholder `<REPO>` with a URL.
+  { pattern = '\$REPO', replace = "https://github.com/es-ude/elastic-ai.creator" },  # replace repository URL
 ]
-
 
 [tool.git-cliff.git]
 conventional_commits = true
 filter_unconventional = true
 commit_preprocessors = [
-    { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/es-ude/elastic-ai.creator/issues/${1}))" },                            # replace #NR by link to issue
-    { pattern = "([ \\n])(([a-f0-9]{7})[a-f0-9]*)", replace = "${1}commit # [${3}](https://github.com/es-ude/elastic-ai.creator/commit/${2})" }, # replace commit hash by link to commit
+  { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/es-ude/elastic-ai.creator/issues/${1}))" },  # replace #NR by link to issue
+  { pattern = "([ \\n])(([a-f0-9]{7})[a-f0-9]*)", replace = "${1}commit # [${3}](https://github.com/es-ude/elastic-ai.creator/commit/${2})" },  # replace commit hash by link to commit
 ]
 commit_parsers = [
-    { message = "^wip", skip = true }, # ignore commits of type wip
+  { message = "^wip", skip = true },  # ignore commits of type wip
 ]
 
 [tool.git-cliff.bump]
 breaking_always_bump_major = false
 features_always_bump_minor = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/elasticai"]
+exclude = [
+  "*_test.py",
+  "test_*.py",
+  "src/elasticai/creator_plugins/*/tests",
+  "src/elasticai/creator_plugins/*/examples",
+  "src/elasticai/creator_plugins/*/docs",
+]
+
+[tool.mypy]
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+## Ignore errors in the following modules until we fixed type hints
+module = [
+  "elasticai.creator.nn.fixed_point.lstm.*",
+  "elasticai.creator.nn.fixed_point.conv1d.*",
+  "elasticai.creator.nn.fixed_point.linear.*",
+  "elasticai.creator.nn.fixed_point.number_converter.*",
+  "elasticai.creator.nn.quantized_grads.*",
+  "elasticai.creator.base_modules.conv1d",
+  "elasticai.creator.base_modules.conv2d",
+  "elasticai.creator.base_modules.linear",
+  "elasticai.creator.nn.integer.*",
+]
+ignore_errors = true
+
+[tool.pyrefly]
+search-path = ["src/elasticai/creator/", "src/elasticai/creator_plugins"]
+
+[tool.pytest]
+addopts = ["--import-mode=importlib"]
+markers = [
+  "hardware: slow running system tests using the hardware deployment on real targets",
+  "simulation: possibly slow running integration tests including hw simulation, depends on ghdl being present",
+  "slow: a slow test that you would not run in tdd cycle",
+]
+minversion = "9.0"
+python_files = ["*_test.py", "test_*.py"]
+pythonpath = [".", "src"]
+testpaths = ["src/elasticai/creator/", "src/elasticai/creator_plugins", "tests"]
+
+[tool.ruff]
+include = [
+  "pyproject.toml",
+  "src/elasticai/**/*.py",
+  "src/elasticai/**/*.pyi",
+  "src/elasticai/**/*.py",
+  "tests/**/*.py",
+]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  ".devenv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+target-version = "py312"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F", "I"]
+ignore = [
+  "D101",
+  "D102",
+  "E741",  # ambiguous variable names
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.ty.environment]
+root = ["./src"]
+
+[tool.uv]
+default-groups = ["utils", "testing", "lint", "dev", "docs", "non-nixos"]
+
+# this allows us to inject a custom index for torch via command line
+# in this case you will also have to provide the default index again, e.g.,
+# uv sync --index pytorch=https://download.pytorch.org/whl/cpu --index default=https://pypi.org/simple
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://pypi.org/simple"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch" }]
+torchvision = [{ index = "pytorch" }]
+elasticai-usbprotocol = { git = "https://github.com/es-ude/elastic-ai.runtime.enV5" }
