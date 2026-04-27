@@ -163,7 +163,7 @@ class PatternRule[G: DataGraph]:
         )
         for match in matches:
             graph_mapped_to_matched_pattern = _create_remapped_graph(graph, match)
-            repl_graph, _registry = self._spec.create_replacement(
+            repl_graph, registry = self._spec.create_replacement(
                 graph_mapped_to_matched_pattern, registry
             )
             self._validate_replacement_interface_compatibility(repl_graph.nodes)
