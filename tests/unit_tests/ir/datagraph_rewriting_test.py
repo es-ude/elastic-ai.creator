@@ -470,3 +470,26 @@ def test_copy_edge_data_from_edges_connected_to_interface_nodes(
     assert {"second": "second", "third": "third"} == dict(
         new_impl.edges[("input", "fused_conv")].attributes
     ) | dict(new_impl.edges[("conv1", "bnorm1")].attributes)
+
+
+def test_replacement_fns_can_extend_registry(network, replacement, pattern):
+    _network = network.add_node("a").add_edges(("input", "a"), ("a", "output"))
+    expected_reg = Registry(
+        a=network.clear().with_attributes(attribute(type="added_during_replacement"))
+    )
+
+    def replace(match: DataGraph, registry: Registry):
+        return (replacement.add_edges(("start", "b"), ("b", "end")), expected_reg)
+
+    rule = PatternRule(
+        PatternRuleSpec(
+            pattern=DummyPattern(
+                graph=pattern,
+                interface={"start", "end"},
+                match=[dict(start="input", end="output")],
+            ),
+            replacement_fn=replace,
+        )
+    )
+    new_impl, reg = rule(network, Registry())
+    assert reg == expected_reg
