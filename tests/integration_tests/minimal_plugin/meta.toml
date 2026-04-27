@@ -4,7 +4,7 @@ target_platform = "elastic-node-v5"
 target_runtime = "vhdl"
 version = "0.1"
 api_version = "0.1"
-generated = ["convolution" ]
+generated = ["convolution"]
 
 [[plugins]]
 name = "lowering_pass_plugin"
@@ -12,4 +12,4 @@ target_platform = "testing"
 target_runtime = "lowering_pass_test"
 version = "0.1"
 api_version = "0.1"
-generated = ["lowering_pass_conv" ]
+generated = ["lowering_pass_conv"]

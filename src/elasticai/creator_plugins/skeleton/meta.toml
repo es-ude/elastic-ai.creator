@@ -6,10 +6,10 @@ version = "0.1"
 api_version = "0.1"
 generated = ["skeleton"]
 static_files = [
-    "skeleton_pkg.vhd",
-    "asymmetric_dual_port_bram.vhd",
-    "buffered_network_input_reader.vhd",
-    "skeleton_input_adapter.vhd",
-    "skeleton_network_runner.vhd",
-    "skeleton_inference_controller.vhd",
+  "skeleton_pkg.vhd",
+  "asymmetric_dual_port_bram.vhd",
+  "buffered_network_input_reader.vhd",
+  "skeleton_input_adapter.vhd",
+  "skeleton_network_runner.vhd",
+  "skeleton_inference_controller.vhd",
 ]
