@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator, Mapping
-from typing import Self, overload
+from typing import Any, Self, overload
 
 from .datagraph import DataGraph
 
@@ -56,3 +56,16 @@ class Registry[G: DataGraph](Mapping[str, G]):
 
     def add(self, name: str, graph: G) -> Self:
         return type(self)(**(self._data) | {name: graph})
+
+    def __repr__(self) -> str:
+        return f"Registry(**{repr(self._data)})"
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Registry):
+            if set(self.keys()) != other.keys():
+                return False
+            for k in self.keys():
+                if self[k] != other[k]:
+                    return False
+            return True
+        return False

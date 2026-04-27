@@ -366,6 +366,9 @@ class DataGraphImpl[N: Node, E: Edge](DataGraph[N, E]):
             node_attributes=node_attributes,
         )
 
+    def __repr__(self) -> str:
+        return f"DataGraphImpl(node_attributes={repr(self.node_attributes)}, attributes={repr(self.attributes)}, edges={repr(self._graph.successors)})"
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, DataGraphImpl):
             return False
