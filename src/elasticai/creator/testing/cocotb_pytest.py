@@ -5,6 +5,7 @@ import json
 from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Sequence
 from contextlib import ExitStack
 from functools import wraps
+from importlib.resources import Anchor
 from os import environ
 from pathlib import Path
 from typing import Any
@@ -131,6 +132,18 @@ class CocotbTestFixture:
             except (ModuleNotFoundError, FileNotFoundError):
                 pass
 
+    def add_srcs_from_package(self, package: Anchor, glob_pattern: str) -> None:
+        package_dir = importlib.resources.as_file(
+            importlib.resources.files(package),
+        )
+        opened_package_dir = self._context_stack.enter_context(package_dir)
+        self._srcs.extend(
+            (
+                str(p.absolute().as_posix())
+                for p in opened_package_dir.glob(glob_pattern)
+            )
+        )
+
     def _create_build_dir(self):
         build_test_subdir = create_name_for_build_test_subdir(
             self._test_fn, *self._args, **self._kwargs
@@ -159,6 +172,7 @@ class CocotbTestFixture:
         self._top_module_name = top_module_name
 
     def set_srcs(self, srcs: Iterable[str | Path]):
+        self._context_stack.close()
         self._srcs = list((str(s) for s in srcs))
 
     def add_srcs(self, *srcs: str | Path) -> None:

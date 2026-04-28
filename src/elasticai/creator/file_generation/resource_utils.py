@@ -13,6 +13,14 @@ def get_file_from_package(package: Package, file_name: str) -> ContextManager[Pa
     will take care of removing the resulting temporary files on __exit__
     """
     file_path = list(Path(file_name).parts)
+    if not isinstance(package, str):
+        package = package.__name__
+    package_parts = package.split(".")
+    while ".." == file_path[0]:
+        file_path.pop(0)
+        package_parts.pop(-1)
+    package = ".".join(package_parts)
+
     current_resource = resources.files(package)
     dir_contents = current_resource.iterdir()
     try:
