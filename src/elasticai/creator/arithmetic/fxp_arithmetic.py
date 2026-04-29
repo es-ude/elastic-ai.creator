@@ -2,6 +2,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, TypeVar, cast, overload
 
+from ._int_arith_protocol import IntArithmetic
 from .fxp_params import (
     ConvertableToFixedPointValues,
     FxpParams,
@@ -11,7 +12,7 @@ T = TypeVar("T", bound="ConvertableToFixedPointValues")
 
 
 @dataclass
-class FxpArithmetic:
+class FxpArithmetic(IntArithmetic):
     def __init__(self, fxp_params: FxpParams):
         self._config = fxp_params
 

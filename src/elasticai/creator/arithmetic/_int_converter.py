@@ -1,0 +1,25 @@
+from typing import Protocol
+
+from .fxp_converter import FxpConverter
+from .fxp_params import FxpParams
+
+
+def int_converter(total_bits: int, signed: bool) -> "IntConverter":
+    return FxpConverter(FxpParams(total_bits=total_bits, frac_bits=0, signed=signed))
+
+
+class IntConverter(Protocol):
+    @property
+    def total_bits(self) -> int: ...
+
+    def integer_to_binary_string_vhdl(self, number: int) -> str: ...
+
+    def integer_to_hex_string_vhdl(self, number: int) -> str: ...
+
+    def integer_to_binary_string_verilog(self, number: int) -> str: ...
+
+    def integer_to_decimal_string_verilog(self, number: int) -> str: ...
+
+    def integer_to_hex_string_verilog(self, number: int) -> str: ...
+
+    def binary_to_integer(self, binary: str) -> int: ...

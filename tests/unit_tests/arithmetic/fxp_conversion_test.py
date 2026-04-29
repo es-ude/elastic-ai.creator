@@ -1,3 +1,5 @@
+from itertools import chain
+
 import pytest
 from hypothesis import given, settings, strategies
 
@@ -5,22 +7,40 @@ from elasticai.creator.arithmetic.fxp_converter import FxpConverter, FxpParams
 
 
 @pytest.mark.parametrize(
-    "total_bits, frac_bits, number, check",
-    [
-        (2, 0, 1, '"01"'),
-        (2, 1, -1, '"11"'),
-        (4, 2, 1, '"0001"'),
-        (4, 2, -1, '"1111"'),
-        (4, 2, -3, '"1101"'),
-        (8, 4, -98, '"10011110"'),
-        (8, 4, 35, '"00100011"'),
-    ],
+    "total_bits, frac_bits, signed, number, check",
+    list(
+        chain(
+            [
+                (total, frac, True, number, check)
+                for total, frac, number, check in [
+                    (2, 0, 1, '"01"'),
+                    (2, 1, -1, '"11"'),
+                    (4, 2, 1, '"0001"'),
+                    (4, 2, -1, '"1111"'),
+                    (4, 2, -3, '"1101"'),
+                    (8, 4, -98, '"10011110"'),
+                    (8, 4, 35, '"00100011"'),
+                ]
+            ],
+            [
+                (total, frac, False, number, check)
+                for total, frac, number, check in [
+                    (2, 0, 3, '"11"'),
+                    (4, 0, 1, '"0001"'),
+                    (4, 0, 15, '"1111"'),
+                    (4, 0, 13, '"1101"'),
+                    (8, 0, 165, '"10100101"'),
+                    (8, 0, 35, '"00100011"'),
+                ]
+            ],
+        )
+    ),
 )
 def test_convert_integer_to_binary_vhdl(
-    total_bits: int, frac_bits: int, number: int, check: str
+    total_bits: int, frac_bits: int, signed: bool, number: int, check: str
 ):
     rslt = FxpConverter(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=signed)
     ).integer_to_binary_string_vhdl(number)
     assert rslt == check
 
@@ -42,6 +62,25 @@ def test_convert_integer_to_hex_vhdl(
 ):
     rslt = FxpConverter(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).integer_to_hex_string_vhdl(number)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, number, check",
+    [
+        (4, 0, 1, 'X"1"'),
+        (4, 0, 15, 'X"F"'),
+        (4, 0, 3, 'X"3"'),
+        (8, 0, 99, 'X"63"'),
+        (8, 0, 35, 'X"23"'),
+    ],
+)
+def test_convert_unsigned_int_to_hex_vhdl(
+    total_bits: int, frac_bits: int, number: int, check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=False)
     ).integer_to_hex_string_vhdl(number)
     assert rslt == check
 
@@ -227,6 +266,8 @@ def test_convert_rational_to_hex_verilog(
         (4, 2, True, "1101", -3),
         (8, 4, True, "10110110", -74),
         (8, 4, True, "00100110", 38),
+        (2, 1, False, "11", 3),
+        (2, 0, True, "10", -2),
     ],
 )
 def test_convert_binary_vhdl_to_integer(
