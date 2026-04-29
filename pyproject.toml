@@ -4,7 +4,7 @@ version = "0.68.0"
 description = "Design, train and compile neural networks optimized specifically for FPGAs."
 readme = "README.md"
 authors = [
-    { name = "Department Intelligent Embedded Systems - University Duisburg Essen" },
+    { name = "Intelligent Embedded Systems Lab - University of Duisburg Essen" },
 ]
 maintainers = [{ name = "Lukas Einhaus", email = "lukas.einhaus@uni-due.de" }]
 requires-python = ">=3.12"

@@ -8,7 +8,7 @@ Obtaining a final model is typically a three stage process.
 
 This version currently only supports parts of VHDL as target representations.
 
-The project is part of the elastic ai ecosystem developed by the Embedded Systems Department of the University Duisburg-Essen. For more details checkout the slides at [researchgate](https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial).
+The project is part of the ElasticAI ecosystem developed by the Intelligent Embedded Systems Lab of the University of Duisburg-Essen. For more details checkout the slides at [researchgate](https://www.researchgate.net/publication/356372207_In-Situ_Artificial_Intelligence_for_Self-_Devices_The_Elastic_AI_Ecosystem_Tutorial).
 
 
 
