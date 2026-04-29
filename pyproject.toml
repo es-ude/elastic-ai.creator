@@ -197,7 +197,7 @@ line-ending = "auto"
 root = ["./src"]
 
 [tool.pyrefly]
-search-path = ["elasticai/creator/", "elasticai/creator_plugins"]
+search-path = ["src/elasticai/creator/", "src/elasticai/creator_plugins"]
 
 [tool.mypy]
 ignore_errors = false

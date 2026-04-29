@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from math import ceil
-from typing import cast
+from typing import TypeVar, cast
 
-from elasticai.creator.arithmetic.fxp_arithmetic import FxpArithmetic
-from elasticai.creator.arithmetic.fxp_params import (
+from .fxp_arithmetic import FxpArithmetic
+from .fxp_params import (
     ConvertableToFixedPointValues,
     FxpParams,
-    T,
 )
+
+T = TypeVar("T", bound=ConvertableToFixedPointValues)
 
 
 @dataclass
@@ -91,28 +92,4 @@ class FxpConverter:
 
     def binary_to_rational(self, binary: str) -> float:
         int_val = self.binary_to_integer(binary)
-        return int_val * self._config.minimum_step_as_rational
-
-    def decimal_to_integer(self, binary: str) -> int:
-        format_binary = binary.split("d")[-1]
-        return int(format_binary) - (
-            (1 << self._config.total_bits)
-            if self._config.signed and format_binary[0] == "1"
-            else 0
-        )
-
-    def decimal_to_rational(self, binary: str) -> float:
-        int_val = self.decimal_to_integer(binary)
-        return int_val * self._config.minimum_step_as_rational
-
-    def hex_to_integer(self, binary: str) -> int:
-        format_binary = binary.replace('"', "").replace(" ", "").split("X")[-1]
-        return int(format_binary, 16) - (
-            (1 << self._config.total_bits)
-            if self._config.signed and format_binary[0] == "1"
-            else 0
-        )
-
-    def hex_to_rational(self, binary: str) -> float:
-        int_val = self.hex_to_integer(binary)
         return int_val * self._config.minimum_step_as_rational

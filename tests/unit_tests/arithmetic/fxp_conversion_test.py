@@ -1,4 +1,5 @@
 import pytest
+from hypothesis import given, settings, strategies
 
 from elasticai.creator.arithmetic.fxp_converter import FxpConverter, FxpParams
 
@@ -260,3 +261,56 @@ def test_convert_binary_vhdl_to_float(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=signed)
     ).binary_to_rational(number)
     assert rslt == expected
+
+
+@pytest.mark.parametrize("total_bits", [4, 8, 16])
+@pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
+@pytest.mark.parametrize("is_signed", [False, True])
+@given(data=strategies.data())
+@settings(max_examples=8)
+def test_convert_binary_string_to_rational_back(
+    total_bits: int, frac_bits: int, is_signed: bool, data: strategies.DataObject
+):
+    config = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+    val0 = data.draw(
+        strategies.integers(
+            min_value=config._config.minimum_as_integer,
+            max_value=config._config.maximum_as_integer,
+        )
+    )
+    val = val0 * config._config.minimum_step_as_rational
+    bin_vhdl_out = config.rational_to_binary_string_vhdl(val)
+    val_vhdl_out = config.binary_to_rational(bin_vhdl_out)
+    assert val == val_vhdl_out
+
+    bin_verilog_out = config.rational_to_binary_string_verilog(val)
+    val_verilog_out = config.binary_to_rational(bin_verilog_out)
+    assert val == val_verilog_out
+
+
+@pytest.mark.parametrize("total_bits", [4, 8, 16])
+@pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
+@pytest.mark.parametrize("is_signed", [False, True])
+@given(data=strategies.data())
+@settings(max_examples=8)
+def test_convert_binary_string_to_integer_back(
+    total_bits: int, frac_bits: int, is_signed: bool, data: strategies.DataObject
+):
+    params = FxpParams(total_bits, frac_bits=frac_bits, signed=is_signed)
+    config = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+    val = data.draw(
+        strategies.integers(
+            min_value=params.minimum_as_integer, max_value=params.maximum_as_integer
+        )
+    )
+    bin_vhdl_out = config.integer_to_binary_string_vhdl(val)
+    val_vhdl_out = config.binary_to_integer(bin_vhdl_out)
+    assert val == val_vhdl_out
+
+    bin_verilog_out = config.integer_to_binary_string_verilog(val)
+    val_verilog_out = config.binary_to_integer(bin_verilog_out)
+    assert val == val_verilog_out

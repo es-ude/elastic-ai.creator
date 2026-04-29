@@ -17,8 +17,8 @@ class RoundToFixedPoint(torch.autograd.Function):
             )
         x: torch.Tensor = args[0]
         config: FxpArithmetic = args[1]
-
-        fxp_ints = config.round_to_integer(x)
+        # false positive from mypy
+        fxp_ints = config.round_to_integer(x)  # type: ignore
         out_of_bounds = fxp_ints[config.integer_out_of_bounds(fxp_ints)]
         if torch.any(out_of_bounds):
             raise ValueError("Cannot quantize tensor. Values out of bounds.")
@@ -41,7 +41,8 @@ class CutToFixedPoint(torch.autograd.Function):
         x: torch.Tensor = args[0]
         config: FxpArithmetic = args[1]
 
-        fxp_ints = config.cut_as_integer(x)
+        # false positive from mypy
+        fxp_ints = config.cut_as_integer(x)  # type: ignore
         out_of_bounds = config.integer_out_of_bounds(fxp_ints)
         if torch.any(out_of_bounds):
             raise ValueError("Cannot quantize tensor. Values out of bounds.")
