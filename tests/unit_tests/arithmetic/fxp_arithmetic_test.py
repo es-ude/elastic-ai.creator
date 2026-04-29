@@ -5,6 +5,21 @@ from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from tests.tensor_test_case import assertTensorEqual
 
 
+@pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
+@pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_total_bits(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+    config = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    assert type(config.config) is FxpParams
+    assert config.config.total_bits == total_bits
+    assert config.config.frac_bits == frac_bits
+    assert config.total_bits == total_bits
+    assert config.frac_bits == frac_bits
+
+
 @pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
 def test_cut_float_to_integer_signed(total_bits: int, frac_bits: int) -> None:
     config = FxpArithmetic(
@@ -237,3 +252,86 @@ def test_integer_to_rational(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=signed)
     ).as_rational(val_in)
     assert result == val_out
+
+
+@pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
+@pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_clamp_integer(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+    sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    config = FxpArithmetic(fxp_params=sets)
+
+    stimuli = list()
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
+    stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
+    stimuli.extend(sets.maximum_as_integer + val for val in range(sets.total_bits))
+
+    check = list()
+    check.extend(sets.minimum_as_integer for _ in range(sets.total_bits))
+    check.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
+    check.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
+    check.extend(sets.maximum_as_integer for _ in range(sets.total_bits))
+
+    result = [config.clamp(val) for val in stimuli]
+    assert result == check
+
+    if frac_bits == 0:
+        result = config.clamp(torch.asarray(stimuli)).tolist()
+        assert result == check
+
+
+@pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
+@pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_clamp_float(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+    sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    config = FxpArithmetic(fxp_params=sets)
+
+    stimuli = list()
+    stimuli.extend(
+        sets.minimum_as_rational
+        - (sets.total_bits - val) * sets.minimum_step_as_rational
+        for val in range(sets.total_bits)
+    )
+    stimuli.extend(
+        sets.minimum_as_rational + val * sets.minimum_step_as_rational
+        for val in range(sets.total_bits)
+    )
+    stimuli.extend(
+        sets.maximum_as_rational
+        - (sets.total_bits - val) * sets.minimum_step_as_rational
+        for val in range(sets.total_bits)
+    )
+    stimuli.extend(
+        sets.maximum_as_rational + val * sets.minimum_step_as_rational
+        for val in range(sets.total_bits)
+    )
+
+    check = list()
+    check.extend(sets.minimum_as_rational for _ in range(sets.total_bits))
+    check.extend(
+        sets.minimum_as_rational + val * sets.minimum_step_as_rational
+        for val in range(sets.total_bits)
+    )
+    check.extend(
+        sets.maximum_as_rational
+        - (sets.total_bits - val) * sets.minimum_step_as_rational
+        for val in range(sets.total_bits)
+    )
+    check.extend(sets.maximum_as_rational for _ in range(sets.total_bits))
+
+    result = [config.clamp(val) for val in stimuli]
+    assert result == check
+
+    result = config.clamp(torch.asarray(stimuli)).tolist()
+    assert result == check

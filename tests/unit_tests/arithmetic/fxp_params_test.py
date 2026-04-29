@@ -1,4 +1,5 @@
 import pytest
+import torch
 
 from elasticai.creator.arithmetic.fxp_converter import (
     FxpParams,
@@ -112,13 +113,21 @@ def test_fxp_maximum_as_rational(
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
 @pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
 @pytest.mark.parametrize("is_signed", [False, True])
-def test_integer_out_of_bounds(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+def test_integer_out_of_bounds(
+    total_bits: int, frac_bits: int, is_signed: bool
+) -> None:
     sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
 
     stimuli = list()
-    stimuli.extend(sets.minimum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
-    stimuli.extend(sets.maximum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.maximum_as_integer + 1 + val for val in range(sets.total_bits))
 
     check = list()
@@ -130,6 +139,9 @@ def test_integer_out_of_bounds(total_bits: int, frac_bits: int, is_signed: bool)
     rslt = [sets.integer_out_of_bounds(val) for val in stimuli]
     assert rslt == check
 
+    rslt = sets.integer_out_of_bounds(torch.asarray(stimuli)).tolist()
+    assert rslt == check
+
 
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
 @pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
@@ -138,9 +150,15 @@ def test_integer_overflow(total_bits: int, frac_bits: int, is_signed: bool) -> N
     sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
 
     stimuli = list()
-    stimuli.extend(sets.minimum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
-    stimuli.extend(sets.maximum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.maximum_as_integer + 1 + val for val in range(sets.total_bits))
 
     check = list()
@@ -152,6 +170,9 @@ def test_integer_overflow(total_bits: int, frac_bits: int, is_signed: bool) -> N
     rslt = [sets.integer_out_overflow(val) for val in stimuli]
     assert rslt == check
 
+    rslt = sets.integer_out_overflow(torch.asarray(stimuli)).tolist()
+    assert rslt == check
+
 
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
 @pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
@@ -160,9 +181,15 @@ def test_integer_underflow(total_bits: int, frac_bits: int, is_signed: bool) -> 
     sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
 
     stimuli = list()
-    stimuli.extend(sets.minimum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
-    stimuli.extend(sets.maximum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.maximum_as_integer + 1 + val for val in range(sets.total_bits))
 
     check = list()
@@ -174,18 +201,30 @@ def test_integer_underflow(total_bits: int, frac_bits: int, is_signed: bool) -> 
     rslt = [sets.integer_out_underflow(val) for val in stimuli]
     assert rslt == check
 
+    rslt = sets.integer_out_underflow(torch.asarray(stimuli)).tolist()
+    assert rslt == check
+
 
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
 @pytest.mark.parametrize("frac_bits", [0, 1, 2, 3])
 @pytest.mark.parametrize("is_signed", [False, True])
-def test_rational_out_of_bounds(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+def test_rational_out_of_bounds(
+    total_bits: int, frac_bits: int, is_signed: bool
+) -> None:
     sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
 
     stimuli = list()
-    stimuli.extend(sets.minimum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
-    stimuli.extend(sets.maximum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.maximum_as_integer + 1 + val for val in range(sets.total_bits))
+    stimuli = [val * sets.minimum_step_as_rational for val in stimuli]
 
     check = list()
     check.extend(True for _ in range(sets.total_bits))
@@ -193,7 +232,10 @@ def test_rational_out_of_bounds(total_bits: int, frac_bits: int, is_signed: bool
     check.extend(False for _ in range(sets.total_bits))
     check.extend(True for _ in range(sets.total_bits))
 
-    rslt = [sets.rational_out_of_bounds(val * sets.minimum_step_as_rational) for val in stimuli]
+    rslt = [sets.rational_out_of_bounds(val) for val in stimuli]
+    assert rslt == check
+
+    rslt = sets.rational_out_of_bounds(torch.asarray(stimuli)).tolist()
     assert rslt == check
 
 
@@ -204,10 +246,17 @@ def test_rational_overflow(total_bits: int, frac_bits: int, is_signed: bool) -> 
     sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
 
     stimuli = list()
-    stimuli.extend(sets.minimum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
-    stimuli.extend(sets.maximum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.maximum_as_integer + 1 + val for val in range(sets.total_bits))
+    stimuli = [val * sets.minimum_step_as_rational for val in stimuli]
 
     check = list()
     check.extend(False for _ in range(sets.total_bits))
@@ -215,7 +264,10 @@ def test_rational_overflow(total_bits: int, frac_bits: int, is_signed: bool) -> 
     check.extend(False for _ in range(sets.total_bits))
     check.extend(True for _ in range(sets.total_bits))
 
-    rslt = [sets.rational_out_overflow(val * sets.minimum_step_as_rational) for val in stimuli]
+    rslt = [sets.rational_out_overflow(val) for val in stimuli]
+    assert rslt == check
+
+    rslt = sets.rational_out_overflow(torch.asarray(stimuli)).tolist()
     assert rslt == check
 
 
@@ -226,10 +278,17 @@ def test_rational_underflow(total_bits: int, frac_bits: int, is_signed: bool) ->
     sets = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
 
     stimuli = list()
-    stimuli.extend(sets.minimum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.minimum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.minimum_as_integer + val for val in range(sets.total_bits))
-    stimuli.extend(sets.maximum_as_integer - sets.total_bits + val for val in range(sets.total_bits))
+    stimuli.extend(
+        sets.maximum_as_integer - sets.total_bits + val
+        for val in range(sets.total_bits)
+    )
     stimuli.extend(sets.maximum_as_integer + 1 + val for val in range(sets.total_bits))
+    stimuli = [val * sets.minimum_step_as_rational for val in stimuli]
 
     check = list()
     check.extend(True for _ in range(sets.total_bits))
@@ -237,5 +296,8 @@ def test_rational_underflow(total_bits: int, frac_bits: int, is_signed: bool) ->
     check.extend(False for _ in range(sets.total_bits))
     check.extend(False for _ in range(sets.total_bits))
 
-    rslt = [sets.rational_out_underflow(val * sets.minimum_step_as_rational) for val in stimuli]
+    rslt = [sets.rational_out_underflow(val) for val in stimuli]
+    assert rslt == check
+
+    rslt = sets.rational_out_underflow(torch.asarray(stimuli)).tolist()
     assert rslt == check

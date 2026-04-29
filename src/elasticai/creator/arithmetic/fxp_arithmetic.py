@@ -87,3 +87,39 @@ class FxpArithmetic:
 
     def as_rational(self, number: int | T) -> float | T:
         return number * self._config.minimum_step_as_rational
+
+    @overload
+    def clamp(self, number: int) -> int: ...
+
+    @overload
+    def clamp(self, number: float) -> float: ...
+
+    @overload
+    def clamp(self, number: T) -> T: ...
+
+    def clamp(self, number: float | int | T) -> float | int | T:
+        if isinstance(number, ConvertableToFixedPointValues):
+            return self._clamp_T_to_T(cast(T, number))
+        elif isinstance(number, float):
+            return self._clamp_for_float(number)
+        else:
+            return self._clamp_for_integer(number)
+
+    def _clamp_T_to_T(self, number: T) -> T:
+        return number.clamp(min=self.minimum_as_rational, max=self.maximum_as_rational)
+
+    def _clamp_for_float(self, number: float) -> float:
+        if self._config.rational_out_overflow(number):
+            return self._config.maximum_as_rational
+        elif self._config.rational_out_underflow(number):
+            return self._config.minimum_as_rational
+        else:
+            return number
+
+    def _clamp_for_integer(self, number: int) -> int:
+        if self._config.integer_out_overflow(number):
+            return self._config.maximum_as_integer
+        elif self._config.integer_out_underflow(number):
+            return self._config.minimum_as_integer
+        else:
+            return number

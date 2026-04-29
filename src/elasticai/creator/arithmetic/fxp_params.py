@@ -12,6 +12,10 @@ class ConvertableToFixedPointValues(Protocol[T]):
 
     def float(self: T) -> T: ...
 
+    def clamp(
+        self: T, min: Union[int, float, T] = None, max: Union[int, float, T] = None
+    ) -> T: ...
+
     def __gt__(self: T, other: Union[int, float, T]) -> T:  # type: ignore
         ...
 
