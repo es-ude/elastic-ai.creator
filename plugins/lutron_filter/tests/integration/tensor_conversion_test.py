@@ -1,6 +1,7 @@
 from collections import namedtuple
 from unittest import TestCase
 
+import pytest
 import torch
 from elasticai.creator_plugins.lutron_filter.tensor_conversion import (
     lutron_to_torch1d,
@@ -63,8 +64,26 @@ class ConvertingTorchToLutron1dTensorFormatTest(TestCase):
         self.assertEqual(expected.tolist(), actual.tolist())
 
     def test_lutron_to_torch_3x2_batched(self):
-        expected = torch.tensor([[[0, 3], [1, 4], [2, 5]], [[6, 9], [7, 10], [8, 11]]])
-        x = torch.tensor([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+        expected = torch.tensor(
+            [
+                [
+                    [0, 3],
+                    [1, 4],
+                    [2, 5],
+                ],
+                [
+                    [6, 9],
+                    [7, 10],
+                    [8, 11],
+                ],
+            ]
+        )
+        x = torch.tensor(
+            [
+                [0, 1, 2, 3, 4, 5],
+                [6, 7, 8, 9, 10, 11],
+            ]
+        )
         actual = lutron_to_torch1d(x, channels=3)
         self.assertEqual(expected.tolist(), actual.tolist())
 
@@ -103,6 +122,57 @@ class IOTensor1DToBitStringListConverterTest(TestCase):
         ]
         actual = torch1d_input_tensor_to_grouped_strings(x, groups=2)
         self.assertEqual(expected, actual)
+
+
+@pytest.mark.parametrize(
+    "input,groups, expected",
+    [
+        (
+            [
+                [
+                    [0, 3],
+                    [1, 4],
+                    [2, 5],
+                ],
+            ],
+            3,
+            [
+                ["03"],
+                ["14"],
+                ["25"],
+            ],
+        ),
+        (
+            [
+                [
+                    [0],
+                    [1],
+                    [2],
+                ]
+            ],
+            1,
+            [["012"]],
+        ),
+        (
+            [
+                [
+                    [0, 4],
+                    [1, 5],
+                    [2, 6],
+                    [3, 7],
+                ],
+            ],
+            2,
+            [
+                ["0415"],
+                ["2637"],
+            ],
+        ),
+    ],
+)
+def test_convert_torch_to_grouped_string(input, groups, expected):
+    x = torch.tensor(input)
+    assert expected == torch1d_input_tensor_to_grouped_strings(x, groups)
 
 
 class ConvertingBatchOfFlatTensorsToIOStringsWithSingleGroup(TestCase):
