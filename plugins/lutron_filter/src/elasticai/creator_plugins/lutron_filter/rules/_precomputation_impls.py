@@ -102,7 +102,7 @@ class PrecomputeLinear(_BasePrecompute):
         linear.weight.data = torch.tensor(
             graph.attributes["parameters"]["weight"], dtype=torch.float32
         )
-        if linear.bias:
+        if linear.bias is not None:
             linear.bias.data = torch.tensor(
                 graph.attributes["parameters"]["bias"], dtype=torch.float32
             )
