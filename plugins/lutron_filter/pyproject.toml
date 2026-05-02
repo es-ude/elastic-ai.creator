@@ -6,11 +6,15 @@ dependencies = [
   "elasticai-creator",
   "matplotlib>=3.10.9",
   "networkx>=3.6.1",
+  "torch>=2.11.0",
 ]
 
 [build-system]
 requires = ["uv_build>=0.11.8,<0.12"]
 build-backend = "uv_build"
+
+[tool.ty.environment]
+root = ["./src"]
 
 [tool.uv.build-backend]
 module-name = "elasticai.creator_plugins.lutron_filter"

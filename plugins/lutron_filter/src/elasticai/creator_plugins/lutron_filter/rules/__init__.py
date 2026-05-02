@@ -1,6 +1,7 @@
 from ._binarize_activations import binarize_activations
 from ._precomputation import PrecomputationStrategy, make_precompute_rule
 from ._precomputation_impls import precompute_linear
+from ._remove_redundant_layers import remove_redundant_layers
 from ._reorder import reorder
 from ._shape_inference import (
     AttachFilterParametersRule,
@@ -21,4 +22,5 @@ __all__ = [
     "make_split_conv_rule",
     "precompute_linear",
     "reorder",
+    "remove_redundant_layers",
 ]

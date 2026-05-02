@@ -11,6 +11,7 @@ from .rules import (
     binarize_activations,
     make_split_conv_rule,
     precompute_linear,
+    remove_redundant_layers,
     reorder,
 )
 from .rules._ir import DataGraph, Registry, build_sequential_ir
@@ -36,6 +37,7 @@ __all__ = [
     "get_default_torch2ir",
     "make_split_conv_rule",
     "precompute_linear",
+    "remove_redundant_layers",
     "reorder",
     "torch1d_input_tensor_to_grouped_strings",
 ]

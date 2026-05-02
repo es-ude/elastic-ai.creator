@@ -744,6 +744,7 @@ dependencies = [
     { name = "elasticai-creator" },
     { name = "matplotlib" },
     { name = "networkx" },
+    { name = "torch" },
 ]
 
 [package.metadata]
@@ -751,6 +752,7 @@ requires-dist = [
     { name = "elasticai-creator", editable = "." },
     { name = "matplotlib", specifier = ">=3.10.9" },
     { name = "networkx", specifier = ">=3.6.1" },
+    { name = "torch", specifier = ">=2.11.0", index = "https://pypi.org/simple" },
 ]
 
 [[package]]
