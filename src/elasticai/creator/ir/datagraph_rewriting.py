@@ -187,7 +187,7 @@ class PatternRule[G: DataGraph]:
                 if dst in original.successors[src]:
                     edges_to_keep.append((src, dst, original.successors[src][dst]))
 
-        name_generator = _NameGenerator(_NameRegistry().prepopulate(nodes_to_keep))
+        name_generator = _NameGenerator(NameRegistry().prepopulate(nodes_to_keep))
         old_to_new_replacement_names = {}
         for node in nodes_to_add:
             old_to_new_replacement_names[node] = name_generator.get_name(node)
@@ -234,7 +234,7 @@ def _create_remapped_graph[G: DataGraph](original: G, mapping: dict[str, str]) -
     return remapped_dgraph
 
 
-class _NameRegistry:
+class NameRegistry:
     def __init__(self):
         self._registry = {}
 
@@ -263,7 +263,7 @@ class _NameRegistry:
 
 
 class _NameGenerator:
-    def __init__(self, registry: _NameRegistry) -> None:
+    def __init__(self, registry: NameRegistry) -> None:
         self._registry = registry
 
     def get_name(self, name: str) -> str:
