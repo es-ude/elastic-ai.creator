@@ -164,7 +164,7 @@ minversion = "9.0"
 python_files = ["*_test.py", "test_*.py"]
 pythonpath = ["."]
 testpaths = [
-  "plugins/**/tests",
+  "plugins/*/tests",
   "src/elasticai/creator/experimental/**/tests",
   "src/elasticai/creator/nn/integer/",
   "src/elasticai/creator_plugins/**/tests",
@@ -247,7 +247,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ty.environment]
-root = ["./src"]
+root = ["./src", "./plugins/*/src/"]
 
 [tool.uv]
 default-groups = ["utils", "testing", "lint", "dev", "docs", "non-nixos"]

@@ -1,6 +1,5 @@
 import pytest
 import torch
-
 from elasticai.creator_plugins.lutron_filter.nn import Binarize
 from elasticai.creator_plugins.lutron_filter.precompute.truth_table_generation import (
     generate_input_tensor_1d as generate_1d_input_tensor,

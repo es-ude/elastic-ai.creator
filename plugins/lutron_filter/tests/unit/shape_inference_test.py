@@ -3,16 +3,16 @@
 from collections.abc import Callable
 
 import pytest
-from elasticai.creator_plugins.lutron_filter.rules import _ir as ir
-from elasticai.creator_plugins.lutron_filter.rules.shape_inference import (
+from elasticai.creator_plugins.lutron_filter import (
     AttachFilterParametersRule as AttachFilterParameters,
 )
-from elasticai.creator_plugins.lutron_filter.rules.shape_inference import (
+from elasticai.creator_plugins.lutron_filter import (
     InferMaxPool1dInChannelsRule as InferMaxPool1dInChannels,
 )
-from elasticai.creator_plugins.lutron_filter.rules.shape_inference import (
+from elasticai.creator_plugins.lutron_filter import (
     InferNodeShapesRule,
 )
+from elasticai.creator_plugins.lutron_filter.rules import _ir as ir
 
 from elasticai.creator.ir2vhdl import (
     Shape,

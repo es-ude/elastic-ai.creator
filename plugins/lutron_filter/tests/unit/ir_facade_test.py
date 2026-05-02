@@ -1,6 +1,6 @@
+import elasticai.creator_plugins.lutron_filter.rules._ir as _ir
 import pytest
 
-import elasticai.creator_plugins.lutron_filter.rules._ir as _ir
 from elasticai.creator.ir import attribute
 from elasticai.creator.ir.datagraph_impl import DefaultIrFactory as Factory
 from elasticai.creator.ir.serializer import IrSerializer

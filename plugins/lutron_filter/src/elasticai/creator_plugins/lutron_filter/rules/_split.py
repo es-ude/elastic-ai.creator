@@ -1,7 +1,6 @@
 from collections.abc import Callable, Iterator
 
 from elasticai.creator.ir import AttributeMapping, attribute
-from elasticai.creator.ir import DataGraph as _BaseDGraph
 from elasticai.creator_plugins.grouped_filter import FilterParameters
 
 from ._ir import (
@@ -23,7 +22,7 @@ FilterParamsProducer = Callable[[FilterParameters], tuple[FilterParameters, ...]
 def make_split_conv_rule(
     replacer: FilterParamsProducer,
     additional_node_constraint: Callable[[Node, Node], bool] = lambda _, __: True,
-) -> Rule[_BaseDGraph, DataGraph]:
+) -> Rule[DataGraph, DataGraph]:
 
     return pattern_rule(
         graph=sequential_with_interface("conv1d"),

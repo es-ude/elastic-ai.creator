@@ -1,17 +1,16 @@
 from abc import abstractmethod
 
 import pytest
-
-from elasticai.creator.graph.graph_rewriting import get_rewriteable_matches
-from elasticai.creator.ir.datagraph import DataGraph
-from elasticai.creator.ir.datagraph_rewriting import StdPattern
-from elasticai.creator.ir.registry import Registry
+from elasticai.creator_plugins.lutron_filter import DataGraph, reorder
 from elasticai.creator_plugins.lutron_filter.rules import _ir
-from elasticai.creator_plugins.lutron_filter.rules.reorder import (
+from elasticai.creator_plugins.lutron_filter.rules._reorder import (
     _make_constraint,
     _pattern_graph,
-    reorder,
 )
+
+from elasticai.creator.graph.graph_rewriting import get_rewriteable_matches
+from elasticai.creator.ir.datagraph_rewriting import StdPattern
+from elasticai.creator.ir.registry import Registry
 
 
 @pytest.fixture

@@ -20,7 +20,7 @@ def pretty_log_debug(g: dgraph.ReadOnlyDataGraph):
     logger.debug(pformat(serialized), stacklevel=2)
 
 
-def _pattern_graph() -> dgraph.DataGraph[dgraph.Node, dgraph.Edge]:
+def _pattern_graph() -> _DataGraph:
     return _sequential("maxpool1d", "batchnorm1d", "binarize")
 
 
@@ -40,7 +40,7 @@ def _make_constraint(_: Registry[_DataGraph], /) -> _NodeConstraint:
 
 def _replacement_fn(
     match: _DataGraph, registry: Registry[_DataGraph]
-) -> tuple[_DataGraph, Registry]:
+) -> tuple[_DataGraph, Registry[_DataGraph]]:
     logger.debug("replacing match {}".format(dict(match.nodes)))
 
     bnorm = registry[match.nodes["batchnorm1d"].implementation]

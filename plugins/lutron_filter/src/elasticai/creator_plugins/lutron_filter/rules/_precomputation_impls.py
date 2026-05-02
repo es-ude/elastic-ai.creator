@@ -19,7 +19,7 @@ import elasticai.creator.ir.datagraph_rewriting as _rew
 from elasticai.creator.ir2vhdl import Shape
 
 from ._ir import DataGraph, Node, NodeConstraint, Registry, sequential_with_interface
-from .precomputation import (
+from ._precomputation import (
     FilterParameters,
     PrecomputationStrategy,
     make_precompute_rule,
@@ -53,14 +53,11 @@ class _BasePrecompute(PrecomputationStrategy):
     @abstractmethod
     def _build_lutron_module(self, filter_params: FilterParameters) -> LutronModule: ...
 
-    @abstractmethod
-    def _extract_filter_parameters(self) -> FilterParameters: ...
-
     @override
     def get_io_pairs(self) -> Iterable[Iterable[tuple[str, str]]]:
         graph, registry = self._module
 
-        filter_params = self._extract_filter_parameters()
+        filter_params = self.get_filter_parameters()
         inputs, outputs = self._build_lutron_module(filter_params).generate_io_tensors()
 
         def to_bits(x):
@@ -117,7 +114,7 @@ class PrecomputeLinear(_BasePrecompute):
         lutron_linear.eval()
         return lutron_linear
 
-    def _extract_filter_params(self) -> FilterParameters:
+    def get_filter_parameters(self) -> FilterParameters:
         g = self._get_impl("linear")
         return FilterParameters(
             kernel_size=1,
@@ -144,7 +141,7 @@ class _PrecomputeMaxPool(_BasePrecompute):
         return pattern_node.type == graph_node.type
 
     @override
-    def _extract_filter_parameters(self) -> FilterParameters:
+    def get_filter_parameters(self) -> FilterParameters:
         maxpool_impl = self._get_impl("maxpool1d")
         attrs = maxpool_impl.attributes
         network, _ = self._module

@@ -1,10 +1,12 @@
 import pytest
-from elasticai.creator_plugins.lutron_filter.rules.split import make_split_conv_rule
+from elasticai.creator_plugins.lutron_filter import make_split_conv_rule
+from elasticai.creator_plugins.lutron_filter.rules import _ir as ir
+from elasticai.creator_plugins.lutron_filter.rules._ir import (
+    FilterDecorator,
+)
 from pytest import Subtests
 
 from elasticai.creator_plugins.grouped_filter import FilterParameters
-from elasticai.creator_plugins.lutron_filter.rules import _ir as ir
-from elasticai.creator_plugins.lutron_filter.rules._ir import FilterDecorator
 
 
 def conv1d(

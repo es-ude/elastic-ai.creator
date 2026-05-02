@@ -2,7 +2,6 @@ from collections import namedtuple
 from unittest import TestCase
 
 import torch
-
 from elasticai.creator_plugins.lutron_filter.tensor_conversion import (
     lutron_to_torch1d,
     torch1d_input_tensor_to_grouped_strings,

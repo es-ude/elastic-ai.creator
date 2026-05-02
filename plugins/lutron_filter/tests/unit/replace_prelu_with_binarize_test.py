@@ -1,14 +1,14 @@
 from itertools import starmap
 
 import pytest
+from elasticai.creator_plugins.lutron_filter import (
+    binarize_activations as replace_prelu_with_binarize,
+)
 
 from elasticai.creator.ir import attribute
 from elasticai.creator.ir.datagraph import Node
 from elasticai.creator.ir.datagraph_impl import DefaultIrFactory as IrFactory
 from elasticai.creator.ir.registry import Registry
-from elasticai.creator_plugins.lutron_filter.rules.binarize_activations import (
-    binarize_activations as replace_prelu_with_binarize,
-)
 
 
 @pytest.fixture

@@ -2,12 +2,12 @@ from collections.abc import Iterable
 from typing import override
 
 import pytest
-from elasticai.creator_plugins.lutron_filter.rules import _ir as ir
-from elasticai.creator_plugins.lutron_filter.rules.precomputation import (
+from elasticai.creator_plugins.lutron_filter.rules import (
     FilterParameters,
     PrecomputationStrategy,
     make_precompute_rule,
 )
+from elasticai.creator_plugins.lutron_filter.rules import _ir as ir
 
 import elasticai.creator.ir.datagraph_rewriting as _rew
 from elasticai.creator.ir import AttributeMapping

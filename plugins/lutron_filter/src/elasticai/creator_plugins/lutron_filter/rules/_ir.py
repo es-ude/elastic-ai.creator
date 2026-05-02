@@ -266,7 +266,7 @@ class Pattern(ir.Pattern):
 
 
 def pattern_rule(
-    graph: _BaseDataGraph[_Node, Edge],
+    graph: DataGraph,
     replacement_fn: Callable[
         [DataGraph, Registry[DataGraph]], tuple[DataGraph, Registry[DataGraph]]
     ],
@@ -274,7 +274,7 @@ def pattern_rule(
         [ir.Registry[DataGraph]], NodeConstraint
     ] = make_default_constraint,
     interface=("start", "end"),
-) -> Rule[ir.DataGraph, DataGraph]:
+) -> Rule[DataGraph, DataGraph]:
     def wrap_replace(
         match: ir.DataGraph, registry: ir.Registry
     ) -> tuple[DataGraph, ir.Registry[DataGraph]]:
