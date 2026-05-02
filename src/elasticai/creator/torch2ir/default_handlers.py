@@ -5,13 +5,13 @@ import torch.nn as nn
 handlers: list[Callable[[nn.Module], dict]] = []
 
 
-def _register(fn):
+def _register(fn: Callable[[nn.Module], dict]) -> Callable[[nn.Module], dict]:
     handlers.append(fn)
     return fn
 
 
 @_register
-def conv1d(module: nn.Conv1d) -> dict:
+def conv1d(module: nn.Module) -> dict:
     return {
         "in_channels": module.in_channels,
         "out_channels": module.out_channels,
@@ -26,7 +26,7 @@ def conv1d(module: nn.Conv1d) -> dict:
 
 
 @_register
-def maxpool1d(module: nn.MaxPool1d) -> dict:
+def maxpool1d(module: nn.Module) -> dict:
     return {
         "kernel_size": module.kernel_size,
         "stride": module.stride,
@@ -38,7 +38,7 @@ def maxpool1d(module: nn.MaxPool1d) -> dict:
 
 
 @_register
-def linear(module: nn.Linear) -> dict:
+def linear(module: nn.Module) -> dict:
     return {
         "in_features": module.in_features,
         "out_features": module.out_features,
@@ -47,7 +47,7 @@ def linear(module: nn.Linear) -> dict:
 
 
 @_register
-def batchnorm1d(module: nn.BatchNorm1d) -> dict:
+def batchnorm1d(module: nn.Module) -> dict:
     return {
         "num_features": module.num_features,
         "affine": module.affine,
@@ -55,22 +55,25 @@ def batchnorm1d(module: nn.BatchNorm1d) -> dict:
 
 
 @_register
-def flatten(module: nn.Flatten) -> dict:
+def flatten(module: nn.Module) -> dict:
     return {"start_dim": module.start_dim, "end_dim": module.end_dim}
 
 
 @_register
-def relu(module: nn.ReLU) -> dict:
+def relu(module: nn.Module) -> dict:
     return {}
 
 
 @_register
-def sigmoid(module: nn.Sigmoid) -> dict:
+def sigmoid(module: nn.Module) -> dict:
     return {}
 
+@_register
+def prelu(_: nn.Module) -> dict:
+    return {}
 
 @_register
-def conv2d(module: nn.Conv2d) -> dict:
+def conv2d(module: nn.Module) -> dict:
     return {
         "in_channels": module.in_channels,
         "out_channels": module.out_channels,
@@ -85,7 +88,7 @@ def conv2d(module: nn.Conv2d) -> dict:
 
 
 @_register
-def batchnorm2d(module: nn.BatchNorm2d) -> dict:
+def batchnorm2d(module: nn.Module) -> dict:
     return {
         "num_features": module.num_features,
         "affine": module.affine,
@@ -93,7 +96,7 @@ def batchnorm2d(module: nn.BatchNorm2d) -> dict:
 
 
 @_register
-def maxpool2d(module: nn.MaxPool2d) -> dict:
+def maxpool2d(module: nn.Module) -> dict:
     return {
         "kernel_size": module.kernel_size,
         "stride": module.stride,
@@ -103,7 +106,7 @@ def maxpool2d(module: nn.MaxPool2d) -> dict:
 
 
 @_register
-def adaptiveavgpool2d(module: nn.AdaptiveAvgPool2d) -> dict:
+def adaptiveavgpool2d(module: nn.Module) -> dict:
     return {
         "output_size": module.output_size,
     }
