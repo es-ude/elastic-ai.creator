@@ -93,16 +93,16 @@ def conv1d(
                 )
 
     attr = dg_node.attributes
-    padding = attr.get("padding")
+    padding = attr.get_int("padding", 0)
     if isinstance(padding, (tuple, list)):
         padding = padding[0]
     return conv1d_output_shape(
         x_shape=validate_shape(input_shapes),
         out_channels=cast(int, attr.get("out_channels")),
-        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
+        kernel_size=_unwrap1(attr.get_int("kernel_size")),
         stride=cast(int, _unwrap1(attr.get("stride"))),
         padding=cast(Padding, padding),
-        dilation=cast(int, _unwrap1(attr.get("dilation"))),
+        dilation=cast(int, _unwrap1(attr.get_int("dilation", 1))),
     )
 
 
@@ -150,9 +150,9 @@ def maxpool1d(
         x_shape=x_shape,
         kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
         stride=cast(int, _unwrap1(attr.get("stride"))),
-        padding=cast(int, _unwrap1(attr.get("padding"))),
-        dilation=cast(int, _unwrap1(attr.get("dilation"))),
-        ceil_mode=cast(bool, attr.get("ceil_mode", False)),
+        padding=cast(int, _unwrap1(attr["padding"])),
+        dilation=cast(int, _unwrap1(attr["dilation"])),
+        ceil_mode=attr.get_bool("ceil_mode", False),
     )
 
 
