@@ -1,15 +1,20 @@
 import warnings
 from typing import Callable, Generic, TypeVar, overload
 
+
+def compose_fns[*T](*fns: Callable[[*T], tuple[*T]]) -> Callable[[*T], tuple[*T]]:
+
+    def composed(*args: *T) -> tuple[*T]:
+        for fn in fns:
+            args = fn(*args)
+        return args
+
+    return composed  # pyrefly: ignore
+
+
 Tin = TypeVar("Tin")
 Tout = TypeVar("Tout")
 FN = TypeVar("FN", bound=Callable)
-
-warnings.warn(
-    "function_utils module is deprecated, use function_dispatch module instead",
-    DeprecationWarning,
-    stacklevel=2,
-)
 
 
 class FunctionDecorator(Generic[FN, Tout]):
@@ -66,6 +71,11 @@ class FunctionDecorator(Generic[FN, Tout]):
     """
 
     def __init__(self, callback: Callable[[str, FN], Tout]):
+        warnings.warn(
+            "function_utils module is deprecated, use function_dispatch module instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._cb = callback
 
     @overload
@@ -149,6 +159,11 @@ class KeyedFunctionDispatcher(Generic[Tin, Tout]):
     register: FunctionDecoratorDescriptor[Tin, Tout] = FunctionDecoratorDescriptor()
 
     def __init__(self, dispatch_key_fn: Callable[[Tin], str]) -> None:
+        warnings.warn(
+            "function_utils module is deprecated, use function_dispatch module instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._key_fn = dispatch_key_fn
         self._fns: dict[str, Callable[[Tin], Tout]] = dict()
 
