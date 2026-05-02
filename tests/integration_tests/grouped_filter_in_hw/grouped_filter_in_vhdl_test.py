@@ -1,11 +1,11 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from itertools import batched
 from pathlib import Path
 
 import cocotb as ctb
 import pytest
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
-from cocotb.types import LogicArray
 
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.ir as ir
@@ -130,6 +130,23 @@ def create_ir2ir_translator():
     return ir2ir
 
 
+def make_inputs() -> Iterator[str]:
+    for i in range(2**4):
+        yield f"{i:04b}"
+
+
+def make_ab_tt(input: str) -> str:
+    if input == "0101":
+        return "1"
+    return "0"
+
+
+def make_dc_tt(input: str) -> str:
+    if input == "0011":
+        return "1"
+    return "0"
+
+
 def create_ir2vhdl_translator():
     to_vhdl = ir2vhdl.Ir2Vhdl()
     _loader = ir2vhdl.PluginLoader(to_vhdl)
@@ -143,6 +160,11 @@ def translate(graph: DataGraph, registry: Registry, build_dir: Path):
     ir2ir = create_ir2ir_translator()
     to_vhdl = create_ir2vhdl_translator()
     lowered_graph, lowered_reg = ir2ir(graph, registry)
+    lowered_reg = lowered_reg.add("network", lowered_graph)
+    lowered_reg = ir2vhdl.collect_transitive_implementation_closure(
+        "network", lowered_reg
+    )
+
     code = to_vhdl(lowered_graph, lowered_reg)
 
     def add_separators(lines):
@@ -157,7 +179,7 @@ def translate(graph: DataGraph, registry: Registry, build_dir: Path):
 
 def build_ir() -> tuple[DataGraph, Registry]:
     factory = ir2vhdl.IrFactory()
-    channels = 2
+    channels = 4
     network = (
         factory.graph(
             name="network",
@@ -167,8 +189,8 @@ def build_ir() -> tuple[DataGraph, Registry]:
             factory.node(
                 "input",
                 type="input",
-                input_shape=ir2vhdl.Shape(channels, 1),
-                output_shape=ir2vhdl.Shape(channels, 1),
+                input_shape=ir2vhdl.Shape(channels, 2),
+                output_shape=ir2vhdl.Shape(channels, 2),
             ),
             factory.node(
                 "output",
@@ -180,78 +202,96 @@ def build_ir() -> tuple[DataGraph, Registry]:
                 "conv0",
                 type="grouped_filter",
                 implementation="conv0",
+                input_shape=ir2vhdl.Shape(channels, 2),
+                output_shape=ir2vhdl.Shape(2, 1),
+            ),
+            factory.node(
+                "conv1",
+                type="grouped_filter",
+                implementation="conv1",
                 input_shape=ir2vhdl.Shape(2, 1),
                 output_shape=ir2vhdl.Shape(2, 1),
             ),
         )
-        .add_edges(("input", "conv0"), ("conv0", "output"))
+        .add_edges(("input", "conv0"), ("conv0", "conv1"), ("conv1", "output"))
     )
-    lutron_xnor = factory.graph(
+
+    def gen_table(fn):
+        return tuple((input, fn(input)) for input in make_inputs())
+
+    lutron_ab = factory.graph(
         ir.attribute(
-            input_size=2,
+            input_size=4,
             output_size=1,
-            truth_table=(
-                ("00", "1"),
-                ("01", "0"),
-                ("10", "0"),
-                ("11", "1"),
-            ),
-            name="lutron_xnor",
+            truth_table=gen_table(make_ab_tt),
+            name="lutron_ab",
             type="lutron",
         )
     )
-    lutron_xor = factory.graph(
+    lutron_cd = factory.graph(
         ir.attribute(
-            input_size=2,
+            input_size=4,
             output_size=1,
-            truth_table=(
-                ("00", "0"),
-                ("01", "1"),
-                ("10", "1"),
-                ("11", "0"),
-            ),
-            name="lutron_xor",
+            truth_table=gen_table(make_dc_tt),
+            name="lutron_cd",
             type="lutron",
+        )
+    )
+    conv1 = factory.graph(
+        ir.attribute(
+            type="grouped_filter",
+            kernel_per_group=("identity",),
+            filter_parameters=FilterParameters(
+                kernel_size=1, in_channels=2, out_channels=2, groups=1
+            ).as_dict(),
         )
     )
     conv0 = factory.graph(
         ir.attribute(
             type="grouped_filter",
-            kernel_per_group=("lutron_xnor", "lutron_xor"),
+            kernel_per_group=("lutron_ab", "lutron_cd"),
             filter_parameters=FilterParameters(
-                kernel_size=2, in_channels=2, out_channels=2, groups=2
+                kernel_size=2,
+                in_channels=4,
+                out_channels=2,
+                groups=2,
             ).as_dict(),
         )
     )
+    identity = factory.graph(
+        ir.attribute(
+            type="lutron",
+            input_size=2,
+            output_size=2,
+            truth_table=(("00", "00"), ("01", "01"), ("10", "10"), ("11", "11")),
+        )
+    )
     return network, ir.Registry(
-        (("lutron_xor", lutron_xor), ("lutron_xnor", lutron_xnor), ("conv0", conv0))
+        (
+            ("lutron_ab", lutron_ab),
+            ("lutron_cd", lutron_cd),
+            ("conv0", conv0),
+            ("conv1", conv1),
+            ("identity", identity),
+        )
     )
 
 
-async def _write(dut, data: list[LogicArray], max_cycles):
-    data_idx = 0
-    dut.src_valid.value = 1
-    dut.d_in.value = data[data_idx]
-    for _ in range(max_cycles):
-        if dut.ready.value == 1:
-            data_idx += 1
-
-            dut.d_in.value = data[data_idx]
-        await RisingEdge(dut.clk)
-        if data_idx == len(data) - 1:
-            return
-    dut.src_valid = 0
-    await RisingEdge(dut.clk)
+def interleave_inputs(inputs: Iterable[str]) -> str:
+    result: list[str] = []
+    for time_step in batched(inputs, 2):
+        result.append("".join(time_step))
+        result.append("".join(time_step))
+    return "".join(result)
 
 
 @ctb.test
 async def check_grouped_filter_behaviour(dut):
-    xnor_input = "000100"
-    xor_input = "000110"
-    expected_xnor_filter_results = "11001"
-    expected_xor_filter_results = "00101"
-    inputs = list("".join(bits) for bits in zip(xnor_input, xor_input))
+    inputs = [interleave_inputs(inputs) for inputs in make_inputs()]
+    expected = [make_ab_tt(input) + make_dc_tt(input) for input in make_inputs()]
     num_steps = len(inputs)
+    assert 16 == num_steps
+
     ctb.start_soon(Clock(dut.clk, period=10).start())
     reset = ResetControl.from_dut(dut)
     stream = StreamInterface.from_dut(dut)
@@ -261,16 +301,15 @@ async def check_grouped_filter_behaviour(dut):
     await RisingEdge(dut.clk)
     await reset.reset_active_high()
     collect_task = ctb.start_soon(
-        stream.collect_chunks(expected_count=num_steps, max_cycles=10)
+        stream.collect_chunks(expected_count=num_steps, max_cycles=2 * num_steps)
     )
     await stream.drive_chunks(inputs)
     observed = await collect_task
-    xnor_results = "".join([a for a, _ in observed])
-    xor_results = "".join([b for _, b in observed])
-    assert {"xor": xor_results, "xnor": xnor_results} == {
-        "xor": expected_xor_filter_results,
-        "xnor": expected_xnor_filter_results,
-    }
+    incorrect = {}
+    for input, exp, actual in zip(inputs, expected, observed):
+        if exp != actual:
+            incorrect[input] = {"expected": exp, "actual": actual}
+    assert incorrect == {}
 
 
 @pytest.mark.simulation
