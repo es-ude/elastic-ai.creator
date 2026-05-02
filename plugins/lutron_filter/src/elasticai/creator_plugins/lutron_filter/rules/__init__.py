@@ -1,3 +1,4 @@
+from ._add_bitwidth import make_add_bitwidths_rule
 from ._binarize_activations import binarize_activations
 from ._precomputation import PrecomputationStrategy, make_precompute_rule
 from ._precomputation_impls import precompute, precompute_linear, precompute_maxpool
@@ -22,6 +23,7 @@ __all__ = [
     "make_precompute_rule",
     "make_split_conv_rule",
     "precompute_linear",
+    "make_add_bitwidths_rule",
     "precompute_maxpool",
     "precompute",
     "reorder",
