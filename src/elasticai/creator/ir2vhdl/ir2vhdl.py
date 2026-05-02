@@ -43,7 +43,7 @@ class Ir2Vhdl:
         self.__static_files: dict[str, Callable[[], str]] = {}
 
     @overload
-    def __call__(self, registry: Registry, /) -> Iterable[Code]: ...
+    def __call__(self, registry: Mapping[str, DataGraph], /) -> Iterable[Code]: ...
 
     @overload
     def __call__(
@@ -114,10 +114,10 @@ class Ir2Vhdl:
         incompatible_args_error = TypeError(
             "Ir2Vhdl called with incompatible arguments"
         )
-        if isinstance(root, ir.Registry) and registry is None:
-            return root  # ty: ignore[invalid-return-type]
-        if isinstance(registry, ir.Registry) and isinstance(root, ir.DataGraph):
-            return registry | ir.Registry(
+        if isinstance(root, Mapping) and registry is None:
+            return ir.Registry(**root)  # ty: ignore[invalid-return-type, invalid-argument-type]
+        if isinstance(registry, Mapping) and isinstance(root, ir.DataGraph):
+            return ir.Registry(
                 **{root.attributes.get_str("name", default_root_name): root}
             ) | registry  # ty: ignore[invalid-return-type]
         raise incompatible_args_error

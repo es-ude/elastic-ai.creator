@@ -1,3 +1,5 @@
+from elasticai.creator.function_utils import compose_fns as compose_rules
+
 from ._attribute import Attribute, AttributeConvertable, AttributeMapping, attribute
 from .datagraph import DataGraph, Edge, Node, NodeEdgeFactory, ReadOnlyDataGraph
 from .datagraph_impl import (
@@ -14,7 +16,6 @@ from .datagraph_rewriting import (
     PatternRuleSpec,
     Rule,
     StdPattern,
-    compose_rules,
 )
 from .deserializer import IrDeserializer, IrDeserializerLegacy
 from .executor import ExecutionOrderGraphReducer

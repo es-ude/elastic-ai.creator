@@ -1,12 +1,12 @@
 from abc import abstractmethod
 from collections.abc import Callable, Iterable, Mapping
-from typing import Protocol
+from typing import Protocol, override
 
 from ._attribute import AttributeMapping
-from .datagraph import DataGraph, Graph, NodeEdgeFactory, ReadOnlyDataGraph
+from .datagraph import DataGraph, NodeEdgeFactory, ReadOnlyDataGraph
 from .datagraph import Edge as _Edge
 from .datagraph import Node as _Node
-from .graph import GraphImpl
+from .graph import Graph, GraphImpl
 from .registry import Registry
 
 
@@ -19,11 +19,13 @@ class StdNodeEdgeFactory[N: _Node, E: _Edge](NodeEdgeFactory):
         self._node_fn = node_fn
         self._edge_fn = edge_fn
 
-    def node(self, name: str, attributes: AttributeMapping = AttributeMapping()) -> N:
+    @override
+    def node(self, name: str, attributes: AttributeMapping = AttributeMapping()) -> N:# pyright: ignore[reportCallInDefaultInitializer]
         return self._node_fn(name, attributes)
 
+    @override
     def edge(
-        self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()
+        self, src: str, dst: str, attributes: AttributeMapping = AttributeMapping()# pyright: ignore[reportCallInDefaultInitializer]
     ) -> E:
         return self._edge_fn(src, dst, attributes)
 
@@ -40,7 +42,7 @@ class IrFactory[N: _Node, E: _Edge, G: DataGraph](NodeEdgeFactory[N, E], Protoco
     @abstractmethod
     def graph(
         self,
-        attributes: AttributeMapping = AttributeMapping(),
+        attributes: AttributeMapping = AttributeMapping()# pyright: ignore[reportCallInDefaultInitializer],
     ) -> G: ...
 
     @abstractmethod
@@ -92,6 +94,7 @@ class StdIrFactory[N: _Node, E: _Edge, G: DataGraph](IrFactory[N, E, G]):
         self._edge = edge_fn
         self._graph = graph_fn
 
+    @override
     def registry(
         self,
         items: Mapping[str, DataGraph] | Iterable[tuple[str, DataGraph]] | None = None,
@@ -101,30 +104,35 @@ class StdIrFactory[N: _Node, E: _Edge, G: DataGraph](IrFactory[N, E, G]):
         reg = Registry(items)  # zuban: ignore[call-overload]
         return reg.apply(lambda g: self.graph_from_other(other=g))
 
+    @override
     def node(
         self,
         name: str,
-        attributes: AttributeMapping = AttributeMapping(),
+        attributes: AttributeMapping = AttributeMapping(),# pyright: ignore[reportCallInDefaultInitializer]
     ) -> N:
         return self._node(name, attributes)
 
+    @override
     def node_from_other(self, other: _Node) -> N:
         return self._node(other.name, other.attributes)
 
+    @override
     def edge(
         self,
         src: str,
         dst: str,
-        attributes: AttributeMapping = AttributeMapping(),
+        attributes: AttributeMapping = AttributeMapping(),# pyright: ignore[reportCallInDefaultInitializer]
     ) -> E:
         return self._edge(src, dst, attributes)
 
+    @override
     def edge_from_other(self, other: _Edge) -> E:
         return self._edge(other.src, other.dst, other.attributes)
 
+    @override
     def graph(
         self,
-        attributes: AttributeMapping = AttributeMapping(),
+        attributes: AttributeMapping = AttributeMapping(),# pyright: ignore[reportCallInDefaultInitializer]
     ) -> G:
         """create a new graph using the underlying data from other"""
         empty_attributes = AttributeMapping()
@@ -135,6 +143,7 @@ class StdIrFactory[N: _Node, E: _Edge, G: DataGraph](IrFactory[N, E, G]):
             node_attributes=empty_attributes,
         )
 
+    @override
     def graph_from_other(self, other: ReadOnlyDataGraph) -> G:
         return self._graph(
             factory=self,

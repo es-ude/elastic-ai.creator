@@ -328,8 +328,7 @@ class KeyedDispatcherDescriptorWithDefaultRegistrars[
                 else:
                     key = fn.__name__
             bound = self.__get__(owner)
-            bound.register(key, fn)
-            return fn
+            return bound.register(key, fn)  # zuban: ignore[arg-type]
 
         return registrar_method(default_wrapped)
 

@@ -1,11 +1,11 @@
 import re
 from abc import abstractmethod
-from collections.abc import Callable, Collection
-from typing import Protocol, cast
+from collections.abc import Callable, Collection, Iterable
+from typing import Protocol, cast, override
 
 from elasticai.creator.graph import find_all_subgraphs, get_rewriteable_matches
 from elasticai.creator.ir._attribute import AttributeMapping
-from elasticai.creator.ir.datagraph import DataGraph, Node
+from elasticai.creator.ir.datagraph import DataGraph, Edge, Node
 from elasticai.creator.ir.registry import Registry
 
 type Rule[GI: DataGraph, GO: DataGraph] = Callable[
@@ -14,10 +14,10 @@ type Rule[GI: DataGraph, GO: DataGraph] = Callable[
 ]
 
 
-class Pattern[G: DataGraph](Protocol):
+class Pattern[G: DataGraph[Node, Edge]](Protocol):
     @property
     @abstractmethod
-    def graph(self) -> DataGraph: ...
+    def graph(self) -> DataGraph[Node, Edge]: ...
 
     @property
     def interface(self) -> Collection[str]: ...
@@ -26,7 +26,7 @@ class Pattern[G: DataGraph](Protocol):
     def match(self, g: G, registry: Registry[G], /) -> list[dict[str, str]]: ...
 
 
-class StdPattern[G: DataGraph, N: Node](Pattern[G]):
+class StdPattern[G: DataGraph[Node, Edge], N: Node](Pattern[G]):
     """Use a simple constraint over `Node`s to find all matching subgraphs.
 
     This pattern ignores the registry, so you cannot
@@ -42,7 +42,7 @@ class StdPattern[G: DataGraph, N: Node](Pattern[G]):
 
     def __init__(
         self,
-        graph: DataGraph,
+        graph: DataGraph[Node, Edge],
         node_constraint: Callable[[Node, N], bool],
         interface: Collection[str],
     ) -> None:
@@ -51,13 +51,16 @@ class StdPattern[G: DataGraph, N: Node](Pattern[G]):
         self._constraint = node_constraint
 
     @property
+    @override
     def graph(self) -> DataGraph:
         return self._graph
 
     @property
+    @override
     def interface(self) -> Collection[str]:
         return self._interface
 
+    @override
     def match(self, g: G, _: Registry[G], /) -> list[dict[str, str]]:
         def constraint(pattern_node: str, graph_node: str) -> bool:
             return self._constraint(
@@ -76,7 +79,7 @@ class StdPattern[G: DataGraph, N: Node](Pattern[G]):
         )
 
 
-class PatternRuleSpec[G: DataGraph]:
+class PatternRuleSpec[G: DataGraph[Node, Edge]]:
     """Specifies how `PatternRule` should create a new `DataGraph` from an existing one.
 
     It consists of
@@ -120,7 +123,7 @@ class PatternRuleSpec[G: DataGraph]:
         return self.replacement_fn(g, registry)
 
 
-class PatternRule[G: DataGraph]:
+class PatternRule[G: DataGraph[Node, Edge]]:
     def __init__(self, spec: PatternRuleSpec[G]):
         self._spec = spec
 
@@ -206,7 +209,9 @@ class PatternRule[G: DataGraph]:
         return new_graph
 
 
-def _create_remapped_graph[G: DataGraph](original: G, mapping: dict[str, str]) -> G:
+def _create_remapped_graph[G: DataGraph[Node, Edge]](
+    original: G, mapping: dict[str, str]
+) -> G:
 
     orig_to_new = {v: k for k, v in mapping.items()}
 
@@ -236,12 +241,12 @@ def _create_remapped_graph[G: DataGraph](original: G, mapping: dict[str, str]) -
 
 class NameRegistry:
     def __init__(self):
-        self._registry = {}
+        self._registry: dict[str, int] = {}
 
-    def _get_name_count(self, name):
+    def _get_name_count(self, name: str) -> int:
         return self._registry.get(name, 0)
 
-    def prepopulate(self, names):
+    def prepopulate(self, names: Iterable[str]):
         for name in names:
             match = re.match(r"(.+)_(\d+)$", name)
             suffix = 0
@@ -252,7 +257,7 @@ class NameRegistry:
             self._registry[name] = suffix
         return self
 
-    def get_unique_name(self, name):
+    def get_unique_name(self, name: str) -> str:
         if name not in self._registry:
             self._registry[name] = 0
             return name
@@ -271,10 +276,3 @@ class _NameGenerator:
         return new_name
 
 
-def compose_rules[G: DataGraph](*rules: Rule[G, G]) -> Rule[G, G]:
-    def composed(graph: G, reg: Registry[G]) -> tuple[G, Registry[G]]:
-        for rule in rules:
-            graph, reg = rule(graph, reg)
-        return graph, reg
-
-    return composed

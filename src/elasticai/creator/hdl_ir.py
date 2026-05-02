@@ -1,9 +1,10 @@
 import operator
 from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
-from typing import Any, Protocol, TypeGuard, cast, overload
+from typing import Any, Protocol, TypeGuard, cast, overload, override
 
 from elasticai.creator import ir
+from elasticai.creator.ir import StdIrFactory
 
 type ShapeTuple = tuple[int] | tuple[int, int] | tuple[int, int, int]
 
@@ -62,6 +63,7 @@ class Shape:
             return self._data[0]
         return 1
 
+    @override
     def __eq__(self, other):
         if isinstance(other, tuple):
             return self._data == other
@@ -83,6 +85,7 @@ class Shape:
             return self._data[2]  # ty: ignore
         return 1
 
+    @override
     def __repr__(self) -> str:
         match self._data:
             case (width,):
@@ -92,7 +95,7 @@ class Shape:
             case (depth, width, height):
                 return f"Shape({depth=}, {width=}, {height=})"
             case _:
-                return f"Shape({self._data})"
+                return f"Shape({self._data})"  # zuban: ignore[unreachable]
 
 
 class Node(ir.Node, Protocol):
@@ -181,12 +184,16 @@ class DataGraphImpl(ir.DataGraphImpl[Node, Edge]):
         return _type_check(self.attributes.get("type", "<undefined>"), str)
 
 
-class IrFactory:
+class IrFactory(StdIrFactory[Node, Edge, DataGraph]):
+    def __init__(self):
+        super().__init__(NodeImpl, EdgeImpl, DataGraphImpl)
+
+    @override
     def node(
         self,
         name: str,
-        attributes: ir.AttributeMapping = ir.AttributeMapping(),
-        /,
+        attributes: ir.AttributeMapping = ir.AttributeMapping(), # pyright: ignore[reportCallInDefaultInitializer]
+        *,
         type: str | None = None,
         input_shape: Shape | None = None,
         output_shape: Shape | None = None,
@@ -204,13 +211,14 @@ class IrFactory:
             return NodeImpl(name, attributes | extra_attributes)
         return NodeImpl(name, attributes)
 
+    @override
     def edge(
         self,
         src: str,
         dst: str,
-        attributes: ir.AttributeMapping = ir.AttributeMapping(),
-        /,
-        src_dst_indices: Iterable[tuple[int, int]] | tuple[str, str] = tuple(),
+        attributes: ir.AttributeMapping = ir.AttributeMapping(), # pyright: ignore[reportCallInDefaultInitializer]
+        *,
+        src_dst_indices: Iterable[tuple[int, int]] | tuple[str, str] = tuple(), # pyright: ignore[reportCallInDefaultInitializer]
     ) -> Edge:
         if (
             isinstance(src_dst_indices, tuple)
@@ -225,9 +233,10 @@ class IrFactory:
             attributes = attributes | dict(src_dst_indices=indices)
         return EdgeImpl(src, dst, attributes)
 
+    @override
     def graph(
         self,
-        attributes: ir.AttributeMapping = ir.AttributeMapping(),
+        attributes: ir.AttributeMapping = ir.AttributeMapping(), # pyright: ignore[reportCallInDefaultInitializer]
         *,
         type: str | None = None,
         name: str | None = None,
