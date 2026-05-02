@@ -16,6 +16,7 @@ from .datagraph_rewriting import (
     compose_rules,
 )
 from .deserializer import IrDeserializer, IrDeserializerLegacy
+from .executor import ExecutionOrderGraphReducer
 from .factories import IrFactory, StdIrFactory
 from .graph import Graph, GraphImpl
 from .registry import Registry
@@ -29,6 +30,7 @@ __all__ = [
     "DefaultIrFactory",
     "DefaultNodeEdgeFactory",
     "DataGraphImpl",
+    "ExecutionOrderGraphReducer",
     "Graph",
     "GraphImpl",
     "EdgeImpl",
