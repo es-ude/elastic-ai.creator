@@ -10,7 +10,6 @@ from elasticai.creator.ir2vhdl import (
     Node,
     Registry,
     Shape,
-    type_handler,
 )
 from elasticai.creator_plugins.grouped_filter import FilterParameters
 
@@ -321,7 +320,6 @@ class _Sequential:
 _factory = IrFactory()
 
 
-@type_handler()
 def sequential(
     impl: ir.DataGraph[ir.Node, ir.Edge],
     registry: ir.Registry[ir.DataGraph[ir.Node, ir.Edge]],
@@ -366,17 +364,19 @@ def sequential(
     return seq.get_impl(), new_registry
 
 
-@type_handler()
 def network(
     impl: ir.DataGraph[ir.Node, ir.Edge],
     registry: ir.Registry[ir.DataGraph[ir.Node, ir.Edge]],
 ) -> tuple[DataGraph, Registry]:
-    network, registry = sequential(_factory.graph(other=impl), registry)
+    network, registry = sequential(_factory.graph_from_other(impl), registry)
     network = network.with_attributes(network.attributes | dict(name="network"))
+
     # network.attributes["top_kernel_size"]
     # network.attributes["top_stride"]
-    input_shape = network.nodes["input"].input_shape
-    output_shape = network.nodes["output"].output_shape
+    if "input" not in network.nodes:
+        raise ValueError()
+    input_shape = network.attributes["runtime_input_shape"]
+    output_shape = network.attributes["runtime_output_shape"]
     input_width, input_depth = input_shape
     output_width, output_depth = output_shape
     skeleton_attrs = {}
@@ -388,8 +388,9 @@ def network(
     }
 
     registry = registry | dict(
-        skeleton=_factory.graph(ir.attribute(skeleton_attrs), type="skeleton"),
-        buffered_network_wrapper=_factory.graph(type="buffered_network_wrapper"),
+        skeleton=_factory.graph(
+            ir.attribute(skeleton_attrs), type="skeleton", name="skeleton"
+        ),
     )
 
     return network, registry
