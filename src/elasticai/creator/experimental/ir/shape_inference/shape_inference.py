@@ -162,6 +162,12 @@ class IrShapeInference:
         return fn
 
     @FD.registrar_method
+    def override_dgraph(self, key: str | None, fn: TypeHandler) -> TypeHandler:
+        key = self._check_and_get_name(key, fn)
+        self._get_out_shape_from_dgraph.override(key, fn)
+        return fn
+
+    @FD.registrar_method
     def register_node(
         self, key: str | None, fn: Callable[[Node, tuple[Shape, ...]], Shape]
     ) -> Callable[[Node, tuple[Shape, ...]], Shape]:
