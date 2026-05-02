@@ -4,10 +4,12 @@ This module provides rules for inferring input/output shapes, attaching filter
 parameters, and propagating channel information through the graph.
 """
 
+from collections.abc import Callable
 from typing import Any
 
+import elasticai.creator.ir as ir
 from elasticai.creator.experimental.ir.shape_inference import (
-    get_default_shape_inference,
+    shapes_calculation_functions as shape_calc,
 )
 from elasticai.creator.experimental.ir.shape_inference.shape_inference import (
     Node as _Node,
@@ -16,71 +18,14 @@ from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functi
     flatten_output_shape,
     maxpool1d_output_shape,
 )
-from elasticai.creator.ir2vhdl import DataGraph as VhdDataGraph
-from elasticai.creator.ir2vhdl import Shape
+from elasticai.creator.hdl_ir import DataGraph as VhdDataGraph
+from elasticai.creator.hdl_ir import Node as VhdNode
+from elasticai.creator.hdl_ir import Shape
+from elasticai.creator.ir.executor import DataGraph as _TypedDGraph
 from elasticai.creator.ir2vhdl import factory as vhdl_factory
 from elasticai.creator_plugins.grouped_filter import FilterParameters
 
 from ._ir import DataGraph, Node, Registry
-
-
-def _get_predecessors(graph: DataGraph, node_name: str) -> list[str]:
-    """Get list of predecessor node names for a given node."""
-    preds = graph.predecessors.get(node_name, {})
-    return list(preds.keys())
-
-
-def _get_successors(graph: DataGraph, node_name: str) -> list[str]:
-    """Get list of successor node names for a given node."""
-    succs = graph.successors.get(node_name, {})
-    return list(succs.keys())
-
-
-def _get_input_shape(graph: DataGraph, node_name: str) -> Shape:
-    """Get the input shape for a node."""
-    attrs = graph.nodes[node_name].attributes
-    input_shape = attrs.get("input_shape")
-    if isinstance(input_shape, Shape):
-        return input_shape
-    if isinstance(input_shape, tuple):
-        return Shape.from_tuple(input_shape)  # type: ignore
-    return Shape(0, 0)
-
-
-def _get_output_shape(graph: DataGraph, node_name: str) -> Shape:
-    """Get the output shape for a node."""
-    attrs = graph.nodes[node_name].attributes
-    output_shape = attrs.get("output_shape")
-    if isinstance(output_shape, Shape):
-        return output_shape
-    if isinstance(output_shape, tuple):
-        return Shape.from_tuple(output_shape)  # type: ignore
-    return Shape(0, 0)
-
-
-def _safe_int(value: Any, default: int = 0) -> int:
-    """Safely convert a value to int."""
-    if value is None:
-        return default
-    if isinstance(value, (int, float)):
-        return int(value)
-    if isinstance(value, str):
-        try:
-            return int(value)
-        except ValueError:
-            return default
-    return default
-
-
-def _safe_str(value: Any, default: str = "") -> str:
-    """Safely convert a value to str."""
-    if value is None:
-        return default
-    if isinstance(value, str):
-        return value
-    if isinstance(value, (int, float)):
-        return str(value)
-    return default
 
 
 class AttachFilterParametersRule:
@@ -170,6 +115,12 @@ class InferMaxPool1dInChannelsRule:
                 if val > 0:
                     return val
 
+            if "output_shape" in pred_node.attributes:
+                out_shape = pred_node.attributes["output_shape"]
+                if len(out_shape) > 1:
+                    val = _safe_int(out_shape[0])
+                    return val
+
             # Move upstream
             node = pred_node
 
@@ -232,21 +183,13 @@ def _get_filter_parameters(node: Node) -> FilterParameters | None:
                 )
         return None
 
-    if isinstance(fp_data, FilterParameters):
+    if isinstance(fp_data, FilterParameters):  # zuban: ignore[unreachable]
         return fp_data
 
-    if isinstance(fp_data, dict):
-        return FilterParameters.from_dict(fp_data)
+    if isinstance(fp_data, dict):  # zuban: ignore[unreachable]
+        return FilterParameters.from_dict(fp_data)  # zuban: ignore[unreachable]
 
     return None
-
-
-def _unpack_input_shape(input_shapes: tuple[tuple[int, ...], ...]) -> tuple[int, ...]:
-    if len(input_shapes) > 1:
-        raise ValueError(
-            "invalid input_shapes, expect 1-tuple, for operation taking single argument"
-        )
-    return input_shapes[0]
 
 
 def maxpool1d(
@@ -266,58 +209,189 @@ def maxpool1d(
     )
 
 
+def _unpack_input_shape[*T](input_shapes: tuple[tuple[*T], ...]) -> tuple[*T]:
+    if len(input_shapes) != 1:
+        raise ValueError(
+            "invalid input_shapes, expect 1-tuple, for operation taking single argument"
+        )
+    return input_shapes[0]
+
+
+def _unwrap_scalar(shape: tuple[int, ...] | int) -> int:
+    if isinstance(shape, tuple):
+        if len(shape) > 1 or len(shape) == 0:
+            raise ValueError()
+        return shape[0]
+    return shape
+
+
+def create_shape_inference() -> Callable[
+    [_TypedDGraph[Node, ir.Edge], Shape, int], VhdDataGraph
+]:
+    infer: ir.ExecutionOrderGraphReducer[Node, VhdDataGraph] = (
+        ir.ExecutionOrderGraphReducer()
+    )
+
+    def get_pred(n: Node, acc: VhdDataGraph) -> VhdNode:
+        preds = list(acc.predecessors[n.name])
+        if len(preds) > 1:
+            raise ValueError("unsupported join of multiple data lines")
+        return acc.nodes[preds[0]]
+
+    @infer.register()  # ty:ignore[invalid-argument-type]
+    def filter(n: Node, acc: VhdDataGraph) -> VhdDataGraph:
+        preds = list(acc.predecessors[n.name])
+        if len(preds) > 1:
+            raise ValueError("unsupported join of multiple data lines")
+        elif len(preds) == 0:
+            return acc
+        pred = acc.nodes[preds[0]]
+        params = FilterParameters.from_dict(n.attributes["filter_parameters"])
+        acc = acc.add_node(
+            n.name,
+            n.attributes
+            | params.as_dict()
+            | {
+                "input_shape": pred.output_shape.to_tuple(),
+                "output_shape": (params.out_channels, params.num_steps),
+            },
+        )
+        return acc
+
+    @infer.register()  # ty:ignore[invalid-argument-type]
+    def output(n: Node, acc: VhdDataGraph) -> VhdDataGraph:
+        pred = get_pred(n, acc)
+        return acc.add_node(
+            n.name,
+            n.attributes
+            | {
+                "input_shape": pred.input_shape.to_tuple(),
+                "output_shape": pred.output_shape.to_tuple(),
+            },
+        )
+
+    @infer.register()  # ty:ignore[invalid-argument-type]
+    def input(n: Node, acc: VhdDataGraph) -> VhdDataGraph:
+        return acc
+
+    def _do_infer(
+        g: _TypedDGraph[Node, ir.Edge], input_shape: Shape, num_input_bits: int
+    ) -> VhdDataGraph:
+        input_nodes: list[Node] = []
+        for n in g.nodes.values():
+            if n.type == "input":
+                input_nodes.append(n)
+
+        input_shape = Shape(num_input_bits * input_shape.depth, input_shape.width)
+        if len(input_nodes) != 1:
+            raise ValueError("supporting only a single input node")
+        input = input_nodes[0]
+        return infer(
+            g,
+            vhdl_factory.graph_from_other(g).add_node(
+                input.name,
+                input.attributes
+                | {
+                    "input_shape": input_shape.to_tuple(),
+                    "output_shape": input_shape.to_tuple(),
+                },
+            ),
+        )
+
+    return _do_infer
+
+
+def _maxpool1d_shape(
+    graph: ir.DataGraph[ir.Node, ir.Edge],
+    input_shapes: tuple[tuple[int, ...], ...],
+) -> tuple[int, ...]:
+    attr = graph.attributes
+    kernel_size = _unwrap_scalar(attr["kernel_size"])
+    return shape_calc.maxpool1d_output_shape(
+        x_shape=_unpack_input_shape(input_shapes),  # type: ignore[arg-type]
+        kernel_size=kernel_size,
+        stride=attr.get_int("stride", kernel_size),
+        padding=attr.get_int("padding", 0),
+        dilation=attr.get_int("dilation", 1),
+    )
+
+
+def _conv1d_shape(
+    graph: ir.DataGraph[ir.Node, ir.Edge], input_shapes: tuple[tuple[int, ...], ...]
+) -> tuple[int, ...]:
+    attr = graph.attributes
+    kernel_size = _unwrap_scalar(attr["kernel_size"])
+    if len(input_shapes) != 3:
+        raise ValueError()
+    return shape_calc.conv1d_output_shape(
+        x_shape=_unpack_input_shape(input_shapes),  # type: ignore[arg-type]
+        out_channels=_unwrap_scalar(attr["output_channels"]),
+        kernel_size=kernel_size,
+        stride=attr.get_int("stride", kernel_size),
+        padding=attr.get_int("padding", 0),
+        dilation=attr.get_int("dilation", 1),
+    )
+
+
 def flatten(_, input_shapes: tuple[tuple[int, ...], ...]) -> tuple[int, ...]:
     input_shape = _unpack_input_shape(input_shapes)
     return flatten_output_shape(tuple((1, *input_shape)))
 
 
-class InferNodeShapesRule:
-    def __init__(self, input_shape: Shape):
-        self._inferer = get_default_shape_inference()
-        self._inferer.register_node("maxpool1d")(maxpool1d)
-        self._inferer.register_node()(flatten)
-        self._input_shape = input_shape
+def _get_predecessors(graph: DataGraph, node_name: str) -> list[str]:
+    """Get list of predecessor node names for a given node."""
+    preds = graph.predecessors.get(node_name, {})
+    return list(preds.keys())
 
-    @staticmethod
-    def _convert_shape_style(core_creator_style: tuple[int, ...]) -> Shape:
-        match core_creator_style:
-            case _, C, L:
-                return Shape(C, L)
-            case C, L:
-                return Shape(C, L)
-            case _:
-                raise ValueError(
-                    f"Invalid Shape: expected (C, L) got {core_creator_style}"
-                )
 
-    def __call__(self, g: DataGraph) -> VhdDataGraph:
-        input_node = ""
-        inferer = self._inferer
-        input_shape = self._input_shape
-        for n in g.nodes.values():
-            if n.type == "input":
-                input_node = n.name
-                break
-        if input_node == "":
-            raise ValueError("no input_node found")
-        new_g = inferer(g, Registry(), {input_node: input_shape.to_tuple()})
-        g = g.add_node(
-            input_node,
-            g.nodes[input_node].attributes | dict(input_shape=input_shape.to_tuple()),
-        )
-        for edge in new_g.edges.values():
-            src = g.nodes[edge.src]
-            dst = g.nodes[edge.dst]
-            shape = self._convert_shape_style(edge.shape).to_tuple()
-            src_attrs = dict(output_shape=shape)
-            dst_attrs = dict(input_shape=shape)
-            if src.type == "input":
-                src_attrs = src_attrs | dst_attrs
-            if dst.type == "output":
-                dst_attrs = src_attrs
-            g = g.add_nodes(
-                (src.name, src.attributes | src_attrs),
-                (dst.name, dst.attributes | dst_attrs),
-            )
+def _get_successors(graph: DataGraph, node_name: str) -> list[str]:
+    """Get list of successor node names for a given node."""
+    succs = graph.successors.get(node_name, {})
+    return list(succs.keys())
 
-        return vhdl_factory.graph(other=g)
+
+def _get_input_shape(graph: DataGraph, node_name: str) -> Shape:
+    """Get the input shape for a node."""
+    attrs = graph.nodes[node_name].attributes
+    input_shape = attrs.get("input_shape")
+    if isinstance(input_shape, Shape):  # zuban: ignore[unreachable]
+        return input_shape
+    if isinstance(input_shape, tuple):
+        return Shape.from_tuple(input_shape)  # type: ignore
+    return Shape(0, 0)
+
+
+def _get_output_shape(graph: DataGraph, node_name: str) -> Shape:
+    """Get the output shape for a node."""
+    attrs = graph.nodes[node_name].attributes
+    output_shape = attrs.get("output_shape")
+    if isinstance(output_shape, Shape):  # zuban: ignore[unreachable]
+        return output_shape
+    if isinstance(output_shape, tuple):
+        return Shape.from_tuple(output_shape)  # type: ignore
+    return Shape(0, 0)
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Safely convert a value to int."""
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
+
+
+def _safe_str(value: Any, default: str = "") -> str:
+    """Safely convert a value to str."""
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (int, float)):
+        return str(value)
+    return default

@@ -188,7 +188,7 @@ def batchnorm1d(
             running_mean=running_mean,
             running_var=running_var,
         )
-        | {"parameters": args}
+        | attribute(parameters=args)
     )
 
 
