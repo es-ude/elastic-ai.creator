@@ -1,8 +1,7 @@
-import re
 from abc import abstractmethod
 from collections.abc import Callable
 from itertools import chain
-from typing import Concatenate, Iterable, Protocol, cast
+from typing import Concatenate, Generic, Iterable, Protocol, TypeVar, cast, override
 
 import elasticai.creator.ir as ir
 from elasticai.creator.graph import find_all_subgraphs
@@ -13,7 +12,6 @@ from elasticai.creator.ir import (
     IrSerializer,
     PatternRule,
     PatternRuleSpec,
-    Rule,
     StdIrFactory,
     attribute,
 )
@@ -24,42 +22,20 @@ from elasticai.creator.ir import (
 from elasticai.creator.ir import (
     EdgeImpl as _EdgeImpl,
 )
+from elasticai.creator.ir import (
+    NameRegistry as NameRegistry,
+)
 from elasticai.creator.ir import Node as _Node
 from elasticai.creator.ir import (
     NodeImpl as _NodeImpl,
 )
 from elasticai.creator.ir import Registry as Registry
+from elasticai.creator.ir import (
+    Rule as Rule,
+)
 from elasticai.creator_plugins.grouped_filter import FilterParameters
 
 _ir_serializer: IrSerializer = IrSerializer()
-
-
-class NameRegistry:
-    def __init__(self) -> None:
-        self._registry = {}
-
-    def _get_name_count(self, name) -> int:
-        return self._registry.get(name, 0)
-
-    def prepopulate(self, names) -> "NameRegistry":
-        for name in names:
-            match = re.match(r"(.+)_(\d+)$", name)
-            suffix = 0
-            if match:
-                name = match.group(1)
-                suffix = int(match.group(2))
-            suffix = max(suffix, self._get_name_count(name))
-            self._registry[name] = suffix
-        return self
-
-    def get_unique_name(self, name) -> str:
-        if name not in self._registry:
-            self._registry[name] = 0
-            return name
-
-        new_name = f"{name}_{self._registry[name] + 1}"
-        self._registry[name] += 1
-        return new_name
 
 
 class Node(_NodeImpl, _Node):
@@ -82,7 +58,7 @@ class _DataGraph[N: _Node, E: Edge](_BaseDataGraph[N, E], Protocol):
 type DataGraph = _DataGraph[Node, Edge]
 
 
-class _DataGraphImpl[N: _Node, E: Edge](_DGraphImpl[N, E]):
+class _DataGraphImpl(_DGraphImpl[Node, Edge]):
     @property
     def type(self) -> str:
         result = self.attributes.get("type", "<undefined>")
@@ -98,17 +74,20 @@ class Decoratable(Protocol):
     def type(self) -> str: ...
 
 
-class FilterDecorator[T: Decoratable]:
-    def __init__(self, decorated: T) -> None:
+_T = TypeVar("_T", bound=Decoratable)
+
+
+class FilterDecorator(Generic[_T]):
+    def __init__(self, decorated: _T) -> None:
         self._decorated = decorated
 
     @property
-    def decorated(self) -> T:
+    def decorated(self) -> _T:
         return self._decorated
 
     def call_on_decorated[**P, R](
-        self, fn: Callable[Concatenate[T, P], T], *args: P.args, **kwargs: P.kwargs
-    ) -> "FilterDecorator[T]":
+        self, fn: Callable[Concatenate[_T, P], _T], *args: P.args, **kwargs: P.kwargs
+    ) -> "FilterDecorator[_T]":
         return FilterDecorator(fn(self._decorated, *args, **kwargs))
 
     @property
@@ -244,13 +223,16 @@ class Pattern(ir.Pattern):
         self._constraint_factory = constraint_factory
 
     @property
+    @override
     def graph(self) -> ir.DataGraph:
         return self._g
 
     @property
+    @override
     def interface(self) -> set[str]:
         return {"start", "end"}
 
+    @override
     def match(self, g: ir.DataGraph, registry: ir.Registry, /) -> list[dict[str, str]]:
         wg = wrap_graph(g)
         wp = wrap_graph(self.graph)
@@ -275,23 +257,14 @@ def pattern_rule(
     ] = make_default_constraint,
     interface=("start", "end"),
 ) -> Rule[DataGraph, DataGraph]:
-    def wrap_replace(
-        match: ir.DataGraph, registry: ir.Registry
-    ) -> tuple[DataGraph, ir.Registry[DataGraph]]:
-        return replacement_fn(wrap_graph(match), wrap_registry(registry))
 
     _rule = PatternRule(
         spec=PatternRuleSpec(
             pattern=Pattern(graph, make_node_constraint),
-            replacement_fn=wrap_replace,
+            replacement_fn=replacement_fn,
         )
     )
-
-    def wrapped_rule(original: ir.DataGraph, registry: ir.Registry):
-        g, reg = _rule(original, registry)
-        return wrap_graph(g), wrap_registry(reg)
-
-    return wrapped_rule
+    return _rule
 
 
 def build_sequential_ir(

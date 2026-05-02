@@ -13,6 +13,9 @@ dependencies = [
 requires = ["uv_build>=0.11.8,<0.12"]
 build-backend = "uv_build"
 
+[tool.pyrefly]
+search-path = ["./src"]
+
 [tool.ty.environment]
 root = ["./src"]
 

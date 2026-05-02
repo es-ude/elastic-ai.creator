@@ -84,6 +84,7 @@ def grouped_tensor_batch_to_strings(inputs_by_group: Tensor) -> Iterable[Iterabl
 def torch1d_input_tensor_to_grouped_strings(
     x: Tensor, groups: int
 ) -> Iterable[Iterable[str]]:
+    """Turn tensor (B, C, N) into a nested list of strings with (G, B, C/GxN)."""
     if x.dim() == 2:
         x = x.view(x.size(0), 1, x.size(1))
     elif x.dim() == 1:

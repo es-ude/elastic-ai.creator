@@ -77,11 +77,10 @@ class LutronBitsToTwoComplementsWrapper(Module):
         self._wrapped = wrapped
         in_channels = num_bits * wrapped.in_channels
         out_channels = wrapped.in_channels
-        groups = wrapped.groups * wrapped.in_channels
         self._preceding = _Conv1d(
             in_channels=in_channels,
             out_channels=out_channels,
-            groups=groups,
+            groups=out_channels,
             kernel_size=1,
             stride=1,
             bias=False,

@@ -1,7 +1,9 @@
 from collections.abc import Callable, Iterator
 
 from elasticai.creator.ir import AttributeMapping, attribute
-from elasticai.creator_plugins.grouped_filter import FilterParameters
+from elasticai.creator_plugins.grouped_filter import (
+    FilterParameters as FilterParameters,
+)
 
 from ._ir import (
     DataGraph,
@@ -88,7 +90,10 @@ class _ReplacementFN:
             node_sequence.extend(nodes)
             for n, fn in zip(
                 nodes,
-                (self._add_conv_to_reg, self._add_bnorm_to_reg, self._add_bin_to_reg),
+                (
+                    self._add_conv_to_reg,
+                    self._add_bnorm_to_reg,
+                ),
             ):
                 fn(n.implementation, filter)
 
@@ -123,7 +128,7 @@ class _ReplacementFN:
                 implementation=self._new_name(conv_name),
             ),
             node(bnorm_name, "batchnorm1d", self._new_name(bnorm_name)),
-            node(bin_name, "binarize", self._new_name(bin_name)),
+            node(bin_name, "binarize", "binarize"),
         ]
 
     def _get_node_sequences_and_filters(
@@ -143,7 +148,7 @@ class _ReplacementFN:
             yield from self._node_seq_filter_pairs
 
     def _add_to_reg(self, name: str, type: str, attributes: AttributeMapping):
-        self._reg = self._reg | {
+        new_item = {
             name: self._match.clear().with_attributes(
                 attribute(
                     type=type,
@@ -151,24 +156,24 @@ class _ReplacementFN:
                 | attributes
             )
         }
+        self._reg = self._reg | new_item
 
     def _add_conv_to_reg(self, name: str, f: FilterParameters) -> None:
+        attr = attribute(
+            **{
+                k: v
+                for k, v in f.as_dict().items()
+                if k not in ("input_size", "output_size")
+            },
+            bias=self._get_impl_for_matched("conv1d").attributes.get_bool("bias"),
+        )
         self._add_to_reg(
             name,
             type="conv1d",
-            attributes=attribute(
-                **{
-                    k: v
-                    for k, v in f.as_dict().items()
-                    if k not in ("input_size", "output_size")
-                }
-            ),
+            attributes=attr,
         )
 
     def _add_bnorm_to_reg(self, name: str, f: FilterParameters) -> None:
         self._add_to_reg(
             name, type="batchnorm1d", attributes=attribute(num_features=f.out_channels)
         )
-
-    def _add_bin_to_reg(self, name: str, _: FilterParameters) -> None:
-        self._add_to_reg(name, "binarization", attribute())
