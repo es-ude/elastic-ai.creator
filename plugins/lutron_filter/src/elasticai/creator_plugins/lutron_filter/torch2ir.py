@@ -16,26 +16,29 @@ def _extend_handler_with_parameter_names(handler: _Handler) -> _Handler:
     @wraps(handler)
     def wrapper(module: Module, /) -> dict[str, AttributeConvertable]:
         result = handler(module)
-        return result | (
-            {"parameters": dict((k, v.tolist()) for k, v in module._parameters.items())}  # type: ignore
+        result = result | (
+            {
+                "parameters": dict(
+                    (k, v.tolist()) for k, v in module.named_parameters()
+                ),
+            }  # type: ignore
         )
+        return result
 
     return wrapper
 
 
-_registered = list(
-    map(_extend_handler_with_parameter_names, t2i.default_module_handlers)
-)
+_registered = list(t2i.default_module_handlers)
 _overriden: list[_Handler] = []
 
 
 def _register(handler: _Handler) -> _Handler:
-    _registered.append(handler)
+    _registered.append(_extend_handler_with_parameter_names(handler))
     return handler
 
 
 def _override(handler: _Handler) -> _Handler:
-    _overriden.append(handler)
+    _overriden.append(_extend_handler_with_parameter_names(handler))
     return handler
 
 
@@ -72,8 +75,17 @@ class _Tracer(torch.fx.Tracer):
 def get_default_torch2ir() -> t2i.Torch2Ir:
     t = t2i.Torch2Ir(tracer=_Tracer())
     for h in _registered:
+        t.register()(_extend_handler_with_parameter_names(h))
+    for h in _overriden:
+        t.override()(_extend_handler_with_parameter_names(h))
+
+    return t
+
+
+def get_torch2ir_without_params() -> t2i.Torch2Ir:
+    t = t2i.Torch2Ir(tracer=_Tracer())
+    for h in _registered:
         t.register()(h)
     for h in _overriden:
         t.override()(h)
-
     return t
