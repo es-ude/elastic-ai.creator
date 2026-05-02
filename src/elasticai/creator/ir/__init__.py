@@ -7,7 +7,14 @@ from .datagraph_impl import (
     EdgeImpl,
     NodeImpl,
 )
-from .datagraph_rewriting import Pattern, PatternRule, PatternRuleSpec, Rule, StdPattern
+from .datagraph_rewriting import (
+    Pattern,
+    PatternRule,
+    PatternRuleSpec,
+    Rule,
+    StdPattern,
+    compose_rules,
+)
 from .deserializer import IrDeserializer, IrDeserializerLegacy
 from .factories import IrFactory, StdIrFactory
 from .graph import Graph, GraphImpl
@@ -43,4 +50,5 @@ __all__ = [
     "PatternRuleSpec",
     "StdPattern",
     "Rule",
+    "compose_rules",
 ]

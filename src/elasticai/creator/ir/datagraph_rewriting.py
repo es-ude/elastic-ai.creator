@@ -269,3 +269,12 @@ class _NameGenerator:
     def get_name(self, name: str) -> str:
         new_name = self._registry.get_unique_name(name)
         return new_name
+
+
+def compose_rules[G: DataGraph](*rules: Rule[G, G]) -> Rule[G, G]:
+    def composed(graph: G, reg: Registry[G]) -> tuple[G, Registry[G]]:
+        for rule in rules:
+            graph, reg = rule(graph, reg)
+        return graph, reg
+
+    return composed
