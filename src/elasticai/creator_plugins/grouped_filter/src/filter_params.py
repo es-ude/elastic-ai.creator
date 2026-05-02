@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class FilterParameters:
     """
     Represents all necessary parameters to implement a (grouped) 1d filter
@@ -24,28 +27,30 @@ class FilterParameters:
 
     def __init__(
         self,
-        kernel_size: int,
+        kernel_size: int | tuple[int],
         in_channels: int,
         out_channels: int,
         groups: int = 1,
-        stride: int = 1,
+        stride: int | tuple[int] = 1,
         input_size: int | None = None,
         output_size: int = 1,
     ):
         self._in_channels = in_channels
         self._out_channels = out_channels
-        self._stride = stride
+        self._stride = stride if isinstance(stride, int) else stride[0]
         self._groups = groups
-        self.kernel_size = kernel_size
+        self.kernel_size = (
+            kernel_size if isinstance(kernel_size, int) else kernel_size[0]
+        )
         self._check_group_validity()
         if input_size is None:
-            input_size = kernel_size
+            input_size = self.kernel_size
         self.input_size = input_size
         self.output_size = output_size
 
     def _handle_kernel_size(self, kernel_size: int | tuple[int, ...]) -> int:
         if isinstance(kernel_size, tuple):
-            if len(kernel_size) > 1:
+            if len(kernel_size) > 1 or len(kernel_size) == 0:
                 raise ValueError("unsupported 2d kernel, only 1d kernels are supported")
             kernel_size = kernel_size[0]
         return kernel_size
@@ -58,7 +63,7 @@ class FilterParameters:
     def kernel_size(self, kernel_size: int | tuple[int]) -> None:
         self._kernel_size = self._handle_kernel_size(kernel_size)
 
-    def _check_group_validity(self):
+    def _check_group_validity(self) -> None:
         if not (
             self.in_channels % self.groups == 0 and self.out_channels % self.groups == 0
         ):
@@ -137,10 +142,10 @@ class FilterParameters:
             in_channels=self.in_channels,
         )
 
-    def _value_dict(self):
+    def _value_dict(self) -> dict[str, Any]:
         return {f: getattr(self, f) for f in self._field_names}
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return self._value_dict()
 
     @classmethod

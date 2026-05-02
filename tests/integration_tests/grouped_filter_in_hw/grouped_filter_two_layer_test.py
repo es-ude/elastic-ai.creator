@@ -1,6 +1,5 @@
-from collections.abc import Callable, Iterator, Iterable
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from itertools import batched
 
 import cocotb as ctb
 import pytest
@@ -131,23 +130,6 @@ def create_ir2ir_translator():
     return ir2ir
 
 
-def make_inputs() -> Iterator[str]:
-    for i in range(2**4):
-        yield f"{i:04b}"
-
-
-def make_ab_tt(input: str) -> str:
-    if input == "0101":
-        return "1"
-    return "0"
-
-
-def make_dc_tt(input: str) -> str:
-    if input == "0011":
-        return "1"
-    return "0"
-
-
 def create_ir2vhdl_translator():
     to_vhdl = ir2vhdl.Ir2Vhdl()
     _loader = ir2vhdl.PluginLoader(to_vhdl)
@@ -162,9 +144,12 @@ def translate(graph: DataGraph, registry: Registry, build_dir: Path):
     to_vhdl = create_ir2vhdl_translator()
     lowered_graph, lowered_reg = ir2ir(graph, registry)
     lowered_reg = lowered_reg.add("network", lowered_graph)
+    for node in lowered_graph.nodes.values():
+        print(node)
     lowered_reg = ir2vhdl.collect_transitive_implementation_closure(
         "network", lowered_reg
     )
+    lowered_graph = lowered_reg["network"]
 
     code = to_vhdl(lowered_graph, lowered_reg)
 
@@ -178,7 +163,59 @@ def translate(graph: DataGraph, registry: Registry, build_dir: Path):
             f.writelines(add_separators(lines))
 
 
-def build_ir() -> tuple[DataGraph, Registry]:
+async def _write(dut, data: list[LogicArray], max_cycles):
+    data_idx = 0
+    dut.src_valid.value = 1
+    dut.d_in.value = data[data_idx]
+    for _ in range(max_cycles):
+        if dut.ready.value == 1:
+            data_idx += 1
+
+            dut.d_in.value = data[data_idx]
+        await RisingEdge(dut.clk)
+        if data_idx == len(data) - 1:
+            return
+    dut.src_valid = 0
+    await RisingEdge(dut.clk)
+
+
+@ctb.test
+async def check_grouped_filter_behaviour(dut):
+    channels = {
+        "ab": "01100",
+        "cd": "11010",
+    }
+    inputs = list("".join(bits) for bits in zip(*channels.values()))
+    inputs = list("".join(bits) for bits in zip(inputs[1:], inputs))
+    num_steps = len(inputs)
+    ctb.start_soon(Clock(dut.clk, period=10).start())
+    reset = ResetControl.from_dut(dut)
+    stream = StreamInterface.from_dut(dut)
+    dut.src_valid.value = 0
+    dut.dst_ready.value = 0
+    dut.en.value = 1
+    await RisingEdge(dut.clk)
+    await reset.reset_active_high()
+    collect_task = ctb.start_soon(
+        stream.collect_chunks(expected_count=num_steps, max_cycles=10)
+    )
+    await stream.drive_chunks(inputs)
+    observed = await collect_task
+    indices = {"a": 0, "b": 1, "c": 2, "d": 3}
+    results = {}
+    for channel_id in indices:
+        result = "".join([x[indices[channel_id]] for x in observed])
+        results[channel_id] = result
+    expected = {
+        "a": "1001",
+        "b": "0011",
+        "c": "1101",
+        "d": "1010",
+    }
+    assert results == expected
+
+
+def build_simple_two_layer_ir() -> tuple[DataGraph, Registry]:
     factory = ir2vhdl.IrFactory()
     channels = 4
     network = (
@@ -190,132 +227,104 @@ def build_ir() -> tuple[DataGraph, Registry]:
             factory.node(
                 "input",
                 type="input",
-                input_shape=ir2vhdl.Shape(channels, 2),
-                output_shape=ir2vhdl.Shape(channels, 2),
+                input_shape=ir2vhdl.Shape(channels, 1),
+                output_shape=ir2vhdl.Shape(channels, 1),
             ),
             factory.node(
                 "output",
                 type="output",
-                input_shape=ir2vhdl.Shape(2, 1),
-                output_shape=ir2vhdl.Shape(2, 1),
+                input_shape=ir2vhdl.Shape(channels, 1),
+                output_shape=ir2vhdl.Shape(channels, 1),
             ),
             factory.node(
                 "conv0",
                 type="grouped_filter",
                 implementation="conv0",
-                input_shape=ir2vhdl.Shape(channels, 2),
-                output_shape=ir2vhdl.Shape(2, 1),
+                input_shape=ir2vhdl.Shape(channels, 1),
+                output_shape=ir2vhdl.Shape(channels, 1),
             ),
             factory.node(
                 "conv1",
                 type="grouped_filter",
                 implementation="conv1",
-                input_shape=ir2vhdl.Shape(2, 1),
-                output_shape=ir2vhdl.Shape(2, 1),
+                input_shape=ir2vhdl.Shape(channels, 1),
+                output_shape=ir2vhdl.Shape(channels, 1),
             ),
         )
-        .add_edges(("input", "conv0"), ("conv0", "conv1"), ("conv1", "output"))
+        .add_edges(
+            ("input", "conv0"),
+            (
+                "conv0",
+                "conv1",
+            ),
+            ("conv1", "output"),
+        )
     )
-
-    def gen_table(fn):
-        return tuple((input, fn(input)) for input in make_inputs())
-
-    lutron_ab = factory.graph(
+    lutron_neg = factory.graph(
         ir.attribute(
-            input_size=4,
-            output_size=1,
-            truth_table=gen_table(make_ab_tt),
-            name="lutron_ab",
+            input_size=2,
+            output_size=2,
+            truth_table=(
+                ("00", "11"),
+                ("01", "10"),
+                ("10", "01"),
+                ("11", "00"),
+            ),
+            name="lutron_neg",
             type="lutron",
         )
     )
-    lutron_cd = factory.graph(
+    lutron_id = factory.graph(
         ir.attribute(
-            input_size=4,
-            output_size=1,
-            truth_table=gen_table(make_dc_tt),
-            name="lutron_cd",
+            input_size=2,
+            output_size=2,
+            truth_table=(
+                ("00", "00"),
+                ("01", "01"),
+                ("10", "10"),
+                ("11", "11"),
+            ),
+            name="lutron_id",
             type="lutron",
-        )
-    )
-    conv1 = factory.graph(
-        ir.attribute(
-            type="grouped_filter",
-            kernel_per_group=("identity",),
-            filter_parameters=FilterParameters(
-                kernel_size=1, in_channels=2, out_channels=2, groups=1
-            ).as_dict(),
         )
     )
     conv0 = factory.graph(
         ir.attribute(
             type="grouped_filter",
-            kernel_per_group=("lutron_ab", "lutron_cd"),
+            kernel_per_group=(
+                "lutron_id",
+                "lutron_neg",
+            ),
             filter_parameters=FilterParameters(
-                kernel_size=2,
-                in_channels=4,
-                out_channels=2,
-                groups=2,
+                kernel_size=2, in_channels=2, out_channels=4, groups=2
             ).as_dict(),
         )
     )
-    identity = factory.graph(
+    conv1 = factory.graph(
         ir.attribute(
-            type="lutron",
-            input_size=2,
-            output_size=2,
-            truth_table=(("00", "00"), ("01", "01"), ("10", "10"), ("11", "11")),
+            type="grouped_filter",
+            kernel_per_group=(
+                "lutron_id",
+                "lutron_id",
+            ),
+            filter_parameters=FilterParameters(
+                kernel_size=1, in_channels=4, out_channels=4, groups=2
+            ).as_dict(),
         )
     )
     return network, ir.Registry(
         (
-            ("lutron_ab", lutron_ab),
-            ("lutron_cd", lutron_cd),
-            ("conv0", conv0),
+            ("lutron_neg", lutron_neg),
+            ("lutron_id", lutron_id),
             ("conv1", conv1),
-            ("identity", identity),
+            ("conv0", conv0),
         )
     )
 
 
-def interleave_inputs(inputs: Iterable[str]) -> str:
-    result: list[str] = []
-    for time_step in batched(inputs, 2):
-        result.append("".join(time_step))
-        result.append("".join(time_step))
-    return "".join(result)
-
-
-@ctb.test
-async def check_grouped_filter_behaviour(dut):
-    inputs = [interleave_inputs(inputs) for inputs in make_inputs()]
-    expected = [make_ab_tt(input) + make_dc_tt(input) for input in make_inputs()]
-    num_steps = len(inputs)
-    assert 16 == num_steps
-
-    ctb.start_soon(Clock(dut.clk, period=10).start())
-    reset = ResetControl.from_dut(dut)
-    stream = StreamInterface.from_dut(dut)
-    dut.src_valid.value = 0
-    dut.dst_ready.value = 0
-    dut.en.value = 1
-    await RisingEdge(dut.clk)
-    await reset.reset_active_high()
-    collect_task = ctb.start_soon(
-        stream.collect_chunks(expected_count=num_steps, max_cycles=2 * num_steps)
-    )
-    await stream.drive_chunks(inputs)
-    observed = await collect_task
-    incorrect = {}
-    for input, exp, actual in zip(inputs, expected, observed):
-        if exp != actual:
-            incorrect[input] = {"expected": exp, "actual": actual}
-    assert incorrect == {}
-
-
 @pytest.mark.simulation
 def test_network(cocotb_test_fixture: CocotbTestFixture):
-    graph, registry = build_ir()
+    graph, registry = build_simple_two_layer_ir()
     artifact_dir = cocotb_test_fixture.get_artifact_dir()
     ir2vhd_build_dir = artifact_dir / "vhdl"
     ir2vhd_build_dir.mkdir(exist_ok=True)
