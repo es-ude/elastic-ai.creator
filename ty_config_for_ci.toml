@@ -13,8 +13,9 @@ include = [
   "src/elasticai/creator/plugin",
   "src/elasticai/creator/testing",
   "src/elasticai/creator_plugins",
-  "src/elasticai/creator/arithmetic/",
   "plugins/",
+  "src/elasticai/creator/function_dispatch.py",
+  "src/elasticai/creator/arithmetic/",
   "tests/integration_tests/fxp_arithmetics_test.py"
 ]
 exclude = [

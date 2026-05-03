@@ -86,10 +86,37 @@ class KeyedDispatcherWithRegistrars[**P1, **P2, R1, R2, K: Hashable](Protocol):
     def __call__(self, *args: P1.args, **kwargs: P1.kwargs) -> R2: ...
 
 
+class DispatchingFn[**P1, **P2, R1, R2](Protocol):
+    """The function that will be called with the registered function and the arguments.
+
+    P1 and P2 can but don't have to be identical.
+    """
+
+    def __call__(
+        self, registered_fn: Callable[P2, R1], /, *args: P1.args, **kwargs: P1.kwargs
+    ) -> R2: ...
+
+
+class DispatchingMethod[Owner, **P1, **P2, R1, R2](Protocol):
+    """The function that will be called with the registered function and the arguments.
+
+    P1 and P2 can but don't have to be identical.
+    """
+
+    def __call__(
+        self,
+        owner: Owner,
+        registered_method: Callable[P2, R1],
+        /,
+        *args: P1.args,
+        **kwargs: P1.kwargs,
+    ) -> R2: ...
+
+
 def create_keyed_dispatch[**P1, **P2, R1, R2, K: Hashable](
     key_from_obj: Callable[P1, K], key_from_fn: Callable[[Callable[P2, R1]], K]
 ) -> Callable[
-    [Callable[Concatenate[Callable[P2, R1], P1], R2]],
+    [DispatchingFn[P1, P2, R1, R2]],
     KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K],
 ]:
     """The created decorator allows to register functions that will be passed to the decorated function based on a key.
@@ -100,7 +127,7 @@ def create_keyed_dispatch[**P1, **P2, R1, R2, K: Hashable](
     """
 
     def keyed_dispatch(
-        fn: Callable[Concatenate[Callable[P2, R1], P1], R2],
+        fn: DispatchingFn[P1, P2, R1, R2],
     ) -> KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K]:
         registry: dict[K, Callable[P2, R1]] = {}
 
@@ -109,7 +136,8 @@ def create_keyed_dispatch[**P1, **P2, R1, R2, K: Hashable](
             if key not in registry:
                 raise KeyError(f"No function registered for key: {key}")
             handler_fn = registry[key]
-            return fn(handler_fn, *args, **kwargs)
+            result = fn(handler_fn, *args, **kwargs)
+            return result  # ty: ignore
 
         @registrar
         def register(key: K | None, fn: Callable[P2, R1]) -> Callable[P2, R1]:
@@ -135,7 +163,7 @@ def create_keyed_dispatch[**P1, **P2, R1, R2, K: Hashable](
 
         update_wrapper(wrapper, fn)
 
-        return cast(KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K], wrapper)
+        return cast(KeyedDispatcherWithRegistrars[P1, P2, R1, R2, K], wrapper)  # ty: ignore
 
     return keyed_dispatch
 
@@ -150,7 +178,7 @@ class KeyedDispatcherForDescriptor[**P1, **P2, R1, R2, Owner, K: Hashable](
         owner: Owner,
         registry_name: str,
         key_from_obj: str,
-        fn: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2],
+        fn: DispatchingMethod[Owner, P1, P2, R1, R2],
     ) -> None:
         self._owner = owner
         self._key_from_obj = key_from_obj
@@ -221,7 +249,7 @@ class KeyedDispatcherDescriptor[**P1, **P2, R1, R2, Owner, K: Hashable]:
         self._registry: str = ""
 
     def __get__(
-        self, instance: Owner | None, owner: type[Owner]
+        self, instance: Owner | None, owner: type[Owner] | None = None
     ) -> KeyedDispatcher[P1, P2, R1, R2, K]:
         if instance is None:
             raise TypeError(
@@ -262,20 +290,98 @@ class KeyedDispatcherDescriptor[**P1, **P2, R1, R2, Owner, K: Hashable]:
         )
         return dispatcher(*args, **kwargs)
 
-    def dispatch_for(
-        self,
-        fn: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2],
-    ) -> Self:
+    def dispatch_for(self, fn: DispatchingMethod[Owner, P1, P2, R1, R2]) -> Self:
         self._fn = fn
         return self
 
 
+class KeyedDispatcherDescriptorWithDefaultRegistrars[
+    **P1,
+    **P2,
+    R1,
+    R2,
+    Owner,
+](KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, str]):
+    @staticmethod
+    def _get_fn_key(key: str | None, fn: Callable) -> str:
+        if key is None:
+            if not hasattr(fn, "__name__") or not isinstance(fn.__name__, str):
+                raise TypeError(
+                    "only supporting function like types for registration with implicit keys"
+                )
+            else:
+                key = fn.__name__
+        return key
+
+    def default_register(
+        self, _fn: Callable[[Owner, str | None, Callable[P2, R1]], Callable[P2, R1]], /
+    ) -> Registrar[str, [Callable[P2, R1]], Callable[P2, R1]]:
+        @wraps(_fn)
+        def default_wrapped(
+            owner: Owner, key: str | None, fn: Callable[P2, R1]
+        ) -> Callable[P2, R1]:
+            if key is None:
+                if not hasattr(fn, "__name__") or not isinstance(fn.__name__, str):
+                    raise TypeError(
+                        "only supporting function like types for registration with implicit keys"
+                    )
+                else:
+                    key = fn.__name__
+            bound = self.__get__(owner)
+            bound.register(key, fn)
+            return fn
+
+        return registrar_method(default_wrapped)
+
+    def default_override(
+        self, _fn: Callable[[Owner, str | None, Callable[P2, R1]], Callable[P2, R1]], /
+    ) -> Registrar[str, [Callable[P2, R1]], Callable[P2, R1]]:
+        @wraps(_fn)
+        def default_wrapped(
+            owner: Owner, key: str | None, fn: Callable[P2, R1]
+        ) -> Callable[P2, R1]:
+            if key is None:
+                if not hasattr(fn, "__name__") or not isinstance(fn.__name__, str):
+                    raise TypeError(
+                        "only supporting function like types for registration with implicit keys"
+                    )
+                else:
+                    key = fn.__name__
+            bound = self.__get__(owner)
+            bound.override(key, fn)
+            return _fn.__get__(owner, type(owner))(key, fn)  # type: ignore
+
+        return registrar_method(default_wrapped)
+
+
+@overload
+def dispatch_method[**P1, **P2, R1, R2, Owner]() -> Callable[
+    [DispatchingMethod[Owner, P1, P2, R1, R2]],
+    KeyedDispatcherDescriptorWithDefaultRegistrars[P1, P2, R1, R2, Owner],
+]: ...
+
+
+@overload
 def dispatch_method[**P1, **P2, R1, R2, Owner, K: Hashable](
-    _: type[K],
+    key_type: type[K],
 ) -> Callable[
-    [Callable[Concatenate[Owner, Callable[P2, R1], P1], R2]],
+    [DispatchingMethod[Owner, P1, P2, R1, R2]],
     KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K],
-]:
+]: ...
+
+
+def dispatch_method[**P1, **P2, R1, R2, Owner, K: Hashable | str](
+    key_type: type[K] | type[str] = str,
+) -> (
+    Callable[
+        [DispatchingMethod[Owner, P1, P2, R1, R2]],
+        KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K],
+    ]
+    | Callable[
+        [DispatchingMethod[Owner, P1, P2, R1, R2]],
+        KeyedDispatcherDescriptorWithDefaultRegistrars[P1, P2, R1, R2, Owner],
+    ]
+):
     """A decorator to create a KeyedDispatcherDescriptor for methods.
 
     This often has the advantage of not needing to specify the generic
@@ -283,8 +389,45 @@ def dispatch_method[**P1, **P2, R1, R2, Owner, K: Hashable](
     automatically, this is why it needs to be provided as an argument to
     the decorator.
 
+    In case that `_t`, the type of keys for registered callables is not
+    specified, we will assume `str` for the type and offer two methods
+    for decorating owner's methods as register and override registrars.
+
+    Example:
+
+    ```python
+    from elasticai.creator import function_dispatch as FD
+    from torch.nn import Module
+
+
+    type TypeHandler = Callable[[Module], dict]
+
+    class MyTranslator:
+
+        @FD.dispatch_method()
+        def _extractors(
+            self,
+            fn: TypeHandler,
+            module: Module,
+        ) -> dict:
+            return fn(module)
+
+        @_extractors.key_from_args
+        def _get_type_from_module(self, module: Module) -> str:
+            return module.__class__.__name__.lower()
+
+        @_extractors.default_override
+        def override(self, _: str | None, fn: TypeHandler) -> TypeHandler:
+            return fn
+
+        @_extractors.default_register
+        def register(self, _: str | None, fn: TypeHandler) -> TypeHandler:
+            return fn
+    ```
+
     Note: The ParamSpec `**P` will narrow down to the most concrete type.
     Thus if you decorate a method with a signature like
+
     ```python
     @dispatch_method(str)
     def call(self, fn: Callable[[str], str], item: str) -> str:
@@ -321,10 +464,19 @@ def dispatch_method[**P1, **P2, R1, R2, Owner, K: Hashable](
     Using a protocol to define the expected signature of the registered functions will not help here, as the type checker will not be able
     to map the protocol to the ParamSpec `P` and return value `R1`.
     """
+    if key_type is str:
 
-    def decorator(
-        wrapped: Callable[Concatenate[Owner, Callable[P2, R1], P1], R2],
-    ) -> KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K]:
-        return KeyedDispatcherDescriptor(wrapped)
+        def default_decorator(
+            wrapped: DispatchingMethod[Owner, P1, P2, R1, R2],
+        ) -> KeyedDispatcherDescriptorWithDefaultRegistrars[P1, P2, R1, R2, Owner]:
+            return KeyedDispatcherDescriptorWithDefaultRegistrars(wrapped)
 
-    return decorator
+        return default_decorator  # ty: ignore
+    else:
+
+        def decorator(
+            wrapped: DispatchingMethod[Owner, P1, P2, R1, R2],
+        ) -> KeyedDispatcherDescriptor[P1, P2, R1, R2, Owner, K]:
+            return KeyedDispatcherDescriptor(wrapped)
+
+        return decorator
