@@ -7,6 +7,8 @@ from torch.nn import Module
 
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.ir as ir
+from elasticai.creator.ir2torch import DataGraph as DataGraph
+from elasticai.creator.ir2torch import IrFactory
 
 from .default_handlers import handlers as default_handlers
 
@@ -23,16 +25,14 @@ class LoweringError(Exception):
         super().__init__(message)
 
 
-type DataGraph = ir.DataGraph[ir.Node, ir.Edge]
-type Registry = ir.Registry[DataGraph]
 type TypeHandler = Callable[[Module], dict]
 
 
 class Torch2Ir:
     def __init__(self, tracer=_DefaultTracer()) -> None:
         self._tracer = tracer
-        self._ir_factory = ir.DefaultIrFactory()
-        self._registry: Registry = ir.Registry()
+        self._ir_factory = IrFactory()
+        self._registry: ir.Registry[DataGraph] = ir.Registry()
         self._root = self._ir_factory.graph(ir.attribute(type="module"))
 
     @FD.dispatch_method()
@@ -74,10 +74,9 @@ class Torch2Ir:
         for successor in self._get_successors(node):
             self._root = self._root.add_edge(node.name, successor.name)
 
-    def convert(self, model: Module) -> tuple[DataGraph, Registry]:
+    def convert(self, model: Module) -> tuple[DataGraph, ir.Registry[DataGraph]]:
         self.model = model
         torch_graph = self._tracer.trace(model)
-        registry: Registry = ir.Registry()
         for node in torch_graph.nodes:
             self._handle_fx_node(node)
         registry = self._registry
@@ -132,7 +131,7 @@ class Torch2Ir:
         module = self.model.get_submodule(cast(str, node.target))
         return self._extractors(module)
 
-    def __call__(self, model: Module) -> tuple[DataGraph, Registry]:
+    def __call__(self, model: Module) -> tuple[DataGraph, ir.Registry[DataGraph]]:
         return self.convert(model)
 
 

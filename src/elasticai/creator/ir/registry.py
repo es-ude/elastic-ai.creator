@@ -1,22 +1,22 @@
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
-from typing import Any, Self, cast, overload
+from typing import Self, overload, override
 
-from .datagraph import DataGraph
+from .datagraph import DataGraph, Edge, Node
 
-_registry_types = []
-
-
-def is_registry(object) -> bool:
-    return object in _registry_types
+_registry_types: list[type] = []
 
 
-def mark_as_registry[T](object: T) -> T:
+def is_registry(obj: type) -> bool:
+    return obj in _registry_types
+
+
+def mark_as_registry[T](object: type[T]) -> type[T]:
     _registry_types.append(object)
     return object
 
 
 @mark_as_registry
-class Registry[G: DataGraph](Mapping[str, G]):
+class Registry[G: DataGraph[Node, Edge]](Mapping[str, G]):
     @overload
     def __init__(self, items: Iterable[tuple[str, G]], /) -> None: ...
     @overload
@@ -28,36 +28,38 @@ class Registry[G: DataGraph](Mapping[str, G]):
         self,
         items: Iterable[tuple[str, G]] | Mapping[str, G] | None = None,
         /,
-        **kwargs,
+        **kwargs: G,
     ) -> None:
         if items is None:
-            self._data: dict[str, G] = dict(**kwargs)
+            self._data: dict[str, G] = kwargs
         else:
             if not len(kwargs) == 0:
                 raise TypeError(f"unsupported arguments for {type(self)}")
             self._data = dict(items)
 
+    @override
     def __getitem__(self, name: str) -> G:
-        return cast(G, self._data[name])
+        return self._data[name]
 
+    @override
     def __len__(self) -> int:
         return len(self._data)
 
+    @override
     def __contains__(self, key: object) -> bool:
         return key in self._data
 
+    @override
     def __iter__(self) -> Iterator[str]:
         yield from self._data
 
-    def __or__(self, other: object) -> Self:
-        if not isinstance(other, Mapping):
-            raise TypeError("unsupported operand")
-        return type(self)(**(self._data | dict(other.items())))  # type: ignore
+    def __or__(self, other: Mapping[str, G]) -> Self:
+        return type(self)((self._data | dict(other.items())))
 
     def add(self, name: str, graph: G) -> Self:
         return type(self)(**(self._data) | {name: graph})
 
-    def apply[G2: DataGraph](self, fn: Callable[[G], G2]) -> "Registry[G2]":
+    def apply[G2: DataGraph[Node, Edge]](self, fn: Callable[[G], G2]) -> "Registry[G2]":
         new_dict = ((k, fn(g)) for k, g in self._data.items())
         return Registry(new_dict)
 
@@ -65,12 +67,14 @@ class Registry[G: DataGraph](Mapping[str, G]):
         new_dict = ((k, g) for k, g in self._data.items() if k not in keys)
         return type(self)(new_dict)
 
+    @override
     def __repr__(self) -> str:
         return f"Registry(**{repr(self._data)})"
 
-    def __eq__(self, other: Any) -> bool:
+    @override
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Registry):
-            if set(self.keys()) != other.keys():
+            if self.keys() != other.keys():
                 return False
             for k in self.keys():
                 if self[k] != other[k]:

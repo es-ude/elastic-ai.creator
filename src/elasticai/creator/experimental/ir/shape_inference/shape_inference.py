@@ -1,10 +1,9 @@
-from collections.abc import Callable, Iterator
-from typing import Any, Iterable, Protocol, cast
+from collections.abc import Callable, Iterable, Iterator
+from typing import Any, Protocol, cast
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
 from elasticai.creator.graph import bfs_iter_down
-from elasticai.creator.ir2torch.ir2torch import _DataGraph
 
 type DataGraph = ir.DataGraph[ir.Node, ir.Edge]
 type Registry = ir.Registry[DataGraph]
@@ -205,8 +204,8 @@ class _ShapedEdgeImpl(ir.EdgeImpl):
         return _guard_shape(self.attributes["shape"])
 
 
-class IrFactory(ir.StdIrFactory):
+class IrFactory(ir.StdIrFactory[Node, ShapedEdge, ShapedDatagraph]):
     def __init__(self):
         super().__init__(
-            node_fn=_NodeImpl, edge_fn=_ShapedEdgeImpl, graph_fn=_DataGraph
+            node_fn=_NodeImpl, edge_fn=_ShapedEdgeImpl, graph_fn=ir.DataGraphImpl
         )

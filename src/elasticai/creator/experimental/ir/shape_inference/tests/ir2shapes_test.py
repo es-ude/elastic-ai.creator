@@ -1,11 +1,15 @@
+from typing import final, override
+
 import pytest
+from torch import Tensor
 from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, Module, ReLU, Sequential
 
 from elasticai.creator import ir, torch2ir
 from elasticai.creator.experimental.ir.shape_inference import (
     get_default_shape_inference,
 )
-from elasticai.creator.torch2ir.torch2ir import DataGraph, Registry
+from elasticai.creator.ir import Registry
+from elasticai.creator.torch2ir.torch2ir import DataGraph
 
 
 def model():
@@ -16,6 +20,7 @@ def model():
 
 
 def model_skip_connection():
+    @final
     class SkipConnection(Module):
         def __init__(self):
             super().__init__()
@@ -25,9 +30,10 @@ def model_skip_connection():
             self.batchnorm2d = BatchNorm2d(2)
             self.flatten = Flatten()
 
-        def forward(self, x):
+        @override
+        def forward(self, x: Tensor) -> Tensor:
             identity = x
-            y = self.conv2d(x)
+            y: Tensor = self.conv2d(x)
             y = self.relu(y)
             y = self.batchnorm2d(y)
             y += identity
