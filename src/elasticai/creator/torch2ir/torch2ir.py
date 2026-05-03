@@ -35,7 +35,7 @@ class Torch2Ir:
         self._registry: Registry = ir.Registry()
         self._root = self._ir_factory.graph(ir.attribute(type="module"))
 
-    @FD.dispatch_method(str)
+    @FD.dispatch_method()
     def _extractors(
         self,
         fn: TypeHandler,
@@ -47,21 +47,12 @@ class Torch2Ir:
     def _get_type_from_module(self, module: Module) -> str:
         return module.__class__.__name__.lower()
 
-    @staticmethod
-    def _check_and_get_name(name: str | None, fn: TypeHandler) -> str:
-        if name is None:
-            if hasattr(fn, "__name__") and isinstance(fn.__name__, str):
-                return fn.__name__
-            else:
-                raise TypeError(
-                    "specify the type handler's type explicitly if you want to register a non-function callable"
-                )
-        return name
+    @_extractors.default_register
+    def register(self, _: str | None, fn: TypeHandler) -> TypeHandler:
+        return fn
 
-    @FD.registrar_method
-    def register(self, key: str | None, fn: TypeHandler) -> TypeHandler:
-        key = self._check_and_get_name(key, fn)
-        self._extractors.register(key, fn)
+    @_extractors.default_override
+    def override(self, _: str | None, fn: TypeHandler) -> TypeHandler:
         return fn
 
     def _handle_fx_node(self, node: FxNode) -> None:
