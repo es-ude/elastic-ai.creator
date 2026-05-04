@@ -2,7 +2,8 @@ from random import randint
 
 import pytest
 
-from elasticai.creator.arithmetic.int_converter import IntConverter, IntParams
+from elasticai.creator.arithmetic._int_converter import int_converter
+from elasticai.creator.arithmetic.fxp_params import FxpParams
 
 
 @pytest.mark.parametrize(
@@ -27,8 +28,8 @@ from elasticai.creator.arithmetic.int_converter import IntConverter, IntParams
 def test_convert_integer_to_binary_vhdl(
     total_bits: int, is_signed: bool, number: int, check: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
+    rslt = int_converter(
+        total_bits=total_bits, signed=is_signed
     ).integer_to_binary_string_vhdl(number)
     assert rslt == check
 
@@ -55,8 +56,8 @@ def test_convert_integer_to_binary_vhdl(
 def test_convert_integer_to_hex_vhdl(
     total_bits: int, is_signed: bool, number: int, check: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
+    rslt = int_converter(
+        total_bits=total_bits, signed=is_signed
     ).integer_to_hex_string_vhdl(number)
     assert rslt == check
 
@@ -76,8 +77,8 @@ def test_convert_integer_to_hex_vhdl(
 def test_convert_integer_to_binary_verilog(
     total_bits: int, is_signed: bool, number: int, check: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
+    rslt = int_converter(
+        total_bits=total_bits, signed=is_signed
     ).integer_to_binary_string_verilog(number)
     assert rslt == check
 
@@ -97,8 +98,8 @@ def test_convert_integer_to_binary_verilog(
 def test_convert_integer_to_decimal_verilog(
     total_bits: int, is_signed: bool, number: int, check: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
+    rslt = int_converter(
+        total_bits=total_bits, signed=is_signed
     ).integer_to_decimal_string_verilog(number)
     assert rslt == check
 
@@ -118,8 +119,8 @@ def test_convert_integer_to_decimal_verilog(
 def test_convert_integer_to_hex_verilog(
     total_bits: int, is_signed: bool, number: int, check: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
+    rslt = int_converter(
+        total_bits=total_bits, signed=is_signed
     ).integer_to_hex_string_verilog(number)
     assert rslt == check
 
@@ -142,9 +143,9 @@ def test_convert_integer_to_hex_verilog(
 def test_convert_binary_vhdl_to_integer(
     total_bits: int, is_signed: bool, number: str, expected: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
-    ).binary_string_to_integer(number)
+    rslt = int_converter(total_bits=total_bits, signed=is_signed).binary_to_integer(
+        number
+    )
     assert rslt == expected
 
 
@@ -168,22 +169,24 @@ def test_convert_binary_vhdl_to_integer(
 def test_convert_binary_string_to_integer(
     total_bits: int, is_signed: bool, number: str, expected: str
 ):
-    rslt = IntConverter(
-        IntParams(total_bits=total_bits, signed=is_signed)
-    ).binary_string_to_integer(number)
+    rslt = int_converter(total_bits=total_bits, signed=is_signed).binary_to_integer(
+        number
+    )
     assert rslt == expected
 
 
 @pytest.mark.parametrize("total_bits", [2, 4, 8, 16])
 @pytest.mark.parametrize("is_signed", [False, True])
 def test_convert_binary_string_to_integer_back(total_bits: int, is_signed: bool):
-    config = IntConverter(IntParams(total_bits=total_bits, signed=is_signed))
+    sets = FxpParams(total_bits=total_bits, frac_bits=0, signed=is_signed)
+    config = int_converter(total_bits=total_bits, signed=is_signed)
+
     for _ in range(8):
-        val = randint(a=config._config.minimum_value, b=config._config.maximum_value)
+        val = randint(a=sets.minimum_as_integer, b=sets.maximum_as_integer)
         bin_vhdl_out = config.integer_to_binary_string_vhdl(val)
-        val_vhdl_out = config.binary_string_to_integer(bin_vhdl_out)
+        val_vhdl_out = config.binary_to_integer(bin_vhdl_out)
         assert val == val_vhdl_out
 
         bin_verilog_out = config.integer_to_binary_string_verilog(val)
-        val_verilog_out = config.binary_string_to_integer(bin_verilog_out)
+        val_verilog_out = config.binary_to_integer(bin_verilog_out)
         assert val == val_verilog_out
