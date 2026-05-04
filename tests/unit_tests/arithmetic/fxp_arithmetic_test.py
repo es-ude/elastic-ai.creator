@@ -12,10 +12,6 @@ def test_total_bits(total_bits: int, frac_bits: int, is_signed: bool) -> None:
     config = FxpArithmetic(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
     )
-
-    assert type(config.config) is FxpParams
-    assert config.config.total_bits == total_bits
-    assert config.config.frac_bits == frac_bits
     assert config.total_bits == total_bits
     assert config.frac_bits == frac_bits
 
@@ -335,3 +331,66 @@ def test_clamp_float(total_bits: int, frac_bits: int, is_signed: bool) -> None:
 
     result = config.clamp(torch.asarray(stimuli)).tolist()
     assert result == check
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, is_signed, val_in, expected",
+    [
+        (2, 1, True, -1, True),
+        (2, 1, True, 0, False),
+        (2, 1, True, 1, True),
+        (2, 1, False, 0, False),
+        (2, 1, False, 2, True),
+        (2, 1, False, 3, False),
+        (8, 4, True, -128, True),
+        (8, 4, True, -60, False),
+        (8, 4, False, 1, True),
+        (8, 4, False, 254, False),
+    ],
+)
+def test_is_power_2(
+    total_bits: int, frac_bits: int, is_signed: bool, val_in, expected: bool
+) -> None:
+    sets = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    results = sets.is_power_of_2(val_in)
+    assert results == expected
+
+    data_in = torch.asarray([val_in for _ in range(10)])
+    check = [expected for _ in range(10)]
+    results = sets.is_power_of_2(data_in).tolist()
+    assert results == check
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, is_signed, val_in, expected",
+    [
+        (2, 1, True, -1, 3),
+        (2, 1, True, -0.5, 1.5),
+        (2, 1, True, 1, 1),
+        (2, 1, False, 1, 1),
+        (2, 1, False, 1.0, 1.0),
+        (8, 3, True, -8.125, 23.875),
+        (8, 3, False, 1.0, 1.0),
+    ],
+)
+def test_to_twos(
+    total_bits: int,
+    frac_bits: int,
+    is_signed: bool,
+    val_in: int | float,
+    expected: int | float,
+) -> None:
+    sets = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    result = sets.to_twos(val_in)
+    assert result == expected
+
+    data_in = torch.asarray([val_in for _ in range(10)])
+    check = [expected for _ in range(10)]
+    rslt = sets.to_twos(data_in).tolist()
+    assert rslt == check
