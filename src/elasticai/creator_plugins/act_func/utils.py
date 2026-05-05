@@ -3,7 +3,7 @@ from typing import Any
 
 import elasticai.creator.ir2verilog as ir
 from elasticai.creator.file_generation import find_project_root as get_path_to_build
-from elasticai.creator.ir import Registry
+from elasticai.creator.ir import Registry, attribute
 from elasticai.creator.ir2verilog import Ir2Verilog, factory
 
 
@@ -29,7 +29,7 @@ def _build_verilog_implementation(
 ) -> ir.DataGraph:
     mod_name = f"{type}_{id}"
     return factory.graph(
-        attributes=params,
+        attributes=attribute(**params),
         type=type,
         name=mod_name.lower(),
     )
@@ -41,13 +41,3 @@ def _prepare_translator(plugin_types: list[str]) -> Ir2Verilog:
     for plugin in plugin_types:
         loader.load_from_package(plugin)
     return _translate
-
-
-def collect_all_srcs_from_build_dir(
-    build_dir: Path, file_type: str = "v"
-) -> list[Path]:
-    all_files = []
-    for f in build_dir.iterdir():
-        if f.is_file() and f.name.endswith(file_type):
-            all_files.append(f)
-    return all_files

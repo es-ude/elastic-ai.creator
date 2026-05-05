@@ -12,18 +12,18 @@ from elasticai.creator.ir2verilog import (
 
 
 @type_handler_iterable()
-def relu(impl: DataGraph, _: Registry) -> Iterable[Code]:
+def prelu2(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.act_func"
-    path2file = "verilog/relu.v"
+    path2file = "verilog/prelu2.v"
 
     _template = (
         TemplateDirector()
         .parameter("BITWIDTH")
+        .localparam("SCALING")
         .add_module_name()
         .set_prototype("\n".join(read_text(package_path, path2file)))
         .build()
     )
-
     code = list()
     code.append(
         (

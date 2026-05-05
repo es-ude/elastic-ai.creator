@@ -4,5 +4,5 @@ version = '0.1'
 api_version = '0.1'
 target_runtime = 'verilog'
 target_platform = 'FPGA'
-generated = ["absolute", "hardtanh", "heaviside", "precomputed", "relu", "prelu", "sign"]
+generated = ["absolute", "hardtanh", "heaviside", "precomputed", "relu", "prelu", "prelu2", "sign"]
 static_files = []

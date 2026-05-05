@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from datetime import datetime
 
 from elasticai.creator.file_generation.resource_utils import read_text
 from elasticai.creator.hdl_ir import DataGraph
@@ -24,5 +25,14 @@ def absolute(impl: DataGraph, _: Registry) -> Iterable[Code]:
     )
 
     code = list()
-    code.append((impl.name, _template.substitute(**impl.attributes)))
+    code.append(
+        (
+            impl.name,
+            _template.substitute(
+                module_name=impl.attributes["name"].upper(),
+                date_copy_created=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                **impl.attributes,
+            ),
+        )
+    )
     return code

@@ -23,7 +23,9 @@ module ACT_SIGN#(
     output wire signed [BITWIDTH-'d1:0] Q
 );
 
-    localparam signed [2*BITWIDTH-'d1:0] YRANGE = {-4'sd4, 4'sd4};
-    assign Q = (A[BITWIDTH-'d1]) ? YRANGE[BITWIDTH+:BITWIDTH] : YRANGE['d0+:BITWIDTH];
+    localparam signed [BITWIDTH-'d1:0] MAX_VAL = 4'sd4;
+    localparam signed [BITWIDTH-'d1:0] MIN_VAL = -4'sd4;
+
+    assign Q = (A[BITWIDTH-'d1]) ? MIN_VAL : MAX_VAL;
 
 endmodule

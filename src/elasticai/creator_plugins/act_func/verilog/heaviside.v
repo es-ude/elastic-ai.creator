@@ -16,14 +16,16 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module ACT_HEAV#(
+module ACT_HEAVISIDE#(
     parameter BITWIDTH = 5'd4
 )(
     input wire signed [BITWIDTH-'d1:0] A,
     output wire signed [BITWIDTH-'d1:0] Q
 );
 
-    localparam signed [2*BITWIDTH-'d1:0] MAX_VAL = {4'sd0, 4'sd4};
-    assign Q = (A[BITWIDTH-'d1]) ? MAX_VAL[BITWIDTH+:BITWIDTH] : MAX_VAL[0+:BITWIDTH];
+    localparam signed [BITWIDTH-'d1:0] MAX_VAL = 4'sd4;
+    localparam signed [BITWIDTH-'d1:0] MIN_VAL = 4'd0;
+
+    assign Q = (A[BITWIDTH-'d1]) ? MIN_VAL : MAX_VAL;
 
 endmodule

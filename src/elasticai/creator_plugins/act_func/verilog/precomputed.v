@@ -13,23 +13,23 @@
 // State: 	        Not tested!
 // Improvements:    None
 // Parameters:      BITWIDTH --> Bitwidth of input data
-//                  NUM_VALUES --> Number of precomputed ACT values
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module ACT_PRECOMPUTED#(
-    parameter BITWIDTH = 5'd4,
-    parameter NUM_VALUES = 5'd4
+    parameter BITWIDTH = 5'd4
 )(
     input wire signed [BITWIDTH-'d1:0] A,
     output wire signed [BITWIDTH-'d1:0] Q
 );
-    localparam ADDRWIDTH = $clog2(NUM_VALUES);
-    wire [ADDRWIDTH-'d1:0] selector;
 
-    // Values of precomputed activation function
+    localparam NUM_VALUES = 5'd4;
     localparam signed [NUM_VALUES * BITWIDTH-'d1:0] PRECOMPUTED = { 4'sd0, 4'sd1, 4'sd2, 4'sd3 };
+    localparam ADDRWIDTH = $clog2(NUM_VALUES);
+
+    wire [ADDRWIDTH-'d1:0] selector;
     wire signed [BITWIDTH-'d1:0] lut_func [NUM_VALUES-'d1:0];
+
     // Slicing vector into array
     genvar k0;
     for(k0 = 'd0; k0 < NUM_VALUES; k0 = k0 + 'd1) begin
