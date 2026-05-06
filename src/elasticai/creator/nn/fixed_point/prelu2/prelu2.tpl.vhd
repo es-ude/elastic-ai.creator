@@ -23,7 +23,7 @@ use ieee.numeric_std.all;
 entity ${layer_name} is
     generic (
         DATA_WIDTH  : integer := ${data_width};
-        SCALING     : integer := ${scaling};
+        SCALING     : integer := ${scaling}
     );
     port (
         enable : in std_logic;
