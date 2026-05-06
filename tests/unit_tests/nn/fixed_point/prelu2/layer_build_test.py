@@ -30,7 +30,7 @@ use ieee.numeric_std.all;
 entity prelu2 is
     generic (
         DATA_WIDTH  : integer := 8;
-        SCALING     : integer := -64
+        SCALING     : integer := 1
     );
     port (
         enable : in std_logic;

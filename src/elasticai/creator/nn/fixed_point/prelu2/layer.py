@@ -39,12 +39,11 @@ class PReLU2(DesignCreatorModule, PReLU2Base):
         self._init = init
 
     def get_params(self) -> list[list[float]]:
-        weights = self._get_weight_exponent().tolist()
-        return weights
+        return self._get_weight_exponent().tolist()
 
     def get_params_quant(self) -> list[list[int]]:
         weights = self.get_params()
-        q_weights = cast(list[list[int]], self._config.cut_as_integer(weights))
+        q_weights = [(-1) * int(val)-1 for val in weights]
         return q_weights
 
     def create_design(self, name: str) -> PReLU2Design:
