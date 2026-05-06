@@ -1,0 +1,12 @@
+[[plugins]]
+name = "adders"
+version = "0.1"
+api_version = "0.1"
+target_runtime = "verilog"
+target_platform = "FPGA"
+generated = [
+  "adder_ripple_carry_signed",
+  "adder_ripple_carry_unsigned",
+  "adder_range_violation"
+]
+static_files = ["adder_half.v", "adder_full.v"]
