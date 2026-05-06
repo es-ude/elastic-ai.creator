@@ -8,7 +8,7 @@ from functools import wraps
 from importlib.resources import Anchor
 from os import environ
 from pathlib import Path
-from typing import Any
+from typing import Any, Self, overload
 
 import pytest
 
@@ -132,18 +132,6 @@ class CocotbTestFixture:
             except (ModuleNotFoundError, FileNotFoundError):
                 pass
 
-    def add_srcs_from_package(self, package: Anchor, glob_pattern: str) -> None:
-        package_dir = importlib.resources.as_file(
-            importlib.resources.files(package),
-        )
-        opened_package_dir = self._context_stack.enter_context(package_dir)
-        self._srcs.extend(
-            (
-                str(p.absolute().as_posix())
-                for p in opened_package_dir.glob(glob_pattern)
-            )
-        )
-
     def _create_build_dir(self):
         build_test_subdir = create_name_for_build_test_subdir(
             self._test_fn, *self._args, **self._kwargs
@@ -155,6 +143,14 @@ class CocotbTestFixture:
         self._artifact_dir = build_report_folder_and_testdata(
             build_test_subdir, _get_args(self._test_fn, *self._args, **self._kwargs)
         )
+
+    @staticmethod
+    def _collect_all_srcs_from_dir(build_dir: Path, file_type: str) -> list[Path]:
+        all_files = []
+        for f in build_dir.iterdir():
+            if f.is_file() and f.name.endswith(file_type):
+                all_files.append(f)
+        return all_files
 
     def get_artifact_dir(self) -> Path:
         if self._artifact_dir == "<none>":
@@ -168,18 +164,79 @@ class CocotbTestFixture:
         with open(Path(self._artifact_dir) / Path("testdata.json"), "w") as f:
             json.dump(testdata, f)
 
-    def set_top_module_name(self, top_module_name: str) -> None:
+    def set_top_module_name(self, top_module_name: str) -> Self:
         self._top_module_name = top_module_name
+        return self
 
-    def set_srcs(self, srcs: Iterable[str | Path]):
+    def clear_srcs(self) -> Self:
+        self.set_srcs([])
+        return self
+
+    @overload
+    def set_srcs(self, srcs: Iterable[str | Path]) -> Self: ...
+
+    @overload
+    def set_srcs(self, *_srcs: Path | str) -> Self: ...
+
+    def set_srcs(
+        self,
+        *_srcs: str | Path | Iterable[str | Path],
+        srcs: Iterable[str | Path] = tuple(),
+    ) -> Self:
+        srcs = tuple(srcs)
+        if len(_srcs) > 0 and len(srcs) > 0:
+            raise TypeError(
+                f"Invalid arguments for set_srcs() {srcs}, pass srcs as variadic arguments only."
+            )
+        if len(_srcs) == 1 and len(srcs) == 0 and not isinstance(_srcs[0], (Path, str)):
+            srcs = tuple(_srcs[0])
+        if len(_srcs) > 0 and len(srcs) == 0:
+            srcs = tuple(srcs)
+
         self._context_stack.close()
         self._srcs = list((str(s) for s in srcs))
+        return self
 
-    def add_srcs(self, *srcs: str | Path) -> None:
+    def set_srcs_from_dir(self, path: Path, glob_pattern: str) -> Self:
+        """Add all matching paths to srcs.
+
+        Use python glob patterns like
+
+         - `verilog/*.v` to add all files ending with `.v`
+           in the verilog folder
+
+         - `**/*.vhdl` to recursively add all files ending with `.vhdl`.
+        """
+        return self.clear_srcs().add_srcs_from_dir(path, glob_pattern)
+
+    def set_srcs_from_artifact_dir(self, glob_pattern: str) -> Self:
+        return self.clear_srcs().set_srcs_from_dir(
+            self.get_artifact_dir(), glob_pattern
+        )
+
+    def add_srcs(self, *srcs: str | Path) -> Self:
         self._srcs.extend((str(s) for s in srcs))
+        return self
 
-    def set_timescale(self, scale: tuple[str, str]) -> None:
+    def add_srcs_from_package(self, package: Anchor, glob_pattern: str) -> Self:
+        package_dir = importlib.resources.as_file(
+            importlib.resources.files(package),
+        )
+        opened_package_dir = self._context_stack.enter_context(package_dir)
+        self._srcs.extend(
+            (p.absolute().as_posix() for p in opened_package_dir.glob(glob_pattern))
+        )
+        return self
+
+    def add_srcs_from_dir(self, path: Path, glob_pattern: str) -> Self:
+        return self.add_srcs(*path.glob(glob_pattern))
+
+    def add_srcs_from_artifact_dir(self, glob_pattern: str) -> Self:
+        return self.add_srcs(*self.get_artifact_dir().glob(glob_pattern))
+
+    def set_timescale(self, scale: tuple[str, str]) -> Self:
         self._timescale = scale
+        return self
 
     def run(self, params, defines):
         environ["EAI_SIM_TEST_DIR"] = str(self._artifact_dir)
@@ -233,7 +290,7 @@ def create_name_for_build_test_subdir(fn: Callable, *args: Any, **kwargs: Any) -
             return str(v)
         elif isinstance(v, float):
             return f"{v: .2f}"
-        return str(get_hash(v))
+        return get_hash(v)
 
     def make_hashable(value):
         if isinstance(value, Hashable):
@@ -249,7 +306,7 @@ def create_name_for_build_test_subdir(fn: Callable, *args: Any, **kwargs: Any) -
     for arg, value in _get_args(fn, *args, **kwargs).items():
         value = make_hashable(value)
         value = to_string(value)
-        mangling_args.extend([str(arg), str(value)])
+        mangling_args.extend([arg, value])
     if len(mangling_args) > 0:
         argstring = "_" + "_".join(mangling_args)
     else:
