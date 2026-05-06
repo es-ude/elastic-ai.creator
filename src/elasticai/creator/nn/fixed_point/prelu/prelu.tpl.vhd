@@ -1,11 +1,4 @@
-from typing import cast
-
-import elasticai.creator.nn.fixed_point as nn_creator
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-
-
-def test_vhdl_code_matches_expected_prelu() -> None:
-    expected = """-- //////////////////////////////////////////////////////////////////////////////////
+-- //////////////////////////////////////////////////////////////////////////////////
 -- Company:         University of Duisburg-Essen, Intelligent Embedded Systems Lab
 -- Engineer:        AE
 --
@@ -27,19 +20,19 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity prelu is
+entity ${layer_name} is
     generic (
-        DATA_WIDTH  : integer := 8;
-        SCALING     : integer := 8;
+        DATA_WIDTH  : integer := ${data_width};
+        SCALING     : integer := ${scaling};
     );
     port (
         enable : in std_logic;
     	x      : in std_logic_vector(DATA_WIDTH-1 downto 0);
     	y      : out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
-end entity prelu;
+end entity ${layer_name};
 
-architecture rtl of prelu is
+architecture rtl of ${layer_name} is
     signal fxp_input : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal fxp_output : signed(DATA_WIDTH-1 downto 0) := (others=>'0');
 begin
@@ -61,16 +54,3 @@ begin
         end if;
     end process;
 end architecture rtl;
-""".splitlines()
-    actfunc = nn_creator.PReLU(
-        total_bits=8,
-        frac_bits=5,
-        init=0.25,
-    )
-    build_path = InMemoryPath("build", parent=None)
-    design = actfunc.create_design("prelu")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["prelu"]).text
-    for text in actual:
-        print(text)
-    assert actual == expected

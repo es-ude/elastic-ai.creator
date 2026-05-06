@@ -7,13 +7,7 @@ from elasticai.creator.nn import Sequential
 
 
 class SimplePReLU(torch.nn.Module):
-    def __init__(
-        self,
-        total_width: int,
-        frac_width: int,
-        num_steps: int,
-        vrange: tuple[float, float],
-    ):
+    def __init__(self, total_width: int, frac_width: int, init: float):
         super().__init__()
         self.model = Sequential(
             nn_fxp.Linear(
@@ -22,12 +16,7 @@ class SimplePReLU(torch.nn.Module):
                 total_bits=total_width,
                 frac_bits=frac_width,
             ),
-            nn_fxp.PReLU(
-                total_bits=total_width,
-                frac_bits=frac_width,
-                num_steps=num_steps,
-                sampling_intervall=vrange,
-            ),
+            nn_fxp.PReLU(total_bits=total_width, frac_bits=frac_width, init=init),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -35,13 +24,13 @@ class SimplePReLU(torch.nn.Module):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("total_bits, frac_bits, num_steps", [(4, 3, 4)])
-def test_trainable_layer_tanh(total_bits: int, frac_bits: int, num_steps: int) -> None:
+@pytest.mark.parametrize("total_bits, frac_bits, init", [(4, 3, 0.25)])
+def test_trainable_layer_prelu(total_bits: int, frac_bits: int, init: float) -> None:
     params = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
     vrange = (params.minimum_as_rational, params.maximum_as_rational)
 
     stimuli = torch.rand((4, 10)) * (vrange[1] - vrange[0]) + vrange[0]
-    model = SimplePReLU(total_bits, frac_bits, num_steps, vrange)
+    model = SimplePReLU(total_bits, frac_bits, init)
     criterion = torch.nn.MSELoss()
     optim = torch.optim.Adam(model.parameters())
 
