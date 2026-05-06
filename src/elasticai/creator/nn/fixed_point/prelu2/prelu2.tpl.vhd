@@ -27,6 +27,7 @@ entity ${layer_name} is
     );
     port (
         enable : in std_logic;
+        clock  : in std_logic;
     	x      : in std_logic_vector(DATA_WIDTH-1 downto 0);
     	y      : out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
