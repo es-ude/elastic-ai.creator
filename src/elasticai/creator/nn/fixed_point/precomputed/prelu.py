@@ -3,7 +3,7 @@ from elasticai.creator.base_modules.prelu import PReLU as PReLUBase
 from .precomputed_module import PrecomputedModule
 
 
-class PReLU(PrecomputedModule):
+class PrecomputedPReLU(PrecomputedModule):
     def __init__(
         self,
         total_bits: int,
