@@ -132,18 +132,6 @@ class CocotbTestFixture:
             except (ModuleNotFoundError, FileNotFoundError):
                 pass
 
-    def add_srcs_from_package(self, package: Anchor, glob_pattern: str) -> None:
-        package_dir = importlib.resources.as_file(
-            importlib.resources.files(package),
-        )
-        opened_package_dir = self._context_stack.enter_context(package_dir)
-        self._srcs.extend(
-            (
-                str(p.absolute().as_posix())
-                for p in opened_package_dir.glob(glob_pattern)
-            )
-        )
-
     def _create_build_dir(self):
         build_test_subdir = create_name_for_build_test_subdir(
             self._test_fn, *self._args, **self._kwargs
@@ -161,6 +149,12 @@ class CocotbTestFixture:
             raise ValueError("no artifact folder initialized")
         return Path(self._artifact_dir)
 
+    def get_package_dir(self, package: Anchor) -> Path:
+        package_dir = importlib.resources.as_file(
+            importlib.resources.files(package),
+        )
+        return self._context_stack.enter_context(package_dir)
+
     def write(self, data: dict[str, Any]) -> None:
         with open(Path(self._artifact_dir) / Path("testdata.json"), "r") as f:
             testdata = json.load(f)
@@ -171,12 +165,37 @@ class CocotbTestFixture:
     def set_top_module_name(self, top_module_name: str) -> None:
         self._top_module_name = top_module_name
 
+    def empty_srcs(self):
+        self._srcs = []
+
     def set_srcs(self, srcs: Iterable[str | Path]):
         self._context_stack.close()
         self._srcs = list((str(s) for s in srcs))
 
     def add_srcs(self, *srcs: str | Path) -> None:
         self._srcs.extend((str(s) for s in srcs))
+
+    def add_srcs_from_package(self, package: Anchor, glob_pattern: str) -> None:
+        opened_package_dir = self.get_package_dir(package)
+        self._srcs.extend(
+            (
+                str(p.absolute().as_posix())
+                for p in opened_package_dir.glob(glob_pattern)
+            )
+        )
+
+    def _collect_all_srcs_from_build_dir(
+        self, build_dir: Path, file_type: str
+    ) -> list[Path]:
+        all_files = []
+        for f in build_dir.iterdir():
+            if f.is_file() and f.name.endswith(file_type):
+                all_files.append(f)
+        return all_files
+
+    def add_all_srcs_from_dir(self, path: Path, file_type: str) -> None:
+        list_path = self._collect_all_srcs_from_build_dir(path, file_type)
+        self.add_srcs(*list_path)
 
     def set_timescale(self, scale: tuple[str, str]) -> None:
         self._timescale = scale
