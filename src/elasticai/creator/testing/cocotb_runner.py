@@ -165,7 +165,7 @@ def _create_iverilog_dump_file(
     with open(dump_dst / "dump.v", "w") as f:
         f.write("module cocotb_iverilog_dump_v2();\n")
         f.write("initial begin\n")
-        f.write(f'    $dumpfile("{dumpfile_path}");\n')
+        f.write(f'    $dumpfile("{dumpfile_path.as_posix()}");\n')
         f.write(f"    $dumpvars(0, {top_module_name});\n")
         f.write("end\n")
         f.write("endmodule\n")
