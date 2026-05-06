@@ -13,7 +13,7 @@ from elasticai.creator.nn import fixed_point as nn_creator
         (4, 3, 4),
         (6, 4, 32),
         (8, 5, 64),
-        (10, 6, 16),
+        (10, 6, 20),
         (12, 7, 128),
         (12, 8, 64),
         (12, 10, 512),
