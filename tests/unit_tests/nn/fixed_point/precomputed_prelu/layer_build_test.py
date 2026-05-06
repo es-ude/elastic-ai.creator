@@ -34,8 +34,8 @@ begin
         if enable = '0' then
             signed_y <= to_signed(0, BITWIDTH_OUTPUT);
         else
-            if signed_x <= to_signed(-128, BITWIDTH_OUTPUT) then signed_y <= to_signed(-43, BITWIDTH_OUTPUT);
-            elsif signed_x <= to_signed(-42, BITWIDTH_OUTPUT) then signed_y <= to_signed(-21, BITWIDTH_OUTPUT);
+            if signed_x <= to_signed(-128, BITWIDTH_OUTPUT) then signed_y <= to_signed(-42, BITWIDTH_OUTPUT);
+            elsif signed_x <= to_signed(-43, BITWIDTH_OUTPUT) then signed_y <= to_signed(-21, BITWIDTH_OUTPUT);
             elsif signed_x <= to_signed(42, BITWIDTH_OUTPUT) then signed_y <= to_signed(0, BITWIDTH_OUTPUT);
             else signed_y <= to_signed(84, BITWIDTH_OUTPUT);
             end if;
