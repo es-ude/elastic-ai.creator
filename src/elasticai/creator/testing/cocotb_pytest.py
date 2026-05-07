@@ -144,16 +144,20 @@ class CocotbTestFixture:
             build_test_subdir, _get_args(self._test_fn, *self._args, **self._kwargs)
         )
 
+    @staticmethod
+    def _collect_all_srcs_from_dir(
+        build_dir: Path, file_type: str
+    ) -> list[Path]:
+        all_files = []
+        for f in build_dir.iterdir():
+            if f.is_file() and f.name.endswith(file_type):
+                all_files.append(f)
+        return all_files
+
     def get_artifact_dir(self) -> Path:
         if self._artifact_dir == "<none>":
             raise ValueError("no artifact folder initialized")
         return Path(self._artifact_dir)
-
-    def get_package_dir(self, package: Anchor) -> Path:
-        package_dir = importlib.resources.as_file(
-            importlib.resources.files(package),
-        )
-        return self._context_stack.enter_context(package_dir)
 
     def write(self, data: dict[str, Any]) -> None:
         with open(Path(self._artifact_dir) / Path("testdata.json"), "r") as f:
@@ -165,18 +169,30 @@ class CocotbTestFixture:
     def set_top_module_name(self, top_module_name: str) -> None:
         self._top_module_name = top_module_name
 
-    def empty_srcs(self):
-        self._srcs = []
+    def clear_srcs(self):
+        self.set_srcs([])
 
     def set_srcs(self, srcs: Iterable[str | Path]):
         self._context_stack.close()
         self._srcs = list((str(s) for s in srcs))
 
+    def set_all_srcs_from_dir(self, path: Path, file_type: str) -> None:
+        list_path = self._collect_all_srcs_from_dir(path, file_type)
+        self.set_srcs(*list_path)
+
+    def set_all_srcs_from_artefact_dir(self, file_type: str) -> None:
+        path = self.get_artifact_dir()
+        list_path = self._collect_all_srcs_from_dir(path, file_type)
+        self.set_srcs(*list_path)
+
     def add_srcs(self, *srcs: str | Path) -> None:
         self._srcs.extend((str(s) for s in srcs))
 
     def add_srcs_from_package(self, package: Anchor, glob_pattern: str) -> None:
-        opened_package_dir = self.get_package_dir(package)
+        package_dir = importlib.resources.as_file(
+            importlib.resources.files(package),
+        )
+        opened_package_dir = self._context_stack.enter_context(package_dir)
         self._srcs.extend(
             (
                 str(p.absolute().as_posix())
@@ -184,17 +200,13 @@ class CocotbTestFixture:
             )
         )
 
-    def _collect_all_srcs_from_build_dir(
-        self, build_dir: Path, file_type: str
-    ) -> list[Path]:
-        all_files = []
-        for f in build_dir.iterdir():
-            if f.is_file() and f.name.endswith(file_type):
-                all_files.append(f)
-        return all_files
-
     def add_all_srcs_from_dir(self, path: Path, file_type: str) -> None:
-        list_path = self._collect_all_srcs_from_build_dir(path, file_type)
+        list_path = self._collect_all_srcs_from_dir(path, file_type)
+        self.add_srcs(*list_path)
+
+    def add_all_srcs_from_artifact_dir(self, file_type: str) -> None:
+        path = self.get_artifact_dir()
+        list_path = self._collect_all_srcs_from_dir(path, file_type)
         self.add_srcs(*list_path)
 
     def set_timescale(self, scale: tuple[str, str]) -> None:
