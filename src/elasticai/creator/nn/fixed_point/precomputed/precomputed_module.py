@@ -59,15 +59,8 @@ class PrecomputedModule(DesignCreatorModule):
             ),
             persistent=False,
         )
-        lut_diff = (
-            torch.abs(torch.diff(self._lut_input))
-            / self._params.minimum_step_as_rational
-            / 2
-        )
-        self._xoffset = (
-            float((lut_diff.max() + lut_diff.min()) / 2)
-            * self._params.minimum_step_as_rational
-        )
+        lut_diff = torch.abs(torch.diff(self._lut_input))
+        self._xoffset = float((lut_diff.max() + lut_diff.min()) / 4)
 
     def get_lut_integer(self) -> tuple[list[int], list[int]]:
         return (
@@ -78,10 +71,11 @@ class PrecomputedModule(DesignCreatorModule):
     def _stepped_inputs(self, x: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, IdentityStepFunction.apply(x, self._lut_input))
 
-    def _forward_nograd(self, x: int) -> int:
-        fxp_input = self._config.as_rational(x)
-        if not isinstance(fxp_input, float):
-            raise ValueError()
+    def _forward_nograd(self, x: int | float) -> int:
+        if isinstance(x, float):
+            fxp_input = x
+        else:
+            fxp_input = self._config.as_rational(x)
 
         with torch.no_grad():
             output = self.forward(torch.tensor(fxp_input).clone().detach())

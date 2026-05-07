@@ -45,3 +45,39 @@ def test_tanh_compared_torch(total_bits: int, frac_bits: int, num_steps: int) ->
         out1.max() - out1.min()
     )
     assert metric_mean < 0.6 * fxp.minimum_step_as_rational
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, num_steps, q_input, q_output",
+    [
+        (
+            4,
+            2,
+            16,
+            [-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7],
+            [-4, -4, -4, -4, -3, -3, -2, -1, 0, 0, 1, 2, 3, 3, 4, 4],
+        ),
+        (
+            6,
+            3,
+            16,
+            [-32, -28, -24, -19, -15, -11, -7, -3, 2, 6, 10, 14, 18, 23, 27, 31],
+            [-8, -8, -8, -8, -8, -7, -7, -5, 0, 3, 6, 7, 8, 8, 8, 8],
+        ),
+    ],
+)
+def test_transfer_function_precomputed_tanh(
+    total_bits: int,
+    frac_bits: int,
+    num_steps: int,
+    q_input: list[int],
+    q_output: list[int],
+) -> None:
+    act = nn_creator.Tanh(
+        total_bits=total_bits, frac_bits=frac_bits, num_steps=num_steps
+    )
+    qin_result, qout_result = act.get_lut_integer()
+    assert len(qin_result) == num_steps
+    assert len(qout_result) == num_steps
+    assert q_input == qin_result
+    assert q_output == qout_result
