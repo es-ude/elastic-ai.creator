@@ -145,9 +145,7 @@ class CocotbTestFixture:
         )
 
     @staticmethod
-    def _collect_all_srcs_from_dir(
-        build_dir: Path, file_type: str
-    ) -> list[Path]:
+    def _collect_all_srcs_from_dir(build_dir: Path, file_type: str) -> list[Path]:
         all_files = []
         for f in build_dir.iterdir():
             if f.is_file() and f.name.endswith(file_type):
