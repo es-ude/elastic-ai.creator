@@ -1,41 +1,35 @@
-from abc import abstractmethod
-from collections.abc import Callable, Hashable, Iterator, Mapping
-from typing import Any, Iterable, Protocol, Self, cast, override
+from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping
+from typing import Protocol, Self, cast, override, runtime_checkable
 
 
+@runtime_checkable
 class ReadOnlyGraph[N: Hashable, E](Protocol):
     @property
-    @abstractmethod
-    def successors(self) -> Mapping[N, Mapping[N, E]]: ...
+    def successors(
+        self,
+    ) -> Mapping[N, Mapping[N, E]]: ...
 
     @property
-    @abstractmethod
     def predecessors(self) -> Mapping[N, Mapping[N, E]]: ...
 
 
 class Graph[N: Hashable, E](ReadOnlyGraph[N, E], Protocol):
-    @abstractmethod
     def add_node(self, node: N, /) -> Self: ...
 
-    @abstractmethod
     def add_edge(self, src: N, dst: N, attributes: E | None = None, /) -> Self: ...
 
-    @abstractmethod
     def remove_node(self, node: N, /) -> Self: ...
 
-    @abstractmethod
     def remove_edge(self, src: N, dst: N, /) -> Self: ...
 
-    @abstractmethod
     def add_nodes(self, *nodes: N) -> Self: ...
 
-    @abstractmethod
     def add_edges(self, *edges: tuple[N, N, E] | tuple[N, N]) -> Self: ...
 
 
 class AdjacencyMap[K, V](Mapping[K, Mapping[K, V]]):
     def __init__(self, mapping: dict[K, dict[K, V]] | None = None) -> None:
-        self._mapping = mapping or {}
+        self._mapping: dict[K, dict[K, V]] = mapping or {}
 
     @override
     def __getitem__(self, key: K) -> Mapping[K, V]:
@@ -61,7 +55,7 @@ class AdjacencyMap[K, V](Mapping[K, Mapping[K, V]]):
         if len(other) == 0:
             return self
         new_dict: dict[K, dict[K, V]] = {}
-        joined_keys_from_other = set()
+        joined_keys_from_other: set[K] = set()
         for key in self._mapping:
             new_dict[key] = self._mapping[key]
 
@@ -93,12 +87,14 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
     def __init__(
         self,
         default_edge_attributes_factory: Callable[[], E],
-        predecessors: AdjacencyMap[T, E] = AdjacencyMap(),
-        successors: AdjacencyMap[T, E] = AdjacencyMap(),
+        predecessors: AdjacencyMap[T, E] = AdjacencyMap(),  # pyright: ignore[reportCallInDefaultInitializer]
+        successors: AdjacencyMap[T, E] = AdjacencyMap(),  # pyright: ignore[reportCallInDefaultInitializer]  these are ok because we know that map is immutable
     ) -> None:
-        self._predecessors = predecessors
-        self._successors = successors
-        self._default_edge_attributes_factory = default_edge_attributes_factory
+        self._predecessors: AdjacencyMap[T, E] = predecessors
+        self._successors: AdjacencyMap[T, E] = successors
+        self._default_edge_attributes_factory: Callable[[], E] = (
+            default_edge_attributes_factory
+        )
 
     @override
     def add_node(self, node: T, /) -> Self:
@@ -136,8 +132,8 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
 
     @override
     def __eq__(self, other: object) -> bool:
-        if hasattr(other, "successors"):
-            return self.successors == other.successors  # pyright: ignore[reportAttributeAccessIssue]
+        if isinstance(other, ReadOnlyGraph):
+            return self.successors == other.successors
         return False
 
     @override
@@ -160,18 +156,16 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
             for a, b, attributes in edges:
                 yield b, a, attributes
 
-        def build_edge_dict(edges: Iterable[tuple[T, T, E]]) -> dict[T, dict[T, Any]]:
-            d: dict[T, dict[T, Any]] = {}
+        def build_edge_dict(edges: Iterable[tuple[T, T, E]]) -> dict[T, dict[T, E]]:
+            d: dict[T, dict[T, E]] = {}
             for a, b, attributes in edges:
                 if a not in d:
                     d[a] = {}
                 d[a][b] = attributes or self._default_edge_attributes_factory()
             return d
 
-        additional_successors: dict[T, dict[T, Any]] = build_edge_dict(_edges)
-        additional_predecessors: dict[T, dict[T, Any]] = build_edge_dict(
-            reverse_src_dst(_edges)
-        )
+        additional_successors = build_edge_dict(_edges)
+        additional_predecessors = build_edge_dict(reverse_src_dst(_edges))
         for src, dst, _ in _edges:
             if dst not in self.successors and dst not in additional_successors:
                 additional_successors[dst] = {}

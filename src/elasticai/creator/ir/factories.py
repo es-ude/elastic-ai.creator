@@ -98,7 +98,7 @@ class StdIrFactory[N: _Node, E: _Edge, G: DataGraph](IrFactory[N, E, G]):
     ) -> Registry[G]:
         if items is None:
             return Registry()
-        reg = Registry(items)
+        reg = Registry(items)  # zuban: ignore[call-overload]
         return reg.apply(lambda g: self.graph_from_other(other=g))
 
     def node(
