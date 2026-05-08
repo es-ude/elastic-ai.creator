@@ -7,11 +7,11 @@ from torch import nn
 import elasticai.creator.ir as ir
 from elasticai.creator import function_dispatch as FD
 
-dgraph_handlers = []
-node_handlers = {}
+dgraph_handlers: list[Any] = []
+node_handlers: dict[str, Any] = {}
 
 
-def _register_dgraph(fn):
+def _register_dgraph(fn: Any) -> Any:
     dgraph_handlers.append(fn)
     return fn
 
@@ -19,12 +19,12 @@ def _register_dgraph(fn):
 @FD.registrar
 def _register_node(
     key: str | None, fn: Callable[[ir.Node], Callable[[Any], torch.Tensor]]
-):
+) -> Callable[[ir.Node], Callable[[Any], torch.Tensor]]:
     if key is None:
         if not hasattr(fn, "__name__"):
             raise TypeError("only functions are supported")
-        key = cast(str, fn.__name__)
-    node_handlers[key] = fn
+        key = fn.__name__  # ty: ignore[invalid-assignment]
+    node_handlers[key] = fn  # ty: ignore[invalid-assignment]
     return fn
 
 

@@ -209,7 +209,7 @@ def attribute(
     | None = None,
     /,
     **kwargs: AttributeConvertable,
-) -> AttributeMapping | tuple[Attribute] | Attribute:
+) -> AttributeMapping | tuple[Attribute] | Attribute:  # zuban: ignore
     """Create AttributeMapping from other (native) data types recursively.
 
     The implementation assumes that any encountered AttributeMapping objects

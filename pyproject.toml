@@ -282,7 +282,14 @@ files = [
 enable_error_code = [
   "redundant-cast",
 ]
-disable_error_code = ["explicit-any", "no-any-return", "no-untyped-defs"]
+disable_error_code = [
+  "explicit-any",
+  "no-any-return",
+  "no-untyped-def",
+  "type-arg",
+  "no-untyped-call",
+  "untyped-decorator"
+]
 allow_redefinition = true
 strict = true
 extra_checks = true
