@@ -5,7 +5,7 @@ type AttributeBaseData = float | int | str | bool
 
 type AttributeTuple = tuple["Attribute", ...]
 
-type Attribute = AttributeBaseData | "AttributeTuple" | "AttributeMapping"
+type Attribute = "AttributeBaseData | AttributeTuple | AttributeMapping"
 
 
 class AttributeMapping(Mapping[str, Attribute]):
@@ -35,7 +35,8 @@ class AttributeMapping(Mapping[str, Attribute]):
         return False
 
     def __repr__(self) -> str:
-        return f"AttributeMapping({repr(self._mapping)})"
+        args = (f"{k}={repr(v)}" for k, v in self._mapping.items())
+        return f"AttributeMapping({', '.join(args)})"
 
     def drop(self, key: str) -> Self:
         new_dict = {k: v for k, v in self._mapping.items() if k != key}
@@ -43,7 +44,9 @@ class AttributeMapping(Mapping[str, Attribute]):
 
     def __or__(self, other: object) -> Self:
         if not isinstance(other, Mapping):
-            return NotImplemented
+            raise TypeError(
+                f"unsupported operand __or__ for types {type(self)} and {type(other)}"
+            )
         if len(other) == 0:
             return self
         return type(self)(
@@ -129,6 +132,42 @@ class AttributeMapping(Mapping[str, Attribute]):
                 return data
 
         return to_attribute(data)
+
+    def get_mapping(
+        self, key: str, default: "None | AttributeMapping" = None
+    ) -> "AttributeMapping":
+        return self._get_type_safe(key, default, AttributeMapping)
+
+    def get_int(self, key: str, default: None | int = None) -> int:
+        return self._get_type_safe(key, default, int)
+
+    def get_str(self, key: str, default: None | str = None) -> str:
+        return self._get_type_safe(key, default, str)
+
+    def get_float(self, key: str, default: None | float = None) -> float:
+        return self._get_type_safe(key, default, float)
+
+    def get_bool(self, key: str, default: None | bool = None) -> bool:
+        return self._get_type_safe(key, default, bool)
+
+    def get_tuple(
+        self, key: str, default: None | tuple[Attribute] = None
+    ) -> tuple[Attribute]:
+        return self._get_type_safe(key, default, tuple)
+
+    def _get_type_safe[T](self, key: str, default: T | None, _type: type[T]) -> T:
+        if key not in self:
+            if default is not None:
+                return default
+            else:
+                raise KeyError(f"key {key} not found in attribute mapping.")
+        item = self[key]
+        if isinstance(item, _type):
+            return item
+        else:
+            raise TypeError(
+                f"expected item {key} to be of type {_type} found {type(item)}"
+            )
 
 
 type AttributeConvertable = (
