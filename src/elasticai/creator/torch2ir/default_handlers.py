@@ -1,6 +1,8 @@
+from collections.abc import Callable
+
 import torch.nn as nn
 
-handlers = []
+handlers: list[Callable[[nn.Module], dict]] = []
 
 
 def _register(fn):

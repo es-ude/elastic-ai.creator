@@ -47,10 +47,4 @@ __all__ = [
     "logic_value_to_bitstring",
     "set_from_bit_string",
     "StreamInterface",
-    "HardwareFunction",
-    "DefaultHWFunction",
-    "SyncSynthesisStrategy",
-    "CachedSynthesisStrategy",
-    "SyncHardwareTester",
-    "HWFunction",
 ]

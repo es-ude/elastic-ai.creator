@@ -8,17 +8,17 @@ from torch import fx
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
-from elasticai.creator.ir import StdIrFactory
+from elasticai.creator.ir import Edge, Node, StdIrFactory
 
 from .default_handlers import dgraph_handlers, node_handlers
 
 
-class DataGraph(ir.DataGraph[ir.Node, ir.Edge], Protocol):
+class DataGraph(ir.DataGraph[Node, Edge], Protocol):
     @property
     def type(self) -> str: ...
 
 
-class _DataGraph(ir.DataGraphImpl[ir.Node, ir.Edge]):
+class _DataGraph(ir.DataGraphImpl[Node, Edge]):
     @property
     def type(self) -> str:
         result = self.attributes.get("type", "<none>")
