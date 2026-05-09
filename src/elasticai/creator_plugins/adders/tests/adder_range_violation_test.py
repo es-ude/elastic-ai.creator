@@ -5,7 +5,6 @@ from cocotb.triggers import Timer
 from elasticai.creator.arithmetic import int_arithmetic
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
 from elasticai.creator_plugins.adders.utils import (
-    collect_all_srcs_from_build_dir,
     load_and_plugin,
 )
 
@@ -113,5 +112,6 @@ def test_adder_range_violation_build(
         path2save=build_dir,
     )
     cocotb_test_fixture.set_top_module_name(f"ADDER_RANGE_VIOLATION_{bitwidth}")
-    cocotb_test_fixture.set_srcs(collect_all_srcs_from_build_dir(build_dir))
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("*.v")
     cocotb_test_fixture.run(params={}, defines={})

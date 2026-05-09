@@ -41,13 +41,3 @@ def _prepare_translator(plugin_types: list[str]) -> Ir2Verilog:
     for plugin in plugin_types:
         loader.load_from_package(plugin)
     return _translate
-
-
-def collect_all_srcs_from_build_dir(
-    build_dir: Path, file_type: str = "v"
-) -> list[Path]:
-    all_files = []
-    for f in build_dir.iterdir():
-        if f.is_file() and f.name.endswith(file_type):
-            all_files.append(f)
-    return all_files

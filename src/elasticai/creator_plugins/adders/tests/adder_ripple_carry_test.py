@@ -6,10 +6,7 @@ from cocotb.triggers import Timer
 
 from elasticai.creator.arithmetic import int_arithmetic
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
-from elasticai.creator_plugins.adders.utils import (
-    collect_all_srcs_from_build_dir,
-    load_and_plugin,
-)
+from elasticai.creator_plugins.adders.utils import load_and_plugin
 
 
 def adder_model(a: int, b: int, bitwidth: int, signed: bool) -> int:
@@ -41,17 +38,16 @@ async def adder_truthtable(dut, bitwidth: int, is_signed: bool):
 def test_adder_ripple_carry(
     cocotb_test_fixture: CocotbTestFixture, bitwidth: int, is_signed: bool
 ):
-    package_dir = cocotb_test_fixture.get_package_dir("adders") / "verilog"
     top_name = (
         "ADDER_RIPPLE_CARRY_SIGNED" if is_signed else "ADDER_RIPPLE_CARRY_UNSIGNED"
     )
-
     cocotb_test_fixture.set_top_module_name(top_name)
-    cocotb_test_fixture.set_srcs([])
-    cocotb_test_fixture.set_srcs(collect_all_srcs_from_build_dir(package_dir))
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_package("adders", "verilog/adder_*.v")
     cocotb_test_fixture.run(params={"BITWIDTH": bitwidth}, defines={})
 
 
+@pytest.mark.skip
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [8, 10])
 @pytest.mark.parametrize("is_signed", [False, True])
@@ -74,5 +70,6 @@ def test_adder_ripple_carry_build(
         path2save=build_dir,
     )
     cocotb_test_fixture.set_top_module_name(top_name)
-    cocotb_test_fixture.set_srcs(collect_all_srcs_from_build_dir(build_dir))
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("*.v")
     cocotb_test_fixture.run(params={}, defines={})

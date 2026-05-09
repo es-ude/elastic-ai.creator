@@ -25,9 +25,6 @@ async def adder_truthtable(dut):
 
 @pytest.mark.simulation
 def test_adder_full(cocotb_test_fixture: CocotbTestFixture):
-    build_dir = cocotb_test_fixture.get_package_dir("adders") / "verilog"
-    files = [p.as_posix() for p in build_dir.glob("adder_half.v")]
-
     cocotb_test_fixture.set_top_module_name("ADDER_FULL")
-    cocotb_test_fixture.add_srcs(*files)
+    cocotb_test_fixture.add_srcs_from_package("adders", "verilog/adder_half.v")
     cocotb_test_fixture.run(params={}, defines={})
