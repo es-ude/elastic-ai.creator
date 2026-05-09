@@ -29,13 +29,13 @@ class Registry[G: DataGraph[Node, Edge]](Mapping[str, G]):
         items: Iterable[tuple[str, G]] | Mapping[str, G] | None = None,
         /,
         **kwargs: G,
-    ) -> None:
+    ) -> None:  # zuban: ignore[misc]
         if items is None:
             self._data: dict[str, G] = kwargs
         else:
             if not len(kwargs) == 0:
                 raise TypeError(f"unsupported arguments for {type(self)}")
-            self._data = dict(items)
+            self._data = dict(items)  # zuban: ignore[call-overload]
 
     @override
     def __getitem__(self, name: str) -> G:
