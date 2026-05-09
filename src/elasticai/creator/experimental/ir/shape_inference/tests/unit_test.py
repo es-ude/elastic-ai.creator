@@ -1,13 +1,13 @@
 import pytest
 
-from elasticai.creator import ir
+import elasticai.creator.ir2torch as ir
 from elasticai.creator.experimental.ir.shape_inference import (
     IrShapeInference,
     Shape,
     get_default_shape_inference,
 )
 
-factory = ir.DefaultIrFactory()
+factory = ir.IrFactory()
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def infer_shape():
 
     @infer.register_node()
     def scalar_function(_, input_shape: tuple[Shape, ...]) -> Shape:
-        if len(input_shape) > 1:
+        if len(input_shape) > 1 or len(input_shape) < 1:
             raise ValueError("Scalar function cannot take more than single argument")
         return input_shape[0]
 
@@ -32,7 +32,7 @@ def _base_graph():
 
 
 @pytest.fixture
-def _graph_with_datapath_join(_base_graph: ir.DataGraph[ir.Node, ir.Edge]):
+def _graph_with_datapath_join(_base_graph: ir.DataGraph):
     add_attr = ir.attribute(type="function", implementation="add")
     scalar_attr = ir.attribute(type="scalar_function")
     return (
@@ -53,7 +53,7 @@ def test_can_infer_shape_for_dgraph_with_path_join(
 ):
     result = infer_shape(
         _graph_with_datapath_join,
-        ir.Registry(),
+        factory.registry(),
         input_node_shapes=dict(input=(1, 1, 1)),
     )
     expected_edges = {

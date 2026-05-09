@@ -1,3 +1,5 @@
+from elasticai.creator.ir import attribute
+
 from .default_handlers import dgraph_handlers as default_handlers
 from .ir2torch import (
     DataGraph,
@@ -12,4 +14,5 @@ __all__ = [
     "get_default_converter",
     "default_handlers",
     "IrFactory",
+    "attribute",
 ]

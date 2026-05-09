@@ -1,5 +1,5 @@
-from collections.abc import Callable, Iterable, Iterator
-from typing import Any, Protocol, cast
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from typing import Protocol, cast
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator import ir
@@ -11,7 +11,7 @@ type TypeHandler = Callable[[DataGraph, tuple[tuple[int, ...], ...]], tuple[int,
 type Shape = tuple[int, ...]
 
 
-def _guard_shape(item: Any) -> Shape:
+def _guard_shape(item: object) -> Shape:
     return _type_check(item, tuple)
 
 
@@ -31,7 +31,7 @@ type ShapedDatagraph = ir.DataGraph[Node, ShapedEdge]
 class IrShapeInference:
     def __init__(self) -> None:
         self._ir_factory = IrFactory()
-        self._registry: ir.Registry[DataGraph] = ir.Registry()
+        self._registry: Mapping[str, DataGraph] = ir.Registry()
         self._root = self._ir_factory.graph(ir.attribute(type="module"))
         self._original = ir.DefaultIrFactory().graph()
         self._unfinished_nodes: set[str] = set()
@@ -39,7 +39,7 @@ class IrShapeInference:
     def __call__(
         self,
         root: DataGraph,
-        reg: Registry,
+        reg: Mapping[str, DataGraph],
         input_node_shapes: dict[str, tuple[int, ...]],
     ) -> ShapedDatagraph:
         self._original = root
@@ -181,7 +181,7 @@ class IrShapeInference:
         return name
 
 
-def _type_check[T](item: Any, t: type[T]) -> T:
+def _type_check[T](item: object, t: type[T]) -> T:
     if isinstance(item, t):
         return item
     else:
@@ -205,7 +205,7 @@ class _ShapedEdgeImpl(ir.EdgeImpl):
 
 
 class IrFactory(ir.StdIrFactory[Node, ShapedEdge, ShapedDatagraph]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             node_fn=_NodeImpl, edge_fn=_ShapedEdgeImpl, graph_fn=ir.DataGraphImpl
         )

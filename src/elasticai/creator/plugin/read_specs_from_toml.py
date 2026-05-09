@@ -52,17 +52,17 @@ Most other classes defined in this module are supposed to increase usability and
 """
 
 import importlib.resources as _res
-from collections.abc import Iterable
 
 import tomlkit as toml
 
 from .plugin_spec import PluginMap
 
 
-def read_plugin_dicts_from_package(package: str) -> Iterable[PluginMap]:
+def read_plugin_dicts_from_package(package: _res.Anchor) -> list[PluginMap]:
     """read the meta.toml file from the package returning the list of plugin dictionaries."""
     t = _res.files(package).joinpath("meta.toml")
-    parsed: list[dict] = []
+    parsed: list[PluginMap] = []
+    package = package if isinstance(package, str) else package.__name__
     if t.is_file():
         with t.open("rb") as f:
             content = toml.load(f).unwrap()

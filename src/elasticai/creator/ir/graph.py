@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Callable, Hashable, Iterator, Mapping
-from typing import Any, Protocol, Self, cast
+from typing import Any, Iterable, Protocol, Self, cast, override
 
 
 class ReadOnlyGraph[N: Hashable, E](Protocol):
@@ -37,18 +37,23 @@ class AdjacencyMap[K, V](Mapping[K, Mapping[K, V]]):
     def __init__(self, mapping: dict[K, dict[K, V]] | None = None) -> None:
         self._mapping = mapping or {}
 
+    @override
     def __getitem__(self, key: K) -> Mapping[K, V]:
         return self._mapping[key].keys().mapping
 
+    @override
     def __contains__(self, key: object) -> bool:
         return key in self._mapping
 
+    @override
     def __iter__(self) -> Iterator[K]:
         return iter(self._mapping)
 
+    @override
     def __len__(self) -> int:
         return len(self._mapping)
 
+    @override
     def __repr__(self) -> str:
         return f"AdjacencyMap({repr(self._mapping)})"
 
@@ -95,9 +100,11 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
         self._successors = successors
         self._default_edge_attributes_factory = default_edge_attributes_factory
 
+    @override
     def add_node(self, node: T, /) -> Self:
         return self.add_nodes(node)
 
+    @override
     def add_nodes(self, *nodes: T) -> Self:
         additional_predecessors: dict[T, dict[T, E]] = {}
         additional_successors: dict[T, dict[T, E]] = {}
@@ -114,21 +121,26 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
         )
 
     @property
+    @override
     def successors(self) -> AdjacencyMap[T, E]:
         return self._successors
 
     @property
+    @override
     def predecessors(self) -> AdjacencyMap[T, E]:
         return self._predecessors
 
+    @override
     def add_edge(self, src: T, dst: T, attributes: E | None = None, /) -> Self:
         return self.add_edges((src, dst, attributes))
 
+    @override
     def __eq__(self, other: object) -> bool:
         if hasattr(other, "successors"):
-            return self.successors == other.successors
+            return self.successors == other.successors  # pyright: ignore[reportAttributeAccessIssue]
         return False
 
+    @override
     def add_edges(self, *edges: tuple[T, T, E | None] | tuple[T, T]) -> Self:
         def dispatch_arg(edge: tuple[T, T, E | None] | tuple[T, T]) -> tuple[T, T, E]:
             match edge:
@@ -137,16 +149,18 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
                 case (src, dst, None):
                     return src, dst, self._default_edge_attributes_factory()
                 case (src, dst, attributes):
-                    return src, dst, attributes
+                    return src, dst, attributes  # zuban: ignore[return-value]
             raise TypeError(f"Invalid edge argument {edge}.")
 
         _edges = tuple(map(dispatch_arg, edges))
 
-        def reverse_src_dst(edges) -> Iterator[tuple[T, T, E]]:
+        def reverse_src_dst(
+            edges: Iterable[tuple[T, T, E]],
+        ) -> Iterator[tuple[T, T, E]]:
             for a, b, attributes in edges:
                 yield b, a, attributes
 
-        def build_edge_dict(edges) -> dict[T, dict[T, Any]]:
+        def build_edge_dict(edges: Iterable[tuple[T, T, E]]) -> dict[T, dict[T, Any]]:
             d: dict[T, dict[T, Any]] = {}
             for a, b, attributes in edges:
                 if a not in d:
@@ -171,6 +185,7 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
             successors=new_successors,
         )
 
+    @override
     def remove_edge(self, src: T, dst: T, /) -> Self:
         new_predecessors = self.predecessors.drop(dst, src)
         new_successors = self.successors.drop(src, dst)
@@ -180,6 +195,7 @@ class GraphImpl[T: Hashable, E](Graph[T, E]):
             successors=new_successors,
         )
 
+    @override
     def remove_node(self, node: T, /) -> Self:
         new_predecessors = self.predecessors.drop(node)
         new_successors = self.successors.drop(node)

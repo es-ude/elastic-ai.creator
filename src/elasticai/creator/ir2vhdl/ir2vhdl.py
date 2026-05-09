@@ -1,8 +1,8 @@
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from itertools import starmap
-from typing import Any, Protocol, cast, overload, override
+from typing import Protocol, overload, override
 
 import elasticai.creator.function_dispatch as FD
 import elasticai.creator.ir as ir
@@ -13,7 +13,6 @@ from elasticai.creator.hdl_ir import (
     NonIterableTypeHandler,
     Registry,
     TypeHandler,
-    _check_and_get_name_fn,
 )
 from elasticai.creator.hdl_ir import (
     Edge as Edge,
@@ -48,12 +47,15 @@ class Ir2Vhdl:
 
     @overload
     def __call__(
-        self, root: DataGraph, registry: Registry, default_root_name="root"
+        self, root: DataGraph, registry: Mapping[str, DataGraph], default_root_name: str = "root"
     ) -> Iterable[Code]: ...
 
     def __call__(
-        self, root=None, registry=None, default_root_name="root"
-    ) -> Iterable[Code]:
+        self,
+        root: None | DataGraph | Mapping[str, DataGraph]= None,
+        registry: Mapping[str, DataGraph]| None = None,
+        default_root_name: str = "root",
+    ) -> Iterable[Code]:  # zuban: ignore[misc]
         registry = self._normalize_args(
             root=root, registry=registry, default_root_name=default_root_name
         )
@@ -83,7 +85,7 @@ class Ir2Vhdl:
         return graph.type
 
     @staticmethod
-    def _check_and_get_name(name: str | None, fn: Callable) -> str:
+    def _check_and_get_name[**P, R](name: str | None, fn: Callable[P, R]) -> str:
         return _check_and_get_name_fn(name, fn)
 
     @FD.registrar_method
@@ -96,27 +98,28 @@ class Ir2Vhdl:
     @FD.registrar_method
     def register(self, name: str | None, fn: TypeHandler) -> TypeHandler:
         name = self._check_and_get_name(name, fn)
-        self._handle_type.register(name, fn)
-        return fn
+        return self._handle_type.register(name, fn)
 
     @FD.registrar_method
     def override(self, name: str | None, fn: TypeHandler) -> TypeHandler:
         name = self._check_and_get_name(name, fn)
-        self._handle_type.override(name, fn)
-        return fn
+        return self._handle_type.override(name, fn)
 
     def _normalize_args(
-        self, root: DataGraph | None, registry: Registry | None, default_root_name: str
-    ) -> ir.Registry:
+        self,
+        root: DataGraph | Mapping[str, DataGraph]| None,
+        registry: Mapping[str, DataGraph]| None,
+        default_root_name: str,
+    ) -> Registry:
         incompatible_args_error = TypeError(
             "Ir2Vhdl called with incompatible arguments"
         )
         if isinstance(root, ir.Registry) and registry is None:
-            return root
-        if isinstance(registry, ir.Registry) and root is not None:
+            return root  # ty: ignore[invalid-return-type]
+        if isinstance(registry, ir.Registry) and isinstance(root, ir.DataGraph):
             return registry | ir.Registry(
-                **{cast(str, root.attributes.get("name", default_root_name)): root}
-            )
+                **{root.attributes.get_str("name", default_root_name): root}
+            ) | registry  # ty: ignore[invalid-return-type]
         raise incompatible_args_error
 
 
@@ -139,13 +142,13 @@ type PluginSymbol = PluginSymbolClass | PluginSymbolObject | PluginSymbolStatic
 
 class _StaticFileSymbol:
     def __init__(self, file: StaticFileBase):
-        self._file = file
+        self._file: StaticFileBase = file
 
     def load_vhdl(self, receiver: Ir2Vhdl) -> None:
-        receiver.register_static(self._file.name, self._file.get_content)
+        _ = receiver.register_static(self._file.name, self._file.get_content)
 
 
-class PluginLoader(PluginLoaderBase):
+class PluginLoader(PluginLoaderBase[PluginSpec, PluginSymbol]):
     """PluginLoader for Ir2Vhdl passes."""
 
     def __init__(self, lowering: Ir2Vhdl):
@@ -154,8 +157,8 @@ class PluginLoader(PluginLoaderBase):
 
     @override
     def filter_plugin_dicts(
-        self, plugins: Iterable[dict[str, Any]]
-    ) -> Iterable[dict[str, Any]]:
+        self, plugins: Iterable[_pl.PluginMap]
+    ) -> Iterable[_pl.PluginMap]:
         for p in plugins:
             if p["target_runtime"] == "vhdl":
                 yield p
@@ -179,7 +182,7 @@ class PluginLoader(PluginLoaderBase):
                 stacklevel=2,
                 category=DeprecationWarning,
             )
-            symbol.load_into(self._receiver)
+            symbol.load_vhdl(self._receiver)
         else:
             raise TypeError("Failed to load plugin symbol")
 
@@ -191,10 +194,10 @@ def type_handler(
     name = _check_and_get_name_fn(name, fn)
 
     def load_into(lower: Ir2Vhdl) -> None:
-        def wrapper(*args, **kwargs):
-            yield fn(*args, **kwargs)
+        def wrapper(a: DataGraph, b: Registry, /) -> Iterator[Code]:
+            yield fn(a, b)
 
-        lower.register(name, wrapper)
+        _ = lower.register(name, wrapper)
 
     setattr(fn, "load_vhdl", load_into)
     return fn
@@ -203,11 +206,18 @@ def type_handler(
 @FD.registrar
 def type_handler_iterable(name: str | None, fn: TypeHandler) -> TypeHandler:
     name = _check_and_get_name_fn(name, fn)
-    if name is None:
-        name = fn.__name__
 
     def load_into(lower: Ir2Vhdl) -> None:
-        lower.register(name, fn)
+        _ = lower.register(name, fn)
 
     setattr(fn, "load_vhdl", load_into)
     return fn
+
+
+def _check_and_get_name_fn[**P, R](name: str | None, fn: Callable[P, R]) -> str:
+    if name is None:
+        if hasattr(fn, "__name__"):
+            return fn.__name__  # ty: ignore[invalid-return-type]
+        else:
+            raise Exception(f"you need to specify name explicitly for {fn}")
+    return name
