@@ -2,16 +2,16 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Iterable
 from importlib import resources as res
-from typing import Any
 
-import elasticai.creator.plugin as _pl
+from .plugin_spec import PluginMap, PluginSpec
+from .read_specs_from_toml import read_plugin_dicts_from_package
 
 
-class PluginLoaderBase[PS: _pl.PluginSpec, S]:
-    """PluginLoader for Ir2Verilog passes."""
+class PluginLoaderBase[PS: PluginSpec, S]:
+    """PluginLoader for translation passes."""
 
     def __init__(self, spec: type[PS]):
-        self._spec = spec
+        self._spec: type[PS] = spec
 
     def load_from_package(self, package: str) -> None:
         if "." not in package:
@@ -22,8 +22,8 @@ class PluginLoaderBase[PS: _pl.PluginSpec, S]:
 
     @abstractmethod
     def filter_plugin_dicts(
-        self, plugins: Iterable[dict[str, Any]]
-    ) -> Iterable[dict[str, Any]]: ...
+        self, plugins: Iterable[PluginMap]
+    ) -> Iterable[PluginMap]: ...
 
     @abstractmethod
     def load_symbol(self, symbol: S) -> None: ...
@@ -31,13 +31,13 @@ class PluginLoaderBase[PS: _pl.PluginSpec, S]:
     @abstractmethod
     def get_symbols(self, specs: Iterable[PS]) -> Iterable[S]: ...
 
-    def get_specs(self, package) -> Iterable[PS]:
+    def get_specs(self, package: res.Anchor) -> Iterable[PS]:
         spec_fields = set(f.name for f in dataclasses.fields(self._spec))
-        plugin_dicts: Iterable[dict[str, Any]] = self.filter_plugin_dicts(
-            _pl.read_plugin_dicts_from_package(package)
+        plugin_dicts: Iterable[PluginMap] = self.filter_plugin_dicts(
+            read_plugin_dicts_from_package(package)
         )
         plugin_dicts = ({k: p[k] for k in p if k in spec_fields} for p in plugin_dicts)
-        plugin_specs = (self._spec(**p) for p in plugin_dicts)
+        plugin_specs = (self._spec(**p) for p in plugin_dicts)  # type: ignore
         return plugin_specs
 
 

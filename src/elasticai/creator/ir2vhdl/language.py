@@ -1,19 +1,10 @@
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
+from typing import override
 
 import elasticai.creator.function_dispatch as FD
 from elasticai.creator.hdl_ir import Node, Shape
-
-
-def _check_and_get_fn_name(name: str | None, fn: Callable) -> str:
-    """Get function name for registration, either from parameter or function.__name__."""
-    if name is None:
-        if hasattr(fn, "__name__") and isinstance(fn.__name__, str):
-            return fn.__name__
-        else:
-            raise Exception(f"you need to specify name explicitly for {fn}")
-    return name
 
 
 class Signal(ABC):
@@ -47,16 +38,19 @@ class Signal(ABC):
 
 class LogicSignal(Signal):
     def __init__(self, name: str):
-        self._name = name
+        self._name: str = name
 
+    @override
     def define(self) -> Iterator[str]:
         yield f"signal {self._name} : std_logic := '0';"
 
     @property
+    @override
     def name(self) -> str:
         return self._name
 
     @classmethod
+    @override
     def can_create_from_code(cls, code: str) -> bool:
         return cls._search(code) is not None
 
@@ -68,6 +62,7 @@ class LogicSignal(Signal):
         return match
 
     @classmethod
+    @override
     def from_code(cls, code: str) -> "Signal":
         match = cls._search(code)
         if match is None:
@@ -75,9 +70,11 @@ class LogicSignal(Signal):
         (name,) = match.groups()
         return cls(name)
 
+    @override
     def make_instance_specific(self, instance: str) -> Signal:
         return self.__class__(f"{self.name}_{instance}")
 
+    @override
     def __eq__(self, other: object) -> bool:
         if other is self:
             return True
@@ -88,13 +85,15 @@ class LogicSignal(Signal):
 
 class LogicVectorSignal(Signal):
     def __init__(self, name: str, width: int):
-        self._name = name
-        self._width = width
+        self._name: str = name
+        self._width: int = width
 
+    @override
     def define(self) -> Iterator[str]:
         yield f"signal {self._name} : std_logic_vector({self._width} - 1 downto 0) := (others => '0');"
 
     @property
+    @override
     def name(self) -> str:
         return self._name
 
@@ -103,6 +102,7 @@ class LogicVectorSignal(Signal):
         return self._width
 
     @classmethod
+    @override
     def can_create_from_code(cls, code: str) -> bool:
         return cls._search(code) is not None
 
@@ -115,6 +115,7 @@ class LogicVectorSignal(Signal):
         return match
 
     @classmethod
+    @override
     def from_code(cls, code: str) -> "Signal":
         match = cls._search(code)
         if match is None:
@@ -125,10 +126,12 @@ class LogicVectorSignal(Signal):
             width = str(int(a) - int(b))
         return cls(name, int(width) + 1)
 
+    @override
     def make_instance_specific(self, instance: str) -> Signal:
         return self.__class__(f"{self.name}_{instance}", self.width)
 
-    def __eq__(self, other) -> bool:
+    @override
+    def __eq__(self, other: object) -> bool:
         if other is self:
             return True
         if isinstance(other, LogicVectorSignal):
@@ -137,24 +140,29 @@ class LogicVectorSignal(Signal):
 
 
 class NullDefinedLogicSignal(Signal):
-    def __init__(self, name):
-        self._name = name
+    def __init__(self, name: str):
+        self._name: str = name
 
+    @override
     def define(self) -> Iterator[str]:
         yield from []
 
     @property
+    @override
     def name(self) -> str:
         return self._name
 
     @classmethod
+    @override
     def can_create_from_code(cls, code: str) -> bool:
         return False
 
     @classmethod
+    @override
     def from_code(cls, code: str) -> "Signal":
         return cls("<unknown>")
 
+    @override
     def make_instance_specific(self, instance: str) -> Signal:
         return self
 
@@ -227,9 +235,9 @@ class Instance:
         generics = tuple(self._generics.items())
         if len(generics) > 0:
             yield "generic map ("
-            for key, value in generics[:-1]:
+            for key, value in generics[:-1]:  # zuban: ignore[misc]
                 yield f"  {key.upper()} => {value},"
-            for g in generics[-1:]:
+            for g in generics[-1:]:  # zuban: ignore[misc]
                 yield f"  {g[0].upper()} => {g[1]}"
             yield "  )"
         port_map = tuple(self.port_map.items())
@@ -267,10 +275,10 @@ class InstanceFactory:
         return self._handle_type(node)
 
 
-def _check_and_get_name_fn(name: str | None, fn: Callable) -> str:
+def _check_and_get_name_fn[**P, R](name: str | None, fn: Callable[P, R]) -> str:
     if name is None:
-        if hasattr(fn, "__name__") and isinstance(fn.__name__, str):
-            return fn.__name__
+        if hasattr(fn, "__name__"):
+            return fn.__name__  # ty: ignore[invalid-return-type]
         else:
             raise Exception(f"you need to specify name explicitly for {fn}")
     return name
