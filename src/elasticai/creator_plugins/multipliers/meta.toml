@@ -1,0 +1,15 @@
+[[plugins]]
+name = "multipliers"
+version = "0.1"
+api_version = "0.1"
+target_runtime = "verilog"
+target_platform = "FPGA"
+generated = [
+  "mult_lut_signed",
+  "mult_lut_unsigned",
+  "mult_dsp_signed",
+  "mult_dsp_unsigned",
+  "mult_booth_signed",
+  "mult_booth_unsigned"
+]
+static_files = []
