@@ -95,8 +95,9 @@ class DeltaOperations:
     def __delta_consecutive(input: Tensor) -> tuple[Tensor, Size]:
         original_shape = input.shape
         input = input.flatten()
-        for index in reversed(range(1, len(input))):
-            input[index] = input[index] - input[index - 1]
+        input[1:] -= input[:-1].clone()
+        # for index in reversed(range(1, len(input))):
+        #     input[index] = input[index] - input[index - 1]
         return input, original_shape
 
     def _delta(self, input: Tensor) -> tuple[Tensor, Size]:
@@ -172,8 +173,9 @@ class DeltaOperations:
     def __reverse_delta_consecutive(input: Tensor) -> tuple[Tensor, Size]:
         original_shape = input.shape
         input = input.flatten()
-        for index in range(1, len(input)):
-            input[index] = input[index - 1] + input[index]
+        input.cumsum_(0)
+        # for index in range(1, len(input)):
+        #     input[index] = input[index - 1] + input[index]
         return input, original_shape
 
     @staticmethod
