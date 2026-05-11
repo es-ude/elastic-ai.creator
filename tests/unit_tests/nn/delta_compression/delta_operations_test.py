@@ -1,10 +1,14 @@
 """Unit tests for DeltaOperations class."""
 
+import pytest
 import torch
 
 from elasticai.creator.arithmetic.fxp_arithmetic import FxpArithmetic
 from elasticai.creator.arithmetic.fxp_params import FxpParams
-from elasticai.creator.nn.delta_compression.delta_operations import DeltaOperations
+from elasticai.creator.nn.delta_compression.delta_operations import (
+    DeltaOperations,
+    DeltaType,
+)
 
 
 class TestDeltaOperationsWithoutClamping:
@@ -364,3 +368,170 @@ class TestDeltaOperationsWithClamping:
             assert inflated[i] <= inflated[i + 1]
 
         assert torch.Tensor.all(inflated == input_tensor)
+
+
+class TestDeltaOperationsFixedReferenceWithoutClamping:
+    """Test cases for DeltaOperations using fixed-reference delta encoding."""
+
+    def test_compress_function(self):
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+
+        delta_ops = DeltaOperations(
+            delta_bits=4,
+            delta_offset=0,
+            fxp_arithmetic=fxp_arithmetic,
+            delta_type=DeltaType.FIXED_REFERENCE,
+        )
+
+        # Non-equal spacing makes fixed-reference and consecutive produce different results:
+        # FIXED_REFERENCE deltas from element[0]=16: [1, 2, 3, 6]
+        # CONSECUTIVE would give:                    [1, 1, 1, 3]
+        input_tensor = torch.Tensor([1.0, 1.0625, 1.125, 1.1875, 1.375])
+        result = delta_ops.compress(input_tensor.clone())
+
+        assert result.shape == input_tensor.shape
+        assert result[0] == fxp_arithmetic.cut_as_integer(1.0)
+        assert result[1] == 1
+        assert result[2] == 2
+        assert result[3] == 3
+        assert result[4] == 6
+
+    def test_inflate_function(self):
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+
+        delta_ops = DeltaOperations(
+            delta_bits=4,
+            delta_offset=0,
+            fxp_arithmetic=fxp_arithmetic,
+            delta_type=DeltaType.FIXED_REFERENCE,
+        )
+
+        # First element is the absolute integer value; rest are deltas from it.
+        # Fixed-reference inflate adds element[0] to each delta independently,
+        # not cumulatively as CONSECUTIVE would.
+        input_tensor = torch.Tensor([16.0, 1.0, 2.0, 3.0])
+        result = delta_ops.inflate(input_tensor.clone())
+
+        assert result.shape == input_tensor.shape
+        assert result[0] == fxp_arithmetic.as_rational(16.0)
+        assert result[1] == fxp_arithmetic.as_rational(16.0 + 1.0)
+        assert result[2] == fxp_arithmetic.as_rational(16.0 + 2.0)
+        assert result[3] == fxp_arithmetic.as_rational(16.0 + 3.0)
+
+    def test_compress_inflate_roundtrip(self):
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+
+        delta_ops = DeltaOperations(
+            delta_bits=4,
+            delta_offset=0,
+            fxp_arithmetic=fxp_arithmetic,
+            delta_type=DeltaType.FIXED_REFERENCE,
+        )
+
+        # Deltas from element[0] are 1, 2, 3, 6 in integer space — all fit in bitmask(4,0)=7
+        input_tensor = torch.Tensor([1.0, 1.0625, 1.125, 1.1875, 1.375])
+
+        compressed = delta_ops.compress(input_tensor.clone())
+        assert compressed.shape == input_tensor.shape
+
+        inflated = delta_ops.inflate(compressed)
+        assert inflated.shape == input_tensor.shape
+
+        assert torch.Tensor.all(inflated == input_tensor)
+
+
+class TestDeltaOperationsFixedReferenceWithClamping:
+    """Test cases for DeltaOperations with fixed-reference delta encoding and clamping."""
+
+    def test_compress_function(self):
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+
+        delta_ops = DeltaOperations(
+            delta_bits=4,
+            delta_offset=0,
+            fxp_arithmetic=fxp_arithmetic,
+            delta_type=DeltaType.FIXED_REFERENCE,
+            clamp=True,
+        )
+
+        # Deltas from element[0]=0: 16, -16, 8 all exceed clamp max=7
+        input_tensor = torch.Tensor([0.0, 1.0, -1.0, 0.5])
+        result = delta_ops.compress(input_tensor.clone())
+
+        assert result.shape == input_tensor.shape
+        assert result[0] == fxp_arithmetic.cut_as_integer(0.0)
+        assert result[1] == 7
+        assert result[2] == -7
+        assert result[3] == 7
+
+    def test_inflate_function(self):
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+
+        delta_ops = DeltaOperations(
+            delta_bits=4,
+            delta_offset=0,
+            fxp_arithmetic=fxp_arithmetic,
+            delta_type=DeltaType.FIXED_REFERENCE,
+            clamp=True,
+        )
+
+        input_tensor = torch.Tensor([16.0, 1.0, 2.0, 3.0])
+        result = delta_ops.inflate(input_tensor.clone())
+
+        assert result.shape == input_tensor.shape
+        assert result[0] == fxp_arithmetic.as_rational(16.0)
+        assert result[1] == fxp_arithmetic.as_rational(16.0 + 1.0)
+        assert result[2] == fxp_arithmetic.as_rational(16.0 + 2.0)
+        assert result[3] == fxp_arithmetic.as_rational(16.0 + 3.0)
+
+    def test_compress_inflate_roundtrip(self):
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+
+        delta_ops = DeltaOperations(
+            delta_bits=4,
+            delta_offset=0,
+            fxp_arithmetic=fxp_arithmetic,
+            delta_type=DeltaType.FIXED_REFERENCE,
+            clamp=True,
+        )
+
+        # Deltas from element[0] are 1, 2, 3, 6 — all within clamp max=7
+        input_tensor = torch.Tensor([1.0, 1.0625, 1.125, 1.1875, 1.375])
+
+        compressed = delta_ops.compress(input_tensor.clone())
+        assert compressed.shape == input_tensor.shape
+
+        inflated = delta_ops.inflate(compressed)
+        assert inflated.shape == input_tensor.shape
+
+        assert torch.Tensor.all(inflated == input_tensor)
+
+
+class TestDeltaOperationsPostInit:
+    """Test that invalid constructor arguments raise ValueError."""
+
+    def test_raises_on_zero_delta_bits(self):
+        fxp_arithmetic = FxpArithmetic(fxp_params=FxpParams(total_bits=8, frac_bits=4))
+        with pytest.raises(ValueError):
+            DeltaOperations(delta_bits=0, delta_offset=0, fxp_arithmetic=fxp_arithmetic)
+
+    def test_raises_on_negative_delta_bits(self):
+        fxp_arithmetic = FxpArithmetic(fxp_params=FxpParams(total_bits=8, frac_bits=4))
+        with pytest.raises(ValueError):
+            DeltaOperations(delta_bits=-1, delta_offset=0, fxp_arithmetic=fxp_arithmetic)
+
+    def test_raises_on_negative_delta_offset(self):
+        fxp_arithmetic = FxpArithmetic(fxp_params=FxpParams(total_bits=8, frac_bits=4))
+        with pytest.raises(ValueError):
+            DeltaOperations(delta_bits=4, delta_offset=-1, fxp_arithmetic=fxp_arithmetic)
+
+    def test_raises_when_delta_bits_plus_offset_exceeds_total_bits(self):
+        fxp_arithmetic = FxpArithmetic(fxp_params=FxpParams(total_bits=8, frac_bits=4))
+        with pytest.raises(ValueError):
+            DeltaOperations(delta_bits=5, delta_offset=4, fxp_arithmetic=fxp_arithmetic)

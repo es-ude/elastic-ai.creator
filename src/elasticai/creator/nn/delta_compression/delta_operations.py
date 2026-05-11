@@ -1,9 +1,16 @@
+from enum import Enum
+
 from torch import (
     Size,  # type:ignore[reportPrivateImportUsage]
     Tensor,
 )
 
 from elasticai.creator.arithmetic.fxp_arithmetic import FxpArithmetic
+
+
+class DeltaType(Enum):
+    CONSECUTIVE = "consecutive"
+    FIXED_REFERENCE = "fixed-reference"
 
 
 class DeltaOperations:
@@ -14,6 +21,7 @@ class DeltaOperations:
         fxp_arithmetic: FxpArithmetic,
         delta_bits: int,
         delta_offset: int,
+        delta_type: DeltaType = DeltaType.CONSECUTIVE,
         clamp: bool = False,
     ) -> None:
         """Delta operations for fixed-point arithmetic.
@@ -31,7 +39,9 @@ class DeltaOperations:
         self._delta_bits = delta_bits
         self._fxp_arithmetic = fxp_arithmetic
         self._delta_offset = delta_offset
+        self._delta_type = delta_type
         self._clamp = clamp
+        self.__post_init__()
 
     def __post_init__(self):
         if self.delta_bits <= 0:
@@ -59,6 +69,10 @@ class DeltaOperations:
         return self._delta_offset
 
     @property
+    def delta_type(self) -> DeltaType:
+        return self._delta_type
+
+    @property
     def total_bits(self) -> int:
         return self._fxp_arithmetic.total_bits
 
@@ -71,18 +85,33 @@ class DeltaOperations:
         return self._clamp
 
     @staticmethod
-    def __bitmask(delta_bits: int, delta_offset: int) -> int:
-        bitmask = 0
-        for bit_index in range(delta_bits - 1):
-            bitmask |= 1 << (bit_index + delta_offset)
-        return bitmask
+    def __delta_fixed(input: Tensor) -> tuple[Tensor, Size]:
+        original_shape = input.shape
+        input = input.flatten()
+        input[1:] -= input[0]
+        return input, original_shape
 
-    def _delta(self, input: Tensor) -> tuple[Tensor, Size]:
+    @staticmethod
+    def __delta_consecutive(input: Tensor) -> tuple[Tensor, Size]:
         original_shape = input.shape
         input = input.flatten()
         for index in reversed(range(1, len(input))):
             input[index] = input[index] - input[index - 1]
         return input, original_shape
+
+    def _delta(self, input: Tensor) -> tuple[Tensor, Size]:
+        match self.delta_type:
+            case DeltaType.CONSECUTIVE:
+                return DeltaOperations.__delta_consecutive(input)
+            case DeltaType.FIXED_REFERENCE:
+                return DeltaOperations.__delta_fixed(input)
+
+    @staticmethod
+    def __bitmask(delta_bits: int, delta_offset: int) -> int:
+        bitmask = 0
+        for bit_index in range(delta_bits - 1):
+            bitmask |= 1 << (bit_index + delta_offset)
+        return bitmask
 
     @staticmethod
     def __compress_without_clamping(
@@ -139,12 +168,27 @@ class DeltaOperations:
         input[1:] = self._compress(input[1:])
         return input.reshape(input_shape)
 
-    def _reverse_delta(self, input: Tensor) -> tuple[Tensor, Size]:
+    @staticmethod
+    def __reverse_delta_consecutive(input: Tensor) -> tuple[Tensor, Size]:
         original_shape = input.shape
         input = input.flatten()
         for index in range(1, len(input)):
             input[index] = input[index - 1] + input[index]
         return input, original_shape
+
+    @staticmethod
+    def __reverse_delta_fixed(input: Tensor) -> tuple[Tensor, Size]:
+        original_shape = input.shape
+        input = input.flatten()
+        input[1:] += input[0]
+        return input, original_shape
+
+    def _reverse_delta(self, input) -> tuple[Tensor, Size]:
+        match self.delta_type:
+            case DeltaType.CONSECUTIVE:
+                return DeltaOperations.__reverse_delta_consecutive(input)
+            case DeltaType.FIXED_REFERENCE:
+                return DeltaOperations.__reverse_delta_fixed(input)
 
     def inflate(self, input: Tensor) -> Tensor:
         """Inflates the input tensor using delta encoding.

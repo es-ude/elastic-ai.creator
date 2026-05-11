@@ -1,3 +1,6 @@
-from .delta_operations import DeltaOperations
+from .delta_operations import DeltaOperations, DeltaType
 
-__all__ = ["DeltaOperations"]
+__all__ = [
+    "DeltaType",
+    "DeltaOperations",
+]
