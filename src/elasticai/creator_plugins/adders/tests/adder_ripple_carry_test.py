@@ -47,7 +47,6 @@ def test_adder_ripple_carry(
     cocotb_test_fixture.run(params={"BITWIDTH": bitwidth}, defines={})
 
 
-@pytest.mark.skip
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [8, 10])
 @pytest.mark.parametrize("is_signed", [False, True])
@@ -71,5 +70,5 @@ def test_adder_ripple_carry_build(
     )
     cocotb_test_fixture.set_top_module_name(top_name)
     cocotb_test_fixture.clear_srcs()
-    cocotb_test_fixture.add_srcs_from_artifact_dir("*.v")
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
     cocotb_test_fixture.run(params={}, defines={})

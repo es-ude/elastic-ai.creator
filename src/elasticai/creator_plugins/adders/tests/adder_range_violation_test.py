@@ -113,5 +113,5 @@ def test_adder_range_violation_build(
     )
     cocotb_test_fixture.set_top_module_name(f"ADDER_RANGE_VIOLATION_{bitwidth}")
     cocotb_test_fixture.clear_srcs()
-    cocotb_test_fixture.add_srcs_from_artifact_dir("*.v")
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
     cocotb_test_fixture.run(params={}, defines={})

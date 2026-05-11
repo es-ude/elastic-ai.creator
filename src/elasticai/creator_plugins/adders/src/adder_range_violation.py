@@ -30,6 +30,7 @@ def adder_range_violation(impl: DataGraph, _: Registry) -> Iterable[Code]:
         (
             impl.name,
             _template.substitute(
+                module_name=impl.attributes["name"].upper(),
                 date_copy_created=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 **impl.attributes,
             ),
