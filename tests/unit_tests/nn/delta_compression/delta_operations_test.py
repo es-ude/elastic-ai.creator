@@ -535,3 +535,109 @@ class TestDeltaOperationsPostInit:
         fxp_arithmetic = FxpArithmetic(fxp_params=FxpParams(total_bits=8, frac_bits=4))
         with pytest.raises(ValueError):
             DeltaOperations(delta_bits=5, delta_offset=4, fxp_arithmetic=fxp_arithmetic)
+
+    def test_valid_when_delta_bits_plus_offset_equals_total_bits(self):
+        """delta_bits + delta_offset == total_bits is the exact boundary and must be accepted."""
+        fxp_arithmetic = FxpArithmetic(fxp_params=FxpParams(total_bits=8, frac_bits=4))
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=4, fxp_arithmetic=fxp_arithmetic
+        )
+        assert delta_ops.delta_bits == 4
+        assert delta_ops.delta_offset == 4
+
+
+class TestDeltaOperationsEdgeCases:
+    """Boundary and edge-case inputs for DeltaOperations."""
+
+    def test_single_element_compress(self):
+        """A length-1 tensor has no deltas; the sole element is returned unchanged as an integer."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        result = delta_ops.compress(torch.Tensor([1.5]))
+        assert result.shape == torch.Size([1])
+        assert result[0] == fxp_arithmetic.cut_as_integer(1.5)
+
+    def test_single_element_inflate(self):
+        """A length-1 tensor has no deltas to reverse; the element is converted to rational."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        result = delta_ops.inflate(torch.Tensor([16.0]))
+        assert result.shape == torch.Size([1])
+        assert result[0] == fxp_arithmetic.as_rational(16.0)
+
+    def test_multidimensional_compress_preserves_shape(self):
+        """compress flattens internally but must restore the original tensor shape."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        input_tensor = torch.Tensor([[1.0, 1.0625], [1.125, 1.1875]])
+        result = delta_ops.compress(input_tensor.clone())
+        assert result.shape == torch.Size([2, 2])
+
+    def test_multidimensional_inflate_preserves_shape(self):
+        """inflate flattens internally but must restore the original tensor shape."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        input_tensor = torch.Tensor([[16.0, 1.0], [1.0, 1.0]])
+        result = delta_ops.inflate(input_tensor.clone())
+        assert result.shape == torch.Size([2, 2])
+
+    def test_all_identical_values_produce_zero_deltas(self):
+        """When all values are equal, all consecutive deltas are zero after compression."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        result = delta_ops.compress(torch.Tensor([1.0, 1.0, 1.0, 1.0]))
+        assert result[0] == fxp_arithmetic.cut_as_integer(1.0)
+        assert torch.all(result[1:] == 0)
+
+    def test_consecutive_compress_with_negative_deltas(self):
+        """Descending values produce negative deltas; compress must preserve their sign."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=4, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        # Each step decreases by 1 LSB in integer space (frac_bits=4, so 0.0625 = 1 unit)
+        # cut_as_integer: [4, 3, 2, 1] → consecutive deltas: [4, -1, -1, -1]
+        result = delta_ops.compress(torch.Tensor([0.25, 0.1875, 0.125, 0.0625]))
+        assert result[0] == fxp_arithmetic.cut_as_integer(0.25)
+        assert result[1] == -1
+        assert result[2] == -1
+        assert result[3] == -1
+
+    def test_delta_bits_one_without_clamping_zeros_all_deltas(self):
+        """With delta_bits=1 the bitmask is 0 (empty loop in __bitmask), collapsing every delta to zero."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=1, delta_offset=0, fxp_arithmetic=fxp_arithmetic
+        )
+        result = delta_ops.compress(torch.Tensor([1.0, 2.0, 3.0]))
+        assert result[0] == fxp_arithmetic.cut_as_integer(1.0)
+        assert torch.all(result[1:] == 0)
+
+    def test_delta_bits_one_with_clamping_and_nonzero_offset_silently_clamps_to_max(self):
+        """With delta_bits=1 and delta_offset>0 the clamp window is inverted (min=2 > max=1).
+        PyTorch silently clamps to max, so every delta becomes 1 regardless of its actual value."""
+        fxp_params = FxpParams(total_bits=8, frac_bits=4)
+        fxp_arithmetic = FxpArithmetic(fxp_params=fxp_params)
+        delta_ops = DeltaOperations(
+            delta_bits=1, delta_offset=1, fxp_arithmetic=fxp_arithmetic, clamp=True
+        )
+        result = delta_ops.compress(torch.Tensor([1.0, 2.0, 3.0]))
+        assert result[0] == fxp_arithmetic.cut_as_integer(1.0)
+        assert torch.all(result[1:] == 1)
