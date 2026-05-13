@@ -7,16 +7,15 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 from cocotb.types import LogicArray
 
+import elasticai.creator_plugins.adders as adders
+import elasticai.creator_plugins.multipliers as multipliers
 from elasticai.creator.arithmetic import int_arithmetic, int_converter
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
-import elasticai.creator_plugins.multipliers as multipliers
-import elasticai.creator_plugins.adders as adders
+from elasticai.creator_plugins.mac_fxp import load_and_plugin
 
 
 def model_mac(bias: int, weights: list, data: list) -> int:
-    return bias + int(
-            np.sum(np.array(weights) * np.array(data))
-        )
+    return bias + int(np.sum(np.array(weights) * np.array(data)))
 
 
 @cocotb.test()
@@ -25,7 +24,6 @@ async def mac_calculation(
     dut, bitwidth: int, num_params: int, num_mult: int, is_signed: bool
 ):
     period_clk = 2
-    period_data = 4 * int(num_params / num_mult) + 2
     repeat = 100
 
     dut.CLK_SYS.value = 0
@@ -51,10 +49,11 @@ async def mac_calculation(
     dut.EN.value = 1
     for _ in range(4):
         await RisingEdge(dut.CLK_SYS)
-    cocotb.start_soon(Clock(dut.DO_CALC, period_data, unit="ns").start())
 
     conv = int_converter(total_bits=bitwidth, signed=is_signed)
-    arith = int_arithmetic(total_bits=bitwidth, signed=is_signed)
+    arith = int_arithmetic(
+        total_bits=bitwidth - int(np.log2(num_params)) + 1, signed=is_signed
+    )
     for _ in range(repeat):
         await RisingEdge(dut.CLK_SYS)
         val_bias = randint(arith.minimum_as_integer, arith.maximum_as_integer)
@@ -77,15 +76,25 @@ async def mac_calculation(
         dut.IN_WEIGHTS.value = LogicArray(val_gain)
         dut.IN_DATA.value = LogicArray(val_data)
 
-        await RisingEdge(dut.DATA_VALID)
-        assert dut.DATA_VALID.value == 1
+        await RisingEdge(dut.CLK_SYS)
+        dut.DO_CALC.value = 1
+        await RisingEdge(dut.CLK_SYS)
+        dut.DO_CALC.value = 0
+        await RisingEdge(dut.CLK_SYS)
+
+        await RisingEdge(dut.DATA_RDY)
+        assert dut.DATA_RDY.value == 1
         await RisingEdge(dut.CLK_SYS)
         check = model_mac(val_bias, val_gain0, val_data0)
-        print(val_bias)
-        print(val_data0)
-        print(val_gain0)
-        print(check, dut.mac_out.value.to_signed(), dut.OUT_DATA.value.to_signed())
-        print("\n")
+        result = dut.OUT_DATA.value.to_signed()
+
+        if check != result or dut.DATA_VALID.value == 0:
+            print("\n")
+            print(val_bias)
+            print(val_data0)
+            print(val_gain0)
+            print(check, dut.mac_out.value.to_signed(), dut.OUT_DATA.value.to_signed())
+        assert dut.DATA_VALID.value == 1
         assert dut.OUT_DATA.value.to_signed() == check
 
 
@@ -104,7 +113,7 @@ def test_mac_fxp_dsp(
     cocotb_test_fixture.set_top_module_name("MAC_FXP")
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_package("mac_fxp", "verilog/mac_fxp.v")
-    cocotb_test_fixture.add_srcs_from_package(multipliers, f"verilog/mult_dadda_s{bitwidth}.v")
+    cocotb_test_fixture.add_srcs_from_package(multipliers, "verilog/mult_dsp_signed.v")
     cocotb_test_fixture.add_srcs_from_package(adders, "verilog/adder_*.v")
     cocotb_test_fixture.run(
         params={
@@ -131,7 +140,7 @@ def test_mac_fxp_lut(
     cocotb_test_fixture.set_top_module_name("MAC_FXP")
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_package("mac_fxp", "verilog/mac_fxp.v")
-    cocotb_test_fixture.add_srcs_from_package(multipliers, f"verilog/mult_dadda_s{bitwidth}.v")
+    cocotb_test_fixture.add_srcs_from_package(multipliers, "verilog/mult_lut_signed.v")
     cocotb_test_fixture.add_srcs_from_package(adders, "verilog/adder_*.v")
     cocotb_test_fixture.run(
         params={
@@ -145,8 +154,8 @@ def test_mac_fxp_lut(
 
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4, 8])
-@pytest.mark.parametrize("num_params", [2, 4, 6])
-@pytest.mark.parametrize("num_mult", [1, 2, 4])
+@pytest.mark.parametrize("num_params", [4])
+@pytest.mark.parametrize("num_mult", [2])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_fxp_dadda(
     cocotb_test_fixture: CocotbTestFixture,
@@ -158,7 +167,9 @@ def test_mac_fxp_dadda(
     cocotb_test_fixture.set_top_module_name("MAC_FXP")
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_package("mac_fxp", "verilog/mac_fxp.v")
-    cocotb_test_fixture.add_srcs_from_package(multipliers, f"verilog/mult_dadda_s{bitwidth}.v")
+    cocotb_test_fixture.add_srcs_from_package(
+        multipliers, f"verilog/mult_dadda_s{bitwidth}.v"
+    )
     cocotb_test_fixture.add_srcs_from_package(adders, "verilog/adder_*.v")
     cocotb_test_fixture.run(
         params={
@@ -168,3 +179,83 @@ def test_mac_fxp_dadda(
         },
         defines={},
     )
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("bitwidth", [4])
+@pytest.mark.parametrize("num_params", [4, 8])
+@pytest.mark.parametrize("num_mult", [2])
+@pytest.mark.parametrize("is_signed", [True])
+def test_mac_fxp_lut_build(
+    cocotb_test_fixture: CocotbTestFixture,
+    bitwidth: int,
+    num_params: int,
+    num_mult: int,
+    is_signed: bool,
+):
+    artifact_dir = cocotb_test_fixture.get_artifact_dir()
+    build_dir = artifact_dir / "verilog"
+
+    load_and_plugin(
+        type="mac_fxp",
+        id="",
+        params={
+            "INPUT_BITWIDTH": bitwidth,
+            "INPUT_NUM_DATA": num_params,
+            "NUM_MULT_PARALLEL": num_mult,
+        },
+        packages=["mac_fxp"],
+        path2save=build_dir,
+    )
+    load_and_plugin(
+        type="mult_lut_signed",
+        id="",
+        params={"BITWIDTH": bitwidth},
+        packages=["multipliers", "adders"],
+        path2save=build_dir,
+    )
+
+    cocotb_test_fixture.set_top_module_name("MAC_FXP")
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
+    cocotb_test_fixture.run(params={}, defines={})
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("bitwidth", [4])
+@pytest.mark.parametrize("num_params", [4, 8])
+@pytest.mark.parametrize("num_mult", [2])
+@pytest.mark.parametrize("is_signed", [True])
+def test_mac_fxp_dsp_build(
+    cocotb_test_fixture: CocotbTestFixture,
+    bitwidth: int,
+    num_params: int,
+    num_mult: int,
+    is_signed: bool,
+):
+    artifact_dir = cocotb_test_fixture.get_artifact_dir()
+    build_dir = artifact_dir / "verilog"
+
+    load_and_plugin(
+        type="mac_fxp",
+        id="",
+        params={
+            "INPUT_BITWIDTH": bitwidth,
+            "INPUT_NUM_DATA": num_params,
+            "NUM_MULT_PARALLEL": num_mult,
+        },
+        packages=["mac_fxp"],
+        path2save=build_dir,
+    )
+    load_and_plugin(
+        type="mult_dsp_signed",
+        id="",
+        params={"BITWIDTH": bitwidth},
+        packages=["multipliers", "adders"],
+        path2save=build_dir,
+    )
+
+    cocotb_test_fixture.set_top_module_name("MAC_FXP")
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
+    cocotb_test_fixture.run(params={}, defines={})

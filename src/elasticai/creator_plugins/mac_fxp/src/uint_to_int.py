@@ -19,7 +19,7 @@ def uint_to_int(impl: DataGraph, _: Registry) -> Iterable[Code]:
     _template = (
         TemplateDirector()
         .parameter("BITWIDTH")
-        .add_module_name()
+        # .add_module_name()
         .set_prototype("\n".join(read_text(package_path, path2file)))
         .build()
     )
@@ -29,7 +29,7 @@ def uint_to_int(impl: DataGraph, _: Registry) -> Iterable[Code]:
         (
             impl.name,
             _template.substitute(
-                module_name=impl.attributes["name"].upper(),
+                # module_name=impl.attributes["name"].upper(),
                 date_copy_created=datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 **impl.attributes,
             ),

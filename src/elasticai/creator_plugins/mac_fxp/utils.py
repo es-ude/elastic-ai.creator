@@ -27,7 +27,7 @@ def load_and_plugin(
 def _build_verilog_implementation(
     type: str, id: str, params: dict[str, Any]
 ) -> ir.DataGraph:
-    mod_name = f"{type}_{id}"
+    mod_name = f"{type}_{id}" if id else f"{type}"
     return factory.graph(
         attributes=attribute(**params),
         type=type,

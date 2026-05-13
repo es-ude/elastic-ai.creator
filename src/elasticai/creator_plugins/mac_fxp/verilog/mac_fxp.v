@@ -11,8 +11,8 @@
 // Processing:      Data applied on posedge clk
 // Dependencies:    None
 //
-// State: 	        Works! (System Test done: 22.01.2025 on Arty A7-35T with 20% usage)
-// Improvements:    None
+// State: 	        Works!
+// Improvements:    Adding a mechanism to set output values if over- and underflow occurs
 // Parameters:      INPUT_BITWIDTH --> Bitwidth of input data
 //                  INPUT_NUM_DATA --> Length of used data
 //                  NUM_MULT_PARALLEL --> Number of used multiplier in parallel
@@ -32,6 +32,7 @@ module MAC_FXP#(
     input wire signed [INPUT_NUM_DATA* INPUT_BITWIDTH -'d1:0] IN_WEIGHTS,
     input wire signed [INPUT_NUM_DATA* INPUT_BITWIDTH -'d1:0] IN_DATA,
     output wire signed [2* INPUT_BITWIDTH -'d1:0] OUT_DATA,
+    output wire DATA_RDY,
     output wire DATA_VALID
 );
     // --- Local parameter for configuring the pipeline and parallisation of MAC
@@ -49,7 +50,7 @@ module MAC_FXP#(
     assign padded_input_wght = {{NUM_ZERO_PADDING* INPUT_BITWIDTH{1'd0}}, IN_WEIGHTS};
 
     // --- Definition of internal signals and register
-    reg [1:0] do_calc_dly;
+    reg do_calc_dly;
     reg active_process;
     reg [$clog2(NUM_CYC_CNTSTOP):0] cnt_cyc_calc;
     reg signed [INPUT_BITWIDTH-'d1:0] pipeline_input_a [NUM_MULT_PARALLEL-'d1:0];
@@ -62,7 +63,8 @@ module MAC_FXP#(
     wire do_shift_data;
     assign do_shift_data = ~((cnt_cyc_calc == NUM_CYC_CNTSTOP - 'd1) || (cnt_cyc_calc == NUM_CYC_CNTSTOP));
     assign OUT_DATA = mac_out[2*INPUT_BITWIDTH-'d1:0];
-    assign DATA_VALID = ~active_process;
+    assign DATA_RDY = ~active_process;
+    assign DATA_VALID = ~active_process && (&mac_out[NUM_BITWIDTH_MAC-'d1:2*INPUT_BITWIDTH] || ~|mac_out[NUM_BITWIDTH_MAC-'d1:2*INPUT_BITWIDTH]) && (mac_out[NUM_BITWIDTH_MAC-'d1] == mac_out[2*INPUT_BITWIDTH-'d1]);
 
     // --- Using custom multiplier
     genvar k0;
@@ -96,7 +98,7 @@ module MAC_FXP#(
     integer k1;
     always@(posedge CLK_SYS) begin
         if(~(RSTN && EN)) begin
-            do_calc_dly <= 2'd0;
+            do_calc_dly <= 1'd0;
             active_process <= 1'd0;
             cnt_cyc_calc <= 'd0;
             for(i0 = 'd0; i0 < NUM_MULT_PARALLEL; i0 = i0 + 'd1) begin
@@ -104,10 +106,10 @@ module MAC_FXP#(
                 pipeline_input_b[i0] <= 'd0;
                 pipeline_output[i0] <= 'd0;
             end
-            mac_out <= 'd0;
+            mac_out <= 'sd0;
         end else begin
-            do_calc_dly <= {do_calc_dly[0], DO_CALC};
-            if((~do_calc_dly[1] && do_calc_dly[0]) || active_process) begin
+            do_calc_dly <= DO_CALC;
+            if((~do_calc_dly && DO_CALC) || active_process) begin
                 // --- State: Do Calculation
                 active_process <= (cnt_cyc_calc == NUM_CYC_CNTSTOP) ? 1'd0 : 1'd1;
                 cnt_cyc_calc <= (cnt_cyc_calc == NUM_CYC_CNTSTOP) ? 'd0 : cnt_cyc_calc + 'd1;
@@ -116,7 +118,7 @@ module MAC_FXP#(
                     pipeline_input_b[i0] <= (do_shift_data) ? padded_input_wght[(cnt_cyc_calc + i0 * NUM_CYC_COMPLETE)* INPUT_BITWIDTH+: INPUT_BITWIDTH] : 'd0;
                     pipeline_output[i0] <= mult_output[i0];
                 end
-                mac_out <= (cnt_cyc_calc == 'd0) ? {{(INPUT_BITWIDTH){IN_BIAS[INPUT_BITWIDTH-'d1]}}, IN_BIAS} : mac_out + sum_pipeline;
+                mac_out <= (cnt_cyc_calc == 'd0) ? {{(NUM_BITWIDTH_MAC-INPUT_BITWIDTH){IN_BIAS[INPUT_BITWIDTH-'d1]}}, IN_BIAS} : mac_out + sum_pipeline;
             end else begin
                 // --- State: Hold data
                 active_process <= active_process;

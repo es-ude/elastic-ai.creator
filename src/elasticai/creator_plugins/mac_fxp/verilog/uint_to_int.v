@@ -4,7 +4,7 @@
 //
 // Create Date: 	16.01.2024 15:57:24
 // Copied on: 	    §{date_copy_created}
-// Module Name:     UNSIGNED_TO_SIGNED
+// Module Name:     Number converter unsigned to signed integer
 // Target Devices:  ASIC / FPGA
 // Tool Versions:   1v0
 // Description:     Number transformation from unsigned to signed
@@ -16,7 +16,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module UNSIGNED_TO_SIGNED#(
+module UINT_TO_INT#(
     parameter BITWIDTH = 12
 )(
     input wire [BITWIDTH-'d1:0] A,

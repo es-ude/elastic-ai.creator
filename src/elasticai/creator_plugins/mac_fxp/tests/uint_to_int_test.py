@@ -34,7 +34,7 @@ async def int_transform_random_negative(dut, bitwidth: int):
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4, 6, 8, 9, 12])
 def test_uint_to_int(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
-    cocotb_test_fixture.set_top_module_name("UNSIGNED_TO_SIGNED")
+    cocotb_test_fixture.set_top_module_name("UINT_TO_INT")
     cocotb_test_fixture.run(params={"BITWIDTH": bitwidth}, defines={})
 
 
@@ -52,7 +52,7 @@ def test_uint_to_int_build(cocotb_test_fixture: CocotbTestFixture, bitwidth: int
         path2save=build_dir,
     )
 
-    cocotb_test_fixture.set_top_module_name(f"UINT_TO_INT_{bitwidth}")
+    cocotb_test_fixture.set_top_module_name("UINT_TO_INT")
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
     cocotb_test_fixture.run(params={}, defines={})
