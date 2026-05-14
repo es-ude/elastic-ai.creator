@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from shutil import rmtree
 
 from elasticai.creator.file_generation import find_project_root
 
@@ -11,6 +12,7 @@ def build_report_folder_and_testdata(dut_name: str, testdata: dict) -> Path:
     :return:                Path to the report folder containing hardware design and testpattern data
     """
     build_dir = find_project_root() / "build_test" / dut_name.lower()
+    rmtree(build_dir, ignore_errors=True)
     build_dir.mkdir(exist_ok=True, parents=True)
 
     file_name = "testdata.json"
