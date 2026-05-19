@@ -6,8 +6,9 @@ from .linear import BatchNormedLinear as BatchNormedLinear
 from .linear import Linear as Linear
 from .math_operations import MathOperations as MathOperations
 from .precomputed import AdaptableSiLU as AdaptableSiLU
-from .precomputed import PReLU as PReLU
 from .precomputed import Sigmoid as Sigmoid
 from .precomputed import SiLU as SiLU
 from .precomputed import Tanh as Tanh
+from .prelu import PReLU as PReLU
+from .prelu2 import PReLU2 as PReLU2
 from .relu import ReLU as ReLU
