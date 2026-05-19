@@ -12,9 +12,9 @@ from elasticai.creator.ir2verilog import (
 
 
 @type_handler_iterable()
-def mac_fxp(impl: DataGraph, _: Registry) -> Iterable[Code]:
-    package_path = "elasticai.creator_plugins.mac_fxp"
-    path2file = "verilog/mac_fxp.v"
+def mac(impl: DataGraph, _: Registry) -> Iterable[Code]:
+    package_path = "elasticai.creator_plugins.mac"
+    path2file = "verilog/mac.v"
 
     _template = (
         TemplateDirector()

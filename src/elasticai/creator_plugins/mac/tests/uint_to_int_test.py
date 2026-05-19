@@ -6,7 +6,7 @@ from cocotb.triggers import Timer
 
 from elasticai.creator.arithmetic import int_arithmetic
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
-from elasticai.creator_plugins.mac_fxp import load_and_plugin
+from elasticai.creator_plugins.mac import load_and_plugin
 
 
 @cocotb.test()
@@ -48,7 +48,7 @@ def test_uint_to_int_build(cocotb_test_fixture: CocotbTestFixture, bitwidth: int
         type="uint_to_int",
         id=f"{bitwidth}",
         params={"BITWIDTH": bitwidth},
-        packages=["mac_fxp"],
+        packages=["mac"],
         path2save=build_dir,
     )
 

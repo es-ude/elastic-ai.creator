@@ -13,7 +13,7 @@ from elasticai.creator.ir2verilog import (
 
 @type_handler_iterable()
 def uint_to_int(impl: DataGraph, _: Registry) -> Iterable[Code]:
-    package_path = "elasticai.creator_plugins.mac_fxp"
+    package_path = "elasticai.creator_plugins.mac"
     path2file = "verilog/uint_to_int.v"
 
     _template = (

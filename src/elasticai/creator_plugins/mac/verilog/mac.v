@@ -4,22 +4,22 @@
 // 
 // Create Date:     17.01.2025 08:11:51
 // Copied on: 	    §{date_copy_created}
-// Module Name:     LUT-based Multiply-Accumulate Operator
-// Target Devices:  ASIC (using LUT multiplier)
+// Module Name:     Multiply-Accumulate Operator
+// Target Devices:  FPGA / ASIC (call LUT-based multiplier with custom integration)
 // Tool Versions:   1v0
-// Description:     Performing a MAC Operation on Device (with Pipelined Multiplier and Parallisation)
+// Description:     Performing a MAC Operation on Device (with Clamping, Pipelined Multiplier and Parallisation)
 // Processing:      Data applied on posedge clk
 // Dependencies:    None
 //
 // State: 	        Works!
-// Improvements:    Adding a mechanism to set output values if over- and underflow occurs
+// Improvements:    None
 // Parameters:      INPUT_BITWIDTH --> Bitwidth of input data
 //                  INPUT_NUM_DATA --> Length of used data
 //                  NUM_MULT_PARALLEL --> Number of used multiplier in parallel
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module MAC_FXP#(
+module MAC#(
     parameter INPUT_BITWIDTH = 6'd8,
     parameter INPUT_NUM_DATA = 12'd2,
     parameter NUM_MULT_PARALLEL = 4'd2
@@ -32,8 +32,7 @@ module MAC_FXP#(
     input wire signed [INPUT_NUM_DATA* INPUT_BITWIDTH -'d1:0] IN_WEIGHTS,
     input wire signed [INPUT_NUM_DATA* INPUT_BITWIDTH -'d1:0] IN_DATA,
     output wire signed [2* INPUT_BITWIDTH -'d1:0] OUT_DATA,
-    output wire DATA_RDY,
-    output wire DATA_VALID
+    output wire DATA_RDY
 );
     // --- Local parameter for configuring the pipeline and parallisation of MAC
     localparam NUM_K_PIPELINE_STAGE = 4'd2;
@@ -60,11 +59,17 @@ module MAC_FXP#(
     reg signed [NUM_BITWIDTH_MAC-'d1:0] mac_out;
     logic signed [NUM_BITWIDTH_MAC-'d1:0] sum_pipeline;
 
-    wire do_shift_data;
+    wire do_shift_data, is_overflow, is_underflow;
     assign do_shift_data = ~((cnt_cyc_calc == NUM_CYC_CNTSTOP - 'd1) || (cnt_cyc_calc == NUM_CYC_CNTSTOP));
-    assign OUT_DATA = mac_out[2*INPUT_BITWIDTH-'d1:0];
+
     assign DATA_RDY = ~active_process;
-    assign DATA_VALID = ~active_process && (&mac_out[NUM_BITWIDTH_MAC-'d1:2*INPUT_BITWIDTH] || ~|mac_out[NUM_BITWIDTH_MAC-'d1:2*INPUT_BITWIDTH]) && (mac_out[NUM_BITWIDTH_MAC-'d1] == mac_out[2*INPUT_BITWIDTH-'d1]);
+    assign is_overflow = ~mac_out[NUM_BITWIDTH_MAC-'d1] && |mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
+    assign is_underflow = mac_out[NUM_BITWIDTH_MAC-'d1] && ~&mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
+
+    // --- Clamping output data
+    assign OUT_DATA =   (is_overflow) ? {1'b0, {(2*INPUT_BITWIDTH-'d1){1'b1}}} :
+                        ((is_underflow) ? {1'b1, {(2*INPUT_BITWIDTH-'d1){1'b0}}} :
+                        mac_out[2*INPUT_BITWIDTH-'d1:0]);
 
     // --- Using custom multiplier
     genvar k0;
@@ -133,4 +138,3 @@ module MAC_FXP#(
         end
     end
 endmodule
-
