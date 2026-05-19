@@ -22,3 +22,13 @@ class Add(Protocol):
 class Mul(Protocol):
     @abstractmethod
     def mul(self, a: Tensor, b: Tensor) -> Tensor: ...
+
+
+class TwosScale(Protocol):
+    @abstractmethod
+    def twos_scaling(self, a: Tensor) -> Tensor: ...
+
+
+class ParamExponent(Protocol):
+    @abstractmethod
+    def get_exponent(self, a: Tensor) -> Tensor: ...
