@@ -52,14 +52,37 @@ class FxpConverter:
         twos = self._integer_to_twos(number)
         return f"{self._config.total_bits}'b{twos:0{self._config.total_bits}b}"
 
+    def integer_to_binary_string_array_verilog(self, numbers: list[int]) -> str:
+        return (
+            "{"
+            + ", ".join([self.integer_to_binary_string_verilog(val) for val in numbers])
+            + "}"
+        )
+
     def integer_to_decimal_string_verilog(self, number: int) -> str:
         twos = self._integer_to_twos(number)
         return f"{self._config.total_bits}'d{twos}"
+
+    def integer_to_decimal_string_array_verilog(self, numbers: list[int]) -> str:
+        return (
+            "{"
+            + ", ".join(
+                [self.integer_to_decimal_string_verilog(val) for val in numbers]
+            )
+            + "}"
+        )
 
     def integer_to_hex_string_verilog(self, number: int) -> str:
         twos = self._integer_to_twos(number)
         return (
             f"{self._config.total_bits}'h{twos:0{ceil(self._config.total_bits / 4)}X}"
+        )
+
+    def integer_to_hex_string_array_verilog(self, numbers: list[int]) -> str:
+        return (
+            "{"
+            + ", ".join([self.integer_to_hex_string_verilog(val) for val in numbers])
+            + "}"
         )
 
     def rational_to_binary_string_vhdl(self, number: float) -> str:
@@ -74,13 +97,25 @@ class FxpConverter:
         fxp = self._round_to_integer(number)
         return self.integer_to_binary_string_verilog(fxp)
 
+    def rational_to_binary_string_array_verilog(self, numbers: list[float]) -> str:
+        fxp = [self._round_to_integer(val) for val in numbers]
+        return self.integer_to_binary_string_array_verilog(fxp)
+
     def rational_to_decimal_string_verilog(self, number: float) -> str:
         fxp = self._round_to_integer(number)
         return self.integer_to_decimal_string_verilog(fxp)
 
+    def rational_to_decimal_string_array_verilog(self, numbers: list[float]) -> str:
+        fxp = [self._round_to_integer(val) for val in numbers]
+        return self.integer_to_decimal_string_array_verilog(fxp)
+
     def rational_to_hex_string_verilog(self, number: float) -> str:
         fxp = self._round_to_integer(number)
         return self.integer_to_hex_string_verilog(fxp)
+
+    def rational_to_hex_string_array_verilog(self, numbers: list[float]) -> str:
+        fxp = [self._round_to_integer(val) for val in numbers]
+        return self.integer_to_hex_string_array_verilog(fxp)
 
     def binary_to_integer(self, binary: str) -> int:
         format_binary = binary.replace('"', "").replace(" ", "").split("b")[-1]

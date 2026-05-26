@@ -149,6 +149,22 @@ def test_convert_integer_to_binary_verilog(
 
 
 @pytest.mark.parametrize(
+    "total_bits, frac_bits, numbers, check",
+    [
+        (2, 0, [1, -1], "{2'b01, 2'b11}"),
+        (4, 2, [-7, -4, -1, 2, 5], "{4'b1001, 4'b1100, 4'b1111, 4'b0010, 4'b0101}"),
+    ],
+)
+def test_convert_integer_to_binary_array_verilog(
+    total_bits: int, frac_bits: int, numbers: list[int], check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).integer_to_binary_string_array_verilog(numbers)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
     "total_bits, frac_bits, number, check",
     [
         (2, 0, 1, "2'd1"),
@@ -166,6 +182,22 @@ def test_convert_integer_to_decimal_verilog(
     rslt = FxpConverter(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits)
     ).integer_to_decimal_string_verilog(number)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, numbers, check",
+    [
+        (2, 0, [1, -1], "{2'd1, 2'd3}"),
+        (4, 2, [-7, -4, -1, 2, 5], "{4'd9, 4'd12, 4'd15, 4'd2, 4'd5}"),
+    ],
+)
+def test_convert_integer_to_decimal_array_verilog(
+    total_bits: int, frac_bits: int, numbers: list[int], check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).integer_to_decimal_string_array_verilog(numbers)
     assert rslt == check
 
 
@@ -191,6 +223,22 @@ def test_convert_integer_to_hex_verilog(
 
 
 @pytest.mark.parametrize(
+    "total_bits, frac_bits, numbers, check",
+    [
+        (2, 0, [1, -1], "{2'h1, 2'h3}"),
+        (4, 2, [-7, -4, -1, 2, 5], "{4'h9, 4'hC, 4'hF, 4'h2, 4'h5}"),
+    ],
+)
+def test_convert_integer_to_hex_array_verilog(
+    total_bits: int, frac_bits: int, numbers: list[int], check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).integer_to_hex_string_array_verilog(numbers)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
     "total_bits, frac_bits, number, check",
     [
         (2, 0, 1, "2'b01"),
@@ -208,6 +256,27 @@ def test_convert_rational_to_binary_verilog(
     rslt = FxpConverter(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits)
     ).rational_to_binary_string_verilog(number)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, numbers, check",
+    [
+        (2, 0, [1.0, -1.0], "{2'b01, 2'b11}"),
+        (
+            4,
+            2,
+            [-1.75, -1.0, -0.25, 0.5, 1.25],
+            "{4'b1001, 4'b1100, 4'b1111, 4'b0010, 4'b0101}",
+        ),
+    ],
+)
+def test_convert_rational_to_binary_array_verilog(
+    total_bits: int, frac_bits: int, numbers: list[float], check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).rational_to_binary_string_array_verilog(numbers)
     assert rslt == check
 
 
@@ -233,6 +302,22 @@ def test_convert_rational_to_decimal_verilog(
 
 
 @pytest.mark.parametrize(
+    "total_bits, frac_bits, numbers, check",
+    [
+        (2, 0, [1.0, -1.0], "{2'd1, 2'd3}"),
+        (4, 2, [-1.75, -1.0, -0.25, 0.5, 1.25], "{4'd9, 4'd12, 4'd15, 4'd2, 4'd5}"),
+    ],
+)
+def test_convert_rational_to_decimal_array_verilog(
+    total_bits: int, frac_bits: int, numbers: list[float], check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).rational_to_decimal_string_array_verilog(numbers)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
     "total_bits, frac_bits, number, check",
     [
         (2, 0, 1, "2'h1"),
@@ -250,6 +335,22 @@ def test_convert_rational_to_hex_verilog(
     rslt = FxpConverter(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits)
     ).rational_to_hex_string_verilog(number)
+    assert rslt == check
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, numbers, check",
+    [
+        (2, 0, [1.0, -1.0], "{2'h1, 2'h3}"),
+        (4, 2, [-1.75, -1.0, -0.25, 0.5, 1.25], "{4'h9, 4'hC, 4'hF, 4'h2, 4'h5}"),
+    ],
+)
+def test_convert_rational_to_hex_array_verilog(
+    total_bits: int, frac_bits: int, numbers: list[float], check: str
+):
+    rslt = FxpConverter(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits)
+    ).rational_to_hex_string_array_verilog(numbers)
     assert rslt == check
 
 
