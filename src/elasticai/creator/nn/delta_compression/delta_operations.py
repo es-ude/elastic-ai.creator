@@ -14,6 +14,7 @@ class DeltaOperations:
         fxp_arithmetic: FxpArithmetic,
         delta_bits: int,
         delta_offset: int,
+        clamp: bool = False,
     ) -> None:
         """Delta operations for fixed-point arithmetic.
 
@@ -21,6 +22,7 @@ class DeltaOperations:
             delta_bits: The number of bits to use for the delta values.
             fxp_arithmetic: The arithmetic to use for the fixed-point operations.
             delta_offset: The offset to use for the delta bits
+            clamp: Wheter to clamp the values
 
         Notes for clamp_style:
             - "lsb" clamps to the least significant bit
@@ -29,6 +31,7 @@ class DeltaOperations:
         self._delta_bits = delta_bits
         self._fxp_arithmetic = fxp_arithmetic
         self._delta_offset = delta_offset
+        self._clamp = clamp
 
     def __post_init__(self):
         if self.delta_bits <= 0:
@@ -63,6 +66,10 @@ class DeltaOperations:
     def frac_bits(self) -> int:
         return self._fxp_arithmetic.frac_bits
 
+    @property
+    def clamp(self) -> bool:
+        return self._clamp
+
     @staticmethod
     def __bitmask(delta_bits: int, delta_offset: int) -> int:
         bitmask = 0
@@ -77,16 +84,44 @@ class DeltaOperations:
             input[index] = input[index] - input[index - 1]
         return input, original_shape
 
+    @staticmethod
+    def __compress_without_clamping(
+        t: Tensor, delta_bits: int, delta_offset: int
+    ) -> Tensor:
+        negatvive_indexes = t < 0
+        t.abs_()
+        t &= DeltaOperations.__bitmask(delta_bits, delta_offset)
+        t[negatvive_indexes] *= -1
+        return t
+
+    @staticmethod
+    def __compress_with_clamping(
+        t: Tensor, delta_bits: int, delta_offset: int
+    ) -> Tensor:
+        negative_indexes = t < 0
+        t.abs_()
+        t.clamp_(
+            min=2 ** (delta_offset) if delta_offset > 0 else 0,
+            max=2 ** (delta_bits - 1 + delta_offset) - 1,
+        )
+        t[negative_indexes] *= -1
+        return t
+
     def _compress(self, t: Tensor) -> Tensor:
         assert isinstance(self._delta_bits, int) and self._delta_bits > 0
         assert isinstance(self._delta_offset, int) and self._delta_offset >= 0
         assert self._delta_bits + self._delta_offset <= self.total_bits
 
         t_int = t.int()
-        negatvive_indexes = t_int < 0
-        t_int.abs_()
-        t_int &= self.__bitmask(self.delta_bits, self.delta_offset)
-        t_int[negatvive_indexes] *= -1
+
+        if self.clamp:
+            t_int = DeltaOperations.__compress_with_clamping(
+                t_int, self.delta_bits, self.delta_offset
+            )
+        else:
+            t_int = DeltaOperations.__compress_without_clamping(
+                t_int, self.delta_bits, self.delta_offset
+            )
 
         return t.copy_(t_int.float())
 
