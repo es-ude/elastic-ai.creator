@@ -42,7 +42,7 @@ lsp = [
 ]
 non-nixos = [  # you might want to disable these if you're on nixos as these packages ship binaries, but its included per default
   "ruff>=0.11.0",
-  "ty>=0.0.32"
+  "ty>=0.0.32",
 ]
 release = ["git-cliff>=2.7.0"]
 testing = [
