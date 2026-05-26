@@ -7,6 +7,7 @@ import torch
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 from cocotb.types import LogicArray
+from cocotb.utils import get_sim_time
 
 import elasticai.creator_plugins.adders as adders
 import elasticai.creator_plugins.multipliers as multipliers
@@ -118,12 +119,14 @@ async def mac_calculation(
         dut.IN_DATA.value = LogicArray(val_data)
 
         await RisingEdge(dut.CLK_SYS)
+        t0 = get_sim_time("ns")
         dut.DO_CALC.value = 1
         await RisingEdge(dut.CLK_SYS)
         dut.DO_CALC.value = 0
         await RisingEdge(dut.CLK_SYS)
 
         await RisingEdge(dut.DATA_RDY)
+        t1 = get_sim_time("ns")
         assert dut.DATA_RDY.value == 1
         await RisingEdge(dut.CLK_SYS)
         check = model_mac(
@@ -135,6 +138,8 @@ async def mac_calculation(
         )
         result = dut.OUT_DATA.value.to_signed()
 
+        dt = int((t1 - t0) / period_clk)
+        assert dt == int(num_params / num_mult) + 2
         if check != result:
             print("\n")
             print(bias0)

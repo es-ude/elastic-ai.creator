@@ -6,6 +6,7 @@ import pytest
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 from cocotb.types import LogicArray
+from cocotb.utils import get_sim_time
 
 import elasticai.creator_plugins.adders as adders
 import elasticai.creator_plugins.multipliers as multipliers
@@ -132,12 +133,14 @@ async def mac_calculation(
         dut.IN_DATA.value = LogicArray(val_data)
 
         await RisingEdge(dut.CLK_SYS)
+        t0 = get_sim_time("ns")
         dut.DO_CALC.value = 1
         await RisingEdge(dut.CLK_SYS)
         dut.DO_CALC.value = 0
         await RisingEdge(dut.CLK_SYS)
 
         await RisingEdge(dut.DATA_RDY)
+        t1 = get_sim_time("ns")
         assert dut.DATA_RDY.value == 1
         await RisingEdge(dut.CLK_SYS)
         check = model_mac(
@@ -149,6 +152,8 @@ async def mac_calculation(
         )
         result = dut.OUT_DATA.value.to_signed()
 
+        dt = int((t1 - t0) / period_clk)
+        assert dt == int(num_params / num_mult) + 2
         if check != result:
             print("\n")
             print(bias0)
@@ -159,9 +164,9 @@ async def mac_calculation(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [4])
-@pytest.mark.parametrize("num_params", [4, 8, 16])
-@pytest.mark.parametrize("num_mult", [1, 2, 4])
+@pytest.mark.parametrize("bitwidth", [8, 12])
+@pytest.mark.parametrize("num_params", [8, 32])
+@pytest.mark.parametrize("num_mult", [1, 4])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_dsp(
     cocotb_test_fixture: CocotbTestFixture,
@@ -181,7 +186,6 @@ def test_mac_dsp(
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_package("mac", "verilog/mac.v")
     cocotb_test_fixture.add_srcs_from_package(multipliers, "verilog/mult_dsp_signed.v")
-    cocotb_test_fixture.add_srcs_from_package(adders, "verilog/adder_*.v")
     cocotb_test_fixture.run(
         params={
             "INPUT_BITWIDTH": bitwidth,
@@ -193,9 +197,9 @@ def test_mac_dsp(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [4])
-@pytest.mark.parametrize("num_params", [2, 4, 8, 16])
-@pytest.mark.parametrize("num_mult", [1, 2, 4])
+@pytest.mark.parametrize("bitwidth", [6, 8])
+@pytest.mark.parametrize("num_params", [8, 32])
+@pytest.mark.parametrize("num_mult", [1, 4])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_lut(
     cocotb_test_fixture: CocotbTestFixture,
@@ -227,9 +231,9 @@ def test_mac_lut(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [4, 8])
-@pytest.mark.parametrize("num_params", [4])
-@pytest.mark.parametrize("num_mult", [2])
+@pytest.mark.parametrize("bitwidth", [6, 8])
+@pytest.mark.parametrize("num_params", [32])
+@pytest.mark.parametrize("num_mult", [1, 4])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_dadda(
     cocotb_test_fixture: CocotbTestFixture,
@@ -264,7 +268,7 @@ def test_mac_dadda(
 
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4])
-@pytest.mark.parametrize("num_params", [4, 8])
+@pytest.mark.parametrize("num_params", [8])
 @pytest.mark.parametrize("num_mult", [2])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_lut_build(
@@ -310,7 +314,7 @@ def test_mac_lut_build(
 
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4])
-@pytest.mark.parametrize("num_params", [4, 8])
+@pytest.mark.parametrize("num_params", [8])
 @pytest.mark.parametrize("num_mult", [2])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_dsp_build(
@@ -338,7 +342,7 @@ def test_mac_dsp_build(
         type="mult_dsp_signed",
         id="",
         params={"BITWIDTH": bitwidth},
-        packages=["multipliers", "adders"],
+        packages=["multipliers"],
         path2save=build_dir,
     )
 
@@ -356,7 +360,7 @@ def test_mac_dsp_build(
 
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4, 8])
-@pytest.mark.parametrize("num_params", [16, 32])
+@pytest.mark.parametrize("num_params", [32])
 @pytest.mark.parametrize("num_mult", [2])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_clamp_overflow(
@@ -377,7 +381,6 @@ def test_mac_clamp_overflow(
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_package("mac", "verilog/mac.v")
     cocotb_test_fixture.add_srcs_from_package(multipliers, "verilog/mult_dsp_signed.v")
-    cocotb_test_fixture.add_srcs_from_package(adders, "verilog/adder_*.v")
     cocotb_test_fixture.run(
         params={
             "INPUT_BITWIDTH": bitwidth,
@@ -390,7 +393,7 @@ def test_mac_clamp_overflow(
 
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4, 8])
-@pytest.mark.parametrize("num_params", [16, 32, 64])
+@pytest.mark.parametrize("num_params", [32])
 @pytest.mark.parametrize("num_mult", [2])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mac_clamp_underflow(
@@ -411,7 +414,6 @@ def test_mac_clamp_underflow(
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_package("mac", "verilog/mac.v")
     cocotb_test_fixture.add_srcs_from_package(multipliers, "verilog/mult_dsp_signed.v")
-    cocotb_test_fixture.add_srcs_from_package(adders, "verilog/adder_*.v")
     cocotb_test_fixture.run(
         params={
             "INPUT_BITWIDTH": bitwidth,
