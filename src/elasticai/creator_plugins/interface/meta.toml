@@ -1,0 +1,8 @@
+[[plugins]]
+name = 'interface'
+version = '0.1'
+api_version = '0.1'
+target_runtime = 'verilog'
+target_platform = 'FPGA'
+generated = ["spi_master", "spi_slave_with_clk", "spi_slave_without_clk", "uart"]
+static_files = []
