@@ -90,3 +90,45 @@ def test_integer_to_rational(
         FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=signed)
     ).as_rational(val_in)
     assert result == val_out
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, signed, val_in, val_out",
+    [
+        (2, 1, True, 0.5, 0.5),
+        (2, 1, True, -0.9, -0.5),
+        (3, 2, True, 0.75, 0.75),
+        (2, 1, False, 0.5, 0.5),
+        (2, 1, False, 0.0, 0.0),
+        (3, 2, False, 1.0, 1.0),
+        (3, 2, False, [1.0, 0.5], [1.0, 0.5]),
+    ],
+)
+def test_rational_to_rational_cut(
+    total_bits: int, frac_bits: int, signed: bool, val_in: float, val_out: float
+) -> None:
+    result = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=signed)
+    ).cut_as_rational(val_in)
+    assert result == val_out
+
+
+@pytest.mark.parametrize(
+    "total_bits, frac_bits, signed, val_in, val_out",
+    [
+        (2, 1, True, 0.5, 0.5),
+        (2, 1, True, -0.9, -1.0),
+        (3, 2, True, 0.75, 0.75),
+        (2, 1, False, 0.5, 0.5),
+        (2, 1, False, 0.0, 0.0),
+        (3, 2, False, 1.0, 1.0),
+        (3, 2, False, [1.0, 0.5], [1.0, 0.5]),
+    ],
+)
+def test_rational_to_rational_round(
+    total_bits: int, frac_bits: int, signed: bool, val_in: float, val_out: float
+) -> None:
+    result = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=signed)
+    ).round_to_rational(val_in)
+    assert result == val_out

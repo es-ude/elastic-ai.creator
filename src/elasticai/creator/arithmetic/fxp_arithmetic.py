@@ -52,6 +52,7 @@ class FxpArithmetic(IntArithmetic):
 
     @overload
     def cut_as_integer(self, number: list[float | int]) -> list[float | int]: ...
+
     @overload
     def cut_as_integer(
         self, number: list[list[float | int]]
@@ -70,16 +71,16 @@ class FxpArithmetic(IntArithmetic):
                 )
                 return cast(
                     list,
-                    self._cut_nested_list(number),
+                    self._cut_nested_list_to_integer(number),
                 )
             case float() | int():
                 return self._cut_float_or_int_to_integer(number)
             case ConvertableToFixedPointValues():
                 return self._cut_T_to_integer(number)
 
-    def _cut_nested_list(self, numbers: Any) -> Any:
+    def _cut_nested_list_to_integer(self, numbers: Any) -> Any:
         if isinstance(numbers, list):
-            return list(map(self._cut_nested_list, numbers))
+            return list(map(self._cut_nested_list_to_integer, numbers))
         else:
             return self.cut_as_integer(numbers)
 
@@ -88,6 +89,49 @@ class FxpArithmetic(IntArithmetic):
 
     def _cut_float_or_int_to_integer(self, number: float | int) -> int:
         return int(number / self._config.minimum_step_as_rational)
+
+    @overload
+    def cut_as_rational(self, number: float) -> float: ...
+
+    @overload
+    def cut_as_rational(self, number: list[float]) -> list[float]: ...
+
+    @overload
+    def cut_as_rational(self, number: list[list[float]]) -> list[list[float]]: ...
+
+    @overload
+    def cut_as_rational(self, number: T) -> T: ...
+
+    def cut_as_rational(self, number: float | T | list) -> float | list | T:
+        """Cut the input number to integer directly (more like in hardware)"""
+        match number:
+            case list():
+                warnings.warn(
+                    "Calling cut_to_integer with lists is deprecated and will be removed in the future. Use functions from itertools at call site instead.",
+                    stacklevel=2,
+                )
+                return cast(
+                    list,
+                    self._cut_nested_list_to_rational(number),
+                )
+            case float() | int():
+                return self._cut_float_or_int_to_rational(number)
+            case ConvertableToFixedPointValues():
+                return self._cut_T_to_rational(number)
+
+    def _cut_nested_list_to_rational(self, numbers: Any) -> Any:
+        if isinstance(numbers, list):
+            return list(map(self._cut_nested_list_to_rational, numbers))
+        else:
+            return self.cut_as_rational(numbers)
+
+    def _cut_T_to_rational(self, number: T) -> T:
+        return self._cut_T_to_integer(number) * self._config.minimum_step_as_rational
+
+    def _cut_float_or_int_to_rational(self, number: float) -> float:
+        return float(
+            self.cut_as_integer(number) * self._config.minimum_step_as_rational
+        )
 
     @overload
     def round_to_integer(self, number: float | int) -> int: ...
@@ -117,6 +161,41 @@ class FxpArithmetic(IntArithmetic):
 
     def as_rational(self, number: int | T) -> float | T:
         return number * self._config.minimum_step_as_rational
+
+    @overload
+    def round_to_rational(self, number: float) -> float: ...
+
+    @overload
+    def round_to_rational(self, number: T) -> T: ...
+
+    def round_to_rational(self, number: float | T) -> Any:
+        """Mathematical Round function for number"""
+        match number:
+            case list():
+                warnings.warn(
+                    "Calling cut_to_integer with lists is deprecated and will be removed in the future. Use functions from itertools at call site instead.",
+                    stacklevel=2,
+                )
+                return cast(
+                    list,
+                    self._round_nested_list_to_rational(number),
+                )
+            case float():
+                return self._round_float_or_int_to_rational(number)
+            case ConvertableToFixedPointValues() as n:
+                return self._round_T_to_rational(n)
+
+    def _round_nested_list_to_rational(self, numbers: Any) -> Any:
+        if isinstance(numbers, list):
+            return list(map(self._round_nested_list_to_rational, numbers))
+        else:
+            return self.round_to_rational(numbers)
+
+    def _round_T_to_rational(self, number: T) -> T:
+        return self._round_T_to_integer(number) * self._config.minimum_step_as_rational
+
+    def _round_float_or_int_to_rational(self, number: float) -> float:
+        return self.round_to_integer(number) * self._config.minimum_step_as_rational
 
     @overload
     def clamp(self, number: int) -> int: ...

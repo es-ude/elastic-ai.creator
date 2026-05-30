@@ -11,31 +11,39 @@ assertTensorEqual = partial(assert_close, rtol=0, atol=0)
 
 
 @pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
-def test_cut_tensor_to_integer_signed(total_bits: int, frac_bits: int) -> None:
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_cut_tensor_to_integer(
+    total_bits: int, frac_bits: int, is_signed: bool
+) -> None:
     config = FxpArithmetic(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
-    )
-
-    chck: ConvertableToFixedPointValues = torch.Tensor(
-        [config.config.minimum_as_integer, -1, 0, +1, config.config.maximum_as_integer]
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
     )
     stimuli = torch.Tensor(
         [
             config.config.minimum_as_rational,
-            -config.config.minimum_step_as_rational,
-            0.0,
             config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational - config.config.minimum_step_as_rational,
             config.config.maximum_as_rational,
         ]
+    )
+    chck = torch.tensor(
+        [
+            config.config.minimum_as_integer,
+            1,
+            config.config.maximum_as_integer - 1,
+            config.config.maximum_as_integer,
+        ],
+        dtype=stimuli.dtype,
     )
     rslt = config.cut_as_integer(stimuli)
     assertTensorEqual(rslt, chck)
 
 
 @pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
-def test_cut_x_to_integer_signed(total_bits: int, frac_bits: int) -> None:
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_cut_x_to_integer(total_bits: int, frac_bits: int, is_signed: bool) -> None:
     config = FxpArithmetic(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
     )
 
     stimuli_tensor = torch.Tensor(
@@ -60,9 +68,12 @@ def test_cut_x_to_integer_signed(total_bits: int, frac_bits: int) -> None:
 
 
 @pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
-def test_round_tensor_to_integer_signed(total_bits: int, frac_bits: int) -> None:
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_round_tensor_to_integer(
+    total_bits: int, frac_bits: int, is_signed: bool
+) -> None:
     config = FxpArithmetic(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
     )
 
     chck = torch.Tensor(
@@ -82,56 +93,31 @@ def test_round_tensor_to_integer_signed(total_bits: int, frac_bits: int) -> None
 
 
 @pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
-def test_cut_tensor_to_integer_unsigned(total_bits: int, frac_bits: int) -> None:
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_round_x_to_integer(total_bits: int, frac_bits: int, is_signed: bool) -> None:
     config = FxpArithmetic(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=False)
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
     )
-    stimuli = torch.Tensor(
+
+    stimuli_tensor = torch.Tensor(
         [
             config.config.minimum_as_rational,
+            -config.config.minimum_step_as_rational,
+            0.0,
             config.config.minimum_step_as_rational,
-            config.config.maximum_as_rational - config.config.minimum_step_as_rational,
             config.config.maximum_as_rational,
         ]
     )
-    chck = torch.tensor(
-        [
-            config.config.minimum_as_integer,
-            1,
-            config.config.maximum_as_integer - 1,
-            config.config.maximum_as_integer,
-        ],
-        dtype=stimuli.dtype,
-    )
-    rslt = config.cut_as_integer(stimuli)
-    assertTensorEqual(rslt, chck)
-
-
-@pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
-def test_round_tensor_to_integer_unsigned(total_bits: int, frac_bits: int) -> None:
-    config = FxpArithmetic(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=False)
-    )
-
-    stimuli = torch.tensor(
-        [
-            config.config.minimum_as_rational,
-            config.config.minimum_step_as_rational,
-            config.config.maximum_as_rational - config.config.minimum_step_as_rational,
-            config.config.maximum_as_rational,
-        ]
-    )
-    chck = torch.tensor(
-        [
-            config.config.minimum_as_integer,
-            1,
-            config.config.maximum_as_integer - 1,
-            config.config.maximum_as_integer,
-        ],
-        dtype=stimuli.dtype,
-    )
-    rslt = config.round_to_integer(stimuli)
-    assertTensorEqual(rslt, chck)
+    stimuli_float = [
+        config.config.minimum_as_rational,
+        -config.config.minimum_step_as_rational,
+        0.0,
+        config.config.minimum_step_as_rational,
+        config.config.maximum_as_rational,
+    ]
+    rslt_tensor = config.round_to_integer(stimuli_tensor).tolist()
+    rslt_float = [config.round_to_integer(val) for val in stimuli_float]
+    assert rslt_tensor == rslt_float
 
 
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
@@ -179,33 +165,6 @@ def test_clamp_float(total_bits: int, frac_bits: int, is_signed: bool) -> None:
 
     result = config.clamp(torch.asarray(stimuli)).tolist()
     assert result == check
-
-
-@pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
-def test_round_x_to_integer_signed(total_bits: int, frac_bits: int) -> None:
-    config = FxpArithmetic(
-        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
-    )
-
-    stimuli_tensor = torch.Tensor(
-        [
-            config.config.minimum_as_rational,
-            -config.config.minimum_step_as_rational,
-            0.0,
-            config.config.minimum_step_as_rational,
-            config.config.maximum_as_rational,
-        ]
-    )
-    stimuli_float = [
-        config.config.minimum_as_rational,
-        -config.config.minimum_step_as_rational,
-        0.0,
-        config.config.minimum_step_as_rational,
-        config.config.maximum_as_rational,
-    ]
-    rslt_tensor = config.round_to_integer(stimuli_tensor).tolist()
-    rslt_float = [config.round_to_integer(val) for val in stimuli_float]
-    assert rslt_tensor == rslt_float
 
 
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
@@ -305,3 +264,128 @@ def test_to_twos(
     check = [expected for _ in range(10)]
     rslt = sets.to_twos(data_in).tolist()
     assert rslt == check
+
+
+@pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_cut_tensor_to_rational(
+    total_bits: int, frac_bits: int, is_signed: bool
+) -> None:
+    config = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    chck: ConvertableToFixedPointValues = (
+        torch.Tensor(
+            [
+                config.config.minimum_as_integer,
+                -1,
+                0,
+                +1,
+                config.config.maximum_as_integer,
+            ]
+        )
+        * config.config.minimum_step_as_rational
+    )
+    stimuli = torch.Tensor(
+        [
+            config.config.minimum_as_rational,
+            -config.config.minimum_step_as_rational,
+            0.0,
+            config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational,
+        ]
+    )
+    rslt = config.cut_as_rational(stimuli)
+    assertTensorEqual(rslt, chck)
+
+
+@pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_cut_x_to_rational(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+    config = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    stimuli_tensor = torch.Tensor(
+        [
+            config.config.minimum_as_rational,
+            -config.config.minimum_step_as_rational,
+            0,
+            config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational,
+        ]
+    )
+    stimuli_float = [
+        config.config.minimum_as_rational,
+        -config.config.minimum_step_as_rational,
+        0.0,
+        config.config.minimum_step_as_rational,
+        config.config.maximum_as_rational,
+    ]
+    rslt_tensor = config.cut_as_rational(stimuli_tensor).tolist()
+    rslt_float = [config.cut_as_rational(val) for val in stimuli_float]
+    assert rslt_tensor == rslt_float
+
+
+@pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_round_tensor_to_rational(
+    total_bits: int, frac_bits: int, is_signed: bool
+) -> None:
+    config = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    chck = (
+        torch.Tensor(
+            [
+                config.config.minimum_as_integer,
+                -1,
+                0,
+                +1,
+                config.config.maximum_as_integer,
+            ]
+        )
+        * config.config.minimum_step_as_rational
+    )
+    stimuli = torch.Tensor(
+        [
+            config.config.minimum_as_rational,
+            -config.config.minimum_step_as_rational,
+            0.0,
+            config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational,
+        ]
+    )
+    rslt = config.round_to_rational(stimuli)
+    assertTensorEqual(rslt, chck)
+
+
+@pytest.mark.parametrize("total_bits, frac_bits", [(2, 2), (4, 3), (8, 4)])
+@pytest.mark.parametrize("is_signed", [False, True])
+def test_round_x_to_rational(total_bits: int, frac_bits: int, is_signed: bool) -> None:
+    config = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=is_signed)
+    )
+
+    stimuli = torch.tensor(
+        [
+            config.config.minimum_as_rational,
+            config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational - config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational,
+        ]
+    )
+    chck = torch.tensor(
+        [
+            config.config.minimum_as_rational,
+            config.config.minimum_step_as_rational,
+            (config.config.maximum_as_integer - 1)
+            * config.config.minimum_step_as_rational,
+            config.config.maximum_as_rational,
+        ],
+        dtype=stimuli.dtype,
+    )
+    rslt = config.round_to_rational(stimuli)
+    assertTensorEqual(rslt, chck)
