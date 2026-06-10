@@ -28,7 +28,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             kwargs.get("in_channels"),
             kwargs.get("out_channels"),
             kwargs.get("kernel_size"),
-            kwargs.get("padding"),
+            padding=kwargs.get("padding"),
         )
         self.seq_len = kwargs.get("seq_len")
 
