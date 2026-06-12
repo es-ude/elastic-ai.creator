@@ -20,7 +20,7 @@
 
 
 module MULT_UNSIGNED#(
-    parameter BITWIDTH = 2
+    parameter BITWIDTH = 6
 )(
     input wire [5:0]    A,
     input wire [5:0]    B,

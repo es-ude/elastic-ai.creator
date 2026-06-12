@@ -20,7 +20,7 @@
 
 
 module MULT_SIGNED#(
-    parameter BITWIDTH = 2
+    parameter BITWIDTH = 8
 )(
     input wire signed [7:0]		A,
     input wire signed [7:0]    	B,
