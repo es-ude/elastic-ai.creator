@@ -9,24 +9,25 @@
 // Tool Versions:   1v0
 // Description:     DSP-based multiplication with parametrized bitwidth
 // Processing:      Direct processing
-// Dependencies:    None
+// Dependencies:    Needs pipeline buffer in upper module
 //
 // State: 	        Works!
-// Dependency:      None (FPGA has DSP slices)
+// Dependency:      FPGA has DSP slices
 // Improvements:    None
 // Parameters:      BITWIDTH --> Bitwidth of input data
 //
 //////////////////////////////////////////////////////////////////////////////////
 
 
+(* use_dsp = "yes" *)
 module MULT_UNSIGNED#(
     parameter BITWIDTH = 6'd6
 )(
-    input wire [BITWIDTH-'d1:0]    A,
-    input wire [BITWIDTH-'d1:0]    B,
-    output wire [2*BITWIDTH-'d1:0] Q
+    input wire [BITWIDTH-'d1:0]     A,
+    input wire [BITWIDTH-'d1:0]     B,
+    output reg [2*BITWIDTH-'d1:0]   Q
 );
+    always@(*)
+        Q = A * B;
 
-    assign Q = A * B;
-    
 endmodule
