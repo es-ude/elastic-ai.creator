@@ -4,5 +4,5 @@ version = "0.1"
 api_version = "0.1"
 target_runtime = "verilog"
 target_platform = "FPGA"
-generated = ["bram_single_port", "bram_dual_port"]
+generated = ["bram_single_port", "bram_dual_port", "lutrom_single_port"]
 static_files = []
