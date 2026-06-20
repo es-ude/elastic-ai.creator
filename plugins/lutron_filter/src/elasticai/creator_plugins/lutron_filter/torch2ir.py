@@ -16,7 +16,7 @@ def _extend_handler_with_parameter_names(handler: _Handler) -> _Handler:
     @wraps(handler)
     def wrapper(module: Module, /) -> dict[str, AttributeConvertable]:
         result = handler(module)
-        result = result | (
+        return result | (
             {
                 "parameters": dict(
                     (k, v.tolist()) for k, v in module.named_parameters()
@@ -40,11 +40,6 @@ def _register(handler: _Handler) -> _Handler:
 def _override(handler: _Handler) -> _Handler:
     _overriden.append(_extend_handler_with_parameter_names(handler))
     return handler
-
-
-@_register
-def prelu(module: Module) -> dict[str, AttributeConvertable]:
-    return {}
 
 
 @_register
