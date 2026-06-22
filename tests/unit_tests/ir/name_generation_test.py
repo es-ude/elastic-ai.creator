@@ -37,3 +37,9 @@ def test_use_maximum_of_suffixes():
     reg.prepopulate(["a", "a_3", "a_2"])
 
     assert reg.get_unique_name("a") == "a_4"
+
+
+def test_gracefully_handle_non_numeric_suffix():
+    reg = NameRegistry()
+    reg.prepopulate(["conv_a"])
+    assert reg.get_unique_name("conv_a") == "conv_a_1"
