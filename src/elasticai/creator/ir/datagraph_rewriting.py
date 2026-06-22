@@ -155,6 +155,7 @@ class PatternRule[G: DataGraph[Node, Edge]]:
                 original=graph, matches=matches, interface_nodes=self._spec.interface
             )
         )
+        print(matches)
         for match in matches:
             graph_mapped_to_matched_pattern = _create_remapped_graph(graph, match)
             repl_graph, registry = self._spec.create_replacement(
@@ -274,5 +275,3 @@ class _NameGenerator:
     def get_name(self, name: str) -> str:
         new_name = self._registry.get_unique_name(name)
         return new_name
-
-

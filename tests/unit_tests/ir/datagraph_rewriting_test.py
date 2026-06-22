@@ -174,9 +174,9 @@ def test_raise_error_when_interface_is_not_in_pattern(
 
 def test_replace_prelu(network, pattern, replacement, factory):
     impl = (
-        network.add_node(factory.node("activation0", "prelu"))
-        .add_edge(factory.edge("input", "activation0"))
-        .add_edge(factory.edge("activation0", "output"))
+        network.add_node(factory.node("activation", "prelu"))
+        .add_edge(factory.edge("input", "activation"))
+        .add_edge(factory.edge("activation", "output"))
     )
     pattern_graph = (
         pattern.add_node(factory.node("prelu", "prelu"))
@@ -188,15 +188,15 @@ def test_replace_prelu(network, pattern, replacement, factory):
         return (
             replacement.add_node(
                 factory.node(
-                    "binarize",
+                    "activation",
                     "binarize",
                     {
                         "implementation": "binarize",
                     },
                 )
             )
-            .add_edge(factory.edge("start", "binarize"))
-            .add_edge(factory.edge("binarize", "end"))
+            .add_edge(factory.edge("start", "activation"))
+            .add_edge(factory.edge("activation", "end"))
         ), Registry()
 
     def node_constraint(pattern_node: Node, original_node: Node) -> bool:
@@ -219,8 +219,7 @@ def test_replace_prelu(network, pattern, replacement, factory):
     new_impl, _ = rule(impl, Registry())
     assert len(new_impl.successors) == 3
     assert len(new_impl.nodes) == 3
-    assert "binarize" in new_impl.nodes
-    assert new_impl.nodes["binarize"].type == "binarize"
+    assert new_impl.nodes["activation"].type == "binarize"
 
 
 def test_merge_layers(network, pattern, replacement, factory):

@@ -94,7 +94,7 @@ def translate(
 
     serializer = ir.IrSerializer()
     hl_dir = build_dir / "hl"
-    hl_dir.mkdir(exist_ok=True)
+    hl_dir.mkdir(exist_ok=True, parents=True)
     for name, g in reg.items():
         serialized = serializer.serialize(g)
         with open(hl_dir / f"{name}.json", "w") as f:
@@ -110,8 +110,10 @@ def translate(
     for name, g in reg.items():
         logger.debug(name)
     code = convert_to_vhdl(reg)
+    vhd_dir = build_dir / "vhdl"
+    vhd_dir.mkdir(exist_ok=True)
     for name, lines in code:
-        with open(build_dir / f"{name}", "w") as f:
+        with open(vhd_dir / f"{name}", "w") as f:
             for line in lines:
                 f.write(line)
                 f.write("\n")
@@ -186,6 +188,7 @@ def prepare_for_training(
     handle_filter_params: Callable[
         [FilterParameters], tuple[FilterParameters, FilterParameters]
     ],
+    save_dir: Path | None = None,
 ) -> tnn.Module:
     """binarize activations and split convolutions using handle_filter_params."""
     original, reg = _convert_torch2ir_for_preparation(model)
@@ -197,6 +200,15 @@ def prepare_for_training(
     split = _make_split_conv_rule(handle_filter_params)
     rule = ir.compose_rules(binarize_activations, split)
     g, new_reg = rule(*ir_representation)
+    if save_dir is not None:
+        save_dir.mkdir(exist_ok=True)
+        serializer = ir.IrSerializer()
+        for name, graph in new_reg.items():
+            with open(save_dir / f"{name}.json", "w") as f:
+                json.dump(serializer.serialize(graph), f)
+        with open(save_dir / "network.json", "w") as f:
+            json.dump(serializer.serialize(g), f)
+
     pretty_log_debug(g)
     for _g in new_reg.values():
         pretty_log_debug(_g)

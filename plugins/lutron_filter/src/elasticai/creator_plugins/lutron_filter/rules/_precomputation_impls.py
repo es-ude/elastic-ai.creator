@@ -95,7 +95,7 @@ class PrecomputeLinear(_BasePrecompute):
     def build_lutron_module(self, filter_params: FilterParameters) -> LutronModule:
         graph = self.get_impl("linear")
         linear = torch.nn.Linear(
-            in_features=filter_params.kernel_size,
+            in_features=filter_params.in_channels,
             out_features=filter_params.out_channels,
             bias=graph.attributes["bias"],
         )
@@ -109,11 +109,11 @@ class PrecomputeLinear(_BasePrecompute):
 
         class RemoveKernelDim(torch.nn.Module):
             def forward(self, x: torch.Tensor):
-                return x.view(-1, filter_params.kernel_size)
+                return x.view(-1, filter_params.in_channels)
 
         class AddKernelDim(torch.nn.Module):
             def forward(self, x: torch.Tensor):
-                return x.view(-1, filter_params.out_channels, 1)
+                return x.view(-1, 1, filter_params.out_channels)
 
         lutron_linear = LutronLinear(
             wrapped=torch.nn.Sequential(RemoveKernelDim(), linear, AddKernelDim()),
@@ -125,8 +125,8 @@ class PrecomputeLinear(_BasePrecompute):
     def get_filter_parameters(self) -> FilterParameters:
         g = self.get_impl("linear")
         return FilterParameters(
-            in_channels=1,
-            kernel_size=g.attributes["in_features"],
+            in_channels=g.attributes["in_features"],
+            kernel_size=1,
             out_channels=g.attributes["out_features"],
         )
 

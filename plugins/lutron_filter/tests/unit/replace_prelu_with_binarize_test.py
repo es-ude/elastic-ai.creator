@@ -18,8 +18,10 @@ def ir_factory():
 
 @pytest.fixture
 def node(ir_factory):
-    def create(name: str, type: str) -> Node:
-        return ir_factory.node(name, attribute(type=type))
+    def create(name: str, type: str, implementation: str = "") -> Node:
+        return ir_factory.node(
+            name, attribute(type=type, implementation=implementation)
+        )
 
     return create
 
@@ -30,20 +32,21 @@ def node_sequences(node) -> tuple[tuple[Node, ...], tuple[Node, ...]]:
         ("input", "input"),
         ("a", "conv"),
         ("b", "conv"),
-        ("c", "prelu"),
+        ("activation", "prelu"),
         ("output", "output"),
     ]
     expected = [
         ("input", "input"),
         ("a", "conv"),
         ("b", "conv"),
-        ("activation", "binarize"),
+        ("activation", "binarize", "binarize"),
         ("output", "output"),
     ]
     return tuple(starmap(node, input)), tuple(starmap(node, expected))
 
 
 def graph_from_node_sequence(ir_factory, node, sequence):
+
     return (
         ir_factory.graph()
         .add_nodes(*sequence)

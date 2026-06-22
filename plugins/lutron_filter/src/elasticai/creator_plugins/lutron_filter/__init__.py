@@ -13,14 +13,13 @@ from .rules import (
     binarize_activations,
     create_shape_inference,
     make_split_conv_rule,
-    precompute_linear,
     precompute,
+    precompute_linear,
     remove_redundant_layers,
     reorder,
 )
 from .rules._ir import DataGraph, Node, Registry, build_sequential_ir
 from .rules._ir import ir_factory as factory
-from .rules._precomputation_impls import precompute
 from .tensor_conversion import (
     torch1d_input_tensor_to_grouped_strings as torch1d_input_tensor_to_grouped_strings,
 )

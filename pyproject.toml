@@ -18,6 +18,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+  "bokeh>=3.9.1",
   "build>=1.2.2.post1",
   "hatch>=1.14.0",
   "hatch-vcs>=0.4.0",

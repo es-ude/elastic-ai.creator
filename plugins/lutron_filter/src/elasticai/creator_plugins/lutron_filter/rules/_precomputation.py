@@ -87,37 +87,36 @@ def make_precompute_rule(strategy: PrecomputationStrategy) -> Rule:
         match: DataGraph, registry: Registry[DataGraph]
     ) -> tuple[DataGraph, Registry[DataGraph]]:
         matched_nodes = collect_origins_of_match(match)
+        print(f"Found match {matched_nodes}")
         existing_matches = collect_origins_of_existing_impls(registry)
         name_registry = NameRegistry()
         name_registry.prepopulate(registry)
-        if origin_as_key(matched_nodes) not in existing_matches.keys():
-            strategy.set_module(match, registry)
-            lutrons: dict[str, DataGraph] = {}
-            for truth_table in strategy.get_io_pairs():
-                name = name_registry.get_unique_name("lutron")
-                _truth_table = tuple(truth_table)
-                lutron = dict(
-                    truth_table=_truth_table,
-                    type="lutron",
-                    input_size=len(_truth_table[0][0]),
-                    output_size=len(_truth_table[0][1]),
-                )
-                lutrons[name] = ir_factory.graph(attribute(lutron))
-            lutron_filter_attributes = attribute(
-                type="grouped_filter",
-                kernel_per_group=tuple(lutrons),
-                filter_parameters=attribute(
-                    **strategy.get_filter_parameters().as_dict()
-                ),
-                origin=matched_nodes,
+        # if origin_as_key(matched_nodes) not in existing_matches.keys():
+        strategy.set_module(match, registry)
+        lutrons: dict[str, DataGraph] = {}
+        for truth_table in strategy.get_io_pairs():
+            name = name_registry.get_unique_name("lutron")
+            _truth_table = tuple(truth_table)
+            lutron = dict(
+                truth_table=_truth_table,
+                type="lutron",
+                input_size=len(_truth_table[0][0]),
+                output_size=len(_truth_table[0][1]),
             )
-            lutron_filter = ir_factory.graph(lutron_filter_attributes)
-            lutron_filter_name = name_registry.get_unique_name("lutron_filter")
-            registry = registry | lutrons | {lutron_filter_name: lutron_filter}
-        else:
-            lutron_filter_name = existing_matches[origin_as_key(matched_nodes)]
-            lutron_filter = registry[lutron_filter_name]
-            lutron_filter_attributes = lutron_filter.attributes
+            lutrons[name] = ir_factory.graph(attribute(lutron))
+        lutron_filter_attributes = attribute(
+            type="grouped_filter",
+            kernel_per_group=tuple(lutrons),
+            filter_parameters=attribute(**strategy.get_filter_parameters().as_dict()),
+            origin=matched_nodes,
+        )
+        lutron_filter = ir_factory.graph(lutron_filter_attributes)
+        lutron_filter_name = name_registry.get_unique_name("lutron_filter")
+        registry = registry | lutrons | {lutron_filter_name: lutron_filter}
+        # else:
+        #     lutron_filter_name = existing_matches[origin_as_key(matched_nodes)]
+        #     lutron_filter = registry[lutron_filter_name]
+        #     lutron_filter_attributes = lutron_filter.attributes
 
         replacement = sequential_with_interface(
             ("lutron_filter", "filter"),

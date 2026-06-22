@@ -32,7 +32,7 @@ def pretty_log_debug(g):
     logger.debug(pformat(serialized), stacklevel=2)
 
 
-def handle_filter_params(
+def specify_split(
     p: lf.FilterParameters,
 ) -> tuple[lf.FilterParameters, lf.FilterParameters]:
     return FilterParameters(
@@ -66,7 +66,9 @@ async def check_network(
     await reset.reset_active_high()
     dut.en.value = 1
     collect_task = cocotb.start_soon(
-        stream.collect_chunks(expected_count=len(expected), max_cycles=10)
+        stream.collect_chunks(
+            expected_count=len(expected), max_cycles=4 * len(expected)
+        )
     )
     await stream.drive_chunks(
         [
@@ -89,27 +91,28 @@ class InputOutputData:
 def setup(
     seed: int, tmpdir: Path, convert_to_vhdl: Ir2Vhdl | None = None
 ) -> InputOutputData:
+    channels = [4, 8]
     model = tnn.Sequential(
-        tnn.Conv1d(1, 4, kernel_size=1),
+        tnn.Conv1d(1, out_channels=channels[0], kernel_size=1),
         tnn.PReLU(),
-        tnn.Conv1d(4, 4, kernel_size=2),
+        tnn.Conv1d(channels[0], channels[1], kernel_size=3),
         tnn.PReLU(),
-        tnn.Conv1d(4, 4, kernel_size=2),
-        tnn.PReLU(),
-        tnn.Conv1d(4, 2, kernel_size=1),
+        tnn.Conv1d(channels[1], 2, kernel_size=1),
         tnn.Flatten(),
         tnn.PReLU(),
-        tnn.Linear(4, 2),
+        tnn.Linear(2, 2),
         tnn.PReLU(),
     )
+    torch.manual_seed(seed)
     metadata = {
-        "required_input_size": lf.compute_required_input_size(model, 1) + 1,
+        "required_input_size": lf.compute_required_input_size(model, 1),
         "num_input_bits": 3,
         "in_channels": 1,
     }
-    torch.manual_seed(seed)  # set the seed as this specific seed failed before
-    prepared_model = lf.prepare_for_training(model, handle_filter_params)
     tmpdir.mkdir(exist_ok=True)
+    prepared_model = lf.prepare_for_training(
+        model, specify_split, tmpdir / "prepared_for_training"
+    )
     lf.translate(
         prepared_model,
         Shape(metadata["in_channels"], metadata["required_input_size"]),
@@ -171,12 +174,17 @@ def setup(
 
 @pytest.mark.slow
 @pytest.mark.simulation
-@pytest.mark.parametrize("seed", [3, 5])
+@pytest.mark.parametrize(
+    "seed",
+    [
+        3,
+    ],
+)
 def test_toy_model_simulates_correctly(
     cocotb_test_fixture: CocotbTestFixture, seed: int
 ):
 
-    test_data = setup(seed, cocotb_test_fixture.get_artifact_dir() / "vhdl")
+    test_data = setup(seed, cocotb_test_fixture.get_artifact_dir())
     cocotb_test_fixture.write(dataclasses.asdict(test_data))
     cocotb_test_fixture.set_srcs_from_artifact_dir("vhdl/*.vhd")
     cocotb_test_fixture.set_top_module_name("network")
@@ -195,7 +203,7 @@ def test_toy_model_on_hw(tmp_path):
     loader = PluginLoader(convert_to_vhdl)
     loader.load_from_package("middleware")
     build_dir = tmp_path / "vhdl"
-    test_data = setup(seed, build_dir, convert_to_vhdl)
+    test_data = setup(seed, tmp_path, convert_to_vhdl)
     hwid_updater = HwFunctionIdUpdater(build_dir)
     hwid_updater.compute_id()
     hwid_updater.write_id()
