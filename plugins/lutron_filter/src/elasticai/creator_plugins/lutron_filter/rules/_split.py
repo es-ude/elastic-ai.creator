@@ -60,6 +60,11 @@ class _ReplacementFN:
         self._filter_replacer = filter_replacer
         self._suffixes = "abcdefghijklmnopqrstuvwxyz"
         self._node_seq_filter_pairs = None
+        self._replacement = None
+        self._reg = None
+        self._naming = None
+        self._new_filters = None
+        self._match = None
 
     def __call__(
         self, match: DataGraph, reg: Registry[DataGraph]
@@ -73,15 +78,22 @@ class _ReplacementFN:
             )
         self._update_name_registry()
         self._update_replacement_graph_and_registry()
-
-        return self._replacement, self._reg
+        repl, reg = self._replacement, self._reg
+        self._replacement = None
+        self._reg = None
+        self._naming = None
+        self._new_filters = None
+        self._match = None
+        self._node_seq_filter_pairs = None
+        return repl, reg
 
     def _update_name_registry(self) -> None:
         self._naming = NameRegistry()
         self._naming.prepopulate(self._reg.keys())
 
     def _new_name(self, name: str) -> str:
-        return self._naming.get_unique_name(name)
+        new_name = self._naming.get_unique_name(name)
+        return new_name
 
     def _update_replacement_graph_and_registry(self) -> None:
         node_sequence = [node("start", "interface")]
