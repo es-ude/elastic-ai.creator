@@ -1,0 +1,6 @@
+[[plugins]]
+name = "delta_compression"
+version = "0.1"
+api_version = "0.1"
+target_runtime = "python"
+target_platform = "native"
