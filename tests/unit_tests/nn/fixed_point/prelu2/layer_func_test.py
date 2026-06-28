@@ -19,7 +19,7 @@ from elasticai.creator.nn import fixed_point as nn_creator
         (12, 10, 0.03125),
     ],
 )
-def test_prelu_compared_torch(total_bits: int, frac_bits: int, init: float) -> None:
+def test_prelu2_compared_torch(total_bits: int, frac_bits: int, init: float) -> None:
     fxp = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
     vrange = (fxp.minimum_as_rational, fxp.maximum_as_rational)
     stimulus = torch.arange(
@@ -30,7 +30,7 @@ def test_prelu_compared_torch(total_bits: int, frac_bits: int, init: float) -> N
 
     act0 = torch.nn.PReLU(init=init)
     out0 = act0(stimulus).detach().numpy()
-    act1 = nn_creator.PReLU(
+    act1 = nn_creator.PReLU2(
         total_bits=total_bits,
         frac_bits=frac_bits,
         init=init,

@@ -43,3 +43,9 @@ class MathOperations(LinearOps, Conv1dOps, LSTMOps):
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
         return self._cut(self._clamp(a))
+
+    def twos_scaling(self, a: torch.Tensor) -> torch.Tensor:
+        return torch.pow(2, a)
+
+    def get_exponent(self, a: torch.Tensor) -> torch.Tensor:
+        return torch.round(torch.log2(torch.abs(a)))
