@@ -6,6 +6,10 @@
   ...
 }: let
   unstablePkgs = import inputs.nixpkgs-unstable {system = pkgs.stdenv.system;};
+  uv_run = "${unstablePkgs.uv}/bin/uv run --active";
+  alej_run = "${pkgs.alejandra}/bin/alejandra";
+  tombi_run = "${pkgs.tombi}/bin/tombi";
+  cog_run = "${pkgs.cocogitto}/bin/cog";
 in {
   # override these in your devenv.local.nix as needed
   languages.vhdl = {
@@ -60,13 +64,13 @@ in {
           jetty.http.port="8081"
     '';
     serve_docs = {
-      exec = "${unstablePkgs.uv}/bin/uv run zensical serve --config-file zensical.toml";
+      exec = "${uv_run} zensical serve --config-file zensical.toml";
     };
     run_simulation_tests = {
-      exec = ''${unstablePkgs.uv}/bin/uv run --all-packages python -m pytest -m simulation | grep -v "ld:"'';
+      exec = ''${uv_run} --all-packages python -m pytest -m simulation | grep -v "ld:"'';
     };
     run_hw_tests = {
-      exec = ''${unstablePkgs.uv}/bin/uv run python -m pytest -m hardware "@$"'';
+      exec = ''${uv_run} run python -m pytest -m hardware "@$"'';
       description = ''        Run hw tests depending on the experiment framework. This uses a different import mode to resolve
                       import issues. IMPORTANT: this is only temporary and will be solved more naturally in the future'';
     };
@@ -75,18 +79,16 @@ in {
     };
     fix_all = {
       exec = ''
-        uv run ruff format
-        uv run ruff check --fix
+        ${uv_run} ruff format
+        ${uv_run} ruff check --fix
 
-        ${pkgs.alejandra}/bin/alejandra --exclude ./.devenv --exclude ./.devenv.flake.nix .
-        ${pkgs.tombi}/bin/tombi format
+        ${alej_run} --exclude ./.devenv --exclude ./.devenv.flake.nix .
+        ${tombi_run} format
       '';
     };
   };
 
-  tasks = let
-    uv_run = "${unstablePkgs.uv}/bin/uv run";
-  in {
+  tasks = {
     "check:slow-tests" = {
       exec = "${uv_run} --all-packages python -m pytest  -m '(simulation or slow) and not hardware'";
       before = ["check:tests"];
@@ -116,20 +118,20 @@ in {
     "check:commit-lint" = {
       exec = ''
         if [ -n "$CI" ]; then
-          ${pkgs.cocogitto}/bin/cog check ..$GITHUB_SOURCE_REF
+          ${cog_run} check ..$GITHUB_SOURCE_REF
         else
-          ${pkgs.cocogitto}/bin/cog check main..
+          ${cog_run} check main..
         fi
       '';
     };
 
     "check:nix-lint" = {
-      exec = "${pkgs.alejandra}/bin/alejandra --exclude ./.devenv --exclude ./.devenv.flake.nix -c .";
+      exec = "${alej_run} --exclude ./.devenv --exclude ./.devenv.flake.nix -c .";
       before = ["check:code-lint"];
     };
 
     "check:toml-formatting" = {
-      exec = "${pkgs.tombi}/bin/tombi format --check";
+      exec = "${tombi_run} format --check";
     };
 
     "check:formatting" = {

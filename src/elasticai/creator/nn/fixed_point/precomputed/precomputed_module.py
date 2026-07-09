@@ -83,8 +83,8 @@ class PrecomputedModule(DesignCreatorModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self._stepped_inputs(x)
-        y = self._base_module(x - self._xoffset)
-        return self._operations.round(y)
+        x = self._base_module(x - self._xoffset)
+        return self._operations._round(x)
 
     def create_design(self, name: str) -> PrecomputedScalarFunction:
         q_input = self.get_lut_integer()[0]
