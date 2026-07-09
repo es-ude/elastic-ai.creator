@@ -45,7 +45,7 @@ class PReLU(DesignCreatorModule, PReLUBase):
 
     def get_params_quant(self) -> list[list[float]]:
         weights = self.get_params()
-        q_weights = cast(list[list[int]], self._config.cut_as_integer(weights))
+        q_weights = cast(list[list[float]], self._config.cut_as_integer(weights))
         return q_weights
 
     def create_design(self, name: str) -> PReLUDesign:

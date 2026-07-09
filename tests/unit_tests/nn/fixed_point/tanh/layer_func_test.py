@@ -40,7 +40,6 @@ def test_tanh_compared_torch(total_bits: int, frac_bits: int, num_steps: int) ->
     metric_mean_abs = float(sum(abs(out1 - out0))) / stimulus.shape[0]
     metric_mean = float(abs(sum(out1 - out0))) / stimulus.shape[0]
 
-    print(metric_mean_abs, metric_mean)
     assert metric_mean_abs < 1.5 * fxp.minimum_step_as_rational * (
         out1.max() - out1.min()
     )
