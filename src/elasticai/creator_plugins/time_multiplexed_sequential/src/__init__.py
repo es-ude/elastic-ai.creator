@@ -256,20 +256,12 @@ class _Sequential:
 
     def strided_shift_register(self, output_shape: tuple[int, int], stride: int):
         self._num_registers += 1
-        if stride > 1:
-            self._append_static(
-                name="striding_shift_register",
-                output_shape=Shape(*output_shape),
-                implementation="striding_shift_register",
-                generic_map=dict(stride=stride),
-            )
-        else:
-            self._append_static(
-                name="shift_register",
-                output_shape=Shape(*output_shape),
-                implementation="shift_register",
-                generic_map=dict(),
-            )
+        self._append_static(
+            name="shift_register",
+            output_shape=Shape(*output_shape),
+            implementation="shift_register",
+            generic_map=dict(skip=stride),
+        )
 
     def input(self, impl: DataGraph, input_node: str) -> None:
         input_shape = self._determine_required_input_shape(impl, input_node)
