@@ -43,11 +43,11 @@ def test_inserts_striding_shift_register():
         stride=2,
     )
     lowered, _ = sequential(nw, ir.Registry())
-    type = "striding_shift_register"
+    type = "shift_register"
     name = f"{type}_i0"
     expected = _factory.node(
         name,
-        ir.attribute({"generic_map": {"stride": 2}}),
+        ir.attribute({"generic_map": {"skip": 2}}),
         input_shape=Shape(1, out_channels),
         output_shape=Shape(1, kernel_size),
         implementation=type,

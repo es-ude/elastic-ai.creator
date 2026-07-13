@@ -145,11 +145,11 @@ def test_add_correct_edges(lower):
         ),
         edge(
             src="conv0_i0",
-            dst="striding_shift_register_i0",
+            dst="shift_register_i0",
             src_dst_indices=tuple(),
         ),
         edge(
-            src="striding_shift_register_i0",
+            src="shift_register_i0",
             dst="conv1_i0",
             src_dst_indices=tuple(),
         ),
@@ -223,4 +223,6 @@ def test_remember_stride_after_pointwise_filter() -> None:
     )
     lowered, _ = sequential(net, ir.Registry())
     follower_of_pointwise = lowered.nodes[list(lowered.successors["f1_i0"].keys())[0]]
-    assert follower_of_pointwise.type == "striding_shift_register"
+    assert follower_of_pointwise.type == "shift_register"
+    print(follower_of_pointwise.attributes)
+    assert follower_of_pointwise.attributes["generic_map"]["skip"] == 2
