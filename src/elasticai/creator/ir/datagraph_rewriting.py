@@ -155,7 +155,6 @@ class PatternRule[G: DataGraph[Node, Edge]]:
                 original=graph, matches=matches, interface_nodes=self._spec.interface
             )
         )
-        print(matches)
         for match in matches:
             graph_mapped_to_matched_pattern = _create_remapped_graph(graph, match)
             repl_graph, registry = self._spec.create_replacement(

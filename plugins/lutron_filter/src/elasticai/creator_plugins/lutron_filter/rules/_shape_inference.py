@@ -69,6 +69,7 @@ class InferMaxPool1dInChannelsRule:
         self, graph: DataGraph, registry: Registry
     ) -> tuple[DataGraph, Registry]:
         # Find maxpool nodes that need channel inference
+        self._reg = registry
         for node in graph.nodes.values():
             if node.type == "maxpool1d" and "in_channels" not in node.attributes:
                 channels = self._find_channels(graph, node.name)
@@ -101,22 +102,23 @@ class InferMaxPool1dInChannelsRule:
                 break
             pred_name = preds[0]
             pred_node = graph.nodes[pred_name]
+            pred_impl = self._reg[pred_node.implementation]
 
             # Check the node's own attributes first
-            out_ch = pred_node.attributes.get("out_channels")
+            out_ch = pred_impl.attributes.get("out_channels")
             if out_ch is not None:
                 val = _safe_int(out_ch)
                 if val > 0:
                     return val
 
-            num_feat = pred_node.attributes.get("num_features")
+            num_feat = pred_impl.attributes.get("num_features")
             if num_feat is not None:
                 val = _safe_int(num_feat)
                 if val > 0:
                     return val
 
-            if "output_shape" in pred_node.attributes:
-                out_shape = pred_node.attributes["output_shape"]
+            if "output_shape" in pred_impl.attributes:
+                out_shape = pred_impl.attributes["output_shape"]
                 if len(out_shape) > 1:
                     val = _safe_int(out_shape[0])
                     return val
@@ -136,15 +138,16 @@ class InferMaxPool1dInChannelsRule:
                 break
             succ_name = succs[0]
             succ_node = graph.nodes[succ_name]
+            succ_impl = self._reg[succ_node.implementation]
 
             # Check the node's own attributes first
-            in_ch = succ_node.attributes.get("in_channels")
+            in_ch = succ_impl.attributes.get("in_channels")
             if in_ch is not None:
                 val = _safe_int(in_ch)
                 if val > 0:
                     return val
 
-            num_feat = succ_node.attributes.get("num_features")
+            num_feat = succ_impl.attributes.get("num_features")
             if num_feat is not None:
                 val = _safe_int(num_feat)
                 if val > 0:

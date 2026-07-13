@@ -27,7 +27,7 @@ def _pattern_graph() -> _DataGraph:
 def _make_constraint(_: Registry[_DataGraph], /) -> _NodeConstraint:
     def constraint(pattern_node: _Node, graph_node: _Node, /) -> bool:
         possible_start_node_types = ("maxpool1d", "input", "conv1d")
-        possible_end_node_types = ("linear", "output", "conv1d")
+        possible_end_node_types = ("linear", "output", "conv1d", "flatten")
         match pattern_node.name:
             case "start":
                 return graph_node.type in possible_start_node_types

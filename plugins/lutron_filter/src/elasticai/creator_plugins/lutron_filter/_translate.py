@@ -39,6 +39,13 @@ _convert_ir2torch = get_default_converter()
 
 
 @_convert_ir2torch.register()
+def maxpool1d(impl: DataGraph):
+    kernel_size = impl.attributes.get_int("kernel_size")
+    stride = impl.attributes.get_int("stride", kernel_size)
+    return tnn.MaxPool1d(kernel_size=kernel_size, stride=stride)
+
+
+@_convert_ir2torch.register()
 def binarize(_):
     return _Binarize()
 
@@ -82,8 +89,16 @@ def translate(
     rule = ir.compose_rules(
         _reorder, _make_add_bitwidths_rule(num_input_bits), _precompute
     )
+
+    serializer = ir.IrSerializer()
     g, reg = rule(*ir_rep)
     reg = reg.add("network", g)
+    ml_dir = build_dir / "ml"
+    ml_dir.mkdir(exist_ok=True)
+    for name, g in reg.items():
+        serialized = serializer.serialize(g)
+        with open(ml_dir / f"{name}.json", "w") as f:
+            json.dump(serialized, f, indent=1)
     vhd_reg = ir2vhdl.factory.registry(reg)
     vhd_reg = vhd_reg.add(
         "network",
@@ -92,7 +107,6 @@ def translate(
     vhd_reg = clean_registry_from_leftover_dgraphs("network", vhd_reg)
     pretty_log_debug(vhd_reg["network"])
 
-    serializer = ir.IrSerializer()
     hl_dir = build_dir / "hl"
     hl_dir.mkdir(exist_ok=True, parents=True)
     for name, g in reg.items():

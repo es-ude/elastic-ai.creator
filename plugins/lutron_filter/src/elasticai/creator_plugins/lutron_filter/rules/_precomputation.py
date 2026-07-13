@@ -87,7 +87,6 @@ def make_precompute_rule(strategy: PrecomputationStrategy) -> Rule:
         match: DataGraph, registry: Registry[DataGraph]
     ) -> tuple[DataGraph, Registry[DataGraph]]:
         matched_nodes = collect_origins_of_match(match)
-        print(f"Found match {matched_nodes}")
         existing_matches = collect_origins_of_existing_impls(registry)
         name_registry = NameRegistry()
         name_registry.prepopulate(registry)
