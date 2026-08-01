@@ -1,13 +1,8 @@
 [[plugins]]
 name = "mac"
-version = "0.1"
+version = "0.2"
 api_version = "0.1"
 target_runtime = "verilog"
 target_platform = "FPGA"
-generated = [
-  "mac",
-  "mac_delta_consecutive",
-  "mac_delta_reference",
-  "uint_to_int"
-]
-static_files = []
+generated = ["mac_array", "mac_bram", "uint_to_int"]
+static_files = ["mac_core.v"]

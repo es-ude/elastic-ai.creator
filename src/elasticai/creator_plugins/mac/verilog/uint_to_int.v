@@ -17,7 +17,7 @@
 
 
 module UINT_TO_INT#(
-    parameter BITWIDTH = 12
+    parameter integer BITWIDTH = 12
 )(
     input wire [BITWIDTH-'d1:0] A,
     output wire signed [BITWIDTH-'d1:0] Q

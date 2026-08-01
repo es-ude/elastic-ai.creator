@@ -2,6 +2,7 @@
 
 This plugin provides different math operations implemented in Verilog:
 
-- Multiply and Accumulate Operator (MAC)
-- Delta-compressed MAC operator (MAC_DELTA_RECONSTRUCTIVE, MAC_DELTA_REFERENCE)
+- Computing Core for Multiply and Accumulate Operator (MAC_CORE)
+- MAC Operator for BRAM applications (MAC_BRAM)
+- MAC Operator for callable array applications (MAC_ARRAY)
 - Unsigned to Signed Integer Converter (UINT_TO_INT)

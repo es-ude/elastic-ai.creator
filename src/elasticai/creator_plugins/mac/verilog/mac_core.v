@@ -4,69 +4,52 @@
 // 
 // Create Date:     17.01.2025 08:11:51
 // Copied on: 	    §{date_copy_created}
-// Module Name:     Multiply-Accumulate Operator
+// Module Name:     Computation Core for Multiply-Accumulate Operator
 // Target Devices:  FPGA / ASIC (call LUT-based multiplier with custom integration)
 // Tool Versions:   1v0
-// Description:     Performing a MAC Operation on Device (with Clamping, Pipelined Multiplier and Parallisation)
+// Description:     Performing a MAC Operation on Device (with Clamping, Pipelined Multiplier and Parallization)
 // Processing:      Data applied on posedge clk
+//                  First cycle with DO_CALC --> Reset MAC output, add bias and stream data into pipeline
+//                  After first cycle --> pipelined MAC operation
 // Dependencies:    None
 //
 // State: 	        Works!
 // Improvements:    None
 // Parameters:      INPUT_BITWIDTH --> Bitwidth of input data
-//                  INPUT_NUM_DATA --> Length of used data
 //                  NUM_MULT_PARALLEL --> Number of used multiplier in parallel
+//                  NUM_SUM_OVERSIZE --> Number of bits to oversize the sum unit
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module MAC#(
-    parameter INPUT_BITWIDTH = 6'd8,
-    parameter INPUT_NUM_DATA = 12'd2,
-    parameter NUM_MULT_PARALLEL = 4'd2
+module MAC_CORE#(
+    parameter integer INPUT_BITWIDTH = 8,
+    parameter integer NUM_MULT_PARALLEL = 2,
+    parameter integer NUM_SUM_OVERSIZE = 2
 )(
     input wire CLK_SYS,
     input wire RSTN,
     input wire EN,
     input wire DO_CALC,
     input wire signed [INPUT_BITWIDTH -'d1:0] IN_BIAS,
-    input wire signed [INPUT_NUM_DATA* INPUT_BITWIDTH -'d1:0] IN_WEIGHTS,
-    input wire signed [INPUT_NUM_DATA* INPUT_BITWIDTH -'d1:0] IN_DATA,
-    output wire signed [2* INPUT_BITWIDTH -'d1:0] OUT_DATA,
-    output wire DATA_RDY
+    input wire signed [INPUT_BITWIDTH * NUM_MULT_PARALLEL -'d1:0] IN_WEIGHTS,
+    input wire signed [INPUT_BITWIDTH * NUM_MULT_PARALLEL -'d1:0] IN_DATA,
+    output wire signed [2* INPUT_BITWIDTH -'d1:0] OUT_DATA
 );
-    // --- Local parameter for configuring the pipeline and parallisation of MAC
-    localparam NUM_K_PIPELINE_STAGE = 4'd2;
-    localparam NUM_CYC_COMPLETE_WOPAD = INPUT_NUM_DATA / NUM_MULT_PARALLEL;
-    localparam NUM_ZERO_PADDING = INPUT_NUM_DATA - NUM_CYC_COMPLETE_WOPAD * NUM_MULT_PARALLEL;
-    localparam NUM_CYC_COMPLETE = (INPUT_NUM_DATA + NUM_ZERO_PADDING) / NUM_MULT_PARALLEL;
-    localparam NUM_CYC_CNTSTOP = NUM_CYC_COMPLETE + NUM_K_PIPELINE_STAGE - 'd1;
-    localparam NUM_BITWIDTH_MAC = 2* INPUT_BITWIDTH + $clog2(INPUT_NUM_DATA);
-
-    // --- Definition of Padded Input
-    wire [(INPUT_NUM_DATA + NUM_ZERO_PADDING)* INPUT_BITWIDTH -'d1:0] padded_input_data, padded_input_wght;
-    if(NUM_ZERO_PADDING > 0) begin
-        assign padded_input_data = {{NUM_ZERO_PADDING* INPUT_BITWIDTH{1'd0}}, IN_DATA};
-        assign padded_input_wght = {{NUM_ZERO_PADDING* INPUT_BITWIDTH{1'd0}}, IN_WEIGHTS};
-    end else begin
-        assign padded_input_data = IN_DATA;
-        assign padded_input_wght = IN_WEIGHTS;
-    end
+    // --- Local parameter for configuring the pipeline and parallelization of MAC
+    localparam NUM_BITWIDTH_MAC = 2* INPUT_BITWIDTH + NUM_SUM_OVERSIZE;
 
     // --- Definition of internal signals and register
     reg do_calc_dly;
-    reg active_process;
-    reg [$clog2(NUM_CYC_CNTSTOP):0] cnt_cyc_calc;
     reg signed [INPUT_BITWIDTH-'d1:0] pipeline_input_a [NUM_MULT_PARALLEL-'d1:0];
     reg signed [INPUT_BITWIDTH-'d1:0] pipeline_input_b [NUM_MULT_PARALLEL-'d1:0];
     reg signed [2* INPUT_BITWIDTH-'d1:0] pipeline_output [NUM_MULT_PARALLEL-'d1:0];
     wire signed [2* INPUT_BITWIDTH-'d1:0] mult_output [NUM_MULT_PARALLEL-'d1:0];
     reg signed [NUM_BITWIDTH_MAC-'d1:0] mac_out;
     reg signed [NUM_BITWIDTH_MAC-'d1:0] sum_pipeline;
+    wire is_overflow, is_underflow;
+    wire do_load_bias;
 
-    wire do_shift_data, is_overflow, is_underflow;
-    assign do_shift_data = ~((cnt_cyc_calc == NUM_CYC_CNTSTOP - 'd1) || (cnt_cyc_calc == NUM_CYC_CNTSTOP));
-
-    assign DATA_RDY = ~active_process;
+    assign do_load_bias = DO_CALC && ~do_calc_dly;
     assign is_overflow = ~mac_out[NUM_BITWIDTH_MAC-'d1] && |mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
     assign is_underflow = mac_out[NUM_BITWIDTH_MAC-'d1] && ~&mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
 
@@ -103,36 +86,30 @@ module MAC#(
     // --- Control device for pipeline multiplication
     integer i0;
     always@(posedge CLK_SYS) begin
-        if(~(RSTN && EN)) begin
-            do_calc_dly <= 1'd0;
-            active_process <= 1'd0;
-            cnt_cyc_calc <= 'd0;
+        if(~RSTN) begin
             for(i0 = 'd0; i0 < NUM_MULT_PARALLEL; i0 = i0 + 'd1) begin
-                pipeline_input_a[i0] <= 'd0;
-                pipeline_input_b[i0] <= 'd0;
-                pipeline_output[i0] <= 'd0;
+                pipeline_input_a[i0] <= 'sd0;
+                pipeline_input_b[i0] <= 'sd0;
+                pipeline_output[i0] <= 'sd0;
             end
+            do_calc_dly <= 1'd0;
             mac_out <= 'sd0;
         end else begin
             do_calc_dly <= DO_CALC;
-            if((~do_calc_dly && DO_CALC) || active_process) begin
+            if(EN && DO_CALC) begin
                 // --- State: Do Calculation
-                active_process <= (cnt_cyc_calc == NUM_CYC_CNTSTOP) ? 1'd0 : 1'd1;
-                cnt_cyc_calc <= (cnt_cyc_calc == NUM_CYC_CNTSTOP) ? 'd0 : cnt_cyc_calc + 'd1;
                 for(i0 = 'd0; i0 < NUM_MULT_PARALLEL; i0 = i0 + 'd1) begin
-                    pipeline_input_a[i0] <= (do_shift_data) ? padded_input_data[(cnt_cyc_calc + i0 * NUM_CYC_COMPLETE)* INPUT_BITWIDTH+: INPUT_BITWIDTH] : 'd0;
-                    pipeline_input_b[i0] <= (do_shift_data) ? padded_input_wght[(cnt_cyc_calc + i0 * NUM_CYC_COMPLETE)* INPUT_BITWIDTH+: INPUT_BITWIDTH] : 'd0;
+                    pipeline_input_a[i0] <= IN_WEIGHTS[i0 * INPUT_BITWIDTH+: INPUT_BITWIDTH];
+                    pipeline_input_b[i0] <= IN_DATA[i0 * INPUT_BITWIDTH+: INPUT_BITWIDTH];
                     pipeline_output[i0] <= mult_output[i0];
                 end
-                mac_out <= (cnt_cyc_calc == 'd0) ? {{(NUM_BITWIDTH_MAC-INPUT_BITWIDTH){IN_BIAS[INPUT_BITWIDTH-'d1]}}, IN_BIAS} : mac_out + sum_pipeline;
+                mac_out <= (do_load_bias) ? {{(NUM_BITWIDTH_MAC-INPUT_BITWIDTH){IN_BIAS[INPUT_BITWIDTH-'d1]}}, IN_BIAS} : mac_out + sum_pipeline;
             end else begin
                 // --- State: Hold data
-                active_process <= active_process;
-                cnt_cyc_calc <= cnt_cyc_calc;
                 for(i0 = 'd0; i0 < NUM_MULT_PARALLEL; i0 = i0 + 'd1) begin
-                    pipeline_input_a[i0] <= pipeline_input_a[i0];
-                    pipeline_input_b[i0] <= pipeline_input_b[i0];
-                    pipeline_output[i0] <= pipeline_output[i0];
+                    pipeline_input_a[i0] <= 'sd0;
+                    pipeline_input_b[i0] <= 'sd0;
+                    pipeline_output[i0] <= 'sd0;
                 end
                 mac_out <= mac_out;
             end

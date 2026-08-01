@@ -12,15 +12,17 @@ from elasticai.creator.ir2verilog import (
 
 
 @type_handler_iterable()
-def mac(impl: DataGraph, _: Registry) -> Iterable[Code]:
+def mac_bram(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.mac"
-    path2file = "verilog/mac.v"
+    path2file = "verilog/mac_bram.v"
 
     _template = (
         TemplateDirector()
         .parameter("INPUT_BITWIDTH")
+        .parameter("INDEX_BITWIDTH")
         .parameter("INPUT_NUM_DATA")
         .parameter("NUM_MULT_PARALLEL")
+        .parameter("INDEX_WEIGHTS_START")
         .set_prototype("\n".join(read_text(package_path, path2file)))
         .build()
     )
