@@ -42,6 +42,18 @@ class TestVerilogTemplate:
             template.substitute({"DATA_WIDTH": "'h16"}) == "parameter DATA_WIDTH = 'h16"
         )
 
+    def test_can_set_parameter_with_datatype(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""parameter integer DATA_WIDTH = 4'd8""")
+            .parameter("DATA_WIDTH")
+            .build()
+        )
+        assert (
+            template.substitute({"DATA_WIDTH": "'h16"})
+            == "parameter integer DATA_WIDTH = 'h16"
+        )
+
     def test_can_define(self):
         template = (
             TemplateDirector()
