@@ -49,8 +49,8 @@ module MAC_CORE#(
     wire is_overflow, is_underflow;
     wire do_load_bias;
 
-    assign do_load_bias = DO_CALC && ~do_calc_dly;
-    assign is_overflow = ~mac_out[NUM_BITWIDTH_MAC-'d1] && |mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
+    assign do_load_bias = DO_CALC && !do_calc_dly;
+    assign is_overflow = !mac_out[NUM_BITWIDTH_MAC-'d1] && |mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
     assign is_underflow = mac_out[NUM_BITWIDTH_MAC-'d1] && ~&mac_out[NUM_BITWIDTH_MAC-'d2:2*INPUT_BITWIDTH-'d1];
 
     // --- Clamping output data
@@ -71,22 +71,26 @@ module MAC_CORE#(
     // --- Adder Tree
     integer k1;
     always@(*) begin
-        if(~(RSTN && EN)) begin
+        if(!RSTN) begin
             sum_pipeline = 'd0;
         end else begin
-            for (k1 = 'd0; k1 < NUM_MULT_PARALLEL; k1 = k1 + 'd1) begin
-                if(k1 == 'd0) begin
-                    sum_pipeline = pipeline_output[k1];
-                end else begin
-                    sum_pipeline = sum_pipeline + pipeline_output[k1];
+            if(EN) begin
+                for (k1 = 'd0; k1 < NUM_MULT_PARALLEL; k1 = k1 + 'd1) begin
+                    if(k1 == 'd0) begin
+                        sum_pipeline = pipeline_output[k1];
+                    end else begin
+                        sum_pipeline = sum_pipeline + pipeline_output[k1];
+                    end
                 end
+            end else begin
+                sum_pipeline = 'd0;
             end
         end
     end
     // --- Control device for pipeline multiplication
     integer i0;
     always@(posedge CLK_SYS) begin
-        if(~RSTN) begin
+        if(!RSTN) begin
             for(i0 = 'd0; i0 < NUM_MULT_PARALLEL; i0 = i0 + 'd1) begin
                 pipeline_input_a[i0] <= 'sd0;
                 pipeline_input_b[i0] <= 'sd0;
