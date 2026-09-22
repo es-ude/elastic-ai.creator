@@ -163,13 +163,7 @@ markers = [
 minversion = "9.0"
 python_files = ["*_test.py", "test_*.py"]
 pythonpath = ["."]
-testpaths = [
-  "plugins/*/tests",
-  "src/elasticai/creator/experimental/**/tests",
-  "src/elasticai/creator/nn/integer/",
-  "src/elasticai/creator_plugins/**/tests",
-  "tests"
-]
+testpaths = ["plugins/*/tests", "src/elasticai/creator/experimental/**/tests", "src/elasticai/creator/nn/integer/", "src/elasticai/creator_plugins/**/tests", "tests"]
 
 [tool.ruff]
 include = [
