@@ -20,9 +20,9 @@
 
 
 module ADDER_RANGE_VIOLATION#(
-    parameter BITWIDTH = 6'd8,
-    parameter NUM_ADDERS = 4'd1,
-    parameter IS_SIGNED = 1'd0
+    parameter integer BITWIDTH = 8,
+    parameter integer NUM_ADDERS = 1,
+    parameter integer IS_SIGNED = 0
 )(
     input wire [BITWIDTH-'d1:0] A,
     output wire UPPER_LIMIT,
