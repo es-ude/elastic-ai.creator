@@ -30,7 +30,7 @@ in {
     pkgs.iverilog
     pkgs.plantuml
     pkgs.plantuml-server
-    pkgs.jetty_11
+    pkgs.jetty_12
     unstablePkgs.ty
   ];
 
@@ -49,16 +49,16 @@ in {
   };
 
   env = {
-    JETTY_HOME = "${pkgs.jetty_11}";
+    JETTY_HOME = "${pkgs.jetty_12}";
     PLANTUML_SERVER_HOME = "${pkgs.plantuml-server}";
   };
 
   scripts = {
     plantuml_server.exec = ''
       java \
-        -jar ${pkgs.jetty_11}/start.jar \
+        -jar ${pkgs.jetty_12}/start.jar \
           --module=deploy,http,jsp \
-          jetty.home=${pkgs.jetty_11} \
+          jetty.home=${pkgs.jetty_12} \
           jetty.base=${pkgs.plantuml-server} \
           jetty.http.host="127.0.0.1" \
           jetty.http.port="8081"

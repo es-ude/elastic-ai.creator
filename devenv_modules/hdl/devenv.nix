@@ -42,7 +42,7 @@ in {
     verilog = config.languages.verilog.enable;
     ghdl = config.languages.vhdl.ghdl.enable;
     mkIf = lib.mkIf;
-    isNotAppleSilicon = !(pkgs.stdenv.isDarwin && pkgs.stdenv.isAarch64);
+    isNotAppleSilicon = !(pkgs.stdenv.hostPlatform.isDarwin && pkgs.stdenv.hostPlatform.isAarch64);
   in [
     (mkIf config.languages.vhdl.vivado.enable vivadoPkgs.vivado-2020_1)
     (mkIf vhdl pkgs.vhdl-ls)

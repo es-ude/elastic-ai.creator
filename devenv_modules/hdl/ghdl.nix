@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  attrOnlyForM1 = attr: lib.optionalAttrs (pkgs.stdenv.isDarwin && pkgs.stdenv.isAarch64) attr;
+  attrOnlyForM1 = attr: lib.optionalAttrs (pkgs.stdenv.hostPlatform.isDarwin && pkgs.stdenv.hostPlatform.isAarch64) attr;
   ghdl_link = {
     version,
     archive,
