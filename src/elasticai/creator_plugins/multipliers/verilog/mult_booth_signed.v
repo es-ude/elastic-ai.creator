@@ -20,7 +20,7 @@
 
 
 module MULT_SIGNED#(
-    parameter BITWIDTH = 16
+    parameter integer BITWIDTH = 16
 )(
     input  wire                         CLK,
     input  wire                         RSTN,

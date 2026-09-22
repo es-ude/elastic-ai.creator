@@ -21,7 +21,7 @@
 
 (* use_dsp = "yes" *)
 module MULT_SIGNED#(
-    parameter BITWIDTH = 6'd6
+    parameter integer BITWIDTH = 6'd6
 )(
     input wire signed [BITWIDTH-'d1:0]      A,
     input wire signed [BITWIDTH-'d1:0]      B,
