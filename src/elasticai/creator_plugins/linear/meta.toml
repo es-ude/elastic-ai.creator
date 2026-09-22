@@ -1,8 +1,8 @@
 [[plugins]]
-name = "act_func"
+name = "linear"
 version = "0.1"
 api_version = "0.1"
 target_runtime = "verilog"
 target_platform = "FPGA"
-generated = ["absolute", "hardtanh", "heaviside", "precomputed", "relu", "prelu", "prelu2", "sign"]
+generated = ["linear"]
 static_files = []

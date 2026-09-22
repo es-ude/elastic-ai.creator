@@ -3,10 +3,7 @@ standard = "2008"
 
 # File names are either absolute or relative to the parent folder of the vhdl_ls.toml file
 [libraries]
-creator.files = [
-  "./elasticai/creator_plugins/*/vhdl/*.vhd",
-  "./elasticai/creator_plugins/*/tests/*.vhd"
-]
+creator.files = ["./elasticai/creator_plugins/*/vhdl/*.vhd", "./elasticai/creator_plugins/*/tests/*.vhd"]
 
 # # Libraries can be marked as third-party to disable some analysis warnings, such as unused declarations
 # UNISIM.files = [
