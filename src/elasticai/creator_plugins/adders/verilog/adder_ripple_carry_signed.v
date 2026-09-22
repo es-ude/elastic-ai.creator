@@ -18,7 +18,7 @@
 
 
 module ADDER_RIPPLE_CARRY_SIGNED#(
-	parameter BITWIDTH = 'd4
+	parameter integer BITWIDTH = 4
 )(
 	input wire signed [BITWIDTH-'d1:0] A, B,
 	output wire signed [BITWIDTH:0] Q
