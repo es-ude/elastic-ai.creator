@@ -67,10 +67,8 @@ class _InstanceName(tpl.TemplateParameter):
     def __init__(self, name: str, delimiter: str):
         self.name = name
         self.delimiter = delimiter
-        self.regex = (
-            r"\s*{name}(?P<prefix>(\s*#\(.*\))? [a-zA-Z0-9_]+(?=\s*\())".format(
-                name=name
-            )
+        self.regex = r"(?P<indent>\s*){name}(?P<prefix>(?:\s*#\s*\([^;]*?\))?\s+[a-zA-Z0-9_]+(?=\s*\())".format(
+            name=name
         )
 
     def replace(self, match: dict[str, str]) -> str:
