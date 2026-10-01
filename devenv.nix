@@ -67,7 +67,7 @@ in {
       exec = "${uv_run} zensical serve --config-file zensical.toml";
     };
     run_simulation_tests = {
-      exec = ''${uv_run} --all-packages python -m pytest -m simulation | grep -v "ld:"'';
+      exec = ''${uv_run} --all-packages python -m pytest -m "(simulation or slow or ghdl) and not hardware"  -n auto'';
     };
     run_hw_tests = {
       exec = ''${uv_run} run python -m pytest -m hardware "@$"'';
@@ -90,7 +90,7 @@ in {
 
   tasks = {
     "check:slow-tests" = {
-      exec = "${uv_run} --all-packages python -m pytest  -m '(simulation or slow) and not hardware'";
+      exec = "${uv_run} --all-packages python -m pytest -m '(simulation or slow or ghdl) and not (hardware)' -n auto";
       before = ["check:tests"];
     };
 
