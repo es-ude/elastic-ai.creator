@@ -2,6 +2,8 @@ from .conv1d import BatchNormedConv1d as BatchNormedConv1d
 from .conv1d import Conv1d as Conv1d
 from .hard_sigmoid import HardSigmoid as HardSigmoid
 from .hard_tanh import HardTanh as HardTanh
+from .leaky_relu import LeakyReLU as LeakyReLU
+from .leaky_relu2 import LeakyReLU2 as LeakyReLU2
 from .linear import BatchNormedLinear as BatchNormedLinear
 from .linear import Linear as Linear
 from .math_operations import MathOperations as MathOperations
