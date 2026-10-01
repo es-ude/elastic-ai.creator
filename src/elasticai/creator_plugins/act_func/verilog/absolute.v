@@ -17,12 +17,12 @@
 
 
 module ACT_ABSOLUTE#(
-    parameter BITWIDTH = 5'd12
+    parameter integer BITWIDTH = 12
 )(
-    input wire signed [BITWIDTH-'d1:0] A,
-    output wire signed [BITWIDTH-'d1:0] Q
+    input wire signed [BITWIDTH-1:0] A,
+    output wire signed [BITWIDTH-1:0] Q
 );
 
-    assign Q = (A[BITWIDTH-'d1]) ? (~A) + 'd1 : A;
+    assign Q = (A[BITWIDTH-1]) ? (~A) + 'sd1 : A;
 
 endmodule
