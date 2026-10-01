@@ -39,13 +39,13 @@ class PReLU(DesignCreatorModule, PReLUBase):
         self._frac_bits = frac_bits
         self._init = init
 
-    def get_params(self) -> list[list[float]]:
+    def get_params(self) -> list[float]:
         weights = self.weight.tolist()
         return weights
 
-    def get_params_quant(self) -> list[list[float]]:
+    def get_params_quant(self) -> list[int]:
         weights = self.get_params()
-        q_weights = cast(list[list[float]], self._config.cut_as_integer(weights))
+        q_weights = cast(list[int], self._config.cut_as_integer(weights))
         return q_weights
 
     def create_design(self, name: str) -> PReLUDesign:
