@@ -17,12 +17,12 @@
 
 
 module ACT_RELU#(
-    parameter BITWIDTH = 5'd12
+    parameter integer BITWIDTH = 12
 )(
     input wire signed [BITWIDTH-'d1:0] A,
     output wire signed [BITWIDTH-'d1:0] Q
 );
 
-    assign Q = (A[BITWIDTH-'d1]) ? 'd0 : A;
+    assign Q = (A[BITWIDTH-1]) ? 'sd0 : A;
 
 endmodule

@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from elasticai.creator.arithmetic import FxpConverter, FxpParams
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
@@ -8,6 +9,7 @@ from elasticai.creator.file_generation.template import (
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design
 from elasticai.creator.vhdl.design.ports import Port
+from elasticai.creator_plugins.act_func.utils import load_and_plugin
 
 
 class PrecomputedScalarFunction(Design):
@@ -50,28 +52,53 @@ class PrecomputedScalarFunction(Design):
     def port(self) -> Port:
         return create_port(x_width=self._input_width, y_width=self._output_width)
 
-    def save_to(self, destination: Path) -> None:
-        process_content = []
+    def save_to(self, destination: Path, take_vhdl: bool = True) -> None:
+        def _save_to_vhdl(destination: Path) -> None:
+            process_content = []
 
-        pairs = self._compute_io_pairs()
-        input_value, output_value = pairs[0]
-        process_content.append(
-            f"if signed_x <= to_signed({input_value}, BITWIDTH_OUTPUT) then "
-            f"signed_y <= to_signed({output_value}, BITWIDTH_OUTPUT);"
-        )
-        for input_value, output_value in pairs[1:-1]:
+            pairs = self._compute_io_pairs()
+            input_value, output_value = pairs[0]
             process_content.append(
-                f"elsif signed_x <= to_signed({input_value}, BITWIDTH_OUTPUT) then "
+                f"if signed_x <= to_signed({input_value}, BITWIDTH_OUTPUT) then "
                 f"signed_y <= to_signed({output_value}, BITWIDTH_OUTPUT);"
             )
-        _, output = pairs[-1]
-        process_content.append(
-            f"else signed_y <= to_signed({output}, BITWIDTH_OUTPUT);"
-        )
-        process_content.append("end if;")
+            for input_value, output_value in pairs[1:-1]:
+                process_content.append(
+                    f"elsif signed_x <= to_signed({input_value}, BITWIDTH_OUTPUT) then "
+                    f"signed_y <= to_signed({output_value}, BITWIDTH_OUTPUT);"
+                )
+            _, output = pairs[-1]
+            process_content.append(
+                f"else signed_y <= to_signed({output}, BITWIDTH_OUTPUT);"
+            )
+            process_content.append("end if;")
 
-        self._template.parameters.update(process_content=process_content)
-        destination.create_subpath(self.name).as_file(".vhd").write(self._template)
+            self._template.parameters.update(process_content=process_content)
+            destination.create_subpath(self.name).as_file(".vhd").write(self._template)
+
+        def _save_to_verilog(destination: Path) -> None:
+            cnv = FxpConverter(
+                FxpParams(total_bits=self._input_width, frac_bits=0, signed=True)
+            )
+            outputs = [val for _, val in self._compute_io_pairs()]
+            ref_str = cnv.integer_to_decimal_string_array_verilog(outputs)
+
+            load_and_plugin(
+                type="precomputed",
+                id=self.name,
+                params={
+                    "BITWIDTH": self._output_width,
+                    "NUM_VALUES": len(self._inputs),
+                    "PRECOMPUTED": ref_str,
+                },
+                packages=["act_func"],
+                path2save=str(destination),
+            )
+
+        if take_vhdl:
+            _save_to_vhdl(destination)
+        else:
+            _save_to_verilog(destination)
 
 
 def _assert_value_is_representable_with_n_bits(value: int, n_bits: int) -> None:

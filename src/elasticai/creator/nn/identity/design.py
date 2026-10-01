@@ -25,19 +25,30 @@ class BufferedIdentity(Design):
             y_count=self._num_input_features,
         )
 
-    def save_to(self, destination: Path) -> None:
-        template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="buffered_identity.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_address_width=str(self._address_width),
-                y_address_width=str(self._address_width),
-                x_width=str(self._num_input_bits),
-                y_width=str(self._num_input_bits),
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+    def save_to(self, destination: Path, take_vhdl: bool = True) -> None:
+        def _save_to_vhdl(destination: Path) -> None:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="buffered_identity.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    x_address_width=str(self._address_width),
+                    y_address_width=str(self._address_width),
+                    x_width=str(self._num_input_bits),
+                    y_width=str(self._num_input_bits),
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        def _save_to_verilog(destination: Path) -> None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} is not implemented yet for Verilog"
+            )
+
+        if take_vhdl:
+            _save_to_vhdl(destination)
+        else:
+            _save_to_verilog(destination)
 
 
 class BufferlessDesign(Design):
@@ -49,14 +60,25 @@ class BufferlessDesign(Design):
     def port(self) -> Port:
         return create_port(x_width=self._num_input_bits, y_width=self._num_input_bits)
 
-    def save_to(self, destination: Path) -> None:
-        template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="bufferless_identity.tpl.vhd",
-            parameters=dict(
-                name=self.name,
-                x_width=str(self._num_input_bits),
-                y_width=str(self._num_input_bits),
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+    def save_to(self, destination: Path, take_vhdl: bool = True) -> None:
+        def _save_to_vhdl(destination: Path) -> None:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="bufferless_identity.tpl.vhd",
+                parameters=dict(
+                    name=self.name,
+                    x_width=str(self._num_input_bits),
+                    y_width=str(self._num_input_bits),
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        def _save_to_verilog(destination: Path) -> None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} is not implemented yet for Verilog"
+            )
+
+        if take_vhdl:
+            _save_to_vhdl(destination)
+        else:
+            _save_to_verilog(destination)

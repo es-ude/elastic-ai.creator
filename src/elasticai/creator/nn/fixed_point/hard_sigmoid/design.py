@@ -32,19 +32,28 @@ class HardSigmoid(Design):
     def port(self) -> Port:
         return create_port(x_width=self._total_bits, y_width=self._total_bits)
 
-    def save_to(self, destination: Path) -> None:
-        template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="hard_sigmoid.tpl.vhd",
-            parameters=dict(
-                layer_name=self.name,
-                data_width=str(self._total_bits),
-                frac_width=str(self._frac_bits),
-                one=str(self._one),
-                zero_threshold=str(self._zero_threshold),
-                one_threshold=str(self._one_threshold),
-                slope=str(self._slope),
-                y_intercept=str(self._y_intercept),
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+    def save_to(self, destination: Path, take_vhdl: bool = True) -> None:
+        def _save_to_vhdl(destination: Path) -> None:
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="hard_sigmoid.tpl.vhd",
+                parameters=dict(
+                    layer_name=self.name,
+                    data_width=str(self._total_bits),
+                    frac_width=str(self._frac_bits),
+                    one=str(self._one),
+                    zero_threshold=str(self._zero_threshold),
+                    one_threshold=str(self._one_threshold),
+                    slope=str(self._slope),
+                    y_intercept=str(self._y_intercept),
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
+
+        def _save_to_verilog(destination: Path) -> None:
+            raise NotImplementedError("Missing Verilog design files")
+
+        if take_vhdl:
+            _save_to_vhdl(destination)
+        else:
+            _save_to_verilog(destination)
