@@ -4,11 +4,13 @@ pytest_plugins = ["elasticai.creator.testing"]
 def pytest_sessionstart(session):
     from elasticai.creator.file_generation import find_project_root
     from shutil import rmtree
+    folders = ["build_test", "build_sim"]
 
-    path2temp = find_project_root() / "build_test"
-    if path2temp.exists():
-        rmtree(path2temp, ignore_errors=True)
-    path2temp.mkdir(parents=True, exist_ok=True)
+    for folder in folders:
+        path2temp = find_project_root() / folder
+        if path2temp.exists():
+            rmtree(path2temp, ignore_errors=True)
+        path2temp.mkdir(parents=True, exist_ok=True)
 
 
 def pytest_sessionfinish(session, exitstatus):
