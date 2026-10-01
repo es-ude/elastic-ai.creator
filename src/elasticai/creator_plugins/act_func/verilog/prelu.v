@@ -18,21 +18,21 @@
 
 
 module ACT_PRELU#(
-    parameter BITWIDTH = 5'd4
+    parameter integer BITWIDTH = 4
 )(
-    input wire signed [BITWIDTH-'d1:0] A,
-    output reg signed [BITWIDTH-'d1:0] Q
+    input wire signed [BITWIDTH-1:0] A,
+    output reg signed [BITWIDTH-1:0] Q
 );
-    localparam FRACWIDTH = 5'd2;
-    localparam signed SCALING = 5'd2;
+    localparam integer FRACWIDTH = 2;
+    localparam integer signed SCALING = 2;
 
-    reg signed [2*BITWIDTH-'d1:0] step;
+    reg signed [2*BITWIDTH-1:0] step;
     always@(*) begin
-        if(A[BITWIDTH-'d1]) begin
+        if(A[BITWIDTH-1]) begin
             step = (A * SCALING);
-            Q = step[FRACWIDTH+:BITWIDTH] + |step[0+:FRACWIDTH];
+            Q = step[FRACWIDTH+:BITWIDTH];
         end else begin
-            step = 'd0;
+            step = 'sd0;
             Q = A;
         end
     end

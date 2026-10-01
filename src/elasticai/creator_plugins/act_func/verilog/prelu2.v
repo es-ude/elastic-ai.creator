@@ -18,13 +18,13 @@
 
 
 module ACT_PRELU2#(
-    parameter BITWIDTH = 5'd4
+    parameter integer BITWIDTH = 4
 )(
-    input wire signed [BITWIDTH-'d1:0] A,
-    output wire signed [BITWIDTH-'d1:0] Q
+    input wire signed [BITWIDTH-1:0] A,
+    output wire signed [BITWIDTH-1:0] Q
 );
-    localparam SCALING = 5'd1;
+    localparam integer SCALING = 1;
 
-    assign Q = (A[BITWIDTH-'d1]) ? {{(SCALING){1'b1}}, A[(BITWIDTH-'d1)-:(BITWIDTH-SCALING)]} + |A[SCALING-'d1:0] : A;
+    assign Q = (A[BITWIDTH-1]) ? {{(SCALING){1'b1}}, A[(BITWIDTH-1)-:(BITWIDTH-SCALING)]}: A;
 
 endmodule

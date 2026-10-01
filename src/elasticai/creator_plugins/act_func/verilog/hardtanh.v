@@ -17,14 +17,14 @@
 
 
 module ACT_HARDTANH#(
-    parameter BITWIDTH = 5'd4
+    parameter integer BITWIDTH = 4
 )(
-    input wire signed [BITWIDTH-'d1:0] A,
-    output wire signed [BITWIDTH-'d1:0] Q
+    input wire signed [BITWIDTH-1:0] A,
+    output wire signed [BITWIDTH-1:0] Q
 );
 
-    localparam signed [BITWIDTH-'d1:0] MAX_VAL = 4'sd4;
-    localparam signed [BITWIDTH-'d1:0] MIN_VAL = -4'sd4;
+    localparam signed [BITWIDTH-1:0] MAX_VAL = 4'sd4;
+    localparam signed [BITWIDTH-1:0] MIN_VAL = -4'sd4;
 
     assign Q = (A > MAX_VAL) ? MAX_VAL : ((A > MIN_VAL) ? A : MIN_VAL);
 
