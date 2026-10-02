@@ -31,7 +31,9 @@ async def check_transfer_function(dut, total_bits: int):
 @pytest.mark.parametrize("total_bits", [4, 8, 12, 16])
 def test_absolute(cocotb_test_fixture: CocotbTestFixture, total_bits: int):
     cocotb_test_fixture.set_top_module_name("ACT_ABSOLUTE")
-    cocotb_test_fixture.run(params={"BITWIDTH": total_bits}, defines={})
+    cocotb_test_fixture.run(
+        params={"BITWIDTH_IN": total_bits, "BITWIDTH_OUT": total_bits}, defines={}
+    )
 
 
 @pytest.mark.simulation
@@ -43,7 +45,7 @@ def test_absolute_build(cocotb_test_fixture: CocotbTestFixture, total_bits: int)
     load_and_plugin(
         type="absolute",
         id=id,
-        params={"BITWIDTH": total_bits},
+        params={"BITWIDTH_IN": total_bits, "BITWIDTH_OUT": total_bits},
         packages=["act_func"],
         path2save=build_dir,
     )

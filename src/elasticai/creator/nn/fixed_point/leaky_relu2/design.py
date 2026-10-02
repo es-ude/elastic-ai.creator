@@ -42,7 +42,8 @@ class LeakyReLU2(Design):
                 type="prelu2",
                 id=self.name,
                 params={
-                    "BITWIDTH": self._total_bits,
+                    "BITWIDTH_IN": self._total_bits,
+                    "BITWIDTH_OUT": self._total_bits,
                     "FRACWIDTH": self._frac_bits,
                     "SCALING": self._weights[0] + 1,
                 },
