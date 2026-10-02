@@ -62,7 +62,12 @@ def test_build(cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bit
     load_and_plugin(
         type="hardtanh",
         id=id,
-        params={"BITWIDTH": total_bits, "MAX_VAL": max_val, "MIN_VAL": min_val},
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "MAX_VAL": max_val,
+            "MIN_VAL": min_val,
+        },
         packages=["act_func"],
         path2save=build_dir,
     )

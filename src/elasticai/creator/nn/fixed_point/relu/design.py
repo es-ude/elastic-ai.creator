@@ -35,7 +35,10 @@ class ReLU(Design):
             load_and_plugin(
                 type="relu",
                 id=self.name,
-                params={"BITWIDTH": self._total_bits},
+                params={
+                    "BITWIDTH_IN": self._total_bits,
+                    "BITWIDTH_OUT": self._total_bits,
+                },
                 packages=["act_func"],
                 path2save=str(destination),
             )

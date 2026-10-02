@@ -80,7 +80,11 @@ def test_build(
     load_and_plugin(
         type="prelu2",
         id=id,
-        params={"BITWIDTH": total_bits, "SCALING": scale},
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "SCALING": scale,
+        },
         packages=["act_func"],
         path2save=build_dir,
     )

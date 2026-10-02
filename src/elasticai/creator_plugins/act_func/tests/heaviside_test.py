@@ -60,7 +60,12 @@ def test_heaviside_build(
     load_and_plugin(
         type="heaviside",
         id=id,
-        params={"BITWIDTH": total_bits, "MAX_VAL": max_val, "MIN_VAL": min_val},
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "MAX_VAL": max_val,
+            "MIN_VAL": min_val,
+        },
         packages=["act_func"],
         path2save=build_dir,
     )

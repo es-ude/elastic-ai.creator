@@ -37,7 +37,9 @@ async def check_transfer_function(dut, bitwidth: int):
 @pytest.mark.parametrize("bitwidth", [4, 8, 12, 16])
 def test_relu(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
     cocotb_test_fixture.set_top_module_name("ACT_RELU")
-    cocotb_test_fixture.run(params={"BITWIDTH": bitwidth}, defines={})
+    cocotb_test_fixture.run(
+        params={"BITWIDTH_IN": bitwidth, "BITWIDTH_OUT": bitwidth}, defines={}
+    )
 
 
 @pytest.mark.simulation
@@ -49,7 +51,7 @@ def test_build(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
     load_and_plugin(
         type="relu",
         id=id,
-        params={"BITWIDTH": bitwidth},
+        params={"BITWIDTH_IN": bitwidth, "BITWIDTH_OUT": bitwidth},
         packages=["act_func"],
         path2save=build_dir,
     )

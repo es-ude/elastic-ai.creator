@@ -57,21 +57,13 @@ class PrecomputedScalarFunction(Design):
             process_content = []
 
             pairs = self._compute_io_pairs()
-            input_value, output_value = pairs[0]
-            process_content.append(
-                f"if signed_x <= to_signed({input_value}, BITWIDTH_OUTPUT) then "
-                f"signed_y <= to_signed({output_value}, BITWIDTH_OUTPUT);"
-            )
             for input_value, output_value in pairs[1:-1]:
                 process_content.append(
-                    f"elsif signed_x <= to_signed({input_value}, BITWIDTH_OUTPUT) then "
-                    f"signed_y <= to_signed({output_value}, BITWIDTH_OUTPUT);"
+                    f"elsif sx <= to_signed({input_value}, BITWIDTH_INPUT) then "
+                    f"return to_signed({output_value}, BITWIDTH_OUTPUT);"
                 )
             _, output = pairs[-1]
-            process_content.append(
-                f"else signed_y <= to_signed({output}, BITWIDTH_OUTPUT);"
-            )
-            process_content.append("end if;")
+            process_content.append(f"else return to_signed({output}, BITWIDTH_OUTPUT);")
 
             self._template.parameters.update(process_content=process_content)
             destination.create_subpath(self.name).as_file(".vhd").write(self._template)
@@ -87,7 +79,8 @@ class PrecomputedScalarFunction(Design):
                 type="precomputed",
                 id=self.name,
                 params={
-                    "BITWIDTH": self._output_width,
+                    "BITWIDTH_IN": self._input_width,
+                    "BITWIDTH_OUT": self._output_width,
                     "NUM_VALUES": len(self._inputs),
                     "PRECOMPUTED": ref_str,
                 },

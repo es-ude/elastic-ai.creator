@@ -42,7 +42,8 @@ class HardTanh(Design):
                 type="hardtanh",
                 id=self.name,
                 params={
-                    "BITWIDTH": self._total_bits,
+                    "BITWIDTH_IN": self._total_bits,
+                    "BITWIDTH_OUT": self._total_bits,
                     "MAX_VAL": self._max_val,
                     "MIN_VAL": self._min_val,
                 },

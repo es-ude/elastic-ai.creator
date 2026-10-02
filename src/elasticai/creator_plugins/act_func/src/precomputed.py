@@ -18,7 +18,8 @@ def precomputed(impl: DataGraph, _: Registry) -> Iterable[Code]:
 
     _template = (
         TemplateDirector()
-        .parameter("BITWIDTH")
+        .parameter("BITWIDTH_IN")
+        .parameter("BITWIDTH_OUT")
         .localparam("NUM_VALUES")
         .localparam("PRECOMPUTED")
         .add_module_name()
