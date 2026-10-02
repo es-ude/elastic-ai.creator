@@ -12,7 +12,7 @@ from elasticai.creator.vhdl.design.ports import Port
 from elasticai.creator_plugins.act_func.utils import load_and_plugin
 
 
-class PrecomputedScalarFunction(Design):
+class PrecomputedLutFunction(Design):
     _template_package = module_to_package(__name__)
 
     def __init__(
@@ -55,7 +55,7 @@ class PrecomputedScalarFunction(Design):
             process_content.append(f"else return to_signed({output}, BITWIDTH_OUTPUT);")
 
             self._template = InProjectTemplate(
-                file_name="precomputed_scalar_function.tpl.vhd",
+                file_name="precomputed_lut_function.tpl.vhd",
                 package=self._template_package,
                 parameters=dict(
                     name=self.name,
@@ -74,18 +74,13 @@ class PrecomputedScalarFunction(Design):
             inputs = [val for val, _ in self._compute_io_pairs()]
 
             load_and_plugin(
-                type="precomputed_scalar",
+                type="precomputed_lut",
                 id=self.name,
                 params={
                     "BITWIDTH_IN": self._input_width,
                     "BITWIDTH_OUT": self._output_width,
                     "NUM_VALUES": len(inputs),
-                    "VALUES_X": cnv.integer_to_decimal_string_array_verilog(
-                        inputs[::-1]
-                    ),
-                    "VALUES_Y": cnv.integer_to_decimal_string_array_verilog(
-                        outputs[::-1]
-                    ),
+                    "VALUES_Y": cnv.integer_to_decimal_string_array_verilog(outputs),
                 },
                 packages=["act_func"],
                 path2save=str(destination),

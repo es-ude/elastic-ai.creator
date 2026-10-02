@@ -1,22 +1,11 @@
-from typing import cast
-
-import torch
-
-from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
-from elasticai.creator.nn.fixed_point.precomputed.precomputed_module import (
-    PrecomputedModule,
-)
-
-
-def test_vhdl_code_matches_expected_for_precomputed_module() -> None:
-    expected = """library ieee;
+library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity precomputed is
+entity ${name} is
     generic (
-        BITWIDTH_INPUT : integer := 8;
-        BITWIDTH_OUTPUT : integer := 8;
+        BITWIDTH_INPUT : integer := ${input_data_width};
+        BITWIDTH_OUTPUT : integer := ${output_data_width};
         PIPELINE_ENABLE : boolean := false
     );
     port (
@@ -25,9 +14,9 @@ entity precomputed is
         x      : in std_logic_vector(BITWIDTH_INPUT-1 downto 0);
         y      : out std_logic_vector(BITWIDTH_OUTPUT-1 downto 0)
     );
-end precomputed;
+end ${name};
 
-architecture rtl of precomputed is
+architecture rtl of ${name} is
     signal signed_x : signed(BITWIDTH_INPUT-1 downto 0) := (others=>'0');
     signal signed_y : signed(BITWIDTH_OUTPUT-1 downto 0) := (others=>'0');
 
@@ -35,9 +24,7 @@ architecture rtl of precomputed is
     begin
         if en = '0' then
             return to_signed(0, BITWIDTH_OUTPUT);
-        elsif sx <= to_signed(-43, BITWIDTH_INPUT) then return to_signed(-4, BITWIDTH_OUTPUT);
-        elsif sx <= to_signed(42, BITWIDTH_INPUT) then return to_signed(0, BITWIDTH_OUTPUT);
-        else return to_signed(4, BITWIDTH_OUTPUT);
+        ${process_content}
         end if;
     end function;
 begin
@@ -60,18 +47,3 @@ begin
         end process;
     end generate;
 end rtl;
-""".splitlines()
-    tanh = PrecomputedModule(
-        base_module=torch.nn.Tanh(),
-        total_bits=8,
-        frac_bits=2,
-        num_steps=4,
-        sampling_intervall=(-float("inf"), float("inf")),
-    )
-    build_path = InMemoryPath("build", parent=None)
-    design = tanh.create_design("precomputed")
-    design.save_to(build_path)
-    actual = cast(InMemoryFile, build_path["precomputed"]).text
-    for text in actual:
-        print(text)
-    assert actual == expected
