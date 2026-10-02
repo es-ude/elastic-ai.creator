@@ -26,7 +26,7 @@ module ACT_PRECOMPUTED#(
 );
 
     localparam integer NUM_VALUES = 4;
-    localparam signed [NUM_VALUES * BITWIDTH_OUT-1:0] PRECOMPUTED = { 4'sd0, 4'sd1, 4'sd2, 4'sd3 };
+    localparam signed [NUM_VALUES * BITWIDTH_OUT-1:0] VALUES_Y = { 4'sd0, 4'sd1, 4'sd2, 4'sd3 };
     localparam integer ADDRWIDTH = $clog2(NUM_VALUES);
 
     wire [ADDRWIDTH-1:0] selector;
@@ -35,7 +35,7 @@ module ACT_PRECOMPUTED#(
     // Slicing vector into array
     genvar k0;
     for(k0 = 0; k0 < NUM_VALUES; k0 = k0 + 1) begin
-        assign lut_func[NUM_VALUES - 1 - k0] = PRECOMPUTED[k0*BITWIDTH_OUT+:BITWIDTH_OUT];
+        assign lut_func[NUM_VALUES - 1 - k0] = VALUES_Y[k0*BITWIDTH_OUT+:BITWIDTH_OUT];
     end
 
     assign selector = {~A[BITWIDTH_IN-1], A[(BITWIDTH_IN-2)-:(ADDRWIDTH-1)]};

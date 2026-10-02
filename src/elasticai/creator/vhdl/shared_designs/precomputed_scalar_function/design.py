@@ -28,23 +28,12 @@ class PrecomputedScalarFunction(Design):
         self._output_width = output_width
         self._function = function
         self._inputs = inputs
-        self._template = InProjectTemplate(
-            file_name="precomputed_scalar_function.tpl.vhd",
-            package=self._template_package,
-            parameters=dict(
-                name=self.name,
-                input_data_width=str(self._input_width),
-                output_data_width=str(self._output_width),
-            ),
-        )
 
     def _compute_io_pairs(self) -> list[tuple[int, int]]:
         ascending_unique_inputs = sorted(set(self._inputs))
         io_pairs = []
         for input_value in ascending_unique_inputs:
-            _assert_value_is_representable_with_n_bits(input_value, self._input_width)
             output_value = self._function(input_value)
-            _assert_value_is_representable_with_n_bits(output_value, self._output_width)
             io_pairs.append((input_value, output_value))
         return io_pairs
 
@@ -65,6 +54,15 @@ class PrecomputedScalarFunction(Design):
             _, output = pairs[-1]
             process_content.append(f"else return to_signed({output}, BITWIDTH_OUTPUT);")
 
+            self._template = InProjectTemplate(
+                file_name="precomputed_scalar_function.tpl.vhd",
+                package=self._template_package,
+                parameters=dict(
+                    name=self.name,
+                    input_data_width=str(self._input_width),
+                    output_data_width=str(self._output_width),
+                ),
+            )
             self._template.parameters.update(process_content=process_content)
             destination.create_subpath(self.name).as_file(".vhd").write(self._template)
 
@@ -73,16 +71,21 @@ class PrecomputedScalarFunction(Design):
                 FxpParams(total_bits=self._input_width, frac_bits=0, signed=True)
             )
             outputs = [val for _, val in self._compute_io_pairs()]
-            ref_str = cnv.integer_to_decimal_string_array_verilog(outputs)
+            inputs = [val for val, _ in self._compute_io_pairs()]
 
             load_and_plugin(
-                type="precomputed",
+                type="precomputed_scalar",
                 id=self.name,
                 params={
                     "BITWIDTH_IN": self._input_width,
                     "BITWIDTH_OUT": self._output_width,
-                    "NUM_VALUES": len(self._inputs),
-                    "PRECOMPUTED": ref_str,
+                    "NUM_VALUES": len(inputs),
+                    "VALUES_X": cnv.integer_to_decimal_string_array_verilog(
+                        inputs[::-1]
+                    ),
+                    "VALUES_Y": cnv.integer_to_decimal_string_array_verilog(
+                        outputs[::-1]
+                    ),
                 },
                 packages=["act_func"],
                 path2save=str(destination),
@@ -92,14 +95,3 @@ class PrecomputedScalarFunction(Design):
             _save_to_vhdl(destination)
         else:
             _save_to_verilog(destination)
-
-
-def _assert_value_is_representable_with_n_bits(value: int, n_bits: int) -> None:
-    min_value = 2 ** (n_bits - 1) * (-1)
-    max_value = 2 ** (n_bits - 1) - 1
-
-    if value < min_value or value > max_value:
-        raise ValueError(
-            f"The value '{value}' cannot be represented "
-            f"with {n_bits} in two's complement representation."
-        )
