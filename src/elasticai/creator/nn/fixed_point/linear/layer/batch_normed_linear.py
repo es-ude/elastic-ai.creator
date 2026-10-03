@@ -78,6 +78,7 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         bn_mean = cast(torch.Tensor, self._batch_norm.running_mean)
         bn_variance = cast(torch.Tensor, self._batch_norm.running_var)
         bn_epsilon = self._batch_norm.eps
+
         lin_weight = self._linear.weight
         lin_bias = (
             torch.tensor([0] * self._linear.out_features)
@@ -91,7 +92,9 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         if self._batch_norm.affine:
             weights = (self._batch_norm.weight * weights.t()).t()
             bias = self._batch_norm.weight * bias + self._batch_norm.bias
-        return weights.tolist(), bias.tolist()
+        return self._operations.quantize(weights).tolist(), self._operations.quantize(
+            bias
+        ).tolist()
 
     def get_params_quant(self) -> tuple[list[list[int]], list[int]]:
         weights, bias = self.get_params()

@@ -20,8 +20,8 @@ async def layer_computation_test(dut):
     dut.y_address.value = 0
     dut.x.value = 0
 
-    cocotb.start_soon(Clock(dut.clock, period=clock_period_ns, units="ns").start())
-    await Timer(4 * clock_period_ns, units="ns")
+    cocotb.start_soon(Clock(dut.clock, period=clock_period_ns, unit="ns").start())
+    await Timer(4 * clock_period_ns, unit="ns")
     await RisingEdge(dut.clock)
     chck_test = list()
     for ite, (sig_in, ref_out) in enumerate(zip(data["in"], data["out"])):
@@ -66,7 +66,7 @@ async def layer_computation_test(dut):
             await RisingEdge(dut.clock)
 
     accuracy = sum(chck_test) / len(chck_test)
-    limit = 0.9
+    limit = 1.0
     assert accuracy >= limit, f"Accuracy of {accuracy * 100:.2f}%"
 
 
