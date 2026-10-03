@@ -76,7 +76,7 @@ class LinearTest(TensorTestCase):
         )
 
         actual = linear(tensor([1, 2, 3]))
-        expected = [28.0]
+        expected = [31.0]
 
         self.assertTensorEqual(expected, actual)
 

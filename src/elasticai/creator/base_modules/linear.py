@@ -30,9 +30,10 @@ class Linear(torch.nn.Linear):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         weight = self._operations.quantize(self.weight)
         if self.bias is None:
-            return self._operations.matmul(x, weight.T)
+            W = self._operations.matmul(x, weight.T)
         else:
-            return self._operations.add(
-                self._operations.matmul(x, weight.T),
-                self._operations.quantize(self.bias),
+            W = self._operations.add(
+                a=self._operations.matmul(x, weight.T),
+                b=self._operations.quantize(self.bias),
             )
+        return self._operations.quantize(W)
