@@ -23,6 +23,8 @@ do_not_commit/*
 CLAUDE.md
 claude*
 .dual-graph/
+examples/*_data
+examples/hw_*
 
 # python build output
 dist/
