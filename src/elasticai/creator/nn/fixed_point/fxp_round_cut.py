@@ -52,3 +52,27 @@ class CutToFixedPoint(torch.autograd.Function):
     @staticmethod
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         return *grad_outputs, None
+
+
+class FloorToFixedPoint(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
+        if len(args) != 2:
+            raise TypeError(
+                "apply() takes exactly two arguments "
+                "(x: torch.Tensor, config: FixedPointConfig)"
+            )
+        x: torch.Tensor = args[0]
+        config: FxpArithmetic = args[1]
+
+        # false positive from mypy
+        fxp_ints = (x / config.config.minimum_step_as_rational).floor()  # type: ignore
+        out_of_bounds = config.integer_out_of_bounds(fxp_ints)
+        if torch.any(out_of_bounds):
+            raise ValueError("Cannot quantize tensor. Values out of bounds.")
+
+        return fxp_ints * config.config.minimum_step_as_rational
+
+    @staticmethod
+    def backward(ctx: Any, *grad_outputs: Any) -> Any:
+        return *grad_outputs, None
