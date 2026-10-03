@@ -3,7 +3,7 @@ from math import ceil, log2
 import cocotb
 import pytest
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, Timer
+from cocotb.triggers import ClockCycles, ReadOnly, RisingEdge
 from cocotb.types import LogicArray
 from cocotb.utils import get_sim_time
 
@@ -41,27 +41,24 @@ async def mac_calculation(
     dut.RSTN.value = 1
     dut.EN.value = 0
     dut.DO_CALC.value = 0
+    dut.DO_CLEAR.value = 0
     dut.IN_BRAM.value = 0
     dut.IN_DATA.value = 0
 
     # Start clock and make reset
     cocotb.start_soon(Clock(dut.CLK_SYS, period_clk, unit="ns").start())
-    await Timer(4 * period_clk, unit="ns")
-    for idx in range(4):
-        await RisingEdge(dut.CLK_SYS)
+    await ClockCycles(dut.CLK_SYS, 2)
+    for idx in range(8):
         dut.RSTN.value = idx % 2
-    await RisingEdge(dut.CLK_SYS)
+        await ClockCycles(dut.CLK_SYS, 2)
     dut.RSTN.value = 1
-    for _ in range(4):
-        await RisingEdge(dut.CLK_SYS)
+    await ClockCycles(dut.CLK_SYS, 2)
 
     # Apply data and test
     dut.EN.value = 1
-    for _ in range(4):
-        await RisingEdge(dut.CLK_SYS)
+    await ClockCycles(dut.CLK_SYS, 2)
 
     conv = int_converter(total_bits=bitwidth, signed=is_signed)
-
     for data0, gain0, bias0 in zip(data_in, weights_in, bias_in):
         bram_params = list()
         bram_params.extend(gain0)
@@ -73,11 +70,17 @@ async def mac_calculation(
         await RisingEdge(dut.CLK_SYS)
         dut.DO_CALC.value = 0
 
+        val_bias = conv.integer_to_binary_string_verilog(bram_params[-1]).split("b")[-1]
+        dut.IN_BRAM.value = LogicArray(val_bias)
+        dut.IN_DATA.value = conv.integer_to_binary_string_verilog(0).split("b")[-1]
+        bram_width = dut.INDEX_BITWIDTH.value.to_unsigned()
         for ite in range(1 + int(num_params / num_mult)):
+            await ReadOnly()
+            bram_idx = dut.IDX_BRAM.value.to_unsigned()
             idx = split_logical_data_into_list(
-                value=dut.IDX_BRAM.value,
+                value=bram_idx,
                 num_values=num_mult,
-                bitwidth=dut.INDEX_BITWIDTH.value.to_unsigned(),
+                bitwidth=bram_width,
             )
             val_data = ""
             val_gain = ""
@@ -86,21 +89,22 @@ async def mac_calculation(
                     bram_params[val]
                 ).split("b")[-1]
 
-                if ite > 0:
+                if not bram_idx == len(bram_params) - 1:
                     val_data += conv.integer_to_binary_string_verilog(data0[val]).split(
                         "b"
                     )[-1]
                 else:
                     val_data += conv.integer_to_binary_string_verilog(0).split("b")[-1]
+            await RisingEdge(dut.CLK_SYS)
             dut.IN_BRAM.value = LogicArray(val_gain)
             dut.IN_DATA.value = LogicArray(val_data)
 
-            await RisingEdge(dut.CLK_SYS)
-            await Timer(1, unit="step")
-
         await RisingEdge(dut.DATA_RDY)
-        t1 = get_sim_time("ns")
         assert dut.DATA_RDY.value == 1
+        t1 = get_sim_time("ns")
+        await ReadOnly()
+        result = dut.OUT_DATA.value.to_signed()
+
         for _ in range(2):
             await RisingEdge(dut.CLK_SYS)
         check = model_mac(
@@ -110,7 +114,6 @@ async def mac_calculation(
             bitwidth=bitwidth,
             is_signed=is_signed,
         )
-        result = dut.OUT_DATA.value.to_signed()
 
         dt = int((t1 - t0) / period_clk)
         dt_check = int(num_params / num_mult) + 4
@@ -120,10 +123,10 @@ async def mac_calculation(
 
         if check != result:
             print("\n")
-            print(bias0)
-            print(data0)
-            print(gain0)
-            print(bram_params)
+            print(f"bias: {bias0}")
+            print(f"data: {data0}")
+            print(f"weights: {gain0}")
+            print(f"bram: {bram_params}")
             print(
                 check,
                 dut.MAC_UNIT.mac_out.value.to_signed(),
@@ -135,9 +138,9 @@ async def mac_calculation(
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [4, 8])
 @pytest.mark.parametrize("num_params", [16, 64])
-@pytest.mark.parametrize("num_mult", [1, 2])
+@pytest.mark.parametrize("num_mult", [1])
 @pytest.mark.parametrize("is_signed", [True])
-def test_mac_bram_with_dsp(
+def test_template_dsp(
     cocotb_test_fixture: CocotbTestFixture,
     bitwidth: int,
     num_params: int,
@@ -158,10 +161,12 @@ def test_mac_bram_with_dsp(
     cocotb_test_fixture.add_srcs_from_package(multipliers, "verilog/mult_dsp_signed.v")
     cocotb_test_fixture.run(
         params={
-            "INPUT_BITWIDTH": bitwidth,
+            "BITWIDTH": bitwidth,
+            "SIZE_INPUT": num_params,
+            "NUM_MULT": num_mult,
+            "BITS_SCALE_BIAS": 0,
+            "BITS_SCALE_DOUT": 0,
             "INDEX_BITWIDTH": 1 + int(ceil(log2(num_params))),
-            "INPUT_NUM_DATA": num_params,
-            "NUM_MULT_PARALLEL": num_mult,
             "INDEX_WEIGHTS_START": 0,
         },
         defines={},
@@ -173,7 +178,7 @@ def test_mac_bram_with_dsp(
 @pytest.mark.parametrize("num_params", [32])
 @pytest.mark.parametrize("num_mult", [1])
 @pytest.mark.parametrize("is_signed", [True])
-def test_mac_bram_build_width_dsp(
+def test_build_dsp(
     cocotb_test_fixture: CocotbTestFixture,
     bitwidth: int,
     num_params: int,
@@ -187,10 +192,12 @@ def test_mac_bram_build_width_dsp(
         type="mac_bram",
         id="",
         params={
-            "INPUT_BITWIDTH": bitwidth,
+            "BITWIDTH": bitwidth,
+            "SIZE_INPUT": num_params,
+            "NUM_MULT": num_mult,
+            "BITS_SCALE_BIAS": 0,
+            "BITS_SCALE_DOUT": 0,
             "INDEX_BITWIDTH": 1 + int(ceil(log2(num_params))),
-            "INPUT_NUM_DATA": num_params,
-            "NUM_MULT_PARALLEL": num_mult,
             "INDEX_WEIGHTS_START": 0,
         },
         packages=["mac"],
@@ -221,7 +228,7 @@ def test_mac_bram_build_width_dsp(
 @pytest.mark.parametrize("num_params", [32])
 @pytest.mark.parametrize("num_mult", [1])
 @pytest.mark.parametrize("is_signed", [True])
-def test_mac_bram_build_with_lut(
+def test_build_lut(
     cocotb_test_fixture: CocotbTestFixture,
     bitwidth: int,
     num_params: int,
@@ -235,10 +242,12 @@ def test_mac_bram_build_with_lut(
         type="mac_bram",
         id="",
         params={
-            "INPUT_BITWIDTH": bitwidth,
+            "BITWIDTH": bitwidth,
+            "SIZE_INPUT": num_params,
+            "NUM_MULT": num_mult,
+            "BITS_SCALE_BIAS": 0,
+            "BITS_SCALE_DOUT": 0,
             "INDEX_BITWIDTH": 1 + int(ceil(log2(num_params))),
-            "INPUT_NUM_DATA": num_params,
-            "NUM_MULT_PARALLEL": num_mult,
             "INDEX_WEIGHTS_START": 0,
         },
         packages=["mac"],

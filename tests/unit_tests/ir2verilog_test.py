@@ -258,7 +258,7 @@ class TestVerilogTemplate:
     def test_replace_instance_name_of_module(self):
         template = (
             TemplateDirector()
-            .set_prototype("""   FILT_BIQUAD#(4) DUT (
+            .set_prototype("""\tFILT_BIQUAD#(4) DUT (
     .CLK(clk_sys),
 	  .nRST(nrst),
 	  .EN(en_dut),
@@ -272,7 +272,7 @@ class TestVerilogTemplate:
         )
         assert (
             template.substitute({})
-            == """   MyModule#(4) DUT (
+            == """\tMyModule#(4) DUT (
     .CLK(clk_sys),
 	  .nRST(nrst),
 	  .EN(en_dut),
@@ -280,6 +280,38 @@ class TestVerilogTemplate:
 	  .DATA_IN(filter_in),
 	  .DATA_OUT(dout),
 	  .DATA_VALID(filter_rdy)
+);"""
+        )
+
+    def test_replace_instance_name_of_module_enhanced(self):
+        template = (
+            TemplateDirector()
+            .set_prototype("""   FILT_BIQUAD#(
+        4
+    ) DUT (
+    .CLK(clk_sys),
+    .nRST(nrst),
+    .EN(en_dut),
+    .START_FLAG(clk_adc),
+    .DATA_IN(filter_in),
+    .DATA_OUT(dout),
+    .DATA_VALID(filter_rdy)
+);""")
+            .replace_instance_name("FILT_BIQUAD", "MyModule")
+            .build()
+        )
+        assert (
+            template.substitute({})
+            == """   MyModule#(
+        4
+    ) DUT (
+    .CLK(clk_sys),
+    .nRST(nrst),
+    .EN(en_dut),
+    .START_FLAG(clk_adc),
+    .DATA_IN(filter_in),
+    .DATA_OUT(dout),
+    .DATA_VALID(filter_rdy)
 );"""
         )
 

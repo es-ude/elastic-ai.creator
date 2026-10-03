@@ -80,28 +80,65 @@ class LinearDesign(Design):
             )
         )
 
-    def save_to(self, destination: Path):
-        rom_name = f"{self.name}_rom"
-        rom_params = list(
-            chain.from_iterable([a + [b] for a, b in zip(self.weights, self.bias)])
-        )
+    def save_to(
+        self, destination: Path, take_vhdl: bool = True, num_mult: int = 1
+    ) -> None:
+        def _save_to_vhdl(destination: Path) -> None:
+            rom_name = f"{self.name}_rom"
+            rom_params = list(
+                chain.from_iterable([a + [b] for a, b in zip(self.weights, self.bias)])
+            )
 
-        template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="linear.tpl.vhd",
-            parameters=dict(
-                layer_name=self.name,
-                params_rom_name=rom_name,
-                work_library_name=self.work_library_name,
-                resource_option=f'"{self.resource_option}"',
-                log2_max_value="31",
-                **self._template_parameters(),
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(template)
+            template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="linear.tpl.vhd",
+                parameters=dict(
+                    layer_name=self.name,
+                    params_rom_name=rom_name,
+                    work_library_name=self.work_library_name,
+                    resource_option=f'"{self.resource_option}"',
+                    log2_max_value="31",
+                    **self._template_parameters(),
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(template)
 
-        Rom(
-            name=rom_name,
-            data_width=self.data_width,
-            values_as_integers=rom_params,
-        ).save_to(destination)
+            Rom(
+                name=rom_name,
+                data_width=self.data_width,
+                values_as_integers=rom_params,
+            ).save_to(destination)
+
+        def _save_to_verilog(destination: Path, num_mult: int) -> None:
+            from elasticai.creator.arithmetic import FxpConverter, FxpParams
+            from elasticai.creator_plugins.linear.utils import load_and_plugin
+
+            conv = FxpConverter(
+                FxpParams(
+                    total_bits=self._data_width, frac_bits=self._frac_width, signed=True
+                )
+            )
+            weights = list(chain.from_iterable([a for a in self.weights]))
+            load_and_plugin(
+                type="linear_array",
+                id=self.name,
+                params={
+                    "BITWIDTH": self._data_width,
+                    "NUM_MULT": num_mult,
+                    "SIZE_INPUT": self._in_feature_num,
+                    "SIZE_OUTPUT": self._out_feature_num,
+                    "BITS_SCALE_BIAS": self._frac_width,
+                    "BITS_SCALE_DOUT": self._frac_width,
+                    "WEIGHTS": conv.integer_to_decimal_string_array_verilog(
+                        weights,
+                    ),
+                    "BIAS": conv.integer_to_decimal_string_array_verilog(self.bias),
+                },
+                packages=["linear"],
+                path2save=destination,
+            )
+
+        if take_vhdl:
+            _save_to_vhdl(destination=destination)
+        else:
+            _save_to_verilog(destination=destination, num_mult=num_mult)

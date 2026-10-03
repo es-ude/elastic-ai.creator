@@ -4,6 +4,7 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge, RisingEdge, Timer
 
+from elasticai.creator.testing.cocotb_func import check_results
 from elasticai.creator.testing.cocotb_prepare import read_testdata
 
 
@@ -19,8 +20,8 @@ async def layer_computation_test(dut):
     dut.y_address.value = 0
     dut.x.value = 0
 
-    cocotb.start_soon(Clock(dut.clock, period=clock_period_ns, units="ns").start())
-    await Timer(4 * clock_period_ns, units="ns")
+    cocotb.start_soon(Clock(dut.clock, period=clock_period_ns, unit="ns").start())
+    await Timer(4 * clock_period_ns, unit="ns")
     await RisingEdge(dut.clock)
     chck_test = list()
     for ite, (sig_in, ref_out) in enumerate(zip(data["in"], data["out"])):
@@ -39,10 +40,11 @@ async def layer_computation_test(dut):
             dut.y_address.value = idx
             for _ in range(2):
                 await RisingEdge(dut.clock)
-            result.append(dut.y.value.signed_integer)
+            result.append(dut.y.value.to_signed())
             chck_ite.append(
-                dut.y.value.signed_integer
-                in [ref_out[idx] - 1, ref_out[idx], ref_out[idx] + 1]
+                check_results(
+                    result=[dut.y.value.to_signed()], expected=[ref_out[idx]], tol=1
+                )
             )
             for _ in range(2):
                 await RisingEdge(dut.clock)
@@ -64,7 +66,7 @@ async def layer_computation_test(dut):
             await RisingEdge(dut.clock)
 
     accuracy = sum(chck_test) / len(chck_test)
-    limit = 0.9
+    limit = 1.0
     assert accuracy >= limit, f"Accuracy of {accuracy * 100:.2f}%"
 
 
@@ -81,4 +83,4 @@ async def layer_params_test(dut):
     dut.x.value = 0
 
     for rom_w, json_w in zip(dut_rom.rom_w.ROM.value, params["params"]):
-        assert rom_w.signed_integer == json_w
+        assert rom_w.to_signed() == json_w

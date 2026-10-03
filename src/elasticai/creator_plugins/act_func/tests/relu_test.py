@@ -4,14 +4,14 @@ from cocotb.triggers import Timer
 from torch import asarray
 
 from elasticai.creator.arithmetic import FxpParams
-from elasticai.creator.nn.fixed_point import ReLU as layer
+from elasticai.creator.nn.fixed_point import ReLU
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
 from elasticai.creator_plugins.act_func.utils import load_and_plugin
 
 
 def act_relu(a: list[int], config: FxpParams) -> list[float]:
     xin = asarray(a)
-    lay = layer(total_bits=config.total_bits)
+    lay = ReLU(total_bits=config.total_bits)
     lay.eval()
     return lay.forward(xin).tolist()
 
@@ -37,19 +37,21 @@ async def check_transfer_function(dut, bitwidth: int):
 @pytest.mark.parametrize("bitwidth", [4, 8, 12, 16])
 def test_relu(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
     cocotb_test_fixture.set_top_module_name("ACT_RELU")
-    cocotb_test_fixture.run(params={"BITWIDTH": bitwidth}, defines={})
+    cocotb_test_fixture.run(
+        params={"BITWIDTH_IN": bitwidth, "BITWIDTH_OUT": bitwidth}, defines={}
+    )
 
 
 @pytest.mark.simulation
 @pytest.mark.parametrize("bitwidth", [8, 10])
-def test_relu_build(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
+def test_build(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
     build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
     id = f"{bitwidth}"
 
     load_and_plugin(
         type="relu",
         id=id,
-        params={"BITWIDTH": bitwidth},
+        params={"BITWIDTH_IN": bitwidth, "BITWIDTH_OUT": bitwidth},
         packages=["act_func"],
         path2save=build_dir,
     )
@@ -57,4 +59,24 @@ def test_relu_build(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
     cocotb_test_fixture.set_top_module_name(f"RELU_{id}")
+    cocotb_test_fixture.run(params={}, defines={})
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("bitwidth", [8, 10])
+def test_codesign(cocotb_test_fixture: CocotbTestFixture, bitwidth: int):
+    build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
+
+    dut = ReLU(total_bits=bitwidth)
+    dut.create_design(name="1").save_to(build_dir, take_vhdl=False)  # type: ignore
+
+    files_available = [file.name for file in build_dir.glob("*.v")]
+    files_available.sort()
+    assert files_available == [
+        "relu_1.v",
+    ]
+
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
+    cocotb_test_fixture.set_top_module_name("RELU_1")
     cocotb_test_fixture.run(params={}, defines={})

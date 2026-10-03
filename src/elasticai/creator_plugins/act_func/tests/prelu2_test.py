@@ -6,13 +6,13 @@ from cocotb.triggers import Timer
 from torch import asarray
 
 from elasticai.creator.arithmetic import FxpParams
-from elasticai.creator.nn.fixed_point import PReLU2 as layer
+from elasticai.creator.nn.fixed_point import PReLU2
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
 from elasticai.creator_plugins.act_func.utils import load_and_plugin
 
 
 def act_prelu2(a: list[float], scaling: float, config: FxpParams) -> list:
-    lay = layer(
+    lay = PReLU2(
         total_bits=config.total_bits,
         frac_bits=config.frac_bits,
         num_parameters=1,
@@ -67,7 +67,7 @@ def test_prelu2(
 @pytest.mark.parametrize("total_bits", [8])
 @pytest.mark.parametrize("frac_bits", [5])
 @pytest.mark.parametrize("scaling", [0.5, 0.25, 0.125, 0.0625])
-def test_prelu2_build(
+def test_build(
     cocotb_test_fixture: CocotbTestFixture,
     total_bits: int,
     frac_bits: int,
@@ -77,11 +77,14 @@ def test_prelu2_build(
     id = f"{total_bits:02d}_{frac_bits:02d}"
 
     scale = floor(-log2(scaling))
-
     load_and_plugin(
         type="prelu2",
         id=id,
-        params={"BITWIDTH": total_bits, "SCALING": scale},
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "SCALING": scale,
+        },
         packages=["act_func"],
         path2save=build_dir,
     )
@@ -89,4 +92,36 @@ def test_prelu2_build(
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
     cocotb_test_fixture.set_top_module_name(f"PRELU2_{id}")
+    cocotb_test_fixture.run(params={}, defines={})
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("total_bits", [8])
+@pytest.mark.parametrize("frac_bits", [5])
+@pytest.mark.parametrize("scaling", [0.25, 0.125])
+def test_codesign(
+    cocotb_test_fixture: CocotbTestFixture,
+    total_bits: int,
+    frac_bits: int,
+    scaling: float,
+) -> None:
+    build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
+
+    dut = PReLU2(
+        total_bits=total_bits,
+        frac_bits=frac_bits,
+        num_parameters=1,
+        init=scaling,
+    )
+    dut.create_design(name="1").save_to(build_dir, take_vhdl=False)  # type: ignore
+
+    files_available = [file.name for file in build_dir.glob("*.v")]
+    files_available.sort()
+    assert files_available == [
+        "prelu2_1.v",
+    ]
+
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
+    cocotb_test_fixture.set_top_module_name("PRELU2_1")
     cocotb_test_fixture.run(params={}, defines={})

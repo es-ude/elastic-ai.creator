@@ -58,7 +58,12 @@ def test_sign_build(
     load_and_plugin(
         type="sign",
         id=id,
-        params={"BITWIDTH": total_bits, "MIN_VAL": min_val, "MAX_VAL": max_val},
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "MIN_VAL": min_val,
+            "MAX_VAL": max_val,
+        },
         packages=["act_func"],
         path2save=build_dir,
     )

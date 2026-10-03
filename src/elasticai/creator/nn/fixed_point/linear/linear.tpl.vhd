@@ -48,10 +48,10 @@ architecture rtl of ${layer_name} is
             TEMP0 := ('0', others => '1');
         else
             if TEMP0(DATA_WIDTH-1) = '1' and TEMP1 /= 0 then
-                TEMP0 := TEMP0 + 1;
+                TEMP0 := TEMP0;
+                --TEMP0 := TEMP0 + 1;
             end if;
         end if;
-
         return TEMP0;
     end function;
 

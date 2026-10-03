@@ -13,7 +13,13 @@ import elasticai.creator_plugins.mac_delta as mac_delta
 import elasticai.creator_plugins.multipliers as multipliers
 from elasticai.creator.arithmetic import int_arithmetic, int_converter
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
-from elasticai.creator_plugins.mac.tests.mac_core_test import model_mac
+
+
+def model_mac(
+    bias: int, weights: list, data: list, bitwidth: int, is_signed: bool
+) -> int:
+    arith = int_arithmetic(total_bits=2 * bitwidth, signed=is_signed)
+    return arith.clamp(bias + int(np.sum(np.array(weights) * np.array(data))))
 
 
 def build_testdata(

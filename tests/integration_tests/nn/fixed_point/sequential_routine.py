@@ -46,12 +46,14 @@ def routine_testing_sequential_module(
 
     dut.eval()
     with torch.no_grad():
+        val_input = fxp.cut_as_rational(val_input)
         val_output = dut(val_input)
+
     output_dir = build_report_folder_and_testdata(
         dut_name=file_name,
         testdata={
             "in": fxp.cut_as_integer(val_input).int().tolist(),
-            "out": fxp.round_to_integer(val_output).int().tolist(),
+            "out": fxp.cut_as_integer(val_output).int().tolist(),
             "params": list(
                 chain.from_iterable([a + [b] for a, b in zip(weights_q, bias_q)])
             ),

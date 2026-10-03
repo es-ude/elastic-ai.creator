@@ -18,10 +18,12 @@ def mac_bram(impl: DataGraph, _: Registry) -> Iterable[Code]:
 
     _template = (
         TemplateDirector()
-        .parameter("INPUT_BITWIDTH")
+        .parameter("BITWIDTH")
+        .parameter("NUM_MULT")
+        .parameter("SIZE_INPUT")
+        .parameter("BITS_SCALE_BIAS")
+        .parameter("BITS_SCALE_DOUT")
         .parameter("INDEX_BITWIDTH")
-        .parameter("INPUT_NUM_DATA")
-        .parameter("NUM_MULT_PARALLEL")
         .parameter("INDEX_WEIGHTS_START")
         .set_prototype("\n".join(read_text(package_path, path2file)))
         .build()

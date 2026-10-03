@@ -1,4 +1,5 @@
 from functools import partial, reduce
+from inspect import signature
 from itertools import chain
 
 from elasticai.creator.file_generation.savable import Path
@@ -97,9 +98,16 @@ class Sequential(Design):
     def port(self) -> Port:
         return self._port
 
-    def _save_subdesigns(self, destination: Path) -> None:
+    def _save_subdesigns(self, destination: Path, take_vhdl: bool = True) -> None:
         for design in self._subdesigns:
-            design.save_to(destination.create_subpath(design.name))
+            params = list(signature(design.save_to).parameters.keys())
+            if "take_vhdl" in params:
+                design.save_to(
+                    destination=destination.create_subpath(design.name),
+                    take_vhdl=take_vhdl,
+                )
+            else:
+                design.save_to(destination=destination.create_subpath(design.name))
 
     def _instance_names(self) -> list[str]:
         return [f"i_{design.name}" for design in self._subdesigns]
@@ -179,20 +187,25 @@ class Sequential(Design):
     def _y_width(self) -> int:
         return self.port["y"].width
 
-    def save_to(self, destination: Path):
-        self._save_subdesigns(destination)
-        network_template = InProjectTemplate(
-            package=module_to_package(self.__module__),
-            file_name="network.tpl.vhd",
-            parameters=dict(
-                layer_connections=self._generate_connections_code(),
-                layer_instantiations=self._generate_instantiations(),
-                signal_definitions=self._generate_signal_definitions(),
-                x_address_width=str(self._x_address_width),
-                y_address_width=str(self._y_address_width),
-                x_width=str(self._x_width),
-                y_width=str(self._y_width),
-                layer_name=self.name,
-            ),
-        )
-        destination.create_subpath(self.name).as_file(".vhd").write(network_template)
+    def save_to(self, destination: Path, take_vhdl: bool = True) -> None:
+        self._save_subdesigns(destination=destination, take_vhdl=take_vhdl)
+        if take_vhdl:
+            network_template = InProjectTemplate(
+                package=module_to_package(self.__module__),
+                file_name="network.tpl.vhd",
+                parameters=dict(
+                    layer_connections=self._generate_connections_code(),
+                    layer_instantiations=self._generate_instantiations(),
+                    signal_definitions=self._generate_signal_definitions(),
+                    x_address_width=str(self._x_address_width),
+                    y_address_width=str(self._y_address_width),
+                    x_width=str(self._x_width),
+                    y_width=str(self._y_width),
+                    layer_name=self.name,
+                ),
+            )
+            destination.create_subpath(self.name).as_file(".vhd").write(
+                network_template
+            )
+        else:
+            pass

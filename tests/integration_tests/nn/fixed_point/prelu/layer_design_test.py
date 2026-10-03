@@ -7,8 +7,7 @@ from tests.integration_tests.nn.fixed_point.precomputed_routine import (
 )
 
 
-@pytest.mark.skip(reason="Layer not fully implemented yet")
-@pytest.mark.simulation
+@pytest.mark.ghdl
 @pytest.mark.parametrize(
     "total_bits, frac_bits, init", [(6, 4, 0.125), (8, 4, 0.0625), (10, 9, 0.03125)]
 )

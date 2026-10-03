@@ -9,6 +9,7 @@ from elasticai.creator.arithmetic import (
 )
 from elasticai.creator.nn.fixed_point.fxp_round_cut import (
     CutToFixedPoint,
+    FloorToFixedPoint,
     RoundToFixedPoint,
 )
 from tests.tensor_test_case import assertTensorEqual
@@ -36,6 +37,17 @@ def cut_to_fxp(inputs: list[float] | torch.Tensor) -> torch.Tensor:
     )
 
 
+def floor_to_fxp(inputs: list[float] | torch.Tensor) -> torch.Tensor:
+    if isinstance(inputs, list):
+        inputs = torch.tensor(inputs)
+    return cast(
+        torch.Tensor,
+        FloorToFixedPoint.apply(
+            inputs, FxpArithmetic(FxpParams(total_bits=4, frac_bits=2, signed=True))
+        ),
+    )
+
+
 @pytest.mark.parametrize(
     "val_in, val_out",
     [(1.75, 1.75), (-2.0, -2.0), (-1.3, -1.25), (0.1, 0.0), (1.6, 1.5)],
@@ -56,7 +68,7 @@ def test_round_out_of_bounds(val_in: float, val_out: float) -> None:
 
 @pytest.mark.parametrize(
     "val_in, val_out",
-    [(1.75, 1.75), (-2.0, -2.0), (-1.3, -1.25), (0.1, 0.0), (1.6, 1.5)],
+    [(1.75, 1.75), (-1.55, -1.5), (-1.3, -1.25), (0.1, 0.0), (1.6, 1.5)],
 )
 def test_cut_integer(val_in: float, val_out: float) -> None:
     assertTensorEqual(
@@ -70,3 +82,21 @@ def test_cut_out_of_bounds(val_in: float, val_out: float) -> None:
     inputs = torch.tensor([val_in])
     with pytest.raises(ValueError):
         _ = cut_to_fxp(inputs)
+
+
+@pytest.mark.parametrize(
+    "val_in, val_out",
+    [(1.75, 1.75), (-1.55, -1.75), (-1.3, -1.5), (0.1, 0.0), (1.6, 1.5)],
+)
+def test_floor_integer(val_in: float, val_out: float) -> None:
+    assertTensorEqual(
+        expected=floor_to_fxp([val_in]),
+        actual=[val_out],
+    )
+
+
+@pytest.mark.parametrize("val_in, val_out", [(-2.5, -2.0), (2.0, 1.75)])
+def test_floor_out_of_bounds(val_in: float, val_out: float) -> None:
+    inputs = torch.tensor([val_in])
+    with pytest.raises(ValueError):
+        _ = floor_to_fxp(inputs)

@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Callable, Iterable
 from os import environ
 from os.path import exists
@@ -104,7 +105,7 @@ def run_cocotb_sim(
     environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
 
     if build_sim_dir is None:
-        build_sim_dir = find_project_root() / "build_sim"
+        build_sim_dir = find_project_root() / "build_sim" / f"temp_{uuid.uuid4().hex}"
         build_sim_dir.mkdir(exist_ok=True, parents=True)
     else:
         build_sim_dir = Path(build_sim_dir)

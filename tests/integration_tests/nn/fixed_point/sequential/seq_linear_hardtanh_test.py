@@ -12,7 +12,7 @@ from tests.integration_tests.nn.fixed_point.sequential_routine import (
 )
 
 
-@pytest.mark.simulation
+@pytest.mark.ghdl
 @pytest.mark.parametrize(
     "total_bits, frac_bits, features_in, features_out",
     [

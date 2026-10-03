@@ -18,7 +18,8 @@ def absolute(impl: DataGraph, _: Registry) -> Iterable[Code]:
 
     _template = (
         TemplateDirector()
-        .parameter("BITWIDTH")
+        .parameter("BITWIDTH_IN")
+        .parameter("BITWIDTH_OUT")
         .add_module_name()
         .set_prototype("\n".join(read_text(package_path, path2file)))
         .build()

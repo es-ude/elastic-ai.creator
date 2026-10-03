@@ -10,7 +10,7 @@ def test_vhdl_code_matches_expected_prelu() -> None:
 -- Engineer:        AE
 --
 -- Create Date:     05.05.2026, 20:37
--- Last modified:   06.05.2026, 08:54
+-- Last modified:   29.09.2026, 21:35
 -- Module Name:     Programmable ReLU-Activation Function for DNN
 -- Target Devices:  ASIC / FPGA
 -- Tool Versions:   1v0
@@ -20,6 +20,7 @@ def test_vhdl_code_matches_expected_prelu() -> None:
 -- State: 	        Works!
 -- Improvements:    None
 -- Parameters:      DATA_WIDTH --> Bitwidth of input data
+--                  FRAC_WIDTH --> Bitwidth of the fraction (FxP)
 --                  SCALING --> Fixed point value of negative scaling
 -- ////////////////////////////////////////////////////////////////////////////////
 
@@ -30,6 +31,7 @@ use ieee.numeric_std.all;
 entity prelu is
     generic (
         DATA_WIDTH  : integer := 8;
+        FRAC_WIDTH  : integer := 5;
         SCALING     : integer := 8
     );
     port (
@@ -55,7 +57,7 @@ begin
         else
             if fxp_input < 0 then
                 mult_result <= fxp_input * to_signed(SCALING, DATA_WIDTH);
-                fxp_output <= mult_result(2*DATA_WIDTH-1 downto DATA_WIDTH);
+                fxp_output  <= mult_result(FRAC_WIDTH + DATA_WIDTH - 1 downto FRAC_WIDTH);
             else
                 fxp_output <= fxp_input;
             end if;
