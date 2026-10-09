@@ -48,3 +48,28 @@ def test_GlobalMinMaxObserver_setUp2():
     observer(tensor3)
     assert torch.equal(observer.min_float, torch.tensor([-9.0], dtype=torch.float32))
     assert torch.equal(observer.max_float, torch.tensor([12.0], dtype=torch.float32))
+
+
+def test_GlobalMinMaxObserver_extends_range_after_load_state_dict():
+    observer = GlobalMinMaxObserver()
+    observer(torch.tensor([-1.0, 1.0], dtype=torch.float32))
+
+    loaded = GlobalMinMaxObserver()
+    loaded.load_state_dict(observer.state_dict())
+    loaded(torch.tensor([0.1, 0.2], dtype=torch.float32))
+
+    assert torch.equal(loaded.min_float, torch.tensor([-1.0], dtype=torch.float32))
+    assert torch.equal(loaded.max_float, torch.tensor([1.0], dtype=torch.float32))
+
+
+def test_GlobalMinMaxObserver_loads_state_dict_without_initialized():
+    observer = GlobalMinMaxObserver()
+    observer(torch.tensor([-1.0, 1.0], dtype=torch.float32))
+    state_dict = observer.state_dict()
+    del state_dict["initialized"]
+
+    loaded = GlobalMinMaxObserver()
+    loaded.load_state_dict(state_dict)
+    loaded(torch.tensor([0.1, 0.2], dtype=torch.float32))
+
+    assert torch.equal(loaded.min_float, torch.tensor([-1.0], dtype=torch.float32))

@@ -38,7 +38,7 @@ def test_intadd_with_wrong_dtype(math_ops):
     inputs_a = torch.tensor([127, 34, 89], dtype=torch.float32)
     inputs_b = torch.tensor([-54, 29, 39], dtype=torch.int32)
     c_quant_bits = 9
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         math_ops.intadd(inputs_a, inputs_b, c_quant_bits)
 
 
@@ -55,7 +55,7 @@ def test_intsub_with_wrong_dtype(math_ops):
     inputs_a = torch.tensor([127, 34, 89], dtype=torch.int32)
     inputs_b = torch.tensor([-54, 29, 39], dtype=torch.float32)
     c_quant_bits = 9
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         math_ops.intsub(inputs_a, inputs_b, c_quant_bits)
 
 
@@ -82,5 +82,5 @@ def test_intmatmul_with_wrong_dtype():
     c_quant_bits = 18
 
     math_ops = MathOperations()
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         math_ops.intmatmul(inputs_a, inputs_b, c_quant_bits)

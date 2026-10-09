@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 
-def save_quant_data(tensor, file_dir: Path, file_name: str):
+def save_quant_data(tensor, file_dir: str | Path | None, file_name: str):
     if file_dir is None:
         # logging.warning("quant_file_dir is None, skipping saving quant data.")
         return
