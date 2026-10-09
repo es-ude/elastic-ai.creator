@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
@@ -73,26 +74,9 @@ def test_SymmetricSignedQParams():
     assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
 
 
-def test_SymmetricUnsignedQParams():
-    # BUG:  this scheme lead to huge quantization error
-    SSUSParams = SymmetricUnsignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
-
-    x = torch.tensor([-2.0, 0.5, 0.5, 1.0, 2.0], dtype=torch.float32)
-    torch.tensor([0], dtype=torch.int32)
-    torch.tensor([254], dtype=torch.int32)
-    torch.tensor([0.0157480314], dtype=torch.float32)
-    torch.tensor([0], dtype=torch.int32)
-
-    SSUSParams.update_quant_params(x)
-    actual_q_x = SSUSParams.quantize(x)
-    expected_q_x = torch.tensor([0, 32, 32, 64, 127], dtype=torch.int32)
-    assert torch.equal(actual_q_x, expected_q_x)
-
-    actual_dq_x = SSUSParams.dequantize(actual_q_x)
-    expected_dq_x = torch.tensor(
-        [0.0000, 0.5039, 0.5039, 1.0079, 2.0000], dtype=torch.float32
-    )
-    assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
+def test_SymmetricUnsignedQParams_is_not_implemented():
+    with pytest.raises(NotImplementedError):
+        SymmetricUnsignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 
 
 def test_set_scale_factor():
@@ -164,3 +148,12 @@ def test_state_dict():
     assert torch.equal(ASSSParams.zero_point, ASSSParams_new.zero_point)
     assert torch.equal(ASSSParams.min_quant, ASSSParams_new.min_quant)
     assert torch.equal(ASSSParams.max_quant, ASSSParams_new.max_quant)
+
+
+def test_str_separates_fields():
+    qparams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+
+    assert str(qparams) == (
+        "min_float: 1.000000, max_float: 1.000000, min_quant: -128, "
+        "max_quant: 127, scale_factor: 1.0000000000, zero_point: 0"
+    )

@@ -1,11 +1,32 @@
+from typing import Literal
+
 import torch
 
+from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import scaling_M, simulate_bitshifting
+from elasticai.creator.nn.integer.quant_utils.MPQParams import QParams
 
 
 class MPQSupport:
-    def _init_mpq_attributes(self, **kwargs):
-        self.MPQ_strategy = kwargs.get("MPQ_strategy")  # ["inheritance", "requantizer"]
+    """Mixin that adds mixed-precision quantization (MPQ) support to a layer.
+
+    With the `"inheritance"` strategy, a layer takes over the input `QParams`
+    of the previous layer. With the `"requantizer"` strategy, it keeps its own
+    input `QParams` and requantizes incoming integer values from the previous
+    layer's parameters to its own.
+
+    The layer must provide `quantizable_elements`, `math_ops` and a
+    `<element>_QParams` attribute for each element.
+    """
+
+    quantizable_elements: list
+    math_ops: MathOperations
+
+    def _init_mpq_attributes(
+        self,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
+        self.MPQ_strategy = MPQ_strategy
         self.MPQ_elements = [
             element
             for element in self.quantizable_elements
@@ -16,7 +37,7 @@ class MPQSupport:
 
     def _handle_input_QParams(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_QParams: object,
         QParams_attr: str,
         prev_QParams_attr: str,
@@ -36,31 +57,31 @@ class MPQSupport:
 
     def _requantize_inputs(
         self,
-        prev_q_inputs: torch.IntTensor,
-        prev_QParams: object,
-        curr_QParams: object,
-        m_q_1_shift: int,
-        m_q_1: int,
-    ) -> torch.IntTensor:
+        prev_q_inputs: torch.Tensor,
+        prev_QParams: QParams,
+        curr_QParams: QParams,
+        m_q_1_shift: torch.Tensor,
+        m_q_1: torch.Tensor,
+    ) -> torch.Tensor:
         # s_curr (q_curr - z_curr) = s_prev  (q_prev - z_prev)
         curr_q_inputs = self.math_ops.intsub(
             prev_q_inputs,
             prev_QParams.zero_point,
-            prev_QParams.quant_bits + 1,
+            int(prev_QParams.quant_bits.item()) + 1,
         )
 
         # (q_curr - z_curr) = s_prev/s_curr (q_prev - z_prev)
         curr_q_inputs = simulate_bitshifting(
             curr_q_inputs,
-            m_q_1_shift,
-            m_q_1,
+            m_q_1_shift.to(curr_q_inputs.device),
+            m_q_1.to(curr_q_inputs.device),
         )
 
         # q_curr = s_prev/s_curr (q_prev - z_prev) + z_curr
         curr_q_inputs = self.math_ops.intadd(
             curr_q_inputs,
             curr_QParams.zero_point,
-            curr_QParams.quant_bits + 1,
+            int(curr_QParams.quant_bits.item()) + 1,
         )
         return curr_q_inputs
 

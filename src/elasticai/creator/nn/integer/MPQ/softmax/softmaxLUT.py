@@ -36,7 +36,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
 
         self.device = device
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):

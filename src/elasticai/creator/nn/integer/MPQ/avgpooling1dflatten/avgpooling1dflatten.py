@@ -37,7 +37,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
