@@ -3,6 +3,7 @@ import re
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 
 
 @pytest.fixture
@@ -553,3 +554,42 @@ begin
     end generate;
 end architecture rtl;"""
     assert expected_code == actual_code
+
+
+def create_linear_design(
+    *,
+    in_features: int = 3,
+    weights: list[list[int]] | None = None,
+    m_q: int = 1,
+    num_dimensions: int | None = None,
+    use_parallelised_template: bool = False,
+    unroll_factor: int = 1,
+    use_pipeline_template: bool = False,
+) -> LinearDesign:
+    return LinearDesign(
+        name="linear_0",
+        data_width=8,
+        in_features=in_features,
+        out_features=2,
+        weights=[[1, 2, 3], [4, 5, 6]] if weights is None else weights,
+        bias=[1, 2],
+        m_q=m_q,
+        m_q_shift=1,
+        z_w=0,
+        z_b=0,
+        z_x=0,
+        z_y=0,
+        work_library_name="work",
+        resource_option="auto",
+        num_dimensions=num_dimensions,
+        use_parallelised_template=use_parallelised_template,
+        unroll_factor=unroll_factor,
+        use_pipeline_template=use_pipeline_template,
+    )
+
+
+def test_unroll_factor_above_out_features_is_capped_with_warning() -> None:
+    with pytest.warns(UserWarning, match="capped at 2"):
+        design = create_linear_design(unroll_factor=5)
+
+    assert design._unroll_factor == 2
