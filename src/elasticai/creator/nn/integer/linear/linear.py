@@ -8,6 +8,8 @@ from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    QParams,
+    QParamsFactory,
     SimQuant,
     SymmetricSignedQParams,
     scaling_M,
@@ -19,39 +21,54 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Linear(DesignCreatorModule, nn.Linear):
-    def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
-        )
-        self.num_dimensions = kwargs.get("num_dimensions", None)
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        quant_bits: int,
+        bias: bool = False,
+        num_dimensions: int | None = None,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        use_parallelised_template: bool = False,
+        unroll_factor: int = 1,
+        use_pipeline_template: bool = False,
+        weight_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
+        bias_qparams_cls: QParamsFactory = SymmetricSignedQParams,
+        inputs_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
+        outputs_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
+    ):
+        super().__init__(in_features, out_features, bias)
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
-        # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
-        self.weight_QParams = AsymmetricSignedQParams(
+        self.weight_QParams = weight_qparams_cls(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        if kwargs.get("bias"):
-            self.bias_QParams = SymmetricSignedQParams(
+        if bias:
+            self.bias_QParams = bias_qparams_cls(
                 quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
             ).to(device)
-        self.inputs_QParams = AsymmetricSignedQParams(
+        self.inputs_QParams = inputs_qparams_cls(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        self.outputs_QParams = AsymmetricSignedQParams(
+        self.outputs_QParams = outputs_qparams_cls(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
 
-        self.use_parallelised_template = kwargs.get("use_parallelised_template", False)
-        self.unroll_factor = kwargs.get("unroll_factor", 1)
-        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
+        self.use_parallelised_template = use_parallelised_template
+        self.unroll_factor = unroll_factor
+        self.use_pipeline_template = use_pipeline_template
 
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
@@ -61,13 +78,15 @@ class Linear(DesignCreatorModule, nn.Linear):
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist(),
+            bias=self.q_bias.tolist() if self.q_bias is not None else [],
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
-            z_x=self.inputs_QParams.zero_point.item(),
-            z_w=self.weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item(),
-            z_y=self.outputs_QParams.zero_point.item(),
+            z_x=int(self.inputs_QParams.zero_point.item()),
+            z_w=int(self.weight_QParams.zero_point.item()),
+            z_b=int(self.bias_QParams.zero_point.item())
+            if self.bias is not None
+            else 0,
+            z_y=int(self.outputs_QParams.zero_point.item()),
             work_library_name="work",
             resource_option="distributed",
             use_parallelised_template=self.use_parallelised_template,
@@ -164,7 +183,7 @@ class Linear(DesignCreatorModule, nn.Linear):
     def forward(
         self,
         inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
     ) -> torch.FloatTensor:
         if enable_simquant:

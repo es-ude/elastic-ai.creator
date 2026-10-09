@@ -600,3 +600,9 @@ def test_int_forward_q_outputs_is_correctly(
     expected_q_output = q_outputs
     actual_q_output = linear_layer.int_forward(q_inputs)
     assert torch.allclose(actual_q_output, expected_q_output, atol=1)
+
+
+def test_num_dimensions_defaults_to_none() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    assert layer.num_dimensions is None
