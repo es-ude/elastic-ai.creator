@@ -556,9 +556,9 @@ def test_get_quantized_bias_in_precompute(
         expected_q_bias,
     ) = q_bias_subtracted
 
-    actual_new_bias_scale_factor = linear_layer.bias_QParams.scale_factor
-    actual_new_zero_point = linear_layer.bias_QParams.zero_point
-    actual_new_quant_bits = linear_layer.bias_QParams.quant_bits
+    actual_new_bias_scale_factor = linear_layer.q_bias_QParams.scale_factor
+    actual_new_zero_point = linear_layer.q_bias_QParams.zero_point
+    actual_new_quant_bits = linear_layer.q_bias_QParams.quant_bits
     actual_q_bias = linear_layer.q_bias
 
     assert torch.allclose(
@@ -666,3 +666,19 @@ def test_parameters_are_created_on_device() -> None:
     assert layer.weight.device.type == "meta"
     assert layer.bias.device.type == "meta"
     assert layer.weight_QParams.scale_factor.device.type == "meta"
+
+
+def test_precompute_keeps_bias_QParams(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    scale_factor = linear_layer.bias_QParams.scale_factor.clone()
+    zero_point = linear_layer.bias_QParams.zero_point.clone()
+    quant_bits = linear_layer.bias_QParams.quant_bits
+    outputs = linear_layer.forward(inputs)
+
+    linear_layer.precompute()
+
+    assert torch.equal(linear_layer.bias_QParams.scale_factor, scale_factor)
+    assert torch.equal(linear_layer.bias_QParams.zero_point, zero_point)
+    assert linear_layer.bias_QParams.quant_bits == quant_bits
+    assert torch.equal(linear_layer.forward(inputs), outputs)

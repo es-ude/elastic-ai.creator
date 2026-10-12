@@ -1,3 +1,5 @@
+import copy
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -123,7 +125,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         # of zeros.
         if self.q_bias is not None:
             bias = self.q_bias.tolist()
-            z_b = int(self.bias_QParams.zero_point.item())
+            z_b = int(self.q_bias_QParams.zero_point.item())
         else:
             bias = [0] * self.out_features
             z_b = 0
@@ -167,23 +169,26 @@ class Linear(DesignCreatorModule, nn.Linear):
 
         The bias is added to the accumulator of `(x - z_x) @ (w - z_w).T`, so
         it uses the scale factor `s_x * s_w`, zero point 0 and the bit width
-        `(x_bits + 1) + (w_bits + 1)`. This overwrites the quantization
-        parameters of `bias_QParams`.
+        `(x_bits + 1) + (w_bits + 1)`. These parameters are stored in
+        `q_bias_QParams`, a copy of `bias_QParams`, so that `bias_QParams`
+        keeps the parameters learned in training and `forward` still works
+        after `precompute`.
         """
         assert not self.training, "int_forward should be called in eval mode"
+        self.q_bias_QParams = copy.deepcopy(self.bias_QParams)
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
         new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
-        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(new_bias_quant_bits)
-        q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
-        if not self.bias_QParams.is_symmetric:
+        self.q_bias_QParams.set_scale_factor(new_bias_scale_factor)
+        self.q_bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
+        self.q_bias_QParams.set_quant_range(new_bias_quant_bits)
+        q_bias = self.q_bias_QParams.quantize(self.bias).to("cpu")
+        if not self.q_bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
+                q_bias, self.q_bias_QParams.zero_point, new_bias_quant_bits + 1
             )
         return q_bias
 
