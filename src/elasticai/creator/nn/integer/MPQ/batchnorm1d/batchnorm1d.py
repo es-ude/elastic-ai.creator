@@ -13,8 +13,9 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
+    QParams,
     SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -90,10 +91,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
     def create_design(self, name: str) -> BatchNorm1dDesign:
         return BatchNorm1dDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            w_data_width=self.weight_QParams.quant_bits.item(),
-            b_data_width=self.bias_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            w_data_width=self.weight_QParams.quant_bits,
+            b_data_width=self.bias_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             num_dimensions=self.num_dimensions,
             in_features=self.in_features,
             out_features=self.out_features,
@@ -110,7 +111,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         )
 
     def _get_quantized_weights(
-        self, weight: torch.FloatTensor, weight_QParams: nn.Module
+        self, weight: torch.FloatTensor, weight_QParams: QParams
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
@@ -119,14 +120,14 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             q_weights = self.math_ops.intsub(
                 q_weights,
                 weight_QParams.zero_point,
-                weight_QParams.quant_bits.item() + 1,
+                weight_QParams.quant_bits + 1,
             )
         return q_weights
 
     def _get_quantized_bias(
         self,
         bias: torch.FloatTensor,
-        bias_QParams: nn.Module,
+        bias_QParams: QParams,
         given_quant_scale: torch.FloatTensor,
         given_quant_bits: int,
     ) -> torch.IntTensor:
@@ -143,8 +144,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        self.tmp_quant_bits = (self.weight_QParams.quant_bits.item() + 1) + (
-            self.inputs_QParams.quant_bits.item() + 1
+        self.tmp_quant_bits = (self.weight_QParams.quant_bits + 1) + (
+            self.inputs_QParams.quant_bits + 1
         )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
@@ -190,7 +191,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         q_inputs = self.math_ops.intsub(
             q_inputs,
             self.inputs_QParams.zero_point,
-            self.inputs_QParams.quant_bits.item() + 1,
+            self.inputs_QParams.quant_bits + 1,
         )
         # integer-only
         tmp = self.math_ops.int_dotproduct(
@@ -205,7 +206,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

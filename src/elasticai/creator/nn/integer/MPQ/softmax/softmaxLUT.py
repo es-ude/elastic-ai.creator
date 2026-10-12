@@ -11,7 +11,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     MPQSupport,
     SimQuant,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -62,16 +62,14 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         ).to(self.device)
 
     def create_design(self, name: str) -> SoftmaxLUTDesign:
-        numerator_out_data_width = self.inputs1_QParams.quant_bits.item() * 3 - 1
-        coefficient = 3 if self.inputs1_QParams.quant_bits.item() <= 4 else 2
-        denominator_out_data_width = (
-            self.inputs1_QParams.quant_bits.item() * coefficient
-        )
+        numerator_out_data_width = self.inputs1_QParams.quant_bits * 3 - 1
+        coefficient = 3 if self.inputs1_QParams.quant_bits <= 4 else 2
+        denominator_out_data_width = self.inputs1_QParams.quant_bits * coefficient
 
         return SoftmaxLUTDesign(
             name=name,
-            x_data_width=self.inputs1_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs1_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             dim_a=self.dim_a,
             dim_b=self.dim_b,
             dim_c=self.dim_c,
@@ -99,8 +97,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         tmp = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
 
         # 4. Identify quant_bits of tmp
-        coefficient = 3 if self.inputs2_QParams.quant_bits.item() <= 4 else 2
-        tmp_quant_bits = self.inputs2_QParams.quant_bits.item() * coefficient
+        coefficient = 3 if self.inputs2_QParams.quant_bits <= 4 else 2
+        tmp_quant_bits = self.inputs2_QParams.quant_bits * coefficient
 
         # get scale factor of tmp
         tmp_scale_factor = (1.0 - 0.0) / (
@@ -129,8 +127,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         q_numerator = tmp / (tmp_scale_factor * self.outputs_QParams.scale_factor)
         q_numerator = q_numerator.to(torch.int32)
         q_numerator = q_numerator.round_().clamp(
-            -(2 ** (self.inputs2_QParams.quant_bits.item() * 3 - 1)),
-            2 ** (self.inputs2_QParams.quant_bits.item() * 3 - 1) - 1,
+            -(2 ** (self.inputs2_QParams.quant_bits * 3 - 1)),
+            2 ** (self.inputs2_QParams.quant_bits * 3 - 1) - 1,
         )
         self.Qinput2QNumerator_LUT_dict = {}
         for i in range(len(q_numerator)):
@@ -169,12 +167,12 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         # 1. Compute q_inputs
         max_q_inputs = q_inputs.max(dim=-1, keepdim=True)[0]
         q_inputs = self.math_ops.intsub(
-            q_inputs, max_q_inputs, self.inputs2_QParams.quant_bits.item() + 1
+            q_inputs, max_q_inputs, self.inputs2_QParams.quant_bits + 1
         )
         q_inputs = self.math_ops.intadd(
             q_inputs,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits.item() + 1,
+            self.inputs2_QParams.quant_bits + 1,
         )
 
         indices = q_inputs - self.mapping_offset
@@ -184,11 +182,11 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
         q_denominator = q_denominator.sum(dim=-1, keepdim=True)  # sum(Q_t - Z_t)
 
         tmp = self.math_ops.int_division(
-            q_numerator, q_denominator, self.outputs_QParams.quant_bits.item() + 1
+            q_numerator, q_denominator, self.outputs_QParams.quant_bits + 1
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 
@@ -217,8 +215,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
                     "inputs1_QParams",
                     "prev_inputs1_QParams",
                 )
-                inherited_bits = self.inputs1_QParams.quant_bits.item()
-                if self.inputs2_QParams.quant_bits.item() != inherited_bits:
+                inherited_bits = self.inputs1_QParams.quant_bits
+                if self.inputs2_QParams.quant_bits != inherited_bits:
                     self.inputs2_QParams.set_quant_range(inherited_bits)
 
         max_input = inputs.max(dim=-1, keepdim=True)[0]

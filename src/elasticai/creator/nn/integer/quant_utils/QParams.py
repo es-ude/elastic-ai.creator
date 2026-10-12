@@ -1,4 +1,5 @@
-from typing import Protocol
+from enum import Enum
+from typing import Any, Protocol
 
 import torch
 import torch.nn as nn
@@ -12,20 +13,51 @@ from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
 from elasticai.creator.nn.integer.quant_utils.Observers import BaseObserver
 
 
+class QuantScheme(Enum):
+    """Quantization scheme: symmetric or asymmetric, signed or unsigned.
+
+    Symmetric schemes have a fixed zero point of 0. For 8 bits the integer
+    ranges are `[-128, 127]` (asymmetric signed), `[-127, 127]` (symmetric
+    signed), `[0, 255]` (asymmetric unsigned) and `[0, 254]` (symmetric
+    unsigned).
+    """
+
+    ASYMMETRIC_SIGNED = "asymmetric_signed"
+    SYMMETRIC_SIGNED = "symmetric_signed"
+    ASYMMETRIC_UNSIGNED = "asymmetric_unsigned"
+    SYMMETRIC_UNSIGNED = "symmetric_unsigned"
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Whether the scheme has a fixed zero point of 0."""
+        return self in (QuantScheme.SYMMETRIC_SIGNED, QuantScheme.SYMMETRIC_UNSIGNED)
+
+    @property
+    def is_signed(self) -> bool:
+        """Whether the scheme uses a signed integer range."""
+        return self in (QuantScheme.ASYMMETRIC_SIGNED, QuantScheme.SYMMETRIC_SIGNED)
+
+
 class QParams(nn.Module):
     """Quantization parameters for one tensor: scale factor, zero point, range.
 
     The float range is tracked by `observer`. The integer range follows from
-    `quant_bits`, `is_signed` and `is_symmetric`; for 8 bits it is
-    `[-128, 127]` (asymmetric signed), `[-127, 127]` (symmetric signed),
-    `[0, 255]` (asymmetric unsigned) or `[0, 254]` (symmetric unsigned).
+    `quant_bits` and `scheme` (see `QuantScheme`).
+
+    `quant_bits` is a plain `int` and is saved in the state dict as extra
+    state. State dicts that store it as a `quant_bits` tensor, as the former
+    `MPQParams.QParams` did, can still be loaded.
 
     Args:
         quant_bits: Bit width of the quantized values.
         observer: Observer that tracks the float range in its `min_float` and
             `max_float` buffers.
-        is_symmetric: Use a symmetric range with zero point 0.
-        is_signed: Use a signed integer range.
+        scheme: The quantization scheme.
+
+    Raises:
+        NotImplementedError: If `scheme` is `QuantScheme.SYMMETRIC_UNSIGNED`,
+            which is not usable yet (see the BUG note on
+            `SymmetricUnsignedQParams`).
     """
 
     min_float: torch.Tensor
@@ -36,19 +68,28 @@ class QParams(nn.Module):
     zero_point: torch.Tensor
     eps: torch.Tensor
 
+    observer: BaseObserver
+    quant_bits: int
+    scheme: QuantScheme
+    math_ops: MathOperations
+
     def __init__(
         self,
         quant_bits: int,
         observer: BaseObserver,
-        is_symmetric: bool,
-        is_signed: bool,
+        scheme: QuantScheme,
     ):
+        if scheme is QuantScheme.SYMMETRIC_UNSIGNED:
+            raise NotImplementedError(
+                "The symmetric unsigned scheme is broken: it quantizes negative "
+                "values to 0 and uses only half of the integer range. Use "
+                "QuantScheme.ASYMMETRIC_UNSIGNED instead."
+            )
         super().__init__()
 
         self.observer = observer
         self.quant_bits = quant_bits
-        self.is_symmetric = is_symmetric
-        self.is_signed = is_signed
+        self.scheme = scheme
 
         self.register_buffer(
             "min_float", torch.ones((1), dtype=torch.float32, requires_grad=False)
@@ -79,6 +120,16 @@ class QParams(nn.Module):
 
         self._calculate_quant_range()
         self.math_ops = MathOperations()
+
+    @property
+    def is_symmetric(self) -> bool:
+        """Whether the zero point is fixed to 0."""
+        return self.scheme.is_symmetric
+
+    @property
+    def is_signed(self) -> bool:
+        """Whether the integer range is signed."""
+        return self.scheme.is_signed
 
     def _calculate_quant_range(self):
         if self.is_signed:
@@ -210,6 +261,12 @@ class QParams(nn.Module):
         x_dq = x_q * scale_factor
         return x_dq.to(torch.float32).to(x_q.device)
 
+    def get_extra_state(self) -> dict[str, Any]:
+        return {"quant_bits": self.quant_bits}
+
+    def set_extra_state(self, state: dict[str, Any]) -> None:
+        self.set_quant_range(int(state["quant_bits"]))
+
     def _load_from_state_dict(
         self,
         state_dict,
@@ -233,6 +290,13 @@ class QParams(nn.Module):
             value.data = state_dict[prefix + key].data
             state_dict.pop(prefix + key)
 
+        # `quant_bits` is extra state now; older MPQ state dicts store a tensor.
+        # Restore it without recalculating the range loaded above.
+        if prefix + "_extra_state" in state_dict:
+            self.quant_bits = int(state_dict.pop(prefix + "_extra_state")["quant_bits"])
+        elif prefix + "quant_bits" in state_dict:
+            self.quant_bits = int(state_dict.pop(prefix + "quant_bits").item())
+
     def __str__(self):
         return ", ".join(
             [
@@ -240,6 +304,7 @@ class QParams(nn.Module):
                 f"max_float: {self.max_float.item():.6f}",
                 f"min_quant: {int(self.min_quant.item())}",
                 f"max_quant: {int(self.max_quant.item())}",
+                f"quant_bits: {self.quant_bits}",
                 f"scale_factor: {self.scale_factor.item():.10f}",
                 f"zero_point: {int(self.zero_point.item())}",
             ]
@@ -250,21 +315,21 @@ class AsymmetricSignedQParams(QParams):
     """Signed quantization parameters with a variable zero point."""
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
-        super().__init__(quant_bits, observer, is_symmetric=False, is_signed=True)
+        super().__init__(quant_bits, observer, QuantScheme.ASYMMETRIC_SIGNED)
 
 
 class SymmetricSignedQParams(QParams):
     """Signed quantization parameters with zero point 0."""
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
-        super().__init__(quant_bits, observer, is_symmetric=True, is_signed=True)
+        super().__init__(quant_bits, observer, QuantScheme.SYMMETRIC_SIGNED)
 
 
 class AsymmetricUnsignedQParams(QParams):
     """Unsigned quantization parameters with a variable zero point."""
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
-        super().__init__(quant_bits, observer, is_symmetric=False, is_signed=False)
+        super().__init__(quant_bits, observer, QuantScheme.ASYMMETRIC_UNSIGNED)
 
 
 # BUG: The symmetric unsigned scheme is broken. `calculate_symmetric_quant_params`
@@ -282,8 +347,8 @@ class AsymmetricUnsignedQParams(QParams):
 #     (dropping a code only matters for signed symmetric ranges),
 #   - clamp negative inputs deliberately and document it, or raise a
 #     `ValueError` in `update_quant_params` if `min_float < 0`,
-#   - remove the `NotImplementedError` below and rewrite the test with
-#     correct expected values.
+#   - remove the `NotImplementedError` in `QParams.__init__` and rewrite the
+#     test with correct expected values.
 class SymmetricUnsignedQParams(QParams):
     """Unsigned quantization parameters with zero point 0.
 
@@ -295,12 +360,7 @@ class SymmetricUnsignedQParams(QParams):
     """
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
-        # super().__init__(quant_bits, observer, is_symmetric=True, is_signed=False)
-        raise NotImplementedError(
-            "SymmetricUnsignedQParams is broken: it quantizes negative values to 0 "
-            "and uses only half of the integer range. Use AsymmetricUnsignedQParams "
-            "instead."
-        )
+        super().__init__(quant_bits, observer, QuantScheme.SYMMETRIC_UNSIGNED)
 
 
 class QParamsFactory(Protocol):

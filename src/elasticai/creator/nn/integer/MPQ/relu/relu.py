@@ -9,7 +9,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     MPQSupport,
     SimQuant,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -52,8 +52,8 @@ class ReLU(DesignCreatorModule, MPQSupport):
     def create_design(self, name: str) -> ReLUDesign:
         return ReLUDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             threshold=int(self.inputs_QParams.zero_point.detach()),
             clock_option=False,
             work_library_name="work",
