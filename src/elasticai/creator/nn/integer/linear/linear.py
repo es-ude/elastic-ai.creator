@@ -163,7 +163,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         if not self.weight_QParams.is_symmetric:
             q_weights = self.math_ops.intsub(
                 q_weights,
-                self.weight_QParams.zero_point,
+                self.weight_QParams.zero_point.cpu(),
                 self.weight_QParams.quant_bits + 1,
             )
         return q_weights
@@ -191,7 +191,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         q_bias = self.q_bias_QParams.quantize(self.bias).to("cpu")
         if not self.q_bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
-                q_bias, self.q_bias_QParams.zero_point, new_bias_quant_bits + 1
+                q_bias, self.q_bias_QParams.zero_point.cpu(), new_bias_quant_bits + 1
             )
         return q_bias
 
@@ -232,12 +232,15 @@ class Linear(DesignCreatorModule, nn.Linear):
         applied as a multiplication by `m_q` and a right shift by `m_q_shift`.
         Inputs and outputs are saved to `quant_data_dir`.
 
+        The computation runs on the CPU, whatever the device of the layer,
+        because torch has no integer matrix multiplication on CUDA or MPS.
+
         Args:
             q_inputs: Inputs quantized with `inputs_QParams`, dtype
                 `torch.int32`.
 
         Returns:
-            The quantized outputs, dtype `torch.int32`.
+            The quantized outputs, dtype `torch.int32`, on the CPU.
 
         Raises:
             RuntimeError: If the layer is in training mode or `precompute` has
@@ -250,10 +253,13 @@ class Linear(DesignCreatorModule, nn.Linear):
             raise RuntimeError("precompute must be called before int_forward")
         check_dtype("q_inputs", q_inputs, torch.int32)
 
+        q_inputs = q_inputs.cpu()
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_inputs = self.math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
+            q_inputs,
+            self.inputs_QParams.zero_point.cpu(),
+            self.inputs_QParams.quant_bits + 1,
         )
 
         tmp = self.math_ops.int_mac(
@@ -269,7 +275,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
+            tmp, self.outputs_QParams.zero_point.cpu(), self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

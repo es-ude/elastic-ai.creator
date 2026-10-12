@@ -737,3 +737,28 @@ def test_int_forward_without_precompute_raises(linear_layer, inputs) -> None:
 
     with pytest.raises(RuntimeError, match="precompute"):
         linear_layer.int_forward(linear_layer.inputs_QParams.quantize(inputs))
+
+
+def _accelerator() -> str | None:
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return None
+
+
+@pytest.mark.skipif(_accelerator() is None, reason="needs a CUDA or MPS device")
+def test_int_forward_on_accelerator_matches_cpu(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+    q_inputs = linear_layer.inputs_QParams.quantize(inputs)
+    expected = linear_layer.int_forward(q_inputs)
+    device = _accelerator()
+    linear_layer.to(device)
+    linear_layer.precompute()
+
+    actual = linear_layer.int_forward(q_inputs.to(device))
+
+    assert actual.device.type == "cpu"
+    assert torch.equal(actual, expected)
