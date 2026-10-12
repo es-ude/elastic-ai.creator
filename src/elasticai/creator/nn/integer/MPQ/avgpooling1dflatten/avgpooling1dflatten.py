@@ -16,7 +16,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     QParams,
 )
@@ -78,8 +78,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AVGPooling1dFlattenDesign:
         return AVGPooling1dFlattenDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             in_features=self.in_features,
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,
@@ -120,7 +120,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs = self.math_ops.intsub(
             q_inputs,
             self.inputs_QParams.zero_point,
-            self.inputs_QParams.quant_bits.item() + 1,
+            self.inputs_QParams.quant_bits + 1,
         )
 
         # assume that (batch_size, channels, seq_len) is the shape of q_inputs
@@ -133,7 +133,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
         q_outputs = q_outputs.squeeze(2)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
