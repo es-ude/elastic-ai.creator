@@ -84,7 +84,12 @@ class Linear(Design):
                 Capped at `out_features`.
             use_pipeline_template: Use the pipelined variant of the
                 parallelised template and its testbench.
+
+        Raises:
+            ValueError: If `unroll_factor` is smaller than 1.
         """
+        if unroll_factor < 1:
+            raise ValueError(f"unroll_factor must be at least 1, got {unroll_factor}")
         super().__init__(name=name)
 
         self._data_width = data_width

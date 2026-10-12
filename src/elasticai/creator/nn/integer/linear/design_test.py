@@ -596,3 +596,9 @@ def test_parallelised_template_with_one_input_feature_is_not_implemented() -> No
 
     with pytest.raises(NotImplementedError):
         design.save_to(InMemoryPath("linear_0", parent=None))
+
+
+@pytest.mark.parametrize("unroll_factor", [0, -1])
+def test_unroll_factor_below_one_raises(unroll_factor) -> None:
+    with pytest.raises(ValueError, match="unroll_factor"):
+        create_linear_design(unroll_factor=unroll_factor)

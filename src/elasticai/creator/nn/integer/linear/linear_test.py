@@ -682,3 +682,41 @@ def test_precompute_keeps_bias_QParams(linear_layer, inputs) -> None:
     assert torch.equal(linear_layer.bias_QParams.zero_point, zero_point)
     assert linear_layer.bias_QParams.quant_bits == quant_bits
     assert torch.equal(linear_layer.forward(inputs), outputs)
+
+
+def test_has_bias_by_default() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    assert layer.bias is not None
+
+
+def test_unroll_factor_below_one_raises() -> None:
+    with pytest.raises(ValueError, match="unroll_factor"):
+        Linear(
+            name="linear", in_features=3, out_features=2, quant_bits=8, unroll_factor=0
+        )
+
+
+def test_precompute_in_training_mode_raises(linear_layer) -> None:
+    linear_layer.train()
+
+    with pytest.raises(RuntimeError, match="eval mode"):
+        linear_layer.precompute()
+
+
+def test_int_forward_in_training_mode_raises(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+    linear_layer.train()
+
+    with pytest.raises(RuntimeError, match="eval mode"):
+        linear_layer.int_forward(linear_layer.inputs_QParams.quantize(inputs))
+
+
+def test_int_forward_without_precompute_raises(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+
+    with pytest.raises(RuntimeError, match="precompute"):
+        linear_layer.int_forward(linear_layer.inputs_QParams.quantize(inputs))
