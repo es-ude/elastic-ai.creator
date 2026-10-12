@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
@@ -33,3 +34,14 @@ def test_scaling_M_shift_limit():
     approx_M = m_q * (2 ** (-m_q_shift.item()))
     error = torch.abs((M - approx_M) / M)
     assert torch.all(error < 0.0001)
+
+
+@pytest.mark.parametrize("M", [0.0, -0.5])
+def test_scaling_M_rejects_non_positive(M):
+    with pytest.raises(ValueError, match="positive"):
+        scaling_M(torch.tensor([M], dtype=torch.float32))
+
+
+def test_scaling_M_rejects_value_that_rounds_to_zero():
+    with pytest.raises(ValueError, match="at least"):
+        scaling_M(torch.tensor([0.000001], dtype=torch.float32))

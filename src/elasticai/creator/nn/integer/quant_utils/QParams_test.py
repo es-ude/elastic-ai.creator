@@ -131,6 +131,16 @@ def test_dequantize():
     assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
 
 
+@pytest.mark.parametrize(
+    "x_q", [torch.tensor([1.0, 2.0]), torch.tensor([1, 2], dtype=torch.int64)]
+)
+def test_dequantize_rejects_non_int32(x_q):
+    qparams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+
+    with pytest.raises(TypeError):
+        qparams.dequantize(x_q)
+
+
 def test_state_dict():
     ASSSParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 

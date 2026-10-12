@@ -255,6 +255,7 @@ class QParams(nn.Module):
             TypeError: If `x_q` is not a `torch.Tensor` or does not have dtype
                 `torch.int32`.
         """
+        check_dtype("x_q", x_q, torch.int32)
         zero_point = self.zero_point.to(x_q.device)
         scale_factor = self.scale_factor.to(x_q.device)
         x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits + 1)

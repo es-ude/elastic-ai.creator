@@ -61,10 +61,10 @@ def calculate_asymmetric_quant_params(
 
 
 def calculate_symmetric_quant_params(
-    min_quant: torch.Tensor,
-    max_quant: torch.Tensor,
     min_float: torch.Tensor,
     max_float: torch.Tensor,
+    min_quant: torch.Tensor,
+    max_quant: torch.Tensor,
     eps: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Calculate scale factor and zero point for symmetric quantization.
@@ -74,16 +74,17 @@ def calculate_symmetric_quant_params(
     `[min_quant, max_quant]`. The zero point is always 0.
 
     Args:
-        min_quant: Smallest representable integer value.
-        max_quant: Largest representable integer value.
         min_float: Smallest observed float value.
         max_float: Largest observed float value.
+        min_quant: Smallest representable integer value.
+        max_quant: Largest representable integer value.
         eps: Lower bound for the scale factor, to avoid division by zero.
 
     Returns:
-        A tuple `(scale_factor, zero_point, min_float, max_float)`. The zero
-        point is a zero tensor of dtype `torch.int32`, and `min_float` and
-        `max_float` are the widened symmetric range `-m` and `m`.
+        A tuple `(scale_factor, zero_point, min_float, max_float)`. The scale
+        factor has dtype `torch.float32`, the zero point is a zero tensor of
+        dtype `torch.int32`, and `min_float` and `max_float` are the widened
+        symmetric range `-m` and `m`.
 
     Raises:
         TypeError: If an argument is not a `torch.Tensor`, or if a float
@@ -97,9 +98,8 @@ def calculate_symmetric_quant_params(
     min_float = -max_extent
 
     scale_factor = (max_float - min_float) / (max_quant.float() - min_quant.float())
-    scale_factor = torch.max(scale_factor, eps)
+    scale_factor = torch.max(scale_factor, eps).to(torch.float32)
 
-    zero_point = torch.zeros(scale_factor.size())
-    zero_point = zero_point.clone().detach().to(torch.int32)
+    zero_point = torch.zeros(scale_factor.size(), dtype=torch.int32)
 
     return scale_factor, zero_point, min_float, max_float
