@@ -71,6 +71,18 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.use_pipeline_template = use_pipeline_template
 
     def create_design(self, name: str) -> LinearDesign:
+        if not self.precomputed:
+            raise RuntimeError("precompute must be called before create_design")
+
+        # The hardware always adds a bias, so a layer without one gets a bias
+        # of zeros.
+        if self.q_bias is not None:
+            bias = self.q_bias.tolist()
+            z_b = int(self.bias_QParams.zero_point.item())
+        else:
+            bias = [0] * self.out_features
+            z_b = 0
+
         return LinearDesign(
             name=name,
             data_width=self.quant_bits,
@@ -78,14 +90,12 @@ class Linear(DesignCreatorModule, nn.Linear):
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist() if self.q_bias is not None else [],
+            bias=bias,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=int(self.inputs_QParams.zero_point.item()),
             z_w=int(self.weight_QParams.zero_point.item()),
-            z_b=int(self.bias_QParams.zero_point.item())
-            if self.bias is not None
-            else 0,
+            z_b=z_b,
             z_y=int(self.outputs_QParams.zero_point.item()),
             work_library_name="work",
             resource_option="distributed",

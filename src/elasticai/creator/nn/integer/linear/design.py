@@ -1,7 +1,5 @@
 from itertools import chain
 
-import numpy as np
-
 from elasticai.creator.file_generation.savable import Path
 from elasticai.creator.file_generation.template import (
     InProjectTemplate,
@@ -52,9 +50,9 @@ class Linear(Design):
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
-        self._m_q_data_width = (
-            int(np.ceil(np.log2(self._m_q))) + 1 if self._m_q != 0 else 1
-        )
+        # M_Q is converted with `to_signed`, so it needs one bit more than its
+        # magnitude. ceil(log2(m_q)) + 1 was one bit short for powers of 2.
+        self._m_q_data_width = int(self._m_q).bit_length() + 1
 
         self._z_x = z_x
         self._z_w = z_w
@@ -158,8 +156,8 @@ class Linear(Design):
                 if not self._use_parallelised_template:
                     file_name = "linear_2d_feature1.tpl.vhd"
                 else:
-                    assert self._num_dimensions == 1, (
-                        "Parallelised template for input with 1 feature is not supported"
+                    raise NotImplementedError(
+                        "The parallelised template does not support in_features=1"
                     )
             test_file_name = "linear_2d_tb.tpl.vhd"
             if self.lstm_use_pipeline_template:

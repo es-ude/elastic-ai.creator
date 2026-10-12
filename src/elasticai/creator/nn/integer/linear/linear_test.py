@@ -606,3 +606,31 @@ def test_num_dimensions_defaults_to_none() -> None:
     layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
 
     assert layer.num_dimensions is None
+
+
+def test_create_design_without_precompute_raises() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    with pytest.raises(RuntimeError, match="precompute"):
+        layer.create_design("linear")
+
+
+def test_create_design_without_bias_uses_zero_bias(tmp_path) -> None:
+    torch.manual_seed(0)
+    layer = Linear(
+        name="linear",
+        in_features=3,
+        out_features=2,
+        quant_bits=8,
+        bias=False,
+        quant_data_dir=str(tmp_path),
+    )
+    layer.train()
+    layer(torch.randn(4, 3))
+    layer.eval()
+    layer.precompute()
+
+    design = layer.create_design("linear")
+
+    assert design._bias == [0, 0]
+    assert design._z_b == 0

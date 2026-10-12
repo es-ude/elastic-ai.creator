@@ -3,6 +3,7 @@ import re
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 
 
 @pytest.fixture
@@ -62,7 +63,7 @@ entity linear_0 is
         Z_W : integer := 0;
         Z_B : integer := 0;
         Z_Y : integer := 0;
-        M_Q_DATA_WIDTH : integer := 2;
+        M_Q_DATA_WIDTH : integer := 3;
         Y_RESOURCE_OPTION : string := "distributed"
     );
     port (
@@ -553,3 +554,45 @@ begin
     end generate;
 end architecture rtl;"""
     assert expected_code == actual_code
+
+
+def create_linear_design(**kwargs) -> LinearDesign:
+    parameters = dict(
+        name="linear_0",
+        data_width=8,
+        in_features=3,
+        out_features=2,
+        weights=[[1, 2, 3], [4, 5, 6]],
+        bias=[1, 2],
+        m_q=1,
+        m_q_shift=1,
+        z_w=0,
+        z_b=0,
+        z_x=0,
+        z_y=0,
+        work_library_name="work",
+        resource_option="auto",
+    )
+    parameters.update(kwargs)
+    return LinearDesign(**parameters)
+
+
+@pytest.mark.parametrize(
+    "m_q, expected_width", [(0, 1), (1, 2), (2, 3), (3, 3), (4, 4), (5, 4), (255, 9)]
+)
+def test_m_q_data_width_fits_m_q_as_signed(m_q, expected_width) -> None:
+    design = create_linear_design(m_q=m_q)
+
+    assert design._m_q_data_width == expected_width
+
+
+def test_parallelised_template_with_one_input_feature_is_not_implemented() -> None:
+    design = create_linear_design(
+        in_features=1,
+        weights=[[1], [2]],
+        num_dimensions=1,
+        use_parallelised_template=True,
+    )
+
+    with pytest.raises(NotImplementedError):
+        design.save_to(InMemoryPath("linear_0", parent=None))
