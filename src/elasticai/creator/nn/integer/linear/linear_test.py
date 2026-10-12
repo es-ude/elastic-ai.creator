@@ -651,3 +651,18 @@ def test_int_forward_with_float_inputs_raises(linear_layer, inputs) -> None:
 
     with pytest.raises(TypeError, match="q_inputs"):
         linear_layer.int_forward(inputs)
+
+
+def test_parameters_are_created_on_device() -> None:
+    layer = Linear(
+        name="linear",
+        in_features=3,
+        out_features=2,
+        quant_bits=8,
+        bias=True,
+        device="meta",
+    )
+
+    assert layer.weight.device.type == "meta"
+    assert layer.bias.device.type == "meta"
+    assert layer.weight_QParams.scale_factor.device.type == "meta"

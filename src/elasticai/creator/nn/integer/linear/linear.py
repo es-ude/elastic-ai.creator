@@ -67,7 +67,7 @@ class Linear(DesignCreatorModule, nn.Linear):
                 `(num_dimensions, in_features)`. `None` for 1D inputs.
             quant_data_dir: Directory for the quantized inputs and outputs
                 saved by `int_forward`. `None` disables saving.
-            device: Device of the quantization parameters.
+            device: Device of the weights, bias and quantization parameters.
             enable_error_analysis: Also save the float outputs of `forward`
                 and the dequantized outputs of `int_forward`.
             use_parallelised_template: See `LinearDesign`.
@@ -78,7 +78,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             inputs_qparams_cls: Quantization scheme of the inputs.
             outputs_qparams_cls: Quantization scheme of the outputs.
         """
-        super().__init__(in_features, out_features, bias)
+        super().__init__(in_features, out_features, bias, device=device)
         self.num_dimensions = num_dimensions
 
         self.name = name
