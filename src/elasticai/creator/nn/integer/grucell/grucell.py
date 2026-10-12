@@ -186,10 +186,10 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-        q_h_prev: torch.IntTensor,
-        q_c_prev: torch.IntTensor = None,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+        q_h_prev: torch.Tensor,
+        q_c_prev: torch.Tensor = None,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -374,10 +374,10 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        h_prev: torch.FloatTensor,
+        inputs: torch.Tensor,
+        h_prev: torch.Tensor,
         given_inputs_QParams: torch.nn.Module,
-        c_prev: torch.FloatTensor = None,
+        c_prev: torch.Tensor = None,
         enable_simquant: bool = True,
     ) -> torch.Tensor:
         if enable_simquant:

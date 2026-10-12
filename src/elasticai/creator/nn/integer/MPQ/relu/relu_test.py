@@ -26,7 +26,7 @@ def eps():
 
 
 @pytest.fixture
-def inputs() -> torch.FloatTensor:
+def inputs() -> torch.Tensor:
     return torch.tensor([[1.0, -1.0, 0.0], [0.5, -0.5, 2.0]], dtype=torch.float32)
 
 

@@ -13,6 +13,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -79,9 +80,9 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs1: torch.IntTensor,  # inputs
-        q_inputs2: torch.IntTensor,  # h_prev
-    ) -> torch.IntTensor:
+        q_inputs1: torch.Tensor,  # inputs
+        q_inputs2: torch.Tensor,  # h_prev
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -117,12 +118,12 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs1: torch.FloatTensor,  # inputs
-        inputs2: torch.FloatTensor,  # h_prev
-        given_inputs1_QParams: torch.nn.Module = None,
-        given_inputs2_QParams: torch.nn.Module = None,
+        inputs1: torch.Tensor,  # inputs
+        inputs2: torch.Tensor,  # h_prev
+        given_inputs1_QParams: QParams | None = None,
+        given_inputs2_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs1_QParams is None:

@@ -122,10 +122,10 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_q: torch.IntTensor,
-        q_k: torch.IntTensor,
-        q_v: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_q: torch.Tensor,
+        q_k: torch.Tensor,
+        q_v: torch.Tensor,
+    ) -> torch.Tensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
@@ -162,14 +162,14 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        q: torch.FloatTensor,
-        k: torch.FloatTensor,
-        v: torch.FloatTensor,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
         given_inputs_q_QParams: object = None,
         given_inputs_k_QParams: object = None,
         given_inputs_v_QParams: object = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_q_QParams is not None:

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.vhdl.design.design import Design
 
 
@@ -11,8 +12,8 @@ class DesignCreatorModule(ABC, torch.nn.Module):
 
     @abstractmethod
     def forward(
-        self, inputs: torch.FloatTensor, given_inputs_QParams: torch.nn.Module = None
-    ) -> torch.FloatTensor: ...
+        self, inputs: torch.Tensor, given_inputs_QParams: QParams | None = None
+    ) -> torch.Tensor: ...
 
     @abstractmethod
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor: ...
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor: ...

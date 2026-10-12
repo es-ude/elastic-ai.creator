@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from elasticai.creator.nn.integer.MPQ.encoderlayer import EncoderLayer
 from elasticai.creator.nn.integer.MPQ.sequential import Sequential
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -58,7 +59,7 @@ class Encoder(nn.Module):
     def outputs_QParams(self):
         return self.sequential.submodules[-1].outputs_QParams
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_outputs = self.sequential.int_forward(q_inputs)
@@ -73,10 +74,10 @@ class Encoder(nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         outputs = self.sequential.forward(
             inputs,
             given_inputs_QParams=given_inputs_QParams,

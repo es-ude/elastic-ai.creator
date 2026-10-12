@@ -117,9 +117,9 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs1: torch.IntTensor,
-        q_inputs2: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs1: torch.Tensor,
+        q_inputs2: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -169,12 +169,12 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
 
     def forward(
         self,
-        inputs1: torch.FloatTensor,
-        inputs2: torch.FloatTensor,
+        inputs1: torch.Tensor,
+        inputs2: torch.Tensor,
         given_inputs1_QParams: object,
         given_inputs2_QParams: object,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         assert inputs1.ndim == 4, "Input must be a 4D tensor"
         assert inputs2.ndim == 4, "Input must be a 4D tensor"
         if enable_simquant:
