@@ -13,7 +13,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     QParams,
 )
@@ -76,9 +76,9 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AdditionDesign:
         return AdditionDesign(
             name=name,
-            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
-            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_1_data_width=self.inputs1_QParams.quant_bits,
+            x_2_data_width=self.inputs2_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             num_features=self.num_features,
             num_dimensions=self.num_dimensions,
             m_q_1=self.scale_factor_m_q_1.item(),
@@ -124,12 +124,12 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
-            self.inputs1_QParams.quant_bits.item() + 1,
+            self.inputs1_QParams.quant_bits + 1,
         )
         q_inputs2 = self.math_ops.intsub(
             q_inputs2,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits.item() + 1,
+            self.inputs2_QParams.quant_bits + 1,
         )
 
         q_inputs1 = simulate_bitshifting(
@@ -141,11 +141,11 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
         tmp = self.math_ops.intadd(
             q_inputs1,
             q_inputs2,
-            self.inputs2_QParams.quant_bits.item() + 2,
+            self.inputs2_QParams.quant_bits + 2,
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")

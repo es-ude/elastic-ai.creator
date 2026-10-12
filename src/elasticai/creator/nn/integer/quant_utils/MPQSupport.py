@@ -3,8 +3,16 @@ from typing import Literal
 import torch
 
 from elasticai.creator.nn.integer.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils import scaling_M, simulate_bitshifting
-from elasticai.creator.nn.integer.quant_utils.MPQParams import QParams
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
+
+# NOTE: Import the functions from their modules, not from the package. This
+#   module is imported while `quant_utils/__init__.py` is still running, so
+#   `from elasticai.creator.nn.integer.quant_utils import scaling_M` would bind
+#   the submodule `scaling_M.py` instead of the function.
+from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
+from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    simulate_bitshifting,
+)
 
 
 class MPQSupport:
@@ -15,10 +23,11 @@ class MPQSupport:
     input `QParams` and requantizes incoming integer values from the previous
     layer's parameters to its own.
 
-    The layer must provide `quantizable_elements`, `math_ops` and a
+    The layer must provide `name`, `quantizable_elements`, `math_ops` and a
     `<element>_QParams` attribute for each element.
     """
 
+    name: str
     quantizable_elements: list
     math_ops: MathOperations
 
@@ -34,6 +43,29 @@ class MPQSupport:
         ]
         for element in self.MPQ_elements:
             setattr(self, f"prev_{element}_QParams", None)
+
+    def _check_quant_bits_configured(
+        self, quant_bits_per_element: dict[str, int | None]
+    ) -> None:
+        """Raise an error if the config has no bit width for an element.
+
+        The bias is skipped, because its bit width is derived from the inputs
+        and weights.
+
+        Args:
+            quant_bits_per_element: Bit width per element as read from the
+                config, `None` where the config has no entry.
+
+        Raises:
+            ValueError: If an element other than `"bias"` has no bit width.
+        """
+        missing = [
+            f"{self.name}.{element}"
+            for element, quant_bits in quant_bits_per_element.items()
+            if quant_bits is None and element != "bias"
+        ]
+        if missing:
+            raise ValueError(f"Missing quant_bits in config for: {', '.join(missing)}")
 
     def _handle_input_QParams(
         self,
@@ -67,7 +99,7 @@ class MPQSupport:
         curr_q_inputs = self.math_ops.intsub(
             prev_q_inputs,
             prev_QParams.zero_point,
-            int(prev_QParams.quant_bits.item()) + 1,
+            prev_QParams.quant_bits + 1,
         )
 
         # (q_curr - z_curr) = s_prev/s_curr (q_prev - z_prev)
@@ -81,7 +113,7 @@ class MPQSupport:
         curr_q_inputs = self.math_ops.intadd(
             curr_q_inputs,
             curr_QParams.zero_point,
-            int(curr_QParams.quant_bits.item()) + 1,
+            curr_QParams.quant_bits + 1,
         )
         return curr_q_inputs
 

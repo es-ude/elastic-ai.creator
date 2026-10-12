@@ -5,6 +5,8 @@ from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObser
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     AsymmetricUnsignedQParams,
+    QParams,
+    QuantScheme,
     SymmetricSignedQParams,
     SymmetricUnsignedQParams,
 )
@@ -155,5 +157,59 @@ def test_str_separates_fields():
 
     assert str(qparams) == (
         "min_float: 1.000000, max_float: 1.000000, min_quant: -128, "
-        "max_quant: 127, scale_factor: 1.0000000000, zero_point: 0"
+        "max_quant: 127, quant_bits: 8, scale_factor: 1.0000000000, zero_point: 0"
     )
+
+
+@pytest.mark.parametrize(
+    "scheme, is_symmetric, is_signed",
+    [
+        (QuantScheme.ASYMMETRIC_SIGNED, False, True),
+        (QuantScheme.SYMMETRIC_SIGNED, True, True),
+        (QuantScheme.ASYMMETRIC_UNSIGNED, False, False),
+        (QuantScheme.SYMMETRIC_UNSIGNED, True, False),
+    ],
+)
+def test_QuantScheme_flags(scheme, is_symmetric, is_signed):
+    assert scheme.is_symmetric is is_symmetric
+    assert scheme.is_signed is is_signed
+
+
+def test_subclass_uses_scheme():
+    qparams = SymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+
+    assert qparams.scheme is QuantScheme.SYMMETRIC_SIGNED
+    assert qparams.is_symmetric
+    assert qparams.is_signed
+
+
+def test_QParams_with_symmetric_unsigned_scheme_is_not_implemented():
+    with pytest.raises(NotImplementedError):
+        QParams(8, GlobalMinMaxObserver(), QuantScheme.SYMMETRIC_UNSIGNED)
+
+
+def test_state_dict_restores_quant_bits():
+    qparams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+    qparams.update_quant_params(torch.tensor([-2.0, 0.5, 1.0], dtype=torch.float32))
+    qparams.set_quant_range(4)
+
+    loaded = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+    loaded.load_state_dict(qparams.state_dict())
+
+    assert loaded.quant_bits == 4
+    assert torch.equal(loaded.min_quant, qparams.min_quant)
+    assert torch.equal(loaded.max_quant, qparams.max_quant)
+
+
+def test_loads_state_dict_with_quant_bits_tensor():
+    # State dicts of the former MPQParams.QParams store quant_bits as a tensor.
+    qparams = AsymmetricSignedQParams(quant_bits=4, observer=GlobalMinMaxObserver())
+    state_dict = qparams.state_dict()
+    del state_dict["_extra_state"]
+    state_dict["quant_bits"] = torch.tensor([4], dtype=torch.int32)
+
+    loaded = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
+    loaded.load_state_dict(state_dict)
+
+    assert loaded.quant_bits == 4
+    assert torch.equal(loaded.max_quant, torch.tensor([7], dtype=torch.int32))
