@@ -33,7 +33,7 @@ class Linear(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
-        num_dimensions: int = None,
+        num_dimensions: int | None = None,
         use_parallelised_template: bool = False,
         unroll_factor: int = 1,
         use_pipeline_template: bool = False,

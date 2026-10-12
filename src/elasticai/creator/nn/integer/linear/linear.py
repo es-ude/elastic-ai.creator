@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer._dtypes import FLOAT_DTYPES, check_dtype
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations import MathOperations
@@ -62,8 +63,8 @@ class Linear(DesignCreatorModule, nn.Linear):
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
-            m_q=self.scale_factor_m_q.item(),
-            m_q_shift=self.scale_factor_m_q_shift.item(),
+            m_q=int(self.scale_factor_m_q.item()),
+            m_q_shift=int(self.scale_factor_m_q_shift.item()),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
             z_b=self.bias_QParams.zero_point.item(),
@@ -75,7 +76,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             use_pipeline_template=self.use_pipeline_template,
         )
 
-    def _get_quantized_weights(self) -> torch.IntTensor:
+    def _get_quantized_weights(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -87,7 +88,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.IntTensor:
+    def _get_quantized_bias(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -124,10 +125,11 @@ class Linear(DesignCreatorModule, nn.Linear):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
+        check_dtype("q_inputs", q_inputs, torch.int32)
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
@@ -163,10 +165,11 @@ class Linear(DesignCreatorModule, nn.Linear):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_inputs_QParams: torch.nn.Module = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
+        check_dtype("inputs", inputs, *FLOAT_DTYPES)
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

@@ -6,6 +6,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.sequential import Sequential
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -64,7 +65,7 @@ class Encoder(nn.Module):
 
         self.precomputed = False
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
         q_outputs = self.sequential.int_forward(q_inputs)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -78,10 +79,10 @@ class Encoder(nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is not None:
