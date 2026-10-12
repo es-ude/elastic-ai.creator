@@ -634,3 +634,20 @@ def test_create_design_without_bias_uses_zero_bias(tmp_path) -> None:
 
     assert design._bias == [0, 0]
     assert design._z_b == 0
+
+
+def test_forward_with_int_inputs_raises() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    with pytest.raises(TypeError, match="inputs"):
+        layer(torch.ones(4, 3, dtype=torch.int32))
+
+
+def test_int_forward_with_float_inputs_raises(linear_layer, inputs) -> None:
+    linear_layer.train()
+    linear_layer(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    with pytest.raises(TypeError, match="q_inputs"):
+        linear_layer.int_forward(inputs)

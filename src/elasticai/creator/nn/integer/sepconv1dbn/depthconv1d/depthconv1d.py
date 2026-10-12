@@ -16,6 +16,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.sepconv1dbn.depthconv1d.design import (
     DepthConv1d as DepthConv1dDesign,
 )
@@ -80,7 +81,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             resource_option="auto",
         )
 
-    def _get_quantized_weights(self) -> torch.IntTensor:
+    def _get_quantized_weights(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -92,7 +93,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.IntTensor:
+    def _get_quantized_bias(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -129,8 +130,8 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -177,10 +178,10 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

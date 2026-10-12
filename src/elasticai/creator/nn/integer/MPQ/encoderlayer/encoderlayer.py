@@ -138,8 +138,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
@@ -182,10 +182,10 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_inputs_QParams: object = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         mha_outputs, mha_attns = self.mha.forward(
             q=inputs,
             k=inputs,

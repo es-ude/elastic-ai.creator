@@ -114,8 +114,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         )
 
     def _get_quantized_weights(
-        self, weight: torch.FloatTensor, weight_QParams: QParams
-    ) -> torch.IntTensor:
+        self, weight: torch.Tensor, weight_QParams: QParams
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
@@ -129,11 +129,11 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
     def _get_quantized_bias(
         self,
-        bias: torch.FloatTensor,
+        bias: torch.Tensor,
         bias_QParams: QParams,
-        given_quant_scale: torch.FloatTensor,
+        given_quant_scale: torch.Tensor,
         given_quant_bits: int,
-    ) -> torch.IntTensor:
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
 
         bias_QParams.set_scale_factor(given_quant_scale)
@@ -182,8 +182,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -223,10 +223,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_inputs_QParams: object,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(
