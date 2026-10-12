@@ -327,9 +327,26 @@ def test_use_given_inputs_QParams_in_forward(linear_layer, inputs) -> None:
     linear_layer.train()
     linear_layer.forward(inputs, given_inputs_QParams)
 
-    expected_inputs_QParams = given_inputs_QParams
     actual_inputs_QParams = linear_layer.inputs_QParams
-    assert expected_inputs_QParams == actual_inputs_QParams
+    assert actual_inputs_QParams.quant_bits == given_inputs_QParams.quant_bits
+    assert torch.equal(
+        actual_inputs_QParams.scale_factor, given_inputs_QParams.scale_factor
+    )
+    assert torch.equal(
+        actual_inputs_QParams.zero_point, given_inputs_QParams.zero_point
+    )
+
+
+def test_given_inputs_QParams_are_not_shared(linear_layer, inputs) -> None:
+    given_inputs_QParams = AsymmetricSignedQParams(
+        quant_bits=6, observer=GlobalMinMaxObserver()
+    )
+    linear_layer.train()
+
+    linear_layer.forward(inputs, given_inputs_QParams)
+
+    assert linear_layer.inputs_QParams is not given_inputs_QParams
+    assert all(module is not given_inputs_QParams for module in linear_layer.modules())
 
 
 def test_update_quant_params_of_inputs_QParams_in_forward(

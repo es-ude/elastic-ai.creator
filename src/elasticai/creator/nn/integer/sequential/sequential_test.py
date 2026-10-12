@@ -135,14 +135,15 @@ def test_QParams_transfering_in_forward(sequential_instance, inputs):
     sequential_instance.train()
     _ = sequential_instance(inputs)
 
-    assert (
-        sequential_instance.submodules[1].inputs_QParams
-        == sequential_instance.submodules[0].outputs_QParams
-    )
-    assert (
-        sequential_instance.submodules[2].inputs_QParams
-        == sequential_instance.submodules[1].outputs_QParams
-    )
+    submodules = sequential_instance.submodules
+    for previous, current in zip(submodules, submodules[1:]):
+        assert current.inputs_QParams.quant_bits == previous.outputs_QParams.quant_bits
+        assert torch.equal(
+            current.inputs_QParams.scale_factor, previous.outputs_QParams.scale_factor
+        )
+        assert torch.equal(
+            current.inputs_QParams.zero_point, previous.outputs_QParams.zero_point
+        )
 
 
 def test_precompute(sequential_instance, inputs):

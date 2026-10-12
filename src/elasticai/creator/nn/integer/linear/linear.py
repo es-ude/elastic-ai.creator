@@ -294,8 +294,8 @@ class Linear(DesignCreatorModule, nn.Linear):
             inputs: Float inputs of shape `(..., in_features)`.
             given_inputs_QParams: Quantization parameters of the inputs,
                 usually the output parameters of the previous layer. If given
-                in training mode, they replace `inputs_QParams` instead of
-                being learned from `inputs`.
+                in training mode, a copy of them replaces `inputs_QParams`
+                instead of learning them from `inputs`.
             enable_simquant: Simulate quantization of inputs, weights, bias
                 and outputs. If `False`, the layer acts like `nn.Linear`.
 
@@ -311,7 +311,10 @@ class Linear(DesignCreatorModule, nn.Linear):
                 if given_inputs_QParams is None:
                     self.inputs_QParams.update_quant_params(inputs)
                 else:
-                    self.inputs_QParams = given_inputs_QParams
+                    # Copy instead of assigning, so that the previous layer's
+                    # QParams are not registered as a submodule of this
+                    # layer too, and the two layers do not share one module.
+                    self.inputs_QParams = copy.deepcopy(given_inputs_QParams)
 
                 self.weight_QParams.update_quant_params(self.weight)
                 if self.bias is not None:
