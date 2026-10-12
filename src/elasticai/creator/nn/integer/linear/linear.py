@@ -22,6 +22,18 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Linear(DesignCreatorModule, nn.Linear):
+    """Linear layer with quantization-aware training and integer inference.
+
+    The layer has three modes:
+
+    - `forward` with `enable_simquant=True` simulates quantization of inputs,
+      weights, bias and outputs. In training mode it also updates their
+      quantization parameters.
+    - `int_forward` runs integer-only inference on quantized inputs, as the
+      hardware does. Call `precompute` first.
+    - `create_design` creates the VHDL design. Call `precompute` first.
+    """
+
     def __init__(
         self,
         *,
@@ -42,6 +54,30 @@ class Linear(DesignCreatorModule, nn.Linear):
         inputs_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
         outputs_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
     ):
+        """Create the layer.
+
+        Args:
+            name: Name of the layer, used for the VHDL entity and the saved
+                quantization data.
+            in_features: Number of input features.
+            out_features: Number of output features.
+            quant_bits: Bit width of inputs, outputs and weights.
+            bias: Whether the layer has a bias.
+            num_dimensions: Number of input vectors for 2D inputs of shape
+                `(num_dimensions, in_features)`. `None` for 1D inputs.
+            quant_data_dir: Directory for the quantized inputs and outputs
+                saved by `int_forward`. `None` disables saving.
+            device: Device of the quantization parameters.
+            enable_error_analysis: Also save the float outputs of `forward`
+                and the dequantized outputs of `int_forward`.
+            use_parallelised_template: See `LinearDesign`.
+            unroll_factor: See `LinearDesign`.
+            use_pipeline_template: See `LinearDesign`.
+            weight_qparams_cls: Quantization scheme of the weights.
+            bias_qparams_cls: Quantization scheme of the bias.
+            inputs_qparams_cls: Quantization scheme of the inputs.
+            outputs_qparams_cls: Quantization scheme of the outputs.
+        """
         super().__init__(in_features, out_features, bias)
         self.num_dimensions = num_dimensions
 
@@ -72,6 +108,14 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.use_pipeline_template = use_pipeline_template
 
     def create_design(self, name: str) -> LinearDesign:
+        """Create the VHDL design from the precomputed integer parameters.
+
+        Args:
+            name: Name of the VHDL entity.
+
+        Raises:
+            RuntimeError: If `precompute` has not been called.
+        """
         if not self.precomputed:
             raise RuntimeError("precompute must be called before create_design")
 
@@ -106,6 +150,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         )
 
     def _get_quantized_weights(self) -> torch.Tensor:
+        """Quantize the weights and subtract their zero point."""
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -118,6 +163,13 @@ class Linear(DesignCreatorModule, nn.Linear):
         return q_weights
 
     def _get_quantized_bias(self) -> torch.Tensor:
+        """Quantize the bias with the scale of the accumulator.
+
+        The bias is added to the accumulator of `(x - z_x) @ (w - z_w).T`, so
+        it uses the scale factor `s_x * s_w`, zero point 0 and the bit width
+        `(x_bits + 1) + (w_bits + 1)`. This overwrites the quantization
+        parameters of `bias_QParams`.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -136,6 +188,12 @@ class Linear(DesignCreatorModule, nn.Linear):
         return q_bias
 
     def precompute(self) -> None:
+        """Compute the integer parameters for `int_forward` and `create_design`.
+
+        Quantizes weights and bias and approximates the requantization scale
+        `M = s_x * s_w / s_y` by `m_q * 2**-m_q_shift`. Must be called in eval
+        mode, after training.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
         if self.bias is not None:
@@ -156,6 +214,22 @@ class Linear(DesignCreatorModule, nn.Linear):
         self,
         q_inputs: torch.Tensor,
     ) -> torch.Tensor:
+        """Run integer-only inference, as the hardware does.
+
+        Computes `y = ((x - z_x) @ (w - z_w).T + b) * M + z_y`, with `M`
+        applied as a multiplication by `m_q` and a right shift by `m_q_shift`.
+        Inputs and outputs are saved to `quant_data_dir`.
+
+        Args:
+            q_inputs: Inputs quantized with `inputs_QParams`, dtype
+                `torch.int32`.
+
+        Returns:
+            The quantized outputs, dtype `torch.int32`.
+
+        Raises:
+            TypeError: If `q_inputs` is not a `torch.int32` tensor.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
         check_dtype("q_inputs", q_inputs, torch.int32)
@@ -198,6 +272,23 @@ class Linear(DesignCreatorModule, nn.Linear):
         given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
     ) -> torch.Tensor:
+        """Apply the layer to float inputs, optionally simulating quantization.
+
+        Args:
+            inputs: Float inputs of shape `(..., in_features)`.
+            given_inputs_QParams: Quantization parameters of the inputs,
+                usually the output parameters of the previous layer. If given
+                in training mode, they replace `inputs_QParams` instead of
+                being learned from `inputs`.
+            enable_simquant: Simulate quantization of inputs, weights, bias
+                and outputs. If `False`, the layer acts like `nn.Linear`.
+
+        Returns:
+            The float outputs of shape `(..., out_features)`.
+
+        Raises:
+            TypeError: If `inputs` does not have a floating-point dtype.
+        """
         check_dtype("inputs", inputs, *FLOAT_DTYPES)
         if enable_simquant:
             if self.training:

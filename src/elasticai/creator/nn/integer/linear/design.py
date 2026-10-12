@@ -15,6 +15,25 @@ from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class Linear(Design):
+    """VHDL design of an integer-only linear layer.
+
+    The hardware computes `y = ((x - z_x) @ (w - z_w).T + b) * M + z_y`, where
+    `M` is approximated by `m_q * 2**-m_q_shift`. Weights and bias are stored
+    in ROMs, and the layer uses the buffered interface (`x`, `x_address`, `y`,
+    `y_address`, `enable`, `done`, `clock`).
+
+    Depending on `num_dimensions`, `in_features` and the template options, one
+    of these templates is used:
+
+    - `linear.tpl.vhd`: 1D inputs (`num_dimensions is None`).
+    - `linear_2d.tpl.vhd`: 2D inputs.
+    - `linear_2d_feature1.tpl.vhd`: 2D inputs with `in_features == 1`.
+    - `linear_2d_parallel.tpl.vhd`: 2D inputs, `unroll_factor` output
+      features computed in parallel.
+    - `linear_2d_parallel_rdy.tpl.vhd`: like the parallel template, but
+      pipelined.
+    """
+
     def __init__(
         self,
         name: str,
@@ -36,6 +55,36 @@ class Linear(Design):
         unroll_factor: int = 1,
         use_pipeline_template: bool = False,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of the inputs, outputs and weights.
+            in_features: Number of input features.
+            out_features: Number of output features.
+            weights: Quantized weights of shape `(out_features, in_features)`,
+                with the zero point `z_w` already subtracted.
+            bias: Quantized bias of length `out_features`, with the zero point
+                `z_b` already subtracted. Pass zeros for a layer without bias.
+            m_q: Integer multiplier of the requantization scale `M`.
+            m_q_shift: Right shift of the requantization scale `M`.
+            z_w: Zero point of the weights.
+            z_b: Zero point of the bias.
+            z_x: Zero point of the inputs.
+            z_y: Zero point of the outputs.
+            work_library_name: Name of the VHDL library the design is
+                compiled into.
+            resource_option: Resource type used for the ROMs, e.g.
+                `"distributed"`.
+            num_dimensions: Number of input vectors for 2D inputs of shape
+                `(num_dimensions, in_features)`. `None` for 1D inputs.
+            use_parallelised_template: Compute `unroll_factor` output features
+                in parallel. Only supported for 2D inputs.
+            unroll_factor: Number of output features computed in parallel.
+                Capped at `out_features`.
+            use_pipeline_template: Use the pipelined variant of the
+                parallelised template and its testbench.
+        """
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -78,6 +127,7 @@ class Linear(Design):
 
     @property
     def port(self) -> Port:
+        """Buffered port with `x_count` inputs and `y_count` outputs."""
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
@@ -86,6 +136,15 @@ class Linear(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer, its weight and bias ROMs, a RAM and a testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+
+        Raises:
+            NotImplementedError: If the parallelised template is used with
+                2D inputs and `in_features == 1`.
+        """
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
         if not self._use_parallelised_template:
@@ -222,4 +281,5 @@ class Linear(Design):
 
 
 def _flatten_params(params: list[list[int]]) -> list[int]:
+    """Flatten a weight matrix row by row."""
     return list(chain(*params))
