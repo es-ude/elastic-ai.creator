@@ -762,3 +762,31 @@ def test_int_forward_on_accelerator_matches_cpu(linear_layer, inputs) -> None:
 
     assert actual.device.type == "cpu"
     assert torch.equal(actual, expected)
+
+
+def test_create_design_with_other_inputs_quant_bits_raises(linear_layer, inputs):
+    given_inputs_QParams = AsymmetricSignedQParams(
+        quant_bits=6, observer=GlobalMinMaxObserver()
+    )
+    linear_layer.train()
+    linear_layer.forward(inputs, given_inputs_QParams)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    with pytest.raises(ValueError, match="inputs with 8 bits, got 6"):
+        linear_layer.create_design("linear")
+
+
+def test_create_design_uses_work_library_and_resource_option(
+    linear_layer, inputs
+) -> None:
+    linear_layer.work_library_name = "lib"
+    linear_layer.resource_option = "block"
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    design = linear_layer.create_design("linear")
+
+    assert design._work_library_name == "lib"
+    assert design._resource_option == "block"

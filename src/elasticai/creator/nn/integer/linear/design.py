@@ -1,3 +1,4 @@
+import warnings
 from itertools import chain
 
 from elasticai.creator.file_generation.savable import Path
@@ -81,7 +82,7 @@ class Linear(Design):
             use_parallelised_template: Compute `unroll_factor` output features
                 in parallel. Only supported for 2D inputs.
             unroll_factor: Number of output features computed in parallel.
-                Capped at `out_features`.
+                Capped at `out_features`, with a warning.
             use_pipeline_template: Use the pipelined variant of the
                 parallelised template and its testbench.
 
@@ -97,10 +98,13 @@ class Linear(Design):
         self._out_features = out_features
         self._num_dimensions = num_dimensions
         self._use_parallelised_template = use_parallelised_template
-        if out_features < unroll_factor:
-            self._unroll_factor = out_features
-        else:
-            self._unroll_factor = unroll_factor
+        if unroll_factor > out_features:
+            warnings.warn(
+                f"unroll_factor {unroll_factor} is larger than out_features "
+                f"{out_features} and is capped at {out_features}",
+                stacklevel=2,
+            )
+        self._unroll_factor = min(unroll_factor, out_features)
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -115,6 +119,10 @@ class Linear(Design):
 
         self._weights = [[w + self._z_w for w in row] for row in weights]
         self._bias = [b + self._z_b for b in bias]
+        # The templates multiply DATA_WIDTH + 1 bit inputs with DATA_WIDTH + 1
+        # bit weights and add the bias to the product, so the bias has twice
+        # that width.
+        self._bias_data_width = 2 * (data_width + 1)
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
@@ -128,7 +136,7 @@ class Linear(Design):
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
-        self.lstm_use_pipeline_template = use_pipeline_template
+        self._use_pipeline_template = use_pipeline_template
 
     @property
     def port(self) -> Port:
@@ -152,49 +160,29 @@ class Linear(Design):
         """
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
-        if not self._use_parallelised_template:
-            template_parameters = dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                m_q_data_width=str(self._m_q_data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                z_x=str(self._z_x),
-                z_w=str(self._z_w),
-                z_b=str(self._z_b),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-            )
-        else:
-            template_parameters = dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                m_q_data_width=str(self._m_q_data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                z_x=str(self._z_x),
-                z_w=str(self._z_w),
-                z_b=str(self._z_b),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-                unroll_factor=str(self._unroll_factor),
-            )
+        template_parameters: dict[str, str | list[str]] = dict(
+            name=self.name,
+            x_addr_width=str(self._x_addr_width),
+            y_addr_width=str(self._y_addr_width),
+            data_width=str(self._data_width),
+            m_q_data_width=str(self._m_q_data_width),
+            in_features=str(self._in_features),
+            out_features=str(self._out_features),
+            z_x=str(self._z_x),
+            z_w=str(self._z_w),
+            z_b=str(self._z_b),
+            z_y=str(self._z_y),
+            m_q=str(self._m_q),
+            m_q_shift=str(self._m_q_shift),
+            weights_rom_name=rom_name["weights"],
+            bias_rom_name=rom_name["bias"],
+            work_library_name=self._work_library_name,
+            resource_option=self._resource_option,
+        )
+        if self._use_parallelised_template:
+            template_parameters["unroll_factor"] = str(self._unroll_factor)
 
-        test_template_parameters = dict(
+        test_template_parameters: dict[str, str | list[str]] = dict(
             name=self.name,
             x_addr_width=str(self._x_addr_width),
             y_addr_width=str(self._y_addr_width),
@@ -212,7 +200,7 @@ class Linear(Design):
                 if not self._use_parallelised_template:
                     file_name = "linear_2d.tpl.vhd"
                 else:
-                    if self.lstm_use_pipeline_template:
+                    if self._use_pipeline_template:
                         file_name = "linear_2d_parallel_rdy.tpl.vhd"
                     else:
                         file_name = "linear_2d_parallel.tpl.vhd"
@@ -224,7 +212,7 @@ class Linear(Design):
                         "The parallelised template does not support in_features=1"
                     )
             test_file_name = "linear_2d_tb.tpl.vhd"
-            if self.lstm_use_pipeline_template:
+            if self._use_pipeline_template:
                 test_file_name = (  # override the test file name for pipeline template
                     "linear_2d_parallel_rdy_tb.tpl.vhd"
                 )
@@ -249,7 +237,7 @@ class Linear(Design):
 
             rom_bias = Rom(
                 name=rom_name["bias"],
-                data_width=(self._data_width + 1) * 2,
+                data_width=self._bias_data_width,
                 values_as_integers=self._bias,
             )
             rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
@@ -265,7 +253,7 @@ class Linear(Design):
 
             rom_bias = MultiValueRom(
                 name=rom_name["bias"],
-                data_width=(self._data_width + 1) * 2,
+                data_width=self._bias_data_width,
                 values_as_integers=self._bias,
                 number_per_row=1,  # for bias, we only have one value per row
                 unroll_factor=self._unroll_factor,

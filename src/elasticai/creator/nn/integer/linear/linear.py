@@ -51,6 +51,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         use_parallelised_template: bool = False,
         unroll_factor: int = 1,
         use_pipeline_template: bool = False,
+        work_library_name: str = "work",
+        resource_option: str = "distributed",
         weight_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
         bias_qparams_cls: QParamsFactory = SymmetricSignedQParams,
         inputs_qparams_cls: QParamsFactory = AsymmetricSignedQParams,
@@ -75,6 +77,8 @@ class Linear(DesignCreatorModule, nn.Linear):
             use_parallelised_template: See `LinearDesign`.
             unroll_factor: See `LinearDesign`.
             use_pipeline_template: See `LinearDesign`.
+            work_library_name: See `LinearDesign`.
+            resource_option: See `LinearDesign`.
             weight_qparams_cls: Quantization scheme of the weights.
             bias_qparams_cls: Quantization scheme of the bias.
             inputs_qparams_cls: Quantization scheme of the inputs.
@@ -113,6 +117,8 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.use_parallelised_template = use_parallelised_template
         self.unroll_factor = unroll_factor
         self.use_pipeline_template = use_pipeline_template
+        self.work_library_name = work_library_name
+        self.resource_option = resource_option
 
     def create_design(self, name: str) -> LinearDesign:
         """Create the VHDL design from the precomputed integer parameters.
@@ -122,9 +128,24 @@ class Linear(DesignCreatorModule, nn.Linear):
 
         Raises:
             RuntimeError: If `precompute` has not been called.
+            ValueError: If inputs, weights or outputs are not quantized with
+                `quant_bits` bits.
         """
         if not self.precomputed:
             raise RuntimeError("precompute must be called before create_design")
+        # The hardware uses one data width for inputs, weights and outputs, and
+        # a bias width of 2 * (data_width + 1), which matches the bias bit
+        # width (x_bits + 1) + (w_bits + 1) only if both are `quant_bits`.
+        for element, qparams in [
+            ("inputs", self.inputs_QParams),
+            ("weights", self.weight_QParams),
+            ("outputs", self.outputs_QParams),
+        ]:
+            if qparams.quant_bits != self.quant_bits:
+                raise ValueError(
+                    f"The hardware needs {element} with {self.quant_bits} bits, "
+                    f"got {qparams.quant_bits}"
+                )
 
         # The hardware always adds a bias, so a layer without one gets a bias
         # of zeros.
@@ -149,8 +170,8 @@ class Linear(DesignCreatorModule, nn.Linear):
             z_w=int(self.weight_QParams.zero_point.item()),
             z_b=z_b,
             z_y=int(self.outputs_QParams.zero_point.item()),
-            work_library_name="work",
-            resource_option="distributed",
+            work_library_name=self.work_library_name,
+            resource_option=self.resource_option,
             use_parallelised_template=self.use_parallelised_template,
             unroll_factor=self.unroll_factor,
             use_pipeline_template=self.use_pipeline_template,
@@ -335,11 +356,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             weight = self.weight
             bias = self.bias
 
-        outputs = (
-            F.linear(inputs, weight, bias)
-            if bias is not None
-            else F.linear(inputs, weight)
-        )
+        outputs = F.linear(inputs, weight, bias)
 
         if enable_simquant:
             if self.training:

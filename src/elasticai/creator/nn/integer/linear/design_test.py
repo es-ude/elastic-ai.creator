@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 import pytest
 
@@ -556,8 +557,8 @@ end architecture rtl;"""
     assert expected_code == actual_code
 
 
-def create_linear_design(**kwargs) -> LinearDesign:
-    parameters = dict(
+def create_linear_design(**kwargs: Any) -> LinearDesign:
+    parameters: dict[str, Any] = dict(
         name="linear_0",
         data_width=8,
         in_features=3,
@@ -602,3 +603,10 @@ def test_parallelised_template_with_one_input_feature_is_not_implemented() -> No
 def test_unroll_factor_below_one_raises(unroll_factor) -> None:
     with pytest.raises(ValueError, match="unroll_factor"):
         create_linear_design(unroll_factor=unroll_factor)
+
+
+def test_unroll_factor_above_out_features_is_capped_with_warning() -> None:
+    with pytest.warns(UserWarning, match="capped at 2"):
+        design = create_linear_design(unroll_factor=5)
+
+    assert design._unroll_factor == 2
