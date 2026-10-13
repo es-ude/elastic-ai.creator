@@ -111,17 +111,21 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             )
         return q_bias
 
-    def precompute(self) -> None:
-        assert not self.training, "int_forward should be called in eval mode"
-
+    def _fold_bn(self):
         std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)
 
-        gamma_ = self.bn1d.weight / std
-        fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
+        gamma = self.bn1d.weight / std
+        fused_weight = self.conv1d.weight * gamma.reshape(-1, 1, 1)
         fused_bias = (
-            gamma_ * self.conv1d.bias - gamma_ * self.bn1d.running_mean + self.bn1d.bias
+            gamma * self.conv1d.bias - gamma * self.bn1d.running_mean + self.bn1d.bias
         )
+        return fused_weight, fused_bias
 
+    def precompute(self) -> None:
+        assert not self.training, "int_forward should be called in eval mode"
+        fused_weight, fused_bias = self._fold_bn()
+        self.weight_QParams.update_quant_params(fused_weight)
+        self.bias_QParams.update_quant_params(fused_bias)
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
         self.tmp_quant_bits = (
             self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1
