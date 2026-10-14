@@ -1,3 +1,5 @@
+import copy
+
 import torch
 from torch import nn
 
@@ -14,6 +16,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -121,7 +124,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.modified_weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item(),
+            z_b=self.q_bias_zero_point,
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
@@ -145,21 +148,27 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
     def _get_quantized_bias(
         self,
         bias: torch.Tensor,
-        bias_QParams: nn.Module,
+        bias_QParams: QParams,
         given_quant_scale: torch.Tensor,
         given_quant_bits: int,
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, QParams]:
         """Quantize `bias` with the given scale, zero point 0 and bit width.
 
-        This overwrites the quantization parameters of `bias_QParams`.
+        The bias is quantized with a copy of `bias_QParams`, so that
+        `bias_QParams` keeps the parameters learned in training and `forward`
+        gives the same outputs before and after `precompute`.
+
+        Returns:
+            The quantized bias and the QParams it was quantized with.
         """
         assert not self.training, "int_forward should be called in eval mode"
 
-        bias_QParams.set_scale_factor(given_quant_scale)
-        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(given_quant_bits)
-        q_bias = bias_QParams.quantize(bias).to("cpu")
-        return q_bias
+        q_bias_QParams = copy.deepcopy(bias_QParams)
+        q_bias_QParams.set_scale_factor(given_quant_scale)
+        q_bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
+        q_bias_QParams.set_quant_range(given_quant_bits)
+        q_bias = q_bias_QParams.quantize(bias).to("cpu")
+        return q_bias, q_bias_QParams
 
     def precompute(self):
         """Compute the integer parameters for `int_forward` and `create_design`.
@@ -188,12 +197,15 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         new_bias_QParms_scale = (
             self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
         )
-        self.q_bias = self._get_quantized_bias(
+        self.q_bias, q_bias_QParams = self._get_quantized_bias(
             bias=modified_bias,
             bias_QParams=self.bias_QParams,
             given_quant_scale=new_bias_QParms_scale,
             given_quant_bits=self.tmp_quant_bits,
         )
+        # Only the zero point is kept. Storing the QParams module would add
+        # its buffers to the state_dict of the layer.
+        self.q_bias_zero_point = int(q_bias_QParams.zero_point.item())
 
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor

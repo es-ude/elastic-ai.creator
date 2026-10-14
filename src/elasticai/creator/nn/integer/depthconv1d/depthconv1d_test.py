@@ -139,3 +139,45 @@ def test_creates_zero_padding_design(inputs) -> None:
 
     assert design._padding_len == 1
     assert "depthconv1d_0.vhd" in saved_file_names(design)
+
+
+def test_precompute_does_not_change_forward(layer, inputs) -> None:
+    train(layer, inputs)
+    with torch.no_grad():
+        before = layer(inputs)
+        layer.precompute()
+        after = layer(inputs)
+
+    assert torch.equal(before, after)
+
+
+def test_precompute_keeps_bias_qparams(layer, inputs) -> None:
+    train(layer, inputs)
+    names = ["scale_factor", "zero_point", "min_quant", "max_quant"]
+    before = {name: getattr(layer.bias_QParams, name).clone() for name in names}
+
+    layer.precompute()
+
+    for name in names:
+        assert torch.equal(getattr(layer.bias_QParams, name), before[name]), name
+
+
+def test_precompute_twice_gives_same_quantized_bias(layer, inputs) -> None:
+    train(layer, inputs)
+    layer.precompute()
+    q_bias = layer.q_bias.clone()
+
+    layer.precompute()
+
+    assert torch.equal(layer.q_bias, q_bias)
+
+
+def test_precompute_does_not_change_state_dict_keys(layer, inputs) -> None:
+    train(layer, inputs)
+    keys = set(layer.state_dict())
+
+    layer.precompute()
+
+    # Otherwise a state_dict saved after precompute does not load into a new
+    # layer.
+    assert set(layer.state_dict()) == keys
