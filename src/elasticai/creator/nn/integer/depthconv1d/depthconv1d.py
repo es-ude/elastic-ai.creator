@@ -26,6 +26,28 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class DepthConv1d(DesignCreatorModule, nn.Conv1d):
+    """Depthwise 1D convolution with quantization-aware training and integer inference.
+
+    Each input channel is convolved with its own kernels (`groups ==
+    in_channels`), so `out_channels` must be a multiple of `in_channels`.
+    Inputs have the shape `(batch, in_channels, seq_len)` and outputs
+    `(batch, out_channels, seq_len + 2 * padding - kernel_size + 1)`.
+
+    The layer has three modes:
+
+    - `forward` with `enable_simquant=True` simulates quantization of inputs,
+      weights, bias and outputs. In training mode it also updates their
+      quantization parameters.
+    - `int_forward` runs integer-only inference on quantized inputs. Call
+      `precompute` first.
+    - `create_design` creates the VHDL design. Call `precompute` and
+      `int_forward` first, because `int_forward` computes the padding length.
+
+    With padding, `int_forward` does not match `forward`: it pads after
+    subtracting the input zero point, but with the zero point as value, so
+    padded values do not represent 0.
+    """
+
     def __init__(
         self,
         *,
@@ -39,6 +61,22 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
+        """Create the layer.
+
+        Args:
+            name: Name of the layer, used for the saved quantization data.
+            in_channels: Number of input channels.
+            out_channels: Number of output channels, a multiple of
+                `in_channels`.
+            kernel_size: Size of the convolution kernel.
+            padding: Number of zeros added on each side, or `"same"` for
+                outputs as long as the inputs.
+            seq_len: Sequence length of the inputs.
+            quant_bits: Bit width of inputs, outputs and weights.
+            quant_data_dir: Directory for the quantized inputs and outputs
+                saved by `int_forward`. `None` disables saving.
+            device: Device of the quantization parameters.
+        """
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -70,6 +108,13 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         self.precomputed = False
 
     def create_design(self, name: str) -> DepthConv1dDesign:
+        """Create the VHDL design from the precomputed integer parameters.
+
+        Call `precompute` and `int_forward` first.
+
+        Args:
+            name: Name of the VHDL entity.
+        """
         return DepthConv1dDesign(
             name=name,
             data_width=self.quant_bits,
@@ -92,6 +137,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         )
 
     def _get_quantized_weights(self) -> torch.Tensor:
+        """Quantize the weights and subtract their zero point."""
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -104,6 +150,10 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         return q_weights
 
     def _get_quantized_bias(self) -> torch.Tensor:
+        """Quantize the bias with the scale of the accumulator, `s_x * s_w`.
+
+        This overwrites the quantization parameters of `bias_QParams`.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -120,6 +170,12 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         return q_bias
 
     def precompute(self) -> None:
+        """Compute the integer parameters for `int_forward` and `create_design`.
+
+        Quantizes weights and bias and approximates the requantization scale
+        `M = s_x * s_w / s_y` by `m_q * 2**-m_q_shift`. Must be called in eval
+        mode, after training.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
         self.tmp_quant_bits = (
@@ -142,6 +198,19 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         self,
         q_inputs: torch.Tensor,
     ) -> torch.Tensor:
+        """Run integer-only inference.
+
+        Subtracts `z_x`, pads, convolves each channel with its quantized
+        weights and bias, scales the result by `M` and adds `z_y`. Inputs and
+        outputs are saved to `quant_data_dir`.
+
+        Args:
+            q_inputs: Inputs quantized with `inputs_QParams`, of shape
+                `(batch, in_channels, seq_len)`.
+
+        Returns:
+            The quantized outputs.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -192,6 +261,20 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
     ) -> torch.Tensor:
+        """Apply the convolution to float inputs, optionally simulating quantization.
+
+        Args:
+            inputs: Float inputs of shape `(batch, in_channels, seq_len)`.
+            given_inputs_QParams: Quantization parameters of the inputs,
+                usually the output parameters of the previous layer. If given
+                in training mode, they replace `inputs_QParams` instead of
+                being learned from `inputs`.
+            enable_simquant: Simulate quantization of inputs, weights, bias
+                and outputs. If `False`, the layer acts like `nn.Conv1d`.
+
+        Returns:
+            The float outputs.
+        """
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

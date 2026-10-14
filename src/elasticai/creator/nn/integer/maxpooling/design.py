@@ -13,6 +13,13 @@ from elasticai.creator.vhdl.design.ports import Port
 
 
 class MaxPooling1d(Design):
+    """VHDL design of an integer max pooling layer.
+
+    For every channel, outputs the maximum of non-overlapping windows of
+    `kernel_size` inputs. The layer uses the buffered interface (`x`,
+    `x_address`, `y`, `y_address`, `enable`, `done`, `clock`).
+    """
+
     def __init__(
         self,
         name: str,
@@ -25,6 +32,20 @@ class MaxPooling1d(Design):
         work_library_name: str,
         resource_option: str,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of inputs and outputs.
+            in_features: Sequence length of the inputs.
+            out_features: Sequence length of the outputs.
+            in_num_dimensions: Number of channels of the inputs.
+            out_num_dimensions: Number of channels of the outputs.
+            kernel_size: Size and stride of the pooling windows.
+            work_library_name: Name of the VHDL library the design is
+                compiled into.
+            resource_option: Resource type used for the output RAM.
+        """
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -45,6 +66,7 @@ class MaxPooling1d(Design):
 
     @property
     def port(self) -> Port:
+        """Buffered port with `x_count` inputs and `y_count` outputs."""
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
@@ -53,6 +75,11 @@ class MaxPooling1d(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer, its output RAM and a testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+        """
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="maxpooling.tpl.vhd",

@@ -9,6 +9,13 @@ from elasticai.creator.vhdl.design.ports import Port
 
 
 class ReLU(Design):
+    """VHDL design of an integer ReLU.
+
+    Outputs `max(x, threshold)`, where the threshold is the zero point of the
+    inputs. The layer uses the bufferless interface (`x`, `y`, `clock`) plus
+    `enable`; while `enable` is low, the output is the threshold.
+    """
+
     def __init__(
         self,
         name: str,
@@ -17,6 +24,17 @@ class ReLU(Design):
         clock_option: bool,
         work_library_name: str,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of inputs and outputs.
+            threshold: Integer value below which inputs are replaced by it,
+                usually the zero point of the inputs.
+            clock_option: Register the output on the rising clock edge
+                instead of computing it combinationally.
+            work_library_name: Name of the VHDL library the testbench uses.
+        """
         super().__init__(name=name)
         self._data_width = data_width
         self._threshold = threshold
@@ -25,9 +43,15 @@ class ReLU(Design):
 
     @property
     def port(self) -> Port:
+        """Bufferless port with inputs and outputs of `data_width` bits."""
         return create_port(x_width=self._data_width, y_width=self._data_width)
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer and its testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+        """
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="relu.tpl.vhd",
