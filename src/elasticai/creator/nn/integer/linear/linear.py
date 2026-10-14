@@ -109,9 +109,11 @@ class Linear(DesignCreatorModule, nn.Linear):
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         if bias:
-            self.bias_QParams = bias_qparams_cls(
+            self.bias_QParams: QParams | None = bias_qparams_cls(
                 quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
             ).to(device)
+        else:
+            self.bias_QParams = None
         self.inputs_QParams = inputs_qparams_cls(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
@@ -120,7 +122,15 @@ class Linear(DesignCreatorModule, nn.Linear):
         ).to(device)
 
         self.math_ops = MathOperations()
+
+        # Integer parameters, set by `precompute`.
         self.precomputed = False
+        self.q_weights: torch.Tensor | None = None
+        self.q_bias: torch.Tensor | None = None
+        self.q_bias_QParams: QParams | None = None
+        self.scale_factor_M: torch.Tensor | None = None
+        self.scale_factor_m_q: torch.Tensor | None = None
+        self.scale_factor_m_q_shift: torch.Tensor | None = None
 
         self.use_parallelised_template = use_parallelised_template
         self.unroll_factor = unroll_factor
@@ -139,7 +149,12 @@ class Linear(DesignCreatorModule, nn.Linear):
             ValueError: If inputs, weights or outputs are not quantized with
                 `quant_bits` bits.
         """
-        if not self.precomputed:
+        if (
+            not self.precomputed
+            or self.q_weights is None
+            or self.scale_factor_m_q is None
+            or self.scale_factor_m_q_shift is None
+        ):
             raise RuntimeError("precompute must be called before create_design")
         # The hardware uses one data width for inputs, weights and outputs, and
         # a bias width of 2 * (data_width + 1), which matches the bias bit
@@ -157,7 +172,7 @@ class Linear(DesignCreatorModule, nn.Linear):
 
         # The hardware always adds a bias, so a layer without one gets a bias
         # of zeros.
-        if self.q_bias is not None:
+        if self.q_bias is not None and self.q_bias_QParams is not None:
             bias = self.q_bias.tolist()
             z_b = int(self.q_bias_QParams.zero_point.item())
         else:
@@ -197,34 +212,38 @@ class Linear(DesignCreatorModule, nn.Linear):
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.Tensor:
+    def _get_quantized_bias(
+        self, bias: torch.Tensor, bias_QParams: QParams
+    ) -> tuple[torch.Tensor, QParams]:
         """Quantize the bias with the scale of the accumulator.
 
         The bias is added to the accumulator of `(x - z_x) @ (w - z_w).T`, so
         it uses the scale factor `s_x * s_w`, zero point 0 and the bit width
-        `(x_bits + 1) + (w_bits + 1)`. These parameters are stored in
-        `q_bias_QParams`, a copy of `bias_QParams`, so that `bias_QParams`
-        keeps the parameters learned in training and `forward` still works
-        after `precompute`.
+        `(x_bits + 1) + (w_bits + 1)`. These parameters are returned as a
+        copy of `bias_QParams`, so that `bias_QParams` keeps the parameters
+        learned in training and `forward` still works after `precompute`.
 
         A warning is issued if bias values do not fit into the bit width and
         are clamped.
+
+        Returns:
+            The quantized bias and the QParams it was quantized with.
         """
-        self.q_bias_QParams = copy.deepcopy(self.bias_QParams)
+        q_bias_QParams = copy.deepcopy(bias_QParams)
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
         new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
             self.weight_QParams.quant_bits + 1
         )
-        self.q_bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.q_bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.q_bias_QParams.set_quant_range(new_bias_quant_bits)
-        unclamped_q_bias = torch.round(self.bias.detach() / new_bias_scale_factor)
+        q_bias_QParams.set_scale_factor(new_bias_scale_factor)
+        q_bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
+        q_bias_QParams.set_quant_range(new_bias_quant_bits)
+        unclamped_q_bias = torch.round(bias.detach() / new_bias_scale_factor)
         num_clamped = int(
             (
-                (unclamped_q_bias < self.q_bias_QParams.min_quant)
-                | (unclamped_q_bias > self.q_bias_QParams.max_quant)
+                (unclamped_q_bias < q_bias_QParams.min_quant)
+                | (unclamped_q_bias > q_bias_QParams.max_quant)
             ).sum()
         )
         if num_clamped > 0:
@@ -233,12 +252,12 @@ class Linear(DesignCreatorModule, nn.Linear):
                 f"{new_bias_quant_bits} bits and are clamped",
                 stacklevel=3,
             )
-        q_bias = self.q_bias_QParams.quantize(self.bias).to("cpu")
-        if not self.q_bias_QParams.is_symmetric:
+        q_bias = q_bias_QParams.quantize(bias).to("cpu")
+        if not q_bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(
-                q_bias, self.q_bias_QParams.zero_point.cpu(), new_bias_quant_bits + 1
+                q_bias, q_bias_QParams.zero_point.cpu(), new_bias_quant_bits + 1
             )
-        return q_bias
+        return q_bias, q_bias_QParams
 
     def precompute(self) -> None:
         """Compute the integer parameters for `int_forward` and `create_design`.
@@ -253,18 +272,19 @@ class Linear(DesignCreatorModule, nn.Linear):
         if self.training:
             raise RuntimeError("precompute must be called in eval mode")
         self.q_weights = self._get_quantized_weights()
-        if self.bias is not None:
-            self.q_bias = self._get_quantized_bias()
+        if self.bias is not None and self.bias_QParams is not None:
+            self.q_bias, self.q_bias_QParams = self._get_quantized_bias(
+                self.bias, self.bias_QParams
+            )
         else:
             self.q_bias = None
+            self.q_bias_QParams = None
 
-        self.scale_factor_M = (
+        scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.outputs_QParams.scale_factor
-
-        self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
-            self.scale_factor_M
-        )
+        self.scale_factor_M = scale_factor_M
+        self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(scale_factor_M)
         self.precomputed = True
 
     def int_forward(
@@ -294,7 +314,12 @@ class Linear(DesignCreatorModule, nn.Linear):
         """
         if self.training:
             raise RuntimeError("int_forward must be called in eval mode")
-        if not self.precomputed:
+        if (
+            not self.precomputed
+            or self.q_weights is None
+            or self.scale_factor_m_q is None
+            or self.scale_factor_m_q_shift is None
+        ):
             raise RuntimeError("precompute must be called before int_forward")
         check_dtype("q_inputs", q_inputs, torch.int32)
 
@@ -368,13 +393,13 @@ class Linear(DesignCreatorModule, nn.Linear):
                     self.inputs_QParams = copy.deepcopy(given_inputs_QParams)
 
                 self.weight_QParams.update_quant_params(self.weight)
-                if self.bias is not None:
+                if self.bias is not None and self.bias_QParams is not None:
                     self.bias_QParams.update_quant_params(self.bias)
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
             bias = None
-            if self.bias is not None:
+            if self.bias is not None and self.bias_QParams is not None:
                 bias = SimQuant.apply(self.bias, self.bias_QParams)
         else:
             weight = self.weight
