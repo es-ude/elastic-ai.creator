@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -23,24 +25,34 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
-    def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
-        )
-        self.num_dimensions = kwargs.get("num_dimensions", None)
-        self.enable_bias = kwargs.get("bias", True)
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
+        num_dimensions: int | None = None,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
+        super().__init__(in_features, out_features, bias)
+        self.num_dimensions = num_dimensions
+        self.enable_bias = bias
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs", "weights", "outputs"]
-        if kwargs.get("bias"):
+        if bias:
             self.quantizable_elements.append("bias")
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):

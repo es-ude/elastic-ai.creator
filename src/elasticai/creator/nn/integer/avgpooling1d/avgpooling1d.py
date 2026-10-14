@@ -21,18 +21,28 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class AVGPooling1d(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        in_num_dimensions: int,
+        out_num_dimensions: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
 
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.in_num_dimensions = kwargs.get("in_num_dimensions")
-        self.out_num_dimensions = kwargs.get("out_num_dimensions")
+        self.in_features = in_features
+        self.out_features = out_features
+        self.in_num_dimensions = in_num_dimensions
+        self.out_num_dimensions = out_num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

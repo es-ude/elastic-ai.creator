@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 
@@ -21,25 +23,37 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class SoftmaxLUT(DesignCreatorModule, nn.Module, MPQSupport):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        dim_a: int,
+        dim_b: int,
+        dim_c: int,
+        nhead: int,
+        window_size: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ) -> None:
         super().__init__()
 
-        self.dim_a = kwargs.get("dim_a")
-        self.dim_b = kwargs.get("dim_b")
-        self.dim_c = kwargs.get("dim_c")
-        self.nhead = kwargs.get("nhead")
-        self.window_size = kwargs.get("window_size")
+        self.dim_a = dim_a
+        self.dim_b = dim_b
+        self.dim_c = dim_c
+        self.nhead = nhead
+        self.window_size = window_size
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs", "outputs"]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.device = device
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):

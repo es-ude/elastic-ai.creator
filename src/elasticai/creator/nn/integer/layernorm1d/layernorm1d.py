@@ -20,21 +20,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
-    def __init__(self, **kwargs) -> None:
-        super().__init__(
-            kwargs.get("norm_dim"), kwargs.get("eps"), kwargs.get("elementwise_affine")
-        )
+    def __init__(
+        self,
+        *,
+        name: str,
+        norm_dim: int,
+        eps: float,
+        elementwise_affine: bool,
+        num_dimensions: int,
+        in_features: int,
+        out_features: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ) -> None:
+        super().__init__(norm_dim, eps, elementwise_affine)
 
-        self.num_dimensions = kwargs.get("num_dimensions")
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.norm_dim = kwargs.get("norm_dim")
+        self.num_dimensions = num_dimensions
+        self.in_features = in_features
+        self.out_features = out_features
+        self.norm_dim = norm_dim
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

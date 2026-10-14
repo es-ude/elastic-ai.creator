@@ -24,19 +24,30 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Conv1dBN(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        seq_len: int,
+        padding: int | str,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
 
-        self.in_channels = kwargs.get("in_channels")
-        self.out_channels = kwargs.get("out_channels")
-        self.kernel_size = kwargs.get("kernel_size")
-        self.seq_len = kwargs.get("seq_len")
-        self.padding = kwargs.get("padding")
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.seq_len = seq_len
+        self.padding = padding
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.conv1d = nn.Conv1d(
             in_channels=self.in_channels,
@@ -44,7 +55,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             kernel_size=self.kernel_size,
             padding=self.padding,
         )
-        self.bn1d = nn.BatchNorm1d(num_features=kwargs.get("out_channels"))
+        self.bn1d = nn.BatchNorm1d(num_features=out_channels)
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
 
@@ -15,20 +17,27 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class EncoderLayer(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        d_model: int,
+        ffn_dim: int,
+        window_size: int,
+        nhead: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ) -> None:
         super().__init__()
 
-        d_model = kwargs.get("d_model")
-        ffn_dim = kwargs.get("ffn_dim")
-        window_size = kwargs.get("window_size")
-        nhead = kwargs.get("nhead")
+        self.name = name
+        self.quant_data_dir = quant_data_dir
+        self.device = device
 
-        self.name = kwargs.get("name")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
-        self.MPQ_strategy = kwargs.get("MPQ_strategy")
+        self.enable_error_analysis = enable_error_analysis
+        self.MPQ_strategy = MPQ_strategy
 
         mha_name = self.name + "_mha"
         ffn_name = self.name + "_ffn"

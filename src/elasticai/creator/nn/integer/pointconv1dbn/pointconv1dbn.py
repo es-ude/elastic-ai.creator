@@ -22,17 +22,26 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class PointConv1dBN(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        seq_len: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
 
-        self.in_channels = kwargs.get("in_channels")
-        self.out_channels = kwargs.get("out_channels")
-        self.seq_len = kwargs.get("seq_len")
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.seq_len = seq_len
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.conv1d = nn.Conv1d(
             in_channels=self.in_channels,

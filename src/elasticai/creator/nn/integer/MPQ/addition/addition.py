@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
 
@@ -21,22 +23,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Addition(DesignCreatorModule, nn.Module, MPQSupport):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        num_features: int,
+        num_dimensions: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ) -> None:
         super().__init__()
 
-        self.num_features = kwargs.get("num_features")
-        self.num_dimensions = kwargs.get("num_dimensions")
+        self.num_features = num_features
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs1", "inputs2", "outputs"]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
+        self.quant_data_dir = quant_data_dir
+        self.device = device
 
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):

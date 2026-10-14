@@ -22,23 +22,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class LinearReLU(DesignCreatorModule, nn.Linear):
-    def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
-        )
-        self.num_dimensions = kwargs.get("num_dimensions", None)
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        bias: bool,
+        quant_bits: int,
+        num_dimensions: int | None = None,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ):
+        super().__init__(in_features, out_features, bias)
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        if kwargs.get("bias"):
+        if bias:
             self.bias_QParams = SymmetricSignedQParams(
                 quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
             ).to(device)

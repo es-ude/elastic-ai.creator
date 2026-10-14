@@ -20,24 +20,33 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
-    def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("norm_dim"),
-            kwargs.get("eps"),
-            kwargs.get("momentum"),
-            kwargs.get("affine"),
-            kwargs.get("track_running_stats"),
-        )
-        self.num_dimensions = kwargs.get("num_dimensions")
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.norm_dim = kwargs.get("norm_dim")
+    def __init__(
+        self,
+        *,
+        name: str,
+        norm_dim: int,
+        in_features: int,
+        out_features: int,
+        num_dimensions: int,
+        quant_bits: int,
+        eps: float = 1e-5,
+        momentum: float = 0.1,
+        affine: bool = True,
+        track_running_stats: bool = True,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ):
+        super().__init__(norm_dim, eps, momentum, affine, track_running_stats)
+        self.num_dimensions = num_dimensions
+        self.in_features = in_features
+        self.out_features = out_features
+        self.norm_dim = norm_dim
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

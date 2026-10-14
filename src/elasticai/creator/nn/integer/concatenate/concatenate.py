@@ -20,17 +20,26 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Concatenate(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        inputs_size: int,
+        hidden_size: int,
+        num_dimensions: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ) -> None:
         super().__init__()
 
-        self.inputs_size = kwargs.get("inputs_size")  # num_features of input1
-        self.hidden_size = kwargs.get("hidden_size")  # num_features of input2
-        self.num_dimensions = kwargs.get("num_dimensions")
+        self.inputs_size = inputs_size  # num_features of input1
+        self.hidden_size = hidden_size  # num_features of input2
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

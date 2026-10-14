@@ -14,24 +14,30 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Encoder(nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        window_size: int,
+        d_model: int,
+        ffn_dim: int,
+        nhead: int,
+        num_enc_layers: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        do_int_forward: bool = False,
+        device: torch.device | str = torch.device("cpu"),
+        enable_fused_ffn: bool = False,
+        enable_error_analysis: bool = False,
+    ):
         super().__init__()
 
-        window_size = kwargs.get("window_size")
-        d_model = kwargs.get("d_model")
-        ffn_dim = kwargs.get("ffn_dim")
-        nhead = kwargs.get("nhead")
-        num_enc_layers = kwargs.get("num_enc_layers")
+        self.name = name
+        self.quant_bits = quant_bits
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.do_int_forward = kwargs.get("do_int_forward")
-        device = kwargs.get("device")
-
-        enable_fused_ffn = kwargs.get("enable_fused_ffn", False)
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.do_int_forward = do_int_forward
+        self.enable_error_analysis = enable_error_analysis
 
         self.encoder_layers = nn.ModuleList(
             [

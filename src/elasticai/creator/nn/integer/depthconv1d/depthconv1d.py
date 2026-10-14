@@ -26,21 +26,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class DepthConv1d(DesignCreatorModule, nn.Conv1d):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        padding: int | str,
+        seq_len: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__(
-            in_channels=kwargs.get("in_channels"),
-            out_channels=kwargs.get("out_channels"),
-            kernel_size=kwargs.get("kernel_size"),
-            padding=kwargs.get("padding"),
-            groups=kwargs.get("in_channels"),
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            padding=padding,
+            groups=in_channels,
             bias=True,
         )
-        self.seq_len = kwargs.get("seq_len")
+        self.seq_len = seq_len
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
