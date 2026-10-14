@@ -12,15 +12,6 @@ pytestmark = pytest.mark.simulation
 
 NAME = "linear_0"
 
-# BUG: The templates add Z_Y and resize the result to DATA_WIDTH bits without
-#   saturating, so outputs outside the range wrap around (e.g. 256 -> 0),
-#   while int_forward clamps them (256 -> 127).
-#   Possible solution: clamp to the DATA_WIDTH range before the resize.
-OUTPUT_NOT_SATURATED = pytest.mark.xfail(
-    reason="hardware wraps around instead of saturating the outputs",
-    strict=True,
-)
-
 
 def train_and_precompute(layer: Linear, inputs: torch.Tensor) -> None:
     layer.train()
@@ -53,7 +44,6 @@ def read_integers(path: Path) -> list[int]:
             3,
             dict(num_dimensions=2),
             id="2d_one_input_feature",
-            marks=OUTPUT_NOT_SATURATED,
         ),
         pytest.param(
             4,
@@ -66,7 +56,6 @@ def read_integers(path: Path) -> list[int]:
             4,
             dict(num_dimensions=2, use_parallelised_template=True, unroll_factor=2),
             id="2d_parallel_saturating",
-            marks=OUTPUT_NOT_SATURATED,
         ),
         pytest.param(
             4,
@@ -78,7 +67,6 @@ def read_integers(path: Path) -> list[int]:
                 use_pipeline_template=True,
             ),
             id="2d_pipeline",
-            marks=OUTPUT_NOT_SATURATED,
         ),
     ],
 )

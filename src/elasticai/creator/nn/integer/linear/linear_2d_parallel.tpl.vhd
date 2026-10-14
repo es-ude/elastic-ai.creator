@@ -78,6 +78,19 @@ architecture rtl of ${name} is
         end if;
         return result;
     end function;
+    -- Saturate to the range of a signed number with `width` bits.
+    function saturate(value : signed; width : natural) return signed is
+        constant MAX_VAL : integer := 2**(width - 1) - 1;
+        constant MIN_VAL : integer := -(2**(width - 1));
+    begin
+        if value > to_signed(MAX_VAL, value'length) then
+            return to_signed(MAX_VAL, width);
+        elsif value < to_signed(MIN_VAL, value'length) then
+            return to_signed(MIN_VAL, width);
+        else
+            return resize(value, width);
+        end if;
+    end function;
     function log2(val : INTEGER) return natural is
         variable result : natural;
     begin
@@ -174,7 +187,7 @@ begin
         variable var_product : signed(DATA_WIDTH - 1 downto 0);
         type var_b_add_z_b_array_t is array (0 to UNROLL_FACTOR-1) of integer;
         variable var_b_add_z_b : var_b_add_z_b_array_t;
-        type var_y_store_array_t is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH downto 0);
+        type var_y_store_array_t is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH + 1 downto 0);
         variable var_y_store_array : var_y_store_array_t := (others=>(others=>'0'));
     begin
         if rising_edge(clock) then
@@ -248,8 +261,8 @@ begin
                         mac_state <= s_output;
                     when s_output =>
                         for i in 0 to UNROLL_FACTOR-1 loop
-                            var_y_store_array(i) := y_scaled(i)  + to_signed(Z_Y, var_y_store_array(i)'length);
-                            y_store_data(i) <= std_logic_vector(resize(var_y_store_array(i), y_store_data(i)'length));
+                            var_y_store_array(i) := resize(y_scaled(i), var_y_store_array(i)'length) + to_signed(Z_Y, var_y_store_array(i)'length);
+                            y_store_data(i) <= std_logic_vector(saturate(var_y_store_array(i), DATA_WIDTH));
                         end loop;
                         y_store_addr <= output_idx;
                         y_store_en <= '1';
