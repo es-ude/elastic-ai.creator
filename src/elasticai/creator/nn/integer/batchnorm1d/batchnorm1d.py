@@ -289,12 +289,13 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             mean = inputs.mean(dim=(0, 1), keepdim=False)
             var = inputs.var(dim=(0, 1), keepdim=False)
 
-            self.running_mean = (
-                1 - self.momentum
-            ) * self.running_mean + self.momentum * mean
-            self.running_var = (
-                1 - self.momentum
-            ) * self.running_var + self.momentum * var
+            # Update the buffers in place and without autograd, so that they do
+            # not keep the graph of every training step alive.
+            with torch.no_grad():
+                self.running_mean.mul_(1 - self.momentum).add_(
+                    mean, alpha=self.momentum
+                )
+                self.running_var.mul_(1 - self.momentum).add_(var, alpha=self.momentum)
         else:
             mean = self.running_mean
             var = self.running_var

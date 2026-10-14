@@ -90,3 +90,45 @@ def test_creates_design(layer, inputs) -> None:
         "batchnorm1d_0_ram.vhd",
         "batchnorm1d_0_tb.vhd",
     }
+
+
+def train_with_gradients(layer, inputs: torch.Tensor) -> None:
+    layer.train()
+    for _ in range(3):
+        layer(inputs.clone().requires_grad_(), None).sum().backward()
+    layer.eval()
+
+
+def test_running_statistics_are_not_attached_to_the_graph(layer, inputs) -> None:
+    train_with_gradients(layer, inputs)
+
+    assert layer.running_mean.grad_fn is None
+    assert layer.running_var.grad_fn is None
+
+
+def test_running_statistics_stay_buffers(layer, inputs) -> None:
+    running_mean = layer.running_mean
+
+    train_with_gradients(layer, inputs)
+
+    assert layer.running_mean is running_mean
+    assert "running_mean" in dict(layer.named_buffers())
+
+
+def test_running_statistics_follow_momentum(layer, inputs) -> None:
+    layer.train()
+    layer(inputs, None, enable_simquant=False)
+
+    expected_mean = 0.9 * torch.zeros(4) + 0.1 * inputs.mean(dim=(0, 1))
+    expected_var = 0.9 * torch.ones(4) + 0.1 * inputs.var(dim=(0, 1))
+    assert torch.allclose(layer.running_mean, expected_mean)
+    assert torch.allclose(layer.running_var, expected_var)
+
+
+def test_backward_works_in_eval_mode_after_training(layer, inputs) -> None:
+    train_with_gradients(layer, inputs)
+    eval_inputs = inputs.clone().requires_grad_()
+
+    layer(eval_inputs, None).sum().backward()
+
+    assert eval_inputs.grad is not None
