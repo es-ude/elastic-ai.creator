@@ -25,15 +25,19 @@ def read_integers(path: Path) -> list[int]:
     return [int(line) for line in path.read_text().split()]
 
 
+@pytest.mark.parametrize("padding", [0, 1, "same"])
 @pytest.mark.parametrize(
-    "padding",
+    "train_scale",
     [
-        pytest.param(0, id="no_padding"),
-        pytest.param(1, id="padding_1"),
-        pytest.param("same", id="padding_same"),
+        pytest.param(1.0, id="in_range"),
+        # Training on smaller inputs gives a smaller output range, so that
+        # some outputs exceed it and must saturate.
+        pytest.param(0.5, id="saturating"),
     ],
 )
-def test_hardware_matches_int_forward(tmp_path: Path, padding: int | str) -> None:
+def test_hardware_matches_int_forward(
+    tmp_path: Path, padding: int | str, train_scale: float
+) -> None:
     build_dir = tmp_path / "build"
     data_dir = build_dir / "data"
     data_dir.mkdir(parents=True)
@@ -53,7 +57,7 @@ def test_hardware_matches_int_forward(tmp_path: Path, padding: int | str) -> Non
     inputs = torch.randn(2, 2, 8)
     layer.train()
     for _ in range(3):
-        layer(inputs)
+        layer(inputs * train_scale)
     layer.eval()
     layer.precompute()
     # Writes the inputs and expected outputs that the testbench reads.
