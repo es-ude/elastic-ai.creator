@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import torch
 from torch import nn
@@ -198,6 +199,9 @@ class Linear(DesignCreatorModule, nn.Linear):
         `q_bias_QParams`, a copy of `bias_QParams`, so that `bias_QParams`
         keeps the parameters learned in training and `forward` still works
         after `precompute`.
+
+        A warning is issued if bias values do not fit into the bit width and
+        are clamped.
         """
         self.q_bias_QParams = copy.deepcopy(self.bias_QParams)
         new_bias_scale_factor = (
@@ -209,6 +213,19 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.q_bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.q_bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
         self.q_bias_QParams.set_quant_range(new_bias_quant_bits)
+        unclamped_q_bias = torch.round(self.bias.detach() / new_bias_scale_factor)
+        num_clamped = int(
+            (
+                (unclamped_q_bias < self.q_bias_QParams.min_quant)
+                | (unclamped_q_bias > self.q_bias_QParams.max_quant)
+            ).sum()
+        )
+        if num_clamped > 0:
+            warnings.warn(
+                f"{num_clamped} bias values of {self.name} do not fit into "
+                f"{new_bias_quant_bits} bits and are clamped",
+                stacklevel=3,
+            )
         q_bias = self.q_bias_QParams.quantize(self.bias).to("cpu")
         if not self.q_bias_QParams.is_symmetric:
             q_bias = self.math_ops.intsub(

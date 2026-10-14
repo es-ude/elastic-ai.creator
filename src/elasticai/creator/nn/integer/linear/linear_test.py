@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import torch
 from torch.nn import functional as F
@@ -790,3 +792,22 @@ def test_create_design_uses_work_library_and_resource_option(
 
     assert design._work_library_name == "lib"
     assert design._resource_option == "block"
+
+
+def test_precompute_warns_if_bias_is_clamped(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    with torch.no_grad():
+        linear_layer.bias[0] = 1e9
+
+    with pytest.warns(UserWarning, match="1 bias values of linear .* clamped"):
+        linear_layer.precompute()
+
+
+def test_precompute_does_not_warn_if_bias_fits(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        linear_layer.precompute()
