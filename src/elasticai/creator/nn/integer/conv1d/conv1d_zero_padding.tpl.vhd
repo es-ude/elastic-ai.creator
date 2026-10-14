@@ -104,7 +104,7 @@ architecture rtl of ${name} is
     signal zero_padding_en : std_logic := '1';
 begin
     done <= '1' when layer_state = s_finished else '0';
-    s_x <= to_signed(Z_X+Z_X, s_x'length) when zero_padding_en = '1' else signed(x);
+    s_x <= to_signed(Z_X, s_x'length) when zero_padding_en = '1' else signed(x);
     FSM_PROC : process(clock, enable)
     begin
         if rising_edge(clock) then

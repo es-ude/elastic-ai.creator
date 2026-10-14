@@ -29,18 +29,8 @@ def read_integers(path: Path) -> list[int]:
     "padding",
     [
         pytest.param(0, id="no_padding"),
-        pytest.param(
-            1,
-            id="padding_1",
-            # BUG: the template pads with 2 * z_x, so padded values do not
-            # represent 0.
-            marks=pytest.mark.xfail(strict=True),
-        ),
-        pytest.param(
-            "same",
-            id="padding_same",
-            marks=pytest.mark.xfail(strict=True),
-        ),
+        pytest.param(1, id="padding_1"),
+        pytest.param("same", id="padding_same"),
     ],
 )
 def test_hardware_matches_int_forward(tmp_path: Path, padding: int | str) -> None:
