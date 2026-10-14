@@ -40,12 +40,10 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
       quantization parameters.
     - `int_forward` runs integer-only inference on quantized inputs. Call
       `precompute` first.
-    - `create_design` creates the VHDL design. Call `precompute` and
-      `int_forward` first, because `int_forward` computes the padding length.
+    - `create_design` creates the VHDL design. Call `precompute` first.
 
-    With padding, `int_forward` does not match `forward`: it pads after
-    subtracting the input zero point, but with the zero point as value, so
-    padded values do not represent 0.
+    Padded values are 0, which `int_forward` represents by the zero point of
+    the inputs.
     """
 
     def __init__(
@@ -85,6 +83,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             groups=in_channels,
             bias=True,
         )
+        self.padding_len = get_padding_len(self.padding, self.kernel_size)
         self.seq_len = seq_len
 
         self.name = name
@@ -110,7 +109,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
     def create_design(self, name: str) -> DepthConv1dDesign:
         """Create the VHDL design from the precomputed integer parameters.
 
-        Call `precompute` and `int_forward` first.
+        Call `precompute` first.
 
         Args:
             name: Name of the VHDL entity.
@@ -200,7 +199,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
     ) -> torch.Tensor:
         """Run integer-only inference.
 
-        Subtracts `z_x`, pads, convolves each channel with its quantized
+        Pads with `z_x`, subtracts `z_x`, convolves each channel with its quantized
         weights and bias, scales the result by `M` and adds `z_y`. Inputs and
         outputs are saved to `quant_data_dir`.
 
@@ -216,15 +215,15 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
-        q_inputs = self.math_ops.intsub(
-            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
-        )
-
-        self.padding_len = get_padding_len(self.padding, self.kernel_size)
+        # Pad with the zero point before subtracting it, so that the padded
+        # values represent 0.
         q_inputs = get_padded_q_inputs(
             padding_len=self.padding_len,
             q_inputs=q_inputs,
             inputs_QParams=self.inputs_QParams,
+        )
+        q_inputs = self.math_ops.intsub(
+            q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
 
         if self.q_bias is not None:

@@ -80,7 +80,6 @@ def test_int_forward_matches_forward(layer, inputs) -> None:
 def test_creates_design(layer, inputs) -> None:
     train(layer, inputs)
     layer.precompute()
-    layer.int_forward(layer.inputs_QParams.quantize(inputs))
 
     names = saved_file_names(layer.create_design("depthconv1d_0"))
 
@@ -93,10 +92,9 @@ def test_creates_design(layer, inputs) -> None:
     }
 
 
-@pytest.mark.parametrize("padding", [1, "same"])
-def test_forward_pads_like_torch_conv1d(inputs, padding) -> None:
+def create_padded_layer(padding: int | str) -> DepthConv1d:
     torch.manual_seed(0)
-    layer = DepthConv1d(
+    return DepthConv1d(
         name="depthconv1d_0",
         in_channels=3,
         out_channels=3,
@@ -107,9 +105,37 @@ def test_forward_pads_like_torch_conv1d(inputs, padding) -> None:
         device="cpu",
     )
 
+
+@pytest.mark.parametrize("padding", [1, "same"])
+def test_forward_pads_like_torch_conv1d(inputs, padding) -> None:
+    layer = create_padded_layer(padding)
+
     outputs = layer(inputs, enable_simquant=False)
 
     expected = torch.nn.functional.conv1d(
         inputs, layer.weight, layer.bias, padding=padding, groups=3
     )
     assert torch.allclose(outputs, expected)
+
+
+@pytest.mark.parametrize("padding, out_seq_len", [(1, 8), (2, 10), ("same", 8)])
+def test_int_forward_with_padding_matches_forward(inputs, padding, out_seq_len) -> None:
+    layer = create_padded_layer(padding)
+    train(layer, inputs)
+    layer.precompute()
+
+    q_outputs = layer.int_forward(layer.inputs_QParams.quantize(inputs))
+
+    assert q_outputs.shape == (2, 3, out_seq_len)
+    assert max_error_in_steps(layer, q_outputs, layer(inputs)) <= 1
+
+
+def test_creates_zero_padding_design(inputs) -> None:
+    layer = create_padded_layer(1)
+    train(layer, inputs)
+    layer.precompute()
+
+    design = layer.create_design("depthconv1d_0")
+
+    assert design._padding_len == 1
+    assert "depthconv1d_0.vhd" in saved_file_names(design)
