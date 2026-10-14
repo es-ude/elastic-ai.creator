@@ -20,6 +20,21 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
+    """Batch normalization with quantization-aware training and integer inference.
+
+    Inputs have the shape `(batch, num_dimensions, norm_dim)`. Every feature
+    is normalized with the mean and variance over the batch and the
+    `num_dimensions` vectors, then scaled by `weight` and shifted by `bias`.
+
+    `precompute` folds the running statistics into the parameters, so the
+    integer path is an element-wise multiply-add per feature:
+    `w' = w / sqrt(var + eps)` and `b' = b - w' * mean`.
+
+    Note:
+        `int_forward` currently deviates from `forward` by several
+        quantization steps.
+    """
+
     def __init__(
         self,
         *,
@@ -37,6 +52,27 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
     ):
+        """Create the layer.
+
+        Args:
+            name: Name of the layer, used for the saved quantization data.
+            norm_dim: Number of normalized features, `num_features` of
+                `nn.BatchNorm1d`.
+            in_features: Features per input vector, passed to the design.
+            out_features: Features per output vector, passed to the design.
+            num_dimensions: Number of vectors per input.
+            quant_bits: Bit width of inputs, outputs and weights.
+            eps: Added to the variance for numerical stability.
+            momentum: Weight of the current batch in the running statistics.
+            affine: Passed to `nn.BatchNorm1d`; the layer needs weight and
+                bias, so it must be `True`.
+            track_running_stats: Passed to `nn.BatchNorm1d`.
+            quant_data_dir: Directory for the quantized inputs and outputs
+                saved by `int_forward`. `None` disables saving.
+            device: Device of the quantization parameters.
+            enable_error_analysis: Also save the float outputs of `forward`
+                and the dequantized outputs of `int_forward`.
+        """
         super().__init__(norm_dim, eps, momentum, affine, track_running_stats)
         self.num_dimensions = num_dimensions
         self.in_features = in_features
@@ -68,6 +104,11 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self.precomputed = False
 
     def create_design(self, name: str) -> BatchNorm1dDesign:
+        """Create the VHDL design. Call `precompute` first.
+
+        Args:
+            name: Name of the VHDL entity.
+        """
         return BatchNorm1dDesign(
             name=name,
             data_width=self.quant_bits,
@@ -89,6 +130,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
     def _get_quantized_weights(
         self, weight: torch.Tensor, weight_QParams: nn.Module
     ) -> torch.Tensor:
+        """Quantize `weight` with `weight_QParams` and subtract its zero point."""
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
@@ -107,6 +149,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         given_quant_scale: torch.Tensor,
         given_quant_bits: int,
     ) -> torch.Tensor:
+        """Quantize `bias` with the given scale, zero point 0 and bit width.
+
+        This overwrites the quantization parameters of `bias_QParams`.
+        """
         assert not self.training, "int_forward should be called in eval mode"
 
         bias_QParams.set_scale_factor(given_quant_scale)
@@ -116,6 +162,12 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         return q_bias
 
     def precompute(self):
+        """Compute the integer parameters for `int_forward` and `create_design`.
+
+        Folds the running statistics into weight and bias, quantizes both and
+        approximates the requantization scale `M = s_x * s_w' / s_y` by
+        `m_q * 2**-m_q_shift`. Must be called in eval mode, after training.
+        """
         mean = self.running_mean
         var = self.running_var
         std = torch.sqrt(var + self.eps)
@@ -157,6 +209,18 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self,
         q_inputs: torch.Tensor,
     ) -> torch.Tensor:
+        """Run integer-only inference.
+
+        Computes `(q_x - z_x) * q_w' + q_b'` per feature, scales the result by
+        `M` and adds `z_y`. Inputs and outputs are saved to `quant_data_dir`.
+
+        Args:
+            q_inputs: Inputs quantized with `inputs_QParams`, of shape
+                `(batch, num_dimensions, norm_dim)`.
+
+        Returns:
+            The quantized outputs, with the shape of `q_inputs`.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -195,6 +259,23 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         given_inputs_QParams: object,
         enable_simquant: bool = True,
     ) -> torch.Tensor:
+        """Normalize float inputs, optionally simulating quantization.
+
+        In training mode, the batch statistics are used and the running
+        statistics are updated; in eval mode, the running statistics are used.
+
+        Args:
+            inputs: Float inputs of shape `(batch, num_dimensions, norm_dim)`.
+            given_inputs_QParams: Quantization parameters of the inputs,
+                usually the output parameters of the previous layer, or
+                `None`. If given in training mode, they replace
+                `inputs_QParams` instead of being learned from `inputs`.
+            enable_simquant: Simulate quantization of inputs, weight, bias
+                and outputs.
+
+        Returns:
+            The float outputs, with the shape of `inputs`.
+        """
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

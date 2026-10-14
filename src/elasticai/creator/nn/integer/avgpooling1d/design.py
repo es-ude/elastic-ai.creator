@@ -13,6 +13,13 @@ from elasticai.creator.vhdl.design.ports import Port
 
 
 class AVGPooling1d(Design):
+    """VHDL design of an integer global average pooling layer.
+
+    Sums the inputs, scales the sum by `m_q * 2**-m_q_shift` and adds the
+    output zero point. The layer uses the buffered interface (`x`,
+    `x_address`, `y`, `y_address`, `enable`, `done`, `clock`).
+    """
+
     def __init__(
         self,
         name: str,
@@ -28,6 +35,23 @@ class AVGPooling1d(Design):
         work_library_name: str,
         resource_option: str,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of inputs and outputs.
+            in_features: Features per input vector.
+            out_features: Features per output vector.
+            in_num_dimensions: Number of input vectors.
+            out_num_dimensions: Number of output vectors.
+            m_q: Integer multiplier of the scale `M`.
+            m_q_shift: Right shift of the scale `M`.
+            z_x: Zero point of the inputs.
+            z_y: Zero point of the outputs.
+            work_library_name: Name of the VHDL library the design is
+                compiled into.
+            resource_option: Resource type used for the output RAM.
+        """
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -60,6 +84,7 @@ class AVGPooling1d(Design):
 
     @property
     def port(self) -> Port:
+        """Buffered port with `x_count` inputs and `y_count` outputs."""
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
@@ -68,6 +93,11 @@ class AVGPooling1d(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer, its output RAM and a testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+        """
         template = InProjectTemplate(
             package=module_to_package(self.__module__),
             file_name="avgpooling1d.tpl.vhd",
