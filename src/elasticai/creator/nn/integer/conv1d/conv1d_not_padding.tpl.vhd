@@ -147,6 +147,9 @@ begin
                 out_cnt_channel := 0;
                 y_idx := 0;
                 cnt_in_kernel:=0;
+                s_w_addr <= (others => '0');
+                s_x_addr <= (others => '0');
+                s_b_addr <= (others => '0');
             else
                 case mac_state is
                     when s_init =>
