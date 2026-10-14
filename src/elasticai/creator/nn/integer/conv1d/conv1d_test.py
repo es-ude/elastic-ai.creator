@@ -75,8 +75,6 @@ def test_int_forward_matches_forward(layer, inputs) -> None:
 def test_creates_design(layer, inputs) -> None:
     train(layer, inputs)
     layer.precompute()
-    # create_design reads the padding length set by int_forward.
-    layer.int_forward(layer.inputs_QParams.quantize(inputs))
 
     names = saved_file_names(layer.create_design("conv1d_0"))
 
@@ -87,3 +85,56 @@ def test_creates_design(layer, inputs) -> None:
         "conv1d_0_ram.vhd",
         "conv1d_0_tb.vhd",
     }
+
+
+def create_padded_layer(padding: int | str) -> Conv1d:
+    torch.manual_seed(0)
+    return Conv1d(
+        name="conv1d_0",
+        in_channels=2,
+        out_channels=3,
+        kernel_size=3,
+        padding=padding,
+        seq_len=8,
+        quant_bits=8,
+        device="cpu",
+    )
+
+
+@pytest.mark.parametrize("padding", [1, 2, "same"])
+def test_forward_pads_like_torch_conv1d(inputs, padding) -> None:
+    layer = create_padded_layer(padding)
+
+    outputs = layer(inputs, enable_simquant=False)
+
+    expected = torch.nn.functional.conv1d(
+        inputs, layer.weight, layer.bias, padding=padding
+    )
+    assert torch.allclose(outputs, expected)
+
+
+def test_padding_does_not_change_stride(inputs) -> None:
+    assert create_padded_layer(2).stride == (1,)
+
+
+@pytest.mark.parametrize("padding, out_seq_len", [(1, 8), (2, 10), ("same", 8)])
+def test_int_forward_with_padding_matches_forward(inputs, padding, out_seq_len) -> None:
+    layer = create_padded_layer(padding)
+    train(layer, inputs)
+    layer.precompute()
+
+    q_outputs = layer.int_forward(layer.inputs_QParams.quantize(inputs))
+
+    assert q_outputs.shape == (2, 3, out_seq_len)
+    assert max_error_in_steps(layer, q_outputs, layer(inputs)) <= 1
+
+
+def test_creates_zero_padding_design(inputs) -> None:
+    layer = create_padded_layer(1)
+    train(layer, inputs)
+    layer.precompute()
+
+    design = layer.create_design("conv1d_0")
+
+    assert design._padding_len == 1
+    assert "conv1d_0.vhd" in saved_file_names(design)
