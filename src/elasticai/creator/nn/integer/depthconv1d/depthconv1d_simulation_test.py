@@ -28,9 +28,9 @@ def read_integers(path: Path) -> list[int]:
 @pytest.mark.parametrize(
     "padding",
     [
-        # BUG: the templates do not reset the channel counter, so the second
-        # inference uses the bias of the last channel.
-        pytest.param(0, id="no_padding", marks=pytest.mark.xfail(strict=True)),
+        pytest.param(0, id="no_padding"),
+        # BUG: the templates do not saturate the outputs. One output is 128
+        # before int_forward clamps it to 127, and the hardware wraps it to 0.
         pytest.param(1, id="padding_1", marks=pytest.mark.xfail(strict=True)),
         pytest.param("same", id="padding_same", marks=pytest.mark.xfail(strict=True)),
     ],
