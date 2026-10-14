@@ -103,19 +103,31 @@ in {
         exec = let
           cfg = active_ghdl_config;
         in ''
-          if [ ! -d $DEVENV_ROOT/external ]; then
-            mkdir $DEVENV_ROOT/external
-          fi
-          if [ ! -d external/${cfg.name} ]; then
-            echo "downloading ghdl"
-            cd $DEVENV_ROOT/external/
-            ${pkgs.wget}/bin/wget ${cfg.link}
-            sha256 -c ${cfg.checksum} ${cfg.archive}
-            if [[ ! $? == 0 ]]; then
-              echo "could not verify checksum"
-              exit 1
+          set -e
+          external="$DEVENV_ROOT/external"
+          target="$external/${cfg.name}"
+          # Only exists after a complete extraction. Checking the directory
+          # alone kept an interrupted extraction around forever.
+          marker="$target/lib/ghdl/std/v08/std-obj08.cf"
+          if [ ! -f "$marker" ]; then
+            mkdir -p "$external"
+            cd "$external"
+            if [ ! -f ${cfg.archive} ] || ! sha256 -q -c ${cfg.checksum} ${cfg.archive}; then
+              echo "downloading ghdl"
+              rm -f ${cfg.archive}
+              ${pkgs.wget}/bin/wget ${cfg.link}
+              if ! sha256 -q -c ${cfg.checksum} ${cfg.archive}; then
+                echo "could not verify checksum"
+                exit 1
+              fi
             fi
-            tar -xzf ${cfg.archive}
+            # Extract into a temporary directory and move it into place, so
+            # that an interrupted extraction never leaves a partial install.
+            tmp=$(mktemp -d "$external/.ghdl-extract.XXXXXX")
+            trap 'rm -rf "$tmp"' EXIT
+            tar -xzf ${cfg.archive} -C "$tmp"
+            rm -rf "$target"
+            mv "$tmp/${cfg.name}" "$target"
           fi
         '';
         before = ["devenv:enterShell"];
