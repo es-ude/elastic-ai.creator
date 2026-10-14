@@ -16,20 +16,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class SoftmaxLUT(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        dim_a: int,
+        dim_b: int,
+        dim_c: int,
+        nhead: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ) -> None:
         super().__init__()
 
-        self.dim_a = kwargs.get("dim_a")
-        self.dim_b = kwargs.get("dim_b")
-        self.dim_c = kwargs.get("dim_c")
-        self.nhead = kwargs.get("nhead")
-        self.window_size = kwargs.get("window_size")
+        self.dim_a = dim_a
+        self.dim_b = dim_b
+        self.dim_c = dim_c
+        self.nhead = nhead
+        self.window_size = window_size
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

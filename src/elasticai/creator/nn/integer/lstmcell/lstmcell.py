@@ -19,20 +19,28 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class LSTMCell(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        inputs_size: int,
+        hidden_size: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        lstm_use_pipeline_template: bool = False,
+        device: torch.device | str = torch.device("cpu"),
+        use_parallelised_template: bool = False,
+        unroll_factor: int = 1,
+    ):
         super().__init__()
+        self.hidden_size = hidden_size
+        self.window_size = window_size
 
-        inputs_size = kwargs.get("inputs_size")
-        self.hidden_size = kwargs.get("hidden_size")
-        self.window_size = kwargs.get("window_size")
-
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.lstm_use_pipeline_template = kwargs.get(
-            "lstm_use_pipeline_template", False
-        )
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.lstm_use_pipeline_template = lstm_use_pipeline_template
 
         self.concatenate = Concatenate(
             name=self.name + "_concatenate",
@@ -53,8 +61,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
-            use_parallelised_template=kwargs.get("use_parallelised_template", False),
-            unroll_factor=kwargs.get("unroll_factor", 1),
+            use_parallelised_template=use_parallelised_template,
+            unroll_factor=unroll_factor,
             use_pipeline_template=self.lstm_use_pipeline_template,
         )
         self.c_gate_linear = Linear(
@@ -66,8 +74,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
-            use_parallelised_template=kwargs.get("use_parallelised_template", False),
-            unroll_factor=kwargs.get("unroll_factor", 1),
+            use_parallelised_template=use_parallelised_template,
+            unroll_factor=unroll_factor,
             use_pipeline_template=self.lstm_use_pipeline_template,
         )
 
@@ -80,8 +88,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
-            use_parallelised_template=kwargs.get("use_parallelised_template", False),
-            unroll_factor=kwargs.get("unroll_factor", 1),
+            use_parallelised_template=use_parallelised_template,
+            unroll_factor=unroll_factor,
             use_pipeline_template=self.lstm_use_pipeline_template,
         )
 
@@ -94,8 +102,8 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
-            use_parallelised_template=kwargs.get("use_parallelised_template", False),
-            unroll_factor=kwargs.get("unroll_factor", 1),
+            use_parallelised_template=use_parallelised_template,
+            unroll_factor=unroll_factor,
             use_pipeline_template=self.lstm_use_pipeline_template,
         )
 
@@ -150,7 +158,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_pipeline_template=self.lstm_use_pipeline_template,
-            unroll_factor=kwargs.get("unroll_factor", 1),  # same as the gate linear
+            unroll_factor=unroll_factor,  # same as the gate linear
         )
         self.ic_hadamard_product = HadamardProduct(
             name=self.name + "_ic_hadamard_product",
@@ -160,7 +168,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_pipeline_template=self.lstm_use_pipeline_template,
-            unroll_factor=kwargs.get("unroll_factor", 1),  # same as the gate linear
+            unroll_factor=unroll_factor,  # same as the gate linear
         )
         self.oc_hadamard_product = HadamardProduct(
             name=self.name + "_oc_hadamard_product",

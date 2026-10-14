@@ -20,16 +20,26 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class HadamardProduct(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        num_features: int,
+        num_dimensions: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        use_pipeline_template: bool = False,
+        unroll_factor: int = 1,
+    ) -> None:
         super().__init__()
 
-        self.num_features = kwargs.get("num_features")
-        self.num_dimensions = kwargs.get("num_dimensions")
+        self.num_features = num_features
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -43,8 +53,8 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
 
         self.math_ops = MathOperations()
         self.precomputed = False
-        self.use_pipeline_template = kwargs.get("use_pipeline_template", False)
-        self.unroll_factor = kwargs.get("unroll_factor", 1)
+        self.use_pipeline_template = use_pipeline_template
+        self.unroll_factor = unroll_factor
 
     def create_design(self, name: str) -> HadamardProductDesign:
         return HadamardProductDesign(

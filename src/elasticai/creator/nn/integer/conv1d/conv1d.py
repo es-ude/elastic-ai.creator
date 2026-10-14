@@ -24,19 +24,30 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Conv1d(DesignCreatorModule, nn.Conv1d):
-    def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("in_channels"),
-            kwargs.get("out_channels"),
-            kwargs.get("kernel_size"),
-            kwargs.get("padding"),
-        )
-        self.seq_len = kwargs.get("seq_len")
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        padding: int | str,
+        seq_len: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
+        # BUG: The fourth positional parameter of nn.Conv1d is `stride`, not
+        #   `padding`. `padding` therefore ends up in `self.stride`, and
+        #   `self.padding` is always 0, so the layer never pads.
+        #   Possible solution: pass `padding=padding` as keyword argument and
+        #   check forward, int_forward and the design with padding.
+        super().__init__(in_channels, out_channels, kernel_size, padding)
+        self.seq_len = seq_len
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

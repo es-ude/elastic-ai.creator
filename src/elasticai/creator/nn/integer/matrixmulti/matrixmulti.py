@@ -19,28 +19,46 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class MatrixMulti(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        x_1_dim_a: int,
+        x_1_dim_b: int,
+        x_1_dim_c: int,
+        x_2_dim_a: int,
+        x_2_dim_b: int,
+        x_2_dim_c: int,
+        y_dim_a: int,
+        y_dim_b: int,
+        y_dim_c: int,
+        operation_mode: str,
+        quant_bits: int,
+        additional_scale: float | None = None,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ):
         super().__init__()
 
-        self.x_1_dim_a = kwargs.get("x_1_dim_a")
-        self.x_1_dim_b = kwargs.get("x_1_dim_b")
-        self.x_1_dim_c = kwargs.get("x_1_dim_c")
-        self.x_2_dim_a = kwargs.get("x_2_dim_a")
-        self.x_2_dim_b = kwargs.get("x_2_dim_b")
-        self.x_2_dim_c = kwargs.get("x_2_dim_c")
-        self.y_dim_a = kwargs.get("y_dim_a")
-        self.y_dim_b = kwargs.get("y_dim_b")
-        self.y_dim_c = kwargs.get("y_dim_c")
+        self.x_1_dim_a = x_1_dim_a
+        self.x_1_dim_b = x_1_dim_b
+        self.x_1_dim_c = x_1_dim_c
+        self.x_2_dim_a = x_2_dim_a
+        self.x_2_dim_b = x_2_dim_b
+        self.x_2_dim_c = x_2_dim_c
+        self.y_dim_a = y_dim_a
+        self.y_dim_b = y_dim_b
+        self.y_dim_c = y_dim_c
 
         # attention score, or attention context
-        self.operation_mode = kwargs.get("operation_mode")
-        self.additional_scale = kwargs.get("additional_scale")
+        self.operation_mode = operation_mode
+        self.additional_scale = additional_scale
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()

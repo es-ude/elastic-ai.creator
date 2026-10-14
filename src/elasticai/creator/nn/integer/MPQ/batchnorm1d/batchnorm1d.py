@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 
@@ -23,20 +25,36 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        norm_dim: int,
+        eps: float,
+        momentum: float,
+        affine: bool,
+        track_running_stats: bool,
+        num_dimensions: int,
+        in_features: int,
+        out_features: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
         super().__init__(
-            kwargs.get("norm_dim"),
-            kwargs.get("eps"),
-            kwargs.get("momentum"),
-            kwargs.get("affine"),
-            kwargs.get("track_running_stats"),
+            norm_dim,
+            eps,
+            momentum,
+            affine,
+            track_running_stats,
         )
-        self.num_dimensions = kwargs.get("num_dimensions")
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.norm_dim = kwargs.get("norm_dim")
+        self.num_dimensions = num_dimensions
+        self.in_features = in_features
+        self.out_features = out_features
+        self.norm_dim = norm_dim
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = [
             "inputs",
             "weights",
@@ -44,12 +62,12 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             "outputs",
         ]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):

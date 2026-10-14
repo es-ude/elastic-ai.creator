@@ -17,19 +17,27 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class MultiHeadAttention(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        nhead: int,
+        d_model: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ):
         super().__init__()
 
-        self.nhead = kwargs.get("nhead")
-        d_model = kwargs.get("d_model")
-        window_size = kwargs.get("window_size")
+        self.nhead = nhead
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.enable_error_analysis = enable_error_analysis
 
         self.q_linear = Linear(
             name=self.name + "_q_linear",

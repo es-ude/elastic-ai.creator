@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
 
@@ -13,19 +15,28 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class MultiHeadAttention(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        nhead: int,
+        d_model: int,
+        window_size: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
         super().__init__()
 
-        self.nhead = kwargs.get("nhead")
-        d_model = kwargs.get("d_model")
-        window_size = kwargs.get("window_size")
+        self.nhead = nhead
 
-        self.name = kwargs.get("name")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
+        self.name = name
+        self.quant_data_dir = quant_data_dir
+        self.device = device
 
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
-        self.MPQ_strategy = kwargs.get("MPQ_strategy")
+        self.enable_error_analysis = enable_error_analysis
+        self.MPQ_strategy = MPQ_strategy
 
         self.q_linear = Linear(
             name=self.name + "_q_linear",
