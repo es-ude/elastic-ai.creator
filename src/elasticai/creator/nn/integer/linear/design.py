@@ -15,6 +15,44 @@ from elasticai.creator.vhdl.shared_designs.multi_value_rom import MultiValueRom
 from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
+def check_template_options(
+    *,
+    in_features: int,
+    num_dimensions: int | None,
+    use_parallelised_template: bool,
+    unroll_factor: int,
+    use_pipeline_template: bool,
+) -> None:
+    """Check that a template exists for the given options.
+
+    Called by `LinearDesign` and by the `Linear` layer, so that invalid
+    options fail when the layer is created, not only after training.
+
+    Raises:
+        ValueError: If `unroll_factor` is smaller than 1, or if
+            `use_pipeline_template` is set without `use_parallelised_template`
+            or for 1D inputs.
+        NotImplementedError: If the parallelised template is used with 2D
+            inputs and `in_features == 1`.
+    """
+    if unroll_factor < 1:
+        raise ValueError(f"unroll_factor must be at least 1, got {unroll_factor}")
+    # Only the parallelised 2D template has a pipelined variant. Any other
+    # template lacks the `ready` port that its testbench and the LSTM
+    # pipeline template connect to.
+    if use_pipeline_template and (
+        not use_parallelised_template or num_dimensions is None
+    ):
+        raise ValueError(
+            "use_pipeline_template requires use_parallelised_template and "
+            "num_dimensions"
+        )
+    if use_parallelised_template and num_dimensions is not None and in_features == 1:
+        raise NotImplementedError(
+            "The parallelised template does not support in_features=1"
+        )
+
+
 class Linear(Design):
     """VHDL design of an integer-only linear layer.
 
@@ -89,22 +127,16 @@ class Linear(Design):
                 inputs.
 
         Raises:
-            ValueError: If `unroll_factor` is smaller than 1, or if
-                `use_pipeline_template` is set without
-                `use_parallelised_template` or for 1D inputs.
+            ValueError, NotImplementedError: If no template exists for the
+                given options, see `check_template_options`.
         """
-        if unroll_factor < 1:
-            raise ValueError(f"unroll_factor must be at least 1, got {unroll_factor}")
-        # Only the parallelised 2D template has a pipelined variant. Any other
-        # template lacks the `ready` port that its testbench and the LSTM
-        # pipeline template connect to.
-        if use_pipeline_template and (
-            not use_parallelised_template or num_dimensions is None
-        ):
-            raise ValueError(
-                "use_pipeline_template requires use_parallelised_template and "
-                "num_dimensions"
-            )
+        check_template_options(
+            in_features=in_features,
+            num_dimensions=num_dimensions,
+            use_parallelised_template=use_parallelised_template,
+            unroll_factor=unroll_factor,
+            use_pipeline_template=use_pipeline_template,
+        )
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -167,10 +199,6 @@ class Linear(Design):
 
         Args:
             destination: Directory the VHDL files are written to.
-
-        Raises:
-            NotImplementedError: If the parallelised template is used with
-                2D inputs and `in_features == 1`.
         """
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
@@ -219,12 +247,8 @@ class Linear(Design):
                     else:
                         file_name = "linear_2d_parallel.tpl.vhd"
             else:
-                if not self._use_parallelised_template:
-                    file_name = "linear_2d_feature1.tpl.vhd"
-                else:
-                    raise NotImplementedError(
-                        "The parallelised template does not support in_features=1"
-                    )
+                # check_template_options rules out the parallelised template.
+                file_name = "linear_2d_feature1.tpl.vhd"
             if self._use_pipeline_template:
                 test_file_name = "linear_2d_parallel_rdy_tb.tpl.vhd"
             else:

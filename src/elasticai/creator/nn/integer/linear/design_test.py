@@ -588,15 +588,13 @@ def test_m_q_data_width_fits_m_q_as_signed(m_q, expected_width) -> None:
 
 
 def test_parallelised_template_with_one_input_feature_is_not_implemented() -> None:
-    design = create_linear_design(
-        in_features=1,
-        weights=[[1], [2]],
-        num_dimensions=1,
-        use_parallelised_template=True,
-    )
-
     with pytest.raises(NotImplementedError):
-        design.save_to(InMemoryPath("linear_0", parent=None))
+        create_linear_design(
+            in_features=1,
+            weights=[[1], [2]],
+            num_dimensions=1,
+            use_parallelised_template=True,
+        )
 
 
 @pytest.mark.parametrize("unroll_factor", [0, -1])

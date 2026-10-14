@@ -8,6 +8,7 @@ from torch.nn import functional as F
 from elasticai.creator.nn.integer._dtypes import FLOAT_DTYPES, check_dtype
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
+from elasticai.creator.nn.integer.linear.design import check_template_options
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -86,10 +87,16 @@ class Linear(DesignCreatorModule, nn.Linear):
             outputs_qparams_cls: Quantization scheme of the outputs.
 
         Raises:
-            ValueError: If `unroll_factor` is smaller than 1.
+            ValueError, NotImplementedError: If no VHDL template exists for the
+                template options, see `check_template_options`.
         """
-        if unroll_factor < 1:
-            raise ValueError(f"unroll_factor must be at least 1, got {unroll_factor}")
+        check_template_options(
+            in_features=in_features,
+            num_dimensions=num_dimensions,
+            use_parallelised_template=use_parallelised_template,
+            unroll_factor=unroll_factor,
+            use_pipeline_template=use_pipeline_template,
+        )
         super().__init__(in_features, out_features, bias, device=device)
         self.num_dimensions = num_dimensions
 

@@ -1,4 +1,5 @@
 import warnings
+from typing import Any
 
 import pytest
 import torch
@@ -811,3 +812,24 @@ def test_precompute_does_not_warn_if_bias_fits(linear_layer, inputs) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         linear_layer.precompute()
+
+
+@pytest.mark.parametrize(
+    "options, error",
+    [
+        (dict(use_pipeline_template=True), ValueError),
+        (dict(use_pipeline_template=True, use_parallelised_template=True), ValueError),
+        (
+            dict(in_features=1, num_dimensions=2, use_parallelised_template=True),
+            NotImplementedError,
+        ),
+    ],
+)
+def test_invalid_template_options_raise_on_creation(options, error) -> None:
+    parameters: dict[str, Any] = dict(
+        name="linear", in_features=3, out_features=2, quant_bits=8
+    )
+    parameters.update(options)
+
+    with pytest.raises(error):
+        Linear(**parameters)
