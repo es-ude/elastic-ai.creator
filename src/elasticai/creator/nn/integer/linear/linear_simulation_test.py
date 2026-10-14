@@ -12,17 +12,6 @@ pytestmark = pytest.mark.simulation
 
 NAME = "linear_0"
 
-# BUG: Since 079dc92d the shared Rom reads combinationally instead of on the
-#   clock edge. The integer templates expect one cycle of ROM latency, so the
-#   weights arrive one cycle before the inputs and x_i is multiplied with
-#   w_(i+1). The parallelised templates use MultiValueRom, which is still
-#   clocked.
-#   Possible solution: add a `registered` option to the shared Rom and use it
-#   in the integer designs.
-ROM_NOT_CLOCKED = pytest.mark.xfail(
-    reason="shared Rom reads combinationally, weights are one cycle early",
-    strict=True,
-)
 # BUG: The templates add Z_Y and resize the result to DATA_WIDTH bits without
 #   saturating, so outputs outside the range wrap around (e.g. 256 -> 0),
 #   while int_forward clamps them (256 -> 127).
@@ -57,8 +46,8 @@ def read_integers(path: Path) -> list[int]:
 @pytest.mark.parametrize(
     "in_features, out_features, options",
     [
-        pytest.param(4, 3, dict(), id="1d", marks=ROM_NOT_CLOCKED),
-        pytest.param(4, 3, dict(num_dimensions=2), id="2d", marks=ROM_NOT_CLOCKED),
+        pytest.param(4, 3, dict(), id="1d"),
+        pytest.param(4, 3, dict(num_dimensions=2), id="2d"),
         pytest.param(
             1,
             3,

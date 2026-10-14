@@ -134,6 +134,7 @@ class Linear(Design):
             name=rom_name["weights"],
             data_width=self._w_data_width,
             values_as_integers=flatten_params(self._weights),
+            registered=True,
         )
         rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
@@ -141,6 +142,7 @@ class Linear(Design):
             name=rom_name["bias"],
             data_width=self._b_data_width,
             values_as_integers=self._bias,
+            registered=True,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
 

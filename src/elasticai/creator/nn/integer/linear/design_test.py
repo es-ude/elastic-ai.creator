@@ -445,7 +445,8 @@ def test_weight_rom_code_generated_correctly(saved_files) -> None:
         "type linear_0_w_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);"
         in actual_code
     )
-    assert "ROM_process: process(addr)" in actual_code
+    assert "ROM_process: process(clk)" in actual_code
+    assert "if rising_edge(clk) then" in actual_code
     assert "if (en = '1') then" in actual_code
     assert "data <= ROM(to_integer(unsigned(addr)));" in actual_code
 
@@ -467,7 +468,8 @@ def test_bias_rom_code_generated_correctly(saved_files) -> None:
         "type linear_0_b_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);"
         in actual_code
     )
-    assert "ROM_process: process(addr)" in actual_code
+    assert "ROM_process: process(clk)" in actual_code
+    assert "if rising_edge(clk) then" in actual_code
     assert "if (en = '1') then" in actual_code
     assert "data <= ROM(to_integer(unsigned(addr)));" in actual_code
 
