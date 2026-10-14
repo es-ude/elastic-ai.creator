@@ -84,13 +84,27 @@ class Linear(Design):
             unroll_factor: Number of output features computed in parallel.
                 Capped at `out_features`, with a warning.
             use_pipeline_template: Use the pipelined variant of the
-                parallelised template and its testbench.
+                parallelised template and its testbench. It has an additional
+                `ready` output. Requires `use_parallelised_template` and 2D
+                inputs.
 
         Raises:
-            ValueError: If `unroll_factor` is smaller than 1.
+            ValueError: If `unroll_factor` is smaller than 1, or if
+                `use_pipeline_template` is set without
+                `use_parallelised_template` or for 1D inputs.
         """
         if unroll_factor < 1:
             raise ValueError(f"unroll_factor must be at least 1, got {unroll_factor}")
+        # Only the parallelised 2D template has a pipelined variant. Any other
+        # template lacks the `ready` port that its testbench and the LSTM
+        # pipeline template connect to.
+        if use_pipeline_template and (
+            not use_parallelised_template or num_dimensions is None
+        ):
+            raise ValueError(
+                "use_pipeline_template requires use_parallelised_template and "
+                "num_dimensions"
+            )
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -211,11 +225,10 @@ class Linear(Design):
                     raise NotImplementedError(
                         "The parallelised template does not support in_features=1"
                     )
-            test_file_name = "linear_2d_tb.tpl.vhd"
             if self._use_pipeline_template:
-                test_file_name = (  # override the test file name for pipeline template
-                    "linear_2d_parallel_rdy_tb.tpl.vhd"
-                )
+                test_file_name = "linear_2d_parallel_rdy_tb.tpl.vhd"
+            else:
+                test_file_name = "linear_2d_tb.tpl.vhd"
 
             template_parameters["num_dimensions"] = str(self._num_dimensions)
             test_template_parameters["num_dimensions"] = str(self._num_dimensions)

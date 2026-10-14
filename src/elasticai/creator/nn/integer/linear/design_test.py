@@ -610,3 +610,33 @@ def test_unroll_factor_above_out_features_is_capped_with_warning() -> None:
         design = create_linear_design(unroll_factor=5)
 
     assert design._unroll_factor == 2
+
+
+@pytest.mark.parametrize(
+    "use_parallelised_template, num_dimensions", [(False, 2), (True, None)]
+)
+def test_pipeline_template_without_parallelised_2d_template_raises(
+    use_parallelised_template, num_dimensions
+) -> None:
+    with pytest.raises(ValueError, match="use_pipeline_template"):
+        create_linear_design(
+            use_pipeline_template=True,
+            use_parallelised_template=use_parallelised_template,
+            num_dimensions=num_dimensions,
+        )
+
+
+def test_pipeline_template_uses_pipeline_layer_and_testbench() -> None:
+    design = create_linear_design(
+        use_pipeline_template=True, use_parallelised_template=True, num_dimensions=2
+    )
+    destination = InMemoryPath("linear_0", parent=None)
+
+    design.save_to(destination)
+
+    layer = destination["linear_0"]
+    testbench = destination["linear_0_tb"]
+    assert isinstance(layer, InMemoryFile)
+    assert isinstance(testbench, InMemoryFile)
+    assert "ready: out std_logic" in "\n".join(layer.text)
+    assert "ready  => open" in "\n".join(testbench.text)
