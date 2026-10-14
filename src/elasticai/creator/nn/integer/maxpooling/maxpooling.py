@@ -19,6 +19,18 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class MaxPooling1d(DesignCreatorModule, nn.Module):
+    """Max pooling over the sequence, with integer inference.
+
+    Inputs have the shape `(batch, channels, seq_len)`. The layer takes the
+    maximum of non-overlapping windows of `kernel_size` values (the stride
+    equals `kernel_size`). `in_features` is the sequence length and
+    `in_num_dimensions` the number of channels; with these, the VHDL design
+    matches `int_forward` (checked with GHDL).
+
+    Taking the maximum does not change the scale, so the layer needs no
+    `precompute`, and after `forward`, `outputs_QParams` is `inputs_QParams`.
+    """
+
     def __init__(
         self,
         *,
@@ -32,6 +44,21 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
+        """Create the layer.
+
+        Args:
+            name: Name of the layer, used for the saved quantization data.
+            in_features: Sequence length of the inputs.
+            out_features: Sequence length of the outputs,
+                `in_features // kernel_size`.
+            in_num_dimensions: Number of channels of the inputs.
+            out_num_dimensions: Number of channels of the outputs.
+            kernel_size: Size and stride of the pooling windows.
+            quant_bits: Bit width of inputs and outputs.
+            quant_data_dir: Directory for the quantized inputs and outputs
+                saved by `int_forward`. `None` disables saving.
+            device: Device of the quantization parameters.
+        """
         super().__init__()
 
         self.name = name
@@ -54,6 +81,11 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         self.scale_factor_Math_ops = MathOperations()
 
     def create_design(self, name: str) -> MaxPooling1dDesign:
+        """Create the VHDL design.
+
+        Args:
+            name: Name of the VHDL entity.
+        """
         return MaxPooling1dDesign(
             name=name,
             data_width=self.quant_bits,
@@ -70,6 +102,19 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         self,
         q_inputs: torch.Tensor,
     ) -> torch.Tensor:
+        """Run integer-only inference, as the hardware does.
+
+        Inputs and outputs are saved to `quant_data_dir`.
+
+        Args:
+            q_inputs: Inputs quantized with `inputs_QParams`, of shape
+                `(batch, channels, seq_len)`.
+
+        Returns:
+            The maximum of each window, of shape
+            `(batch, channels, seq_len // kernel_size)`, quantized with the
+            same parameters as the inputs.
+        """
         assert not self.training, "int_forward should be called in eval mode"
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
@@ -100,6 +145,19 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
     ) -> torch.Tensor:
+        """Apply max pooling to float inputs, optionally simulating quantization.
+
+        Args:
+            inputs: Float inputs of shape `(batch, channels, seq_len)`.
+            given_inputs_QParams: Quantization parameters of the inputs,
+                usually the output parameters of the previous layer. If given
+                in training mode, they replace `inputs_QParams` instead of
+                being learned from `inputs`.
+            enable_simquant: Simulate quantization of the inputs.
+
+        Returns:
+            The float outputs, of shape `(batch, channels, seq_len // kernel_size)`.
+        """
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:
