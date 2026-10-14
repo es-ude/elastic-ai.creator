@@ -14,6 +14,14 @@ from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class BatchNorm1d(Design):
+    """VHDL design of an integer batch normalization.
+
+    Computes `(x - z_x) * w + b` per feature, scales the result by
+    `m_q * 2**-m_q_shift` and adds the output zero point. Weights and bias
+    are stored in ROMs. The layer uses the buffered interface (`x`,
+    `x_address`, `y`, `y_address`, `enable`, `done`, `clock`).
+    """
+
     def __init__(
         self,
         name: str,
@@ -32,6 +40,28 @@ class BatchNorm1d(Design):
         work_library_name: str,
         resource_option: str,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of inputs, outputs and weights.
+            num_dimensions: Number of vectors per input.
+            in_features: Features per input vector.
+            out_features: Features per output vector.
+            weights: Quantized weights, one per feature, with the zero point
+                `z_w` already subtracted.
+            bias: Quantized bias, one per feature, with the zero point `z_b`
+                already subtracted.
+            m_q: Integer multiplier of the requantization scale `M`.
+            m_q_shift: Right shift of the requantization scale `M`.
+            z_w: Zero point of the weights.
+            z_b: Zero point of the bias.
+            z_x: Zero point of the inputs.
+            z_y: Zero point of the outputs.
+            work_library_name: Name of the VHDL library the design is
+                compiled into.
+            resource_option: Resource type used for the output RAM.
+        """
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -64,6 +94,7 @@ class BatchNorm1d(Design):
 
     @property
     def port(self) -> Port:
+        """Buffered port with inputs and outputs of `data_width` bits."""
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
@@ -72,6 +103,11 @@ class BatchNorm1d(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer, its weight and bias ROMs, a RAM and a testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+        """
         template = InProjectTemplate(
             package=module_to_package(__name__),
             file_name="batchnorm1d.tpl.vhd",
@@ -101,6 +137,7 @@ class BatchNorm1d(Design):
             name=rom_name["weights"],
             data_width=self._data_width,
             values_as_integers=self._weights,
+            registered=True,
         )
         rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
@@ -108,6 +145,7 @@ class BatchNorm1d(Design):
             name=rom_name["bias"],
             data_width=(self._data_width + 1) * 2,
             values_as_integers=self._bias,
+            registered=True,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
 

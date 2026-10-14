@@ -12,8 +12,9 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
+    QParams,
     SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -23,15 +24,13 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
     def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
-        )
+        bias = kwargs.get("bias", True)
+        super().__init__(kwargs.get("in_features"), kwargs.get("out_features"), bias)
         self.num_dimensions = kwargs.get("num_dimensions", None)
-        self.enable_bias = kwargs.get("bias", True)
 
         self.name = kwargs.get("name")
         self.quantizable_elements = ["inputs", "weights", "outputs"]
-        if kwargs.get("bias"):
+        if bias:
             self.quantizable_elements.append("bias")
         self.quant_bits_per_element = None
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
@@ -39,7 +38,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=kwargs.get("MPQ_strategy"))
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -47,7 +46,10 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         for element in self.quantizable_elements:
             key = f"{self.name}.{element}"
             quant_bits_per_element[element] = quant_configs.get(key)
+        self._check_quant_bits_configured(quant_bits_per_element)
 
+        # The bias width follows from the inputs and weights; a configured
+        # value is ignored.
         if "bias" in quant_bits_per_element:
             quant_bits_per_element["bias"] = (quant_bits_per_element["inputs"] + 1) + (
                 quant_bits_per_element["weights"] + 1
@@ -66,7 +68,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
 
-        if self.enable_bias:
+        if self.bias is not None:
             self.bias_QParams = SymmetricSignedQParams(
                 quant_bits=self.quant_bits_per_element["bias"],
                 observer=GlobalMinMaxObserver(),
@@ -78,30 +80,41 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         ).to(self.device)
 
     def create_design(self, name: str) -> LinearDesign:
+        # The hardware always adds a bias, so a layer without one gets a bias
+        # of zeros with the width a quantized bias would have.
+        if self.bias is not None:
+            b_data_width = self.bias_QParams.quant_bits
+            bias = self.q_bias.tolist()
+            z_b = int(self.bias_QParams.zero_point.item())
+        else:
+            b_data_width = (self.inputs_QParams.quant_bits + 1) + (
+                self.weight_QParams.quant_bits + 1
+            )
+            bias = [0] * self.out_features
+            z_b = 0
+
         return LinearDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            w_data_width=self.weight_QParams.quant_bits.item(),
-            b_data_width=(
-                self.bias_QParams.quant_bits.item() if self.enable_bias else 0
-            ),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            w_data_width=self.weight_QParams.quant_bits,
+            b_data_width=b_data_width,
+            y_data_width=self.outputs_QParams.quant_bits,
             in_features=self.in_features,
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist(),
+            bias=bias,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item(),
+            z_b=z_b,
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
         )
 
-    def _get_quantized_weights(self) -> torch.IntTensor:
+    def _get_quantized_weights(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -109,17 +122,17 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             q_weights = self.math_ops.intsub(
                 q_weights,
                 self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits.item() + 1,
+                self.weight_QParams.quant_bits + 1,
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.IntTensor:
+    def _get_quantized_bias(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits.item() + 1) + (
-            self.weight_QParams.quant_bits.item() + 1
+        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
+            self.weight_QParams.quant_bits + 1
         )
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
@@ -152,8 +165,8 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -164,15 +177,15 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         q_inputs = self.math_ops.intsub(
             q_inputs,
             self.inputs_QParams.zero_point,
-            self.inputs_QParams.quant_bits.item() + 1,
+            self.inputs_QParams.quant_bits + 1,
         )
 
         tmp = self.math_ops.int_mac(
             x=q_inputs,
             w=self.q_weights,
             b=self.q_bias,
-            x_quant_bits=self.inputs_QParams.quant_bits.item(),
-            w_quant_bits=self.weight_QParams.quant_bits.item(),
+            x_quant_bits=self.inputs_QParams.quant_bits,
+            w_quant_bits=self.weight_QParams.quant_bits,
         )
 
         tmp = simulate_bitshifting(
@@ -180,7 +193,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -195,10 +208,10 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(
@@ -214,6 +227,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
+            bias = None
             if self.bias is not None:
                 bias = SimQuant.apply(self.bias, self.bias_QParams)
         else:

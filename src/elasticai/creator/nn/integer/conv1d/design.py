@@ -16,6 +16,14 @@ from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class Conv1d(Design):
+    """VHDL design of an integer 1D convolution.
+
+    Weights and bias are stored in ROMs. The layer uses the buffered
+    interface (`x`, `x_address`, `y`, `y_address`, `enable`, `done`,
+    `clock`). Depending on `padding_len`, the template with or without zero
+    padding is used.
+    """
+
     def __init__(
         self,
         name: str,
@@ -37,6 +45,32 @@ class Conv1d(Design):
         work_library_name: str,
         resource_option: str,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of inputs, outputs and weights.
+            in_channels: Number of input channels.
+            out_channels: Number of output channels.
+            seq_len: Sequence length of the inputs.
+            kernel_size: Size of the convolution kernel.
+            padding: Padding of the layer, used to compute the output count.
+            padding_len: Number of padded values on each side.
+            weights: Quantized weights of shape
+                `(out_channels, in_channels, kernel_size)`, with the zero point
+                `z_w` already subtracted.
+            bias: Quantized bias of length `out_channels`, with the zero point
+                `z_b` already subtracted.
+            m_q: Integer multiplier of the requantization scale `M`.
+            m_q_shift: Right shift of the requantization scale `M`.
+            z_w: Zero point of the weights.
+            z_b: Zero point of the bias.
+            z_x: Zero point of the inputs.
+            z_y: Zero point of the outputs.
+            work_library_name: Name of the VHDL library the design is
+                compiled into.
+            resource_option: Resource type used for the output RAM.
+        """
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -83,6 +117,7 @@ class Conv1d(Design):
 
     @property
     def port(self) -> Port:
+        """Buffered port with `x_count` inputs and `y_count` outputs."""
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
@@ -91,6 +126,11 @@ class Conv1d(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer, its weight and bias ROMs, a RAM and a testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+        """
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
         template_parameters = dict(
@@ -132,6 +172,7 @@ class Conv1d(Design):
             name=rom_name["weights"],
             data_width=self._data_width,
             values_as_integers=_flatten_params(self._weights),
+            registered=True,
         )
         rom_weights.save_to(destination.create_subpath(rom_name["weights"]))
 
@@ -139,6 +180,7 @@ class Conv1d(Design):
             name=rom_name["bias"],
             data_width=(self._data_width + 1) * 2,
             values_as_integers=self._bias,
+            registered=True,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
 
@@ -166,6 +208,7 @@ class Conv1d(Design):
 
 
 def _flatten_params(params):
+    """Flatten nested lists of parameters depth-first."""
     flat_list = []
     for p in params:
         if isinstance(p, list):

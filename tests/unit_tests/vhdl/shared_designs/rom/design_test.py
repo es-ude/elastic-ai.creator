@@ -135,3 +135,25 @@ class TestRomDesign:
         expected_address_width: int,
     ) -> None:
         assert address_width(values_as_integers) == expected_address_width
+
+
+def saved_rom_code(build_root: InMemoryPath, rom: Rom) -> str:
+    rom.save_to(build_root)
+    file = build_root["test_rom"]
+    assert isinstance(file, InMemoryFile)
+    return "\n".join(file.text)
+
+
+def test_rom_reads_combinationally_by_default(build_root) -> None:
+    code = saved_rom_code(build_root, Rom("test_rom", 8, [1, 2]))
+
+    assert "process(addr)" in code
+    assert "rising_edge(clk)" not in code
+
+
+def test_registered_rom_reads_on_rising_clock_edge(build_root) -> None:
+    code = saved_rom_code(build_root, Rom("test_rom", 8, [1, 2], registered=True))
+
+    assert "process(clk)" in code
+    assert "rising_edge(clk)" in code
+    assert extract_rom_values(code.splitlines()) == ("00000001", "00000010")

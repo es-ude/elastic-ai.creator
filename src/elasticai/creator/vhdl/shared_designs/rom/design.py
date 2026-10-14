@@ -8,10 +8,30 @@ from elasticai.creator.vhdl.code_generation.addressable import calculate_address
 
 
 class Rom:
+    """VHDL design of a read-only memory holding signed integers.
+
+    Unused addresses up to the next power of two are filled with zeros.
+    """
+
     def __init__(
-        self, name: str, data_width: int, values_as_integers: list[int]
+        self,
+        name: str,
+        data_width: int,
+        values_as_integers: list[int],
+        registered: bool = False,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of the stored values.
+            values_as_integers: The values, stored as two's complement.
+            registered: Read on the rising clock edge, so that `data` is
+                valid one cycle after `addr`. Otherwise the read is
+                combinational.
+        """
         self._name = name
+        self._registered = registered
         self._data_width = data_width
         self._address_width = calculate_address_width(len(values_as_integers))
         conv = FxpConverter(
@@ -24,7 +44,7 @@ class Rom:
 
     def save_to(self, destination: Path):
         template = InProjectTemplate(
-            file_name="rom.tpl.vhd",
+            file_name="rom_registered.tpl.vhd" if self._registered else "rom.tpl.vhd",
             package=module_to_package(self.__module__),
             parameters=dict(
                 rom_value=self._rom_values(),

@@ -99,10 +99,10 @@ class RNNLayer(nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-        q_h_prev: torch.IntTensor,
-        q_c_prev: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+        q_h_prev: torch.Tensor,
+        q_c_prev: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -133,14 +133,14 @@ class RNNLayer(nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        h_prev: torch.FloatTensor,
-        c_prev: torch.FloatTensor,
+        inputs: torch.Tensor,
+        h_prev: torch.Tensor,
+        c_prev: torch.Tensor,
         given_inputs_QParams: torch.nn.Module,
         given_h_prev_QParams: torch.nn.Module,
         given_c_prev_QParams: torch.nn.Module,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is not None:

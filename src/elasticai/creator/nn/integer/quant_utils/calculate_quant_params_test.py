@@ -133,7 +133,7 @@ def test_calculate_symmetric_quant_params_signed(symmetric_signed_setup, eps):
 
     actual_scale_factor, actual_zero_point, actual_min_float, actual_max_float = (
         calculate_symmetric_quant_params(
-            min_quant, max_quant, min_float, max_float, eps
+            min_float, max_float, min_quant, max_quant, eps
         )
     )
     assert torch.isclose(actual_scale_factor, expected_scale_factor, atol=1e-10)
@@ -162,7 +162,7 @@ def test_calculate_symmetric_quant_params_unsigned(symmetric_unsigned_setup, eps
 
     actual_scale_factor, actual_zero_point, actual_min_float, actual_max_float = (
         calculate_symmetric_quant_params(
-            min_quant, max_quant, min_float, max_float, eps
+            min_float, max_float, min_quant, max_quant, eps
         )
     )
     assert torch.isclose(actual_scale_factor, expected_scale_factor, atol=1e-10)

@@ -14,25 +14,60 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    """Global average pooling over the sequence followed by flattening.
+
+    Inputs have the shape `(batch, seq_len, channels)`. The layer averages
+    over `seq_len` and returns `(batch, channels)`. `in_features` is the
+    sequence length and `in_num_dimensions` the number of channels; with
+    these, the VHDL design matches `int_forward` (checked with GHDL).
+    """
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        in_num_dimensions: int,
+        out_num_dimensions: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ):
+        """Create the layer.
+
+        Args:
+            name: Name of the layer, used for the saved quantization data.
+            in_features: Sequence length of the inputs.
+            out_features: Sequence length of the outputs, usually 1.
+            in_num_dimensions: Number of channels of the inputs.
+            out_num_dimensions: Number of channels of the outputs.
+            quant_bits: Bit width of inputs and outputs.
+            quant_data_dir: Directory for the quantized inputs and outputs
+                saved by `int_forward`. `None` disables saving.
+            device: Device of the quantization parameters.
+            enable_error_analysis: Also save the float outputs of `forward`
+                and the dequantized outputs of `int_forward`.
+        """
         super().__init__()
 
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.in_num_dimensions = kwargs.get("in_num_dimensions")
-        self.out_num_dimensions = kwargs.get("out_num_dimensions")
+        self.in_features = in_features
+        self.out_features = out_features
+        self.in_num_dimensions = in_num_dimensions
+        self.out_num_dimensions = out_num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -45,6 +80,11 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> AVGPooling1dFlattenDesign:
+        """Create the VHDL design. Call `precompute` first.
+
+        Args:
+            name: Name of the VHDL entity.
+        """
         return AVGPooling1dFlattenDesign(
             name=name,
             data_width=self.quant_bits,
@@ -61,6 +101,11 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         )
 
     def precompute(self) -> None:
+        """Compute the integer scale for `int_forward` and `create_design`.
+
+        Approximates `M = s_x / (s_y * in_features)` by
+        `m_q * 2**-m_q_shift`. Must be called in eval mode, after training.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         L = self.in_features  # e.g., seq_len
         self.scale_factor_M = torch.tensor(
@@ -75,8 +120,20 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
+        """Run integer-only inference, as the hardware does.
+
+        Sums `q_x - z_x` over the sequence, scales the sum by `M` and adds
+        `z_y`. Inputs and outputs are saved to `quant_data_dir`.
+
+        Args:
+            q_inputs: Inputs quantized with `inputs_QParams`, of shape
+                `(batch, seq_len, channels)`.
+
+        Returns:
+            The quantized outputs, of shape `(batch, channels)`.
+        """
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
@@ -111,10 +168,23 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
+        """Average float inputs over the sequence, optionally simulating quantization.
+
+        Args:
+            inputs: Float inputs of shape `(batch, seq_len, channels)`.
+            given_inputs_QParams: Quantization parameters of the inputs,
+                usually the output parameters of the previous layer. If given
+                in training mode, they replace `inputs_QParams` instead of
+                being learned from `inputs`.
+            enable_simquant: Simulate quantization of inputs and outputs.
+
+        Returns:
+            The float outputs, of shape `(batch, channels)`.
+        """
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

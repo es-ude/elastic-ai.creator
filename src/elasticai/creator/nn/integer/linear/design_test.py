@@ -1,8 +1,10 @@
 import re
+from typing import Any
 
 import pytest
 
 from elasticai.creator.file_generation.in_memory_path import InMemoryFile, InMemoryPath
+from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 
 
 @pytest.fixture
@@ -62,7 +64,7 @@ entity linear_0 is
         Z_W : integer := 0;
         Z_B : integer := 0;
         Z_Y : integer := 0;
-        M_Q_DATA_WIDTH : integer := 2;
+        M_Q_DATA_WIDTH : integer := 3;
         Y_RESOURCE_OPTION : string := "distributed"
     );
     port (
@@ -77,6 +79,19 @@ entity linear_0 is
 end linear_0;
 architecture rtl of linear_0 is
     constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    -- Saturate to the range of a signed number with `width` bits.
+    function saturate(value : signed; width : natural) return signed is
+        constant MAX_VAL : integer := 2**(width - 1) - 1;
+        constant MIN_VAL : integer := -(2**(width - 1));
+    begin
+        if value > to_signed(MAX_VAL, value'length) then
+            return to_signed(MAX_VAL, width);
+        elsif value < to_signed(MIN_VAL, value'length) then
+            return to_signed(MIN_VAL, width);
+        else
+            return resize(value, width);
+        end if;
+    end function;
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);
@@ -107,9 +122,9 @@ architecture rtl of linear_0 is
             TMP_3 := TMP_2 + 1;
         end if;
         if is_negative then
-            return -resize(TMP_3, DATA_WIDTH + 1);
+            return -saturate(TMP_3, DATA_WIDTH + 1);
         else
-            return resize(TMP_3, DATA_WIDTH + 1);
+            return saturate(TMP_3, DATA_WIDTH + 1);
         end if;
     end function;
     function log2(val : INTEGER) return natural is
@@ -181,7 +196,7 @@ begin
         variable input_offset : integer;
         variable var_product : signed(DATA_WIDTH - 1 downto 0);
         variable var_b_add_z_b : integer;
-        variable var_y_store : signed(DATA_WIDTH downto 0);
+        variable var_y_store : signed(DATA_WIDTH + 1 downto 0);
     begin
         if rising_edge(clock) then
             if layer_state=s_stop then
@@ -227,8 +242,8 @@ begin
                         y_scaled <= scaling(macc_sum, M_Q_SIGNED, M_Q_SHIFT);
                         mac_state <= s_output;
                     when s_output =>
-                        var_y_store := y_scaled + to_signed(Z_Y, y_scaled'length);
-                        y_store_data <= std_logic_vector(resize(var_y_store, y_store_data'length));
+                        var_y_store := resize(y_scaled, var_y_store'length) + to_signed(Z_Y, var_y_store'length);
+                        y_store_data <= std_logic_vector(saturate(var_y_store, DATA_WIDTH));
                         y_store_addr <= output_idx;
                         y_store_en <= '1';
                         if neuron_idx < OUT_FEATURES-1 then
@@ -443,7 +458,8 @@ def test_weight_rom_code_generated_correctly(saved_files) -> None:
         "type linear_0_w_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);"
         in actual_code
     )
-    assert "ROM_process: process(addr)" in actual_code
+    assert "ROM_process: process(clk)" in actual_code
+    assert "if rising_edge(clk) then" in actual_code
     assert "if (en = '1') then" in actual_code
     assert "data <= ROM(to_integer(unsigned(addr)));" in actual_code
 
@@ -465,7 +481,8 @@ def test_bias_rom_code_generated_correctly(saved_files) -> None:
         "type linear_0_b_rom_array_t is array (0 to 2**ROM_ADDR_WIDTH-1) of std_logic_vector(ROM_DATA_WIDTH-1 downto 0);"
         in actual_code
     )
-    assert "ROM_process: process(addr)" in actual_code
+    assert "ROM_process: process(clk)" in actual_code
+    assert "if rising_edge(clk) then" in actual_code
     assert "if (en = '1') then" in actual_code
     assert "data <= ROM(to_integer(unsigned(addr)));" in actual_code
 
@@ -553,3 +570,86 @@ begin
     end generate;
 end architecture rtl;"""
     assert expected_code == actual_code
+
+
+def create_linear_design(**kwargs: Any) -> LinearDesign:
+    parameters: dict[str, Any] = dict(
+        name="linear_0",
+        data_width=8,
+        in_features=3,
+        out_features=2,
+        weights=[[1, 2, 3], [4, 5, 6]],
+        bias=[1, 2],
+        m_q=1,
+        m_q_shift=1,
+        z_w=0,
+        z_b=0,
+        z_x=0,
+        z_y=0,
+        work_library_name="work",
+        resource_option="auto",
+    )
+    parameters.update(kwargs)
+    return LinearDesign(**parameters)
+
+
+@pytest.mark.parametrize(
+    "m_q, expected_width", [(0, 1), (1, 2), (2, 3), (3, 3), (4, 4), (5, 4), (255, 9)]
+)
+def test_m_q_data_width_fits_m_q_as_signed(m_q, expected_width) -> None:
+    design = create_linear_design(m_q=m_q)
+
+    assert design._m_q_data_width == expected_width
+
+
+def test_parallelised_template_with_one_input_feature_is_not_implemented() -> None:
+    with pytest.raises(NotImplementedError):
+        create_linear_design(
+            in_features=1,
+            weights=[[1], [2]],
+            num_dimensions=1,
+            use_parallelised_template=True,
+        )
+
+
+@pytest.mark.parametrize("unroll_factor", [0, -1])
+def test_unroll_factor_below_one_raises(unroll_factor) -> None:
+    with pytest.raises(ValueError, match="unroll_factor"):
+        create_linear_design(unroll_factor=unroll_factor)
+
+
+def test_unroll_factor_above_out_features_is_capped_with_warning() -> None:
+    with pytest.warns(UserWarning, match="capped at 2"):
+        design = create_linear_design(unroll_factor=5)
+
+    assert design._unroll_factor == 2
+
+
+@pytest.mark.parametrize(
+    "use_parallelised_template, num_dimensions", [(False, 2), (True, None)]
+)
+def test_pipeline_template_without_parallelised_2d_template_raises(
+    use_parallelised_template, num_dimensions
+) -> None:
+    with pytest.raises(ValueError, match="use_pipeline_template"):
+        create_linear_design(
+            use_pipeline_template=True,
+            use_parallelised_template=use_parallelised_template,
+            num_dimensions=num_dimensions,
+        )
+
+
+def test_pipeline_template_uses_pipeline_layer_and_testbench() -> None:
+    design = create_linear_design(
+        use_pipeline_template=True, use_parallelised_template=True, num_dimensions=2
+    )
+    destination = InMemoryPath("linear_0", parent=None)
+
+    design.save_to(destination)
+
+    layer = destination["linear_0"]
+    testbench = destination["linear_0_tb"]
+    assert isinstance(layer, InMemoryFile)
+    assert isinstance(testbench, InMemoryFile)
+    assert "ready: out std_logic" in "\n".join(layer.text)
+    assert "ready  => open" in "\n".join(testbench.text)

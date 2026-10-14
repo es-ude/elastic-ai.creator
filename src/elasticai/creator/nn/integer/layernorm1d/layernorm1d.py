@@ -9,6 +9,7 @@ from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
+    QParams,
     SimQuant,
     SymmetricSignedQParams,
     scaling_M,
@@ -19,10 +20,12 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 )
 
 
-class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
+class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
     def __init__(self, **kwargs) -> None:
         super().__init__(
-            kwargs.get("norm_dim"), kwargs.get("eps"), kwargs.get("elementwise_affine")
+            kwargs.get("norm_dim"),
+            kwargs.get("eps", 1e-5),
+            kwargs.get("elementwise_affine", True),
         )
 
         self.num_dimensions = kwargs.get("num_dimensions")
@@ -59,8 +62,8 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
         return LayerNorm1dDesign(name=name)
 
     def _get_quantized_weights(
-        self, weight: torch.FloatTensor, weight_QParams: nn.Module
-    ) -> torch.IntTensor:
+        self, weight: torch.Tensor, weight_QParams: nn.Module
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
@@ -72,29 +75,14 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             )
         return q_weights
 
-    def _get_quantized_bias(
-        self,
-        bias: torch.FloatTensor,
-        bias_QParams: nn.Module,
-        given_quant_scale: torch.FloatTensor,
-        given_quant_bits: int,
-    ) -> torch.IntTensor:
-        assert not self.training, "int_forward should be called in eval mode"
-
-        bias_QParams.set_scale_factor(given_quant_scale)
-        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(given_quant_bits)
-        q_bias = bias_QParams.quantize(bias).to("cpu")
-        return q_bias
-
     def precompute(self) -> None:
         self.q_weights = self._get_quantized_weights(
             weight=self.weight, weight_QParams=self.weight_QParams
         )
 
-        self.q_bias = self._get_quantized_bias(
-            bias=self.bias, bias_QParams=self.bias_QParams
-        )
+        # The bias is rescaled with its own scale factor (M_2 = s_b / s_y), so
+        # it is quantized with bias_QParams as learned during training.
+        self.q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
 
         self.scale_factor_M_1 = (
             self.normed_inputs_QParams.scale_factor
@@ -137,27 +125,28 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             result.view(-1)[idx] = x
         return result
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
-        q_inputs_sum = torch.sum(q_inputs, dim=-1, keepdim=True)
-        q_inputs_sum_mean = q_inputs_sum / self.norm_dim
-        numerator = self.math_ops.intsub(
-            q_inputs, q_inputs_sum_mean, self.inputs_QParams.quant_bits + 1
-        )
-
-        var = (numerator**2).sum(dim=-1, keepdim=True) / self.norm_dim
-        denominator = torch.sqrt(var).to(torch.int32)
-        normed_inputs = numerator / denominator
+        # The zero point cancels in `x - mean`, and the scale factor cancels
+        # in `(x - mean) / std`, so the inputs can be normalized directly.
+        # Only eps has to be moved into the integer domain.
+        q_inputs_float = q_inputs.to(torch.float32)
+        mean = q_inputs_float.mean(dim=-1, keepdim=True)
+        var = q_inputs_float.var(dim=-1, keepdim=True, unbiased=False)
+        eps = self.eps / self.inputs_QParams.scale_factor**2
+        normed_inputs = (q_inputs_float - mean) / torch.sqrt(var + eps)
 
         # prepare inputs 1
-        if normed_inputs.dtype == torch.FloatTensor:
-            q_inputs = self.normed_inputs_QParams.quantizeProcess(normed_inputs)
-
-        q_inputs = q_inputs - self.normed_inputs_QParams.zero_point
+        q_inputs = self.normed_inputs_QParams.quantize(normed_inputs)
+        q_inputs = self.math_ops.intsub(
+            q_inputs,
+            self.normed_inputs_QParams.zero_point,
+            self.normed_inputs_QParams.quant_bits + 1,
+        )
 
         tmp_input1 = simulate_bitshifting(
             q_inputs * self.q_weights,
@@ -188,10 +177,10 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: object,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:
@@ -202,8 +191,14 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
 
         mean = inputs.mean(dim=-1, keepdim=True)
-        var = inputs.var(dim=-1, keepdim=True)
+        var = inputs.var(dim=-1, keepdim=True, unbiased=False)
         std = torch.sqrt(var + self.eps)
+        normed_inputs = (inputs - mean) / std
+
+        if enable_simquant:
+            if self.training:
+                self.normed_inputs_QParams.update_quant_params(normed_inputs)
+            normed_inputs = SimQuant.apply(normed_inputs, self.normed_inputs_QParams)
 
         if enable_simquant:
             if self.training:
@@ -216,7 +211,6 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             weight = self.weight
             bias = self.bias
 
-        normed_inputs = (inputs - mean) / std
         outputs = weight * normed_inputs + bias
 
         if enable_simquant:

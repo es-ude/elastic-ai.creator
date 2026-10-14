@@ -1,3 +1,6 @@
+import warnings
+from typing import Any
+
 import pytest
 import torch
 from torch.nn import functional as F
@@ -327,9 +330,26 @@ def test_use_given_inputs_QParams_in_forward(linear_layer, inputs) -> None:
     linear_layer.train()
     linear_layer.forward(inputs, given_inputs_QParams)
 
-    expected_inputs_QParams = given_inputs_QParams
     actual_inputs_QParams = linear_layer.inputs_QParams
-    assert expected_inputs_QParams == actual_inputs_QParams
+    assert actual_inputs_QParams.quant_bits == given_inputs_QParams.quant_bits
+    assert torch.equal(
+        actual_inputs_QParams.scale_factor, given_inputs_QParams.scale_factor
+    )
+    assert torch.equal(
+        actual_inputs_QParams.zero_point, given_inputs_QParams.zero_point
+    )
+
+
+def test_given_inputs_QParams_are_not_shared(linear_layer, inputs) -> None:
+    given_inputs_QParams = AsymmetricSignedQParams(
+        quant_bits=6, observer=GlobalMinMaxObserver()
+    )
+    linear_layer.train()
+
+    linear_layer.forward(inputs, given_inputs_QParams)
+
+    assert linear_layer.inputs_QParams is not given_inputs_QParams
+    assert all(module is not given_inputs_QParams for module in linear_layer.modules())
 
 
 def test_update_quant_params_of_inputs_QParams_in_forward(
@@ -556,9 +576,9 @@ def test_get_quantized_bias_in_precompute(
         expected_q_bias,
     ) = q_bias_subtracted
 
-    actual_new_bias_scale_factor = linear_layer.bias_QParams.scale_factor
-    actual_new_zero_point = linear_layer.bias_QParams.zero_point
-    actual_new_quant_bits = linear_layer.bias_QParams.quant_bits
+    actual_new_bias_scale_factor = linear_layer.q_bias_QParams.scale_factor
+    actual_new_zero_point = linear_layer.q_bias_QParams.zero_point
+    actual_new_quant_bits = linear_layer.q_bias_QParams.quant_bits
     actual_q_bias = linear_layer.q_bias
 
     assert torch.allclose(
@@ -600,3 +620,216 @@ def test_int_forward_q_outputs_is_correctly(
     expected_q_output = q_outputs
     actual_q_output = linear_layer.int_forward(q_inputs)
     assert torch.allclose(actual_q_output, expected_q_output, atol=1)
+
+
+def test_num_dimensions_defaults_to_none() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    assert layer.num_dimensions is None
+
+
+def test_create_design_without_precompute_raises() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    with pytest.raises(RuntimeError, match="precompute"):
+        layer.create_design("linear")
+
+
+def test_create_design_without_bias_uses_zero_bias(tmp_path) -> None:
+    torch.manual_seed(0)
+    layer = Linear(
+        name="linear",
+        in_features=3,
+        out_features=2,
+        quant_bits=8,
+        bias=False,
+        quant_data_dir=str(tmp_path),
+    )
+    layer.train()
+    layer(torch.randn(4, 3))
+    layer.eval()
+    layer.precompute()
+
+    design = layer.create_design("linear")
+
+    assert design._bias == [0, 0]
+    assert design._z_b == 0
+
+
+def test_forward_with_int_inputs_raises() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    with pytest.raises(TypeError, match="inputs"):
+        layer(torch.ones(4, 3, dtype=torch.int32))
+
+
+def test_int_forward_with_float_inputs_raises(linear_layer, inputs) -> None:
+    linear_layer.train()
+    linear_layer(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    with pytest.raises(TypeError, match="q_inputs"):
+        linear_layer.int_forward(inputs)
+
+
+def test_parameters_are_created_on_device() -> None:
+    layer = Linear(
+        name="linear",
+        in_features=3,
+        out_features=2,
+        quant_bits=8,
+        bias=True,
+        device="meta",
+    )
+
+    assert layer.weight.device.type == "meta"
+    assert layer.bias.device.type == "meta"
+    assert layer.weight_QParams.scale_factor.device.type == "meta"
+
+
+def test_precompute_keeps_bias_QParams(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    scale_factor = linear_layer.bias_QParams.scale_factor.clone()
+    zero_point = linear_layer.bias_QParams.zero_point.clone()
+    quant_bits = linear_layer.bias_QParams.quant_bits
+    outputs = linear_layer.forward(inputs)
+
+    linear_layer.precompute()
+
+    assert torch.equal(linear_layer.bias_QParams.scale_factor, scale_factor)
+    assert torch.equal(linear_layer.bias_QParams.zero_point, zero_point)
+    assert linear_layer.bias_QParams.quant_bits == quant_bits
+    assert torch.equal(linear_layer.forward(inputs), outputs)
+
+
+def test_has_bias_by_default() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    assert layer.bias is not None
+
+
+def test_unroll_factor_below_one_raises() -> None:
+    with pytest.raises(ValueError, match="unroll_factor"):
+        Linear(
+            name="linear", in_features=3, out_features=2, quant_bits=8, unroll_factor=0
+        )
+
+
+def test_precompute_in_training_mode_raises(linear_layer) -> None:
+    linear_layer.train()
+
+    with pytest.raises(RuntimeError, match="eval mode"):
+        linear_layer.precompute()
+
+
+def test_int_forward_in_training_mode_raises(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+    linear_layer.train()
+
+    with pytest.raises(RuntimeError, match="eval mode"):
+        linear_layer.int_forward(linear_layer.inputs_QParams.quantize(inputs))
+
+
+def test_int_forward_without_precompute_raises(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+
+    with pytest.raises(RuntimeError, match="precompute"):
+        linear_layer.int_forward(linear_layer.inputs_QParams.quantize(inputs))
+
+
+def _accelerator() -> str | None:
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return None
+
+
+@pytest.mark.skipif(_accelerator() is None, reason="needs a CUDA or MPS device")
+def test_int_forward_on_accelerator_matches_cpu(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+    q_inputs = linear_layer.inputs_QParams.quantize(inputs)
+    expected = linear_layer.int_forward(q_inputs)
+    device = _accelerator()
+    linear_layer.to(device)
+    linear_layer.precompute()
+
+    actual = linear_layer.int_forward(q_inputs.to(device))
+
+    assert actual.device.type == "cpu"
+    assert torch.equal(actual, expected)
+
+
+def test_create_design_with_other_inputs_quant_bits_raises(linear_layer, inputs):
+    given_inputs_QParams = AsymmetricSignedQParams(
+        quant_bits=6, observer=GlobalMinMaxObserver()
+    )
+    linear_layer.train()
+    linear_layer.forward(inputs, given_inputs_QParams)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    with pytest.raises(ValueError, match="inputs with 8 bits, got 6"):
+        linear_layer.create_design("linear")
+
+
+def test_create_design_uses_work_library_and_resource_option(
+    linear_layer, inputs
+) -> None:
+    linear_layer.work_library_name = "lib"
+    linear_layer.resource_option = "block"
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    design = linear_layer.create_design("linear")
+
+    assert design._work_library_name == "lib"
+    assert design._resource_option == "block"
+
+
+def test_precompute_warns_if_bias_is_clamped(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    with torch.no_grad():
+        linear_layer.bias[0] = 1e9
+
+    with pytest.warns(UserWarning, match="1 bias values of linear .* clamped"):
+        linear_layer.precompute()
+
+
+def test_precompute_does_not_warn_if_bias_fits(linear_layer, inputs) -> None:
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        linear_layer.precompute()
+
+
+@pytest.mark.parametrize(
+    "options, error",
+    [
+        (dict(use_pipeline_template=True), ValueError),
+        (dict(use_pipeline_template=True, use_parallelised_template=True), ValueError),
+        (
+            dict(in_features=1, num_dimensions=2, use_parallelised_template=True),
+            NotImplementedError,
+        ),
+    ],
+)
+def test_invalid_template_options_raise_on_creation(options, error) -> None:
+    parameters: dict[str, Any] = dict(
+        name="linear", in_features=3, out_features=2, quant_bits=8
+    )
+    parameters.update(options)
+
+    with pytest.raises(error):
+        Linear(**parameters)

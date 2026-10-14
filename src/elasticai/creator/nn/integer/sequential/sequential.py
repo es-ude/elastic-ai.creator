@@ -4,6 +4,7 @@ from typing import Any, cast
 import torch
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.sequential.design_builder import SequentialDesignBuilder
 from elasticai.creator.vhdl.design.design import Design
 
@@ -33,10 +34,10 @@ class Sequential(DesignCreatorModule, torch.nn.Sequential):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module | None = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         outputs = inputs
         for submodule in self.submodules:
             outputs = submodule(
@@ -48,10 +49,10 @@ class Sequential(DesignCreatorModule, torch.nn.Sequential):
                 given_inputs_QParams = submodule.outputs_QParams
         return outputs
 
-    def quantize_inputs(self, inputs: torch.FloatTensor) -> torch.IntTensor:
+    def quantize_inputs(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.submodules[0].inputs_QParams.quantize(inputs)
 
-    def dequantize_outputs(self, q_outputs: torch.IntTensor) -> torch.FloatTensor:
+    def dequantize_outputs(self, q_outputs: torch.Tensor) -> torch.Tensor:
         return self.submodules[-1].outputs_QParams.dequantize(q_outputs)
 
     def precompute(self):
@@ -60,7 +61,7 @@ class Sequential(DesignCreatorModule, torch.nn.Sequential):
                 submodule.precompute()
         self.precomputed = True
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward() should only be called in eval mode"
         assert self.precomputed, "precompute() should be called before int_forward()"
         from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
