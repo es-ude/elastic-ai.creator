@@ -18,7 +18,8 @@ def prelu(impl: DataGraph, _: Registry) -> Iterable[Code]:
 
     _template = (
         TemplateDirector()
-        .parameter("BITWIDTH")
+        .parameter("BITWIDTH_IN")
+        .parameter("BITWIDTH_OUT")
         .localparam("FRACWIDTH")
         .localparam("SCALING")
         .add_module_name()

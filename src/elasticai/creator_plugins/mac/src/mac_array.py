@@ -18,9 +18,11 @@ def mac_array(impl: DataGraph, _: Registry) -> Iterable[Code]:
 
     _template = (
         TemplateDirector()
-        .parameter("INPUT_BITWIDTH")
-        .parameter("INPUT_NUM_DATA")
-        .parameter("NUM_MULT_PARALLEL")
+        .parameter("BITWIDTH")
+        .parameter("NUM_MULT")
+        .parameter("SIZE_INPUT")
+        .parameter("BITS_SCALE_BIAS")
+        .parameter("BITS_SCALE_DOUT")
         .set_prototype("\n".join(read_text(package_path, path2file)))
         .build()
     )

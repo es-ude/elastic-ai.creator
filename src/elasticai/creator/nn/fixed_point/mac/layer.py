@@ -4,10 +4,8 @@ from elasticai.creator.arithmetic import (
 )
 from elasticai.creator.file_generation.savable import Savable
 from elasticai.creator.nn.fixed_point.math_operations import MathOperations
-from elasticai.creator.testing import SimulatedLayer
 
 from .design import MacDesign
-from .mactestbench import MacTestBench
 
 
 class MacLayer:
@@ -30,14 +28,3 @@ class MacLayer:
         return MacDesign(
             fxp_params=self._fxp_params, vector_width=self._vector_width, name=name
         )
-
-    def create_testbench(self, name: str) -> MacTestBench:
-        return MacTestBench(
-            fxp_params=self._fxp_params,
-            uut=self.create_design("mac_wrapper_test"),
-            uut_name="mac_wrapper_test",
-            name=name,
-        )
-
-    def create_simulation(self, simulator, working_dir):
-        return SimulatedLayer(self, simulator, working_dir=working_dir)

@@ -18,7 +18,8 @@ def hardtanh(impl: DataGraph, _: Registry) -> Iterable[Code]:
 
     _template = (
         TemplateDirector()
-        .parameter("BITWIDTH")
+        .parameter("BITWIDTH_IN")
+        .parameter("BITWIDTH_OUT")
         .localparam("MAX_VAL")
         .localparam("MIN_VAL")
         .add_module_name()

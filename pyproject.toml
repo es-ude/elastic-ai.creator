@@ -53,6 +53,7 @@ testing = [
   "pyserial>=3.5",
   "pytest>=8.3.4",
   "pytest-cov>=6.0.0",
+  "pytest-xdist>=3.8.0",
   "torchvision>=0.24.1",
 ]
 utils = ["rust-just>=1.38.0"]
@@ -74,7 +75,7 @@ omit = [
   "src/elasticai/creator/utils/_run.py",  # not testable
 ]
 source = ["src/elasticai/creator", "src/elasticai/creator_plugins"]
-command_line = "-m pytest -m 'not simulation and not slow and not hardware'"
+command_line = "-m pytest -m 'not (simulation or slow or hardware or ghdl)'"
 
 [tool.git-cliff.changelog]
 body = """
@@ -156,6 +157,7 @@ search-path = ["src/elasticai/creator/", "src/elasticai/creator_plugins"]
 [tool.pytest]
 addopts = ["--import-mode=importlib"]
 markers = [
+  "ghdl: slow simulation using GHDL environment",
   "hardware: slow running system tests using the hardware deployment on real targets",
   "simulation: possibly slow running integration tests including hw simulation, depends on ghdl being present",
   "slow: a slow test that you would not run in tdd cycle",

@@ -49,9 +49,7 @@ def test_hardtanh(
 @pytest.mark.simulation
 @pytest.mark.parametrize("total_bits", [4, 8])
 @pytest.mark.parametrize("frac_bits", [3])
-def test_hardtanh_build(
-    cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bits: int
-):
+def test_build(cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bits: int):
     build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
     id = f"{total_bits:02d}_{frac_bits:02d}"
 
@@ -64,7 +62,12 @@ def test_hardtanh_build(
     load_and_plugin(
         type="hardtanh",
         id=id,
-        params={"BITWIDTH": total_bits, "MAX_VAL": max_val, "MIN_VAL": min_val},
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "MAX_VAL": max_val,
+            "MIN_VAL": min_val,
+        },
         packages=["act_func"],
         path2save=build_dir,
     )
@@ -73,3 +76,30 @@ def test_hardtanh_build(
     cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
     cocotb_test_fixture.set_top_module_name(f"HARDTANH_{id}")
     cocotb_test_fixture.run(params={}, defines={})
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("total_bits", [4, 8])
+@pytest.mark.parametrize("frac_bits", [3])
+def test_codesign(
+    cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bits: int
+):
+    from elasticai.creator.nn.fixed_point import HardTanh
+
+    build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
+    HardTanh(
+        total_bits=total_bits,
+        frac_bits=frac_bits,
+    ).create_design("1").save_to(destination=build_dir, take_vhdl=False)  # type: ignore
+
+    files_available = [file.name for file in build_dir.glob("*.v")]
+    files_available.sort()
+    assert files_available == ["hardtanh_1.v"]
+
+    cocotb_test_fixture.set_top_module_name("HARDTANH_1")
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir(glob_pattern="verilog/*.v")
+    cocotb_test_fixture.run(
+        params={},
+        defines={},
+    )

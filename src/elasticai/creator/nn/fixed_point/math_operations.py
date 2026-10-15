@@ -8,6 +8,7 @@ from elasticai.creator.base_modules.linear import MathOperations as LinearOps
 from elasticai.creator.base_modules.lstm_cell import MathOperations as LSTMOps
 from elasticai.creator.nn.fixed_point.fxp_round_cut import (
     CutToFixedPoint,
+    FloorToFixedPoint,
     RoundToFixedPoint,
 )
 
@@ -26,6 +27,9 @@ class MathOperations(LinearOps, Conv1dOps, LSTMOps):
     def _cut(self, a: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, CutToFixedPoint.apply(a, self.config))
 
+    def _floor(self, a: torch.Tensor) -> torch.Tensor:
+        return cast(torch.Tensor, FloorToFixedPoint.apply(a, self.config))
+
     def _round(self, a: torch.Tensor) -> torch.Tensor:
         return cast(torch.Tensor, RoundToFixedPoint.apply(a, self.config))
 
@@ -33,16 +37,16 @@ class MathOperations(LinearOps, Conv1dOps, LSTMOps):
         return self._round(self._clamp(a))
 
     def add(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self._clamp(torch.add(a, b))
+        return torch.add(a, b)
 
     def matmul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self.quantize(torch.matmul(a, b))
+        return torch.matmul(a, b)
 
     def mul(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self.quantize(torch.mul(a, b))
+        return torch.mul(a, b)
 
     def quantize(self, a: torch.Tensor) -> torch.Tensor:
-        return self._cut(self._clamp(a))
+        return self._floor(self._clamp(a))
 
     def twos_scaling(self, a: torch.Tensor) -> torch.Tensor:
         return torch.pow(2, a)

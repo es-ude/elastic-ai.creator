@@ -18,21 +18,21 @@ class FixedPointMathOperationsTest(TensorTestCase):
         a = torch.tensor([-0.25, 0.5, 1.0])
         b = torch.tensor([-1.5, 1.0, 1.5])
         actual = self.operations.add(a, b)
-        expected = [-1.75, 1.5, 1.75]
+        expected = [-1.75, 1.5, 2.5]
         self.assertTensorEqual(expected, actual)
 
     def test_matmul(self) -> None:
         a = torch.tensor([[-2.0, -1.75, -1.5], [-0.25, 0.0, 0.25], [1.25, 1.5, 1.75]])
         b = torch.tensor([[-0.25], [0.5], [0.25]])
         actual = self.operations.matmul(a, b)
-        expected = [[-0.75], [0.0], [0.75]]
+        expected = [[-0.75], [0.125], [0.875]]
         self.assertTensorEqual(expected, actual)
 
     def test_mul(self) -> None:
         a = torch.tensor([-0.5, 1.5, 0.5])
-        b = torch.tensor([0.5, 1.5, 1.2])
+        b = torch.tensor([0.5, 1.5, 1.0])
         actual = self.operations.mul(a, b)
-        expected = [-0.25, 1.75, 0.5]
+        expected = [-0.25, 2.25, 0.5]
         self.assertTensorEqual(expected, actual)
 
     def test_quantize_clamps_minus5_to_minus2(self) -> None:
