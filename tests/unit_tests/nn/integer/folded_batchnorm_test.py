@@ -23,6 +23,8 @@ def test_conv1dbn_matches_pytorch_bn():
         seq_len=L,
         padding=1,
         quant_bits=8,
+        bias_bits=32,
+        activation_bits=16,
         device="cpu",
     )
 
@@ -68,6 +70,8 @@ def setup_conv1dBN(C_IN, C_OUT, K, L):
         seq_len=L,
         padding=1,
         quant_bits=8,
+        bias_bits=32,
+        activation_bits=16,
         device="cpu",
     )
 
@@ -139,7 +143,7 @@ def create_ref_model(C_IN, C_OUT, K ,actual_layer):
     ref_bn.load_state_dict(actual_layer.bn1d.state_dict())
     return ref_conv, ref_bn
 
-def create_conv1dBN(C_IN, C_OUT, K, L, BITS):
+def create_conv1dBN(C_IN, C_OUT, K, L, BITS, BIAS_BITS,ACTIVATION_BITS):
     layer = Conv1dBN(
         in_channels=C_IN,
         out_channels=C_OUT,
@@ -147,6 +151,8 @@ def create_conv1dBN(C_IN, C_OUT, K, L, BITS):
         seq_len=L,
         padding=1,
         quant_bits=BITS,
+        bias_bits=BIAS_BITS,
+        activation_bits=ACTIVATION_BITS,
         device="cpu",
     )
 
@@ -162,22 +168,24 @@ def create_conv1dBN(C_IN, C_OUT, K, L, BITS):
     return layer
 
 @pytest.mark.parametrize(
-    "B, C_IN, C_OUT, L, K, BITS, seed",
+    "B, C_IN, C_OUT, L, K, BITS, BIAS_BITS, ACTIVATION_BITS, seed",
     [
-        (4, 3, 5, 32, 3, 8, 42),    # Original configuration
-        (1, 1, 1, 16, 3, 8, 43),    # Minimal channels and batch
-        (2, 4, 8, 64, 5, 8, 69),    # Larger kernel and sequence
-        (8, 3, 6, 32, 3, 4, 100),    # Lower precision
-        (4, 8, 16, 128, 3, 8, 2),  # Larger model
-        (2, 3, 5, 32, 3, 14, 25),   # Higher precision
+        (4, 3, 5, 32, 3, 8, 8, 8, 42),  # Original configuration
+        (1, 1, 1, 16, 3, 8, 8, 8, 43),  # Minimal channels and batch
+        (2, 4, 8, 64, 5, 8, 8, 8, 69),  # Larger kernel and sequence
+        (8, 3, 6, 32, 3, 4, 8, 8, 100),  # Lower precision
+        (4, 8, 16, 128, 3, 8, 8, 8, 2),  # Larger model
+        (2, 3, 5, 32, 3, 14, 8, 8, 25),  # Higher precision
+        (2, 3, 5, 32, 3, 14, 32, 8, 25),  # 32-bit bias
+        (2, 3, 5, 32, 3,8, 32, 16, 25),  # 16-bit activation
     ],
 )
 def test_conv1dbn_quantized_bn_folding(
-    B, C_IN, C_OUT, L, K, BITS, seed
+    B, C_IN, C_OUT, L, K, BITS, BIAS_BITS,ACTIVATION_BITS, seed
 ):
     torch.manual_seed(seed)
 
-    actual_layer = create_conv1dBN(C_IN, C_OUT, K, L, BITS)
+    actual_layer = create_conv1dBN(C_IN, C_OUT, K, L, BITS, BIAS_BITS, ACTIVATION_BITS)
     ref_conv, ref_bn = create_ref_model(
         C_IN, C_OUT, K, actual_layer
     )
@@ -213,5 +221,5 @@ def test_conv1dbn_quantized_bn_folding(
     print("Max error:", error.max().item())
     print("Mean error:", error.mean().item())
     print("Tolerance:", tolerance)
-    assert error.mean() < 0.1
+    assert error.mean() < 0.05
 

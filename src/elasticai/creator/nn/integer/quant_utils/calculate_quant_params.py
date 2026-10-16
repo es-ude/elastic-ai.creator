@@ -8,6 +8,9 @@ def calculate_asymmetric_quant_params(
     max_quant: torch.IntTensor,
     eps: torch.FloatTensor,
 ):
+    min_float = torch.min(min_float, torch.zeros_like(min_float))
+    max_float = torch.max(max_float, torch.zeros_like(max_float))
+    
     scale_factor = (max_float - min_float) / (max_quant.float() - min_quant.float())
     scale_factor = torch.max(scale_factor, eps)
     scale_factor = scale_factor.clone().detach().to(torch.float32)

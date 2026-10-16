@@ -33,7 +33,9 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.padding = kwargs.get("padding")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.weight_bits = kwargs.get("quant_bits")
+        self.bias_bits= kwargs.get("bias_bits")
+        self.activation_bits=kwargs.get("activation_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
@@ -46,16 +48,16 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.bn1d = nn.BatchNorm1d(num_features=kwargs.get("out_channels"))
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
@@ -64,7 +66,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> Conv1dBNDesign:
         return Conv1dBNDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.weight_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
             kernel_size=self.kernel_size,
