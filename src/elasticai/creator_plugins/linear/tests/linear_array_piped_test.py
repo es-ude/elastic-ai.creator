@@ -7,7 +7,11 @@ from cocotb.types import LogicArray
 from cocotb.utils import get_sim_time
 
 from elasticai.creator.arithmetic import FxpParams, int_converter
-from elasticai.creator.testing import CocotbTestFixture, check_results, eai_testbench
+from elasticai.creator.testing import (
+    CocotbTestFixture,
+    all_within_tolerance,
+    eai_testbench,
+)
 from elasticai.creator_plugins import linear, mac, multipliers
 
 from .linear_array_test import model_linear_layer, reconstruct_results
@@ -73,7 +77,7 @@ async def linear_tb(
         await ClockCycles(dut.CLK_SYS, 8)
         # Check results
         assert int(num_clocks) == int((size_input * size_output) / num_mult) + 3
-        passed = check_results(result=result, expected=expected_batch, tol=1)
+        passed = all_within_tolerance(result=result, expected=expected_batch, tol=1)
         if not passed:
             print(f"data: {data_batch}")
             print(f"bias: {dut.LINEAR.BIAS.value}")

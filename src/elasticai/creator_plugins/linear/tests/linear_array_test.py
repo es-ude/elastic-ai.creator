@@ -9,7 +9,11 @@ from cocotb.utils import get_sim_time
 
 from elasticai.creator.arithmetic import FxpArithmetic, FxpParams, int_converter
 from elasticai.creator.nn.fixed_point.linear import Linear
-from elasticai.creator.testing import CocotbTestFixture, check_results, eai_testbench
+from elasticai.creator.testing import (
+    CocotbTestFixture,
+    all_within_tolerance,
+    eai_testbench,
+)
 from elasticai.creator_plugins import linear, mac, multipliers
 
 
@@ -121,7 +125,7 @@ async def linear_tb(
         assert int(num_clocks) == int((size_input * size_output) / num_mult) + 1 + (
             0 if (num_mult == size_input) else 1
         )
-        if not check_results(result=result, expected=expected_batch, tol=0):
+        if not all_within_tolerance(result=result, expected=expected_batch, tol=0):
             print(f"data: {data_batch}")
             print(f"bias: {dut.BIAS.value}")
             print(f"weights: {dut.WEIGHTS.value}")

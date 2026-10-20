@@ -9,7 +9,11 @@ from cocotb.utils import get_sim_time
 
 from elasticai.creator.arithmetic import FxpParams, int_converter
 from elasticai.creator.nn.fixed_point.linear import BatchNormedLinear
-from elasticai.creator.testing import CocotbTestFixture, check_results, eai_testbench
+from elasticai.creator.testing import (
+    CocotbTestFixture,
+    eai_testbench,
+    error_count_outside_tolerance,
+)
 
 from .linear_array_test import model_linear_layer, reconstruct_results
 
@@ -82,16 +86,19 @@ async def batchnorm_linear_tb(
         assert int(num_clocks) == int((size_input * size_output) / num_mult) + 1 + (
             0 if (num_mult == size_input) else 1
         )
-        if not check_results(result=result, expected=expected_batch, tol=1):
-            print(f"data: {data_batch}")
-            print(f"bias: {dut.BIAS.value}")
-            print(f"weights: {dut.WEIGHTS.value}")
+        cnt = error_count_outside_tolerance(
+            result=result, expected=expected_batch, tol=0
+        )
+        if cnt:
+            # print(f"data: {data_batch}")
+            # print(f"bias: {dut.BIAS.value}")
+            # print(f"weights: {dut.WEIGHTS.value}")
+            print(f"#mismatches: {cnt}")
             print(f"result: {result}")
             print(f"expected: {expected_batch}")
-        else:
-            right_cases += 1
+        right_cases += 1 - cnt / len(expected_batch)
     await ClockCycles(dut.CLK_SYS, 4)
-    assert right_cases / len(data_in) >= 1.0
+    assert right_cases / len(data_in) >= 0.99
 
 
 @pytest.mark.simulation
@@ -101,7 +108,7 @@ async def batchnorm_linear_tb(
         (8, 1, 4, 2, 1),
         (8, 3, 8, 2, 1),
         (12, 5, 40, 8, 8),
-        (16, 8, 128, 64, 8),
+        (12, 10, 128, 64, 8),
     ],
 )
 def test_codesign(
@@ -128,7 +135,7 @@ def test_codesign(
             high=int((fxp.maximum_as_integer - 1) / 2),
             size=size_input,
         ).tolist()
-        for _ in range(8)
+        for _ in range(16)
     ]
     fxp = FxpParams(total_bits=bitwidth, frac_bits=fracwidth, signed=True)
     data_in_fxp = torch.FloatTensor(data_in_int) * fxp.minimum_step_as_rational

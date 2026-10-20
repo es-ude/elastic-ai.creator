@@ -71,6 +71,7 @@ class BatchNormedLinear(DesignCreatorModule, torch.nn.Module):
         x = x.view(*input_shape)
         x = self._linear(x)
         x = self._batch_norm(x)
+        x = x + self._params.minimum_step_as_rational * 0.5
         x = self._operations.quantize(x)
         return x.view(*output_shape)
 

@@ -1,4 +1,8 @@
-from .cocotb_func import check_results
+from .cocotb_func import (
+    all_within_tolerance,
+    error_count_outside_tolerance,
+    is_mae_within_tolerance,
+)
 from .cocotb_prepare import build_report_folder_and_testdata, read_testdata
 from .cocotb_pytest import CocotbTestFixture, cocotb_test_fixture, eai_testbench
 from .cocotb_runner import (
@@ -21,7 +25,9 @@ from .simulated_layer import SimulatedLayer, Testbench
 __all__ = [
     "AIAccelerator",
     "HWTester",
-    "check_results",
+    "all_within_tolerance",
+    "is_mae_within_tolerance",
+    "error_count_outside_tolerance",
     "RemoteControl",
     "run_cocotb_sim",
     "CocotbTestFixture",

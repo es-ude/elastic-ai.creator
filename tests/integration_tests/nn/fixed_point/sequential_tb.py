@@ -4,7 +4,7 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge, RisingEdge, Timer
 
-from elasticai.creator.testing.cocotb_func import check_results
+from elasticai.creator.testing.cocotb_func import all_within_tolerance
 from elasticai.creator.testing.cocotb_prepare import read_testdata
 
 
@@ -42,7 +42,7 @@ async def layer_computation_test(dut):
                 await RisingEdge(dut.clock)
             result.append(dut.y.value.to_signed())
             chck_ite.append(
-                check_results(
+                all_within_tolerance(
                     result=[dut.y.value.to_signed()], expected=[ref_out[idx]], tol=1
                 )
             )
