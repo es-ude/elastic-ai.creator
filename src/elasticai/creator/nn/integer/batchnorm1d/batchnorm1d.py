@@ -6,6 +6,7 @@ from elasticai.creator.nn.integer.batchnorm1d.design import (
 )
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -13,6 +14,10 @@ from elasticai.creator.nn.integer.quant_utils import (
     SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -81,30 +86,16 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         self, weight: torch.FloatTensor, weight_QParams: nn.Module
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = weight_QParams.quantize(weight).to("cpu")
-
-        if not weight_QParams.is_symmetric:
-            q_weights = self.math_ops.intsub(
-                q_weights,
-                weight_QParams.zero_point,
-                weight_QParams.quant_bits + 1,
-            )
-        return q_weights
+        return quantize_weights(weight, weight_QParams)
 
     def _get_quantized_bias(
         self,
         bias: torch.FloatTensor,
         bias_QParams: nn.Module,
         given_quant_scale: torch.FloatTensor,
-        given_quant_bits: int,
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-
-        bias_QParams.set_scale_factor(given_quant_scale)
-        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(given_quant_bits)
-        q_bias = bias_QParams.quantize(bias).to("cpu")
-        return q_bias
+        return quantize_bias(bias, bias_QParams, given_quant_scale)
 
     def precompute(self):
         mean = self.running_mean
@@ -131,7 +122,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             bias=modified_bias,
             bias_QParams=self.bias_QParams,
             given_quant_scale=new_bias_QParms_scale,
-            given_quant_bits=self.tmp_quant_bits,
         )
 
         self.scale_factor_M = (
@@ -161,7 +151,9 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
 
-        tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
+        tmp = self.math_ops.intadd(
+            tmp, self.q_bias, accumulator_bits(self.tmp_quant_bits, bias=self.q_bias)
+        )
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q

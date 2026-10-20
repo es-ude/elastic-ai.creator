@@ -94,3 +94,26 @@ def test_conv1d_preserves_accumulator_until_requantization(
         layer.int_forward(inputs),
         torch.tensor([[[expected_code]]], dtype=torch.int32),
     )
+
+
+@pytest.mark.parametrize("bias_value", [-0.5, 0.5])
+def test_conv1d_preserves_bias_larger_than_product_range(bias_value):
+    layer = Conv1d(
+        in_channels=1,
+        out_channels=1,
+        kernel_size=1,
+        quant_bits=8,
+        bias=True,
+    ).eval()
+    with torch.no_grad():
+        layer.weight.zero_()
+        layer.bias.fill_(bias_value)
+    layer.inputs_QParams.scale_factor.fill_(2.0**-10)
+    layer.weight_QParams.scale_factor.fill_(2.0**-10)
+    layer.outputs_QParams.scale_factor.fill_(2.0**-7)
+    layer.precompute()
+
+    torch.testing.assert_close(
+        layer.int_forward(torch.zeros((1, 1, 1), dtype=torch.int32)),
+        torch.tensor([[[int(bias_value * 128)]]], dtype=torch.int32),
+    )

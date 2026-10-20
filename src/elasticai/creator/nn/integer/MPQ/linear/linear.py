@@ -16,6 +16,10 @@ from elasticai.creator.nn.integer.quant_utils.MPQParams import (
     AsymmetricSignedQParams,
     SymmetricSignedQParams,
 )
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -103,33 +107,14 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
 
     def _get_quantized_weights(self) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
-
-        if not self.weight_QParams.is_symmetric:
-            q_weights = self.math_ops.intsub(
-                q_weights,
-                self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits.item() + 1,
-            )
-        return q_weights
+        return quantize_weights(self.weight, self.weight_QParams)
 
     def _get_quantized_bias(self) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits.item() + 1) + (
-            self.weight_QParams.quant_bits.item() + 1
-        )
-        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(new_bias_quant_bits)
-        q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
-        if not self.bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
-            )
-        return q_bias
+        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"

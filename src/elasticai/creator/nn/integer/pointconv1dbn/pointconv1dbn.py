@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.pointconv1dbn.design import (
     PointConv1dBN as PointConv1dBNDesign,
@@ -14,6 +15,10 @@ from elasticai.creator.nn.integer.quant_utils import (
     SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -79,15 +84,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
     def _get_quantized_weights(self, weight) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = self.weight_QParams.quantize(weight).to("cpu")
-
-        if not self.weight_QParams.is_symmetric:
-            q_weights = self.math_ops.intsub(
-                q_weights,
-                self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits + 1,
-            )
-        return q_weights
+        return quantize_weights(weight, self.weight_QParams)
 
     def _get_quantized_bias(self, bias) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
@@ -95,15 +92,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(self.tmp_quant_bits)
-        q_bias = self.bias_QParams.quantize(bias).to("cpu")
-        if not self.bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, self.tmp_quant_bits + 1
-            )
-        return q_bias
+        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
@@ -117,9 +106,6 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         )
 
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
-        self.tmp_quant_bits = (
-            self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1
-        )
         self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
@@ -128,6 +114,13 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
+        )
+        self.tmp_quant_bits = accumulator_bits(
+            int(self.inputs_QParams.quant_bits)
+            + int(self.weight_QParams.quant_bits)
+            + 2,
+            self.q_fused_weights.shape[1] * self.q_fused_weights.shape[2],
+            self.q_fused_bias,
         )
         self.precomputed = True
 
@@ -146,16 +139,16 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
         if self.q_fused_bias is not None:
             tmp = F.conv1d(
-                q_inputs,
-                self.q_fused_weights,
-                self.q_fused_bias,
+                q_inputs.to(torch.int64),
+                self.q_fused_weights.to(device=q_inputs.device, dtype=torch.int64),
+                self.q_fused_bias.to(device=q_inputs.device, dtype=torch.int64),
                 padding=self.conv1d.padding,
             )
-            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits + 1)
+            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
         else:
             tmp = F.conv1d(
-                q_inputs,
-                self.q_fused_weights,
+                q_inputs.to(torch.int64),
+                self.q_fused_weights.to(device=q_inputs.device, dtype=torch.int64),
                 padding=self.conv1d.padding,
             )
             tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)

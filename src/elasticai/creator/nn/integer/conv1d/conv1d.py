@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.math_operations import (
     get_padded_q_inputs,
     get_padding_len,
 )
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -16,6 +17,10 @@ from elasticai.creator.nn.integer.quant_utils import (
     SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
+)
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -86,53 +91,24 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
 
     def _get_quantized_weights(self) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
-
-        if not self.weight_QParams.is_symmetric:
-            q_weights = self.math_ops.intsub(
-                q_weights,
-                self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits + 1,
-            )
-        return q_weights
+        return quantize_weights(self.weight, self.weight_QParams)
 
     def _get_quantized_bias(self) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(self.tmp_quant_bits)
-        q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
-        if not self.bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, self.tmp_quant_bits + 1
-            )
-        return q_bias
+        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor)
 
-    def _calculate_tmp_quant_bits(self) -> int:
-        num_products = self.weight.shape[1] * self.weight.shape[2]
-        reduction_bits = (num_products - 1).bit_length()
-        return (self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1 + reduction_bits)
-        
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
 
-        self.tmp_quant_bits = self._calculate_tmp_quant_bits()
-        
-        
-        
         if self.bias is not None:
             self.q_bias = self._get_quantized_bias()
-            self.tmp_quant_bits += 1
         else:
             self.q_bias = None
-            
-        if self.tmp_quant_bits > 64:
-            raise ValueError("The required accumulator width exceeds int64")
-        
+
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.outputs_QParams.scale_factor
@@ -141,6 +117,13 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             self.scale_factor_M
         )
 
+        self.tmp_quant_bits = accumulator_bits(
+            int(self.inputs_QParams.quant_bits)
+            + int(self.weight_QParams.quant_bits)
+            + 2,
+            self.q_weights.shape[1] * self.q_weights.shape[2],
+            self.q_bias,
+        )
         self.precomputed = True
 
     def int_forward(
@@ -163,12 +146,20 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             inputs_QParams=self.inputs_QParams,
         )
 
-        bias = (self.q_bias.to(device=q_inputs.device, dtype=torch.int64) if self.q_bias is not None else None)
-        
-        tmp = F.conv1d(q_inputs.to(torch.int64), self.q_weights.to(device=q_inputs.device, dtype=torch.int64), bias=bias, padding=0)
-        tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits) 
-      
-      
+        bias = (
+            self.q_bias.to(device=q_inputs.device, dtype=torch.int64)
+            if self.q_bias is not None
+            else None
+        )
+
+        tmp = F.conv1d(
+            q_inputs.to(torch.int64),
+            self.q_weights.to(device=q_inputs.device, dtype=torch.int64),
+            bias=bias,
+            padding=0,
+        )
+        tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
+
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )

@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 
+from .accumulator import accumulator_bits
+
 
 class MathOperations:
     def clamp_result(self, result: torch.IntTensor, quant_bits: int) -> torch.IntTensor:
@@ -15,7 +17,6 @@ class MathOperations:
         c = a.to(torch.int64) + b.to(device=a.device, dtype=torch.int64)
 
         return self.clamp_result(c, c_quant_bits)
-
 
     def intsub(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
@@ -58,19 +59,15 @@ class MathOperations:
         assert x.dtype == torch.int32
         assert w.dtype == torch.int32
 
-        reduction_bits = (max(x.shape[-1], 1) - 1).bit_length()
-        tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1) + reduction_bits
-        if tmp_quant_bits + (b is not None) > 64:
-            raise ValueError("The required accumulator width exceeds int64")
-
+        product_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
+        result_bits = accumulator_bits(product_bits, x.shape[-1], b)
         tmp = F.linear(x.to(torch.int64), w.to(device=x.device, dtype=torch.int64))
-        tmp = self.clamp_result(tmp, tmp_quant_bits)
 
         if b is not None:
             assert b.dtype == torch.int32
-            tmp = self.intadd(tmp, b, tmp_quant_bits + 1)
+            tmp = tmp + b.to(device=x.device, dtype=torch.int64)
 
-        return tmp
+        return self.clamp_result(tmp, result_bits)
 
     def int_matmul_4d(
         self,
