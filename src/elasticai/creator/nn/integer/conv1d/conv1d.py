@@ -24,11 +24,20 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 class Conv1d(DesignCreatorModule, nn.Conv1d):
     def __init__(self, **kwargs):
+        for option in ("stride", "dilation", "groups"):
+            value = kwargs.get(option, 1)
+            if value != 1 and not (option != "groups" and value == (1,)):
+                raise ValueError(f"Conv1d only supports {option}=1")
+        if kwargs.get("padding_mode", "zeros") != "zeros":
+            raise ValueError("Conv1d only supports padding_mode='zeros'")
+
         super().__init__(
             kwargs.get("in_channels"),
             kwargs.get("out_channels"),
             kwargs.get("kernel_size"),
-            padding=kwargs.get("padding"),
+            padding=kwargs.get("padding", 0),
+            bias=kwargs.get("bias", True),
+            device=kwargs.get("device"),
         )
         self.seq_len = kwargs.get("seq_len")
 
@@ -102,16 +111,28 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             )
         return q_bias
 
+    def _calculate_tmp_quant_bits(self) -> int:
+        num_products = self.weight.shape[1] * self.weight.shape[2]
+        reduction_bits = (num_products - 1).bit_length()
+        return (self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1 + reduction_bits)
+        
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
-        self.tmp_quant_bits = (
-            self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1
-        )
+
+        self.tmp_quant_bits = self._calculate_tmp_quant_bits()
+        
+        
+        
         if self.bias is not None:
             self.q_bias = self._get_quantized_bias()
             self.tmp_quant_bits += 1
-
+        else:
+            self.q_bias = None
+            
+        if self.tmp_quant_bits > 64:
+            raise ValueError("The required accumulator width exceeds int64")
+        
         self.scale_factor_M = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         ) / self.outputs_QParams.scale_factor
@@ -142,22 +163,12 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             inputs_QParams=self.inputs_QParams,
         )
 
-        if self.q_bias is not None:
-            tmp = F.conv1d(
-                q_inputs,
-                self.q_weights,
-                self.q_bias,
-                padding=0,
-            )
-            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits + 1)
-        else:
-            tmp = F.conv1d(
-                q_inputs,
-                self.q_weights,
-                padding=0,
-            )
-            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
-
+        bias = (self.q_bias.to(device=q_inputs.device, dtype=torch.int64) if self.q_bias is not None else None)
+        
+        tmp = F.conv1d(q_inputs.to(torch.int64), self.q_weights.to(device=q_inputs.device, dtype=torch.int64), bias=bias, padding=0)
+        tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits) 
+      
+      
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
         )

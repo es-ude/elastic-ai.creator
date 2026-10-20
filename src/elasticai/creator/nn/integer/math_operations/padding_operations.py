@@ -3,8 +3,8 @@ import torch.nn.functional as F
 
 
 def get_padding_len(
-    padding: tuple[int, int] or str,
-    kernel_size: tuple[int, int] or int,
+    padding: tuple[int, int] | str,
+    kernel_size: tuple[int, int] | int,
 ) -> int:
     kernel_size = kernel_size[0] if isinstance(kernel_size, tuple) else kernel_size
 
@@ -29,14 +29,14 @@ def get_padded_q_inputs(
             input=q_inputs,
             pad=(padding_len, padding_len),
             mode="constant",
-            value=inputs_QParams.zero_point.item(),
+            value=0, # zeropoint has to be subtracted already.
         )
     return q_inputs
 
 
 def get_padded_count(
-    padding: tuple[int, int] or str,
-    kernel_size: tuple[int, int] or int,
+    padding: tuple[int, int] | str,
+    kernel_size: tuple[int, int] | int,
     in_channels: int,
     out_channels: int,
     seq_len: int,

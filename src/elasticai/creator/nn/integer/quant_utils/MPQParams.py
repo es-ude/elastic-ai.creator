@@ -65,7 +65,7 @@ class QParams(nn.Module):
             )
         else:
             self.min_quant.copy_(torch.tensor(0))  # 0 for 8 bits
-            max_value = (1 ** self.quant_bits.item()) - (
+            max_value = (2 ** self.quant_bits.item()) - (
                 2 if self.is_symmetric else 1
             )  # 254 or 255 for 8 bits
             self.max_quant.copy_(torch.tensor(max_value))
@@ -118,29 +118,6 @@ class QParams(nn.Module):
         x_dq = x_q * scale_factor
         return x_dq.to(torch.float32).to(x_q.device)
 
-    def _load_from_state_dict(
-        self,
-        state_dict,
-        prefix,
-        local_metadata,
-        strict,
-        missing_keys,
-        unexpected_keys,
-        error_msgs,
-    ):
-        key_names = [
-            "min_float",
-            "max_float",
-            "min_quant",
-            "max_quant",
-            "quant_bits",
-            "scale_factor",
-            "zero_point",
-        ]
-        for key in key_names:
-            value = getattr(self, key)
-            value.data = state_dict[prefix + key].data
-            state_dict.pop(prefix + key)
 
     def __str__(self):
         info = "min_float: %.6f " % self.min_float

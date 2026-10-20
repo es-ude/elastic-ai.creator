@@ -5,14 +5,14 @@ import torch.nn.functional as F
 class MathOperations:
     def clamp_result(self, result: torch.IntTensor, quant_bits: int) -> torch.IntTensor:
         result.clamp_(-(2 ** (quant_bits - 1)), (2 ** (quant_bits - 1)) - 1)
-        return result
+        return result.to(torch.int32) if quant_bits <= 32 else result
 
     def intadd(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
     ) -> torch.IntTensor:
-        assert a.dtype == torch.int32
-        assert b.dtype == torch.int32
-        c = a + b.to(a.device)
+        assert a.dtype in (torch.int32, torch.int64)
+        assert b.dtype in (torch.int32, torch.int64)
+        c = a.to(torch.int64) + b.to(device=a.device, dtype=torch.int64)
 
         return self.clamp_result(c, c_quant_bits)
 
@@ -58,12 +58,13 @@ class MathOperations:
         assert x.dtype == torch.int32
         assert w.dtype == torch.int32
 
-        tmp = F.linear(x, w)
+        reduction_bits = (max(x.shape[-1], 1) - 1).bit_length()
+        tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1) + reduction_bits
+        if tmp_quant_bits + (b is not None) > 64:
+            raise ValueError("The required accumulator width exceeds int64")
 
-        tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
-        # TODO: should be dynamic, need to be solved in the future
-        tmp_quant_bits = tmp_quant_bits + 1
-        self.clamp_result(tmp, tmp_quant_bits)
+        tmp = F.linear(x.to(torch.int64), w.to(device=x.device, dtype=torch.int64))
+        tmp = self.clamp_result(tmp, tmp_quant_bits)
 
         if b is not None:
             assert b.dtype == torch.int32

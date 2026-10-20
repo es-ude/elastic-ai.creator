@@ -5,7 +5,9 @@ from torch import nn
 class BaseObserver(nn.Module):
     def __init__(self):
         super().__init__()
-        self.forward_num = 0
+        self.register_buffer(
+            "forward_num", torch.tensor(0, dtype=torch.int64)
+        )
 
     def update_float_range(
         self, running_min_float: torch.FloatTensor, running_max_float: torch.FloatTensor
@@ -30,10 +32,10 @@ class GlobalMinMaxObserver(BaseObserver):
     def update_float_range(
         self, running_min_float: torch.FloatTensor, running_max_float: torch.FloatTensor
     ):
-        if self.forward_num == 0:
+        if self.forward_num.item() == 0:
             self.min_float.copy_(running_min_float)
             self.max_float.copy_(running_max_float)
-            self.forward_num += 1
+            self.forward_num.add_(1)
         else:
             self.min_float.copy_(torch.min(running_min_float, self.min_float))
             self.max_float.copy_(torch.max(running_max_float, self.max_float))
@@ -70,7 +72,7 @@ class MovingAverageMinMaxObserver(BaseObserver):
         if self.forward_num == 0:
             self.min_float.copy_(running_min_float)
             self.max_float.copy_(running_max_float)
-            self.forward_num += 1
+            self.forward_num.add_(1)
         else:
             self.min_float.copy_(
                 (1 - self.momentum) * self.min_float + self.momentum * running_min_float

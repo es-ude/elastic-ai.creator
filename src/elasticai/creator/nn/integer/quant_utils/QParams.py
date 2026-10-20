@@ -114,29 +114,6 @@ class QParams(nn.Module):
         x_dq = x_q * scale_factor
         return x_dq.to(torch.float32).to(x_q.device)
 
-    def _load_from_state_dict(
-        self,
-        state_dict,
-        prefix,
-        local_metadata,
-        strict,
-        missing_keys,
-        unexpected_keys,
-        error_msgs,
-    ):
-        key_names = [
-            "min_float",
-            "max_float",
-            "min_quant",
-            "max_quant",
-            "scale_factor",
-            "zero_point",
-        ]
-        for key in key_names:
-            value = getattr(self, key)
-            value.data = state_dict[prefix + key].data
-            state_dict.pop(prefix + key)
-
     def __str__(self):
         info = "min_float: %.6f " % self.min_float
         info += "max_float: %.6f" % self.max_float

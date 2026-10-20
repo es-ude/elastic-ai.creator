@@ -17,6 +17,13 @@ def simulate_bitshifting(
     if torch.any(product > max_int64) or torch.any(product < min_int64):
         warnings.warn("Overflow of product in simulate_bitshifting")
 
-    approx_result = (product / (2 ** m_q_shift.item())).round_().int()
+    divisor = 1 << m_q_shift.item()
+    quotient = torch.div(product, divisor, rounding_mode="floor")
+    remainder = torch.remainder(product, divisor)
+    half = divisor // 2
 
+    round_up = (remainder > half) | (
+        (remainder == half) & (quotient % 2 != 0)
+    )
+    approx_result = quotient + round_up.to(torch.int64)
     return approx_result

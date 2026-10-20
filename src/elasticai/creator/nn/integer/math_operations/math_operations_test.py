@@ -84,3 +84,33 @@ def test_intmatmul_with_wrong_dtype():
     math_ops = MathOperations()
     with pytest.raises(AssertionError):
         math_ops.intmatmul(inputs_a, inputs_b, c_quant_bits)
+
+
+@pytest.mark.parametrize("features", [1, 3, 100, 40000])
+@pytest.mark.parametrize("weight_value", [-255, 255])
+@pytest.mark.parametrize("bias_value", [None, 12345])
+def test_int_mac_preserves_full_accumulation(
+    math_ops, features, weight_value, bias_value
+):
+    inputs = torch.full((2, features), 255, dtype=torch.int32)
+    weights = torch.full((1, features), weight_value, dtype=torch.int32)
+    bias = None if bias_value is None else torch.tensor([bias_value], dtype=torch.int32)
+
+    result = math_ops.int_mac(inputs, weights, 8, 8, bias)
+
+    expected = features * 255 * weight_value + (bias_value or 0)
+    expected_dtype = torch.int64 if features == 40000 else torch.int32
+    torch.testing.assert_close(result, torch.full((2, 1), expected, dtype=expected_dtype))
+
+
+def test_intadd_keeps_wide_result_until_requantization(math_ops):
+    inputs = torch.tensor([2_000_000_000], dtype=torch.int32)
+
+    result = math_ops.intadd(inputs, inputs, 33)
+
+    torch.testing.assert_close(
+        result, torch.tensor([4_000_000_000], dtype=torch.int64)
+    )
+    torch.testing.assert_close(
+        math_ops.clamp_result(result, 8), torch.tensor([127], dtype=torch.int32)
+    )
