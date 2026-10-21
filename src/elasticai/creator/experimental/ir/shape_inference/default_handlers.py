@@ -6,6 +6,7 @@ from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functi
     Padding2D,
     adaptiveavgpool2d_output_shape,
     add_output_shape,
+    avgpool1d_output_shape,
     batchnorm1d_output_shape,
     batchnorm2d_output_shape,
     conv1d_output_shape,
@@ -154,6 +155,25 @@ def maxpool1d(
         stride=cast(int, _unwrap1(attr.get("stride"))),
         padding=cast(int, _unwrap1(attr["padding"])),
         dilation=cast(int, _unwrap1(attr["dilation"])),
+        ceil_mode=attr.get_bool("ceil_mode", False),
+    )
+
+
+@_register_module
+def avgpool1d(
+    dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
+) -> tuple[int, ...]:
+    if len(input_shapes) != 1:
+        raise Exception(
+            f"multiple input_shapes are not supported for avgpool1d. {input_shapes=}"
+        )
+    attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int], input_shapes[0])
+    return avgpool1d_output_shape(
+        x_shape=x_shape,
+        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
+        stride=cast(int, _unwrap1(attr.get("stride"))),
+        padding=cast(int, _unwrap1(attr["padding"])),
         ceil_mode=attr.get_bool("ceil_mode", False),
     )
 

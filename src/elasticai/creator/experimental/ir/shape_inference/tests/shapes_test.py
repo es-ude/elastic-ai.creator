@@ -5,6 +5,7 @@ import torch.nn as nn
 from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functions import (
     adaptiveavgpool2d_output_shape,
     add_output_shape,
+    avgpool1d_output_shape,
     batchnorm1d_output_shape,
     batchnorm2d_output_shape,
     conv1d_output_shape,
@@ -150,6 +151,44 @@ def test_maxpool1d_output_shape(
         )
         == expected
     )
+
+
+# ---------------------------------------------------------------------------
+# avgpool1d
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "x_shape, k, s, p, ceil",
+    [
+        ((1, 16, 128), 2, None, 0, False),
+        ((1, 64, 32), 32, None, 0, False),
+        ((2, 3, 10), 3, 2, 1, False),
+        ((1, 1, 5), 2, 2, 1, True),  # torch drops the last ceil window
+        ((1, 1, 7), 3, 2, 0, True),
+    ],
+)
+def test_avgpool1d_output_shape_matches_torch(x_shape, k, s, p, ceil):
+    module = nn.AvgPool1d(k, s, p, ceil_mode=ceil)
+    expected = ref_shape(module, torch.zeros(x_shape))
+    assert avgpool1d_output_shape(x_shape, k, s, p, ceil) == expected
+
+
+@pytest.mark.parametrize(
+    "x_shape, k, s, p, ceil",
+    [
+        ((1, 1, 1), 2, None, 0, False),  # L_out 0
+        ((1, 1, 1), 4, 1, 0, False),  # L_out negative
+        ((1, 1, 1), 3, 1, 0, True),
+    ],
+)
+def test_avgpool1d_output_shape_rejects_input_shorter_than_window(
+    x_shape, k, s, p, ceil
+):
+    with pytest.raises(RuntimeError):
+        nn.AvgPool1d(k, s, p, ceil_mode=ceil)(torch.zeros(x_shape))
+    with pytest.raises(ValueError, match="avgpool1d"):
+        avgpool1d_output_shape(x_shape, k, s, p, ceil)
 
 
 # ---------------------------------------------------------------------------
