@@ -229,14 +229,17 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
         if self.training:
             mean = inputs.mean(dim=(0, 1), keepdim=False)
-            var = inputs.var(dim=(0, 1), keepdim=False)
+            var = inputs.var(dim=(0, 1), keepdim=False, unbiased=False)
+            n = inputs.shape[0] * inputs.shape[1]
+            running_var = var * n / (n - 1)
 
-            self.running_mean = (
-                1 - self.momentum
-            ) * self.running_mean + self.momentum * mean
-            self.running_var = (
-                1 - self.momentum
-            ) * self.running_var + self.momentum * var
+            with torch.no_grad():
+                self.running_mean = (
+                    1 - self.momentum
+                ) * self.running_mean + self.momentum * mean
+                self.running_var = (
+                    1 - self.momentum
+                ) * self.running_var + self.momentum * running_var
         else:
             mean = self.running_mean
             var = self.running_var

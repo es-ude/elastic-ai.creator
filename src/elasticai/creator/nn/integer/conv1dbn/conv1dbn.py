@@ -211,14 +211,14 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             n = tmp_outputs.shape[0] * tmp_outputs.shape[2]
 
             running_var = var * n / (n - 1)
+            with torch.no_grad():
+                self.bn1d.running_mean = (
+                    1 - self.bn1d.momentum
+                ) * self.bn1d.running_mean + self.bn1d.momentum * mean
 
-            self.bn1d.running_mean = (
-                1 - self.bn1d.momentum
-            ) * self.bn1d.running_mean + self.bn1d.momentum * mean
-
-            self.bn1d.running_var = (
-                1 - self.bn1d.momentum
-            ) * self.bn1d.running_var + self.bn1d.momentum * running_var
+                self.bn1d.running_var = (
+                    1 - self.bn1d.momentum
+                ) * self.bn1d.running_var + self.bn1d.momentum * running_var
 
         else:
             mean = self.bn1d.running_mean
