@@ -36,6 +36,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             kwargs.get("affine"),
             kwargs.get("track_running_stats"),
         )
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.num_dimensions = kwargs.get("num_dimensions")
         self.in_features = kwargs.get("in_features")
         self.out_features = kwargs.get("out_features")
@@ -127,7 +128,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         given_quant_scale: torch.FloatTensor,
     ) -> torch.IntTensor:
         assert not self.training, "int_forward should be called in eval mode"
-        return quantize_bias(bias, bias_QParams, given_quant_scale)
+        return quantize_bias(bias, bias_QParams, given_quant_scale, self.bias_bits)
 
     def precompute(self):
         mean = self.running_mean

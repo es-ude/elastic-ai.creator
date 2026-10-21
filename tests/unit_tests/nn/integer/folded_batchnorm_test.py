@@ -200,6 +200,7 @@ def test_conv1dbn_quantized_bn_folding(
         y_ref = ref_bn(ref_conv(x))
         actual_layer.inputs_QParams.update_quant_params(x)
         y_float = actual_layer(x, enable_simquant=False)
+        torch.testing.assert_close(y_float, y_ref, rtol=1e-4, atol=1e-5)
 
         actual_layer.outputs_QParams.update_quant_params(y_float)
 
@@ -209,9 +210,37 @@ def test_conv1dbn_quantized_bn_folding(
         q_y = actual_layer.int_forward(q_x)
 
         y_quantized = actual_layer.outputs_QParams.dequantize(q_y)
+        # The chosen bias width is fixed: narrow biases can saturate. Compare
+        # integer inference with a reference using those quantized parameters.
+        fused_weight, fused_bias = actual_layer._fold_bn()
+        input_scale = actual_layer.inputs_QParams.scale_factor
+        weight_scale = actual_layer.weight_QParams.scale_factor
+        bias_scale = input_scale * weight_scale
+        bias_limit = 2 ** (BIAS_BITS - 1) - 1
+        reference_bias_codes = (fused_bias / bias_scale).round().to(torch.float64).clamp(
+            -bias_limit, bias_limit
+        )
+        torch.testing.assert_close(
+            actual_layer.q_fused_bias,
+            reference_bias_codes.to(torch.int32),
+        )
+        weight_params = actual_layer.weight_QParams
+        reference_weight_codes = (fused_weight / weight_scale + weight_params.zero_point).round().clamp(
+            weight_params.min_quant.item(), weight_params.max_quant.item()
+        ) - weight_params.zero_point
+        reference_input = (q_x.to(torch.float64) - actual_layer.inputs_QParams.zero_point) * input_scale
+        reference_output = F.conv1d(
+            reference_input,
+            reference_weight_codes.to(torch.float64) * weight_scale,
+            reference_bias_codes * bias_scale,
+            padding=actual_layer.padding,
+        )
+        reference_output = actual_layer.outputs_QParams.dequantize(
+            actual_layer.outputs_QParams.quantize(reference_output)
+        )
     print("zero point: ", actual_layer.weight_QParams.zero_point)
 
-    error = (y_quantized - y_ref).abs()
+    error = (y_quantized - reference_output).abs()
     print("Input scale:", actual_layer.inputs_QParams.scale_factor)
     print("Weight scale:", actual_layer.weight_QParams.scale_factor)
     print("Output scale:", actual_layer.outputs_QParams.scale_factor)

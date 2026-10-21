@@ -28,6 +28,7 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 class PointConv1dBN(DesignCreatorModule, nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
+        self.bias_bits = kwargs.get("bias_bits", 32)
 
         self.in_channels = kwargs.get("in_channels")
         self.out_channels = kwargs.get("out_channels")
@@ -92,7 +93,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor)
+        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"

@@ -39,6 +39,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             groups=kwargs.get("in_channels"),
             bias=True,
         )
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.seq_len = kwargs.get("seq_len")
 
         self.name = kwargs.get("name")
@@ -95,7 +96,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor)
+        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"

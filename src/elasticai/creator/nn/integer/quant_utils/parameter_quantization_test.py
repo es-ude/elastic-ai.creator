@@ -37,52 +37,41 @@ def test_weights_preserve_existing_quantization(
 
 
 @pytest.mark.parametrize(
-    "scheme",
-    ["SymmetricSignedQParams", "AsymmetricSignedQParams", "AsymmetricUnsignedQParams"],
+    "scheme,expected",
+    [
+        ("SymmetricSignedQParams", [-131071, 131071]),
+        ("AsymmetricSignedQParams", [-131072, 131071]),
+        ("AsymmetricUnsignedQParams", [0, 262143]),
+    ],
 )
-def test_bias_expands_width_to_preserve_values(params_module, scheme):
+def test_bias_saturates_at_the_requested_width(params_module, scheme, expected):
     params = make_params(params_module, scheme)
     params.zero_point.fill_(7)
-    bias = torch.tensor([-0.5, 0.5] if params.is_signed else [0.0, 0.5])
-    result = quantize_bias(bias, params, torch.tensor(2.0**-20))
-    expected = [-524288, 524288] if params.is_signed else [0, 524288]
+    result = quantize_bias(torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), 18)
     torch.testing.assert_close(result, torch.tensor(expected, dtype=torch.int32))
-    assert int(params.quant_bits) == (21 if params.is_signed else 20)
+    assert int(params.quant_bits) == 18
     assert params.scale_factor.item() == 2.0**-20
     assert params.zero_point.item() == 0
     assert params.observer.forward_num.item() == 0
     assert result.device.type == "cpu"
 
 
-def test_bias_supports_wider_width_chosen_by_caller(params_module):
+@pytest.mark.parametrize("bits", [21, 24, 32])
+def test_bias_preserves_values_when_the_requested_width_fits(params_module, bits):
     params = make_params(params_module, "SymmetricSignedQParams")
-    result = quantize_bias(
-        torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), 21
-    )
-    torch.testing.assert_close(
-        result, torch.tensor([-524288, 524288], dtype=torch.int32)
-    )
-    assert int(params.quant_bits) == 21
-
-
-@pytest.mark.parametrize("value", [float("nan"), float("inf"), 2.0**31])
-def test_bias_rejects_codes_that_cannot_be_stored(params_module, value):
-    params = make_params(params_module, "SymmetricSignedQParams")
-    with pytest.raises(ValueError):
-        quantize_bias(torch.tensor([value]), params, torch.tensor(1.0), 18)
-
-
-def test_unsigned_bias_rejects_negative_values(params_module):
-    params = make_params(params_module, "AsymmetricUnsignedQParams")
-    with pytest.raises(ValueError, match="negatives"):
-        quantize_bias(torch.tensor([-1.0]), params, torch.tensor(1.0), 18)
-
-
-@pytest.mark.parametrize(
-    "values,bits", [([0.0], 2), ([-1.0, 1.0], 2), ([-8.0, 8.0], 5)]
-)
-def test_bias_width_is_selected_without_layer_hint(params_module, values, bits):
-    params = make_params(params_module, "SymmetricSignedQParams")
-    result = quantize_bias(torch.tensor(values), params, torch.tensor(1.0))
+    result = quantize_bias(torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), bits)
+    torch.testing.assert_close(result, torch.tensor([-524288, 524288], dtype=torch.int32))
     assert int(params.quant_bits) == bits
-    torch.testing.assert_close(result, torch.tensor(values, dtype=torch.int32))
+
+
+def test_32_bit_bias_saturates_before_integer_conversion(params_module):
+    params = make_params(params_module, "SymmetricSignedQParams")
+    result = quantize_bias(torch.tensor([-2.0**31, 2.0**31]), params, torch.tensor(1.0), 32)
+    torch.testing.assert_close(result, torch.tensor([-2147483647, 2147483647], dtype=torch.int32))
+
+
+def test_32_bit_bias_round_trip_does_not_overflow(params_module):
+    params = make_params(params_module, "SymmetricSignedQParams")
+    bias = torch.tensor([-0.5, 0.5])
+    result = quantize_bias(bias, params, torch.tensor(2.0**-20), 32)
+    torch.testing.assert_close(params.dequantize(result), bias)

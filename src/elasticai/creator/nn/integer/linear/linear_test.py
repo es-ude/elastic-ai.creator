@@ -107,8 +107,8 @@ def bias_quant_params(linear_layer, eps):
         calculate_symmetric_quant_params(
             min_float=linear_layer.bias.min(),
             max_float=linear_layer.bias.max(),
-            min_quant=torch.tensor([-127], dtype=torch.int32),
-            max_quant=torch.tensor([127], dtype=torch.int32),
+            min_quant=linear_layer.bias_QParams.min_quant,
+            max_quant=linear_layer.bias_QParams.max_quant,
             eps=eps,
         )
     )
@@ -170,7 +170,7 @@ def q_bias_subtracted(linear_layer, inputs_quant_params, weights_quant_params):
     new_bias_zero_point = torch.tensor([0], dtype=torch.int32)
     q_bias = linear_layer.bias / new_bias_scale_factor + new_bias_zero_point
     q_bias = q_bias.round_()
-    new_quant_bits = max(2, int(q_bias.abs().max().item()).bit_length() + 1)
+    new_quant_bits = linear_layer.bias_bits
     q_bias = q_bias.clone().detach().to(torch.int32)
 
     q_bias_subtracted = q_bias - new_bias_zero_point
@@ -242,7 +242,7 @@ def test_linear_layer_initialization_weight_quant_bits(linear_layer) -> None:
 
 
 def test_linear_layer_initialization_bias_quant_bits(linear_layer) -> None:
-    expected_quant_bits = 8
+    expected_quant_bits = linear_layer.bias_bits
     actual_quant_bits = linear_layer.bias_QParams.quant_bits
     assert expected_quant_bits == actual_quant_bits
 

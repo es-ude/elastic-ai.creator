@@ -59,6 +59,15 @@ def test_intsub_with_wrong_dtype(math_ops):
         math_ops.intsub(inputs_a, inputs_b, c_quant_bits)
 
 
+def test_intsub_widens_before_clamping_to_33_bits(math_ops):
+    result = math_ops.intsub(
+        torch.tensor([2147483647], dtype=torch.int32),
+        torch.tensor([-2147483647], dtype=torch.int32),
+        33,
+    )
+    torch.testing.assert_close(result, torch.tensor([4294967294], dtype=torch.int64))
+
+
 def test_intmatmul_correctly():
     inputs_a = torch.tensor([[127, 34], [56, 78]], dtype=torch.int32)
     inputs_b = torch.tensor([[-54, 29], [39, 12]], dtype=torch.int32)

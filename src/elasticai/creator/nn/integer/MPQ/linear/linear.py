@@ -30,6 +30,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.num_dimensions = kwargs.get("num_dimensions", None)
         self.enable_bias = kwargs.get("bias", True)
 
@@ -114,7 +115,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor)
+        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"

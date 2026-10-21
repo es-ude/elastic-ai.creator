@@ -39,7 +39,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         self.weight_bits = kwargs.get("quant_bits")
-        self.bias_bits= kwargs.get("bias_bits")
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.activation_bits=kwargs.get("activation_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
@@ -100,7 +100,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor)
+        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
 
     def _fold_bn(self):
         std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)

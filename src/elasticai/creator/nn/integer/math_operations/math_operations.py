@@ -24,7 +24,7 @@ class MathOperations:
         assert a.dtype == torch.int32
         assert b.dtype == torch.int32
 
-        c = a - b.to(a.device)
+        c = a.to(torch.int64) - b.to(device=a.device, dtype=torch.int64)
         return self.clamp_result(c, c_quant_bits)
 
     def intmatmul(

@@ -25,7 +25,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         inputs_size = kwargs.get("inputs_size")
         self.hidden_size = kwargs.get("hidden_size")
         self.window_size = kwargs.get("window_size")
-
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
@@ -50,6 +50,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             num_dimensions=1,
             bias=True,
+            bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -63,6 +64,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             num_dimensions=1,
             bias=True,
+            bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -93,6 +95,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             num_dimensions=1,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
+            bias_bits=self.bias_bits,
             device=device,
             use_parallelised_template=kwargs.get("use_parallelised_template", False),
             unroll_factor=kwargs.get("unroll_factor", 1),

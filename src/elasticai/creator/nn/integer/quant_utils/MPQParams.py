@@ -106,7 +106,9 @@ class QParams(nn.Module):
         zero_point = self.zero_point.to(x.device)
 
         x_q = x / scale_factor + zero_point
-        x_q = x_q.round_().clamp(min=self.min_quant.item(), max=self.max_quant.item())
+        x_q = x_q.round().to(torch.float64).clamp(
+            min=self.min_quant.item(), max=self.max_quant.item()
+        )
         x_q = x_q.to(torch.int32)
 
         return x_q.to(x.device)

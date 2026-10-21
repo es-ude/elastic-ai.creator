@@ -24,6 +24,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
 
         self.name = kwargs.get("name")
         self.quant_bits = kwargs.get("quant_bits")
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
@@ -34,6 +35,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             out_features=ffn_dim,
             num_dimensions=num_dimensions,
             bias=True,
+            bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
@@ -54,6 +56,7 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=num_dimensions,
             bias=True,
+            bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,

@@ -27,6 +27,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         super().__init__(
             kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
         )
+        self.bias_bits = kwargs.get("bias_bits", 32)
         self.num_dimensions = kwargs.get("num_dimensions", None)
 
         self.name = kwargs.get("name")
@@ -41,7 +42,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         ).to(device)
         if kwargs.get("bias"):
             self.bias_QParams = SymmetricSignedQParams(
-                quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+                quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
             ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -88,7 +89,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor)
+        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
