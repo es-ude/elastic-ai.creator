@@ -93,8 +93,13 @@ def conv1d(
                 )
 
     attr = dg_node.attributes
+    x_shape = validate_shape(input_shapes)
+    if x_shape[1] != attr.get("in_channels"):
+        raise Exception(
+            f"expected {attr.get('in_channels')} in_channels for conv1d. Got {x_shape[1]=}"
+        )
     return conv1d_output_shape(
-        x_shape=validate_shape(input_shapes),
+        x_shape=x_shape,
         out_channels=cast(int, attr.get("out_channels")),
         kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
         stride=cast(int, _unwrap1(attr.get("stride"))),

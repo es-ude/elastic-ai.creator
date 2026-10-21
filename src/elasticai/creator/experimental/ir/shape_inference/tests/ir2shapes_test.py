@@ -121,3 +121,10 @@ def test_ir2shapes_conv1d_from_torch2ir(convert2ir, padding, dilation):
     expected = tuple(m(torch.zeros(1, 9, 128)).shape)
     into_output = {e.shape for e in new_graph.edges.values() if e.dst == "output"}
     assert into_output == {expected}
+
+
+def test_ir2shapes_conv1d_rejects_mismatched_in_channels(convert2ir):
+    m = Sequential(Conv1d(9, 16, 7, padding=3))
+    root, reg = convert2ir(m)
+    with pytest.raises(Exception, match="in_channels"):
+        shape_translator()(root, reg, {"input_1": (1, 3, 128)})
