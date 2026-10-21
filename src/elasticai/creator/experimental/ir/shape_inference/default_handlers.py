@@ -93,16 +93,13 @@ def conv1d(
                 )
 
     attr = dg_node.attributes
-    padding = attr.get_int("padding", 0)
-    if isinstance(padding, (tuple, list)):
-        padding = padding[0]
     return conv1d_output_shape(
         x_shape=validate_shape(input_shapes),
         out_channels=cast(int, attr.get("out_channels")),
-        kernel_size=_unwrap1(attr.get_int("kernel_size")),
+        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
         stride=cast(int, _unwrap1(attr.get("stride"))),
-        padding=cast(Padding, padding),
-        dilation=cast(int, _unwrap1(attr.get_int("dilation", 1))),
+        padding=cast(Padding, _unwrap1(attr.get("padding", 0))),
+        dilation=cast(int, _unwrap1(attr.get("dilation", 1))),
     )
 
 
