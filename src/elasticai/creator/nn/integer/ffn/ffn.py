@@ -23,7 +23,11 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         num_dimensions = kwargs.get("num_dimensions")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.bias_bits = kwargs.get("bias_bits", 32)
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
@@ -37,6 +41,8 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             bias=True,
             bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -45,6 +51,8 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.relu = ReLU(
             name=self.name + "_relu",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -58,16 +66,18 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
             bias=True,
             bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False

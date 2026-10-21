@@ -25,7 +25,11 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         window_size = kwargs.get("window_size")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
@@ -37,6 +41,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -49,6 +55,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -60,6 +68,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -71,6 +81,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             nhead=self.nhead,
             window_size=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             d_model=d_model,
             enable_error_analysis=self.enable_error_analysis,
@@ -81,6 +93,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -88,10 +102,10 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False

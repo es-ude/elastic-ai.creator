@@ -27,7 +27,11 @@ class GRUCell(DesignCreatorModule, nn.Module):
         kwargs.get("window_size")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
         device = kwargs.get("device")
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -38,6 +42,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
             hidden_size=self.hidden_size,
             num_dimensions=1,  # only one-step
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -49,12 +55,16 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_dimensions=1,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.z_sigmoid = HardSigmoid(
             name=self.name + "_z_sigmoid",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -66,12 +76,16 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_dimensions=1,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.r_sigmoid = HardSigmoid(
             name=self.name + "_r_sigmoid",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -81,6 +95,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -89,6 +105,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_features=inputs_size + hidden_size,
             num_dimensions=1,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -99,12 +117,16 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_dimensions=1,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.h_tanh = HardTanh(
             name=self.name + "_h_tanh",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -114,6 +136,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -122,6 +146,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -131,24 +157,26 @@ class GRUCell(DesignCreatorModule, nn.Module):
             num_features=hidden_size,
             num_dimensions=1,  # TODO: check this
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.minus_z_sigmoid_outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()

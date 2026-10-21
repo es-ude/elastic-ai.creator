@@ -31,25 +31,29 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
         self.norm_dim = kwargs.get("norm_dim")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.normed_inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()

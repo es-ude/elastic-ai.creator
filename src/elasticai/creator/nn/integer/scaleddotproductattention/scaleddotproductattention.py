@@ -28,7 +28,11 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         nhead = kwargs.get("nhead")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
 
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
@@ -46,6 +50,8 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             y_dim_b=window_size,
             y_dim_c=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             operation_mode="score",
             addtion_scale=1 / np.sqrt(d_model),
@@ -61,6 +67,8 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             dim_b=window_size,
             dim_c=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -78,6 +86,8 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             y_dim_b=nhead,
             y_dim_c=d_model,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             operation_mode="att",
             addtion_scale=None,
@@ -86,16 +96,16 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         )
 
         self.inputs_q_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_k_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_v_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.precomputed = False
 

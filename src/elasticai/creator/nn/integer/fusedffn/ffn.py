@@ -23,7 +23,11 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
         num_dimensions = kwargs.get("num_dimensions")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
         self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
@@ -35,6 +39,8 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -47,16 +53,18 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False

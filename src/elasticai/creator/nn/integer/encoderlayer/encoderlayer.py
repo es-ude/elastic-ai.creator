@@ -29,7 +29,11 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         nhead = kwargs.get("nhead")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
@@ -45,6 +49,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             d_model=d_model,
             window_size=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -54,6 +60,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             num_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -70,6 +78,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             affine=True,
             track_running_stats=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -82,6 +92,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 d_model=d_model,
                 ffn_dim=ffn_dim,
                 quant_bits=self.quant_bits,
+                activation_bits=self.activation_bits,
+                weight_bits=self.weight_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 enable_error_analysis=self.enable_error_analysis,
@@ -93,6 +105,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 d_model=d_model,
                 ffn_dim=ffn_dim,
                 quant_bits=self.quant_bits,
+                activation_bits=self.activation_bits,
+                weight_bits=self.weight_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 enable_error_analysis=self.enable_error_analysis,
@@ -103,6 +117,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             num_features=d_model,
             num_dimensions=window_size,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -119,16 +135,18 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             affine=True,
             track_running_stats=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.precomputed = False
 

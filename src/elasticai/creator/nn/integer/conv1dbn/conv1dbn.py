@@ -38,9 +38,11 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.padding = kwargs.get("padding")
 
         self.name = kwargs.get("name")
-        self.weight_bits = kwargs.get("quant_bits")
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", kwargs.get("activation_bits"))
+        )
         self.bias_bits = kwargs.get("bias_bits", 32)
-        self.activation_bits=kwargs.get("activation_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 

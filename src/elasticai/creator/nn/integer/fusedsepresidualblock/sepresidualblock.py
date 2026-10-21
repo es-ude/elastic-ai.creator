@@ -26,7 +26,11 @@ class SepResidualBlock(nn.Module):
         seq_len = kwargs.get("seq_len")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
 
@@ -38,12 +42,16 @@ class SepResidualBlock(nn.Module):
             padding=1,
             name=self.name + "_sepconv1dbn_0",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.sepconv1dbn_0_relu = ReLU(
             name=self.name + "_sepconv1dbn_0_relu",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -55,6 +63,8 @@ class SepResidualBlock(nn.Module):
             padding=1,
             name=self.name + "_sepconv1dbn_1",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -70,6 +80,8 @@ class SepResidualBlock(nn.Module):
                     padding=1,
                     name=self.name + "_shortcut",
                     quant_bits=self.quant_bits,
+                    activation_bits=self.activation_bits,
+                    weight_bits=self.weight_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                 ),
@@ -80,21 +92,25 @@ class SepResidualBlock(nn.Module):
             num_features=seq_len,
             num_dimensions=out_channels,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.relu = ReLU(
             name=self.name + "_relu",
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.precomputed = False
 

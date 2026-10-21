@@ -25,7 +25,11 @@ class RNNLayer(nn.Module):
         self.window_size = kwargs.get("window_size")
 
         self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.activation_bits = kwargs.get("activation_bits", kwargs.get("quant_bits"))
+        self.weight_bits = kwargs.get(
+            "weight_bits", kwargs.get("quant_bits", self.activation_bits)
+        )
+        self.quant_bits = self.activation_bits
         self.quant_data_dir = kwargs.get("quant_data_dir", None)
         device = kwargs.get("device")
         self.lstm_use_pipeline_template = kwargs.get("use_pipeline_template", False)
@@ -37,6 +41,8 @@ class RNNLayer(nn.Module):
                 hidden_size=self.hidden_size,
                 window_size=self.window_size,
                 quant_bits=self.quant_bits,
+                activation_bits=self.activation_bits,
+                weight_bits=self.weight_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 use_parallelised_template=kwargs.get(
@@ -52,6 +58,8 @@ class RNNLayer(nn.Module):
                 hidden_size=self.hidden_size,
                 window_size=self.window_size,
                 quant_bits=self.quant_bits,
+                activation_bits=self.activation_bits,
+                weight_bits=self.weight_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
             )
@@ -59,22 +67,22 @@ class RNNLayer(nn.Module):
             raise ValueError(f"Unsupported cell type: {self.cell_type}")
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
