@@ -17,13 +17,14 @@ def pytest_sessionfinish(session, exitstatus):
     from elasticai.creator.file_generation import find_project_root
     from pathlib import Path
 
-    path2check = find_project_root() / "build_test"
     def remove_empty_dirs(path: Path) -> None:
         if not path.exists():
             return
-        for dirpath in path2check.iterdir():
+        for dirpath in path.iterdir():
             try:
                 dirpath.rmdir()
             except:
                 pass
+
+    path2check = find_project_root() / "build_test"
     remove_empty_dirs(path2check)
