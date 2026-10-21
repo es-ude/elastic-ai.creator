@@ -212,6 +212,33 @@ def maxpool1d_output_shape(
     return (N, C, L_out)
 
 
+def avgpool1d_output_shape(
+    x_shape: Tuple[int, int, int],  # (N, C, L_in)
+    kernel_size: int,
+    stride: int | None = None,  # defaults to kernel_size
+    padding: int = 0,
+    ceil_mode: bool = False,
+) -> Tuple[int, int, int]:
+    """Returns (N, C, L_out) for AvgPool1d."""
+    N, C, L_in = x_shape
+    if stride is None:
+        stride = kernel_size
+    span = L_in + 2 * padding - kernel_size
+    if ceil_mode:
+        L_out = -(-span // stride) + 1
+        # torch drops the last window if it would start in the right padding
+        if (L_out - 1) * stride >= L_in + padding:
+            L_out -= 1
+    else:
+        L_out = span // stride + 1
+    if L_out < 1:
+        raise ValueError(
+            f"avgpool1d output length would be {L_out} for {L_in=}, "
+            f"{kernel_size=}, {stride=}, {padding=}; input is shorter than the window"
+        )
+    return (N, C, L_out)
+
+
 def maxpool2d_output_shape(
     x_shape: Tuple[int, int, int, int],  # (N, C, H_in, W_in)
     kernel_size: IntOr2,

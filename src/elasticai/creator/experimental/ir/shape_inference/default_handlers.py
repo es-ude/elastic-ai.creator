@@ -6,6 +6,7 @@ from elasticai.creator.experimental.ir.shape_inference.shapes_calculation_functi
     Padding2D,
     adaptiveavgpool2d_output_shape,
     add_output_shape,
+    avgpool1d_output_shape,
     batchnorm1d_output_shape,
     batchnorm2d_output_shape,
     conv1d_output_shape,
@@ -93,16 +94,18 @@ def conv1d(
                 )
 
     attr = dg_node.attributes
-    padding = attr.get_int("padding", 0)
-    if isinstance(padding, (tuple, list)):
-        padding = padding[0]
+    x_shape = validate_shape(input_shapes)
+    if x_shape[1] != attr.get("in_channels"):
+        raise Exception(
+            f"expected {attr.get('in_channels')} in_channels for conv1d. Got {x_shape[1]=}"
+        )
     return conv1d_output_shape(
-        x_shape=validate_shape(input_shapes),
+        x_shape=x_shape,
         out_channels=cast(int, attr.get("out_channels")),
-        kernel_size=_unwrap1(attr.get_int("kernel_size")),
+        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
         stride=cast(int, _unwrap1(attr.get("stride"))),
-        padding=cast(Padding, padding),
-        dilation=cast(int, _unwrap1(attr.get_int("dilation", 1))),
+        padding=cast(Padding, _unwrap1(attr.get("padding", 0))),
+        dilation=cast(int, _unwrap1(attr.get("dilation", 1))),
     )
 
 
@@ -152,6 +155,25 @@ def maxpool1d(
         stride=cast(int, _unwrap1(attr.get("stride"))),
         padding=cast(int, _unwrap1(attr["padding"])),
         dilation=cast(int, _unwrap1(attr["dilation"])),
+        ceil_mode=attr.get_bool("ceil_mode", False),
+    )
+
+
+@_register_module
+def avgpool1d(
+    dg_node: DataGraph, input_shapes: tuple[tuple[int, ...], ...]
+) -> tuple[int, ...]:
+    if len(input_shapes) != 1:
+        raise Exception(
+            f"multiple input_shapes are not supported for avgpool1d. {input_shapes=}"
+        )
+    attr = dg_node.attributes
+    x_shape = cast(tuple[int, int, int], input_shapes[0])
+    return avgpool1d_output_shape(
+        x_shape=x_shape,
+        kernel_size=cast(int, _unwrap1(attr.get("kernel_size"))),
+        stride=cast(int, _unwrap1(attr.get("stride"))),
+        padding=cast(int, _unwrap1(attr["padding"])),
         ceil_mode=attr.get_bool("ceil_mode", False),
     )
 

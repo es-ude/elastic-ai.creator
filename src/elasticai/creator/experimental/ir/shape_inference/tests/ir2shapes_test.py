@@ -1,8 +1,20 @@
 from typing import final, override
 
 import pytest
+import torch
 from torch import Tensor
-from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, Module, ReLU, Sequential
+from torch.nn import (
+    AvgPool1d,
+    BatchNorm2d,
+    Conv1d,
+    Conv2d,
+    Flatten,
+    Linear,
+    MaxPool1d,
+    Module,
+    ReLU,
+    Sequential,
+)
 
 from elasticai.creator import ir, torch2ir
 from elasticai.creator.experimental.ir.shape_inference import (
@@ -98,3 +110,41 @@ def test_ir2shapes_skip_connection(convert2ir):
     }
     actual_shapes = {(e.src, e.dst): e.shape for e in new_graph.edges.values()}
     assert expected_shapes == actual_shapes
+
+
+@pytest.mark.parametrize(
+    "padding, dilation",
+    [(3, 1), (0, 1), (0, 2), (2, 2)],
+)
+def test_ir2shapes_conv1d_from_torch2ir(convert2ir, padding, dilation):
+    m = Sequential(Conv1d(9, 16, 7, padding=padding, dilation=dilation))
+    root, reg = convert2ir(m)
+    new_graph = shape_translator()(root, reg, {"input_1": (1, 9, 128)})
+    expected = tuple(m(torch.zeros(1, 9, 128)).shape)
+    into_output = {e.shape for e in new_graph.edges.values() if e.dst == "output"}
+    assert into_output == {expected}
+
+
+def test_ir2shapes_conv1d_rejects_mismatched_in_channels(convert2ir):
+    m = Sequential(Conv1d(9, 16, 7, padding=3))
+    root, reg = convert2ir(m)
+    with pytest.raises(Exception, match="in_channels"):
+        shape_translator()(root, reg, {"input_1": (1, 3, 128)})
+
+
+def test_ir2shapes_avgpool1d(convert2ir):
+    m = Sequential(Conv1d(9, 16, 7, padding=3), ReLU(), MaxPool1d(2), AvgPool1d(64))
+    root, reg = convert2ir(m)
+    new_graph = shape_translator()(root, reg, {"input_1": (1, 9, 128)})
+    into_output = {e.shape for e in new_graph.edges.values() if e.dst == "output"}
+    assert into_output == {(1, 16, 1)}
+
+
+@pytest.mark.parametrize("length", [5, 7, 128])
+def test_ir2shapes_avgpool1d_padding_ceil_mode(convert2ir, length):
+    m = Sequential(AvgPool1d(2, stride=2, padding=1, ceil_mode=True))
+    root, reg = convert2ir(m)
+    new_graph = shape_translator()(root, reg, {"input_1": (1, 4, length)})
+    expected = tuple(m(torch.zeros(1, 4, length)).shape)
+    into_output = {e.shape for e in new_graph.edges.values() if e.dst == "output"}
+    assert into_output == {expected}

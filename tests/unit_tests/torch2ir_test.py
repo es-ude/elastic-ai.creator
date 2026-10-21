@@ -1,9 +1,18 @@
 from collections import OrderedDict
 
 import torch
-from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, Module, ReLU, Sequential
+from torch.nn import (
+    AvgPool1d,
+    BatchNorm2d,
+    Conv2d,
+    Flatten,
+    Linear,
+    Module,
+    ReLU,
+    Sequential,
+)
 
-from elasticai.creator import ir
+from elasticai.creator import ir, torch2ir
 from elasticai.creator.torch2ir import (
     Torch2Ir as Torch2IrTranslator,
 )
@@ -487,6 +496,23 @@ def test_convert_with_params_and_buffers_exports_batchnorm_buffers():
         "running_mean": (0.0, 0.0),
         "running_var": (1.0, 1.0),
         "num_batches_tracked": 0,
+        "edges": {},
+        "nodes": {},
+    }
+
+
+def test_convert_avgpool1d_exports_attributes():
+    m = Sequential(
+        AvgPool1d(4, stride=2, padding=1, ceil_mode=True, count_include_pad=False)
+    )
+    _, reg = torch2ir.get_default_converter()(m)
+    assert ir.IrSerializerLegacy().serialize(reg["0"]) == {
+        "type": "avgpool1d",
+        "kernel_size": (4,),
+        "stride": (2,),
+        "padding": (1,),
+        "ceil_mode": True,
+        "count_include_pad": False,
         "edges": {},
         "nodes": {},
     }

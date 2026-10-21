@@ -38,6 +38,17 @@ def maxpool1d(module: nn.MaxPool1d) -> dict:
 
 
 @_register
+def avgpool1d(module: nn.AvgPool1d) -> dict:
+    return {
+        "kernel_size": module.kernel_size,
+        "stride": module.stride,
+        "padding": module.padding,
+        "ceil_mode": module.ceil_mode,
+        "count_include_pad": module.count_include_pad,
+    }
+
+
+@_register
 def linear(module: nn.Linear) -> dict:
     return {
         "in_features": module.in_features,
