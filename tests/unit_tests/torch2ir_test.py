@@ -10,6 +10,9 @@ from elasticai.creator.torch2ir import (
 from elasticai.creator.torch2ir import (
     Torch2IrWithParams as Torch2IrWithParamsTranslator,
 )
+from elasticai.creator.torch2ir import (
+    Torch2IrWithParamsAndBuffers as Torch2IrWithParamsAndBuffersTranslator,
+)
 from elasticai.creator.torch2ir.default_handlers import (
     adaptiveavgpool2d,
     add,
@@ -465,4 +468,25 @@ def test_can_handle_nested_hierarchies():
             "edges": {},
             "nodes": {},
         },
+    }
+
+
+def test_convert_with_params_and_buffers_exports_batchnorm_buffers():
+    translate = Torch2IrWithParamsAndBuffersTranslator()
+    translate.register()(batchnorm1d)
+    serializer = ir.IrSerializerLegacy()
+
+    _, reg = translate(Sequential(torch.nn.BatchNorm1d(2)))
+
+    assert serializer.serialize(reg["0"]) == {
+        "type": "batchnorm1d",
+        "num_features": 2,
+        "affine": True,
+        "weight": (1.0, 1.0),
+        "bias": (0.0, 0.0),
+        "running_mean": (0.0, 0.0),
+        "running_var": (1.0, 1.0),
+        "num_batches_tracked": 0,
+        "edges": {},
+        "nodes": {},
     }
