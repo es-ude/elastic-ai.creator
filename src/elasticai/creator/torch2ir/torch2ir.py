@@ -158,7 +158,7 @@ class Torch2IrWithParams(Torch2Ir):
 class Torch2IrWithParamsAndBuffers(Torch2IrWithParams):
     def _add_buffers(self, module: Module) -> dict:
         buffers = {}
-        for name, buffer in module.named_parameters():
+        for name, buffer in module.named_buffers():
             buffers[name] = nested_list_to_tuple(buffer.data.detach().numpy().tolist())
         return buffers
 
