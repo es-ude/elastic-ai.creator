@@ -22,7 +22,7 @@ end entity;
 
 architecture rtl of base_shift_register is
     signal storage : std_logic_vector(DATA_WIDTH*NUM_POINTS - 1 downto 0) := (others => '0');
-  
+    signal counter : natural range 0 to NUM_POINTS := 0;
 
 
 begin
@@ -31,17 +31,16 @@ begin
     D_OUT <= storage;
 
     process(CLK) is
-        variable counter : integer := 0;
     begin
         if rising_edge(CLK) then
             VALID <= '0';
             if RST = '1' then
-                counter := 0;
+                counter <= 0;
 
             elsif SRC_VALID = '1' and DST_READY = '1' and EN = '1' then
                     storage <= storage((DATA_WIDTH*(NUM_POINTS-1))-1 downto 0) & d_in;
                     if counter < NUM_POINTS - 1 then
-                        counter := counter + 1;
+                        counter <= counter + 1;
                     else
                         VALID <= '1';
                     end if;
