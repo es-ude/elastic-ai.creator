@@ -21,7 +21,7 @@ def get_padding_len(
 
 def get_padded_q_inputs(
     padding_len: int,
-    q_inputs: torch.IntTensor,
+    q_inputs: torch.Tensor,
     inputs_QParams,
 ) -> None:
     if padding_len > 0:

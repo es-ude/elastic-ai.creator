@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 
@@ -5,25 +7,33 @@ from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModu
 from elasticai.creator.nn.integer.MPQ.ffn.design import FFN as FFNDesign
 from elasticai.creator.nn.integer.MPQ.linear import Linear
 from elasticai.creator.nn.integer.MPQ.relu import ReLU
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class FeedForwardNetwork(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        d_model: int,
+        ffn_dim: int,
+        num_dimensions: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ) -> None:
         super().__init__()
 
-        d_model = kwargs.get("d_model")
-        ffn_dim = kwargs.get("ffn_dim")
-        num_dimensions = kwargs.get("num_dimensions")
+        self.name = name
+        self.quant_data_dir = quant_data_dir
+        self.device = device
 
-        self.name = kwargs.get("name")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
-        self.MPQ_strategy = kwargs.get("MPQ_strategy")
+        self.enable_error_analysis = enable_error_analysis
+        self.MPQ_strategy = MPQ_strategy
 
         self.fc1 = Linear(
             name=self.name + "_fc1",
@@ -85,8 +95,8 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
@@ -111,10 +121,10 @@ class FeedForwardNetwork(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         f1_outputs = self.fc1.forward(
             inputs=inputs,
             given_inputs_QParams=given_inputs_QParams,

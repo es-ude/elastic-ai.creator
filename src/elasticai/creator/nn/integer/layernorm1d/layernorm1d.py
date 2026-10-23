@@ -20,21 +20,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
-    def __init__(self, **kwargs) -> None:
-        super().__init__(
-            kwargs.get("norm_dim"), kwargs.get("eps"), kwargs.get("elementwise_affine")
-        )
+    def __init__(
+        self,
+        *,
+        name: str,
+        norm_dim: int,
+        eps: float,
+        elementwise_affine: bool,
+        num_dimensions: int,
+        in_features: int,
+        out_features: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ) -> None:
+        super().__init__(norm_dim, eps, elementwise_affine)
 
-        self.num_dimensions = kwargs.get("num_dimensions")
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.norm_dim = kwargs.get("norm_dim")
+        self.num_dimensions = num_dimensions
+        self.in_features = in_features
+        self.out_features = out_features
+        self.norm_dim = norm_dim
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -59,8 +70,8 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
         return LayerNorm1dDesign(name=name)
 
     def _get_quantized_weights(
-        self, weight: torch.FloatTensor, weight_QParams: nn.Module
-    ) -> torch.IntTensor:
+        self, weight: torch.Tensor, weight_QParams: nn.Module
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
@@ -74,11 +85,11 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
 
     def _get_quantized_bias(
         self,
-        bias: torch.FloatTensor,
+        bias: torch.Tensor,
         bias_QParams: nn.Module,
-        given_quant_scale: torch.FloatTensor,
+        given_quant_scale: torch.Tensor,
         given_quant_bits: int,
-    ) -> torch.IntTensor:
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
 
         bias_QParams.set_scale_factor(given_quant_scale)
@@ -137,7 +148,7 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             result.view(-1)[idx] = x
         return result
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -188,10 +199,10 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_inputs_QParams: object,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

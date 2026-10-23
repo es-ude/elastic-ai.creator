@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 
@@ -13,39 +15,58 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        x_1_dim_a: int,
+        x_1_dim_b: int,
+        x_1_dim_c: int,
+        x_2_dim_a: int,
+        x_2_dim_b: int,
+        x_2_dim_c: int,
+        y_dim_a: int,
+        y_dim_b: int,
+        y_dim_c: int,
+        operation_mode: str,
+        additional_scale: float | None = None,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
         super().__init__()
 
-        self.x_1_dim_a = kwargs.get("x_1_dim_a")
-        self.x_1_dim_b = kwargs.get("x_1_dim_b")
-        self.x_1_dim_c = kwargs.get("x_1_dim_c")
-        self.x_2_dim_a = kwargs.get("x_2_dim_a")
-        self.x_2_dim_b = kwargs.get("x_2_dim_b")
-        self.x_2_dim_c = kwargs.get("x_2_dim_c")
-        self.y_dim_a = kwargs.get("y_dim_a")
-        self.y_dim_b = kwargs.get("y_dim_b")
-        self.y_dim_c = kwargs.get("y_dim_c")
+        self.x_1_dim_a = x_1_dim_a
+        self.x_1_dim_b = x_1_dim_b
+        self.x_1_dim_c = x_1_dim_c
+        self.x_2_dim_a = x_2_dim_a
+        self.x_2_dim_b = x_2_dim_b
+        self.x_2_dim_c = x_2_dim_c
+        self.y_dim_a = y_dim_a
+        self.y_dim_b = y_dim_b
+        self.y_dim_c = y_dim_c
 
         # attention score, or attention context
-        self.operation_mode = kwargs.get("operation_mode")
-        self.additional_scale = kwargs.get("additional_scale")
+        self.operation_mode = operation_mode
+        self.additional_scale = additional_scale
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs1", "inputs2", "outputs"]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -74,9 +95,9 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         return MatrixMultiDesign(
             name=name,
             is_score_mode="true" if self.operation_mode == "score" else "false",
-            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
-            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_1_data_width=self.inputs1_QParams.quant_bits,
+            x_2_data_width=self.inputs2_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             x_1_dim_a=self.x_1_dim_a,
             x_1_dim_b=self.x_1_dim_b,
             x_1_dim_c=self.x_1_dim_c,
@@ -117,9 +138,9 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs1: torch.IntTensor,
-        q_inputs2: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs1: torch.Tensor,
+        q_inputs2: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -132,13 +153,13 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
-            self.inputs1_QParams.quant_bits.item() + 1,
+            self.inputs1_QParams.quant_bits + 1,
         )
 
         q_inputs2 = self.math_ops.intsub(
             q_inputs2,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits.item() + 1,
+            self.inputs2_QParams.quant_bits + 1,
         )
 
         # integer-only matrix multiplication on CPU
@@ -146,7 +167,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
             inputs1=q_inputs1,
             inputs2=q_inputs2,
             operation_mode=self.operation_mode,
-            outputs_quant_bits=(self.outputs_QParams.quant_bits.item() + 1) * 2,
+            outputs_quant_bits=(self.outputs_QParams.quant_bits + 1) * 2,
         )
 
         tmp = simulate_bitshifting(
@@ -154,7 +175,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
         ).to("cpu")
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -169,12 +190,12 @@ class MatrixMulti(DesignCreatorModule, nn.Module, MPQSupport):
 
     def forward(
         self,
-        inputs1: torch.FloatTensor,
-        inputs2: torch.FloatTensor,
+        inputs1: torch.Tensor,
+        inputs2: torch.Tensor,
         given_inputs1_QParams: object,
         given_inputs2_QParams: object,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         assert inputs1.ndim == 4, "Input must be a 4D tensor"
         assert inputs2.ndim == 4, "Input must be a 4D tensor"
         if enable_simquant:

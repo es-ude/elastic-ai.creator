@@ -16,6 +16,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.sepconv1dbn.depthconv1d.design import (
     DepthConv1d as DepthConv1dDesign,
 )
@@ -25,22 +26,33 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class DepthConv1d(DesignCreatorModule, nn.Conv1d):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        padding: int | str,
+        seq_len: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__(
-            in_channels=kwargs.get("in_channels"),
-            out_channels=kwargs.get("out_channels"),
-            kernel_size=kwargs.get("kernel_size"),
-            padding=kwargs.get("padding"),
-            groups=kwargs.get("in_channels"),
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            padding=padding,
+            groups=in_channels,
             bias=True,
         )
-        self.seq_len = kwargs.get("seq_len")
+        self.seq_len = seq_len
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.name = name
+        self.quant_bits = quant_bits
 
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.quant_data_dir = quant_data_dir
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -80,7 +92,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             resource_option="auto",
         )
 
-    def _get_quantized_weights(self) -> torch.IntTensor:
+    def _get_quantized_weights(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -92,7 +104,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.IntTensor:
+    def _get_quantized_bias(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -129,8 +141,8 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -177,10 +189,10 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
 
@@ -11,29 +13,42 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.QParams import (
+    AsymmetricSignedQParams,
+    QParams,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class Addition(DesignCreatorModule, nn.Module, MPQSupport):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        num_features: int,
+        num_dimensions: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ) -> None:
         super().__init__()
 
-        self.num_features = kwargs.get("num_features")
-        self.num_dimensions = kwargs.get("num_dimensions")
+        self.num_features = num_features
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs1", "inputs2", "outputs"]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
+        self.quant_data_dir = quant_data_dir
+        self.device = device
 
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -61,9 +76,9 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AdditionDesign:
         return AdditionDesign(
             name=name,
-            x_1_data_width=self.inputs1_QParams.quant_bits.item(),
-            x_2_data_width=self.inputs2_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_1_data_width=self.inputs1_QParams.quant_bits,
+            x_2_data_width=self.inputs2_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             num_features=self.num_features,
             num_dimensions=self.num_dimensions,
             m_q_1=self.scale_factor_m_q_1.item(),
@@ -95,8 +110,8 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
         self.precomputed = True
 
     def int_forward(
-        self, q_inputs1: torch.IntTensor, q_inputs2: torch.IntTensor
-    ) -> torch.IntTensor:
+        self, q_inputs1: torch.Tensor, q_inputs2: torch.Tensor
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -109,12 +124,12 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs1 = self.math_ops.intsub(
             q_inputs1,
             self.inputs1_QParams.zero_point,
-            self.inputs1_QParams.quant_bits.item() + 1,
+            self.inputs1_QParams.quant_bits + 1,
         )
         q_inputs2 = self.math_ops.intsub(
             q_inputs2,
             self.inputs2_QParams.zero_point,
-            self.inputs2_QParams.quant_bits.item() + 1,
+            self.inputs2_QParams.quant_bits + 1,
         )
 
         q_inputs1 = simulate_bitshifting(
@@ -126,11 +141,11 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
         tmp = self.math_ops.intadd(
             q_inputs1,
             q_inputs2,
-            self.inputs2_QParams.quant_bits.item() + 2,
+            self.inputs2_QParams.quant_bits + 2,
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -145,12 +160,12 @@ class Addition(DesignCreatorModule, nn.Module, MPQSupport):
 
     def forward(
         self,
-        inputs1: torch.FloatTensor,
-        inputs2: torch.FloatTensor,
-        given_inputs1_QParams: torch.nn.Module = None,
-        given_inputs2_QParams: torch.nn.Module = None,
+        inputs1: torch.Tensor,
+        inputs2: torch.Tensor,
+        given_inputs1_QParams: QParams | None = None,
+        given_inputs2_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(

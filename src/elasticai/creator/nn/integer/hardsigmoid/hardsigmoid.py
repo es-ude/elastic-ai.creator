@@ -11,19 +11,26 @@ from elasticai.creator.nn.integer.quant_utils import (
     GlobalMinMaxObserver,
     SimQuant,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class HardSigmoid(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits,
@@ -49,7 +56,7 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
             work_library_name="work",
         )
 
-    def _customized_hard_sigmoid(self, inputs: torch.FloatTensor) -> torch.FloatTensor:
+    def _customized_hard_sigmoid(self, inputs: torch.Tensor) -> torch.Tensor:
         outputs = torch.where(inputs <= -3.0, torch.zeros_like(inputs), inputs)
         outputs = torch.where(inputs >= 3.0, torch.ones_like(outputs), outputs)
         outputs = torch.where(
@@ -76,7 +83,7 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
     def _div_trunc(self, x: torch.Tensor, y: int) -> torch.Tensor:
         return torch.where(x >= 0, x // y, -((-x) // y))
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
@@ -105,10 +112,10 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

@@ -15,20 +15,34 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class RNNLayer(nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        cell_type: str,
+        inputs_size: int,
+        hidden_size: int,
+        batch_size: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        use_pipeline_template: bool = False,
+        use_parallelised_template: bool = False,
+        unroll_factor: int = 1,
+    ) -> None:
         super().__init__()
 
-        self.cell_type = kwargs.get("cell_type")
-        self.inputs_size = kwargs.get("inputs_size")
-        self.hidden_size = kwargs.get("hidden_size")
-        self.batch_size = kwargs.get("batch_size")
-        self.window_size = kwargs.get("window_size")
+        self.cell_type = cell_type
+        self.inputs_size = inputs_size
+        self.hidden_size = hidden_size
+        self.batch_size = batch_size
+        self.window_size = window_size
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.lstm_use_pipeline_template = kwargs.get("use_pipeline_template", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.lstm_use_pipeline_template = use_pipeline_template
         print("in RNNLayer.py use_pipeline_template:", self.lstm_use_pipeline_template)
         if self.cell_type == "lstm":
             self.rnn_cell = LSTMCell(
@@ -39,10 +53,8 @@ class RNNLayer(nn.Module):
                 quant_bits=self.quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
-                use_parallelised_template=kwargs.get(
-                    "use_parallelised_template", False
-                ),
-                unroll_factor=kwargs.get("unroll_factor", 1),
+                use_parallelised_template=use_parallelised_template,
+                unroll_factor=unroll_factor,
                 lstm_use_pipeline_template=self.lstm_use_pipeline_template,
             )
         elif self.cell_type == "gru":
@@ -99,10 +111,10 @@ class RNNLayer(nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-        q_h_prev: torch.IntTensor,
-        q_c_prev: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+        q_h_prev: torch.Tensor,
+        q_c_prev: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -133,14 +145,14 @@ class RNNLayer(nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        h_prev: torch.FloatTensor,
-        c_prev: torch.FloatTensor,
+        inputs: torch.Tensor,
+        h_prev: torch.Tensor,
+        c_prev: torch.Tensor,
         given_inputs_QParams: torch.nn.Module,
         given_h_prev_QParams: torch.nn.Module,
         given_c_prev_QParams: torch.nn.Module,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is not None:

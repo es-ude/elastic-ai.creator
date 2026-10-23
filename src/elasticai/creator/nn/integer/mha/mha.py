@@ -17,19 +17,27 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class MultiHeadAttention(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        nhead: int,
+        d_model: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ):
         super().__init__()
 
-        self.nhead = kwargs.get("nhead")
-        d_model = kwargs.get("d_model")
-        window_size = kwargs.get("window_size")
+        self.nhead = nhead
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.enable_error_analysis = enable_error_analysis
 
         self.q_linear = Linear(
             name=self.name + "_q_linear",
@@ -118,9 +126,9 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_q: torch.IntTensor,
-        q_k: torch.IntTensor,
-        q_v: torch.IntTensor,
+        q_q: torch.Tensor,
+        q_k: torch.Tensor,
+        q_v: torch.Tensor,
     ):
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
@@ -172,12 +180,12 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        q: torch.FloatTensor,
-        k: torch.FloatTensor,
-        v: torch.FloatTensor,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
         given_inputs_QParams: object = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is not None:

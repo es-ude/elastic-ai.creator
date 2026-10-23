@@ -9,6 +9,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.relu import ReLU
 from elasticai.creator.nn.integer.sepconv1dbn import SepConv1dBN
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -17,18 +18,23 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class SepResidualBlock(nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        seq_len: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
 
-        in_channels = kwargs.get("in_channels")
-        out_channels = kwargs.get("out_channels")
-        kernel_size = kwargs.get("kernel_size")
-        seq_len = kwargs.get("seq_len")
-
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.sepconv1dbn_0 = SepConv1dBN(
             in_channels=in_channels,
@@ -123,7 +129,7 @@ class SepResidualBlock(nn.Module):
 
         self.precomputed = True
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -152,10 +158,10 @@ class SepResidualBlock(nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

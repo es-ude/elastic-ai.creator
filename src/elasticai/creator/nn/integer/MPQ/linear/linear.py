@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -12,8 +14,9 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
+    QParams,
     SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -22,24 +25,34 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
-    def __init__(self, **kwargs):
-        super().__init__(
-            kwargs.get("in_features"), kwargs.get("out_features"), kwargs.get("bias")
-        )
-        self.num_dimensions = kwargs.get("num_dimensions", None)
-        self.enable_bias = kwargs.get("bias", True)
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
+        num_dimensions: int | None = None,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
+        super().__init__(in_features, out_features, bias)
+        self.num_dimensions = num_dimensions
+        self.enable_bias = bias
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs", "weights", "outputs"]
-        if kwargs.get("bias"):
+        if bias:
             self.quantizable_elements.append("bias")
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -80,12 +93,10 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
     def create_design(self, name: str) -> LinearDesign:
         return LinearDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            w_data_width=self.weight_QParams.quant_bits.item(),
-            b_data_width=(
-                self.bias_QParams.quant_bits.item() if self.enable_bias else 0
-            ),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            w_data_width=self.weight_QParams.quant_bits,
+            b_data_width=(self.bias_QParams.quant_bits if self.enable_bias else 0),
+            y_data_width=self.outputs_QParams.quant_bits,
             in_features=self.in_features,
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,
@@ -101,7 +112,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             resource_option="auto",
         )
 
-    def _get_quantized_weights(self) -> torch.IntTensor:
+    def _get_quantized_weights(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
 
@@ -109,17 +120,17 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             q_weights = self.math_ops.intsub(
                 q_weights,
                 self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits.item() + 1,
+                self.weight_QParams.quant_bits + 1,
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.IntTensor:
+    def _get_quantized_bias(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits.item() + 1) + (
-            self.weight_QParams.quant_bits.item() + 1
+        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
+            self.weight_QParams.quant_bits + 1
         )
         self.bias_QParams.set_scale_factor(new_bias_scale_factor)
         self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
@@ -152,8 +163,8 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -164,15 +175,15 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         q_inputs = self.math_ops.intsub(
             q_inputs,
             self.inputs_QParams.zero_point,
-            self.inputs_QParams.quant_bits.item() + 1,
+            self.inputs_QParams.quant_bits + 1,
         )
 
         tmp = self.math_ops.int_mac(
             x=q_inputs,
             w=self.q_weights,
             b=self.q_bias,
-            x_quant_bits=self.inputs_QParams.quant_bits.item(),
-            w_quant_bits=self.weight_QParams.quant_bits.item(),
+            x_quant_bits=self.inputs_QParams.quant_bits,
+            w_quant_bits=self.weight_QParams.quant_bits,
         )
 
         tmp = simulate_bitshifting(
@@ -180,7 +191,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -195,10 +206,10 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(

@@ -13,23 +13,33 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class Concatenate(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        inputs_size: int,
+        hidden_size: int,
+        num_dimensions: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ) -> None:
         super().__init__()
 
-        self.inputs_size = kwargs.get("inputs_size")  # num_features of input1
-        self.hidden_size = kwargs.get("hidden_size")  # num_features of input2
-        self.num_dimensions = kwargs.get("num_dimensions")
+        self.inputs_size = inputs_size  # num_features of input1
+        self.hidden_size = hidden_size  # num_features of input2
+        self.num_dimensions = num_dimensions
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -79,9 +89,9 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs1: torch.IntTensor,  # inputs
-        q_inputs2: torch.IntTensor,  # h_prev
-    ) -> torch.IntTensor:
+        q_inputs1: torch.Tensor,  # inputs
+        q_inputs2: torch.Tensor,  # h_prev
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -117,12 +127,12 @@ class Concatenate(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs1: torch.FloatTensor,  # inputs
-        inputs2: torch.FloatTensor,  # h_prev
-        given_inputs1_QParams: torch.nn.Module = None,
-        given_inputs2_QParams: torch.nn.Module = None,
+        inputs1: torch.Tensor,  # inputs
+        inputs2: torch.Tensor,  # h_prev
+        given_inputs1_QParams: QParams | None = None,
+        given_inputs2_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs1_QParams is None:

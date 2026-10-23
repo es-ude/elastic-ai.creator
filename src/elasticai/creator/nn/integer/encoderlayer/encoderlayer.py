@@ -20,21 +20,26 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class EncoderLayer(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        d_model: int,
+        ffn_dim: int,
+        window_size: int,
+        nhead: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_fused_ffn: bool = False,
+        enable_error_analysis: bool = False,
+    ) -> None:
         super().__init__()
 
-        d_model = kwargs.get("d_model")
-        ffn_dim = kwargs.get("ffn_dim")
-        window_size = kwargs.get("window_size")
-        nhead = kwargs.get("nhead")
-
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-
-        enable_fused_ffn = kwargs.get("enable_fused_ffn", False)
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         mha_name = self.name + "_mha"
         ffn_name = self.name + "_fusedffn" if enable_fused_ffn else self.name + "_ffn"
@@ -156,8 +161,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
@@ -200,10 +205,10 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_inputs_QParams: object = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is not None:

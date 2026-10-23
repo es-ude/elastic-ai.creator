@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn.functional as F
 
@@ -9,25 +11,36 @@ from elasticai.creator.nn.integer.quant_utils import (
     MPQSupport,
     SimQuant,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.QParams import (
+    AsymmetricSignedQParams,
+    QParams,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class ReLU(DesignCreatorModule, MPQSupport):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
         super().__init__()
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs", "outputs"]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -52,8 +65,8 @@ class ReLU(DesignCreatorModule, MPQSupport):
     def create_design(self, name: str) -> ReLUDesign:
         return ReLUDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             threshold=int(self.inputs_QParams.zero_point.detach()),
             clock_option=False,
             work_library_name="work",
@@ -63,7 +76,7 @@ class ReLU(DesignCreatorModule, MPQSupport):
         self._precompute_requantizer_params()
         self.precomputed = True
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "Precompute the model before running int_forward"
 
@@ -84,10 +97,10 @@ class ReLU(DesignCreatorModule, MPQSupport):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(

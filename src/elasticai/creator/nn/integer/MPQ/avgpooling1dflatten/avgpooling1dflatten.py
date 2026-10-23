@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -14,30 +16,45 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import AsymmetricSignedQParams
+from elasticai.creator.nn.integer.quant_utils.QParams import (
+    AsymmetricSignedQParams,
+    QParams,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_features: int,
+        out_features: int,
+        in_num_dimensions: int,
+        out_num_dimensions: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
         super().__init__()
 
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.in_num_dimensions = kwargs.get("in_num_dimensions")
-        self.out_num_dimensions = kwargs.get("out_num_dimensions")
+        self.in_features = in_features
+        self.out_features = out_features
+        self.in_num_dimensions = in_num_dimensions
+        self.out_num_dimensions = out_num_dimensions
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = ["inputs", "outputs"]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -61,8 +78,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
     def create_design(self, name: str) -> AVGPooling1dFlattenDesign:
         return AVGPooling1dFlattenDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             in_features=self.in_features,
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,
@@ -90,8 +107,8 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -103,7 +120,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         q_inputs = self.math_ops.intsub(
             q_inputs,
             self.inputs_QParams.zero_point,
-            self.inputs_QParams.quant_bits.item() + 1,
+            self.inputs_QParams.quant_bits + 1,
         )
 
         # assume that (batch_size, channels, seq_len) is the shape of q_inputs
@@ -116,7 +133,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
         q_outputs = q_outputs.squeeze(2)
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -131,10 +148,10 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module, MPQSupport):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(

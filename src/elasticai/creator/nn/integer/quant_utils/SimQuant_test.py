@@ -25,7 +25,10 @@ def setUp():
     # scale_factor = torch.tensor([0.0176], dtype=torch.float32)
     # zero_point = torch.tensor([-85], dtype=torch.int32)
 
-    x_r_QParams = AsymmetricSignedQParams(quant_bits=8, observer=GlobalMinMaxObserver)
+    x_r_QParams = AsymmetricSignedQParams(
+        quant_bits=8,
+        observer=GlobalMinMaxObserver(),
+    )
     x_r_QParams.min_float = min_float
     x_r_QParams.max_float = max_float
     x_r_QParams.scale_factor = scale_factor

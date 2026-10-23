@@ -19,17 +19,23 @@ from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
 
 
 class GRUCell(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        inputs_size: int,
+        hidden_size: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
+        window_size
 
-        inputs_size = kwargs.get("inputs_size")
-        hidden_size = kwargs.get("hidden_size")
-        kwargs.get("window_size")
-
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = Path(kwargs.get("quant_data_dir"))
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = Path(quant_data_dir)
         self.logger = logging.getLogger(self.__class__.__name__)
 
         self.ihprev_concatenate = Concatenate(
@@ -86,7 +92,8 @@ class GRUCell(DesignCreatorModule, nn.Module):
         )
         self.irhprev_concatenate = Concatenate(
             name=self.name + "irhprev_concatenate",
-            num_features=inputs_size + hidden_size,
+            inputs_size=inputs_size,
+            hidden_size=hidden_size,
             num_dimensions=1,
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
@@ -186,10 +193,10 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-        q_h_prev: torch.IntTensor,
-        q_c_prev: torch.IntTensor = None,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+        q_h_prev: torch.Tensor,
+        q_c_prev: torch.Tensor = None,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -374,10 +381,10 @@ class GRUCell(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        h_prev: torch.FloatTensor,
+        inputs: torch.Tensor,
+        h_prev: torch.Tensor,
         given_inputs_QParams: torch.nn.Module,
-        c_prev: torch.FloatTensor = None,
+        c_prev: torch.Tensor = None,
         enable_simquant: bool = True,
     ) -> torch.Tensor:
         if enable_simquant:

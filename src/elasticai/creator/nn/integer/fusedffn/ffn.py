@@ -9,24 +9,31 @@ from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
 class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        d_model: int,
+        ffn_dim: int,
+        num_dimensions: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ) -> None:
         super().__init__()
 
-        d_model = kwargs.get("d_model")
-        ffn_dim = kwargs.get("ffn_dim")
-        num_dimensions = kwargs.get("num_dimensions")
-
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.fc1relu = LinearReLU(
             name=self.name + "_fc1relu",
@@ -78,8 +85,8 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
@@ -102,10 +109,10 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is not None:

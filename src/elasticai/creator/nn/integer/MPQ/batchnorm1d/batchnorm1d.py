@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from torch import nn
 
@@ -13,8 +15,9 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.MPQParams import (
+from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
+    QParams,
     SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -23,20 +26,36 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        norm_dim: int,
+        eps: float,
+        momentum: float,
+        affine: bool,
+        track_running_stats: bool,
+        num_dimensions: int,
+        in_features: int,
+        out_features: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
         super().__init__(
-            kwargs.get("norm_dim"),
-            kwargs.get("eps"),
-            kwargs.get("momentum"),
-            kwargs.get("affine"),
-            kwargs.get("track_running_stats"),
+            norm_dim,
+            eps,
+            momentum,
+            affine,
+            track_running_stats,
         )
-        self.num_dimensions = kwargs.get("num_dimensions")
-        self.in_features = kwargs.get("in_features")
-        self.out_features = kwargs.get("out_features")
-        self.norm_dim = kwargs.get("norm_dim")
+        self.num_dimensions = num_dimensions
+        self.in_features = in_features
+        self.out_features = out_features
+        self.norm_dim = norm_dim
 
-        self.name = kwargs.get("name")
+        self.name = name
         self.quantizable_elements = [
             "inputs",
             "weights",
@@ -44,12 +63,12 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             "outputs",
         ]
         self.quant_bits_per_element = None
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        self.device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.quant_data_dir = quant_data_dir
+        self.device = device
+        self.enable_error_analysis = enable_error_analysis
 
         self.math_ops = MathOperations()
-        self._init_mpq_attributes(**kwargs)  # MPQ
+        self._init_mpq_attributes(MPQ_strategy=MPQ_strategy)
         self.precomputed = False
 
     def set_quant_bits_from_config(self, quant_configs):
@@ -90,10 +109,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
     def create_design(self, name: str) -> BatchNorm1dDesign:
         return BatchNorm1dDesign(
             name=name,
-            x_data_width=self.inputs_QParams.quant_bits.item(),
-            w_data_width=self.weight_QParams.quant_bits.item(),
-            b_data_width=self.bias_QParams.quant_bits.item(),
-            y_data_width=self.outputs_QParams.quant_bits.item(),
+            x_data_width=self.inputs_QParams.quant_bits,
+            w_data_width=self.weight_QParams.quant_bits,
+            b_data_width=self.bias_QParams.quant_bits,
+            y_data_width=self.outputs_QParams.quant_bits,
             num_dimensions=self.num_dimensions,
             in_features=self.in_features,
             out_features=self.out_features,
@@ -110,8 +129,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         )
 
     def _get_quantized_weights(
-        self, weight: torch.FloatTensor, weight_QParams: nn.Module
-    ) -> torch.IntTensor:
+        self, weight: torch.Tensor, weight_QParams: QParams
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = weight_QParams.quantize(weight).to("cpu")
 
@@ -119,17 +138,17 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             q_weights = self.math_ops.intsub(
                 q_weights,
                 weight_QParams.zero_point,
-                weight_QParams.quant_bits.item() + 1,
+                weight_QParams.quant_bits + 1,
             )
         return q_weights
 
     def _get_quantized_bias(
         self,
-        bias: torch.FloatTensor,
-        bias_QParams: nn.Module,
-        given_quant_scale: torch.FloatTensor,
+        bias: torch.Tensor,
+        bias_QParams: QParams,
+        given_quant_scale: torch.Tensor,
         given_quant_bits: int,
-    ) -> torch.IntTensor:
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
 
         bias_QParams.set_scale_factor(given_quant_scale)
@@ -143,8 +162,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        self.tmp_quant_bits = (self.weight_QParams.quant_bits.item() + 1) + (
-            self.inputs_QParams.quant_bits.item() + 1
+        self.tmp_quant_bits = (self.weight_QParams.quant_bits + 1) + (
+            self.inputs_QParams.quant_bits + 1
         )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
@@ -178,8 +197,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -190,7 +209,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         q_inputs = self.math_ops.intsub(
             q_inputs,
             self.inputs_QParams.zero_point,
-            self.inputs_QParams.quant_bits.item() + 1,
+            self.inputs_QParams.quant_bits + 1,
         )
         # integer-only
         tmp = self.math_ops.int_dotproduct(
@@ -205,7 +224,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits.item()
+            tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
         )
 
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
@@ -219,10 +238,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_inputs_QParams: object,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 self._handle_input_QParams(

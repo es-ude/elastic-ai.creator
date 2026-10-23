@@ -600,3 +600,54 @@ def test_int_forward_q_outputs_is_correctly(
     expected_q_output = q_outputs
     actual_q_output = linear_layer.int_forward(q_inputs)
     assert torch.allclose(actual_q_output, expected_q_output, atol=1)
+
+
+def test_num_dimensions_defaults_to_none() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    assert layer.num_dimensions is None
+
+
+def test_forward_with_int_inputs_raises() -> None:
+    layer = Linear(name="linear", in_features=3, out_features=2, quant_bits=8)
+
+    with pytest.raises(TypeError, match="inputs"):
+        layer(torch.ones(4, 3, dtype=torch.int32))
+
+
+def test_int_forward_with_float_inputs_raises(linear_layer, inputs) -> None:
+    linear_layer.train()
+    linear_layer(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    with pytest.raises(TypeError, match="q_inputs"):
+        linear_layer.int_forward(inputs)
+
+
+def test_create_design_with_other_inputs_quant_bits_raises(linear_layer, inputs):
+    given_inputs_QParams = AsymmetricSignedQParams(
+        quant_bits=6, observer=GlobalMinMaxObserver()
+    )
+    linear_layer.train()
+    linear_layer.forward(inputs, given_inputs_QParams)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    with pytest.raises(ValueError, match="inputs with 8 bits, got 6"):
+        linear_layer.create_design("linear")
+
+
+def test_create_design_uses_work_library_and_resource_option(
+    linear_layer, inputs
+) -> None:
+    linear_layer.work_library_name = "lib"
+    linear_layer.resource_option = "block"
+    linear_layer.forward(inputs)
+    linear_layer.eval()
+    linear_layer.precompute()
+
+    design = linear_layer.create_design("linear")
+
+    assert design._work_library_name == "lib"
+    assert design._resource_option == "block"

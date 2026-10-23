@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     GlobalMinMaxObserver,
     SimQuant,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.softmax.design import SoftmaxLUT as SoftmaxLUTDesign
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -15,20 +16,32 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class SoftmaxLUT(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        dim_a: int,
+        dim_b: int,
+        dim_c: int,
+        nhead: int,
+        window_size: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ) -> None:
         super().__init__()
 
-        self.dim_a = kwargs.get("dim_a")
-        self.dim_b = kwargs.get("dim_b")
-        self.dim_c = kwargs.get("dim_c")
-        self.nhead = kwargs.get("nhead")
-        self.window_size = kwargs.get("window_size")
+        self.dim_a = dim_a
+        self.dim_b = dim_b
+        self.dim_c = dim_c
+        self.nhead = nhead
+        self.window_size = window_size
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
         self.inputs1_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
@@ -136,7 +149,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
 
         self.precomputed = True
 
-    def int_forward(self, q_inputs: torch.IntTensor) -> torch.IntTensor:
+    def int_forward(self, q_inputs: torch.Tensor) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -201,10 +214,10 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:

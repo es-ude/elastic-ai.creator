@@ -1,3 +1,4 @@
+import warnings
 from itertools import chain
 
 import numpy as np
@@ -17,6 +18,25 @@ from elasticai.creator.vhdl.shared_designs.rom import Rom
 
 
 class Linear(Design):
+    """VHDL design of an integer-only linear layer.
+
+    The hardware computes `y = ((x - z_x) @ (w - z_w).T + b) * M + z_y`, where
+    `M` is approximated by `m_q * 2**-m_q_shift`. Weights and bias are stored
+    in ROMs, and the layer uses the buffered interface (`x`, `x_address`, `y`,
+    `y_address`, `enable`, `done`, `clock`).
+
+    Depending on `num_dimensions`, `in_features` and the template options, one
+    of these templates is used:
+
+    - `linear.tpl.vhd`: 1D inputs (`num_dimensions is None`).
+    - `linear_2d.tpl.vhd`: 2D inputs.
+    - `linear_2d_feature1.tpl.vhd`: 2D inputs with `in_features == 1`.
+    - `linear_2d_parallel.tpl.vhd`: 2D inputs, `unroll_factor` output
+      features computed in parallel.
+    - `linear_2d_parallel_rdy.tpl.vhd`: like the parallel template, but
+      pipelined.
+    """
+
     def __init__(
         self,
         name: str,
@@ -33,11 +53,41 @@ class Linear(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
-        num_dimensions: int = None,
+        num_dimensions: int | None = None,
         use_parallelised_template: bool = False,
         unroll_factor: int = 1,
         use_pipeline_template: bool = False,
     ) -> None:
+        """Create the design.
+
+        Args:
+            name: Name of the VHDL entity.
+            data_width: Bit width of the inputs, outputs and weights.
+            in_features: Number of input features.
+            out_features: Number of output features.
+            weights: Quantized weights of shape `(out_features, in_features)`,
+                with the zero point `z_w` already subtracted.
+            bias: Quantized bias of length `out_features`, with the zero point
+                `z_b` already subtracted. Pass zeros for a layer without bias.
+            m_q: Integer multiplier of the requantization scale `M`.
+            m_q_shift: Right shift of the requantization scale `M`.
+            z_w: Zero point of the weights.
+            z_b: Zero point of the bias.
+            z_x: Zero point of the inputs.
+            z_y: Zero point of the outputs.
+            work_library_name: Name of the VHDL library the design is
+                compiled into.
+            resource_option: Resource type used for the ROMs, e.g.
+                `"distributed"`.
+            num_dimensions: Number of input vectors for 2D inputs of shape
+                `(num_dimensions, in_features)`. `None` for 1D inputs.
+            use_parallelised_template: Compute `unroll_factor` output features
+                in parallel. Only supported for 2D inputs.
+            unroll_factor: Number of output features computed in parallel.
+                Capped at `out_features`, with a warning.
+            use_pipeline_template: Use the pipelined variant of the
+                parallelised template and its testbench.
+        """
         super().__init__(name=name)
 
         self._data_width = data_width
@@ -45,10 +95,13 @@ class Linear(Design):
         self._out_features = out_features
         self._num_dimensions = num_dimensions
         self._use_parallelised_template = use_parallelised_template
-        if out_features < unroll_factor:
-            self._unroll_factor = out_features
-        else:
-            self._unroll_factor = unroll_factor
+        if unroll_factor > out_features:
+            warnings.warn(
+                f"unroll_factor {unroll_factor} is larger than out_features "
+                f"{out_features} and is capped at {out_features}",
+                stacklevel=2,
+            )
+        self._unroll_factor = min(unroll_factor, out_features)
 
         self._m_q = m_q
         self._m_q_shift = m_q_shift
@@ -63,6 +116,10 @@ class Linear(Design):
 
         self._weights = [[w + self._z_w for w in row] for row in weights]
         self._bias = [b + self._z_b for b in bias]
+        # The templates multiply DATA_WIDTH + 1 bit inputs with DATA_WIDTH + 1
+        # bit weights and add the bias to the product, so the bias has twice
+        # that width.
+        self._bias_data_width = 2 * (data_width + 1)
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
@@ -76,10 +133,11 @@ class Linear(Design):
 
         self._x_addr_width = calculate_address_width(self._x_count)
         self._y_addr_width = calculate_address_width(self._y_count)
-        self.lstm_use_pipeline_template = use_pipeline_template
+        self._use_pipeline_template = use_pipeline_template
 
     @property
     def port(self) -> Port:
+        """Buffered port with `x_count` inputs and `y_count` outputs."""
         return create_port(
             x_width=self._data_width,
             y_width=self._data_width,
@@ -88,51 +146,36 @@ class Linear(Design):
         )
 
     def save_to(self, destination: Path) -> None:
+        """Write the layer, its weight and bias ROMs, a RAM and a testbench.
+
+        Args:
+            destination: Directory the VHDL files are written to.
+        """
         rom_name = dict(weights=f"{self.name}_w_rom", bias=f"{self.name}_b_rom")
 
-        if not self._use_parallelised_template:
-            template_parameters = dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                m_q_data_width=str(self._m_q_data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                z_x=str(self._z_x),
-                z_w=str(self._z_w),
-                z_b=str(self._z_b),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-            )
-        else:
-            template_parameters = dict(
-                name=self.name,
-                x_addr_width=str(self._x_addr_width),
-                y_addr_width=str(self._y_addr_width),
-                data_width=str(self._data_width),
-                m_q_data_width=str(self._m_q_data_width),
-                in_features=str(self._in_features),
-                out_features=str(self._out_features),
-                z_x=str(self._z_x),
-                z_w=str(self._z_w),
-                z_b=str(self._z_b),
-                z_y=str(self._z_y),
-                m_q=str(self._m_q),
-                m_q_shift=str(self._m_q_shift),
-                weights_rom_name=rom_name["weights"],
-                bias_rom_name=rom_name["bias"],
-                work_library_name=self._work_library_name,
-                resource_option=self._resource_option,
-                unroll_factor=str(self._unroll_factor),
-            )
+        template_parameters: dict[str, str | list[str]] = dict(
+            name=self.name,
+            x_addr_width=str(self._x_addr_width),
+            y_addr_width=str(self._y_addr_width),
+            data_width=str(self._data_width),
+            m_q_data_width=str(self._m_q_data_width),
+            in_features=str(self._in_features),
+            out_features=str(self._out_features),
+            z_x=str(self._z_x),
+            z_w=str(self._z_w),
+            z_b=str(self._z_b),
+            z_y=str(self._z_y),
+            m_q=str(self._m_q),
+            m_q_shift=str(self._m_q_shift),
+            weights_rom_name=rom_name["weights"],
+            bias_rom_name=rom_name["bias"],
+            work_library_name=self._work_library_name,
+            resource_option=self._resource_option,
+        )
+        if self._use_parallelised_template:
+            template_parameters["unroll_factor"] = str(self._unroll_factor)
 
-        test_template_parameters = dict(
+        test_template_parameters: dict[str, str | list[str]] = dict(
             name=self.name,
             x_addr_width=str(self._x_addr_width),
             y_addr_width=str(self._y_addr_width),
@@ -150,7 +193,7 @@ class Linear(Design):
                 if not self._use_parallelised_template:
                     file_name = "linear_2d.tpl.vhd"
                 else:
-                    if self.lstm_use_pipeline_template:
+                    if self._use_pipeline_template:
                         file_name = "linear_2d_parallel_rdy.tpl.vhd"
                     else:
                         file_name = "linear_2d_parallel.tpl.vhd"
@@ -162,7 +205,7 @@ class Linear(Design):
                         "Parallelised template for input with 1 feature is not supported"
                     )
             test_file_name = "linear_2d_tb.tpl.vhd"
-            if self.lstm_use_pipeline_template:
+            if self._use_pipeline_template:
                 test_file_name = (  # override the test file name for pipeline template
                     "linear_2d_parallel_rdy_tb.tpl.vhd"
                 )
@@ -187,7 +230,7 @@ class Linear(Design):
 
             rom_bias = Rom(
                 name=rom_name["bias"],
-                data_width=(self._data_width + 1) * 2,
+                data_width=self._bias_data_width,
                 values_as_integers=self._bias,
             )
             rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
@@ -203,7 +246,7 @@ class Linear(Design):
 
             rom_bias = MultiValueRom(
                 name=rom_name["bias"],
-                data_width=(self._data_width + 1) * 2,
+                data_width=self._bias_data_width,
                 values_as_integers=self._bias,
                 number_per_row=1,  # for bias, we only have one value per row
                 unroll_factor=self._unroll_factor,
@@ -224,4 +267,5 @@ class Linear(Design):
 
 
 def _flatten_params(params: list[list[int]]) -> list[int]:
+    """Flatten a weight matrix row by row."""
     return list(chain(*params))

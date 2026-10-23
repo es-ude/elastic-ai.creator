@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import numpy as np
 import torch
 from torch import nn
 
@@ -20,19 +19,29 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        window_size: int,
+        d_model: int,
+        nhead: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+        enable_error_analysis: bool = False,
+    ) -> None:
         super().__init__()
 
-        window_size = kwargs.get("window_size")
-        d_model = kwargs.get("d_model")
-        nhead = kwargs.get("nhead")
+        self.name = name
+        self.quant_bits = quant_bits
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
+        self.quant_data_dir = quant_data_dir
+        self.enable_error_analysis = enable_error_analysis
 
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
-        self.enable_error_analysis = kwargs.get("enable_error_analysis", False)
+        # BUG: The scores are not scaled by 1 / sqrt(d_model). The scale was passed
+        # as `addtion_scale`, which MatrixMulti ignored, so it is left out here and
+        # the fix can follow separately.
 
         self.matrix_multi_score = MatrixMulti(
             name=self.name + "_matmul_score",
@@ -48,7 +57,6 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             operation_mode="score",
-            addtion_scale=1 / np.sqrt(d_model),
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
@@ -80,7 +88,6 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             quant_bits=self.quant_bits,
             quant_data_dir=self.quant_data_dir,
             operation_mode="att",
-            addtion_scale=None,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
@@ -122,10 +129,10 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_q: torch.IntTensor,
-        q_k: torch.IntTensor,
-        q_v: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_q: torch.Tensor,
+        q_k: torch.Tensor,
+        q_v: torch.Tensor,
+    ) -> torch.Tensor:
         assert self.precomputed, "Precompute the model before running int_forward"
         assert not self.training, "int_forward() can only be used in inference mode"
 
@@ -162,14 +169,14 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        q: torch.FloatTensor,
-        k: torch.FloatTensor,
-        v: torch.FloatTensor,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
         given_inputs_q_QParams: object = None,
         given_inputs_k_QParams: object = None,
         given_inputs_v_QParams: object = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_q_QParams is not None:

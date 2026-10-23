@@ -1,11 +1,41 @@
+from typing import Literal
+
 import torch
 
-from elasticai.creator.nn.integer.quant_utils import scaling_M, simulate_bitshifting
+from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
+
+# NOTE: Import the functions from their modules, not from the package. This
+#   module is imported while `quant_utils/__init__.py` is still running, so
+#   `from elasticai.creator.nn.integer.quant_utils import scaling_M` would bind
+#   the submodule `scaling_M.py` instead of the function.
+from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
+from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
+    simulate_bitshifting,
+)
 
 
 class MPQSupport:
-    def _init_mpq_attributes(self, **kwargs):
-        self.MPQ_strategy = kwargs.get("MPQ_strategy")  # ["inheritance", "requantizer"]
+    """Mixin that adds mixed-precision quantization (MPQ) support to a layer.
+
+    With the `"inheritance"` strategy, a layer takes over the input `QParams`
+    of the previous layer. With the `"requantizer"` strategy, it keeps its own
+    input `QParams` and requantizes incoming integer values from the previous
+    layer's parameters to its own.
+
+    The layer must provide `name`, `quantizable_elements`, `math_ops` and a
+    `<element>_QParams` attribute for each element.
+    """
+
+    name: str
+    quantizable_elements: list
+    math_ops: MathOperations
+
+    def _init_mpq_attributes(
+        self,
+        MPQ_strategy: Literal["inheritance", "requantizer"] | None = None,
+    ):
+        self.MPQ_strategy = MPQ_strategy
         self.MPQ_elements = [
             element
             for element in self.quantizable_elements
@@ -14,9 +44,32 @@ class MPQSupport:
         for element in self.MPQ_elements:
             setattr(self, f"prev_{element}_QParams", None)
 
+    def _check_quant_bits_configured(
+        self, quant_bits_per_element: dict[str, int | None]
+    ) -> None:
+        """Raise an error if the config has no bit width for an element.
+
+        The bias is skipped, because its bit width is derived from the inputs
+        and weights.
+
+        Args:
+            quant_bits_per_element: Bit width per element as read from the
+                config, `None` where the config has no entry.
+
+        Raises:
+            ValueError: If an element other than `"bias"` has no bit width.
+        """
+        missing = [
+            f"{self.name}.{element}"
+            for element, quant_bits in quant_bits_per_element.items()
+            if quant_bits is None and element != "bias"
+        ]
+        if missing:
+            raise ValueError(f"Missing quant_bits in config for: {', '.join(missing)}")
+
     def _handle_input_QParams(
         self,
-        inputs: torch.FloatTensor,
+        inputs: torch.Tensor,
         given_QParams: object,
         QParams_attr: str,
         prev_QParams_attr: str,
@@ -36,12 +89,12 @@ class MPQSupport:
 
     def _requantize_inputs(
         self,
-        prev_q_inputs: torch.IntTensor,
-        prev_QParams: object,
-        curr_QParams: object,
-        m_q_1_shift: int,
-        m_q_1: int,
-    ) -> torch.IntTensor:
+        prev_q_inputs: torch.Tensor,
+        prev_QParams: QParams,
+        curr_QParams: QParams,
+        m_q_1_shift: torch.Tensor,
+        m_q_1: torch.Tensor,
+    ) -> torch.Tensor:
         # s_curr (q_curr - z_curr) = s_prev  (q_prev - z_prev)
         curr_q_inputs = self.math_ops.intsub(
             prev_q_inputs,
@@ -52,8 +105,8 @@ class MPQSupport:
         # (q_curr - z_curr) = s_prev/s_curr (q_prev - z_prev)
         curr_q_inputs = simulate_bitshifting(
             curr_q_inputs,
-            m_q_1_shift,
-            m_q_1,
+            m_q_1_shift.to(curr_q_inputs.device),
+            m_q_1.to(curr_q_inputs.device),
         )
 
         # q_curr = s_prev/s_curr (q_prev - z_prev) + z_curr

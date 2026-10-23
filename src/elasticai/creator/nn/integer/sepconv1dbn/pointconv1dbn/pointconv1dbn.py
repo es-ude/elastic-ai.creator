@@ -12,6 +12,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.sepconv1dbn.pointconv1dbn.design import (
     PointConv1dBN as PointConv1dBNDesign,
 )
@@ -21,17 +22,26 @@ from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
 
 
 class PointConv1dBN(DesignCreatorModule, nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        *,
+        name: str,
+        in_channels: int,
+        out_channels: int,
+        seq_len: int,
+        quant_bits: int,
+        quant_data_dir: str | None = None,
+        device: torch.device | str = torch.device("cpu"),
+    ):
         super().__init__()
 
-        self.in_channels = kwargs.get("in_channels")
-        self.out_channels = kwargs.get("out_channels")
-        self.seq_len = kwargs.get("seq_len")
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.seq_len = seq_len
 
-        self.name = kwargs.get("name")
-        self.quant_bits = kwargs.get("quant_bits")
-        self.quant_data_dir = kwargs.get("quant_data_dir", None)
-        device = kwargs.get("device")
+        self.name = name
+        self.quant_bits = quant_bits
+        self.quant_data_dir = quant_data_dir
 
         self.conv1d = nn.Conv1d(
             in_channels=self.in_channels,
@@ -77,7 +87,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             resource_option="auto",
         )
 
-    def _get_quantized_weights(self, weight) -> torch.IntTensor:
+    def _get_quantized_weights(self, weight) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         q_weights = self.weight_QParams.quantize(weight).to("cpu")
 
@@ -89,7 +99,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             )
         return q_weights
 
-    def _get_quantized_bias(self, bias) -> torch.IntTensor:
+    def _get_quantized_bias(self, bias) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
@@ -133,8 +143,8 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
     def int_forward(
         self,
-        q_inputs: torch.IntTensor,
-    ) -> torch.IntTensor:
+        q_inputs: torch.Tensor,
+    ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         assert self.precomputed, "precompute should be called before int_forward"
 
@@ -171,10 +181,10 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
     def forward(
         self,
-        inputs: torch.FloatTensor,
-        given_inputs_QParams: torch.nn.Module = None,
+        inputs: torch.Tensor,
+        given_inputs_QParams: QParams | None = None,
         enable_simquant: bool = True,
-    ) -> torch.FloatTensor:
+    ) -> torch.Tensor:
         if enable_simquant:
             if self.training:
                 if given_inputs_QParams is None:
