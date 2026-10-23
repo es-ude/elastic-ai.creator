@@ -79,7 +79,7 @@ begin
                     output_word_address <= std_logic_vector(to_unsigned(output_idx, OUT_WORD_ADDR_WIDTH));
                     output_word_data <= out_word;
 
-                    if output_idx = DATA_OUT_DEPTH - 1 then
+                    if output_idx >= DATA_OUT_DEPTH - 1 then
                         done <= '1';
                         active <= '0';
                     else
