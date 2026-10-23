@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator, Mapping
-from typing import Any, Self, cast, overload
+from typing import Any, Self, cast, overload, override
 
 type AttributeBaseData = float | int | str | bool
 
@@ -12,6 +12,7 @@ class AttributeMapping(Mapping[str, Attribute]):
     def __init__(self, **kwargs: Attribute) -> None:
         self._mapping = dict(kwargs)
 
+    @override
     def __getitem__(self, key: str) -> Any:
         # There is no feasible way to type this properly.
         # As values are highly dynamic. TypedDict would not
@@ -23,17 +24,21 @@ class AttributeMapping(Mapping[str, Attribute]):
         # Users would have to cast the result almost everytime.
         return self._mapping[key]
 
+    @override
     def __iter__(self) -> Iterator[str]:
         return iter(self._mapping)
 
+    @override
     def __len__(self) -> int:
         return len(self._mapping)
 
+    @override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, AttributeMapping):
             return self._mapping == other._mapping
         return False
 
+    @override
     def __repr__(self) -> str:
         args = (f"{k}={repr(v)}" for k, v in self._mapping.items())
         return f"AttributeMapping({', '.join(args)})"
