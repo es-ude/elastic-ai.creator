@@ -5,10 +5,8 @@ from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObser
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     AsymmetricUnsignedQParams,
-    QParams,
     QuantScheme,
     SymmetricSignedQParams,
-    SymmetricUnsignedQParams,
 )
 
 
@@ -74,11 +72,6 @@ def test_SymmetricSignedQParams():
         [-2.0000, 0.5039, 0.5039, 1.0079, 2.0000], dtype=torch.float32
     )
     assert torch.allclose(actual_dq_x, expected_dq_x, atol=1e-4)
-
-
-def test_SymmetricUnsignedQParams_is_not_implemented():
-    with pytest.raises(NotImplementedError):
-        SymmetricUnsignedQParams(quant_bits=8, observer=GlobalMinMaxObserver())
 
 
 def test_set_scale_factor():
@@ -181,11 +174,6 @@ def test_subclass_uses_scheme():
     assert qparams.scheme is QuantScheme.SYMMETRIC_SIGNED
     assert qparams.is_symmetric
     assert qparams.is_signed
-
-
-def test_QParams_with_symmetric_unsigned_scheme_is_not_implemented():
-    with pytest.raises(NotImplementedError):
-        QParams(8, GlobalMinMaxObserver(), QuantScheme.SYMMETRIC_UNSIGNED)
 
 
 def test_state_dict_restores_quant_bits():

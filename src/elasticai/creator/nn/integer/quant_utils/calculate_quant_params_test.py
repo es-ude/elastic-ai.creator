@@ -169,3 +169,54 @@ def test_calculate_symmetric_quant_params_unsigned(symmetric_unsigned_setup, eps
     assert torch.equal(actual_zero_point, expected_zero_point)
     assert torch.equal(actual_min_float, expected_min_float)
     assert torch.equal(actual_max_float, expected_max_float)
+
+
+def _symmetric_unsigned_params(min_float_value, max_float_value, eps):
+    min_quant = torch.tensor([0], dtype=torch.int32)
+    max_quant = torch.tensor([254], dtype=torch.int32)
+    min_float = torch.tensor([min_float_value], dtype=torch.float32)
+    max_float = torch.tensor([max_float_value], dtype=torch.float32)
+    scale_factor, zero_point, _, _ = calculate_symmetric_quant_params(
+        min_quant, max_quant, min_float, max_float, eps
+    )
+    return scale_factor, zero_point, min_quant, max_quant
+
+
+def _roundtrip(x, scale_factor, zero_point, min_quant, max_quant):
+    x_q = (
+        (x / scale_factor + zero_point)
+        .round()
+        .clamp(min_quant.item(), max_quant.item())
+    )
+    return (x_q - zero_point) * scale_factor
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="BUG: symmetric unsigned scheme, zero point 0 with range [0, 254] "
+    "quantizes negative values to 0 (see QParams.py)",
+)
+def test_symmetric_unsigned_params_represent_negative_values(eps):
+    scale_factor, zero_point, min_quant, max_quant = _symmetric_unsigned_params(
+        -2.0, 3.0, eps
+    )
+    x = torch.tensor([-2.0, 3.0])
+
+    x_dq = _roundtrip(x, scale_factor, zero_point, min_quant, max_quant)
+
+    assert torch.allclose(x_dq, x, atol=scale_factor.item())
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="BUG: symmetric unsigned scheme, scale = 2m / 254 wastes half of the "
+    "codes on negative values (see QParams.py)",
+)
+def test_symmetric_unsigned_params_use_full_range_for_non_negative_data(eps):
+    scale_factor, zero_point, min_quant, max_quant = _symmetric_unsigned_params(
+        0.0, 3.0, eps
+    )
+
+    x_q = (torch.tensor([3.0]) / scale_factor + zero_point).round()
+
+    assert x_q.item() == max_quant.item()
