@@ -2,9 +2,6 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
-    calculate_asymmetric_quant_params,
-)
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.SimQuant import SimQuant
@@ -17,31 +14,19 @@ def relu_layer() -> ReLU:
 
 
 @pytest.fixture
-def eps():
-    return torch.tensor(
-        (torch.finfo(torch.float32).eps),
-        dtype=torch.float32,
-        requires_grad=False,
-    )
-
-
-@pytest.fixture
 def inputs() -> torch.Tensor:
     return torch.tensor([[1.0, -1.0, 0.0], [0.5, -0.5, 2.0]], dtype=torch.float32)
 
 
 @pytest.fixture
-def inputs_quant_params(inputs, eps):
-    inputs_scale_factor, inputs_zero_point, inputs_min_float, inputs_max_float = (
-        calculate_asymmetric_quant_params(
-            min_float=inputs.min(),
-            max_float=inputs.max(),
-            min_quant=torch.tensor([-128], dtype=torch.int32),
-            max_quant=torch.tensor([127], dtype=torch.int32),
-            eps=eps,
-        )
+def inputs_quant_params():
+    # range [-1.0, 2.0] mapped onto [-128, 127]
+    return (
+        torch.tensor([0.0117647061124444], dtype=torch.float32),
+        torch.tensor([-43], dtype=torch.int32),
+        torch.tensor(-1.0, dtype=torch.float32),
+        torch.tensor(2.0, dtype=torch.float32),
     )
-    return (inputs_scale_factor, inputs_zero_point, inputs_min_float, inputs_max_float)
 
 
 @pytest.fixture
