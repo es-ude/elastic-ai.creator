@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Protocol
 
@@ -6,10 +7,6 @@ import torch.nn as nn
 
 from elasticai.creator.nn.integer._dtypes import FLOAT_DTYPES, INT_DTYPES, check_dtype
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
-    calculate_asymmetric_quant_params,
-    calculate_symmetric_quant_params,
-)
 from elasticai.creator.nn.integer.quant_utils.Observers import BaseObserver
 
 
@@ -37,7 +34,7 @@ class QuantScheme(Enum):
         return self in (QuantScheme.ASYMMETRIC_SIGNED, QuantScheme.SYMMETRIC_SIGNED)
 
 
-class QParams(nn.Module):
+class QParams(nn.Module, ABC):
     """Quantization parameters for one tensor: scale factor, zero point, range.
 
     The float range is tracked by `observer`. The integer range follows from
@@ -136,6 +133,32 @@ class QParams(nn.Module):
             )  # 254 or 255 for 8 bits
             self.max_quant.copy_(torch.tensor(max_value))
 
+    @abstractmethod
+    def _calculate_quant_params(
+        self,
+        min_quant: torch.Tensor,
+        max_quant: torch.Tensor,
+        min_float: torch.Tensor,
+        max_float: torch.Tensor,
+        eps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Calculate scale factor and zero point for the quantization scheme.
+
+        Args:
+            min_quant: Smallest representable integer value.
+            max_quant: Largest representable integer value.
+            min_float: Smallest observed float value.
+            max_float: Largest observed float value.
+            eps: Lower bound for the scale factor, to avoid division by zero.
+
+        Returns:
+            A tuple `(scale_factor, zero_point, min_float, max_float)`. The scale
+            factor has dtype `torch.float32`, the zero point `torch.int32` and is
+            clamped to `[min_quant, max_quant]`. The float range is returned
+            unchanged.
+        """
+        ...
+
     def update_quant_params(self, x: torch.Tensor) -> None:
         """Observe `x` and recalculate scale factor, zero point and float range.
 
@@ -148,12 +171,7 @@ class QParams(nn.Module):
         """
         check_dtype("x", x, *FLOAT_DTYPES)
         self.observer(x)
-        calculate_quant_params_fn = (
-            calculate_symmetric_quant_params
-            if self.is_symmetric
-            else calculate_asymmetric_quant_params
-        )
-        scale_factor, zero_point, min_float, max_float = calculate_quant_params_fn(
+        scale_factor, zero_point, min_float, max_float = self._calculate_quant_params(
             min_quant=self.min_quant,
             max_quant=self.max_quant,
             min_float=self.observer.min_float,
@@ -305,12 +323,50 @@ class AsymmetricSignedQParams(QParams):
     def __init__(self, quant_bits: int, observer: BaseObserver):
         super().__init__(quant_bits, observer, QuantScheme.ASYMMETRIC_SIGNED)
 
+    def _calculate_quant_params(
+        self,
+        min_quant: torch.Tensor,
+        max_quant: torch.Tensor,
+        min_float: torch.Tensor,
+        max_float: torch.Tensor,
+        eps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        scale_factor = (max_float - min_float) / (max_quant.float() - min_quant.float())
+        scale_factor = torch.max(scale_factor, eps)
+        scale_factor = scale_factor.clone().detach().to(torch.float32)
+
+        zero_point = max_quant - (max_float / scale_factor)
+        zero_point = zero_point.round_().clamp(min_quant, max_quant)
+        zero_point = zero_point.clone().detach().to(torch.int32)
+
+        return scale_factor, zero_point, min_float, max_float
+
 
 class SymmetricSignedQParams(QParams):
     """Signed quantization parameters with zero point 0."""
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
         super().__init__(quant_bits, observer, QuantScheme.SYMMETRIC_SIGNED)
+
+    def _calculate_quant_params(
+        self,
+        min_quant: torch.Tensor,
+        max_quant: torch.Tensor,
+        min_float: torch.Tensor,
+        max_float: torch.Tensor,
+        eps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        max_extent = torch.max(torch.abs(min_float), torch.abs(max_float))
+        max_float = max_extent
+        min_float = -max_extent
+
+        scale_factor = (max_float - min_float) / (max_quant.float() - min_quant.float())
+        scale_factor = torch.max(scale_factor, eps)
+
+        zero_point = torch.zeros(scale_factor.size())
+        zero_point = zero_point.clone().detach().to(torch.int32)
+
+        return scale_factor, zero_point, min_float, max_float
 
 
 class AsymmetricUnsignedQParams(QParams):
@@ -319,12 +375,54 @@ class AsymmetricUnsignedQParams(QParams):
     def __init__(self, quant_bits: int, observer: BaseObserver):
         super().__init__(quant_bits, observer, QuantScheme.ASYMMETRIC_UNSIGNED)
 
+    def _calculate_quant_params(
+        self,
+        min_quant: torch.Tensor,
+        max_quant: torch.Tensor,
+        min_float: torch.Tensor,
+        max_float: torch.Tensor,
+        eps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        scale_factor = (max_float - min_float) / (max_quant.float() - min_quant.float())
+        scale_factor = torch.max(scale_factor, eps)
+        scale_factor = scale_factor.clone().detach().to(torch.float32)
+
+        zero_point = max_quant - (max_float / scale_factor)
+        zero_point = zero_point.round_().clamp(min_quant, max_quant)
+        zero_point = zero_point.clone().detach().to(torch.int32)
+
+        return scale_factor, zero_point, min_float, max_float
+
 
 class SymmetricUnsignedQParams(QParams):
-    """Unsigned quantization parameters with zero point 0."""
+    """Unsigned quantization parameters with zero point 0.
+
+    NOTE: This scheme is only suitable for non-negative float values,
+          as negative values are quantized to 0!
+    """
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
         super().__init__(quant_bits, observer, QuantScheme.SYMMETRIC_UNSIGNED)
+
+    def _calculate_quant_params(
+        self,
+        min_quant: torch.Tensor,
+        max_quant: torch.Tensor,
+        min_float: torch.Tensor,
+        max_float: torch.Tensor,
+        eps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        min_float = torch.zeros(
+            min_float.size(), dtype=torch.float32, device=min_float.device
+        )
+
+        scale_factor = (max_float) / (max_quant.float() - min_quant.float())
+        scale_factor = torch.max(scale_factor, eps)
+
+        zero_point = torch.zeros(scale_factor.size())
+        zero_point = zero_point.clone().detach().to(torch.int32)
+
+        return scale_factor, zero_point, min_float, max_float
 
 
 class QParamsFactory(Protocol):
