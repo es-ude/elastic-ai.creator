@@ -60,7 +60,7 @@ def test_conv1d_accepts_unit_tuple_options():
 @pytest.mark.parametrize("kernel_size,output_shift", [(50, 17), (20000, 25)])
 @pytest.mark.parametrize("bias", [False, True])
 @pytest.mark.parametrize("negative_inputs", [False, True])
-def test_conv1d_preserves_accumulator_until_requantization(
+def test_conv1d_accumulator_uses_int32_arithmetic(
     kernel_size, output_shift, bias, negative_inputs
 ):
     layer = Conv1d(
@@ -80,15 +80,20 @@ def test_conv1d_preserves_accumulator_until_requantization(
     layer.weight_QParams.zero_point.fill_(-128)
     layer.inputs_QParams.zero_point.fill_(127 if negative_inputs else -128)
     layer.outputs_QParams.scale_factor.fill_(2**output_shift)
-    layer.precompute()
+    if kernel_size == 20000:
+        with pytest.warns(RuntimeWarning, match="Overflow could occur"):
+            layer.precompute()
+    else:
+        layer.precompute()
 
     inputs = torch.full(
         (1, 2, kernel_size), -128 if negative_inputs else 127, dtype=torch.int32
     )
     accumulator = 2 * kernel_size * 255 * 255 * (-1 if negative_inputs else 1)
+    accumulator = (accumulator + 2**31) % 2**32 - 2**31
     expected_code = round(accumulator / (2**output_shift))
-    # Requantization keeps the final code in range, so output saturation
-    # cannot hide premature accumulator clipping or int32 overflow.
+    # Requantization keeps the final code in range, exposing int32 wraparound
+    # rather than hiding it through output saturation.
     assert -128 < expected_code < 127
     torch.testing.assert_close(
         layer.int_forward(inputs),

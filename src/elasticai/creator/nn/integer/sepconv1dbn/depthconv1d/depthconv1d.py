@@ -148,17 +148,17 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
 
         if self.q_bias is not None:
             tmp = F.conv1d(
-                q_inputs.to(torch.int64),
-                self.q_weights.to(device=q_inputs.device, dtype=torch.int64),
-                self.q_bias.to(device=q_inputs.device, dtype=torch.int64),
+                q_inputs.to(torch.int32),
+                self.q_weights.to(device=q_inputs.device, dtype=torch.int32),
+                self.q_bias.to(device=q_inputs.device, dtype=torch.int32),
                 padding=0,
                 groups=self.groups,
             )
             tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
         else:
             tmp = F.conv1d(
-                q_inputs.to(torch.int64),
-                self.q_weights.to(device=q_inputs.device, dtype=torch.int64),
+                q_inputs.to(torch.int32),
+                self.q_weights.to(device=q_inputs.device, dtype=torch.int32),
                 padding=0,
                 groups=self.groups,
             )

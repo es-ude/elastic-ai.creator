@@ -102,10 +102,7 @@ class QParams(nn.Module):
         zero_point = self.zero_point.to(x.device)
 
         x_q = x / scale_factor + zero_point
-        # Float32 exactly represents the quantized range through 16 bits.
-        # Keep float64 for wider ranges to preserve int32 saturation boundaries.
-        clamp_dtype = torch.float32 if self.quant_bits <= 16 else torch.float64
-        x_q = x_q.round().to(clamp_dtype).clamp(
+        x_q = x_q.round().to(torch.float32).clamp(
             min=self.min_quant.item(), max=self.max_quant.item()
         )
         x_q = x_q.to(torch.int32)
@@ -115,9 +112,17 @@ class QParams(nn.Module):
     def dequantize(self, x_q: torch.IntTensor) -> torch.FloatTensor:
         zero_point = self.zero_point.to(x_q.device)
         scale_factor = self.scale_factor.to(x_q.device)
-        x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits + 1)
-        x_dq = x_q * scale_factor
-        return x_dq.to(torch.float32).to(x_q.device)
+
+        return (
+            (x_q.to(torch.float32) - zero_point) * scale_factor
+        ).to(torch.float32)
+        
+    # def dequantize(self, x_q: torch.IntTensor) -> torch.FloatTensor:
+    #     zero_point = self.zero_point.to(x_q.device)
+    #     scale_factor = self.scale_factor.to(x_q.device)
+    #     x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits + 1)
+    #     x_dq = x_q * scale_factor
+    #     return x_dq.to(torch.float32).to(x_q.device)
 
     def __str__(self):
         info = "min_float: %.6f " % self.min_float

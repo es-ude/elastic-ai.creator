@@ -6,15 +6,16 @@ from .accumulator import accumulator_bits
 
 class MathOperations:
     def clamp_result(self, result: torch.IntTensor, quant_bits: int) -> torch.IntTensor:
+        quant_bits = accumulator_bits(quant_bits)
         result.clamp_(-(2 ** (quant_bits - 1)), (2 ** (quant_bits - 1)) - 1)
         return result.to(torch.int32) if quant_bits <= 32 else result
 
     def intadd(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
     ) -> torch.IntTensor:
-        assert a.dtype in (torch.int32, torch.int64)
-        assert b.dtype in (torch.int32, torch.int64)
-        c = a.to(torch.int64) + b.to(device=a.device, dtype=torch.int64)
+        assert a.dtype == torch.int32
+        assert b.dtype  == torch.int32
+        c = a.to(torch.int32) + b.to(device=a.device, dtype=torch.int32)
 
         return self.clamp_result(c, c_quant_bits)
 
@@ -24,7 +25,7 @@ class MathOperations:
         assert a.dtype == torch.int32
         assert b.dtype == torch.int32
 
-        c = a.to(torch.int64) - b.to(device=a.device, dtype=torch.int64)
+        c = a.to(torch.int32) - b.to(device=a.device, dtype=torch.int32)
         return self.clamp_result(c, c_quant_bits)
 
     def intmatmul(
@@ -61,11 +62,11 @@ class MathOperations:
 
         product_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
         result_bits = accumulator_bits(product_bits, x.shape[-1], b)
-        tmp = F.linear(x.to(torch.int64), w.to(device=x.device, dtype=torch.int64))
+        tmp = F.linear(x.to(torch.int32), w.to(device=x.device, dtype=torch.int32))
 
         if b is not None:
             assert b.dtype == torch.int32
-            tmp = tmp + b.to(device=x.device, dtype=torch.int64)
+            tmp = tmp + b.to(device=x.device, dtype=torch.int32)
 
         return self.clamp_result(tmp, result_bits)
 
@@ -148,8 +149,8 @@ class MathOperations:
     def int_division(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
     ) -> torch.IntTensor:
-        assert a.dtype == torch.int32 or a.dtype == torch.int64
-        assert b.dtype == torch.int32 or b.dtype == torch.int64
+        assert a.dtype == torch.int32 or a.dtype == torch.int32
+        assert b.dtype == torch.int32 or b.dtype == torch.int32
 
         a_cpu = a.cpu().to(torch.int32)
         b_cpu = b.cpu().to(torch.int32)

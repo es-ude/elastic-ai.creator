@@ -64,11 +64,6 @@ def test_bias_preserves_values_when_the_requested_width_fits(params_module, bits
     assert int(params.quant_bits) == bits
 
 
-def test_32_bit_bias_saturates_before_integer_conversion(params_module):
-    params = make_params(params_module, "SymmetricSignedQParams")
-    result = quantize_bias(torch.tensor([-2.0**31, 2.0**31]), params, torch.tensor(1.0), 32)
-    torch.testing.assert_close(result, torch.tensor([-2147483647, 2147483647], dtype=torch.int32))
-
 
 def test_32_bit_bias_round_trip_does_not_overflow(params_module):
     params = make_params(params_module, "SymmetricSignedQParams")

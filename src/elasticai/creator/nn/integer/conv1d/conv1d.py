@@ -152,14 +152,14 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         )
 
         bias = (
-            self.q_bias.to(device=q_inputs.device, dtype=torch.int64)
+            self.q_bias.to(device=q_inputs.device, dtype=torch.int32)
             if self.q_bias is not None
             else None
         )
 
         tmp = F.conv1d(
-            q_inputs.to(torch.int64),
-            self.q_weights.to(device=q_inputs.device, dtype=torch.int64),
+            q_inputs.to(torch.int32),
+            self.q_weights.to(device=q_inputs.device, dtype=torch.int32),
             bias=bias,
             padding=0,
         )

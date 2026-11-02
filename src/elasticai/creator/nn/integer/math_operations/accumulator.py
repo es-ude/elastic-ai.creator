@@ -1,5 +1,7 @@
 """Width calculation shared by integer accumulation operations."""
 
+import warnings
+
 import torch
 
 
@@ -26,6 +28,12 @@ def accumulator_bits(
     """Allow for the reduction and for adding the actual quantized bias."""
     mac_bits = _calculate_bits_for_mac_op(product_bits, num_products)
     accumulator_bits = _calculate_bits_for_bias_addition(mac_bits, bias)
-    if accumulator_bits > 64:
-        raise ValueError("The required accumulator width exceeds int64")
+    if accumulator_bits > 32:
+        warnings.warn(
+            f"The calculated accumulator width is {accumulator_bits} bits; "
+            "using 32 bits instead. Overflow could occur.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return 32
     return accumulator_bits

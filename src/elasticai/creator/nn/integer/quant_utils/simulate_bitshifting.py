@@ -25,5 +25,5 @@ def simulate_bitshifting(
     round_up = (remainder > half) | (
         (remainder == half) & (quotient % 2 != 0)
     )
-    approx_result = quotient + round_up.to(torch.int64)
-    return approx_result
+    approx_result = quotient + round_up.to(torch.int32)
+    return approx_result.int()
