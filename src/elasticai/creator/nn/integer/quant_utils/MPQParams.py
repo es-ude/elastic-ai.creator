@@ -106,7 +106,10 @@ class QParams(nn.Module):
         zero_point = self.zero_point.to(x.device)
 
         x_q = x / scale_factor + zero_point
-        x_q = x_q.round().to(torch.float64).clamp(
+        # Float32 exactly represents the quantized range through 16 bits.
+        # Keep float64 for wider ranges to preserve int32 saturation boundaries.
+        clamp_dtype = torch.float32 if self.quant_bits.item() <= 16 else torch.float64
+        x_q = x_q.round().to(clamp_dtype).clamp(
             min=self.min_quant.item(), max=self.max_quant.item()
         )
         x_q = x_q.to(torch.int32)

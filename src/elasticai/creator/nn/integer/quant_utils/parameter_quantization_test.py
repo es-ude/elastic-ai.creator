@@ -75,3 +75,28 @@ def test_32_bit_bias_round_trip_does_not_overflow(params_module):
     bias = torch.tensor([-0.5, 0.5])
     result = quantize_bias(bias, params, torch.tensor(2.0**-20), 32)
     torch.testing.assert_close(params.dequantize(result), bias)
+
+
+@pytest.mark.parametrize("device", ["cpu", "mps"])
+@pytest.mark.parametrize("bits", [6, 8, 16])
+@pytest.mark.parametrize(
+    "scheme",
+    ["SymmetricSignedQParams", "AsymmetricSignedQParams", "AsymmetricUnsignedQParams"],
+)
+def test_low_bit_quantization_rounding_and_saturation(params_module, device, bits, scheme):
+    if device == "mps" and not torch.backends.mps.is_available():
+        pytest.skip("MPS is unavailable")
+    params = make_params(params_module, scheme).to(device)
+    params.set_quant_range(bits)
+    params.scale_factor.fill_(1.0)
+    params.zero_point.zero_()
+    inputs = torch.tensor([-1e6, -1.6, 0.0, 1.6, 1e6], device=device)
+
+    result = params.quantize(inputs)
+
+    lower, upper = int(params.min_quant.item()), int(params.max_quant.item())
+    expected = [max(lower, min(upper, v)) for v in [-1000000, -2, 0, 2, 1000000]]
+    torch.testing.assert_close(
+        result.cpu(), torch.tensor(expected, dtype=torch.int32)
+    )
+    assert result.device.type == device
