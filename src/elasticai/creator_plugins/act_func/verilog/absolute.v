@@ -14,19 +14,23 @@
 // Improvements:    None
 // Parameters:      BITWIDTH_IN     --> Bitwidth of input data
 //                  BITWIDTH_OUT    --> Bitwidth of the output data
+//                  NUM_INPUTS      --> Number of in/outputs
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module ACT_ABSOLUTE#(
     parameter integer BITWIDTH_IN = 12,
-    parameter integer BITWIDTH_OUT = 12
+    parameter integer BITWIDTH_OUT = 12,
+    parameter integer NUM_INPUTS = 1
 )(
-    input wire signed [BITWIDTH_IN-1:0] A,
-    output wire signed [BITWIDTH_OUT-1:0] Q
+    input wire signed [NUM_INPUTS*BITWIDTH_IN-1:0] A,
+    output wire signed [NUM_INPUTS*BITWIDTH_OUT-1:0] Q
 );
 
-    wire signed [BITWIDTH_IN-1:0] abs_val;
-    assign abs_val = (A[BITWIDTH_IN-1]) ? -A : A;
-    assign Q = abs_val[(BITWIDTH_IN-1)-:BITWIDTH_OUT];
-
+    genvar k;
+    for(k = 0; k < NUM_INPUTS; k = k + 1) begin
+        wire signed [BITWIDTH_IN-1:0] abs_val;
+        assign abs_val = (A[BITWIDTH_IN-1]) ? -A : A;
+        assign Q[k*BITWIDTH_OUT+:BITWIDTH_OUT] = abs_val[(BITWIDTH_IN-1)-:BITWIDTH_OUT];
+    end
 endmodule
