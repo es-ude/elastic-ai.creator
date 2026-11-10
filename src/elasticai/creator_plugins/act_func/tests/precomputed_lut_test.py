@@ -2,9 +2,9 @@ import cocotb
 import pytest
 from cocotb.triggers import Timer
 from matplotlib import pyplot as plt
-from torch import asarray, no_grad
+from torch import asarray, nn, no_grad
 
-import elasticai.creator.nn.fixed_point as nn
+import elasticai.creator.nn.fixed_point as nn_creator
 from elasticai.creator.arithmetic import FxpArithmetic, FxpConverter, FxpParams
 from elasticai.creator.testing import CocotbTestFixture, eai_testbench
 from elasticai.creator_plugins.act_func.utils import load_and_plugin
@@ -14,14 +14,13 @@ def plot_data(
     din: list[int],
     dout: list[int],
     xcheck: list[int],
-    xref: list[float] = [],
     yref: list[float] = [],
 ) -> None:
     plt.figure()
-    plt.stem(din, dout, "r", label="HW")
-    plt.stem(din, xcheck, "k", label="SW")
-    if xref is not None or yref is not None:
-        plt.plot(xref, yref, "b", label="PyTorch")
+    plt.plot(din, dout, "r", label="HW")
+    plt.plot(din, xcheck, "k", label="SW")
+    if yref is not None:
+        plt.plot(din, yref, "b", label="PyTorch")
     plt.legend()
     plt.tight_layout()
     plt.grid(True)
@@ -38,6 +37,7 @@ async def precomputed_transfer_func(
     num_steps: int,
     input: list,
     check: list,
+    ref: list,
 ):
     assert len(input) == len(check)
 
@@ -60,7 +60,7 @@ async def precomputed_transfer_func(
         print("xin: ", xinput)
         print("xout: ", xoutput)
         print("ref: ", check)
-        # plot_data(din=xinput, dout=xoutput, xcheck=check)
+        # plot_data(din=xinput, dout=xoutput, xcheck=check, yref=ref)
     assert xoutput == check
     assert xinput == input
 
@@ -81,6 +81,7 @@ def test_template(
         {
             "input": [-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7],
             "check": [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+            "ref": [],
         }
     )
     cocotb_test_fixture.clear_srcs()
@@ -92,6 +93,13 @@ def test_template(
 
 
 FUNC_REGISTRY = {
+    "Tanh": nn_creator.Tanh,
+    "Sigmoid": nn_creator.Sigmoid,
+    "SiLU": nn_creator.SiLU,
+}
+
+
+REF_REGISTRY = {
     "Tanh": nn.Tanh,
     "Sigmoid": nn.Sigmoid,
     "SiLU": nn.SiLU,
@@ -144,7 +152,7 @@ def test_build(
     )
     xcheck = xcheck.int().tolist()
 
-    cocotb_test_fixture.write({"input": xinput, "check": xcheck})
+    cocotb_test_fixture.write({"input": xinput, "check": xcheck, "ref": []})
     cocotb_test_fixture.set_top_module_name(f"PRECOMPUTED_LUT_{id.upper()}")
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
@@ -170,6 +178,8 @@ def test_codesign(
     )
     dut.create_design("1").save_to(destination=build_dir, take_vhdl=False)  # type: ignore
 
+    ref = REF_REGISTRY[func]()
+
     files_available = [file.name for file in build_dir.glob("*.v")]
     files_available.sort()
     assert files_available == ["precomputed_lut_1.v"]
@@ -181,14 +191,23 @@ def test_codesign(
         val for val in range(arith.minimum_as_integer, arith.maximum_as_integer + 1)
     ]
     dut.eval()
+    ref.eval()
     with no_grad():
+        xref = (
+            (
+                ref(asarray(xinput) * arith.config.minimum_step_as_rational)
+                / arith.config.minimum_step_as_rational
+            )
+            .int()
+            .tolist()
+        )
         xcheck = (
             dut(asarray(xinput) * arith.config.minimum_step_as_rational)
             / arith.config.minimum_step_as_rational
         )
         xcheck = xcheck.int().tolist()
 
-    cocotb_test_fixture.write({"input": xinput, "check": xcheck})
+    cocotb_test_fixture.write({"input": xinput, "check": xcheck, "ref": xref})
     cocotb_test_fixture.set_top_module_name("PRECOMPUTED_LUT_1")
     cocotb_test_fixture.clear_srcs()
     cocotb_test_fixture.add_srcs_from_artifact_dir(glob_pattern="verilog/*.v")
