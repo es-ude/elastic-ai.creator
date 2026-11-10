@@ -6,7 +6,7 @@
 // Copied on: 	    §{date_copy_created}
 // Module Name:     Multiply-Accumulate Operator for BRAM Processing
 // Target Devices:  FPGA / ASIC (call LUT-based multiplier with custom integration)
-// Tool Versions:   1v1
+// Tool Versions:   1v2
 // Description:     Performing a MAC Operation on Device (with Clamping, Pipelined Multiplier and Parallisation)
 // Processing:      Data applied on posedge clk
 //                  First cycle with DO_CALC --> Reset MAC output, add bias and stream data into pipeline

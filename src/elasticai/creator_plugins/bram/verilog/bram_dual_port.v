@@ -20,24 +20,24 @@
 
 
 module BRAM_DUAL#(
-    parameter BITWIDTH = 12,
-    parameter RAMWIDTH = 32,
+    parameter integer BITWIDTH = 12,
+    parameter integer RAMWIDTH = 32,
     parameter DATAFILE = "bram_preload.mem"
 )(
     input wire CLK_RAM,
     input wire EN,
     input wire WE_A, WE_B,
-    input wire [$clog2(RAMWIDTH)-'d1:'d0] ADR_A, ADR_B,
-    input wire [BITWIDTH-'d1:'d0] DIN_A, DIN_B,
-    output reg [BITWIDTH-'d1:'d0] DOUT_A, DOUT_B
+    input wire [$clog2(RAMWIDTH)-1:0] ADR_A, ADR_B,
+    input wire [BITWIDTH-1:0] DIN_A, DIN_B,
+    output reg [BITWIDTH-1:0] DOUT_A, DOUT_B
 );
 
     (* ram_style = "block" *)
-    reg [BITWIDTH-'d1:'d0] bram_block ['d0:RAMWIDTH-'d1];
+    reg [BITWIDTH-1:0] bram_block [0:RAMWIDTH-1];
 
     initial begin
         if(DATAFILE != "") begin
-            $readmemh(DATAFILE, bram_block, 'd0, RAMWIDTH-'d1);
+            $readmemh(DATAFILE, bram_block, 0, RAMWIDTH-1);
         end
     end
     

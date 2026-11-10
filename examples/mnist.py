@@ -1,6 +1,8 @@
 import gzip
 import urllib.request
 from pathlib import Path
+from copy import deepcopy
+from shutil import rmtree
 
 import numpy as np
 import torch
@@ -10,7 +12,6 @@ from elasticai.creator.file_generation import find_project_root
 from elasticai.creator.file_generation.on_disk_path import OnDiskPath
 from elasticai.creator.nn import Sequential
 from elasticai.creator.nn import fixed_point as nn_creator
-from elasticai.creator.vhdl.system_integrations.firmware_env5 import FirmwareENv5
 
 
 BASE_URL = "https://ossci-datasets.s3.amazonaws.com/mnist/"
@@ -22,7 +23,7 @@ FILES = {
 }
 
 
-def load_data(path2folder: Path, batch_size: int) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+def load_data(path2folder: Path, batch_size: int, do_minmax_norm: bool=True) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     path2folder.mkdir(parents=True, exist_ok=True)
     for name, filename in FILES.items():
         path = path2folder / filename
@@ -39,9 +40,11 @@ def load_data(path2folder: Path, batch_size: int) -> tuple[torch.utils.data.Data
             data = np.frombuffer(f.read(), dtype=np.uint8, offset=8)
         return data
 
-    x_train = load_images(path2folder / FILES["train_images"])
+    scale = 1 / 255. if do_minmax_norm else 1.0
+
+    x_train = scale * load_images(path2folder / FILES["train_images"])
     y_train = load_labels(path2folder / FILES["train_labels"])
-    x_test = load_images(path2folder / FILES["test_images"])
+    x_test = scale * load_images(path2folder / FILES["test_images"])
     y_test = load_labels(path2folder / FILES["test_labels"])
 
     x_train = torch.tensor(x_train, dtype=torch.float32)
@@ -55,6 +58,56 @@ def load_data(path2folder: Path, batch_size: int) -> tuple[torch.utils.data.Data
         torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True),
         torch.utils.data.DataLoader(valid_ds, batch_size=batch_size, shuffle=True),
     )
+
+
+def patch_ap_types_for_macos(out_dir: Path) -> None:
+    for name in ("ap_int_special.h", "ap_fixed_special.h"):
+        header = out_dir / "firmware" / "ap_types" / name
+        if header.exists():
+            header.write_text("// stubbed out for the macOS C simulation build\n")
+
+
+def convert_with_hls4ml(model: nn.Sequential, run_synthesis: bool=False, output_dir: str = "mlp_prj", backend: str="Vivado"):
+    """You need Vivado/Vitis HLS on your client"""
+    import hls4ml, sys
+
+    if Path(output_dir).exists():
+        rmtree(output_dir, ignore_errors=True)
+
+    model_used = deepcopy(model).cpu().eval()
+    config = hls4ml.utils.config_from_pytorch_model(
+        model_used,
+        input_shape=(14 * 14,),
+        granularity="model",
+        backend=backend,
+        default_precision="ap_fixed<12,6>",
+        default_reuse_factor=1,
+    )
+    config["Model"]["Strategy"] = "Latency"
+    #  1 = fully parallel (max area, min latency). Larger values reuse multipliers,
+    #  use a valid divisor of the layer's input width and switch to "Resource".
+    config["Model"]["ReuseFactor"] = 400
+
+    hls_model = hls4ml.converters.convert_from_pytorch_model(
+        model_used,
+        hls_config=config,
+        output_dir=output_dir,
+        backend=backend,
+        part="xc7s15ftgb196-2",
+        io_type="io_parallel",
+    )
+    if sys.platform == "darwin":
+        hls_model.write()
+        patch_ap_types_for_macos(Path(output_dir))
+        hls_model._compile()
+    else:
+        hls_model.compile()
+
+    if run_synthesis:
+        hls_model.build(csim=False, synth=True, export=True)
+        hls4ml.report.read_vivado_report(output_dir)
+
+    return hls_model
 
 
 if __name__ == "__main__":
@@ -130,18 +183,26 @@ if __name__ == "__main__":
         acc_fxp = (preds.argmax(dim=1) == y_test_dev).float().mean().item()
     print(f"\nTest-Genauigkeit: {acc_full:.4f} (full) - {acc_fxp:.4f} (fxp)")
 
-
+    # --- Export model
     path0 = OnDiskPath(name="hw_vhdl", parent=path2save.parent.as_posix())
     my_design = model_fxp.create_design("mnist")
     my_design.save_to(path0, take_vhdl=True)
-    firmware = FirmwareENv5(
-        network=my_design,
-        x_num_values=144,
-        y_num_values=10,
-        id=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        skeleton_version="v2",
-    )
-    firmware.save_to(path0)
 
     path1 = OnDiskPath(name="hw_verilog", parent=path2save.parent.as_posix())
     model_fxp.create_design("mnist").save_to(path1, take_vhdl=False)
+
+    model_hls = convert_with_hls4ml(
+        model=model_full,
+        run_synthesis=False,
+        output_dir="hw_hls4ml"
+    )
+
+    with torch.no_grad():
+        x_test_dev = valid.dataset.tensors[0].to("cpu")
+        y_test_dev = valid.dataset.tensors[1].to("cpu")
+        frames = preprocess(x_test_dev).numpy()
+
+        preds = torch.asarray(model_hls.predict(frames))
+        acc_hls = (preds.argmax(dim=1) == y_test_dev).float().mean().item()
+    print(f"\nTest-Genauigkeit: {acc_full:.4f} (full) - {acc_fxp:.4f} (fxp) - {acc_hls:.4f} (hls)")
+

@@ -4,11 +4,11 @@
 //
 // Create Date:     18.09.2026, 15:47:03
 // Copied on: 	    §{date_copy_created}
-// Module Name:     Template of a linear / fully connected layer (only inference)
+// Module Name:     Template of an array-based linear / fully connected layer (only inference)
 // Target Devices:  FPGA
 // Tool Versions:   1v0
 // Processing:
-// Dependencies:    MAC operator, multipliers (DSP, LUT)
+// Dependencies:    MAC (array) operator, multipliers (DSP, LUT)
 //
 // State: 	        Not tested!
 // Improvements:    Actual rounding error at output, coming from downscaling? Add

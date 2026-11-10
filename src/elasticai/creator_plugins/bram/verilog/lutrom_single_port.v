@@ -20,15 +20,15 @@
 
 
 module LUTROM #(
-    parameter BITWIDTH = 8,
-    parameter ROMWIDTH = 8
+    parameter integer BITWIDTH = 8,
+    parameter integer ROMWIDTH = 8
 )(
     input wire CLK_SYS,
     input wire EN,
-    input wire [$clog2(ROMWIDTH)-'d1:'d0] ADR,
-    output wire [BITWIDTH-'d1:'d0] DOUT
+    input wire [$clog2(ROMWIDTH)-1:0] ADR,
+    output wire [BITWIDTH-1:0] DOUT
 );
-    localparam [BITWIDTH * ROMWIDTH - 'd1:0] LUTROM_DATA = {8'd7, 8'd6, 8'd5, 8'd4, 8'd3, 8'd2, 8'd1, 8'd0};
+    localparam [BITWIDTH * ROMWIDTH -1:0] LUTROM_DATA = { 8'd7, 8'd6, 8'd5, 8'd4, 8'd3, 8'd2, 8'd1, 8'd0 };
 
 
     assign DOUT = (EN) ? LUTROM_DATA[ADR*BITWIDTH+:BITWIDTH] : 'd0;
