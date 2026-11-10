@@ -1,0 +1,111 @@
+import cocotb
+import pytest
+from cocotb.triggers import Timer
+from torch import asarray
+
+from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
+from elasticai.creator.nn.fixed_point import hard_sigmoid as layer
+from elasticai.creator.testing import CocotbTestFixture, eai_testbench
+from elasticai.creator_plugins.act_func.utils import load_and_plugin
+
+
+def act_hardsigmoid(a: list[float], config: FxpParams) -> list:
+    xin = asarray(a)
+    lay = layer.HardSigmoid(total_bits=config.total_bits, frac_bits=config.frac_bits)
+    lay.eval()
+    return lay.forward(xin).tolist()
+
+
+@cocotb.test()
+@eai_testbench
+async def check_transfer_function(dut, total_bits: int, frac_bits: int):
+    config = FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    xstart = config.minimum_as_integer
+    xstop = config.maximum_as_integer + 1
+    xinput = [xstart + val for val in range(xstop - xstart)]
+    xfloat = [
+        (xstart + val) * config.minimum_step_as_rational
+        for val in range(xstop - xstart)
+    ]
+    xcheck = act_hardsigmoid(xfloat, config)
+    xoutput = []
+    for val in xinput:
+        dut.A.value = val
+        await Timer(2, unit="step")
+        xoutput.append(dut.Q.value.to_signed() * config.minimum_step_as_rational)
+    assert xoutput == xcheck
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("total_bits", [8])
+@pytest.mark.parametrize("frac_bits", [4])
+def test_hardsigmoid(
+    cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bits: int
+):
+    cocotb_test_fixture.set_top_module_name("ACT_HARDSIGMOID")
+    cocotb_test_fixture.run(params={}, defines={})
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("total_bits", [4, 5, 6])
+@pytest.mark.parametrize("frac_bits", [3])
+def test_build(cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bits: int):
+    build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
+    id = f"{total_bits:02d}_{frac_bits:02d}"
+
+    arith = FxpArithmetic(
+        FxpParams(total_bits=total_bits, frac_bits=frac_bits, signed=True)
+    )
+    bias = arith.clamp(arith.cut_as_integer(0.5))
+    ymax_val = arith.clamp(arith.cut_as_integer(1.0))
+    xmax_val = arith.clamp(arith.cut_as_integer(2.0))
+    ymin_val = arith.clamp(arith.cut_as_integer(0.0))
+    xmin_val = arith.clamp(arith.cut_as_integer(-2.0))
+
+    load_and_plugin(
+        type="hardsigmoid",
+        id=id,
+        params={
+            "BITWIDTH_IN": total_bits,
+            "BITWIDTH_OUT": total_bits,
+            "BIAS": bias,
+            "YMAX_VAL": ymax_val,
+            "XMAX_VAL": xmax_val,
+            "YMIN_VAL": ymin_val,
+            "XMIN_VAL": xmin_val,
+        },
+        packages=["act_func"],
+        path2save=build_dir,
+    )
+
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir("verilog/*.v")
+    cocotb_test_fixture.set_top_module_name(f"HARDSIGMOID_{id}")
+    cocotb_test_fixture.run(params={}, defines={})
+
+
+@pytest.mark.simulation
+@pytest.mark.parametrize("total_bits", [5, 6, 8])
+@pytest.mark.parametrize("frac_bits", [4])
+def test_codesign(
+    cocotb_test_fixture: CocotbTestFixture, total_bits: int, frac_bits: int
+):
+    from elasticai.creator.nn.fixed_point import HardSigmoid
+
+    build_dir = cocotb_test_fixture.get_artifact_dir() / "verilog"
+    HardSigmoid(
+        total_bits=total_bits,
+        frac_bits=frac_bits,
+    ).create_design("1").save_to(destination=build_dir, take_vhdl=False)  # type: ignore
+
+    files_available = [file.name for file in build_dir.glob("*.v")]
+    files_available.sort()
+    assert files_available == ["hardsigmoid_1.v"]
+
+    cocotb_test_fixture.set_top_module_name("HARDSIGMOID_1")
+    cocotb_test_fixture.clear_srcs()
+    cocotb_test_fixture.add_srcs_from_artifact_dir(glob_pattern="verilog/*.v")
+    cocotb_test_fixture.run(
+        params={},
+        defines={},
+    )
