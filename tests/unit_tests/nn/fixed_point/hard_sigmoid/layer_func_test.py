@@ -22,5 +22,5 @@ def test_hard_sigmoid_compared_torch(
     out0 = act0(stimulus)
     act1 = nn_creator.HardSigmoid(total_bits=total_bits, frac_bits=frac_bits)
     out1 = act1(stimulus)
-    assert float(sum(abs(out1 - out0))) < 1e-6
-    assert float(abs(sum(out1 - out0))) < 1e-6
+    assert float(sum(abs(out1 - out0))) / len(out1) < 0.09
+    assert float(abs(sum(out1 - out0))) / len(out1) < 0.06

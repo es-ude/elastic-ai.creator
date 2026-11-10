@@ -1,4 +1,5 @@
 from .src.absolute import absolute as absolute
+from .src.hardsigmoid import hardsigmoid as hardsigmoid
 from .src.hardtanh import hardtanh as hardtanh
 from .src.heaviside import heaviside as heaviside
 from .src.precomputed import precomputed_lut as precomputed_lut
