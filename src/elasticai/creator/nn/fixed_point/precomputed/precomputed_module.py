@@ -104,7 +104,16 @@ class PrecomputedModule(DesignCreatorModule):
         return (x, y)
 
     def _stepped_inputs(self, x: torch.Tensor) -> torch.Tensor:
-        return cast(torch.Tensor, IdentityStepFunction.apply(x, self._lut_input))
+        if self._use_lut_design:
+            step = self._config.config.minimum_step_as_rational
+            upper = (
+                self._lut_input[-1:]
+                + (2**self._config.total_bits // len(self._lut_input)) * step
+            )
+            edges = torch.cat([self._lut_input, upper])
+        else:
+            edges = self._lut_input
+        return cast(torch.Tensor, IdentityStepFunction.apply(x, edges))
 
     def _forward_nograd(self, x: int | float) -> int:
         if isinstance(x, float):
