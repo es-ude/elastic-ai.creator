@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: ${{ github.env.PR_FETCH_DEPTH }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
       - name: run commit linting
