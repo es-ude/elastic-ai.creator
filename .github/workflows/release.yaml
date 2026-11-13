@@ -17,7 +17,7 @@ jobs:
     uses: ./.github/workflows/checks.yml
     permissions:
       contents: read
-      pull-requests: write # requested by jobs of checks.yml
+      pull-requests: write # requested by check-docs-build
 
   build:
     name: Build distribution 📦

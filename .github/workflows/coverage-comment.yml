@@ -1,0 +1,89 @@
+name: Coverage comment
+
+# Comments the coverage report on pull requests, including those from forks.
+# The token of the pull_request run of "Checks" is read-only for forks, so that
+# workflow only uploads the report as an artifact and this one, which runs in
+# the context of the base repository, comments it.
+#
+# SECURITY: this workflow has a write token. It must never check out or run code
+# of the pull request. The artifact is untrusted data and is only parsed.
+on:
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+
+permissions:
+  actions: read # download the artifact of the triggering run
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment coverage report
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage report
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+          path: coverage-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Create comment
+        id: comment
+        run: |
+          python3 -I - <<'PY'
+          import os
+          import re
+          import sys
+          from collections import defaultdict
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          artifact = Path("coverage-artifact")
+
+          pr_number = (artifact / "pr-number").read_text().strip()
+          if not re.fullmatch(r"[0-9]{1,9}", pr_number):
+              sys.exit("invalid pull request number")
+
+          root = ElementTree.parse(artifact / "coverage.xml").getroot()
+          total = float(root.get("line-rate", 0)) * 100
+
+          missed: dict[str, int] = defaultdict(int)
+          lines: dict[str, int] = defaultdict(int)
+          for cls in root.iter("class"):
+              name = re.sub(r"[^\w./-]", "_", cls.get("filename", ""))
+              for line in cls.findall("lines/line"):
+                  lines[name] += 1
+                  if line.get("hits") == "0":
+                      missed[name] += 1
+
+          rows = sorted(
+              ((n, m, lines[n]) for n, m in missed.items() if m > 0),
+              key=lambda row: -row[1],
+          )
+          body = [
+              "## Coverage report",
+              "",
+              f"Total line coverage: **{total:.1f}%**",
+          ]
+          if rows:
+              body += ["", "| File | Missed lines | Coverage |", "|---|---|---|"]
+              for name, miss, count in rows[:30]:
+                  body.append(f"| `{name}` | {miss} | {100 * (count - miss) / count:.1f}% |")
+              if len(rows) > 30:
+                  body += ["", f"... and {len(rows) - 30} more files with missed lines."]
+          Path("comment.md").write_text("\n".join(body) + "\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"pr-number={pr_number}\n")
+          PY
+      - name: Comment on PR
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          comment-tag: coverage
+          pr-number: ${{ steps.comment.outputs.pr-number }}
+          file-path: comment.md
