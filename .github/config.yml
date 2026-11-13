@@ -1,6 +1,6 @@
 # PR template configuration
 pull_request_template:
-  path: .github/PULL_REQUEST_TEMPLATE.yml
+  path: .github/PULL_REQUEST_TEMPLATE.md
 
 # Additional repository settings
 repository:
