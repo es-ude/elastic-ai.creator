@@ -6,9 +6,23 @@ on:
       - "v*"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  checks:
+    name: Run checks
+    # manual runs on a branch must not publish anything
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/checks.yml
+    permissions:
+      contents: read
+      pull-requests: write # requested by jobs of checks.yml
+
   build:
     name: Build distribution 📦
+    needs:
+      - checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,13 +82,17 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
         run: >-
-          gh release create '${{ github.ref_name }}' --repo '${{ github.repository }}' --notes ""
+          gh release create "$TAG" --repo "$REPO" --notes ""
       - name: Upload artifact signatures to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
         # Upload to GitHub Release using the `gh` CLI.
         # `dist/` contains the built packages, and the
         # sigstore-produced signatures and certificates.
         run: >-
-          gh release upload '${{ github.ref_name }}' dist/** --repo '${{ github.repository }}'
+          gh release upload "$TAG" dist/** --repo "$REPO"

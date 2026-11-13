@@ -7,6 +7,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   check-code-lint:
     name: Lint Source Code
@@ -23,6 +26,8 @@ jobs:
 
   check-commit-lint:
     name: Lint Commits
+    # releases run on tags, there is no pull request whose commits could be linted
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: "get PR commits + 1"
