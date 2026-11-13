@@ -17,8 +17,10 @@ class QuantScheme(Enum):
     """Quantization scheme: symmetric or asymmetric, signed or unsigned.
 
     For 8 bits the integer ranges are `[-128, 127]` (asymmetric signed),
-    `[-127, 127]` (symmetric signed), `[0, 255]` (asymmetric unsigned)
-    and `[0, 254]` (symmetric unsigned).
+    `[-127, 127]` (symmetric signed) and `[0, 255]` (asymmetric unsigned).
+
+    `SYMMETRIC_UNSIGNED` is not supported: `QParams` raises a `ValueError` if
+    it is passed as scheme.
     """
 
     ASYMMETRIC_SIGNED = "asymmetric_signed"
@@ -52,6 +54,10 @@ class QParams(nn.Module):
         observer: Observer that tracks the float range in its `min_float` and
             `max_float` buffers.
         scheme: The quantization scheme.
+
+    Raises:
+        ValueError: If `scheme` is `QuantScheme.SYMMETRIC_UNSIGNED`, which is not
+            supported.
     """
 
     min_float: torch.Tensor
@@ -74,6 +80,12 @@ class QParams(nn.Module):
         scheme: QuantScheme,
     ):
         super().__init__()
+
+        if scheme is QuantScheme.SYMMETRIC_UNSIGNED:
+            raise ValueError(
+                f"quantization scheme {scheme} is not supported, use "
+                f"{QuantScheme.ASYMMETRIC_UNSIGNED} or one of the signed schemes"
+            )
 
         self.observer = observer
         self.quant_bits = quant_bits
@@ -131,10 +143,9 @@ class QParams(nn.Module):
             )
         else:
             self.min_quant.copy_(torch.tensor(0))  # 0 for 8 bits
-            max_value = (2**self.quant_bits) - (
-                2 if self.is_symmetric else 1
-            )  # 254 or 255 for 8 bits
-            self.max_quant.copy_(torch.tensor(max_value))
+            self.max_quant.copy_(
+                torch.tensor((2**self.quant_bits) - 1)
+            )  # 255 for 8 bits
 
     def update_quant_params(self, x: torch.Tensor) -> None:
         """Observe `x` and recalculate scale factor, zero point and float range.
@@ -148,16 +159,16 @@ class QParams(nn.Module):
         """
         check_dtype("x", x, *FLOAT_DTYPES)
         self.observer(x)
-        calculate_quant_params_fn = (
+        calculate = (
             calculate_symmetric_quant_params
             if self.is_symmetric
             else calculate_asymmetric_quant_params
         )
-        scale_factor, zero_point, min_float, max_float = calculate_quant_params_fn(
-            min_quant=self.min_quant,
-            max_quant=self.max_quant,
+        scale_factor, zero_point, min_float, max_float = calculate(
             min_float=self.observer.min_float,
             max_float=self.observer.max_float,
+            min_quant=self.min_quant,
+            max_quant=self.max_quant,
             eps=self.eps,
         )
 
@@ -318,13 +329,6 @@ class AsymmetricUnsignedQParams(QParams):
 
     def __init__(self, quant_bits: int, observer: BaseObserver):
         super().__init__(quant_bits, observer, QuantScheme.ASYMMETRIC_UNSIGNED)
-
-
-class SymmetricUnsignedQParams(QParams):
-    """Unsigned quantization parameters with zero point 0."""
-
-    def __init__(self, quant_bits: int, observer: BaseObserver):
-        super().__init__(quant_bits, observer, QuantScheme.SYMMETRIC_UNSIGNED)
 
 
 class QParamsFactory(Protocol):
