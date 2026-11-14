@@ -14,20 +14,27 @@
 // Improvements:    None
 // Parameters:      BITWIDTH_IN     --> Bitwidth of input data
 //                  BITWIDTH_OUT    --> Bitwidth of output data
+//                  NUM_INPUTS      --> Number of in/outputs
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module ACT_HARDTANH#(
     parameter integer BITWIDTH_IN = 4,
-    parameter integer BITWIDTH_OUT = 4
+    parameter integer BITWIDTH_OUT = 4,
+    parameter integer NUM_INPUTS = 1
 )(
-    input wire signed [BITWIDTH_IN-1:0] A,
-    output wire signed [BITWIDTH_OUT-1:0] Q
+    input wire signed [NUM_INPUTS*BITWIDTH_IN-1:0] A,
+    output wire signed [NUM_INPUTS*BITWIDTH_OUT-1:0] Q
 );
 
     localparam signed [BITWIDTH_OUT-1:0] MAX_VAL = 4'sd4;
     localparam signed [BITWIDTH_OUT-1:0] MIN_VAL = -4'sd4;
 
-    assign Q = (A > MAX_VAL) ? MAX_VAL : ((A > MIN_VAL) ? A : MIN_VAL);
+    genvar k;
+    for(k = 0; k < NUM_INPUTS; k = k + 1) begin
+        wire signed [BITWIDTH_IN-1:0] val;
+        assign val = A[k*BITWIDTH_IN+:BITWIDTH_IN];
+        assign Q[k*BITWIDTH_OUT+:BITWIDTH_OUT] = (val > MAX_VAL) ? MAX_VAL : ((val > MIN_VAL) ? val : MIN_VAL);
+    end
 
 endmodule

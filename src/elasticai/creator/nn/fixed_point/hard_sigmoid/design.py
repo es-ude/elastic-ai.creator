@@ -5,6 +5,7 @@ from elasticai.creator.file_generation.template import (
 )
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.design.design import Design, Port
+from elasticai.creator_plugins.act_func.utils import load_and_plugin
 
 
 class HardSigmoid(Design):
@@ -51,7 +52,21 @@ class HardSigmoid(Design):
             destination.create_subpath(self.name).as_file(".vhd").write(template)
 
         def _save_to_verilog(destination: Path) -> None:
-            raise NotImplementedError("Missing Verilog design files")
+            load_and_plugin(
+                type="hardsigmoid",
+                id=self.name,
+                params={
+                    "BITWIDTH_IN": self._total_bits,
+                    "BITWIDTH_OUT": self._total_bits,
+                    "BIAS": self._y_intercept,
+                    "XMAX_VAL": self._one_threshold,
+                    "YMAX_VAL": self._one,
+                    "XMIN_VAL": self._zero_threshold,
+                    "YMIN_VAL": 0,
+                },
+                packages=["act_func"],
+                path2save=str(destination),
+            )
 
         if take_vhdl:
             _save_to_vhdl(destination)

@@ -130,18 +130,9 @@ if __name__ == "__main__":
         acc_fxp = (preds.argmax(dim=1) == y_test_dev).float().mean().item()
     print(f"\nTest-Genauigkeit: {acc_full:.4f} (full) - {acc_fxp:.4f} (fxp)")
 
-
+    # --- Generate designs
     path0 = OnDiskPath(name="hw_vhdl", parent=path2save.parent.as_posix())
-    my_design = model_fxp.create_design("mnist")
-    my_design.save_to(path0, take_vhdl=True)
-    firmware = FirmwareENv5(
-        network=my_design,
-        x_num_values=144,
-        y_num_values=10,
-        id=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        skeleton_version="v2",
-    )
-    firmware.save_to(path0)
+    model_fxp.create_design("mnist").save_to(path0, take_vhdl=True)
 
     path1 = OnDiskPath(name="hw_verilog", parent=path2save.parent.as_posix())
     model_fxp.create_design("mnist").save_to(path1, take_vhdl=False)

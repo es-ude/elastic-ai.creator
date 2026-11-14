@@ -22,9 +22,9 @@ entity sigmoid is
         DATA_WIDTH : integer := 16;
         FRAC_WIDTH : integer := 8;
         ONE : integer := 256;
-        ZERO_THRESHOLD : integer := -768;
-        ONE_THRESHOLD : integer := 768;
-        SLOPE : integer := 42;
+        ZERO_THRESHOLD : integer := -512;
+        ONE_THRESHOLD : integer := 512;
+        SLOPE : integer := 64;
         Y_INTERCEPT: integer := 128
     );
     port (

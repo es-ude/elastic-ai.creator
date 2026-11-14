@@ -15,27 +15,34 @@
 // Parameters:      BITWIDTH_IN  --> Bitwidth of input data
 //                  BITWIDTH_OUT --> Bitwidth of output data
 //                  SCALING --> Number of bits for bit-shifting negative values
+//                  NUM_INPUTS      --> Number of in/outputs
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module ACT_PRELU#(
     parameter integer BITWIDTH_IN = 4,
-    parameter integer BITWIDTH_OUT = 4
+    parameter integer BITWIDTH_OUT = 4,
+    parameter integer NUM_INPUTS = 1
 )(
-    input wire signed [BITWIDTH_IN-1:0] A,
-    output reg signed [BITWIDTH_OUT-1:0] Q
+    input wire signed [NUM_INPUTS*BITWIDTH_IN-1:0] A,
+    output reg signed [NUM_INPUTS*BITWIDTH_OUT-1:0] Q
 );
     localparam integer FRACWIDTH = 2;
     localparam integer signed SCALING = 2;
+    integer k;
 
+    reg signed [BITWIDTH_IN-1:0] val;
     reg signed [2*BITWIDTH_IN-1:0] step;
     always@(*) begin
-        if(A[BITWIDTH_IN-1]) begin
-            step = (A * SCALING);
-            Q = step[FRACWIDTH+:BITWIDTH_OUT];
-        end else begin
-            step = 'sd0;
-            Q = A;
+        for(k=0; k < NUM_INPUTS; k = k + 1) begin
+            val = A[k*BITWIDTH_IN+:BITWIDTH_IN];
+            if(val[BITWIDTH_IN-1]) begin
+                step = (val * SCALING);
+                Q = step[FRACWIDTH+:BITWIDTH_OUT];
+            end else begin
+                step = 'sd0;
+                Q[k*BITWIDTH_OUT+:BITWIDTH_OUT] = val;
+            end
         end
     end
 endmodule

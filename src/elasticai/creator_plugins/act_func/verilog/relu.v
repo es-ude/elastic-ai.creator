@@ -14,17 +14,21 @@
 // Improvements:    None
 // Parameters:      BITWIDTH_IN     --> Bitwidth of input data
 //                  BITWIDTH_OUT    --> Bitwidth of output data
+//                  NUM_INPUTS      --> Number of in/outputs
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module ACT_RELU#(
     parameter integer BITWIDTH_IN = 12,
-    parameter integer BITWIDTH_OUT = 12
+    parameter integer BITWIDTH_OUT = 12,
+    parameter integer NUM_INPUTS = 1
 )(
-    input wire signed [BITWIDTH_IN-1:0] A,
-    output wire signed [BITWIDTH_OUT-1:0] Q
+    input wire signed [NUM_INPUTS*BITWIDTH_IN-1:0] A,
+    output wire signed [NUM_INPUTS*BITWIDTH_OUT-1:0] Q
 );
 
-    assign Q = (A[BITWIDTH_IN-1]) ? 'sd0 : A[(BITWIDTH_IN-1)-:BITWIDTH_OUT];
-
+    genvar k;
+    for(k = 0; k < NUM_INPUTS; k = k + 1) begin
+        assign Q = (A[(k+1)*BITWIDTH_IN-1]) ? 'sd0 : A[((k+1)*BITWIDTH_IN-1)-:BITWIDTH_OUT];
+    end
 endmodule
