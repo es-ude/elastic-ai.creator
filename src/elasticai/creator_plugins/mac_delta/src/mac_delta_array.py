@@ -10,23 +10,25 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def mac_delta_array(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.mac_delta"
     path2file = "verilog/mac_delta_array.v"
-
-    _template = (
-        TemplateDirector()
-        .parameter("INPUT_BITWIDTH")
-        .parameter("INPUT_DELTAWIDTH")
-        .parameter("INPUT_NUM_DATA")
-        .parameter("NUM_MULT_PARALLEL")
-        .parameter("DELTA_MODE")
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
-
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("INPUT_BITWIDTH")
+            .parameter("INPUT_DELTAWIDTH")
+            .parameter("INPUT_NUM_DATA")
+            .parameter("NUM_MULT_PARALLEL")
+            .parameter("DELTA_MODE")
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code = list()
     code.append(
         (

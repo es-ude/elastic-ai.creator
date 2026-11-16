@@ -10,6 +10,8 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def mult_lut_unsigned(impl: DataGraph, _: Registry) -> Iterable[Code]:
@@ -21,12 +23,14 @@ def mult_lut_unsigned(impl: DataGraph, _: Registry) -> Iterable[Code]:
     else:
         path2file = "verilog/mult_lut_unsigned.v"
 
-    _template = (
-        TemplateDirector()
-        .parameter("BITWIDTH")
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("BITWIDTH")
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code.append(
         (
             impl.name,

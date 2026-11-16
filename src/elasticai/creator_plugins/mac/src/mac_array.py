@@ -10,23 +10,25 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def mac_array(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.mac"
     path2file = "verilog/mac_array.v"
-
-    _template = (
-        TemplateDirector()
-        .parameter("BITWIDTH")
-        .parameter("NUM_MULT")
-        .parameter("SIZE_INPUT")
-        .parameter("BITS_SCALE_BIAS")
-        .parameter("BITS_SCALE_DOUT")
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
-
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("BITWIDTH")
+            .parameter("NUM_MULT")
+            .parameter("SIZE_INPUT")
+            .parameter("BITS_SCALE_BIAS")
+            .parameter("BITS_SCALE_DOUT")
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code = list()
     code.append(
         (

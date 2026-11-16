@@ -10,19 +10,21 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def mult_booth_unsigned(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.multipliers"
     path2file = "verilog/mult_booth_unsigned.v"
-
-    _template = (
-        TemplateDirector()
-        .parameter("BITWIDTH")
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
-
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("BITWIDTH")
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code = list()
     code.append(
         (
