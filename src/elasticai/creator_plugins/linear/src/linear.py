@@ -10,27 +10,29 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def linear_array(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.linear"
     path2file = "verilog/linear_array.v"
-
-    _template = (
-        TemplateDirector()
-        .parameter("BITWIDTH")
-        .parameter("NUM_MULT")
-        .parameter("BITS_SCALE_BIAS")
-        .parameter("BITS_SCALE_DOUT")
-        .parameter("SIZE_INPUT")
-        .parameter("SIZE_OUTPUT")
-        .localparam("BIAS")
-        .localparam("WEIGHTS")
-        .add_module_name()
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
-
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("BITWIDTH")
+            .parameter("NUM_MULT")
+            .parameter("BITS_SCALE_BIAS")
+            .parameter("BITS_SCALE_DOUT")
+            .parameter("SIZE_INPUT")
+            .parameter("SIZE_OUTPUT")
+            .localparam("BIAS")
+            .localparam("WEIGHTS")
+            .add_module_name()
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code = list()
     code.append(
         (

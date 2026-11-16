@@ -10,21 +10,24 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def adder_range_violation(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.adders"
     path2file = "verilog/adder_range_violation.v"
-
-    _template = (
-        TemplateDirector()
-        .parameter("BITWIDTH")
-        .parameter("NUM_ADDERS")
-        .parameter("IS_SIGNED")
-        .add_module_name()
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("BITWIDTH")
+            .parameter("NUM_ADDERS")
+            .parameter("IS_SIGNED")
+            .add_module_name()
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code = list()
     code.append(
         (
