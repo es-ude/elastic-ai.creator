@@ -163,6 +163,26 @@ $ devenv shell
 For more convenience we recommend combining this workflow with direnv for
 automatic shell activation as explained [here](https://devenv.sh/automatic-shell-activation/).
 
+#### Local configuration
+
+You can create a `devenv.local.nix` file in the repository root to override settings in `devenv.nix` or define machine-specific environment variables.
+
+For example:
+
+```nix
+{ lib, ... }:
+
+{
+  # Override the default VHDL setting for this machine.
+  languages.vhdl.enable = lib.mkForce false;
+
+  # Define a machine-specific environment variable.
+  env.MY_LOCAL_SETTING = "example";
+}
+```
+
+The `devenv.local.nix` file is intended for personal configuration and is already excluded by the repository's `.gitignore`. Changes to this file will therefore not affect other contributors and should not be committed.
+
 Devenv will automatically give you access to all other relevant tools
 
  * uv
