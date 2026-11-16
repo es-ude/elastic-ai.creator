@@ -10,21 +10,23 @@ from elasticai.creator.ir2verilog import (
     type_handler_iterable,
 )
 
+_template = None
+
 
 @type_handler_iterable()
 def absolute(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.act_func"
     path2file = "verilog/absolute.v"
-
-    _template = (
-        TemplateDirector()
-        .parameter("BITWIDTH_IN")
-        .parameter("BITWIDTH_OUT")
-        .add_module_name()
-        .set_prototype("\n".join(read_text(package_path, path2file)))
-        .build()
-    )
-
+    global _template
+    if _template is None:
+        _template = (
+            TemplateDirector()
+            .parameter("BITWIDTH_IN")
+            .parameter("BITWIDTH_OUT")
+            .add_module_name()
+            .set_prototype("\n".join(read_text(package_path, path2file)))
+            .build()
+        )
     code = list()
     code.append(
         (
