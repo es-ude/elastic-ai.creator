@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from elasticai.creator.base_modules.prelu import PReLU as PReLUBase
@@ -45,7 +45,7 @@ class PReLU(DesignCreatorModule, PReLUBase):
 
     def get_params_quant(self) -> list[int]:
         weights = self.get_params()
-        q_weights = cast(list[int], self._config.cut_as_integer(weights))
+        q_weights = list(map(self._config.cut_as_integer, weights))  # type: ignore
         return q_weights
 
     def create_design(self, name: str) -> PReLUDesign:

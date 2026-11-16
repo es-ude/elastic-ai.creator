@@ -1,5 +1,3 @@
-from typing import cast
-
 from elasticai.creator.arithmetic import FxpArithmetic, FxpParams
 from elasticai.creator.base_modules.leaky_relu import LeakyReLU as LeakyReLUBase
 from elasticai.creator.nn.design_creator_module import DesignCreatorModule
@@ -34,7 +32,7 @@ class LeakyReLU(DesignCreatorModule, LeakyReLUBase):
 
     def get_params_quant(self) -> list[int]:
         weights = self.get_params()
-        q_weights = cast(list[int], self._config.cut_as_integer(weights))
+        q_weights = list(map(self._config.cut_as_integer, weights))  # type: ignore
         return q_weights
 
     def create_design(self, name: str) -> LeakyReLUDesign:

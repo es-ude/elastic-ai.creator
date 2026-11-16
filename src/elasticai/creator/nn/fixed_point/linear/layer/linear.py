@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from elasticai.creator.arithmetic import (
     FxpArithmetic,
@@ -39,8 +39,8 @@ class Linear(DesignCreatorModule, LinearBase):
 
     def get_params_quant(self) -> tuple[list[list[int]], list[int]]:
         weights, bias = self.get_params()
-        q_weights = cast(list[list[int]], self._config.cut_as_integer(weights))
-        q_bias = cast(list[int], self._config.cut_as_integer(bias))
+        q_weights = list(map(self._config.cut_as_integer, weights))  # type: ignore
+        q_bias = list(map(self._config.cut_as_integer, bias))  # type: ignore
         return q_weights, q_bias
 
     def create_design(self, name: str) -> LinearDesign:
