@@ -16,7 +16,6 @@ _template = None
 @type_handler_iterable()
 def mult_lut_signed(impl: DataGraph, _: Registry) -> Iterable[Code]:
     package_path = "elasticai.creator_plugins.multipliers"
-
     if impl.attributes["BITWIDTH"] in [2, 4, 6, 8, 10, 12]:
         path2file = f"verilog/mult_dadda_s{impl.attributes['BITWIDTH']}.v"
     else:

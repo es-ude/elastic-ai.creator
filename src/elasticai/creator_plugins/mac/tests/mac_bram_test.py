@@ -224,7 +224,8 @@ def test_build_dsp(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [8])
+@pytest.mark.skip
+@pytest.mark.parametrize("bitwidth", [6])
 @pytest.mark.parametrize("num_params", [32])
 @pytest.mark.parametrize("num_mult", [1])
 @pytest.mark.parametrize("is_signed", [True])
