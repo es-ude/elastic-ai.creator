@@ -40,17 +40,17 @@ module MAC#(
     input wire DO_CALC,
     input wire DO_CLEAR,
     output wire RNW_BRAM,
-    output wire [(NUM_MULT * INDEX_BITWIDTH)-'d1:0] IDX_BRAM,
-    input wire signed [(NUM_MULT* BITWIDTH) -'d1:0] IN_BRAM,
-    input wire signed [(NUM_MULT* BITWIDTH) -'d1:0] IN_DATA,
-    output wire signed [(2* BITWIDTH) -'d1:0] OUT_DATA,
+    output wire [(NUM_MULT * INDEX_BITWIDTH)-1:0] IDX_BRAM,
+    input wire signed [(NUM_MULT* BITWIDTH) -1:0] IN_BRAM,
+    input wire signed [(NUM_MULT* BITWIDTH) -1:0] IN_DATA,
+    output wire signed [BITWIDTH-1:0] OUT_DATA,
     output wire DATA_RDY
 );
     localparam integer INDEX_WEIGHTS_STOPP = INDEX_WEIGHTS_START + SIZE_INPUT + 1;
     localparam integer NUM_K_PIPELINE_STAGE = 2;
     localparam integer NUM_CYC_COMPLETE_WOPAD = SIZE_INPUT / NUM_MULT;
     localparam integer NUM_ZERO_PADDING = (NUM_K_PIPELINE_STAGE * NUM_MULT) + (SIZE_INPUT - NUM_CYC_COMPLETE_WOPAD * NUM_MULT);
-    localparam integer NUM_CYC_COMPLETE = 'd1 + SIZE_INPUT / NUM_MULT;
+    localparam integer NUM_CYC_COMPLETE = 1 + SIZE_INPUT / NUM_MULT;
     localparam integer NUM_CYC_CNTSTOP = NUM_CYC_COMPLETE + 1;
 
     // --- Definition of internal signals and register
@@ -61,8 +61,8 @@ module MAC#(
     assign do_clear_mac = (do_operation && (cnt_cyc_calc == 'd0)) || DO_CLEAR;
 
     // --- Interfacing the BRAM with the MAC core
-    wire signed [BITWIDTH-'d1:0] bias_bram;
-    wire signed [(NUM_MULT*BITWIDTH)-'d1:0] piped_data, piped_weights;
+    wire signed [BITWIDTH-1:0] bias_bram;
+    wire signed [(NUM_MULT*BITWIDTH)-1:0] piped_data, piped_weights;
 
     genvar g;
     generate

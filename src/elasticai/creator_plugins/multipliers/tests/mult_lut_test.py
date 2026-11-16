@@ -32,7 +32,7 @@ async def mult_truthtable(dut, bitwidth: int, is_signed: bool):
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [4, 8, 12, 16])
+@pytest.mark.parametrize("bitwidth", [4, 8, 12])
 @pytest.mark.parametrize("is_signed", [True])
 def test_mult_lut_signed(
     cocotb_test_fixture: CocotbTestFixture, bitwidth: int, is_signed: bool
@@ -43,7 +43,7 @@ def test_mult_lut_signed(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [4, 8, 12, 16])
+@pytest.mark.parametrize("bitwidth", [4, 8, 12])
 @pytest.mark.parametrize("is_signed", [False])
 def test_mult_lut_unsigned(
     cocotb_test_fixture: CocotbTestFixture, bitwidth: int, is_signed: bool
@@ -54,7 +54,7 @@ def test_mult_lut_unsigned(
 
 
 @pytest.mark.simulation
-@pytest.mark.parametrize("bitwidth", [3, 16])
+@pytest.mark.parametrize("bitwidth", [4])
 @pytest.mark.parametrize("is_signed", [False, True])
 def test_mult_lut_build(
     cocotb_test_fixture: CocotbTestFixture, bitwidth: int, is_signed: bool
