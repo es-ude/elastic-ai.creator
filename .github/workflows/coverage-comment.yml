@@ -34,10 +34,16 @@ jobs:
           github-token: ${{ github.token }}
       - name: Create comment
         id: comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           python3 -I - <<'PY'
+          import json
           import os
           import re
+          import subprocess
           import sys
           from collections import defaultdict
           from pathlib import Path
@@ -50,32 +56,76 @@ jobs:
               sys.exit("invalid pull request number")
 
           root = ElementTree.parse(artifact / "coverage.xml").getroot()
-          total = float(root.get("line-rate", 0)) * 100
+          total_lines = int(root.get("lines-valid", 0))
+          total_covered = int(root.get("lines-covered", 0))
 
-          missed: dict[str, int] = defaultdict(int)
+          covered: dict[str, int] = defaultdict(int)
           lines: dict[str, int] = defaultdict(int)
           for cls in root.iter("class"):
               name = re.sub(r"[^\w./-]", "_", cls.get("filename", ""))
               for line in cls.findall("lines/line"):
                   lines[name] += 1
-                  if line.get("hits") == "0":
-                      missed[name] += 1
+                  if line.get("hits") != "0":
+                      covered[name] += 1
 
-          rows = sorted(
-              ((n, m, lines[n]) for n, m in missed.items() if m > 0),
-              key=lambda row: -row[1],
+          # changed files of the pull request, only the metadata is read
+          changed = json.loads(
+              subprocess.run(
+                  [
+                      "gh", "api", "--paginate", "--slurp",
+                      f"repos/{os.environ['REPO']}/pulls/{pr_number}/files?per_page=100",
+                  ],
+                  check=True, capture_output=True, text=True,
+              ).stdout
           )
+          status = {
+              re.sub(r"[^\w./-]", "_", f["filename"]): f["status"]
+              for page in changed
+              for f in page
+          }
+
+          def percent(cov: int, count: int) -> int:
+              return round(100 * cov / count) if count else 100
+
+          def icon(pct: int, threshold: int = 80) -> str:
+              return "\U0001f7e2" if pct >= threshold else "\U0001f534"
+
+          def table(names: list[str]) -> list[str]:
+              rows = [
+                  "| File | Coverage | Status |",
+                  "| :--- | :------: | :----: |",
+              ]
+              for n in names:
+                  pct = percent(covered[n], lines[n])
+                  rows.append(f"| {n} | {pct}% | {icon(pct)} |")
+              count = sum(lines[n] for n in names)
+              pct = percent(sum(covered[n] for n in names), count)
+              rows.append(f"| **TOTAL** | **{pct}%** | {icon(pct)} |")
+              return rows
+
+          OVERALL_THRESHOLD = 0
+          overall = percent(total_covered, total_lines)
+          new = sorted(n for n in lines if status.get(n) == "added")
+          modified = sorted(
+              n for n in lines if status.get(n) in ("modified", "renamed", "changed")
+          )
+          sha = os.environ["HEAD_SHA"][:7]
           body = [
-              "## Coverage report",
+              "# \u2602\ufe0f Python Coverage",
               "",
-              f"Total line coverage: **{total:.1f}%**",
+              "## Overall Coverage",
+              "| Lines | Covered | Coverage | Threshold | Status |",
+              "| :---: | :-----: | :------: | :-------: | :----: |",
+              f"| {total_lines} | {total_covered} | {overall}% | {OVERALL_THRESHOLD}% | {icon(overall, OVERALL_THRESHOLD)} |",
+              "",
+              "## New Files",
+              *(table(new) if new else ["No new covered files..."]),
+              "",
+              "## Modified Files",
+              *(table(modified) if modified else ["No covered modified files..."]),
+              "",
+              f"> updated for commit: `{sha}`",
           ]
-          if rows:
-              body += ["", "| File | Missed lines | Coverage |", "|---|---|---|"]
-              for name, miss, count in rows[:30]:
-                  body.append(f"| `{name}` | {miss} | {100 * (count - miss) / count:.1f}% |")
-              if len(rows) > 30:
-                  body += ["", f"... and {len(rows) - 30} more files with missed lines."]
           Path("comment.md").write_text("\n".join(body) + "\n")
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
