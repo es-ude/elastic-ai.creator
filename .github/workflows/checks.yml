@@ -58,11 +58,8 @@ jobs:
         run: devenv tasks run package:build --mode before
 
   check-docs-build:
-    name: check that docs build
+    name: Check that docs build
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: read
     steps:
       - name: checkout repo shallowly
         uses: actions/checkout@v7
@@ -76,25 +73,19 @@ jobs:
           nix run nixpkgs#monolith -- build/docs/index.html > build/docs/single_page.html
       - name: compress docs preview
         run: gzip -9 -c build/docs/single_page.html > build/docs/single_page.html.gz
+      - name: Save PR number
+        if: github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.number }}" > build/docs/pr-number
+      # the preview is commented by docs-comment.yml, since the token of
+      # pull requests from forks is read-only and cannot comment
       - name: Upload docs preview
         uses: actions/upload-artifact@v7
-        id: artifact-upload
         with:
           name: docs-preview
-          path: build/docs/single_page.html.gz
-          retention-days: 1
-      - name: Comment on PR
-        # the token of pull requests from forks is read-only and cannot comment
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: thollander/actions-comment-pull-request@v3
-        with:
-          comment-tag: docs-preview
-          message: |
-            📚 Documentation preview has been built and attached as an artifact.
-
-            [Download Documentation Preview](${{ steps.artifact-upload.outputs.artifact-url }})
-
-            You can also find it in the "Artifacts" section of this workflow run.
+          path: |
+            build/docs/single_page.html.gz
+            build/docs/pr-number
+          retention-days: 28
 
   check-tests:
     name: Run all tests
@@ -121,4 +112,4 @@ jobs:
           path: |
             coverage.xml
             pr-number
-          retention-days: 1
+          retention-days: 28

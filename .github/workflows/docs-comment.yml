@@ -1,0 +1,66 @@
+name: Docs preview comment
+
+# Comments the link to the documentation preview on pull requests, including
+# those from forks. The token of the pull_request run of "Checks" is read-only
+# for forks, so that workflow only uploads the preview as an artifact and this
+# one, which runs in the context of the base repository, comments it.
+#
+# SECURITY: this workflow has a write token. It must never check out or run code
+# of the pull request. The artifact is untrusted data and only the pull request
+# number is parsed from it.
+on:
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+
+permissions:
+  actions: read # download the artifact of the triggering run
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment docs preview
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download pull request number
+        uses: actions/download-artifact@v8
+        with:
+          name: docs-preview
+          path: docs-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Create comment
+        id: comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          pr_number="$(tr -d '[:space:]' < docs-artifact/pr-number)"
+          if ! [[ "$pr_number" =~ ^[0-9]{1,9}$ ]]; then
+            echo "invalid pull request number" >&2
+            exit 1
+          fi
+          artifact_id="$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/artifacts?name=docs-preview" --jq '.artifacts[0].id')"
+          if ! [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+            echo "docs-preview artifact not found" >&2
+            exit 1
+          fi
+          cat > comment.md <<MSG
+          📚 Documentation preview has been built and attached as an artifact.
+
+          [Download Documentation Preview](https://github.com/${REPO}/actions/runs/${RUN_ID}/artifacts/${artifact_id})
+
+          You can also find it in the "Artifacts" section of the workflow run.
+          MSG
+          echo "pr-number=${pr_number}" >> "$GITHUB_OUTPUT"
+      - name: Comment on PR
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          comment-tag: docs-preview
+          pr-number: ${{ steps.comment.outputs.pr-number }}
+          file-path: comment.md
