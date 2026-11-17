@@ -87,8 +87,8 @@ jobs:
             build/docs/pr-number
           retention-days: 28
 
-  check-tests:
-    name: Run all tests
+  check-fast-tests:
+    name: Run fast tests
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo shallowly
@@ -97,8 +97,8 @@ jobs:
           fetch-depth: 1
       - name: prepare devenv
         uses: ./.github/actions/prepare-devenv
-      - name: run tests
-        run: devenv --option torch.backend:string "cpu" tasks run check:tests --mode before
+      - name: run fast tests
+        run: devenv --option torch.backend:string "cpu" tasks run check:fast-tests --mode before
       - name: Save PR number
         if: github.event_name == 'pull_request'
         run: echo "${{ github.event.pull_request.number }}" > pr-number
@@ -113,3 +113,16 @@ jobs:
             coverage.xml
             pr-number
           retention-days: 28
+
+  check-slow-tests:
+    name: Run slow and simulation tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo shallowly
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - name: prepare devenv
+        uses: ./.github/actions/prepare-devenv
+      - name: run slow tests
+        run: devenv --option torch.backend:string "cpu" tasks run check:slow-tests --mode before
