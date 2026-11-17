@@ -38,6 +38,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           python3 -I - <<'PY'
           import json
@@ -110,6 +111,22 @@ jobs:
               n for n in lines if status.get(n) in ("modified", "renamed", "changed")
           )
           sha = os.environ["HEAD_SHA"][:7]
+          artifact_id = json.loads(
+              subprocess.run(
+                  [
+                      "gh", "api",
+                      f"repos/{os.environ['REPO']}/actions/runs/{os.environ['RUN_ID']}/artifacts?name=coverage",
+                      "--jq", ".artifacts[0].id",
+                  ],
+                  check=True, capture_output=True, text=True,
+              ).stdout
+          )
+          if not isinstance(artifact_id, int):
+              sys.exit("coverage artifact not found")
+          artifact_url = (
+              f"https://github.com/{os.environ['REPO']}"
+              f"/actions/runs/{os.environ['RUN_ID']}/artifacts/{artifact_id}"
+          )
           body = [
               "# \u2602\ufe0f Python Coverage",
               "",
@@ -123,6 +140,8 @@ jobs:
               "",
               "## Modified Files",
               *(table(modified) if modified else ["No covered modified files..."]),
+              "",
+              f"[Download coverage report]({artifact_url})",
               "",
               f"> updated for commit: `{sha}`",
           ]
