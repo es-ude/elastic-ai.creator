@@ -152,7 +152,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             q_inputs, self.inputs_QParams.zero_point, self.inputs_QParams.quant_bits + 1
         )
         # integer-only
-        tmp = self.math_ops.int_dotproduct(
+        tmp = self.math_ops.int_elementwise_mul(
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
 

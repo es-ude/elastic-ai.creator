@@ -20,7 +20,7 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
 @pytest.fixture
 def linear_layer() -> Linear:
     linear_layer = Linear(
-        name="linear", in_features=3, out_features=10, bias=True, quant_bits=8
+        name="linear", in_features=3, out_features=10, bias=True, quant_bits=8, bias_bits=8
     )
 
     linear_layer.weight.data = torch.tensor(
@@ -99,32 +99,29 @@ def weights_quant_params(linear_layer, eps):
         weights_min_float,
         weights_max_float,
     )
-
-
 @pytest.fixture
-def bias_quant_params(linear_layer, eps):
-    bias_scale_factor, bias_zero_point, bias_min_float, bias_max_float = (
-        calculate_symmetric_quant_params(
-            min_float=linear_layer.bias.min(),
-            max_float=linear_layer.bias.max(),
-            min_quant=linear_layer.bias_QParams.min_quant,
-            max_quant=linear_layer.bias_QParams.max_quant,
-            eps=eps,
-        )
-    )
+def bias_quant_params(inputs_quant_params, weights_quant_params):
+    input_scale_factor, _ , _, _= inputs_quant_params
+    weights_scale_factor, _ , _, _= weights_quant_params
+    bias_scale_factor= input_scale_factor*weights_scale_factor
+    bias_zero_point, bias_min_float, bias_max_float = torch.tensor([0], dtype=torch.int32), -127*bias_scale_factor, 127*bias_scale_factor
     return (bias_scale_factor, bias_zero_point, bias_min_float, bias_max_float)
 
-
 @pytest.fixture
-def outputs_quant_params(linear_layer, inputs, eps):
+def outputs_quant_params(linear_layer, inputs, bias_quant_params, eps):
     linear_layer.train()
     linear_layer.inputs_QParams.update_quant_params(inputs)
     linear_layer.weight_QParams.update_quant_params(linear_layer.weight)
-    linear_layer.bias_QParams.update_quant_params(linear_layer.bias)
+    bias_scale_factor, _, min_float, max_float= bias_quant_params
+    bias_qparams= linear_layer.bias_QParams
+    bias_qparams.set_scale_factor(bias_scale_factor)
+    bias_qparams.min_float=min_float
+    bias_qparams.max_float=max_float
+    
 
     inputs = SimQuant.apply(inputs, linear_layer.inputs_QParams)
     weight = SimQuant.apply(linear_layer.weight, linear_layer.weight_QParams)
-    bias = SimQuant.apply(linear_layer.bias, linear_layer.bias_QParams)
+    bias = SimQuant.apply(linear_layer.bias, bias_qparams)
 
     outputs = F.linear(inputs, weight, bias)
 
@@ -162,21 +159,22 @@ def q_weights_subtracted(linear_layer, weights_quant_params):
 
 
 @pytest.fixture
-def q_bias_subtracted(linear_layer, inputs_quant_params, weights_quant_params):
-    inputs_scale_factor, _, _, _ = inputs_quant_params
-    weights_scale_factor, _, _, _ = weights_quant_params
-
-    new_bias_scale_factor = inputs_scale_factor * weights_scale_factor
-    new_bias_zero_point = torch.tensor([0], dtype=torch.int32)
-    q_bias = linear_layer.bias / new_bias_scale_factor + new_bias_zero_point
+def q_bias_subtracted(linear_layer, inputs_quant_params, weights_quant_params, bias_quant_params):
+    bias_scale, bias_zero_point, _, _ = bias_quant_params
+   
+    q_bias = linear_layer.bias / bias_scale + bias_zero_point
     q_bias = q_bias.round_()
     new_quant_bits = linear_layer.bias_bits
+    qmax = (1 << (new_quant_bits - 1)) - 1
+    qmin = -qmax
+    q_bias=q_bias.clamp(qmin, qmax)
+   
     q_bias = q_bias.clone().detach().to(torch.int32)
 
-    q_bias_subtracted = q_bias - new_bias_zero_point
+    q_bias_subtracted = q_bias - bias_zero_point
     q_bias_subtracted = q_bias_subtracted.clone().detach().to(torch.int32)
 
-    return new_bias_scale_factor, new_bias_zero_point, new_quant_bits, q_bias_subtracted
+    return bias_scale, bias_zero_point, new_quant_bits, q_bias_subtracted
 
 
 @pytest.fixture
@@ -432,6 +430,8 @@ def test_update_quant_params_of_bias_QParams_in_forward(
     bias_scale_factor, bias_zero_point, bias_min_float, bias_max_float = (
         bias_quant_params
     )
+    print(bias_scale_factor)
+   
     expected_min_float = bias_min_float
     expected_max_float = bias_max_float
     expected_scale_factor = bias_scale_factor
@@ -440,10 +440,12 @@ def test_update_quant_params_of_bias_QParams_in_forward(
     actual_min_float = linear_layer.bias_QParams.min_float
     actual_max_float = linear_layer.bias_QParams.max_float
     actual_scale_factor = linear_layer.bias_QParams.scale_factor
+    print(actual_scale_factor)
+    print(expected_scale_factor)
     actual_zero_point = linear_layer.bias_QParams.zero_point
-
-    assert expected_min_float == actual_min_float
-    assert expected_max_float == actual_max_float
+    
+    assert expected_min_float== actual_min_float
+    assert expected_max_float== actual_max_float
     assert torch.allclose(expected_scale_factor, actual_scale_factor, atol=1e-5)
     assert torch.equal(expected_zero_point, actual_zero_point)
 

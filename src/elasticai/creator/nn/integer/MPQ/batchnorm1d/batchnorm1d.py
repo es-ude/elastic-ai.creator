@@ -184,7 +184,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             self.inputs_QParams.quant_bits.item() + 1,
         )
         # integer-only
-        tmp = self.math_ops.int_dotproduct(
+        tmp = self.math_ops.int_elementwise_mul(
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
 

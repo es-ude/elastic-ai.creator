@@ -238,17 +238,7 @@ def test_conv1dbn_quantized_bn_folding(
         reference_output = actual_layer.outputs_QParams.dequantize(
             actual_layer.outputs_QParams.quantize(reference_output)
         )
-    print("zero point: ", actual_layer.weight_QParams.zero_point)
-
     error = (y_quantized - reference_output).abs()
-    print("Input scale:", actual_layer.inputs_QParams.scale_factor)
-    print("Weight scale:", actual_layer.weight_QParams.scale_factor)
-    print("Output scale:", actual_layer.outputs_QParams.scale_factor)
-    print("Max error:", error.max().item())
-    print("Mean error:", error.mean().item())
-    tolerance = 3 * actual_layer.outputs_QParams.scale_factor
-    print("Max error:", error.max().item())
-    print("Mean error:", error.mean().item())
-    print("Tolerance:", tolerance)
+    #The error threshold might have to be adjusted in the future. This has not been chosen with a rigorous analysis.
     assert error.mean() < 0.05
 

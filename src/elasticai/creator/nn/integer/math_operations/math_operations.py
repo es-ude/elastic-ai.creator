@@ -34,8 +34,8 @@ class MathOperations:
         assert a.dtype == torch.int32
         assert b.dtype == torch.int32
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
+        a_cpu = a.cpu()
+        b_cpu = b.cpu()
 
         m, k = a_cpu.shape
         k, n = b_cpu.shape
@@ -62,11 +62,11 @@ class MathOperations:
 
         product_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
         result_bits = accumulator_bits(product_bits, x.shape[-1], b)
-        tmp = F.linear(x.to(torch.int32), w.to(device=x.device, dtype=torch.int32))
+        tmp = F.linear(x, w.to(x.device))
 
         if b is not None:
             assert b.dtype == torch.int32
-            tmp = tmp + b.to(device=x.device, dtype=torch.int32)
+            tmp = tmp + b.to(x.device)
 
         return self.clamp_result(tmp, result_bits)
 
@@ -120,26 +120,18 @@ class MathOperations:
     def inthadamardproduct(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
     ) -> torch.IntTensor:
-        assert a.dtype == torch.int32
-        assert b.dtype == torch.int32
         assert a.shape == b.shape
+        return self.int_elementwise_mul(a, b, c_quant_bits=c_quant_bits)
+        
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
-
-        dot_product = a_cpu * b_cpu
-
-        dot_product = dot_product.to(a.device)
-        return self.clamp_result(dot_product, c_quant_bits)
-
-    def int_dotproduct(
+    def int_elementwise_mul(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
     ) -> torch.IntTensor:
         assert a.dtype == torch.int32
         assert b.dtype == torch.int32
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
+        a_cpu = a.cpu()
+        b_cpu = b.cpu()
 
         dot_product = a_cpu * b_cpu
 
@@ -149,11 +141,11 @@ class MathOperations:
     def int_division(
         self, a: torch.IntTensor, b: torch.IntTensor, c_quant_bits: int
     ) -> torch.IntTensor:
-        assert a.dtype == torch.int32 or a.dtype == torch.int32
-        assert b.dtype == torch.int32 or b.dtype == torch.int32
+        assert a.dtype == torch.int32
+        assert b.dtype == torch.int32
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
+        a_cpu = a.cpu()
+        b_cpu = b.cpu()
 
         division = a_cpu // b_cpu
 

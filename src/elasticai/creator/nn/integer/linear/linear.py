@@ -166,7 +166,11 @@ class Linear(DesignCreatorModule, nn.Linear):
 
                 self.weight_QParams.update_quant_params(self.weight)
                 if self.bias is not None:
-                    self.bias_QParams.update_quant_params(self.bias)
+                    bias_scale= self.inputs_QParams.scale_factor*self.weight_QParams.scale_factor
+                    with torch.no_grad():
+                        self.bias_QParams.set_scale_factor(bias_scale)
+                        self.bias_QParams.min_float.copy_(self.bias_QParams.min_quant * bias_scale)
+                        self.bias_QParams.max_float.copy_(self.bias_QParams.max_quant * bias_scale)
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)

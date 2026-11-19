@@ -29,14 +29,15 @@ def test_separate_activation_and_weight_widths_in_integer_inference(convolution)
     layer.weight_QParams.zero_point.fill_(1)
     layer.outputs_QParams.scale_factor.fill_(0.125)
     layer.outputs_QParams.zero_point.fill_(5)
-    inputs = torch.tensor([[0.5, -0.5]])
+    # With input scale 0.25 and zero point -3, these codes represent [0.5, -0.5].
+    input_codes = torch.tensor([[-1, -5]], dtype=torch.int32)
+    # The dot product is 0.5, which maps to output code 0.5 / 0.125 + 5 = 9.
+    expected_codes = torch.tensor([[9]], dtype=torch.int32)
     if convolution:
-        inputs = inputs.unsqueeze(-1)
+        input_codes = input_codes.unsqueeze(-1)
+        expected_codes = expected_codes.unsqueeze(-1)
     layer.precompute()
-    expected = layer.outputs_QParams.quantize(layer(inputs, enable_simquant=False))
-    torch.testing.assert_close(
-        layer.int_forward(layer.inputs_QParams.quantize(inputs)), expected
-    )
+    torch.testing.assert_close(layer.int_forward(input_codes), expected_codes)
 
 
 def test_composed_uniform_layer_forwards_both_widths():
