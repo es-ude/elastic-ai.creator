@@ -19,9 +19,6 @@ from elasticai.creator.nn.integer.quant_utils.QParams import (
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     SymmetricSignedQParams as SymmetricSignedQParams,
 )
-from elasticai.creator.nn.integer.quant_utils.QParams import (
-    SymmetricUnsignedQParams as SymmetricUnsignedQParams,
-)
 
 warnings.warn(
     "elasticai.creator.nn.integer.quant_utils.MPQParams is deprecated and will"

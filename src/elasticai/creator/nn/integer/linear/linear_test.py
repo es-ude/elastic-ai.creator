@@ -4,10 +4,6 @@ from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.linear.linear import Linear
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
-from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
-    calculate_asymmetric_quant_params,
-    calculate_symmetric_quant_params,
-)
 from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
 from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.scaling_M import scaling_M
@@ -59,64 +55,40 @@ def inputs():
 
 
 @pytest.fixture
-def eps():
-    return torch.tensor(
-        (torch.finfo(torch.float32).eps),
-        dtype=torch.float32,
-        requires_grad=False,
-    )
-
-
-@pytest.fixture
-def inputs_quant_params(inputs, eps):
-    inputs_scale_factor, inputs_zero_point, inputs_min_float, inputs_max_float = (
-        calculate_asymmetric_quant_params(
-            min_float=inputs.min(),
-            max_float=inputs.max(),
-            min_quant=torch.tensor([-128], dtype=torch.int32),
-            max_quant=torch.tensor([127], dtype=torch.int32),
-            eps=eps,
-        )
-    )
-    return (inputs_scale_factor, inputs_zero_point, inputs_min_float, inputs_max_float)
-
-
-@pytest.fixture
-def weights_quant_params(linear_layer, eps):
-    weights_scale_factor, weights_zero_point, weights_min_float, weights_max_float = (
-        calculate_asymmetric_quant_params(
-            min_float=linear_layer.weight.min(),
-            max_float=linear_layer.weight.max(),
-            min_quant=torch.tensor([-128], dtype=torch.int32),
-            max_quant=torch.tensor([127], dtype=torch.int32),
-            eps=eps,
-        )
-    )
-
+def inputs_quant_params():
+    # range [-1.0, 0.5] mapped onto [-128, 127]
     return (
-        weights_scale_factor,
-        weights_zero_point,
-        weights_min_float,
-        weights_max_float,
+        torch.tensor([0.0058823530562222], dtype=torch.float32),
+        torch.tensor([42], dtype=torch.int32),
+        torch.tensor(-1.0, dtype=torch.float32),
+        torch.tensor(0.5, dtype=torch.float32),
     )
 
 
 @pytest.fixture
-def bias_quant_params(linear_layer, eps):
-    bias_scale_factor, bias_zero_point, bias_min_float, bias_max_float = (
-        calculate_symmetric_quant_params(
-            min_float=linear_layer.bias.min(),
-            max_float=linear_layer.bias.max(),
-            min_quant=torch.tensor([-127], dtype=torch.int32),
-            max_quant=torch.tensor([127], dtype=torch.int32),
-            eps=eps,
-        )
+def weights_quant_params():
+    # range [-1.2, 1.2] mapped onto [-128, 127]
+    return (
+        torch.tensor([0.00941176526248455], dtype=torch.float32),
+        torch.tensor([0], dtype=torch.int32),
+        torch.tensor(-1.2, dtype=torch.float32),
+        torch.tensor(1.2, dtype=torch.float32),
     )
-    return (bias_scale_factor, bias_zero_point, bias_min_float, bias_max_float)
 
 
 @pytest.fixture
-def outputs_quant_params(linear_layer, inputs, eps):
+def bias_quant_params():
+    # symmetric range [-0.6, 0.6] mapped onto [-127, 127]
+    return (
+        torch.tensor([0.004724409431219101], dtype=torch.float32),
+        torch.tensor([0], dtype=torch.int32),
+        torch.tensor(-0.6, dtype=torch.float32),
+        torch.tensor(0.6, dtype=torch.float32),
+    )
+
+
+@pytest.fixture
+def outputs_quant_params(linear_layer, inputs):
     linear_layer.train()
     linear_layer.inputs_QParams.update_quant_params(inputs)
     linear_layer.weight_QParams.update_quant_params(linear_layer.weight)
@@ -128,15 +100,11 @@ def outputs_quant_params(linear_layer, inputs, eps):
 
     outputs = F.linear(inputs, weight, bias)
 
-    outputs_scale_factor, outputs_zero_point, outputs_min_float, outputs_max_float = (
-        calculate_asymmetric_quant_params(
-            min_float=outputs.min(),
-            max_float=outputs.max(),
-            min_quant=torch.tensor([-128], dtype=torch.int32),
-            max_quant=torch.tensor([127], dtype=torch.int32),
-            eps=eps,
-        )
-    )
+    # outputs range [-1.5498, 0.4541] mapped onto [-128, 127]
+    outputs_scale_factor = torch.tensor([0.00785854086279869], dtype=torch.float32)
+    outputs_zero_point = torch.tensor([69], dtype=torch.int32)
+    outputs_min_float = torch.tensor(-1.5498101711273193, dtype=torch.float32)
+    outputs_max_float = torch.tensor(0.45411768555641174, dtype=torch.float32)
 
     return (
         outputs,

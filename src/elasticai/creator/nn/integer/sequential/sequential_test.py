@@ -6,9 +6,6 @@ import torch
 from torch import nn
 
 from elasticai.creator.nn.integer.linear.linear import Linear
-from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
-    calculate_asymmetric_quant_params,
-)
 from elasticai.creator.nn.integer.relu.relu import ReLU
 from elasticai.creator.nn.integer.sequential.sequential import Sequential
 
@@ -83,27 +80,13 @@ def inputs():
 
 
 @pytest.fixture
-def eps():
-    return torch.tensor(
-        (torch.finfo(torch.float32).eps),
-        dtype=torch.float32,
-        requires_grad=False,
-    )
-
-
-@pytest.fixture
-def q_inputs(inputs, eps):
-    min_float = inputs.min()
-    max_float = inputs.max()
-    min_quant = torch.tensor([-128], dtype=torch.int32)
-    max_quant = torch.tensor([127], dtype=torch.int32)
-
-    scale_factor, zero_point, min_float, max_float = calculate_asymmetric_quant_params(
-        min_float, max_float, min_quant, max_quant, eps
-    )
+def q_inputs(inputs):
+    # inputs range [-1.0, 0.5] mapped onto [-128, 127]
+    scale_factor = torch.tensor([0.0058823530562222], dtype=torch.float32)
+    zero_point = torch.tensor([42], dtype=torch.int32)
 
     q_inputs = inputs / scale_factor + zero_point
-    q_inputs = q_inputs.round_().clamp(min=min_quant.item(), max=max_quant.item())
+    q_inputs = q_inputs.round_().clamp(min=-128, max=127)
     q_inputs = q_inputs.to(torch.int32)
     return q_inputs
 

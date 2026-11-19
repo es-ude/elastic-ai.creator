@@ -11,6 +11,11 @@ forbid_circular_dependencies = true
 root_module = "dependenciesonly"
 source_roots = ["./src/", "./plugins/lutron_filter/src/"]
 
+[external]
+# TODO: Remove "hypothesis" once the unit tests of nn.integer are moved to the
+# tests directory. Until then they live in src and import it.
+exclude = ["hypothesis"]
+
 [[modules]]
 path = "elasticai.creator.ir"
 depends_on = ["elasticai.creator.graph"]
