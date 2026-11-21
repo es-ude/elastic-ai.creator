@@ -10,6 +10,7 @@ from .datagraph_impl import (
     NodeImpl,
 )
 from .datagraph_rewriting import (
+    NameRegistry,
     Pattern,
     PatternRule,
     PatternRuleSpec,
@@ -40,6 +41,7 @@ __all__ = [
     "NodeImpl",
     "DataGraph",
     "Edge",
+    "NameRegistry",
     "Node",
     "NodeEdgeFactory",
     "ReadOnlyDataGraph",
