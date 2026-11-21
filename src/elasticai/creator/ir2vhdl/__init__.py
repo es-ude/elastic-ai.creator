@@ -1,3 +1,6 @@
+from elasticai.creator.hdl_ir import collect_transitive_implementation_closure
+from elasticai.creator.ir import attribute, compose_rules
+
 from .ir2vhdl import (
     Code,
     DataGraph,
@@ -36,6 +39,7 @@ __all__ = [
     "Edge",
     "Code",
     "Node",
+    "attribute",
     "DataGraph",
     "Signal",
     "Instance",
@@ -57,4 +61,6 @@ __all__ = [
     "EntityTemplateParameter",
     "ValueTemplateParameter",
     "EntityTemplateDirector",
+    "collect_transitive_implementation_closure",
+    "compose_rules",
 ]

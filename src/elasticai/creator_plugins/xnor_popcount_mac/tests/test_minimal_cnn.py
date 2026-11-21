@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import elasticai.experiment_framework.remote_control as eaixp_rc
@@ -17,6 +18,9 @@ def synthesize(src_dir: Path) -> Path:
     return _synth.synthesize(src_dir) / "results/impl/env5_top_reconfig.bin"
 
 
+_logging = logging.getLogger(__name__)
+
+
 @pytest.mark.hardware
 def test_run_minimal_binary_cnn_defined_in_low_level_ir_on_hardware(tmp_path):
     data_depth = 4
@@ -24,6 +28,7 @@ def test_run_minimal_binary_cnn_defined_in_low_level_ir_on_hardware(tmp_path):
     weight = "10"
     kernel_size = len(weight)
     expected_output_words = b"\x01\x01\x00"
+    _logging.debug(tmp_path)
 
     # Use CNNBuilder instead of build_network
     builder = CNNBuilder(data_out_depth=data_depth - kernel_size + 1)
