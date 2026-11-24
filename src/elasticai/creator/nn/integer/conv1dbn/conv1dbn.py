@@ -8,6 +8,7 @@ from elasticai.creator.nn.integer.math_operations import (
     get_padded_q_inputs,
     get_padding_len,
 )
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -18,6 +19,10 @@ from elasticai.creator.nn.integer.quant_utils import (
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -34,6 +39,9 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         seq_len: int,
         padding: int | str,
         quant_bits: int,
+        weight_bits: int | None = None,
+        activation_bits:int | None = None,
+        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -47,7 +55,11 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
         self.name = name
         self.quant_bits = quant_bits
+        self.weight_bits = (quant_bits if weight_bits is None else weight_bits)
+        self.activation_bits = quant_bits if activation_bits is None else weight_bits
+        self.bias_bits= bias_bits
         self.quant_data_dir = quant_data_dir
+
 
         self.conv1d = nn.Conv1d(
             in_channels=self.in_channels,
@@ -58,16 +70,16 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.bn1d = nn.BatchNorm1d(num_features=out_channels)
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
@@ -76,7 +88,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
     def create_design(self, name: str) -> Conv1dBNDesign:
         return Conv1dBNDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.weight_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
             kernel_size=self.kernel_size,
@@ -97,15 +109,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
     def _get_quantized_weights(self, weight) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = self.weight_QParams.quantize(weight).to("cpu")
-
-        if not self.weight_QParams.is_symmetric:
-            q_weights = self.math_ops.intsub(
-                q_weights,
-                self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits + 1,
-            )
-        return q_weights
+        return quantize_weights(weight, self.weight_QParams)
 
     def _get_quantized_bias(self, bias) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
@@ -113,31 +117,24 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(self.tmp_quant_bits)
-        q_bias = self.bias_QParams.quantize(bias).to("cpu")
-        if not self.bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, self.tmp_quant_bits + 1
-            )
-        return q_bias
+        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
+
+    def _fold_bn(self):
+        std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)
+
+        gamma = self.bn1d.weight / std
+        fused_weight = self.conv1d.weight * gamma.reshape(-1, 1, 1)
+        fused_bias = (
+            gamma * self.conv1d.bias - gamma * self.bn1d.running_mean + self.bn1d.bias
+        )
+        return fused_weight, fused_bias
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
-
-        std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)
-
-        gamma_ = self.bn1d.weight / std
-        fused_weight = self.conv1d.weight * gamma_.reshape(-1, 1, 1)
-        fused_bias = (
-            gamma_ * self.conv1d.bias - gamma_ * self.bn1d.running_mean + self.bn1d.bias
-        )
-
+        fused_weight, fused_bias = self._fold_bn()
+        self.weight_QParams.update_quant_params(fused_weight)
+        self.bias_QParams.update_quant_params(fused_bias)
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
-        self.tmp_quant_bits = (
-            self.inputs_QParams.quant_bits + 1 + self.weight_QParams.quant_bits + 1
-        )
         self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
@@ -146,6 +143,13 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
+        )
+        self.tmp_quant_bits = accumulator_bits(
+            int(self.inputs_QParams.quant_bits)
+            + int(self.weight_QParams.quant_bits)
+            + 2,
+            self.q_fused_weights.shape[1] * self.q_fused_weights.shape[2],
+            self.q_fused_bias,
         )
         self.precomputed = True
 
@@ -171,16 +175,16 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
         if self.q_fused_bias is not None:
             tmp = F.conv1d(
-                q_inputs,
-                self.q_fused_weights,
-                self.q_fused_bias,
+                q_inputs.to(torch.int32),
+                self.q_fused_weights.to(device=q_inputs.device, dtype=torch.int32),
+                self.q_fused_bias.to(device=q_inputs.device, dtype=torch.int32),
                 padding=0,
             )
-            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits + 1)
+            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
         else:
             tmp = F.conv1d(
-                q_inputs,
-                self.q_fused_weights,
+                q_inputs.to(torch.int32),
+                self.q_fused_weights.to(device=q_inputs.device, dtype=torch.int32),
                 padding=0,
             )
             tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
@@ -217,13 +221,20 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             )
 
             mean = tmp_outputs.mean(dim=(0, 2))  # [batch_size, out_channels, seq_len]
-            var = tmp_outputs.var(dim=(0, 2))
-            self.bn1d.running_mean = (
-                1 - self.bn1d.momentum
-            ) * self.bn1d.running_mean + self.bn1d.momentum * mean
-            self.bn1d.running_var = (
-                1 - self.bn1d.momentum
-            ) * self.bn1d.running_var + self.bn1d.momentum * var
+            var = tmp_outputs.var(dim=(0, 2), unbiased=False)
+
+            n = tmp_outputs.shape[0] * tmp_outputs.shape[2]
+
+            running_var = var * n / (n - 1)
+            with torch.no_grad():
+                self.bn1d.running_mean = (
+                    1 - self.bn1d.momentum
+                ) * self.bn1d.running_mean + self.bn1d.momentum * mean
+
+                self.bn1d.running_var = (
+                    1 - self.bn1d.momentum
+                ) * self.bn1d.running_var + self.bn1d.momentum * running_var
+
         else:
             mean = self.bn1d.running_mean
             var = self.bn1d.running_var

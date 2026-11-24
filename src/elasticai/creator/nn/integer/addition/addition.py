@@ -37,7 +37,7 @@ class Addition(DesignCreatorModule, nn.Module):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
+        self.quant_bits=quant_bits
         self.quant_data_dir = quant_data_dir
 
         self.use_pipeline_template = use_pipeline_template

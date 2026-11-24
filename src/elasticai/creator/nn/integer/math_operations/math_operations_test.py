@@ -59,6 +59,17 @@ def test_intsub_with_wrong_dtype(math_ops):
         math_ops.intsub(inputs_a, inputs_b, c_quant_bits)
 
 
+@pytest.mark.parametrize("bits", [33, 64])
+def test_intsub_caps_requested_width_and_warns(math_ops, bits):
+    with pytest.warns(RuntimeWarning, match="using 32 bits instead"):
+        result = math_ops.intsub(
+            torch.tensor([2147483647], dtype=torch.int32),
+            torch.tensor([-2147483647], dtype=torch.int32),
+            bits,
+        )
+    torch.testing.assert_close(result, torch.tensor([-2], dtype=torch.int32))
+
+
 def test_intmatmul_correctly():
     inputs_a = torch.tensor([[127, 34], [56, 78]], dtype=torch.int32)
     inputs_b = torch.tensor([[-54, 29], [39, 12]], dtype=torch.int32)
@@ -84,3 +95,18 @@ def test_intmatmul_with_wrong_dtype():
     math_ops = MathOperations()
     with pytest.raises(TypeError):
         math_ops.intmatmul(inputs_a, inputs_b, c_quant_bits)
+
+
+@pytest.mark.parametrize("bits", [33, 64])
+def test_intadd_caps_requested_width_and_warns(math_ops, bits):
+    inputs = torch.tensor([2_000_000_000], dtype=torch.int32)
+
+    with pytest.warns(RuntimeWarning, match="using 32 bits instead"):
+        result = math_ops.intadd(inputs, inputs, bits)
+
+    torch.testing.assert_close(
+        result, torch.tensor([-294967296], dtype=torch.int32)
+    )
+    torch.testing.assert_close(
+        math_ops.clamp_result(result, 8), torch.tensor([-128], dtype=torch.int32)
+    )

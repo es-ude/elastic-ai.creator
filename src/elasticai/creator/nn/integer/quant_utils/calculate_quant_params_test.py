@@ -1,6 +1,8 @@
 import pytest
 import torch
 
+from elasticai.creator.nn.integer.quant_utils.Observers import GlobalMinMaxObserver
+from elasticai.creator.nn.integer.quant_utils.QParams import AsymmetricSignedQParams
 from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
     calculate_asymmetric_quant_params,
     calculate_symmetric_quant_params,
@@ -220,3 +222,23 @@ def test_symmetric_unsigned_params_use_full_range_for_non_negative_data(eps):
     x_q = (torch.tensor([3.0]) / scale_factor + zero_point).round()
 
     assert x_q.item() == max_quant.item()
+
+@pytest.mark.parametrize("values", [[1.0, 2.0], [-2.0, -1.0]])
+def test_asymmetric_quantization_preserves_one_sided_range(values):
+    qparams = AsymmetricSignedQParams(
+        quant_bits=8,
+        observer=GlobalMinMaxObserver(),
+    )
+    inputs = torch.tensor(values)
+    qparams.update_quant_params(inputs)
+
+    reconstructed = qparams.dequantize(qparams.quantize(inputs))
+
+    # Rounding should introduce at most half a quantization step.
+    max_error = qparams.scale_factor.item() / 2 + 1e-6
+    torch.testing.assert_close(
+        reconstructed,
+        inputs,
+        atol=max_error,
+        rtol=0,
+    )

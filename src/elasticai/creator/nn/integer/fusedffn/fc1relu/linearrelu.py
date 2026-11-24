@@ -16,6 +16,10 @@ from elasticai.creator.nn.integer.quant_utils import (
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -30,6 +34,9 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         out_features: int,
         bias: bool,
         quant_bits: int,
+        weight_bits: int | None = None,
+        activation_bits: int | None = None,
+        bias_bits: int = 32,
         num_dimensions: int | None = None,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
@@ -40,22 +47,27 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
 
         self.name = name
         self.quant_bits = quant_bits
+        self.weight_bits = quant_bits if weight_bits is None else weight_bits
+        self.activation_bits = (
+            quant_bits if activation_bits is None else activation_bits
+        )
+        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         if bias:
             self.bias_QParams = SymmetricSignedQParams(
-                quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+                quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
             ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
@@ -82,33 +94,14 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
 
     def _get_quantized_weights(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
-        q_weights = self.weight_QParams.quantize(self.weight).to("cpu")
-
-        if not self.weight_QParams.is_symmetric:
-            q_weights = self.math_ops.intsub(
-                q_weights,
-                self.weight_QParams.zero_point,
-                self.weight_QParams.quant_bits + 1,
-            )
-        return q_weights
+        return quantize_weights(self.weight, self.weight_QParams)
 
     def _get_quantized_bias(self) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        new_bias_quant_bits = (self.inputs_QParams.quant_bits + 1) + (
-            self.weight_QParams.quant_bits + 1
-        )
-        self.bias_QParams.set_scale_factor(new_bias_scale_factor)
-        self.bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        self.bias_QParams.set_quant_range(new_bias_quant_bits)
-        q_bias = self.bias_QParams.quantize(self.bias).to("cpu")
-        if not self.bias_QParams.is_symmetric:
-            q_bias = self.math_ops.intsub(
-                q_bias, self.bias_QParams.zero_point, new_bias_quant_bits + 1
-            )
-        return q_bias
+        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"

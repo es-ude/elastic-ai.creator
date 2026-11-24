@@ -42,6 +42,9 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
         in_num_dimensions: int,
         out_num_dimensions: int,
         quant_bits: int,
+        weight_bits: int | None = None,
+        activation_bits: int | None= None,
+        bias_bits:int= 32,  
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -67,14 +70,18 @@ class AVGPooling1d(DesignCreatorModule, nn.Module):
         self.out_num_dimensions = out_num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
+        self.quant_bits = activation_bits
+        self.weight_bits= quant_bits if weight_bits is None else weight_bits
+        self.activation_bits = quant_bits if activation_bits is None else activation_bits
+        self.bias_bits = bias_bits
+
         self.quant_data_dir = quant_data_dir
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()

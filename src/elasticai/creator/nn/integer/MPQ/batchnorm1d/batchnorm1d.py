@@ -5,6 +5,7 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.MPQ.batchnorm1d.design import (
     BatchNorm1d as BatchNorm1dDesign,
 )
@@ -19,6 +20,10 @@ from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     QParams,
     SymmetricSignedQParams,
+)
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    quantize_bias,
+    quantize_weights,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -147,7 +152,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         bias: torch.Tensor,
         bias_QParams: QParams,
         given_quant_scale: torch.Tensor,
-        given_quant_bits: int,
     ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
 
@@ -182,7 +186,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             bias=modified_bias,
             bias_QParams=self.bias_QParams,
             given_quant_scale=new_bias_QParms_scale,
-            given_quant_bits=self.tmp_quant_bits,
         )
 
         self.scale_factor_M = (
@@ -212,7 +215,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             self.inputs_QParams.quant_bits + 1,
         )
         # integer-only
-        tmp = self.math_ops.int_dotproduct(
+        tmp = self.math_ops.int_elementwise_mul(
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
 
@@ -255,14 +258,17 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
 
         if self.training:
             mean = inputs.mean(dim=(0, 1), keepdim=False)
-            var = inputs.var(dim=(0, 1), keepdim=False)
+            var = inputs.var(dim=(0, 1), keepdim=False, unbiased=False)
+            n = inputs.shape[0] * inputs.shape[1]
+            running_var = var * n / (n - 1)
 
-            self.running_mean = (
-                1 - self.momentum
-            ) * self.running_mean + self.momentum * mean
-            self.running_var = (
-                1 - self.momentum
-            ) * self.running_var + self.momentum * var
+            with torch.no_grad():
+                self.running_mean = (
+                    1 - self.momentum
+                ) * self.running_mean + self.momentum * mean
+                self.running_var = (
+                    1 - self.momentum
+                ) * self.running_var + self.momentum * running_var
         else:
             mean = self.running_mean
             var = self.running_var

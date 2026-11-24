@@ -27,7 +27,7 @@ class Concatenate(DesignCreatorModule, nn.Module):
         inputs_size: int,
         hidden_size: int,
         num_dimensions: int,
-        quant_bits: int,
+        activation_bits: int,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ) -> None:
@@ -38,7 +38,7 @@ class Concatenate(DesignCreatorModule, nn.Module):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
+        self.quant_bits = activation_bits
         self.quant_data_dir = quant_data_dir
 
         self.inputs1_QParams = AsymmetricSignedQParams(

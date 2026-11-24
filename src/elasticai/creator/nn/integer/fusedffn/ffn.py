@@ -24,6 +24,9 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
         ffn_dim: int,
         num_dimensions: int,
         quant_bits: int,
+        weight_bits: int | None = None,
+        activation_bits: int | None = None,
+        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -32,6 +35,11 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
 
         self.name = name
         self.quant_bits = quant_bits
+        self.weight_bits = quant_bits if weight_bits is None else weight_bits
+        self.activation_bits = (
+            quant_bits if activation_bits is None else activation_bits
+        )
+        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -42,6 +50,8 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -54,16 +64,19 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
             num_dimensions=num_dimensions,
             bias=True,
             quant_bits=self.quant_bits,
+            activation_bits=self.activation_bits,
+            weight_bits=self.weight_bits,
+            bias_bits= self.bias_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False

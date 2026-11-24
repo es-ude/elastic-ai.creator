@@ -28,6 +28,9 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         window_size: int,
         batch_size: int,
         quant_bits: int,
+        weight_bits: int | None = None,
+        activation_bits: int | None = None,
+        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -46,6 +49,12 @@ class StackedRNN(DesignCreatorModule, nn.Module):
 
         self.name = name
         self.quant_bits = quant_bits
+        self.weight_bits = quant_bits if weight_bits is None else weight_bits
+        self.activation_bits = (
+            quant_bits if activation_bits is None else activation_bits
+        )
+        self.bias_bits = bias_bits
+
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = use_pipeline_template
 
@@ -60,6 +69,8 @@ class StackedRNN(DesignCreatorModule, nn.Module):
                     batch_size=self.batch_size,
                     name=self.name + f"_rnn_layer_{i}",
                     quant_bits=self.quant_bits,
+                    activation_bits=self.activation_bits,
+                    weight_bits=self.weight_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                     use_parallelised_template=use_parallelised_template,
@@ -69,16 +80,16 @@ class StackedRNN(DesignCreatorModule, nn.Module):
             )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
