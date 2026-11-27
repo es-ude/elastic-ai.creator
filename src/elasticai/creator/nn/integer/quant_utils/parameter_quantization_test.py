@@ -1,12 +1,17 @@
+import importlib
+
 import pytest
 import torch
 
-from . import MPQParams, QParams
+from . import MPQParams
 from .Observers import GlobalMinMaxObserver
 from .parameter_quantization import quantize_bias, quantize_weights
 
 
-@pytest.fixture(params=[QParams, MPQParams], ids=["standard", "mixed_precision"])
+@pytest.fixture(
+    params=[importlib.import_module(".QParams", __package__), MPQParams],
+    ids=["standard", "mixed_precision"],
+)
 def params_module(request):
     return request.param
 
@@ -44,25 +49,30 @@ def test_weights_preserve_existing_quantization(
         ("AsymmetricUnsignedQParams", [0, 262143]),
     ],
 )
-def test_bias_saturates_at_the_requested_width(params_module, scheme, expected):
+def test_bias_clips_to_accumulator_range(params_module, scheme, expected):
     params = make_params(params_module, scheme)
     params.zero_point.fill_(7)
-    result = quantize_bias(torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), 18)
+    result = quantize_bias(
+        torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), 18
+    )
     torch.testing.assert_close(result, torch.tensor(expected, dtype=torch.int32))
     assert int(params.quant_bits) == 18
     assert params.scale_factor.item() == 2.0**-20
     assert params.zero_point.item() == 0
-    assert params.observer.forward_num.item() == 0
+    assert not params.observer.initialized
     assert result.device.type == "cpu"
 
 
-@pytest.mark.parametrize("bits", [21, 24, 32])
-def test_bias_preserves_values_when_the_requested_width_fits(params_module, bits):
+@pytest.mark.parametrize("accumulator_width", [21, 24, 31])
+def test_bias_fits_in_accumulator_width(params_module, accumulator_width):
     params = make_params(params_module, "SymmetricSignedQParams")
-    result = quantize_bias(torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), bits)
-    torch.testing.assert_close(result, torch.tensor([-524288, 524288], dtype=torch.int32))
-    assert int(params.quant_bits) == bits
-
+    result = quantize_bias(
+        torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), accumulator_width
+    )
+    torch.testing.assert_close(
+        result, torch.tensor([-524288, 524288], dtype=torch.int32)
+    )
+    assert int(params.quant_bits) == accumulator_width
 
 
 def test_32_bit_bias_round_trip_does_not_overflow(params_module):
@@ -78,7 +88,9 @@ def test_32_bit_bias_round_trip_does_not_overflow(params_module):
     "scheme",
     ["SymmetricSignedQParams", "AsymmetricSignedQParams", "AsymmetricUnsignedQParams"],
 )
-def test_low_bit_quantization_rounding_and_saturation(params_module, device, bits, scheme):
+def test_low_bit_quantization_rounding_and_saturation(
+    params_module, device, bits, scheme
+):
     if device == "mps" and not torch.backends.mps.is_available():
         pytest.skip("MPS is unavailable")
     params = make_params(params_module, scheme).to(device)
@@ -91,7 +103,5 @@ def test_low_bit_quantization_rounding_and_saturation(params_module, device, bit
 
     lower, upper = int(params.min_quant.item()), int(params.max_quant.item())
     expected = [max(lower, min(upper, v)) for v in [-1000000, -2, 0, 2, 1000000]]
-    torch.testing.assert_close(
-        result.cpu(), torch.tensor(expected, dtype=torch.int32)
-    )
+    torch.testing.assert_close(result.cpu(), torch.tensor(expected, dtype=torch.int32))
     assert result.device.type == device

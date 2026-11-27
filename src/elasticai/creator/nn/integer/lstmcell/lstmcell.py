@@ -29,7 +29,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         lstm_use_pipeline_template: bool = False,
         device: torch.device | str = torch.device("cpu"),
@@ -46,7 +45,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = lstm_use_pipeline_template
 
@@ -68,7 +66,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             num_dimensions=1,
             bias=True,
-            bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
             activation_bits=self.activation_bits,
             weight_bits=self.weight_bits,
@@ -84,7 +81,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             num_dimensions=1,
             bias=True,
-            bias_bits=self.bias_bits,
             quant_bits=self.quant_bits,
             activation_bits=self.activation_bits,
             weight_bits=self.weight_bits,
@@ -121,7 +117,6 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             activation_bits=self.activation_bits,
             weight_bits=self.weight_bits,
             quant_data_dir=self.quant_data_dir,
-            bias_bits=self.bias_bits,
             device=device,
             use_parallelised_template=use_parallelised_template,
             unroll_factor=unroll_factor,

@@ -51,7 +51,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None= None,
-        bias_bits:int= 32,
         eps: float = 1e-5,
         momentum: float = 0.1,
         affine: bool = True,
@@ -91,7 +90,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         
         self.weight_bits= quant_bits if weight_bits is None else weight_bits
         self.activation_bits = quant_bits if activation_bits is None else activation_bits
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -102,7 +100,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+            quant_bits=32, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
@@ -129,6 +127,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
+            accumulator_width=self.tmp_quant_bits,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -157,7 +156,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         This overwrites the quantization parameters of `bias_QParams`.
         """
         assert not self.training, "int_forward should be called in eval mode"
-        return quantize_bias(bias, bias_QParams, given_quant_scale, self.bias_bits)
+        return quantize_bias(bias, bias_QParams, given_quant_scale, self.tmp_quant_bits)
 
     def precompute(self):
         """Compute the integer parameters for `int_forward` and `create_design`.
@@ -170,8 +169,11 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        self.tmp_quant_bits = (self.weight_QParams.quant_bits + 1) + (
-            self.inputs_QParams.quant_bits + 1
+        self.tmp_quant_bits = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
         )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
@@ -181,8 +183,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             modified_weight, self.modified_weight_QParams
         )
 
-        bias = SimQuant.apply(self.bias, self.bias_QParams)
-        modified_bias = bias - modified_weight * mean
+        modified_bias = self.bias - modified_weight * mean
         new_bias_QParms_scale = (
             self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
         )
@@ -232,7 +233,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         )
 
         tmp = self.math_ops.intadd(
-            tmp, self.q_bias, accumulator_bits(self.tmp_quant_bits, bias=self.q_bias)
+            tmp, self.q_bias, self.tmp_quant_bits
         )
 
         tmp = simulate_bitshifting(

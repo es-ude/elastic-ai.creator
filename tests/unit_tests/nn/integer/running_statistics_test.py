@@ -6,43 +6,77 @@ import pytest
 import torch
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.batchnorm1d.batchnorm1d import BatchNorm1d
+from elasticai.creator.nn.integer.MPQ.batchnorm1d.batchnorm1d import (
+    BatchNorm1d as MPQBatchNorm1d,
+)
+
 
 @pytest.mark.parametrize(
     'module_path',
     [
         'elasticai.creator.nn.integer.pointconv1dbn.pointconv1dbn',
         'elasticai.creator.nn.integer.sepconv1dbn.pointconv1dbn.pointconv1dbn',
-        'elasticai.creator.nn.integer.batchnorm1d.batchnorm1d',
-        'elasticai.creator.nn.integer.MPQ.batchnorm1d.batchnorm1d',
     ],
 )
 @pytest.mark.parametrize('enable_simquant', [False, True])
 @pytest.mark.parametrize('batch_size, length', [(4, 8), (1, 2)])
-def test_running_statistics_do_not_retain_training_graph(
+def test_pointconv_running_statistics_do_not_retain_training_graph(
     module_path, enable_simquant, batch_size, length
 ):
     torch.manual_seed(42)
     module = import_module(module_path)
-    folded = 'pointconv1dbn' in module_path
-    if folded:
-        layer = module.PointConv1dBN(
-            in_channels=2, out_channels=3, seq_len=length,
-            name='bn', quant_bits=8, device='cpu',
-        )
-        bn = layer.bn1d
-        shape = (batch_size, 2, length)
-    else:
-        layer = module.BatchNorm1d(
-            norm_dim=3, eps=1e-5, momentum=0.1, affine=True,
-            track_running_stats=True, name='bn', quant_bits=8, device='cpu',
-            MPQ_strategy='inheritance',
-        )
-        if '.MPQ.' in module_path:
-            layer.set_quant_bits_from_config({f'bn.{key}': 8 for key in
-                                              ('inputs', 'weights', 'bias', 'outputs')})
-        bn = layer
-        shape = (batch_size, length, 3)
+    layer = module.PointConv1dBN(
+        in_channels=2, out_channels=3, seq_len=length,
+        name='bn', quant_bits=8, device='cpu',
+    )
+    _check_running_statistics(
+        layer, layer.bn1d, (batch_size, 2, length), enable_simquant, folded=True
+    )
 
+
+@pytest.mark.parametrize('enable_simquant', [False, True])
+@pytest.mark.parametrize('batch_size, length', [(4, 8), (1, 2)])
+def test_batchnorm_running_statistics_do_not_retain_training_graph(
+    enable_simquant, batch_size, length
+):
+    torch.manual_seed(42)
+    layer = BatchNorm1d(
+        name='bn',
+        norm_dim=3,
+        in_features=3,
+        out_features=3,
+        num_dimensions=length,
+        quant_bits=8,
+    )
+    _check_running_statistics(layer, layer, (batch_size, length, 3), enable_simquant)
+
+
+@pytest.mark.parametrize('enable_simquant', [False, True])
+@pytest.mark.parametrize('batch_size, length', [(4, 8), (1, 2)])
+def test_mpq_batchnorm_running_statistics_do_not_retain_training_graph(
+    enable_simquant, batch_size, length
+):
+    torch.manual_seed(42)
+    layer = MPQBatchNorm1d(
+        name='bn',
+        norm_dim=3,
+        in_features=3,
+        out_features=3,
+        num_dimensions=length,
+        eps=1e-5,
+        momentum=0.1,
+        affine=True,
+        track_running_stats=True,
+        MPQ_strategy='inheritance',
+    )
+    layer.set_quant_bits_from_config(
+        {f'bn.{key}': 8 for key in ('inputs', 'weights', 'outputs')}
+    )
+    _check_running_statistics(layer, layer, (batch_size, length, 3), enable_simquant)
+
+
+def _check_running_statistics(layer, bn, shape, enable_simquant, *, folded=False):
     if not enable_simquant:
         layer.double()  # Resolve near-zero gradient comparisons without float32 cancellation.
     layer.train()

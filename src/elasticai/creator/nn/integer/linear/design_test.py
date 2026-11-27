@@ -77,7 +77,7 @@ entity linear_0 is
     );
 end linear_0;
 architecture rtl of linear_0 is
-    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    constant MACC_OUT_WIDTH : integer := 20;
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);
@@ -86,7 +86,7 @@ architecture rtl of linear_0 is
         variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
         TMP := w * x_in;
-        return TMP + y_out;
+        return resize(TMP + y_out, y_out'length);
     end function;
     function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
@@ -137,7 +137,7 @@ architecture rtl of linear_0 is
     signal w_addr : std_logic_vector(log2(IN_FEATURES*OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal w_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal b_in : std_logic_vector(20 - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal b_int : signed(MACC_OUT_WIDTH - 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
@@ -474,7 +474,7 @@ def test_bias_rom_code_generated_correctly(saved_files) -> None:
     assert match is not None
     values = [token.strip().strip('"') for token in match.group(1).split(",")]
     assert len(values) == 2
-    assert all(re.fullmatch(r"[01]{18}", value) for value in values)
+    assert all(re.fullmatch(r"[01]{20}", value) for value in values)
 
 
 def test_ram_code_generated_correctly(saved_files) -> None:

@@ -8,6 +8,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
@@ -57,6 +58,7 @@ class Linear(Design):
         use_parallelised_template: bool = False,
         unroll_factor: int = 1,
         use_pipeline_template: bool = False,
+        accumulator_width: int | None = None,
     ) -> None:
         """Create the design.
 
@@ -91,6 +93,11 @@ class Linear(Design):
         super().__init__(name=name)
 
         self._data_width = data_width
+        self._accumulator_width = (
+            accumulator_bits(data_width, data_width, (in_features,))
+            if accumulator_width is None
+            else accumulator_width
+        )
         self._in_features = in_features
         self._out_features = out_features
         self._num_dimensions = num_dimensions
@@ -116,10 +123,6 @@ class Linear(Design):
 
         self._weights = [[w + self._z_w for w in row] for row in weights]
         self._bias = [b + self._z_b for b in bias]
-        # The templates multiply DATA_WIDTH + 1 bit inputs with DATA_WIDTH + 1
-        # bit weights and add the bias to the product, so the bias has twice
-        # that width.
-        self._bias_data_width = 2 * (data_width + 1)
 
         self._work_library_name = work_library_name
         self._resource_option = resource_option
@@ -169,6 +172,8 @@ class Linear(Design):
             m_q_shift=str(self._m_q_shift),
             weights_rom_name=rom_name["weights"],
             bias_rom_name=rom_name["bias"],
+            accumulator_width=str(self._accumulator_width),
+            bias_data_width=str(self._accumulator_width),
             work_library_name=self._work_library_name,
             resource_option=self._resource_option,
         )
@@ -230,7 +235,7 @@ class Linear(Design):
 
             rom_bias = Rom(
                 name=rom_name["bias"],
-                data_width=self._bias_data_width,
+                data_width=self._accumulator_width,
                 values_as_integers=self._bias,
             )
             rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
@@ -246,7 +251,7 @@ class Linear(Design):
 
             rom_bias = MultiValueRom(
                 name=rom_name["bias"],
-                data_width=self._bias_data_width,
+                data_width=self._accumulator_width,
                 values_as_integers=self._bias,
                 number_per_row=1,  # for bias, we only have one value per row
                 unroll_factor=self._unroll_factor,

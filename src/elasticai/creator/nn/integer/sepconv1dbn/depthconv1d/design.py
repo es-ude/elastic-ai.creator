@@ -6,6 +6,7 @@ from elasticai.creator.file_generation.template import (
     module_to_package,
 )
 from elasticai.creator.nn.integer.math_operations import get_padded_count
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.nn.integer.vhdl_test_automation import get_vhdl_templates
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
@@ -35,10 +36,16 @@ class DepthConv1d(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
+        accumulator_width: int | None = None,
     ) -> None:
         super().__init__(name=name)
 
         self._data_width = data_width
+        self._accumulator_width = (
+            accumulator_bits(data_width, data_width, (kernel_size,))
+            if accumulator_width is None
+            else accumulator_width
+        )
         self._in_channels = in_channels
         self._out_channels = out_channels
         self._seq_len = seq_len
@@ -107,6 +114,8 @@ class DepthConv1d(Design):
             m_q_data_width=str(self._m_q_data_width),
             weights_rom_name=rom_name["weights"],
             bias_rom_name=rom_name["bias"],
+            accumulator_width=str(self._accumulator_width),
+            bias_data_width=str(self._accumulator_width),
             work_library_name=self._work_library_name,
             resource_option=self._resource_option,
         )
@@ -133,7 +142,7 @@ class DepthConv1d(Design):
 
         rom_bias = Rom(
             name=rom_name["bias"],
-            data_width=(self._data_width + 1) * 2,
+            data_width=self._accumulator_width,
             values_as_integers=self._bias,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))

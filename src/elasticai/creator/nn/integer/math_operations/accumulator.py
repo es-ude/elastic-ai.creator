@@ -1,39 +1,53 @@
 """Width calculation shared by integer accumulation operations."""
 
+from __future__ import annotations
+
 import warnings
+from math import prod
+from typing import TYPE_CHECKING
 
-import torch
+if TYPE_CHECKING:
+    from ..quant_utils.QParams import QuantScheme
 
-
-def _calculate_bits_for_mac_op(product_bits: int, num_products: int = 1):
-    if num_products < 1:
-        raise ValueError("An accumulator must contain at least one product")
-    mac_bits = product_bits + (num_products - 1).bit_length()
-    return mac_bits
-
-
-def _calculate_bits_for_bias_addition(mac_bits: int, bias: torch.Tensor | None) -> int:
-    if bias is None:
-        return mac_bits
-    else:
-        max_bias = max(abs(int(bias.min().item())), abs(int(bias.max().item())))
-        bias_bits = max(2, max_bias.bit_length() + 1)
-        accumulator_bits = max(mac_bits, bias_bits) + 1
-        return accumulator_bits
+MAX_ACCUMULATOR_BITS = 32
 
 
 def accumulator_bits(
-    product_bits: int, num_products: int = 1, bias: torch.Tensor | None = None
+    input_bits: int,
+    weight_bits: int,
+    reduction_shape: tuple[int, ...] = (),
+    *,
+    input_scheme: QuantScheme | None = None,
+    weight_scheme: QuantScheme | None = None,
 ) -> int:
-    """Allow for the reduction and for adding the actual quantized bias."""
-    mac_bits = _calculate_bits_for_mac_op(product_bits, num_products)
-    accumulator_bits = _calculate_bits_for_bias_addition(mac_bits, bias)
-    if accumulator_bits > 32:
+    """Size a signed accumulator, assuming asymmetric operands where unspecified."""
+    num_products = prod(reduction_shape)
+    if num_products < 1:
+        raise ValueError("An accumulator must contain at least one product")
+
+    schemes = (input_scheme, weight_scheme)
+    centering_bits = sum(
+        scheme is None or not scheme.is_symmetric for scheme in schemes
+    )
+    # A product of two unsigned, zero-centered operands needs room for a sign
+    # in the signed accumulator.
+    unsigned_product = all(
+        scheme is not None and scheme.is_symmetric and not scheme.is_signed
+        for scheme in schemes
+    )
+    product_bits = int(input_bits) + int(weight_bits) + centering_bits
+    return _cap_accumulator_bits(
+        product_bits + (num_products - 1).bit_length() + int(unsigned_product)
+    )
+
+
+def _cap_accumulator_bits(bits: int) -> int:
+    if bits > MAX_ACCUMULATOR_BITS:
         warnings.warn(
-            f"The calculated accumulator width is {accumulator_bits} bits; "
-            "using 32 bits instead. Overflow could occur.",
+            f"The calculated accumulator width is {bits} bits; "
+            f"using {MAX_ACCUMULATOR_BITS} bits instead. Overflow could occur.",
             RuntimeWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
-        return 32
-    return accumulator_bits
+        return MAX_ACCUMULATOR_BITS
+    return bits

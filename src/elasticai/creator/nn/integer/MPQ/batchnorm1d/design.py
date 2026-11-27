@@ -5,6 +5,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
@@ -34,12 +35,18 @@ class BatchNorm1d(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
+        accumulator_width: int | None = None,
     ) -> None:
         super().__init__(name=name)
 
         self._x_data_width = x_data_width
         self._w_data_width = w_data_width
         self._b_data_width = b_data_width
+        self._accumulator_width = (
+            accumulator_bits(x_data_width, w_data_width)
+            if accumulator_width is None
+            else accumulator_width
+        )
         self._y_data_width = y_data_width
 
         self._num_dimensions = num_dimensions
@@ -89,6 +96,7 @@ class BatchNorm1d(Design):
                 x_data_width=str(self._x_data_width),
                 w_data_width=str(self._w_data_width),
                 b_data_width=str(self._b_data_width),
+                accumulator_width=str(self._accumulator_width),
                 y_data_width=str(self._y_data_width),
                 x_count=str(self._x_count),
                 y_count=str(self._y_count),

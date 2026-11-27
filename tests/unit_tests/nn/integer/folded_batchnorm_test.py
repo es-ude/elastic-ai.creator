@@ -17,13 +17,13 @@ def test_conv1dbn_matches_pytorch_bn():
     expected_bn = nn.BatchNorm1d(C_out)
 
     qat = Conv1dBN(
+        name="conv_bn",
         in_channels=C_in,
         out_channels=C_out,
         kernel_size=3,
         seq_len=L,
         padding=1,
         quant_bits=8,
-        bias_bits=32,
         activation_bits=16,
         device="cpu",
     )
@@ -64,13 +64,13 @@ def test_conv1dbn_matches_pytorch_bn():
 
 def setup_conv1dBN(C_IN, C_OUT, K, L):
     layer = Conv1dBN(
+        name="conv_bn",
         in_channels=C_IN,
         out_channels=C_OUT,
         kernel_size=K,
         seq_len=L,
         padding=1,
         quant_bits=8,
-        bias_bits=32,
         activation_bits=16,
         device="cpu",
     )
@@ -143,15 +143,15 @@ def create_ref_model(C_IN, C_OUT, K ,actual_layer):
     ref_bn.load_state_dict(actual_layer.bn1d.state_dict())
     return ref_conv, ref_bn
 
-def create_conv1dBN(C_IN, C_OUT, K, L, BITS, BIAS_BITS,ACTIVATION_BITS):
+def create_conv1dBN(C_IN, C_OUT, K, L, BITS, ACTIVATION_BITS):
     layer = Conv1dBN(
+        name="conv_bn",
         in_channels=C_IN,
         out_channels=C_OUT,
         kernel_size=K,
         seq_len=L,
         padding=1,
         quant_bits=BITS,
-        bias_bits=BIAS_BITS,
         activation_bits=ACTIVATION_BITS,
         device="cpu",
     )
@@ -168,24 +168,23 @@ def create_conv1dBN(C_IN, C_OUT, K, L, BITS, BIAS_BITS,ACTIVATION_BITS):
     return layer
 
 @pytest.mark.parametrize(
-    "B, C_IN, C_OUT, L, K, BITS, BIAS_BITS, ACTIVATION_BITS, seed",
+    "B, C_IN, C_OUT, L, K, BITS, ACTIVATION_BITS, seed",
     [
-        (4, 3, 5, 32, 3, 8, 8, 8, 42),  # Original configuration
-        (1, 1, 1, 16, 3, 8, 8, 8, 43),  # Minimal channels and batch
-        (2, 4, 8, 64, 5, 8, 8, 8, 69),  # Larger kernel and sequence
-        (8, 3, 6, 32, 3, 4, 8, 8, 100),  # Lower precision
-        (4, 8, 16, 128, 3, 8, 8, 8, 2),  # Larger model
-        (2, 3, 5, 32, 3, 14, 8, 8, 25),  # Higher precision
-        (2, 3, 5, 32, 3, 14, 32, 8, 25),  # 32-bit bias
-        (2, 3, 5, 32, 3,8, 32, 16, 25),  # 16-bit activation
+        (4, 3, 5, 32, 3, 8, 8, 42),  # Original configuration
+        (1, 1, 1, 16, 3, 8, 8, 43),  # Minimal channels and batch
+        (2, 4, 8, 64, 5, 8, 8, 69),  # Larger kernel and sequence
+        (8, 3, 6, 32, 3, 4, 8, 100),  # Lower precision
+        (4, 8, 16, 128, 3, 8, 8, 2),  # Larger model
+        (2, 3, 5, 32, 3, 14, 8, 25),  # Higher precision
+        (2, 3, 5, 32, 3, 8, 16, 25),  # 16-bit activation
     ],
 )
 def test_conv1dbn_quantized_bn_folding(
-    B, C_IN, C_OUT, L, K, BITS, BIAS_BITS,ACTIVATION_BITS, seed
+    B, C_IN, C_OUT, L, K, BITS, ACTIVATION_BITS, seed
 ):
     torch.manual_seed(seed)
 
-    actual_layer = create_conv1dBN(C_IN, C_OUT, K, L, BITS, BIAS_BITS, ACTIVATION_BITS)
+    actual_layer = create_conv1dBN(C_IN, C_OUT, K, L, BITS, ACTIVATION_BITS)
     ref_conv, ref_bn = create_ref_model(
         C_IN, C_OUT, K, actual_layer
     )
@@ -210,16 +209,16 @@ def test_conv1dbn_quantized_bn_folding(
         q_y = actual_layer.int_forward(q_x)
 
         y_quantized = actual_layer.outputs_QParams.dequantize(q_y)
-        # The chosen bias width is fixed: narrow biases can saturate. Compare
-        # integer inference with a reference using those quantized parameters.
         fused_weight, fused_bias = actual_layer._fold_bn()
         input_scale = actual_layer.inputs_QParams.scale_factor
         weight_scale = actual_layer.weight_QParams.scale_factor
         bias_scale = input_scale * weight_scale
-        bias_limit = 2 ** (BIAS_BITS - 1) - 1
-        reference_bias_codes = (fused_bias / bias_scale).round().to(torch.float64).clamp(
-            -bias_limit, bias_limit
-        )
+        reference_bias_codes = (fused_bias.double() / bias_scale).round()
+        mac_width = BITS + ACTIVATION_BITS + 2 + (C_IN * K - 1).bit_length()
+        width = min(32, mac_width)
+        limit = 2 ** (width - 1) - 1
+        reference_bias_codes = reference_bias_codes.clamp(-limit, limit)
+        assert actual_layer.bias_QParams.quant_bits == actual_layer.tmp_quant_bits == width
         torch.testing.assert_close(
             actual_layer.q_fused_bias,
             reference_bias_codes.to(torch.int32),

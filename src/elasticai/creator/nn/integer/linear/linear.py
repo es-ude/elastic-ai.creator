@@ -6,6 +6,7 @@ from elasticai.creator.nn.integer._dtypes import FLOAT_DTYPES, check_dtype
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -17,6 +18,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    configure_bias_quantization,
     quantize_bias,
     quantize_weights,
 )
@@ -48,7 +50,6 @@ class Linear(DesignCreatorModule, nn.Linear):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         num_dimensions: int | None = None,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
@@ -98,7 +99,6 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -108,7 +108,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         if bias:
             # Todo: Bias scale calculation currently only supports symmetric biases
             self.bias_QParams: QParams | None = bias_qparams_cls(
-                quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+                quant_bits=32, observer=GlobalMinMaxObserver()
             ).to(device)
         else:
             self.bias_QParams = None
@@ -151,9 +151,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             and self.scale_factor_m_q is not None
             and self.scale_factor_m_q_shift is not None
         ), "precompute should be called before create_design"
-        # The hardware uses one data width for inputs, weights and outputs, and
-        # a bias width of 2 * (data_width + 1), which matches the bias bit
-        # width (x_bits + 1) + (w_bits + 1) only if both are `quant_bits`.
+        # The hardware uses one data width for inputs, weights and outputs.
         for element, qparams in [
             ("inputs", self.inputs_QParams),
             ("weights", self.weight_QParams),
@@ -172,7 +170,10 @@ class Linear(DesignCreatorModule, nn.Linear):
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist() if self.q_bias is not None else [],
+            bias=(
+                self.q_bias.tolist() if self.q_bias is not None else [0] * self.out_features
+            ),
+            accumulator_width=self.accumulator_width,
             m_q=int(self.scale_factor_m_q.item()),
             m_q_shift=int(self.scale_factor_m_q_shift.item()),
             z_x=int(self.inputs_QParams.zero_point.item()),
@@ -193,22 +194,18 @@ class Linear(DesignCreatorModule, nn.Linear):
         assert not self.training, "int_forward should be called in eval mode"
         return quantize_weights(self.weight, self.weight_QParams)
 
-    def _get_quantized_bias(
-        self
-    ) -> torch.Tensor:
-        """Quantize the bias with the scale of the accumulator.
-
-        The bias is added to the accumulator of `(x - z_x) @ (w - z_w).T`, so
-        it uses the scale factor `s_x * s_w`, zero point 0 and the bit width
-        `(x_bits + 1) + (w_bits + 1)`. This overwrites the quantization
-        parameters of `bias_QParams`.
-        """
+    def _get_quantized_bias(self) -> torch.Tensor:
+        """Quantize the bias at the accumulator's scale and width."""
         assert not self.training, "int_forward should be called in eval mode"
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
-
+        return quantize_bias(
+            self.bias,
+            self.bias_QParams,
+            new_bias_scale_factor,
+            self.accumulator_width,
+        )
 
     def precompute(self) -> None:
         """Compute the integer parameters for `int_forward` and `create_design`.
@@ -219,8 +216,15 @@ class Linear(DesignCreatorModule, nn.Linear):
         """
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
+        self.accumulator_width = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            (self.in_features,),
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
+        )
         if self.bias is not None and self.bias_QParams is not None:
-            self.q_bias = self._get_quantized_bias(self.bias, self.bias_QParams)
+            self.q_bias = self._get_quantized_bias()
         else:
             self.q_bias = None
 
@@ -272,6 +276,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             b=self.q_bias,
             x_quant_bits=self.inputs_QParams.quant_bits,
             w_quant_bits=self.weight_QParams.quant_bits,
+            result_bits=self.accumulator_width,
         )
 
         tmp = simulate_bitshifting(
@@ -325,11 +330,18 @@ class Linear(DesignCreatorModule, nn.Linear):
 
                 self.weight_QParams.update_quant_params(self.weight)
                 if self.bias is not None and self.bias_QParams is not None:
-                    bias_scale= self.inputs_QParams.scale_factor*self.weight_QParams.scale_factor
-                    with torch.no_grad():
-                        self.bias_QParams.set_scale_factor(bias_scale)
-                        self.bias_QParams.min_float.copy_(self.bias_QParams.min_quant * bias_scale)
-                        self.bias_QParams.max_float.copy_(self.bias_QParams.max_quant * bias_scale)
+                    configure_bias_quantization(
+                        self.bias_QParams,
+                        self.inputs_QParams.scale_factor
+                        * self.weight_QParams.scale_factor,
+                        accumulator_bits(
+                            self.inputs_QParams.quant_bits,
+                            self.weight_QParams.quant_bits,
+                            (self.in_features,),
+                            input_scheme=self.inputs_QParams.scheme,
+                            weight_scheme=self.weight_QParams.scheme,
+                        ),
+                    )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)

@@ -10,16 +10,23 @@ from elasticai.creator.nn.integer.sequential.sequential import Sequential
 
 @pytest.mark.parametrize("convolution", [False, True])
 def test_separate_activation_and_weight_widths_in_integer_inference(convolution):
-    widths = dict(activation_bits=10, weight_bits=4, bias_bits=24, bias=True)
+    widths = dict(activation_bits=10, weight_bits=4, quant_bits=8)
     layer = (
-        Conv1d(in_channels=2, out_channels=1, kernel_size=1, **widths)
+        Conv1d(
+            name="conv",
+            in_channels=2,
+            out_channels=1,
+            kernel_size=1,
+            padding=0,
+            seq_len=1,
+            **widths,
+        )
         if convolution
-        else Linear(in_features=2, out_features=1, **widths)
+        else Linear(name="linear", in_features=2, out_features=1, bias=True, **widths)
     ).eval()
     assert layer.inputs_QParams.quant_bits == 10
     assert layer.outputs_QParams.quant_bits == 10
     assert layer.weight_QParams.quant_bits == 4
-    assert layer.bias_QParams.quant_bits == 24
     with torch.no_grad():
         layer.weight.copy_(torch.tensor([0.5, -0.5]).reshape_as(layer.weight))
         layer.bias.zero_()
@@ -37,12 +44,19 @@ def test_separate_activation_and_weight_widths_in_integer_inference(convolution)
         input_codes = input_codes.unsqueeze(-1)
         expected_codes = expected_codes.unsqueeze(-1)
     layer.precompute()
+    assert layer.bias_QParams.quant_bits == 17
     torch.testing.assert_close(layer.int_forward(input_codes), expected_codes)
 
 
 def test_composed_uniform_layer_forwards_both_widths():
     layer = FeedForwardNetwork(
-        name="ffn", d_model=2, ffn_dim=4, activation_bits=10, weight_bits=4
+        name="ffn",
+        d_model=2,
+        ffn_dim=4,
+        num_dimensions=1,
+        quant_bits=8,
+        activation_bits=10,
+        weight_bits=4,
     )
     for module in layer.modules():
         if hasattr(module, "inputs_QParams"):
@@ -54,10 +68,13 @@ def test_composed_uniform_layer_forwards_both_widths():
 
 
 def test_quant_bits_remains_the_fallback():
-    layer = Linear(in_features=1, out_features=1, bias=True, quant_bits=8)
+    layer = Linear(
+        name="linear", in_features=1, out_features=1, bias=True, quant_bits=8
+    )
     assert layer.inputs_QParams.quant_bits == layer.outputs_QParams.quant_bits == 8
     assert layer.weight_QParams.quant_bits == 8
     override = Linear(
+        name="linear",
         in_features=1,
         out_features=1,
         bias=True,
@@ -72,10 +89,10 @@ def test_quant_bits_remains_the_fallback():
 
 
 def test_uniform_network_keeps_existing_activation_parameter_inheritance():
-    widths = dict(activation_bits=10, weight_bits=4)
-    first = Linear(in_features=1, out_features=1, bias=True, **widths)
-    relu = ReLU(**widths)
-    last = Linear(in_features=1, out_features=1, bias=True, **widths)
+    widths = dict(activation_bits=10, weight_bits=4, quant_bits=8)
+    first = Linear(name="linear", in_features=1, out_features=1, bias=True, **widths)
+    relu = ReLU(name="relu", **widths)
+    last = Linear(name="last", in_features=1, out_features=1, bias=True, **widths)
     with torch.no_grad():
         first.weight.fill_(0.5)
         last.weight.fill_(0.5)

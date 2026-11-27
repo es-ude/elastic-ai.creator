@@ -30,7 +30,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -53,7 +52,6 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
 
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = use_pipeline_template

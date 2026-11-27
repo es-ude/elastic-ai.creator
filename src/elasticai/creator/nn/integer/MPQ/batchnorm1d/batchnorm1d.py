@@ -6,6 +6,8 @@ from torch import nn
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import quantize_bias
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.MPQ.batchnorm1d.design import (
     BatchNorm1d as BatchNorm1dDesign,
 )
@@ -83,9 +85,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             quant_bits_per_element[element] = quant_configs.get(key)
 
         if "bias" in quant_bits_per_element:
-            quant_bits_per_element["bias"] = (quant_bits_per_element["inputs"] + 1) + (
-                quant_bits_per_element["weights"] + 1
-            )
+            quant_bits_per_element["bias"] = 32
         self.quant_bits_per_element = quant_bits_per_element
         self._init_element_Qparams()
 
@@ -116,7 +116,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             name=name,
             x_data_width=self.inputs_QParams.quant_bits,
             w_data_width=self.weight_QParams.quant_bits,
-            b_data_width=self.bias_QParams.quant_bits,
+            b_data_width=self.tmp_quant_bits,
+            accumulator_width=self.tmp_quant_bits,
             y_data_width=self.outputs_QParams.quant_bits,
             num_dimensions=self.num_dimensions,
             in_features=self.in_features,
@@ -155,19 +156,18 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
     ) -> torch.Tensor:
         assert not self.training, "int_forward should be called in eval mode"
 
-        bias_QParams.set_scale_factor(given_quant_scale)
-        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(given_quant_bits)
-        q_bias = bias_QParams.quantize(bias).to("cpu")
-        return q_bias
+        return quantize_bias(bias, bias_QParams, given_quant_scale, self.tmp_quant_bits)
 
     def precompute(self):
         mean = self.running_mean
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        self.tmp_quant_bits = (self.weight_QParams.quant_bits + 1) + (
-            self.inputs_QParams.quant_bits + 1
+        self.tmp_quant_bits = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
         )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
@@ -177,8 +177,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             modified_weight, self.modified_weight_QParams
         )
 
-        bias = SimQuant.apply(self.bias, self.bias_QParams)
-        modified_bias = bias - modified_weight * mean
+        modified_bias = self.bias - modified_weight * mean
         new_bias_QParms_scale = (
             self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
         )
@@ -219,7 +218,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             self.q_weights, q_inputs, self.tmp_quant_bits
         )
 
-        tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits + 1)
+        tmp = self.math_ops.intadd(tmp, self.q_bias, self.tmp_quant_bits)
         # print("tmp + self.q_bias: ", self.q_bias)
 
         tmp = simulate_bitshifting(

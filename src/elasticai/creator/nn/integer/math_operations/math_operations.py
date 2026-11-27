@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from elasticai.creator.nn.integer._dtypes import check_dtype
 
-from .accumulator import accumulator_bits
+from .accumulator import _cap_accumulator_bits, accumulator_bits
 
 
 class MathOperations:
@@ -25,7 +25,7 @@ class MathOperations:
         Returns:
             The same tensor object as `result`, after clamping.
         """
-        quant_bits = accumulator_bits(quant_bits)
+        quant_bits = _cap_accumulator_bits(quant_bits)
         result.clamp_(-(2 ** (quant_bits - 1)), (2 ** (quant_bits - 1)) - 1)
         return result
 
@@ -118,12 +118,13 @@ class MathOperations:
         x_quant_bits: int,
         w_quant_bits: int,
         b: torch.Tensor | None = None,
+        *,
+        result_bits: int | None = None,
     ) -> torch.Tensor:
         """Compute an integer multiply-accumulate `x @ w.T + b`.
 
-        The product is clamped to `(x_quant_bits + 1) + (w_quant_bits + 1) + 1`
-        bits. If a bias is given, it is added and the sum is clamped to one more
-        bit.
+        If no result width is supplied, derive it from the operand widths
+        and the reduction shape.
 
         Args:
             x: Input tensor of shape `(..., in_features)`, dtype `torch.int32`.
@@ -132,6 +133,7 @@ class MathOperations:
             x_quant_bits: Bit width of the quantized inputs.
             w_quant_bits: Bit width of the quantized weights.
             b: Optional bias of shape `(out_features,)`, dtype `torch.int32`.
+            result_bits: Optional accumulator width calculated during precompute.
 
         Returns:
             The accumulated result of shape `(..., out_features)`.
@@ -143,8 +145,8 @@ class MathOperations:
         check_dtype("x", x, torch.int32)
         check_dtype("w", w, torch.int32)
 
-        product_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
-        result_bits = accumulator_bits(product_bits, x.shape[-1], b)
+        if result_bits is None:
+            result_bits = accumulator_bits(x_quant_bits, w_quant_bits, x.shape[-1:])
         tmp = F.linear(x, w.to(x.device))
 
         if b is not None:

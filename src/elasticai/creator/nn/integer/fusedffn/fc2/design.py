@@ -7,6 +7,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
@@ -33,10 +34,16 @@ class Linear(Design):
         work_library_name: str,
         resource_option: str,
         num_dimensions: int = None,
+        accumulator_width: int | None = None,
     ) -> None:
         super().__init__(name=name)
 
         self._data_width = data_width
+        self._accumulator_width = (
+            accumulator_bits(data_width, data_width, (in_features,))
+            if accumulator_width is None
+            else accumulator_width
+        )
         self._in_features = in_features
         self._out_features = out_features
         self._num_dimensions = num_dimensions
@@ -96,6 +103,8 @@ class Linear(Design):
                 m_q_shift=str(self._m_q_shift),
                 weights_rom_name=rom_name["weights"],
                 bias_rom_name=rom_name["bias"],
+                accumulator_width=str(self._accumulator_width),
+                bias_data_width=str(self._accumulator_width),
                 work_library_name=self._work_library_name,
                 resource_option=self._resource_option,
             ),
@@ -111,7 +120,7 @@ class Linear(Design):
 
         rom_bias = Rom(
             name=rom_name["bias"],
-            data_width=(self._data_width + 1) * 2,
+            data_width=self._accumulator_width,
             values_as_integers=self._bias,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))

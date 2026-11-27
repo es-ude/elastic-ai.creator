@@ -3,8 +3,8 @@ from torch import nn
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.pointconv1dbn.design import (
     PointConv1dBN as PointConv1dBNDesign,
 )
@@ -37,12 +37,10 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
         super().__init__()
-        self.bias_bits = kwargs.get("bias_bits", 32)
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -54,7 +52,6 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
 
         self.conv1d = nn.Conv1d(
@@ -70,7 +67,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+            quant_bits=32, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
@@ -91,6 +88,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             seq_len=self.seq_len,
             weights=self.q_fused_weights.tolist(),
             bias=self.q_fused_bias.tolist(),
+            accumulator_width=self.tmp_quant_bits,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -111,7 +109,12 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
+        return quantize_bias(
+            bias,
+            self.bias_QParams,
+            new_bias_scale_factor,
+            self.tmp_quant_bits,
+        )
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
@@ -125,6 +128,13 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         )
 
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
+        self.tmp_quant_bits = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            self.q_fused_weights.shape[1:],
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
+        )
         self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
@@ -133,13 +143,6 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
-        )
-        self.tmp_quant_bits = accumulator_bits(
-            int(self.inputs_QParams.quant_bits)
-            + int(self.weight_QParams.quant_bits)
-            + 2,
-            self.q_fused_weights.shape[1] * self.q_fused_weights.shape[2],
-            self.q_fused_bias,
         )
         self.precomputed = True
 

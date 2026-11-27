@@ -27,7 +27,6 @@ class RNNLayer(nn.Module):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -48,7 +47,6 @@ class RNNLayer(nn.Module):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
 
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = use_pipeline_template
@@ -62,7 +60,6 @@ class RNNLayer(nn.Module):
                 quant_bits=self.quant_bits,
                 activation_bits=self.activation_bits,
                 weight_bits=self.weight_bits,
-                bias_bits=self.bias_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 use_parallelised_template=use_parallelised_template,
@@ -78,7 +75,6 @@ class RNNLayer(nn.Module):
                 quant_bits=self.quant_bits,
                 activation_bits=self.activation_bits,
                 weight_bits=self.weight_bits,
-                bias_bits= self.bias_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
             )

@@ -2,13 +2,10 @@
 
 import torch
 
-from .MPQParams import QParams as MPQParams
 from .QParams import QParams
 
 
-def quantize_weights(
-    weight: torch.Tensor, qparams: QParams | MPQParams
-) -> torch.Tensor:
+def quantize_weights(weight: torch.Tensor, qparams: QParams) -> torch.Tensor:
     """Quantize on CPU and center asymmetric weights, as in the layer helpers."""
     q_weights = qparams.quantize(weight).to("cpu")
     if not qparams.is_symmetric:
@@ -18,14 +15,26 @@ def quantize_weights(
     return q_weights
 
 
-def quantize_bias(
-    bias: torch.Tensor,
-    qparams: QParams | MPQParams,
-    accumulator_scale: torch.Tensor,
+@torch.no_grad()
+def configure_bias_quantization(
+    qparams: QParams,
+    bias_scale: torch.Tensor,
     quant_bits: int,
-) -> torch.Tensor:
-    """Quantize bias using the layer's chosen scale and width; return CPU codes."""
-    qparams.set_scale_factor(accumulator_scale)
+) -> None:
+    """Set the bias scale and range to match the accumulator."""
+    qparams.set_scale_factor(bias_scale)
     qparams.set_zero_point(torch.zeros_like(qparams.zero_point))
     qparams.set_quant_range(quant_bits)
+    qparams.min_float.copy_(qparams.min_quant * bias_scale)
+    qparams.max_float.copy_(qparams.max_quant * bias_scale)
+
+
+def quantize_bias(
+    bias: torch.Tensor,
+    qparams: QParams,
+    bias_scale: torch.Tensor,
+    quant_bits: int,
+) -> torch.Tensor:
+    """Return bias codes at the calculated accumulator width."""
+    configure_bias_quantization(qparams, bias_scale, quant_bits)
     return quantize_weights(bias, qparams)

@@ -6,6 +6,7 @@ from elasticai.creator.nn.integer.layernorm1d.design import (
     LayerNorm1d as LayerNorm1dDesign,
 )
 from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -14,12 +15,13 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import quantize_bias
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
 
 
-class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
+class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
     def __init__(
         self,
         *,
@@ -33,7 +35,6 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -51,7 +52,6 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -59,7 +59,7 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+            quant_bits=32, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
@@ -91,44 +91,29 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             )
         return q_weights
 
-    def _get_quantized_bias(
-        self,
-        bias: torch.Tensor,
-        bias_QParams: nn.Module,
-        given_quant_scale: torch.Tensor,
-        given_quant_bits: int,
-    ) -> torch.Tensor:
-        assert not self.training, "int_forward should be called in eval mode"
-
-        bias_QParams.set_scale_factor(given_quant_scale)
-        bias_QParams.set_zero_point(torch.zeros((1), dtype=torch.int32))
-        bias_QParams.set_quant_range(given_quant_bits)
-        q_bias = bias_QParams.quantize(bias).to("cpu")
-        return q_bias
-
     def precompute(self) -> None:
         self.q_weights = self._get_quantized_weights(
             weight=self.weight, weight_QParams=self.weight_QParams
         )
 
-        self.q_bias = self._get_quantized_bias(
-            bias=self.bias, bias_QParams=self.bias_QParams
-        )
-
-        self.scale_factor_M_1 = (
+        affine_scale = (
             self.normed_inputs_QParams.scale_factor
             * self.weight_QParams.scale_factor
-            / self.outputs_QParams.scale_factor
         )
-        self.scale_factor_M_2 = (
-            self.bias_QParams.scale_factor / self.outputs_QParams.scale_factor
+        self.accumulator_width = accumulator_bits(
+            self.normed_inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            input_scheme=self.normed_inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
         )
-
-        self.scale_factor_m_1_q_shift, self.scale_factor_m_1_q = scaling_M(
-            self.scale_factor_M_1
+        self.q_bias = quantize_bias(
+            self.bias,
+            self.bias_QParams,
+            affine_scale,
+            self.accumulator_width,
         )
-        self.scale_factor_m_2_q_shift, self.scale_factor_m_2_q = scaling_M(
-            self.scale_factor_M_2
+        self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
+            affine_scale / self.outputs_QParams.scale_factor
         )
         self.precomputed = True
 
@@ -163,34 +148,28 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
         save_quant_data(q_inputs, self.quant_data_dir, f"{self.name}_q_x")
 
         q_inputs_sum = torch.sum(q_inputs, dim=-1, keepdim=True)
-        q_inputs_sum_mean = q_inputs_sum / self.norm_dim
+        q_inputs_sum_mean = (q_inputs_sum / self.norm_dim).round().to(torch.int32)
         numerator = self.math_ops.intsub(
             q_inputs, q_inputs_sum_mean, self.inputs_QParams.quant_bits + 1
         )
 
-        var = (numerator**2).sum(dim=-1, keepdim=True) / self.norm_dim
-        denominator = torch.sqrt(var).to(torch.int32)
+        var = numerator.float().square().mean(dim=-1, keepdim=True)
+        denominator = torch.sqrt(var).clamp_min(self.eps**0.5)
         normed_inputs = numerator / denominator
 
-        # prepare inputs 1
-        if normed_inputs.dtype == torch.FloatTensor:
-            q_inputs = self.normed_inputs_QParams.quantizeProcess(normed_inputs)
-
-        q_inputs = q_inputs - self.normed_inputs_QParams.zero_point
-
-        tmp_input1 = simulate_bitshifting(
-            q_inputs * self.q_weights,
-            self.scale_factor_m_1_q_shift,
-            self.scale_factor_m_1_q,
+        centered_inputs = self.math_ops.intsub(
+            self.normed_inputs_QParams.quantize(normed_inputs),
+            self.normed_inputs_QParams.zero_point,
+            self.normed_inputs_QParams.quant_bits + 1,
         )
-
-        # prepare inputs 2
-        tmp_input2 = simulate_bitshifting(
-            self.q_bias, self.scale_factor_m_2_q_shift, self.scale_factor_m_2_q
+        affine = self.math_ops.intadd(
+            centered_inputs * self.q_weights.to(centered_inputs.device),
+            self.q_bias,
+            self.accumulator_width,
         )
-
-        # execute integer-only addition
-        tmp = tmp_input1 + tmp_input2
+        tmp = simulate_bitshifting(
+            affine, self.scale_factor_m_q_shift, self.scale_factor_m_q
+        )
 
         q_outputs = self.math_ops.intadd(
             tmp, self.outputs_QParams.zero_point, self.outputs_QParams.quant_bits
@@ -236,6 +215,8 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm1d):
             bias = self.bias
 
         normed_inputs = (inputs - mean) / std
+        if enable_simquant and self.training:
+            self.normed_inputs_QParams.update_quant_params(normed_inputs)
         outputs = weight * normed_inputs + bias
 
         if enable_simquant:

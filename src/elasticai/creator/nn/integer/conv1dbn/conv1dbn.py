@@ -8,8 +8,8 @@ from elasticai.creator.nn.integer.math_operations import (
     get_padded_q_inputs,
     get_padding_len,
 )
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -41,7 +41,6 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits:int | None = None,
-        bias_bits: int = 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -56,8 +55,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.name = name
         self.quant_bits = quant_bits
         self.weight_bits = (quant_bits if weight_bits is None else weight_bits)
-        self.activation_bits = quant_bits if activation_bits is None else weight_bits
-        self.bias_bits= bias_bits
+        self.activation_bits = quant_bits if activation_bits is None else activation_bits
         self.quant_data_dir = quant_data_dir
 
 
@@ -73,7 +71,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+            quant_bits=32, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
@@ -97,6 +95,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             padding_len=self.padding_len,
             weights=self.q_fused_weights.tolist(),
             bias=self.q_fused_bias.tolist(),
+            accumulator_width=self.tmp_quant_bits,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -117,7 +116,12 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
 
-        return quantize_bias(bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
+        return quantize_bias(
+            bias,
+            self.bias_QParams,
+            new_bias_scale_factor,
+            self.tmp_quant_bits,
+        )
 
     def _fold_bn(self):
         std = torch.sqrt(self.bn1d.running_var + self.bn1d.eps)
@@ -135,6 +139,13 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.weight_QParams.update_quant_params(fused_weight)
         self.bias_QParams.update_quant_params(fused_bias)
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
+        self.tmp_quant_bits = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            self.q_fused_weights.shape[1:],
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
+        )
         self.q_fused_bias = self._get_quantized_bias(fused_bias)
 
         self.scale_factor_M = (
@@ -143,13 +154,6 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
-        )
-        self.tmp_quant_bits = accumulator_bits(
-            int(self.inputs_QParams.quant_bits)
-            + int(self.weight_QParams.quant_bits)
-            + 2,
-            self.q_fused_weights.shape[1] * self.q_fused_weights.shape[2],
-            self.q_fused_bias,
         )
         self.precomputed = True
 

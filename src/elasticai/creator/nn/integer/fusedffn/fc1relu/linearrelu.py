@@ -7,6 +7,7 @@ from elasticai.creator.nn.integer.fusedffn.fc1relu.design import (
     Linear as LinearReLUDesign,
 )
 from elasticai.creator.nn.integer.math_operations import MathOperations
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
@@ -36,7 +37,6 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         quant_bits: int,
         weight_bits: int | None = None,
         activation_bits: int | None = None,
-        bias_bits: int = 32,
         num_dimensions: int | None = None,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
@@ -51,7 +51,6 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         self.activation_bits = (
             quant_bits if activation_bits is None else activation_bits
         )
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -61,7 +60,7 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         ).to(device)
         if bias:
             self.bias_QParams = SymmetricSignedQParams(
-                quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+                quant_bits=32, observer=GlobalMinMaxObserver()
             ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
@@ -81,12 +80,17 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
-            bias=self.q_bias.tolist(),
+            bias=(
+                self.q_bias.tolist() if self.q_bias is not None else [0] * self.out_features
+            ),
+            accumulator_width=self.accumulator_width,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item(),
+            z_b=(
+                self.bias_QParams.zero_point.item() if self.q_bias is not None else 0
+            ),
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
@@ -101,11 +105,23 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
+        return quantize_bias(
+            self.bias,
+            self.bias_QParams,
+            new_bias_scale_factor,
+            self.accumulator_width,
+        )
 
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
+        self.accumulator_width = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            (self.in_features,),
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
+        )
         if self.bias is not None:
             self.q_bias = self._get_quantized_bias()
         else:
@@ -139,6 +155,7 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
             b=self.q_bias,
             x_quant_bits=self.inputs_QParams.quant_bits,
             w_quant_bits=self.weight_QParams.quant_bits,
+            result_bits=self.accumulator_width,
         )
 
         tmp = simulate_bitshifting(

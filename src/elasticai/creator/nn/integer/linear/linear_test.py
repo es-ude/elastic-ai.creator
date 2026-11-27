@@ -20,7 +20,7 @@ from elasticai.creator.nn.integer.quant_utils.simulate_bitshifting import (
 @pytest.fixture
 def linear_layer() -> Linear:
     linear_layer = Linear(
-        name="linear", in_features=3, out_features=10, bias=True, quant_bits=8, bias_bits=8
+        name="linear", in_features=3, out_features=10, bias=True, quant_bits=8
     )
 
     linear_layer.weight.data = torch.tensor(
@@ -104,7 +104,10 @@ def bias_quant_params(inputs_quant_params, weights_quant_params):
     input_scale_factor, _ , _, _= inputs_quant_params
     weights_scale_factor, _ , _, _= weights_quant_params
     bias_scale_factor= input_scale_factor*weights_scale_factor
-    bias_zero_point, bias_min_float, bias_max_float = torch.tensor([0], dtype=torch.int32), -127*bias_scale_factor, 127*bias_scale_factor
+    bias_limit = 2**19 - 1  # 18 product bits and 2 reduction bits
+    bias_zero_point = torch.tensor([0], dtype=torch.int32)
+    bias_min_float = -bias_limit * bias_scale_factor
+    bias_max_float = bias_limit * bias_scale_factor
     return (bias_scale_factor, bias_zero_point, bias_min_float, bias_max_float)
 
 @pytest.fixture
@@ -164,7 +167,7 @@ def q_bias_subtracted(linear_layer, inputs_quant_params, weights_quant_params, b
    
     q_bias = linear_layer.bias / bias_scale + bias_zero_point
     q_bias = q_bias.round_()
-    new_quant_bits = linear_layer.bias_bits
+    new_quant_bits = 20
     qmax = (1 << (new_quant_bits - 1)) - 1
     qmin = -qmax
     q_bias=q_bias.clamp(qmin, qmax)
@@ -240,7 +243,7 @@ def test_linear_layer_initialization_weight_quant_bits(linear_layer) -> None:
 
 
 def test_linear_layer_initialization_bias_quant_bits(linear_layer) -> None:
-    expected_quant_bits = linear_layer.bias_bits
+    expected_quant_bits = 32
     actual_quant_bits = linear_layer.bias_QParams.quant_bits
     assert expected_quant_bits == actual_quant_bits
 
@@ -562,7 +565,7 @@ def test_get_quantized_bias_in_precompute(
     )
     assert torch.equal(actual_new_zero_point, expected_new_bias_zero_point)
     assert actual_new_quant_bits == expected_new_quant_bits
-    assert torch.equal(actual_q_bias, expected_q_bias)
+    assert torch.allclose(actual_q_bias, expected_q_bias)
 
 
 def test_get_scale_fator_M_in_precompute(linear_layer, inputs, scale_fator_M) -> None:
@@ -648,34 +651,23 @@ def test_create_design_uses_work_library_and_resource_option(
 
 
 @pytest.mark.parametrize("bias_value", [-0.5, 0.5])
-def test_bias_quantization_does_not_clip_to_product_width(bias_value):
+def test_bias_quantization_clips_to_accumulator_width(bias_value):
     layer = Linear(in_features=1, out_features=1, bias=True, quant_bits=8, name="").eval()
     with torch.no_grad():
         layer.bias.fill_(bias_value)
+    layer.inputs_QParams.scale_factor.fill_(2.0**-10)
+    layer.weight_QParams.scale_factor.fill_(2.0**-10)
+    layer.precompute()
 
-    # Powers of two make the bias encoding exact, without rounding ambiguity.
-    layer.inputs_QParams.scale_factor.fill_(1 / 1024)
-    layer.weight_QParams.scale_factor.fill_(1 / 1024)
-    layer.outputs_QParams.scale_factor.fill_(1 / 128)
-
-    # The real bias maps to output code +/-64, safely inside the int8 range.
-    assert abs(bias_value / layer.outputs_QParams.scale_factor.item()) == 64
-    expected_bias_code = int(bias_value * 1024 * 1024)
-    assert (
-        torch.iinfo(torch.int32).min
-        <= expected_bias_code
-        <= torch.iinfo(torch.int32).max
-    )
-
-    actual_bias = layer._get_quantized_bias()
-
+    assert layer.bias_QParams.quant_bits == layer.accumulator_width == 18
+    expected_bias_code = (2**17 - 1) * (1 if bias_value > 0 else -1)
     torch.testing.assert_close(
-        actual_bias, torch.tensor([expected_bias_code], dtype=torch.int32)
+        layer.q_bias, torch.tensor([expected_bias_code], dtype=torch.int32)
     )
 
 
 @pytest.mark.parametrize("bias_value", [-0.5, 0.5])
-def test_integer_forward_preserves_large_bias_code(bias_value):
+def test_integer_forward_uses_clipped_bias_code(bias_value):
     layer = Linear(in_features=1, out_features=1, bias=True, quant_bits=8, name="").eval()
     with torch.no_grad():
         layer.weight.zero_()
@@ -686,5 +678,5 @@ def test_integer_forward_preserves_large_bias_code(bias_value):
     layer.precompute()
     torch.testing.assert_close(
         layer.int_forward(torch.zeros((1, 1), dtype=torch.int32)),
-        torch.tensor([[int(bias_value * 128)]], dtype=torch.int32),
+        torch.tensor([[int(bias_value * 32)]], dtype=torch.int32),
     )

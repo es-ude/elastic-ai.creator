@@ -55,10 +55,9 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         kernel_size: int,
         padding: int | str,
         seq_len: int,
-        quant_bits: int=None,
+        quant_bits: int | list[int, int, int] = None,
         weight_bits: int | None = None,
         activation_bits: int | None= None,
-        bias_bits:int= 32,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -73,7 +72,6 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             seq_len: Sequence length of the inputs.
             weight_bits: Bit width of weights.
             activation_bits: Bit width of activations.
-            bias_bits: Bit width of Biases.
             quant_data_dir: Directory for the quantized inputs and outputs
                 saved by `int_forward`. `None` disables saving.
             device: Device of the quantization parameters.
@@ -85,14 +83,13 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         self.name = name
         self.weight_bits= quant_bits if weight_bits is None else weight_bits
         self.activation_bits = quant_bits if activation_bits is None else activation_bits
-        self.bias_bits = bias_bits
         self.quant_data_dir = quant_data_dir
 
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.bias_bits, observer=GlobalMinMaxObserver()
+            quant_bits=32, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
@@ -123,6 +120,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             padding_len=self.padding_len,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
+            accumulator_width=self.tmp_quant_bits,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -147,7 +145,12 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         new_bias_scale_factor = (
             self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
         )
-        return quantize_bias(self.bias, self.bias_QParams, new_bias_scale_factor, self.bias_bits)
+        return quantize_bias(
+            self.bias,
+            self.bias_QParams,
+            new_bias_scale_factor,
+            self.tmp_quant_bits,
+        )
 
     def precompute(self) -> None:
         """Compute the integer parameters for `int_forward` and `create_design`.
@@ -158,6 +161,13 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         """
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
+        self.tmp_quant_bits = accumulator_bits(
+            self.inputs_QParams.quant_bits,
+            self.weight_QParams.quant_bits,
+            self.q_weights.shape[1:],
+            input_scheme=self.inputs_QParams.scheme,
+            weight_scheme=self.weight_QParams.scheme,
+        )
 
         if self.bias is not None:
             self.q_bias = self._get_quantized_bias()
@@ -172,13 +182,6 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             self.scale_factor_M
         )
 
-        self.tmp_quant_bits = accumulator_bits(
-            int(self.inputs_QParams.quant_bits)
-            + int(self.weight_QParams.quant_bits)
-            + 2,
-            self.q_weights.shape[1] * self.q_weights.shape[2],
-            self.q_bias,
-        )
         self.precomputed = True
 
     def int_forward(

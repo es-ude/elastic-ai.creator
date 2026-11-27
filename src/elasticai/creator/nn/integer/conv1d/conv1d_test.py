@@ -53,7 +53,6 @@ def layer() -> Conv1d:
         seq_len=8,
         weight_bits=8,
         activation_bits=8,
-        bias_bits=8,
         device="cpu",
     )
 
@@ -96,7 +95,7 @@ def test_creates_design(layer, inputs) -> None:
 
 
 @pytest.mark.parametrize("bias_value", [-0.5, 0.5])
-def test_conv1d_preserves_bias_larger_than_product_range(bias_value):
+def test_conv1d_clips_bias_to_accumulator_range(bias_value):
     layer = Conv1d(
         in_channels=1,
         out_channels=1,
@@ -117,7 +116,7 @@ def test_conv1d_preserves_bias_larger_than_product_range(bias_value):
 
     torch.testing.assert_close(
         layer.int_forward(torch.zeros((1, 1, 1), dtype=torch.int32)),
-        torch.tensor([[[int(bias_value * 128)]]], dtype=torch.int32),
+        torch.tensor([[[int(bias_value * 32)]]], dtype=torch.int32),
     )
 
 @pytest.mark.parametrize("kernel_size,output_shift", [(50, 17), (20000, 25)])
