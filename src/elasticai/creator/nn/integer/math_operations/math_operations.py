@@ -3,6 +3,8 @@ import torch.nn.functional as F
 
 from elasticai.creator.nn.integer._dtypes import check_dtype
 
+from .accumulator import _cap_accumulator_bits, accumulator_bits
+
 
 class MathOperations:
     """Integer arithmetic that mimics fixed-width hardware operations.
@@ -23,6 +25,7 @@ class MathOperations:
         Returns:
             The same tensor object as `result`, after clamping.
         """
+        quant_bits = _cap_accumulator_bits(quant_bits)
         result.clamp_(-(2 ** (quant_bits - 1)), (2 ** (quant_bits - 1)) - 1)
         return result
 
@@ -44,7 +47,7 @@ class MathOperations:
         """
         check_dtype("a", a, torch.int32)
         check_dtype("b", b, torch.int32)
-        c = a + b.to(a.device)
+        c = a.to(torch.int32) + b.to(device=a.device, dtype=torch.int32)
 
         return self.clamp_result(c, c_quant_bits)
 
@@ -67,7 +70,7 @@ class MathOperations:
         check_dtype("a", a, torch.int32)
         check_dtype("b", b, torch.int32)
 
-        c = a - b.to(a.device)
+        c = a.to(torch.int32) - b.to(device=a.device, dtype=torch.int32)
         return self.clamp_result(c, c_quant_bits)
 
     def intmatmul(
@@ -93,8 +96,8 @@ class MathOperations:
         check_dtype("a", a, torch.int32)
         check_dtype("b", b, torch.int32)
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
+        a_cpu = a.cpu()
+        b_cpu = b.cpu()
 
         m, k = a_cpu.shape
         k, n = b_cpu.shape
@@ -115,12 +118,13 @@ class MathOperations:
         x_quant_bits: int,
         w_quant_bits: int,
         b: torch.Tensor | None = None,
+        *,
+        result_bits: int | None = None,
     ) -> torch.Tensor:
         """Compute an integer multiply-accumulate `x @ w.T + b`.
 
-        The product is clamped to `(x_quant_bits + 1) + (w_quant_bits + 1) + 1`
-        bits. If a bias is given, it is added and the sum is clamped to one more
-        bit.
+        If no result width is supplied, derive it from the operand widths
+        and the reduction shape.
 
         Args:
             x: Input tensor of shape `(..., in_features)`, dtype `torch.int32`.
@@ -129,6 +133,7 @@ class MathOperations:
             x_quant_bits: Bit width of the quantized inputs.
             w_quant_bits: Bit width of the quantized weights.
             b: Optional bias of shape `(out_features,)`, dtype `torch.int32`.
+            result_bits: Optional accumulator width calculated during precompute.
 
         Returns:
             The accumulated result of shape `(..., out_features)`.
@@ -140,18 +145,15 @@ class MathOperations:
         check_dtype("x", x, torch.int32)
         check_dtype("w", w, torch.int32)
 
-        tmp = F.linear(x, w)
-
-        tmp_quant_bits = (x_quant_bits + 1) + (w_quant_bits + 1)
-        # TODO: should be dynamic, need to be solved in the future
-        tmp_quant_bits = tmp_quant_bits + 1
-        self.clamp_result(tmp, tmp_quant_bits)
+        if result_bits is None:
+            result_bits = accumulator_bits(x_quant_bits, w_quant_bits, x.shape[-1:])
+        tmp = F.linear(x, w.to(x.device))
 
         if b is not None:
             check_dtype("b", b, torch.int32)
-            tmp = self.intadd(tmp, b, tmp_quant_bits + 1)
+            tmp = tmp + b.to(x.device)
 
-        return tmp
+        return self.clamp_result(tmp, result_bits)
 
     def int_matmul_4d(
         self,
@@ -257,19 +259,11 @@ class MathOperations:
             TypeError: If an operand is not a `torch.Tensor` or has the wrong dtype.
             AssertionError: If `a` and `b` have different shapes.
         """
-        check_dtype("a", a, torch.int32)
-        check_dtype("b", b, torch.int32)
         assert a.shape == b.shape
+        return self.int_elementwise_mul(a, b, c_quant_bits=c_quant_bits)
+        
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
-
-        dot_product = a_cpu * b_cpu
-
-        dot_product = dot_product.to(a.device)
-        return self.clamp_result(dot_product, c_quant_bits)
-
-    def int_dotproduct(
+    def int_elementwise_mul(
         self, a: torch.Tensor, b: torch.Tensor, c_quant_bits: int
     ) -> torch.Tensor:
         """Multiply two integer tensors element-wise and clamp the product.
@@ -291,8 +285,8 @@ class MathOperations:
         check_dtype("a", a, torch.int32)
         check_dtype("b", b, torch.int32)
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
+        a_cpu = a.cpu()
+        b_cpu = b.cpu()
 
         dot_product = a_cpu * b_cpu
 
@@ -320,8 +314,8 @@ class MathOperations:
         check_dtype("a", a, torch.int32, torch.int64)
         check_dtype("b", b, torch.int32, torch.int64)
 
-        a_cpu = a.cpu().to(torch.int32)
-        b_cpu = b.cpu().to(torch.int32)
+        a_cpu = a.cpu()
+        b_cpu = b.cpu()
 
         division = a_cpu // b_cpu
 

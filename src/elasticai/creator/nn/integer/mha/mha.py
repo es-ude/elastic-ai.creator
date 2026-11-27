@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear import Linear
 from elasticai.creator.nn.integer.mha.design import MHA as MHADesign
@@ -24,7 +28,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         nhead: int,
         d_model: int,
         window_size: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -34,7 +38,8 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         self.nhead = nhead
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
+
         self.quant_data_dir = quant_data_dir
 
         self.enable_error_analysis = enable_error_analysis
@@ -44,7 +49,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             in_features=d_model,
             out_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -56,7 +61,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             in_features=d_model,
             out_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -67,7 +72,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             in_features=d_model,
             out_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -78,7 +83,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             name=self.name + "_inner_attn",
             nhead=self.nhead,
             window_size=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             d_model=d_model,
             enable_error_analysis=self.enable_error_analysis,
@@ -88,7 +93,7 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
             in_features=d_model,
             out_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             bias=True,
@@ -96,18 +101,19 @@ class MultiHeadAttention(DesignCreatorModule, nn.Module):
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
 
     def create_design(self, name: str) -> MHADesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return MHADesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             q_linear=self.q_linear,
             k_linear=self.k_linear,
             v_linear=self.v_linear,

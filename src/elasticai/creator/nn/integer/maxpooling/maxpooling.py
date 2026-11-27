@@ -2,6 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.maxpooling.design import (
@@ -40,7 +44,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         in_num_dimensions: int,
         out_num_dimensions: int,
         kernel_size: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -54,7 +58,7 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
             in_num_dimensions: Number of channels of the inputs.
             out_num_dimensions: Number of channels of the outputs.
             kernel_size: Size and stride of the pooling windows.
-            quant_bits: Bit width of inputs and outputs.
+            quant_bits: One shared width or a (weight, activation) pair.
             quant_data_dir: Directory for the quantized inputs and outputs
                 saved by `int_forward`. `None` disables saving.
             device: Device of the quantization parameters.
@@ -68,14 +72,14 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         self.out_num_dimensions = out_num_dimensions
         self.kernel_size = kernel_size
 
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.scale_factor_Math_ops = MathOperations()
@@ -86,9 +90,10 @@ class MaxPooling1d(DesignCreatorModule, nn.Module):
         Args:
             name: Name of the VHDL entity.
         """
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return MaxPooling1dDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             in_features=self.in_features,
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,

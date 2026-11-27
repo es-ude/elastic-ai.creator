@@ -1,6 +1,10 @@
 import torch
 import torch.nn.functional as F
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -27,7 +31,7 @@ class ReLU(DesignCreatorModule):
         self,
         *,
         name: str,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -36,7 +40,7 @@ class ReLU(DesignCreatorModule):
 
         Args:
             name: Name of the layer, used for the saved quantization data.
-            quant_bits: Bit width of inputs and outputs.
+            quant_bits: One shared width or a (weight, activation) pair.
             quant_data_dir: Directory for the quantized inputs and outputs
                 saved by `int_forward`. `None` disables saving.
             device: Device of the quantization parameters.
@@ -46,17 +50,18 @@ class ReLU(DesignCreatorModule):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
+
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits,
+            quant_bits=self.activation_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
 
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits,
+            quant_bits=self.activation_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
 
@@ -66,9 +71,10 @@ class ReLU(DesignCreatorModule):
         Args:
             name: Name of the VHDL entity.
         """
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return ReLUDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             threshold=int(self.inputs_QParams.zero_point.detach()),
             clock_option=False,
             work_library_name="work",

@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.concatenate.design import (
     Concatenate as ConcatenateDesign,
 )
@@ -27,7 +31,7 @@ class Concatenate(DesignCreatorModule, nn.Module):
         inputs_size: int,
         hidden_size: int,
         num_dimensions: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ) -> None:
@@ -38,26 +42,27 @@ class Concatenate(DesignCreatorModule, nn.Module):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.inputs1_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs2_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name) -> ConcatenateDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return ConcatenateDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             inputs_size=self.inputs_size,
             hidden_size=self.hidden_size,
             num_dimensions=self.num_dimensions,

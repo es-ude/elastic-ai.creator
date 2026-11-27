@@ -13,6 +13,22 @@ from elasticai.creator.nn.integer.quant_utils.calculate_quant_params import (
 from elasticai.creator.nn.integer.quant_utils.Observers import BaseObserver
 
 
+def _quantize_tensor(
+    x: torch.Tensor,
+    scale_factor: torch.Tensor,
+    zero_point: torch.Tensor | int,
+    lower: int,
+    upper: int,
+) -> torch.Tensor:
+    return (
+        (x / scale_factor + zero_point)
+        .round()
+        .to(torch.float32)
+        .clamp(min=lower, max=upper)
+        .to(torch.int32)
+    )
+
+
 class QuantScheme(Enum):
     """Quantization scheme: symmetric or asymmetric, signed or unsigned.
 
@@ -222,11 +238,9 @@ class QParams(nn.Module):
         scale_factor = self.scale_factor.to(x.device)
         zero_point = self.zero_point.to(x.device)
 
-        x_q = x / scale_factor + zero_point
-        x_q = x_q.round_().clamp(min=self.min_quant.item(), max=self.max_quant.item())
-        x_q = x_q.to(torch.int32)
-
-        return x_q.to(x.device)
+        return _quantize_tensor(
+            x, scale_factor, zero_point, self.min_quant.item(), self.max_quant.item()
+        )
 
     def dequantize(self, x_q: torch.Tensor) -> torch.Tensor:
         """Map a quantized tensor back to float values.
@@ -245,9 +259,7 @@ class QParams(nn.Module):
         """
         zero_point = self.zero_point.to(x_q.device)
         scale_factor = self.scale_factor.to(x_q.device)
-        x_q = self.math_ops.intsub(x_q, zero_point, self.quant_bits + 1)
-        x_dq = x_q * scale_factor
-        return x_dq.to(torch.float32).to(x_q.device)
+        return ((x_q.to(torch.float32) - zero_point) * scale_factor).to(torch.float32)
 
     def get_extra_state(self) -> dict[str, Any]:
         return {"quant_bits": self.quant_bits}

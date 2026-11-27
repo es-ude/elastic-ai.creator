@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition.design import Addition as AdditionDesign
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
@@ -24,7 +28,7 @@ class Addition(DesignCreatorModule, nn.Module):
         name: str,
         num_features: int,
         num_dimensions: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -37,7 +41,7 @@ class Addition(DesignCreatorModule, nn.Module):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.use_pipeline_template = use_pipeline_template
@@ -45,22 +49,23 @@ class Addition(DesignCreatorModule, nn.Module):
         self.enable_error_analysis = enable_error_analysis
 
         self.inputs1_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.inputs2_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name: str) -> AdditionDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return AdditionDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             num_features=self.num_features,
             num_dimensions=self.num_dimensions,
             m_q_1=self.scale_factor_m_q_1.item(),
@@ -83,7 +88,7 @@ class Addition(DesignCreatorModule, nn.Module):
         self.scale_factor_M_2 = (
             self.inputs2_QParams.scale_factor / self.outputs_QParams.scale_factor
         )
-        # error_threshold = 10 ** (-(self.quant_bits - 2))
+        # error_threshold = 10 ** (-(self.activation_bits - 2))
         # self.scale_factor_m_q_1_shift, self.scale_factor_m_q_1 = scaling_M(
         #     self.scale_factor_M_1, error_threshold
         # )

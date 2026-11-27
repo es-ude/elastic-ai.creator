@@ -34,7 +34,7 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    constant MACC_OUT_WIDTH : integer := (X_DATA_WIDTH+1)+(W_DATA_WIDTH+1) + 1;
+    constant MACC_OUT_WIDTH : integer := ${accumulator_width};
     function multiply_accumulate(
                     w : in signed(W_DATA_WIDTH downto 0);
                     x_in : in signed(X_DATA_WIDTH downto 0);
@@ -43,7 +43,7 @@ architecture rtl of ${name} is
         variable TMP : signed( ((X_DATA_WIDTH+1)+(W_DATA_WIDTH+1)) - 1 downto 0) := (others=>'0');
     begin
         TMP := w * x_in;
-        return TMP + y_out;
+        return resize(TMP + y_out, y_out'length);
     end function;
     function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);

@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.conv1dbn import Conv1dBN
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils import (
@@ -27,14 +31,14 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
         out_channels: int,
         kernel_size: int,
         seq_len: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.conv1dbn_0 = Conv1dBN(
@@ -44,14 +48,14 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             padding="same",
             seq_len=seq_len,
             name=self.name + "_conv1dbn_0",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.conv1dbn_0_relu = ReLU(
             name=self.name + "_conv1dbn_0_relu",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -63,7 +67,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             padding="same",
             seq_len=seq_len,
             name=self.name + "_conv1dbn_1",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -78,7 +82,7 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
                     padding="same",
                     seq_len=seq_len,
                     name=self.name + "_shortcut",
-                    quant_bits=self.quant_bits,
+                    quant_bits=quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                 )
@@ -88,26 +92,27 @@ class ResidualBlock(DesignCreatorModule, nn.Module):
             name=self.name + "_add",
             num_features=seq_len,
             num_dimensions=out_channels,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.relu = ReLU(
             name=self.name + "_relu",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.precomputed = False
 
     def create_design(self, name) -> ResidualBlockDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return ResidualBlockDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,

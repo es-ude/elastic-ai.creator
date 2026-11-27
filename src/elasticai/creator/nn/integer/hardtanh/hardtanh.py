@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.hardtanh.design import HardTanh as HardTanhDesign
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
@@ -20,22 +24,23 @@ class HardTanh(DesignCreatorModule, nn.Module):
         self,
         *,
         name: str,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
+
         self.quant_data_dir = quant_data_dir
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits,
+            quant_bits=self.activation_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits,
+            quant_bits=self.activation_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
 
@@ -44,9 +49,10 @@ class HardTanh(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> HardTanhDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return HardTanhDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             quantized_one=int(self.quantized_one),
             quantized_minus_one=int(self.quantized_minus_one),
             work_library_name="work",

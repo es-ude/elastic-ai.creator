@@ -32,7 +32,7 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    constant MACC_OUT_WIDTH : integer := ${accumulator_width};
     constant PRODUCT_SCALING_WIDTH : integer := MACC_OUT_WIDTH + M_Q_DATA_WIDTH;
     function ceil_div(a : integer; b : integer) return integer is
     begin
@@ -104,9 +104,9 @@ architecture rtl of ${name} is
     signal w_int : w_int_array_t := (others=>(others=>'0'));
     type w_sub_z_array_t is array (0 to UNROLL_FACTOR-1) of signed(DATA_WIDTH downto 0);
     signal w_sub_z_array : w_sub_z_array_t := (others=>(others=>'0'));
-    signal b_in : std_logic_vector(UNROLL_FACTOR * 2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal b_in : std_logic_vector(UNROLL_FACTOR * ${bias_data_width} - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(ceil_div(OUT_FEATURES, UNROLL_FACTOR)) - 1 downto 0) := (others=>'0');
-    type b_int_array is array (0 to UNROLL_FACTOR-1) of signed( 2 * (DATA_WIDTH + 1) - 1 downto 0);
+    type b_int_array is array (0 to UNROLL_FACTOR-1) of signed( ${bias_data_width} - 1 downto 0);
     signal b_int : b_int_array := (others=>(others=>'0'));
     signal y_store_en : std_logic;
     type y_shifted_array is array (0 to UNROLL_FACTOR-1) of signed(MACC_OUT_WIDTH + M_Q_DATA_WIDTH - 1 downto 0);
@@ -136,7 +136,7 @@ begin
     -- W input parsing using generate statement
     gen_w_int: for i in 0 to UNROLL_FACTOR-1 generate
         w_int(i) <= signed(w_in((i+1)*DATA_WIDTH-1 downto i*DATA_WIDTH));
-        b_int(i) <= signed(b_in((i+1)*2*(DATA_WIDTH + 1) - 1 downto i*2*(DATA_WIDTH + 1)));
+        b_int(i) <= signed(b_in((i+1)*${bias_data_width} - 1 downto i*${bias_data_width}));
     end generate gen_w_int;
 
     x_int <= signed(x);
@@ -213,7 +213,7 @@ begin
                         for i in 0 to UNROLL_FACTOR-1 loop
                             w_sub_z_array(i) <= w_int(i) - to_signed(Z_W, w_sub_z_array(i)'length);
                             macc_product(i) <= w_sub_z_array(i) * x_sub_z;
-                            macc_sum(i) <=  macc_sum(i) + macc_product(i);
+                            macc_sum(i) <=  resize(macc_sum(i) + macc_product(i), MACC_OUT_WIDTH);
                         end loop;
 
                         mac_cnt := mac_cnt + 1;
@@ -228,7 +228,7 @@ begin
                         end if;
                     when s_scaling_0 =>
                         for i in 0 to UNROLL_FACTOR-1 loop
-                            macc_sum(i) <=  macc_sum(i) + macc_product(i);
+                            macc_sum(i) <=  resize(macc_sum(i) + macc_product(i), MACC_OUT_WIDTH);
                         end loop;
                         mac_state <= s_scaling_1;
                     when s_scaling_1 =>

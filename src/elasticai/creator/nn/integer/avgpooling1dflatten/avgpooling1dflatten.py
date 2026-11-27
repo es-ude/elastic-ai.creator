@@ -5,6 +5,10 @@ from torch.nn import functional as F
 from elasticai.creator.nn.integer.avgpooling1dflatten.design import (
     AVGPooling1dFlatten as AVGPooling1dFlattenDesign,
 )
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
@@ -37,7 +41,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         out_features: int,
         in_num_dimensions: int,
         out_num_dimensions: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -50,7 +54,7 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
             out_features: Sequence length of the outputs, usually 1.
             in_num_dimensions: Number of channels of the inputs.
             out_num_dimensions: Number of channels of the outputs.
-            quant_bits: Bit width of inputs and outputs.
+            quant_bits: One shared width or a (weight, activation) pair.
             quant_data_dir: Directory for the quantized inputs and outputs
                 saved by `int_forward`. `None` disables saving.
             device: Device of the quantization parameters.
@@ -65,15 +69,15 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         self.out_num_dimensions = out_num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
@@ -85,9 +89,10 @@ class AVGPooling1dFlatten(DesignCreatorModule, nn.Module):
         Args:
             name: Name of the VHDL entity.
         """
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return AVGPooling1dFlattenDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             in_features=self.in_features,
             out_features=self.out_features,
             in_num_dimensions=self.in_num_dimensions,

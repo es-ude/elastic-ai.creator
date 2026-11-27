@@ -33,7 +33,7 @@ entity ${name} is
     );
 end ${name};
 architecture rtl of ${name} is
-    constant MACC_OUT_WIDTH : integer := 2 * (DATA_WIDTH + 1) + 1;
+    constant MACC_OUT_WIDTH : integer := ${accumulator_width};
     function multiply_accumulate(
                     w : in signed(DATA_WIDTH downto 0);
                     x_in : in signed(DATA_WIDTH downto 0);
@@ -42,7 +42,7 @@ architecture rtl of ${name} is
         variable TMP : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
     begin
         TMP := w * x_in;
-        return TMP + y_out;
+        return resize(TMP + y_out, y_out'length);
     end function;
     function scaling(x_to_scale : in signed(MACC_OUT_WIDTH - 1 downto 0);
     scaler_m : in signed(M_Q_DATA_WIDTH -1 downto 0);
@@ -93,9 +93,9 @@ architecture rtl of ${name} is
     signal w_addr : std_logic_vector(log2(IN_FEATURES*OUT_FEATURES) - 1 downto 0) := (others=>'0');
     signal w_int : signed(DATA_WIDTH - 1 downto 0) := (others=>'0');
     signal w_sub_z : signed(DATA_WIDTH downto 0) := (others=>'0');
-    signal b_in : std_logic_vector(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal b_in : std_logic_vector(${bias_data_width} - 1 downto 0) := (others=>'0');
     signal b_addr : std_logic_vector(log2(OUT_FEATURES) - 1 downto 0) := (others=>'0');
-    signal b_int : signed(2 * (DATA_WIDTH + 1) - 1 downto 0) := (others=>'0');
+    signal b_int : signed(${bias_data_width} - 1 downto 0) := (others=>'0');
     signal y_store_en : std_logic;
     signal y_scaled : signed(DATA_WIDTH downto 0) := (others=>'0');
     signal y_store_addr : integer range 0 to OUT_FEATURES * NUM_DIMENSIONS;

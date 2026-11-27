@@ -8,6 +8,8 @@ from .Observers import (
 from .Observers import (
     MovingAverageMinMaxObserver as MovingAverageMinMaxObserver,
 )
+from .parameter_quantization import quantize_bias as quantize_bias
+from .parameter_quantization import quantize_weights as quantize_weights
 from .QParams import (
     AsymmetricSignedQParams as AsymmetricSignedQParams,
 )

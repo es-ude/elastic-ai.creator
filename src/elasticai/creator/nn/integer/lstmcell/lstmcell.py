@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.concatenate import Concatenate
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.hadamardproduct import HadamardProduct
@@ -26,7 +30,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         inputs_size: int,
         hidden_size: int,
         window_size: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         lstm_use_pipeline_template: bool = False,
         device: torch.device | str = torch.device("cpu"),
@@ -38,7 +42,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         self.window_size = window_size
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = lstm_use_pipeline_template
 
@@ -47,7 +51,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             inputs_size=inputs_size,
             hidden_size=self.hidden_size,
             num_dimensions=1,  # only one-step
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -58,7 +62,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             num_dimensions=1,
             bias=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_parallelised_template=use_parallelised_template,
@@ -71,7 +75,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             num_dimensions=1,
             bias=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_parallelised_template=use_parallelised_template,
@@ -85,7 +89,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             bias=True,
             num_dimensions=1,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_parallelised_template=use_parallelised_template,
@@ -99,7 +103,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             out_features=self.hidden_size,
             bias=True,
             num_dimensions=1,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_parallelised_template=use_parallelised_template,
@@ -109,32 +113,32 @@ class LSTMCell(DesignCreatorModule, nn.Module):
 
         self.i_sigmoid = HardSigmoid(
             name=self.name + "_i_sigmoid",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.f_sigmoid = HardSigmoid(
             name=self.name + "_f_sigmoid",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.o_sigmoid = HardSigmoid(
             name=self.name + "_o_sigmoid",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.c_tanh = HardTanh(
             name=self.name + "_c_tanh",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.c_next_tanh = HardTanh(
             name=self.name + "_c_next_tanh",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -143,7 +147,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_c_next_addition",
             num_features=self.hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_pipeline_template=self.lstm_use_pipeline_template,
@@ -154,7 +158,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_fc_hadamard_product",
             num_features=self.hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_pipeline_template=self.lstm_use_pipeline_template,
@@ -164,7 +168,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_ic_hadamard_product",
             num_features=self.hidden_size,
             num_dimensions=1,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_pipeline_template=self.lstm_use_pipeline_template,
@@ -174,7 +178,7 @@ class LSTMCell(DesignCreatorModule, nn.Module):
             name=self.name + "_oc_hadamard_product",
             num_features=self.hidden_size,
             num_dimensions=1,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             use_pipeline_template=self.lstm_use_pipeline_template,
@@ -182,27 +186,28 @@ class LSTMCell(DesignCreatorModule, nn.Module):
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
 
     def create_design(self, name) -> LSTMCellDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return LSTMCellDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             concatenate=self.concatenate,
             f_gate_linear=self.f_gate_linear,
             c_gate_linear=self.c_gate_linear,

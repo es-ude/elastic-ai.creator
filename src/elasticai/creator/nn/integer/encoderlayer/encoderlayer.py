@@ -3,6 +3,10 @@ import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
 from elasticai.creator.nn.integer.batchnorm1d import BatchNorm1d
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.encoderlayer.design import (
     EncoderLayer as EncoderLayerDesign,
@@ -28,7 +32,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         ffn_dim: int,
         window_size: int,
         nhead: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_fused_ffn: bool = False,
@@ -37,7 +41,8 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
+
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -49,7 +54,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             nhead=nhead,
             d_model=d_model,
             window_size=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -58,7 +63,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             name=mha_name + "_add",
             num_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -74,7 +79,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             momentum=0.1,
             affine=True,
             track_running_stats=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -86,7 +91,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 num_dimensions=window_size,
                 d_model=d_model,
                 ffn_dim=ffn_dim,
-                quant_bits=self.quant_bits,
+                quant_bits=quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 enable_error_analysis=self.enable_error_analysis,
@@ -97,7 +102,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
                 num_dimensions=window_size,
                 d_model=d_model,
                 ffn_dim=ffn_dim,
-                quant_bits=self.quant_bits,
+                quant_bits=quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 enable_error_analysis=self.enable_error_analysis,
@@ -107,7 +112,7 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             name=ffn_name + "_add",
             num_features=d_model,
             num_dimensions=window_size,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -123,24 +128,25 @@ class EncoderLayer(DesignCreatorModule, nn.Module):
             momentum=0.1,
             affine=True,
             track_running_stats=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.precomputed = False
 
     def create_design(self, name: str) -> EncoderLayerDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return EncoderLayerDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             mha=self.mha,
             mha_add=self.mha_add,
             mha_norm=self.mha_norm,

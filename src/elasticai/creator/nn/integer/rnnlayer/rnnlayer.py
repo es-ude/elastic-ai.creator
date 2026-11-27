@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.grucell import GRUCell
 from elasticai.creator.nn.integer.lstmcell import LSTMCell
 from elasticai.creator.nn.integer.quant_utils import (
@@ -24,7 +28,7 @@ class RNNLayer(nn.Module):
         hidden_size: int,
         batch_size: int,
         window_size: int,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -40,7 +44,8 @@ class RNNLayer(nn.Module):
         self.window_size = window_size
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
+
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = use_pipeline_template
         print("in RNNLayer.py use_pipeline_template:", self.lstm_use_pipeline_template)
@@ -50,7 +55,7 @@ class RNNLayer(nn.Module):
                 inputs_size=self.inputs_size,
                 hidden_size=self.hidden_size,
                 window_size=self.window_size,
-                quant_bits=self.quant_bits,
+                quant_bits=quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
                 use_parallelised_template=use_parallelised_template,
@@ -63,7 +68,7 @@ class RNNLayer(nn.Module):
                 inputs_size=self.inputs_size,
                 hidden_size=self.hidden_size,
                 window_size=self.window_size,
-                quant_bits=self.quant_bits,
+                quant_bits=quant_bits,
                 quant_data_dir=self.quant_data_dir,
                 device=device,
             )
@@ -71,27 +76,28 @@ class RNNLayer(nn.Module):
             raise ValueError(f"Unsupported cell type: {self.cell_type}")
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.precomputed = False
 
     def create_design(self, name: str) -> RNNLayerDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return RNNLayerDesign(
             name=name,
             inputs_size=self.inputs_size,

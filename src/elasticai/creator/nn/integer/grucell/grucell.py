@@ -5,6 +5,10 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.concatenate import Concatenate
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.grucell.design import GRUCell as GRUCellDesign
@@ -26,15 +30,15 @@ class GRUCell(DesignCreatorModule, nn.Module):
         inputs_size: int,
         hidden_size: int,
         window_size: int,
-        quant_bits: int,
+
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
         super().__init__()
-        window_size
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = Path(quant_data_dir)
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -43,7 +47,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
             inputs_size=inputs_size,
             hidden_size=self.hidden_size,
             num_dimensions=1,  # only one-step
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -54,13 +58,13 @@ class GRUCell(DesignCreatorModule, nn.Module):
             out_features=hidden_size,
             num_dimensions=1,
             bias=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.z_sigmoid = HardSigmoid(
             name=self.name + "_z_sigmoid",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -71,13 +75,13 @@ class GRUCell(DesignCreatorModule, nn.Module):
             out_features=hidden_size,
             num_dimensions=1,
             bias=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.r_sigmoid = HardSigmoid(
             name=self.name + "_r_sigmoid",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -86,7 +90,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
             name=self.name + "rhprev_hadamard_product",
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -95,7 +99,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
             inputs_size=inputs_size,
             hidden_size=hidden_size,
             num_dimensions=1,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -105,13 +109,13 @@ class GRUCell(DesignCreatorModule, nn.Module):
             out_features=hidden_size,
             num_dimensions=1,
             bias=True,
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.h_tanh = HardTanh(
             name=self.name + "_h_tanh",
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -120,7 +124,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
             name=self.name + "_zhprev_hadamard_product",
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -128,7 +132,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
             name=self.name + "_zhtidle_hadamard_product",
             num_features=hidden_size,  # TODO: check this
             num_dimensions=1,  # TODO: check this
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -137,31 +141,32 @@ class GRUCell(DesignCreatorModule, nn.Module):
             name=self.name + "_add",
             num_features=hidden_size,
             num_dimensions=1,  # TODO: check this
-            quant_bits=self.quant_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_prev_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.h_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.c_next_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.minus_z_sigmoid_outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
 
         self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name) -> GRUCellDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         pass
 
     def precompute(self) -> None:
@@ -336,7 +341,7 @@ class GRUCell(DesignCreatorModule, nn.Module):
         )
 
         q_minus_z_sigmoid_outputs = self.math_ops.intsub(
-            self.quantized_one, q_z_sigmoid_outputs, self.z_sigmoid.quant_bits + 1
+            self.quantized_one, q_z_sigmoid_outputs, self.z_sigmoid.activation_bits + 1
         )
 
         self._save_quant_data(

@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.hardsigmoid.design import (
     HardSigmoid as HardSigmoidDesign,
@@ -22,32 +26,33 @@ class HardSigmoid(DesignCreatorModule, nn.Module):
         self,
         *,
         name: str,
-        quant_bits: int,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.inputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits,
+            quant_bits=self.activation_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
 
         self.outputs_QParams = AsymmetricSignedQParams(
-            quant_bits=self.quant_bits,
+            quant_bits=self.activation_bits,
             observer=GlobalMinMaxObserver(),
         ).to(device)
         self.math_ops = MathOperations()
         self.precomputed = False
 
     def create_design(self, name: str) -> HardSigmoidDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return HardSigmoidDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             quantized_three=int(self.quantized_three),
             quantized_minus_three=int(self.quantized_minus_three),
             quantized_one=int(self.quantized_one),

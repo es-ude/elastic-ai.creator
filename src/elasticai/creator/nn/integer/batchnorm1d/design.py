@@ -5,6 +5,7 @@ from elasticai.creator.file_generation.template import (
     InProjectTemplate,
     module_to_package,
 )
+from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.ram.design import Ram
 from elasticai.creator.vhdl.auto_wire_protocols.port_definitions import create_port
 from elasticai.creator.vhdl.code_generation.addressable import calculate_address_width
@@ -39,6 +40,7 @@ class BatchNorm1d(Design):
         z_y: int,
         work_library_name: str,
         resource_option: str,
+        accumulator_width: int | None = None,
     ) -> None:
         """Create the design.
 
@@ -65,6 +67,11 @@ class BatchNorm1d(Design):
         super().__init__(name=name)
 
         self._data_width = data_width
+        self._accumulator_width = (
+            accumulator_bits(data_width, data_width)
+            if accumulator_width is None
+            else accumulator_width
+        )
         self._num_dimensions = num_dimensions
         self._in_features = in_features
         self._out_features = out_features
@@ -122,6 +129,8 @@ class BatchNorm1d(Design):
                 m_q=str(self._m_q),
                 m_q_shift=str(self._m_q_shift),
                 m_q_data_width=str(self._m_q_data_width),
+                accumulator_width=str(self._accumulator_width),
+                bias_data_width=str(self._accumulator_width),
                 z_w=str(self._z_w),
                 z_b=str(self._z_b),
                 z_x=str(self._z_x),
@@ -142,7 +151,7 @@ class BatchNorm1d(Design):
 
         rom_bias = Rom(
             name=rom_name["bias"],
-            data_width=(self._data_width + 1) * 2,
+            data_width=self._accumulator_width,
             values_as_integers=self._bias,
         )
         rom_bias.save_to(destination.create_subpath(rom_name["bias"]))
