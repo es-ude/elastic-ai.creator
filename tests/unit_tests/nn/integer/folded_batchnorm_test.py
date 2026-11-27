@@ -215,7 +215,7 @@ def test_conv1dbn_quantized_bn_folding(
         width = min(32, mac_width)
         limit = 2 ** (width - 1) - 1
         reference_bias_codes = reference_bias_codes.clamp(-limit, limit)
-        assert actual_layer.bias_QParams.quant_bits == actual_layer.accumulator_width == width
+        assert actual_layer.accumulator_width == width
         torch.testing.assert_close(
             actual_layer.q_fused_bias,
             reference_bias_codes.to(torch.int32),

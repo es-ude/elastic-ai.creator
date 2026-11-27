@@ -10,17 +10,15 @@ from elasticai.creator.nn.integer.layernorm1d.design import (
     LayerNorm1d as LayerNorm1dDesign,
 )
 from elasticai.creator.nn.integer.math_operations import MathOperations
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     SimQuant,
-    SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
-    configure_bias_for_accumulator,
+    accumulator_qparams,
     quantize_bias,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
@@ -59,9 +57,6 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=32, observer=GlobalMinMaxObserver()
-        ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
@@ -98,24 +93,14 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
             weight=self.weight, weight_QParams=self.weight_QParams
         )
 
-        affine_scale = (
-            self.normed_inputs_QParams.scale_factor
-            * self.weight_QParams.scale_factor
+        accumulator = accumulator_qparams(
+            self.normed_inputs_QParams,
+            self.weight_QParams,
         )
-        self.accumulator_width = accumulator_bits(
-            self.normed_inputs_QParams.quant_bits,
-            self.weight_QParams.quant_bits,
-            input_scheme=self.normed_inputs_QParams.scheme,
-            weight_scheme=self.weight_QParams.scheme,
-        )
-        self.q_bias = quantize_bias(
-            self.bias,
-            self.bias_QParams,
-            affine_scale,
-            self.accumulator_width,
-        )
+        self.accumulator_width = accumulator.quant_bits
+        self.q_bias = quantize_bias(self.bias, accumulator)
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
-            affine_scale / self.outputs_QParams.scale_factor
+            accumulator.scale_factor / self.outputs_QParams.scale_factor
         )
         self.precomputed = True
 
@@ -211,12 +196,13 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
                 self.weight_QParams.update_quant_params(self.weight)
                 self.normed_inputs_QParams.update_quant_params(normed_inputs)
 
-                configure_bias_for_accumulator(
-                    self.bias_QParams, self.normed_inputs_QParams, self.weight_QParams
-                )
             normed_inputs = SimQuant.apply(normed_inputs, self.normed_inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
-            bias = SimQuant.apply(self.bias, self.bias_QParams)
+            accumulator = accumulator_qparams(
+                self.normed_inputs_QParams,
+                self.weight_QParams,
+            )
+            bias = SimQuant.apply(self.bias, accumulator)
         else:
             weight = self.weight
             bias = self.bias

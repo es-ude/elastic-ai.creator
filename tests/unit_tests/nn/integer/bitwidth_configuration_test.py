@@ -44,7 +44,7 @@ def test_separate_activation_and_weight_widths_in_integer_inference(convolution)
         input_codes = input_codes.unsqueeze(-1)
         expected_codes = expected_codes.unsqueeze(-1)
     layer.precompute()
-    assert layer.bias_QParams.quant_bits == 17
+    assert layer.accumulator_width == 17
     torch.testing.assert_close(layer.int_forward(input_codes), expected_codes)
     with pytest.raises(ValueError, match="requires equal weight and activation bit widths"):
         layer.create_design("mixed")

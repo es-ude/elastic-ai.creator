@@ -11,19 +11,17 @@ from elasticai.creator.nn.integer.math_operations import (
     get_padded_q_inputs,
     get_padding_len,
 )
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.math_operations.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
     GlobalMinMaxObserver,
     SimQuant,
-    SymmetricSignedQParams,
     scaling_M,
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
-    configure_bias_for_accumulator,
+    accumulator_qparams,
     quantize_bias,
     quantize_weights,
 )
@@ -66,9 +64,6 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         self.weight_QParams = AsymmetricSignedQParams(
             quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
-        self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=32, observer=GlobalMinMaxObserver()
-        ).to(device)
         self.inputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.activation_bits, observer=GlobalMinMaxObserver()
         ).to(device)
@@ -97,7 +92,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item(),
+            z_b=0,
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
@@ -107,37 +102,21 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         assert not self.training, "int_forward should be called in eval mode"
         return quantize_weights(self.weight, self.weight_QParams)
 
-    def _get_quantized_bias(self) -> torch.Tensor:
-        assert not self.training, "int_forward should be called in eval mode"
-        new_bias_scale_factor = (
-            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
-        )
-
-        return quantize_bias(
-            self.bias,
-            self.bias_QParams,
-            new_bias_scale_factor,
-            self.accumulator_width,
-        )
-
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
         self.q_weights = self._get_quantized_weights()
-        self.accumulator_width = accumulator_bits(
-            self.inputs_QParams.quant_bits,
-            self.weight_QParams.quant_bits,
+        accumulator = accumulator_qparams(
+            self.inputs_QParams,
+            self.weight_QParams,
             self.q_weights.shape[1:],
-            input_scheme=self.inputs_QParams.scheme,
-            weight_scheme=self.weight_QParams.scheme,
         )
+        self.accumulator_width = accumulator.quant_bits
         if self.bias is not None:
-            self.q_bias = self._get_quantized_bias()
+            self.q_bias = quantize_bias(self.bias, accumulator)
         else:
             self.q_bias = None
 
-        self.scale_factor_M = (
-            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
-        ) / self.outputs_QParams.scale_factor
+        self.scale_factor_M = accumulator.scale_factor / self.outputs_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
@@ -206,18 +185,16 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
                     self.inputs_QParams = given_inputs_QParams
 
                 self.weight_QParams.update_quant_params(self.weight)
-                if self.bias is not None:
-                    configure_bias_for_accumulator(
-                        self.bias_QParams,
-                        self.inputs_QParams,
-                        self.weight_QParams,
-                        self.weight.shape[1:],
-                    )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
             if self.bias is not None:
-                bias = SimQuant.apply(self.bias, self.bias_QParams)
+                accumulator = accumulator_qparams(
+                    self.inputs_QParams,
+                    self.weight_QParams,
+                    self.weight.shape[1:],
+                )
+                bias = SimQuant.apply(self.bias, accumulator)
         else:
             weight = self.weight
             bias = self.bias

@@ -5,8 +5,6 @@ from torch import nn
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.MPQ.batchnorm1d.design import (
     BatchNorm1d as BatchNorm1dDesign,
 )
@@ -20,10 +18,9 @@ from elasticai.creator.nn.integer.quant_utils import (
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     QParams,
-    SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
-    configure_bias_for_accumulator,
+    accumulator_qparams,
     fold_batchnorm_affine,
     quantize_bias,
     quantize_weights,
@@ -67,7 +64,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         self.quantizable_elements = [
             "inputs",
             "weights",
-            "bias",
             "outputs",
         ]
         self.quant_bits_per_element = None
@@ -85,8 +81,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             key = f"{self.name}.{element}"
             quant_bits_per_element[element] = quant_configs.get(key)
 
-        if "bias" in quant_bits_per_element:
-            quant_bits_per_element["bias"] = 32
         self.quant_bits_per_element = quant_bits_per_element
         self._init_element_Qparams()
 
@@ -97,10 +91,6 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
         ).to(self.device)
         self.modified_weight_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits_per_element["weights"],
-            observer=GlobalMinMaxObserver(),
-        ).to(self.device)
-        self.bias_QParams = SymmetricSignedQParams(
-            quant_bits=self.quant_bits_per_element["bias"],
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
         self.inputs_QParams = AsymmetricSignedQParams(
@@ -129,7 +119,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.modified_weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item(),
+            z_b=0,
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
@@ -149,27 +139,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             )
         return q_weights
 
-    def _get_quantized_bias(
-        self,
-        bias: torch.Tensor,
-        bias_QParams: QParams,
-        given_quant_scale: torch.Tensor,
-    ) -> torch.Tensor:
-        assert not self.training, "int_forward should be called in eval mode"
-
-        return quantize_bias(bias, bias_QParams, given_quant_scale, self.accumulator_width)
-
     def precompute(self):
         mean = self.running_mean
         var = self.running_var
         std = torch.sqrt(var + self.eps)
-
-        self.accumulator_width = accumulator_bits(
-            self.inputs_QParams.quant_bits,
-            self.modified_weight_QParams.quant_bits,
-            input_scheme=self.inputs_QParams.scheme,
-            weight_scheme=self.modified_weight_QParams.scheme,
-        )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
         modified_weight, modified_bias = fold_batchnorm_affine(
@@ -180,16 +153,14 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             modified_weight, self.modified_weight_QParams
         )
 
-        bias_scale = (
-            self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
+        accumulator = accumulator_qparams(
+            self.inputs_QParams,
+            self.modified_weight_QParams,
         )
-        self.q_bias = self._get_quantized_bias(
-            bias=modified_bias,
-            bias_QParams=self.bias_QParams,
-            given_quant_scale=bias_scale,
-        )
+        self.accumulator_width = accumulator.quant_bits
+        self.q_bias = quantize_bias(modified_bias, accumulator)
 
-        self.scale_factor_M = bias_scale / self.outputs_QParams.scale_factor
+        self.scale_factor_M = accumulator.scale_factor / self.outputs_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
@@ -285,11 +256,12 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d, MPQSupport):
             )
             if self.training:
                 self.modified_weight_QParams.update_quant_params(modified_weight)
-                configure_bias_for_accumulator(
-                    self.bias_QParams, self.inputs_QParams, self.modified_weight_QParams
-                )
             modified_weight = SimQuant.apply(modified_weight, self.modified_weight_QParams)
-            modified_bias = SimQuant.apply(modified_bias, self.bias_QParams)
+            accumulator = accumulator_qparams(
+                self.inputs_QParams,
+                self.modified_weight_QParams,
+            )
+            modified_bias = SimQuant.apply(modified_bias, accumulator)
             outputs = inputs * modified_weight + modified_bias
         else:
             outputs = self.weight * ((inputs - mean) / std) + self.bias

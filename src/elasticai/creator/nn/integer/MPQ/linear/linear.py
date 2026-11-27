@@ -6,9 +6,8 @@ from torch.nn import functional as F
 
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
-from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
-    configure_bias_for_accumulator,
+    accumulator_qparams,
     quantize_bias,
 )
 from elasticai.creator.nn.integer.MPQ.linear.design import Linear as LinearDesign
@@ -22,7 +21,6 @@ from elasticai.creator.nn.integer.quant_utils import (
 from elasticai.creator.nn.integer.quant_utils.QParams import (
     AsymmetricSignedQParams,
     QParams,
-    SymmetricSignedQParams,
 )
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
@@ -45,12 +43,9 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
     ):
         super().__init__(in_features, out_features, bias)
         self.num_dimensions = num_dimensions
-        self.enable_bias = bias
 
         self.name = name
         self.quantizable_elements = ["inputs", "weights", "outputs"]
-        if bias:
-            self.quantizable_elements.append("bias")
         self.quant_bits_per_element = None
         self.quant_data_dir = quant_data_dir
         self.device = device
@@ -66,8 +61,6 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             key = f"{self.name}.{element}"
             quant_bits_per_element[element] = quant_configs.get(key)
 
-        if "bias" in quant_bits_per_element:
-            quant_bits_per_element["bias"] = 32
         self.quant_bits_per_element = quant_bits_per_element
         self._init_element_Qparams()
 
@@ -82,11 +75,6 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             observer=GlobalMinMaxObserver(),
         ).to(self.device)
 
-        if self.enable_bias:
-            self.bias_QParams = SymmetricSignedQParams(
-                quant_bits=self.quant_bits_per_element["bias"],
-                observer=GlobalMinMaxObserver(),
-            ).to(self.device)
 
         self.outputs_QParams = AsymmetricSignedQParams(
             quant_bits=self.quant_bits_per_element["outputs"],
@@ -110,7 +98,7 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
             z_w=self.weight_QParams.zero_point.item(),
-            z_b=self.bias_QParams.zero_point.item() if self.enable_bias else 0,
+            z_b=0,
             z_y=self.outputs_QParams.zero_point.item(),
             work_library_name="work",
             resource_option="auto",
@@ -128,33 +116,21 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
             )
         return q_weights
 
-    def _get_quantized_bias(self) -> torch.Tensor:
-        assert not self.training, "int_forward should be called in eval mode"
-        new_bias_scale_factor = (
-            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
-        )
-        return quantize_bias(
-            self.bias, self.bias_QParams, new_bias_scale_factor, self.accumulator_width
-        )
-
     def precompute(self) -> None:
         assert not self.training, "int_forward should be called in eval mode"
-        self.accumulator_width = accumulator_bits(
-            self.inputs_QParams.quant_bits,
-            self.weight_QParams.quant_bits,
+        accumulator = accumulator_qparams(
+            self.inputs_QParams,
+            self.weight_QParams,
             (self.in_features,),
-            input_scheme=self.inputs_QParams.scheme,
-            weight_scheme=self.weight_QParams.scheme,
         )
+        self.accumulator_width = accumulator.quant_bits
         self.q_weights = self._get_quantized_weights()
         if self.bias is not None:
-            self.q_bias = self._get_quantized_bias()
+            self.q_bias = quantize_bias(self.bias, accumulator)
         else:
             self.q_bias = None
 
-        self.scale_factor_M = (
-            self.inputs_QParams.scale_factor * self.weight_QParams.scale_factor
-        ) / self.outputs_QParams.scale_factor
+        self.scale_factor_M = accumulator.scale_factor / self.outputs_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
@@ -223,18 +199,17 @@ class Linear(DesignCreatorModule, nn.Linear, MPQSupport):
                 )
 
                 self.weight_QParams.update_quant_params(self.weight)
-                if self.bias is not None:
-                    configure_bias_for_accumulator(
-                        self.bias_QParams,
-                        self.inputs_QParams,
-                        self.weight_QParams,
-                        self.weight.shape[1:],
-                    )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
+            bias = None
             if self.bias is not None:
-                bias = SimQuant.apply(self.bias, self.bias_QParams)
+                accumulator = accumulator_qparams(
+                    self.inputs_QParams,
+                    self.weight_QParams,
+                    self.weight.shape[1:],
+                )
+                bias = SimQuant.apply(self.bias, accumulator)
         else:
             weight = self.weight
             bias = self.bias

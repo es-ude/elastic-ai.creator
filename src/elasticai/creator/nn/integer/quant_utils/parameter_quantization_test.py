@@ -5,7 +5,13 @@ import torch
 
 from . import MPQParams
 from .Observers import GlobalMinMaxObserver
-from .parameter_quantization import quantize_bias, quantize_weights
+from .parameter_quantization import (
+    AccumulatorQParams,
+    accumulator_qparams,
+    quantize_bias,
+    quantize_weights,
+)
+from .SimQuant import SimQuant
 
 
 @pytest.fixture(
@@ -41,45 +47,46 @@ def test_weights_preserve_existing_quantization(
     assert result.device.type == "cpu"
 
 
-@pytest.mark.parametrize(
-    "scheme,expected",
-    [
-        ("SymmetricSignedQParams", [-131071, 131071]),
-        ("AsymmetricSignedQParams", [-131072, 131071]),
-        ("AsymmetricUnsignedQParams", [0, 262143]),
-    ],
-)
-def test_bias_clips_to_accumulator_range(params_module, scheme, expected):
-    params = make_params(params_module, scheme)
-    params.zero_point.fill_(7)
-    result = quantize_bias(
-        torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), 18
+def test_accumulator_derives_scale_and_width(params_module):
+    inputs = make_params(params_module, "AsymmetricSignedQParams")
+    weights = make_params(params_module, "SymmetricSignedQParams")
+    inputs.scale_factor.fill_(0.25)
+    weights.scale_factor.fill_(0.125)
+
+    accumulator = accumulator_qparams(inputs, weights, (3,))
+    assert accumulator.quant_bits == 19
+    torch.testing.assert_close(accumulator.scale_factor, torch.tensor([0.03125]))
+
+    inputs.scale_factor.fill_(0.5)
+    torch.testing.assert_close(accumulator.scale_factor, torch.tensor([0.03125]))
+    torch.testing.assert_close(
+        accumulator_qparams(inputs, weights, (3,)).scale_factor, torch.tensor([0.0625])
     )
-    torch.testing.assert_close(result, torch.tensor(expected, dtype=torch.int32))
-    assert int(params.quant_bits) == 18
-    assert params.scale_factor.item() == 2.0**-20
-    assert params.zero_point.item() == 0
-    assert not params.observer.initialized
+
+
+def test_bias_clips_to_accumulator_range():
+    accumulator = AccumulatorQParams(18, torch.tensor(2.0**-20))
+    result = quantize_bias(torch.tensor([-0.5, 0.5]), accumulator)
+    torch.testing.assert_close(
+        result, torch.tensor([-131071, 131071], dtype=torch.int32)
+    )
     assert result.device.type == "cpu"
 
 
-@pytest.mark.parametrize("accumulator_width", [21, 24, 31])
-def test_bias_fits_in_accumulator_width(params_module, accumulator_width):
-    params = make_params(params_module, "SymmetricSignedQParams")
-    result = quantize_bias(
-        torch.tensor([-0.5, 0.5]), params, torch.tensor(2.0**-20), accumulator_width
-    )
+@pytest.mark.parametrize("accumulator_width", [21, 24, 31, 32])
+def test_bias_quantization_matches_fake_quantization(accumulator_width):
+    accumulator = AccumulatorQParams(accumulator_width, torch.tensor(2.0**-20))
+    bias = torch.tensor([-0.5, 0.5], requires_grad=True)
+
+    codes = quantize_bias(bias, accumulator)
+    fake_quantized = SimQuant.apply(bias, accumulator)
+
     torch.testing.assert_close(
-        result, torch.tensor([-524288, 524288], dtype=torch.int32)
+        codes, torch.tensor([-524288, 524288], dtype=torch.int32)
     )
-    assert int(params.quant_bits) == accumulator_width
-
-
-def test_32_bit_bias_round_trip_does_not_overflow(params_module):
-    params = make_params(params_module, "SymmetricSignedQParams")
-    bias = torch.tensor([-0.5, 0.5])
-    result = quantize_bias(bias, params, torch.tensor(2.0**-20), 32)
-    torch.testing.assert_close(params.dequantize(result), bias)
+    torch.testing.assert_close(fake_quantized, accumulator.dequantize(codes))
+    fake_quantized.sum().backward()
+    torch.testing.assert_close(bias.grad, torch.ones_like(bias))
 
 
 @pytest.mark.parametrize("device", ["cpu", "mps"])

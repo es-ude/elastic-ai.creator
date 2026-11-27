@@ -150,7 +150,7 @@ def test_hardware_uses_clipped_bias_code(
     layer.weight_QParams.scale_factor.fill_(2.0**-10)
     layer.outputs_QParams.scale_factor.fill_(1 / 96)
     layer.precompute()
-    assert layer.bias_QParams.quant_bits == layer.accumulator_width == expected_width
+    assert layer.accumulator_width == expected_width
     layer.int_forward(torch.zeros((1, 2, 2), dtype=torch.int32))
     layer.create_design(NAME).save_to(OnDiskPath("build", parent=str(tmp_path)))
 
