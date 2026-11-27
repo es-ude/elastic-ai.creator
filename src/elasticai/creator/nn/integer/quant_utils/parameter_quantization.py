@@ -2,7 +2,19 @@
 
 import torch
 
+from ..math_operations.accumulator import accumulator_bits
 from .QParams import QParams
+
+
+def fold_batchnorm_affine(
+    weight: torch.Tensor,
+    bias: torch.Tensor,
+    mean: torch.Tensor,
+    std: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return the weight and bias of the equivalent per-feature multiply-add."""
+    folded_weight = weight / std
+    return folded_weight, bias - folded_weight * mean
 
 
 def quantize_weights(weight: torch.Tensor, qparams: QParams) -> torch.Tensor:
@@ -27,6 +39,26 @@ def configure_bias_quantization(
     qparams.set_quant_range(quant_bits)
     qparams.min_float.copy_(qparams.min_quant * bias_scale)
     qparams.max_float.copy_(qparams.max_quant * bias_scale)
+
+
+def configure_bias_for_accumulator(
+    bias_qparams: QParams,
+    input_qparams: QParams,
+    weight_qparams: QParams,
+    reduction_shape: tuple[int, ...] = (),
+) -> None:
+    """Configure fake-quantized bias from the operands of the accumulator."""
+    configure_bias_quantization(
+        bias_qparams,
+        input_qparams.scale_factor * weight_qparams.scale_factor,
+        accumulator_bits(
+            input_qparams.quant_bits,
+            weight_qparams.quant_bits,
+            reduction_shape,
+            input_scheme=input_qparams.scheme,
+            weight_scheme=weight_qparams.scheme,
+        ),
+    )
 
 
 def quantize_bias(

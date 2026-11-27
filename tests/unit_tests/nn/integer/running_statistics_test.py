@@ -113,6 +113,14 @@ def _check_running_statistics(layer, bn, shape, enable_simquant, *, folded=False
             for actual, reference in zip(actual_grads, expected_grads):
                 torch.testing.assert_close(actual, reference, atol=1e-6, rtol=1e-4)
         else:
+            accumulator_weight = (
+                layer.weight_QParams if folded else layer.modified_weight_QParams
+            )
+            assert layer.bias_QParams.quant_bits == (19 if folded else 18)
+            torch.testing.assert_close(
+                layer.bias_QParams.scale_factor,
+                layer.inputs_QParams.scale_factor * accumulator_weight.scale_factor,
+            )
             outputs.square().mean().backward()
             assert inputs.grad is not None and torch.isfinite(inputs.grad).all()
             assert all(p.grad is not None and torch.isfinite(p.grad).all() for p in layer.parameters())

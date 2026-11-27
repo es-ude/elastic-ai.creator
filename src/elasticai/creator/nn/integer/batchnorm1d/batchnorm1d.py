@@ -16,6 +16,8 @@ from elasticai.creator.nn.integer.quant_utils import (
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    configure_bias_for_accumulator,
+    fold_batchnorm_affine,
     quantize_bias,
     quantize_weights,
 )
@@ -127,7 +129,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             out_features=self.out_features,
             weights=self.q_weights.tolist(),
             bias=self.q_bias.tolist(),
-            accumulator_width=self.tmp_quant_bits,
+            accumulator_width=self.accumulator_width,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -156,7 +158,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         This overwrites the quantization parameters of `bias_QParams`.
         """
         assert not self.training, "int_forward should be called in eval mode"
-        return quantize_bias(bias, bias_QParams, given_quant_scale, self.tmp_quant_bits)
+        return quantize_bias(bias, bias_QParams, given_quant_scale, self.accumulator_width)
 
     def precompute(self):
         """Compute the integer parameters for `int_forward` and `create_design`.
@@ -169,33 +171,32 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         var = self.running_var
         std = torch.sqrt(var + self.eps)
 
-        self.tmp_quant_bits = accumulator_bits(
+        self.accumulator_width = accumulator_bits(
             self.inputs_QParams.quant_bits,
-            self.weight_QParams.quant_bits,
+            self.modified_weight_QParams.quant_bits,
             input_scheme=self.inputs_QParams.scheme,
-            weight_scheme=self.weight_QParams.scheme,
+            weight_scheme=self.modified_weight_QParams.scheme,
         )
 
         weight = SimQuant.apply(self.weight, self.weight_QParams)
-        modified_weight = weight / std
+        modified_weight, modified_bias = fold_batchnorm_affine(
+            weight, self.bias, mean, std
+        )
         self.modified_weight_QParams.update_quant_params(modified_weight)
         self.q_weights = self._get_quantized_weights(
             modified_weight, self.modified_weight_QParams
         )
 
-        modified_bias = self.bias - modified_weight * mean
-        new_bias_QParms_scale = (
+        bias_scale = (
             self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
         )
         self.q_bias = self._get_quantized_bias(
             bias=modified_bias,
             bias_QParams=self.bias_QParams,
-            given_quant_scale=new_bias_QParms_scale,
+            given_quant_scale=bias_scale,
         )
 
-        self.scale_factor_M = (
-            self.inputs_QParams.scale_factor * self.modified_weight_QParams.scale_factor
-        ) / self.outputs_QParams.scale_factor
+        self.scale_factor_M = bias_scale / self.outputs_QParams.scale_factor
 
         self.scale_factor_m_q_shift, self.scale_factor_m_q = scaling_M(
             self.scale_factor_M
@@ -229,11 +230,11 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         )
         # integer-only
         tmp = self.math_ops.int_elementwise_mul(
-            self.q_weights, q_inputs, self.tmp_quant_bits
+            self.q_weights, q_inputs, self.accumulator_width
         )
 
         tmp = self.math_ops.intadd(
-            tmp, self.q_bias, self.tmp_quant_bits
+            tmp, self.q_bias, self.accumulator_width
         )
 
         tmp = simulate_bitshifting(
@@ -307,16 +308,22 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         if enable_simquant:
             if self.training:
                 self.weight_QParams.update_quant_params(self.weight)
-                self.bias_QParams.update_quant_params(self.bias)
 
             weight = SimQuant.apply(self.weight, self.weight_QParams)
-            bias = SimQuant.apply(self.bias, self.bias_QParams)
+            # Fake-quantize the folded affine operation used by integer inference.
+            modified_weight, modified_bias = fold_batchnorm_affine(
+                weight, self.bias, mean, std
+            )
+            if self.training:
+                self.modified_weight_QParams.update_quant_params(modified_weight)
+                configure_bias_for_accumulator(
+                    self.bias_QParams, self.inputs_QParams, self.modified_weight_QParams
+                )
+            modified_weight = SimQuant.apply(modified_weight, self.modified_weight_QParams)
+            modified_bias = SimQuant.apply(modified_bias, self.bias_QParams)
+            outputs = inputs * modified_weight + modified_bias
         else:
-            weight = self.weight
-            bias = self.bias
-
-        normed_inputs = (inputs - mean) / std
-        outputs = weight * normed_inputs + bias
+            outputs = self.weight * ((inputs - mean) / std) + self.bias
 
         if enable_simquant:
             if self.training:
@@ -329,3 +336,8 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
                     f"{self.name}_y",
                 )
         return outputs
+
+
+
+
+

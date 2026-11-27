@@ -66,8 +66,12 @@ def test_forward_matches_torch_conv1d(layer, inputs) -> None:
 
 def test_int_forward_matches_forward(layer, inputs) -> None:
     train(layer, inputs)
+    training_bias_width = layer.bias_QParams.quant_bits
+    training_bias_scale = layer.bias_QParams.scale_factor.clone()
     layer.precompute()
 
+    assert training_bias_width == layer.bias_QParams.quant_bits == layer.accumulator_width
+    torch.testing.assert_close(training_bias_scale, layer.bias_QParams.scale_factor)
     q_outputs = layer.int_forward(layer.inputs_QParams.quantize(inputs))
 
     assert q_outputs.shape == (2, 3, 6)

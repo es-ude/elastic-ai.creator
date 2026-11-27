@@ -15,7 +15,10 @@ from elasticai.creator.nn.integer.quant_utils import (
     scaling_M,
     simulate_bitshifting,
 )
-from elasticai.creator.nn.integer.quant_utils.parameter_quantization import quantize_bias
+from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    configure_bias_for_accumulator,
+    quantize_bias,
+)
 from elasticai.creator.nn.integer.vhdl_test_automation.file_save_utils import (
     save_quant_data,
 )
@@ -203,20 +206,22 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         var = inputs.var(dim=-1, keepdim=True)
         std = torch.sqrt(var + self.eps)
 
+        normed_inputs = (inputs - mean) / std
         if enable_simquant:
             if self.training:
                 self.weight_QParams.update_quant_params(self.weight)
-                self.bias_QParams.update_quant_params(self.bias)
+                self.normed_inputs_QParams.update_quant_params(normed_inputs)
 
+                configure_bias_for_accumulator(
+                    self.bias_QParams, self.normed_inputs_QParams, self.weight_QParams
+                )
+            normed_inputs = SimQuant.apply(normed_inputs, self.normed_inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)
             bias = SimQuant.apply(self.bias, self.bias_QParams)
         else:
             weight = self.weight
             bias = self.bias
 
-        normed_inputs = (inputs - mean) / std
-        if enable_simquant and self.training:
-            self.normed_inputs_QParams.update_quant_params(normed_inputs)
         outputs = weight * normed_inputs + bias
 
         if enable_simquant:

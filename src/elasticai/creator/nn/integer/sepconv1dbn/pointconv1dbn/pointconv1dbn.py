@@ -15,6 +15,7 @@ from elasticai.creator.nn.integer.quant_utils import (
 )
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    configure_bias_for_accumulator,
     quantize_bias,
     quantize_weights,
 )
@@ -88,7 +89,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             seq_len=self.seq_len,
             weights=self.q_fused_weights.tolist(),
             bias=self.q_fused_bias.tolist(),
-            accumulator_width=self.tmp_quant_bits,
+            accumulator_width=self.accumulator_width,
             m_q=self.scale_factor_m_q.item(),
             m_q_shift=self.scale_factor_m_q_shift.item(),
             z_x=self.inputs_QParams.zero_point.item(),
@@ -113,7 +114,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
             bias,
             self.bias_QParams,
             new_bias_scale_factor,
-            self.tmp_quant_bits,
+            self.accumulator_width,
         )
 
     def precompute(self) -> None:
@@ -128,7 +129,7 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         )
 
         self.q_fused_weights = self._get_quantized_weights(fused_weight)
-        self.tmp_quant_bits = accumulator_bits(
+        self.accumulator_width = accumulator_bits(
             self.inputs_QParams.quant_bits,
             self.weight_QParams.quant_bits,
             self.q_fused_weights.shape[1:],
@@ -166,14 +167,14 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
                 self.q_fused_bias.to(device=q_inputs.device, dtype=torch.int32),
                 padding=self.conv1d.padding,
             )
-            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
+            tmp = self.math_ops.clamp_result(tmp, self.accumulator_width)
         else:
             tmp = F.conv1d(
                 q_inputs.to(torch.int32),
                 self.q_fused_weights.to(device=q_inputs.device, dtype=torch.int32),
                 padding=self.conv1d.padding,
             )
-            tmp = self.math_ops.clamp_result(tmp, self.tmp_quant_bits)
+            tmp = self.math_ops.clamp_result(tmp, self.accumulator_width)
 
         tmp = simulate_bitshifting(
             tmp, self.scale_factor_m_q_shift, self.scale_factor_m_q
@@ -229,7 +230,12 @@ class PointConv1dBN(DesignCreatorModule, nn.Module):
         if enable_simquant:
             if self.training:
                 self.weight_QParams.update_quant_params(fused_weight)
-                self.bias_QParams.update_quant_params(fused_bias)
+                configure_bias_for_accumulator(
+                    self.bias_QParams,
+                    self.inputs_QParams,
+                    self.weight_QParams,
+                    fused_weight.shape[1:],
+                )
 
             fused_weight = SimQuant.apply(fused_weight, self.weight_QParams)
             fused_bias = SimQuant.apply(fused_bias, self.bias_QParams)

@@ -16,6 +16,7 @@ from elasticai.creator.nn.integer.quant_utils import (
 )
 from elasticai.creator.nn.integer.quant_utils.QParams import QParams
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
+    configure_bias_for_accumulator,
     quantize_bias,
     quantize_weights,
 )
@@ -189,7 +190,12 @@ class Linear(DesignCreatorModule, nn.Linear):
 
                 self.weight_QParams.update_quant_params(self.weight)
                 if self.bias is not None:
-                    self.bias_QParams.update_quant_params(self.bias)
+                    configure_bias_for_accumulator(
+                        self.bias_QParams,
+                        self.inputs_QParams,
+                        self.weight_QParams,
+                        self.weight.shape[1:],
+                    )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
             weight = SimQuant.apply(self.weight, self.weight_QParams)

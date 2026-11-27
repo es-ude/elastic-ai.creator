@@ -18,7 +18,7 @@ from elasticai.creator.nn.integer.quant_utils import (
     simulate_bitshifting,
 )
 from elasticai.creator.nn.integer.quant_utils.parameter_quantization import (
-    configure_bias_quantization,
+    configure_bias_for_accumulator,
     quantize_bias,
     quantize_weights,
 )
@@ -330,17 +330,11 @@ class Linear(DesignCreatorModule, nn.Linear):
 
                 self.weight_QParams.update_quant_params(self.weight)
                 if self.bias is not None and self.bias_QParams is not None:
-                    configure_bias_quantization(
+                    configure_bias_for_accumulator(
                         self.bias_QParams,
-                        self.inputs_QParams.scale_factor
-                        * self.weight_QParams.scale_factor,
-                        accumulator_bits(
-                            self.inputs_QParams.quant_bits,
-                            self.weight_QParams.quant_bits,
-                            (self.in_features,),
-                            input_scheme=self.inputs_QParams.scheme,
-                            weight_scheme=self.weight_QParams.scheme,
-                        ),
+                        self.inputs_QParams,
+                        self.weight_QParams,
+                        self.weight.shape[1:],
                     )
 
             inputs = SimQuant.apply(inputs, self.inputs_QParams)
