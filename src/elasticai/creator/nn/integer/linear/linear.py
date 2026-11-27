@@ -3,6 +3,10 @@ from torch import nn
 from torch.nn import functional as F
 
 from elasticai.creator.nn.integer._dtypes import FLOAT_DTYPES, check_dtype
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.linear.design import Linear as LinearDesign
 from elasticai.creator.nn.integer.math_operations import MathOperations
@@ -47,9 +51,7 @@ class Linear(DesignCreatorModule, nn.Linear):
         in_features: int,
         out_features: int,
         bias: bool = False,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         num_dimensions: int | None = None,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
@@ -71,7 +73,7 @@ class Linear(DesignCreatorModule, nn.Linear):
                 quantization data.
             in_features: Number of input features.
             out_features: Number of output features.
-            quant_bits: Bit width of inputs, outputs and weights.
+            quant_bits: One shared width or a (weight, activation) pair.
             bias: Whether the layer has a bias.
             num_dimensions: Number of input vectors for 2D inputs of shape
                 `(num_dimensions, in_features)`. `None` for 1D inputs.
@@ -94,16 +96,12 @@ class Linear(DesignCreatorModule, nn.Linear):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         self.weight_QParams = weight_qparams_cls(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         if bias:
             # Todo: Bias scale calculation currently only supports symmetric biases
@@ -145,6 +143,7 @@ class Linear(DesignCreatorModule, nn.Linear):
             ValueError: If inputs, weights or outputs are not quantized with
                 `quant_bits` bits.
         """
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         assert (
             self.precomputed
             and self.q_weights is not None
@@ -157,15 +156,15 @@ class Linear(DesignCreatorModule, nn.Linear):
             ("weights", self.weight_QParams),
             ("outputs", self.outputs_QParams),
         ]:
-            if qparams.quant_bits != self.quant_bits:
+            if qparams.quant_bits != self.activation_bits:
                 raise ValueError(
-                    f"The hardware needs {element} with {self.quant_bits} bits, "
+                    f"The hardware needs {element} with {self.activation_bits} bits, "
                     f"got {qparams.quant_bits}"
                 )
 
         return LinearDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             in_features=self.in_features,
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,

@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.hadamardproduct.design import (
     HadamardProduct as HadamardProductDesign,
@@ -26,9 +30,7 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
         name: str,
         num_features: int,
         num_dimensions: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -40,11 +42,7 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
 
         self.quant_data_dir = quant_data_dir
 
@@ -64,9 +62,10 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
         self.unroll_factor = unroll_factor
 
     def create_design(self, name: str) -> HadamardProductDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return HadamardProductDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             num_features=self.num_features,
             num_dimensions=self.num_dimensions,
             m_q=self.scale_factor_m_q.item(),
@@ -112,7 +111,7 @@ class HadamardProduct(DesignCreatorModule, nn.Module):
         )
 
         tmp = self.math_ops.inthadamardproduct(
-            q_inputs1, q_inputs2, (self.quant_bits + 1) * 2
+            q_inputs1, q_inputs2, (self.activation_bits + 1) * 2
         )
 
         tmp = simulate_bitshifting(

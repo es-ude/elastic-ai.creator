@@ -2,6 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.fusedffn.fc1relu.design import (
     Linear as LinearReLUDesign,
@@ -35,9 +39,7 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         in_features: int,
         out_features: int,
         bias: bool,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         num_dimensions: int | None = None,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
@@ -47,17 +49,13 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         self.num_dimensions = num_dimensions
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         # TODO: quantization scheme for each quantiztaion objects should be chosen by the user
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         if bias:
             self.bias_QParams = SymmetricSignedQParams(
@@ -74,9 +72,10 @@ class LinearReLU(DesignCreatorModule, nn.Linear):
         self.precomputed = False
 
     def create_design(self, name: str) -> LinearReLUDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return LinearReLUDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             in_features=self.in_features,
             num_dimensions=self.num_dimensions,
             out_features=self.out_features,

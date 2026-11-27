@@ -2,6 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.conv1d.design import Conv1d as Conv1dDesign
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import (
@@ -56,9 +60,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         kernel_size: int,
         padding: int | str,
         seq_len: int,
-        quant_bits: int | list[int, int, int] = None,
-        weight_bits: int | None = None,
-        activation_bits: int | None= None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -71,8 +73,7 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
             kernel_size: Size of the convolution kernel.
             padding: Intended padding, an `int` or `"same"`.
             seq_len: Sequence length of the inputs.
-            weight_bits: Bit width of weights.
-            activation_bits: Bit width of activations.
+            quant_bits: One shared width or a (weight, activation) pair.
             quant_data_dir: Directory for the quantized inputs and outputs
                 saved by `int_forward`. `None` disables saving.
             device: Device of the quantization parameters.
@@ -82,12 +83,11 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         self.seq_len = seq_len
 
         self.name = name
-        self.weight_bits= quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = quant_bits if activation_bits is None else activation_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=32, observer=GlobalMinMaxObserver()
@@ -110,9 +110,10 @@ class Conv1d(DesignCreatorModule, nn.Conv1d):
         Args:
             name: Name of the VHDL entity.
         """
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return Conv1dDesign(
             name=name,
-            data_width=self.weight_bits,
+            data_width=self.activation_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
             kernel_size=self.kernel_size[0],

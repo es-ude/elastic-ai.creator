@@ -51,8 +51,7 @@ def layer() -> Conv1d:
         kernel_size=3,
         padding=0,
         seq_len=8,
-        weight_bits=8,
-        activation_bits=8,
+        quant_bits=8,
         device="cpu",
     )
 

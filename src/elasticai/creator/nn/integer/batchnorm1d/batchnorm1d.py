@@ -4,6 +4,10 @@ from torch import nn
 from elasticai.creator.nn.integer.batchnorm1d.design import (
     BatchNorm1d as BatchNorm1dDesign,
 )
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.math_operations.accumulator import accumulator_bits
@@ -50,9 +54,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
         in_features: int,
         out_features: int,
         num_dimensions: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None= None,
+        quant_bits: int | tuple[int, int],
         eps: float = 1e-5,
         momentum: float = 0.1,
         affine: bool = True,
@@ -70,7 +72,7 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             in_features: Features per input vector, passed to the design.
             out_features: Features per output vector, passed to the design.
             num_dimensions: Number of vectors per input.
-            quant_bits: Bit width of inputs, outputs and weights.
+            quant_bits: One shared width or a (weight, activation) pair.
             eps: Added to the variance for numerical stability.
             momentum: Weight of the current batch in the running statistics.
             affine: Passed to `nn.BatchNorm1d`; the layer needs weight and
@@ -90,16 +92,15 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
 
         self.name = name
         
-        self.weight_bits= quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = quant_bits if activation_bits is None else activation_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.modified_weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=32, observer=GlobalMinMaxObserver()
@@ -121,9 +122,10 @@ class BatchNorm1d(DesignCreatorModule, nn.BatchNorm1d):
             name: Name of the VHDL entity.
         """
 
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return BatchNorm1dDesign(
             name=name,
-            data_width=self.weight_bits,
+            data_width=self.activation_bits,
             num_dimensions=self.num_dimensions,
             in_features=self.in_features,
             out_features=self.out_features,

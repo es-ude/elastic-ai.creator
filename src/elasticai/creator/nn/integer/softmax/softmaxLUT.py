@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.quant_utils import (
@@ -25,9 +29,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         dim_c: int,
         nhead: int,
         window_size: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -41,11 +43,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.window_size = window_size
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -64,13 +62,14 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> SoftmaxLUTDesign:
-        numerator_out_data_width = self.quant_bits * 3 - 1
-        coefficient = 3 if self.quant_bits <= 4 else 2
-        denominator_out_data_width = self.quant_bits * coefficient
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
+        numerator_out_data_width = self.activation_bits * 3 - 1
+        coefficient = 3 if self.activation_bits <= 4 else 2
+        denominator_out_data_width = self.activation_bits * coefficient
 
         return SoftmaxLUTDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             dim_a=self.dim_a,
             dim_b=self.dim_b,
             dim_c=self.dim_c,
@@ -98,8 +97,8 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         tmp = torch.exp(inputs)  # exp(s_x * (q_x - zero_point))
 
         # 4. Identify quant_bits of tmp
-        coefficient = 3 if self.quant_bits <= 4 else 2
-        tmp_quant_bits = self.quant_bits * coefficient
+        coefficient = 3 if self.activation_bits <= 4 else 2
+        tmp_quant_bits = self.activation_bits * coefficient
 
         # get scale factor of tmp
         tmp_scale_factor = (1.0 - 0.0) / (
@@ -128,7 +127,7 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         q_numerator = tmp / (tmp_scale_factor * self.outputs_QParams.scale_factor)
         q_numerator = q_numerator.to(torch.int32)
         q_numerator = q_numerator.round_().clamp(
-            -(2 ** (self.quant_bits * 3 - 1)), 2 ** (self.quant_bits * 3 - 1) - 1
+            -(2 ** (self.activation_bits * 3 - 1)), 2 ** (self.activation_bits * 3 - 1) - 1
         )
         self.Qinput2QNumerator_LUT_dict = {}
         for i in range(len(q_numerator)):
@@ -199,11 +198,11 @@ class SoftmaxLUT(DesignCreatorModule, nn.Module):
         q_denominator = q_denominator.sum(dim=-1, keepdim=True)  # sum(Q_t - Z_t)
 
         tmp = self.math_ops.int_division(
-            q_numerator, q_denominator, self.quant_bits + 1
+            q_numerator, q_denominator, self.activation_bits + 1
         )
 
         q_outputs = self.math_ops.intadd(
-            tmp, self.outputs_QParams.zero_point, self.quant_bits
+            tmp, self.outputs_QParams.zero_point, self.activation_bits
         )
         save_quant_data(q_outputs, self.quant_data_dir, f"{self.name}_q_y")
 

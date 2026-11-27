@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.fusedffn.design import FFN as FFNDesign
 from elasticai.creator.nn.integer.fusedffn.fc1relu import LinearReLU
@@ -23,9 +27,7 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
         d_model: int,
         ffn_dim: int,
         num_dimensions: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -33,11 +35,7 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -47,9 +45,7 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
             out_features=ffn_dim,
             num_dimensions=num_dimensions,
             bias=True,
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -61,9 +57,7 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
             out_features=d_model,
             num_dimensions=num_dimensions,
             bias=True,
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -79,9 +73,10 @@ class FusedFeedForwardNetwork(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> FFNDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return FFNDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             fc1relu=self.fc1relu,
             fc2=self.fc2,
             work_library_name="work",

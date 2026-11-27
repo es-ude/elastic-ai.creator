@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.layernorm1d.design import (
     LayerNorm1d as LayerNorm1dDesign,
@@ -35,9 +39,7 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         num_dimensions: int,
         in_features: int,
         out_features: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -50,16 +52,12 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         self.norm_dim = norm_dim
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=32, observer=GlobalMinMaxObserver()
@@ -78,6 +76,7 @@ class LayerNorm1d(DesignCreatorModule, nn.LayerNorm):
         self.precomputed = False
 
     def create_design(self, name: str) -> LayerNorm1dDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return LayerNorm1dDesign(name=name)
 
     def _get_quantized_weights(

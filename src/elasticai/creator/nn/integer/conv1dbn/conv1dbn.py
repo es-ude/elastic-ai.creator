@@ -2,6 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.conv1dbn.design import Conv1dBN as Conv1dBNDesign
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import (
@@ -39,9 +43,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         kernel_size: int,
         seq_len: int,
         padding: int | str,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits:int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -54,9 +56,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.padding = padding
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = (quant_bits if weight_bits is None else weight_bits)
-        self.activation_bits = quant_bits if activation_bits is None else activation_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
 
@@ -69,7 +69,7 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.bn1d = nn.BatchNorm1d(num_features=out_channels)
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=32, observer=GlobalMinMaxObserver()
@@ -85,9 +85,10 @@ class Conv1dBN(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> Conv1dBNDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return Conv1dBNDesign(
             name=name,
-            data_width=self.weight_bits,
+            data_width=self.activation_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
             kernel_size=self.kernel_size,

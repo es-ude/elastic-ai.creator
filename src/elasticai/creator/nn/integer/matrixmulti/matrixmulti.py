@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import MathOperations
 from elasticai.creator.nn.integer.matrixmulti.design import (
@@ -33,9 +37,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         y_dim_b: int,
         y_dim_c: int,
         operation_mode: str,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         additional_scale: float | None = None,
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
@@ -58,11 +60,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.additional_scale = additional_scale
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
 
@@ -80,10 +78,11 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> MatrixMultiDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return MatrixMultiDesign(
             name=name,
             is_score_mode="true" if self.operation_mode == "score" else "false",
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             x_1_dim_a=self.x_1_dim_a,
             x_1_dim_b=self.x_1_dim_b,
             x_1_dim_c=self.x_1_dim_c,
@@ -149,7 +148,7 @@ class MatrixMulti(DesignCreatorModule, nn.Module):
             inputs1=q_inputs1,
             inputs2=q_inputs2,
             operation_mode=self.operation_mode,
-            outputs_quant_bits=(self.quant_bits + 1) * 2,
+            outputs_quant_bits=(self.activation_bits + 1) * 2,
         )
 
         tmp = simulate_bitshifting(

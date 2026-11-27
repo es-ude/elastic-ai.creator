@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 
 from elasticai.creator.nn.integer.addition import Addition
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.fusedsepresidualblock.design import (
     SepResidualBlock as SepResidualBlockDesign,
 )
@@ -26,20 +30,14 @@ class SepResidualBlock(nn.Module):
         out_channels: int,
         kernel_size: int,
         seq_len: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.sepconv1dbn_0 = SepConv1dBN(
@@ -49,17 +47,13 @@ class SepResidualBlock(nn.Module):
             seq_len=seq_len,
             padding=1,
             name=self.name + "_sepconv1dbn_0",
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.sepconv1dbn_0_relu = ReLU(
             name=self.name + "_sepconv1dbn_0_relu",
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -70,9 +64,7 @@ class SepResidualBlock(nn.Module):
             seq_len=seq_len,
             padding=1,
             name=self.name + "_sepconv1dbn_1",
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -87,9 +79,7 @@ class SepResidualBlock(nn.Module):
                     seq_len=seq_len,
                     padding=1,
                     name=self.name + "_shortcut",
-                    quant_bits=self.quant_bits,
-                    activation_bits=self.activation_bits,
-                    weight_bits=self.weight_bits,
+                    quant_bits=quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                 ),
@@ -99,17 +89,13 @@ class SepResidualBlock(nn.Module):
             name=self.name + "_add",
             num_features=seq_len,
             num_dimensions=out_channels,
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
         self.relu = ReLU(
             name=self.name + "_relu",
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -123,6 +109,7 @@ class SepResidualBlock(nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> SepResidualBlockDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return SepResidualBlockDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,

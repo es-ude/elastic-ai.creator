@@ -10,7 +10,7 @@ from elasticai.creator.nn.integer.sequential.sequential import Sequential
 
 @pytest.mark.parametrize("convolution", [False, True])
 def test_separate_activation_and_weight_widths_in_integer_inference(convolution):
-    widths = dict(activation_bits=10, weight_bits=4, quant_bits=8)
+    widths = dict(quant_bits=(4, 10))
     layer = (
         Conv1d(
             name="conv",
@@ -46,6 +46,8 @@ def test_separate_activation_and_weight_widths_in_integer_inference(convolution)
     layer.precompute()
     assert layer.bias_QParams.quant_bits == 17
     torch.testing.assert_close(layer.int_forward(input_codes), expected_codes)
+    with pytest.raises(ValueError, match="requires equal weight and activation bit widths"):
+        layer.create_design("mixed")
 
 
 def test_composed_uniform_layer_forwards_both_widths():
@@ -54,9 +56,7 @@ def test_composed_uniform_layer_forwards_both_widths():
         d_model=2,
         ffn_dim=4,
         num_dimensions=1,
-        quant_bits=8,
-        activation_bits=10,
-        weight_bits=4,
+        quant_bits=(4, 10),
     )
     for module in layer.modules():
         if hasattr(module, "inputs_QParams"):
@@ -65,31 +65,23 @@ def test_composed_uniform_layer_forwards_both_widths():
             assert module.outputs_QParams.quant_bits == 10
         if hasattr(module, "weight_QParams"):
             assert module.weight_QParams.quant_bits == 4
+    with pytest.raises(ValueError, match="requires equal weight and activation bit widths"):
+        layer.create_design("ffn")
 
 
-def test_quant_bits_remains_the_fallback():
+@pytest.mark.parametrize("quant_bits", [8, (8, 8)])
+def test_equal_weight_and_activation_widths_allow_design(quant_bits):
     layer = Linear(
-        name="linear", in_features=1, out_features=1, bias=True, quant_bits=8
-    )
+        name="linear", in_features=1, out_features=1, bias=True, quant_bits=quant_bits
+    ).eval()
     assert layer.inputs_QParams.quant_bits == layer.outputs_QParams.quant_bits == 8
     assert layer.weight_QParams.quant_bits == 8
-    override = Linear(
-        name="linear",
-        in_features=1,
-        out_features=1,
-        bias=True,
-        quant_bits=8,
-        activation_bits=10,
-        weight_bits=4,
-    )
-    assert (
-        override.inputs_QParams.quant_bits == override.outputs_QParams.quant_bits == 10
-    )
-    assert override.weight_QParams.quant_bits == 4
+    layer.precompute()
+    assert layer.create_design("linear").port["x"].width == 8
 
 
 def test_uniform_network_keeps_existing_activation_parameter_inheritance():
-    widths = dict(activation_bits=10, weight_bits=4, quant_bits=8)
+    widths = dict(quant_bits=(4, 10))
     first = Linear(name="linear", in_features=1, out_features=1, bias=True, **widths)
     relu = ReLU(name="relu", **widths)
     last = Linear(name="last", in_features=1, out_features=1, bias=True, **widths)

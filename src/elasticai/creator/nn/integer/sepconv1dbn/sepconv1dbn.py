@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -26,9 +30,7 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
         kernel_size: int,
         padding: int | str,
         seq_len: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -38,11 +40,7 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
         self.seq_len = seq_len
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.depthconv1d = DepthConv1d(
@@ -52,9 +50,7 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
             padding=padding,  # 1
             seq_len=self.seq_len,
             name=self.name + "_depthconv1d_0",
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -63,9 +59,7 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
             out_channels=out_channels,
             seq_len=self.seq_len,
             name=self.name + "_pointconv1dbn_0",
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
         )
@@ -80,9 +74,10 @@ class SepConv1dBN(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> SepConv1dBNDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return SepConv1dBNDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             depthconv1d=self.depthconv1d,
             pointconv1dbn=self.pointconv1dbn,
             work_library_name="work",

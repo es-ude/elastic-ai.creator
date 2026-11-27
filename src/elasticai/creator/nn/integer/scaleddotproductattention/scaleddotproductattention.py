@@ -3,6 +3,10 @@ from pathlib import Path
 import torch
 from torch import nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.matrixmulti import MatrixMulti
 from elasticai.creator.nn.integer.quant_utils import (
@@ -26,9 +30,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         window_size: int,
         d_model: int,
         nhead: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         enable_error_analysis: bool = False,
@@ -36,11 +38,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
 
         self.quant_data_dir = quant_data_dir
         self.enable_error_analysis = enable_error_analysis
@@ -60,9 +58,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             y_dim_a=nhead,
             y_dim_b=window_size,
             y_dim_c=window_size,
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             operation_mode="score",
             device=device,
@@ -76,9 +72,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             dim_a=nhead,
             dim_b=window_size,
             dim_c=window_size,
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             device=device,
             enable_error_analysis=self.enable_error_analysis,
@@ -95,9 +89,7 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
             y_dim_a=window_size,
             y_dim_b=nhead,
             y_dim_c=d_model,
-            quant_bits=self.quant_bits,
-            activation_bits=self.activation_bits,
-            weight_bits=self.weight_bits,
+            quant_bits=quant_bits,
             quant_data_dir=self.quant_data_dir,
             operation_mode="att",
             device=device,
@@ -119,9 +111,10 @@ class ScaledDotProductAttention(DesignCreatorModule, nn.Module):
         self.precomputed = False
 
     def create_design(self, name: str) -> ScaledDotProductAttentionDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return ScaledDotProductAttentionDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             matrix_multi_score=self.matrix_multi_score,
             softmax=self.softmax,
             matrix_multi_att=self.matrix_multi_att,

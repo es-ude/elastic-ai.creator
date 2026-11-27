@@ -2,6 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.math_operations import (
     get_padded_q_inputs,
@@ -41,9 +45,7 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         kernel_size: int,
         padding: int | str,
         seq_len: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
     ):
@@ -58,13 +60,11 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         self.seq_len = seq_len
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits= quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = quant_bits if activation_bits is None else activation_bits
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
         self.quant_data_dir = quant_data_dir
 
         self.weight_QParams = AsymmetricSignedQParams(
-            quant_bits=self.weight_bits, observer=GlobalMinMaxObserver()
+            quant_bits=self._weight_bits, observer=GlobalMinMaxObserver()
         ).to(device)
         self.bias_QParams = SymmetricSignedQParams(
             quant_bits=32, observer=GlobalMinMaxObserver()
@@ -80,9 +80,10 @@ class DepthConv1d(DesignCreatorModule, nn.Conv1d):
         self.precomputed = False
 
     def create_design(self, name: str) -> DepthConv1dDesign:
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return DepthConv1dDesign(
             name=name,
-            data_width=self.quant_bits,
+            data_width=self.activation_bits,
             in_channels=self.in_channels,
             out_channels=self.out_channels,
             seq_len=self.seq_len,

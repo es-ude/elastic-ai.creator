@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.bitwidth import split_quant_bits
 from elasticai.creator.nn.integer.encoderlayer import EncoderLayer
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -23,9 +24,7 @@ class Encoder(nn.Module):
         ffn_dim: int,
         nhead: int,
         num_enc_layers: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None= None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         do_int_forward: bool = False,
         device: torch.device | str = torch.device("cpu"),
@@ -35,11 +34,7 @@ class Encoder(nn.Module):
         super().__init__()
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        _, self.activation_bits = split_quant_bits(quant_bits)
 
         self.quant_data_dir = quant_data_dir
         self.do_int_forward = do_int_forward
@@ -54,9 +49,7 @@ class Encoder(nn.Module):
                     ffn_dim=ffn_dim if ffn_dim is not None else d_model * 4,
                     nhead=nhead,
                     window_size=window_size,
-                    quant_bits=self.quant_bits,
-                    activation_bits=self.activation_bits,
-                    weight_bits=self.weight_bits,
+                    quant_bits=quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                     enable_error_analysis=self.enable_error_analysis,

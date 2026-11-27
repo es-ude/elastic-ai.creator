@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 
+from elasticai.creator.nn.integer.bitwidth import (
+    require_uniform_quant_bits,
+    split_quant_bits,
+)
 from elasticai.creator.nn.integer.design_creator_module import DesignCreatorModule
 from elasticai.creator.nn.integer.quant_utils import (
     AsymmetricSignedQParams,
@@ -27,9 +31,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         hidden_size: int,
         window_size: int,
         batch_size: int,
-        quant_bits: int,
-        weight_bits: int | None = None,
-        activation_bits: int | None = None,
+        quant_bits: int | tuple[int, int],
         quant_data_dir: str | None = None,
         device: torch.device | str = torch.device("cpu"),
         use_pipeline_template: bool = False,
@@ -47,11 +49,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
         self.batch_size = batch_size
 
         self.name = name
-        self.quant_bits = quant_bits
-        self.weight_bits = quant_bits if weight_bits is None else weight_bits
-        self.activation_bits = (
-            quant_bits if activation_bits is None else activation_bits
-        )
+        self._weight_bits, self.activation_bits = split_quant_bits(quant_bits)
 
         self.quant_data_dir = quant_data_dir
         self.lstm_use_pipeline_template = use_pipeline_template
@@ -66,9 +64,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
                     cell_type=self.cell_type,
                     batch_size=self.batch_size,
                     name=self.name + f"_rnn_layer_{i}",
-                    quant_bits=self.quant_bits,
-                    activation_bits=self.activation_bits,
-                    weight_bits=self.weight_bits,
+                    quant_bits=quant_bits,
                     quant_data_dir=self.quant_data_dir,
                     device=device,
                     use_parallelised_template=use_parallelised_template,
@@ -94,6 +90,7 @@ class StackedRNN(DesignCreatorModule, nn.Module):
 
     def create_design(self, name) -> StackedRNNDesign:
         # TODO: only support 1 rnn layer now
+        require_uniform_quant_bits(self._weight_bits, self.activation_bits)
         return StackedRNNDesign(
             name=name,
             data_width=self.inputs_QParams.quant_bits,

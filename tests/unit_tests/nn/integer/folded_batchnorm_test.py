@@ -23,8 +23,7 @@ def test_conv1dbn_matches_pytorch_bn():
         kernel_size=3,
         seq_len=L,
         padding=1,
-        quant_bits=8,
-        activation_bits=16,
+        quant_bits=(8, 16),
         device="cpu",
     )
 
@@ -70,8 +69,7 @@ def setup_conv1dBN(C_IN, C_OUT, K, L):
         kernel_size=K,
         seq_len=L,
         padding=1,
-        quant_bits=8,
-        activation_bits=16,
+        quant_bits=(8, 16),
         device="cpu",
     )
 
@@ -151,8 +149,7 @@ def create_conv1dBN(C_IN, C_OUT, K, L, BITS, ACTIVATION_BITS):
         kernel_size=K,
         seq_len=L,
         padding=1,
-        quant_bits=BITS,
-        activation_bits=ACTIVATION_BITS,
+        quant_bits=(BITS, ACTIVATION_BITS),
         device="cpu",
     )
 
